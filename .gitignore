@@ -62,5 +62,6 @@ gradle-app.setting
 # IntelliJ
 .idea
 /out/
+texlab.iml
 
 # End of https://www.gitignore.io/api/java,kotlin,gradle
