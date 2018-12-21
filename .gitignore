@@ -1,3 +1,8 @@
+
+# Created by https://www.gitignore.io/api/java,kotlin,gradle
+# Edit at https://www.gitignore.io/?templates=java,kotlin,gradle
+
+### Java ###
 # Compiled class file
 *.class
 
@@ -21,3 +26,41 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+### Kotlin ###
+# Compiled class file
+
+# Log file
+
+# BlueJ files
+
+# Mobile Tools for Java (J2ME)
+
+# Package Files #
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+
+### Gradle ###
+.gradle
+/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
+
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+### Gradle Patch ###
+**/build/
+
+# IntelliJ
+.idea
+/out/
+
+# End of https://www.gitignore.io/api/java,kotlin,gradle
