@@ -1,6 +1,7 @@
 package texlab
 
 import org.eclipse.lsp4j.*
+import texlab.syntax.CharStream
 import java.net.URI
 
 abstract class Document(val uri: URI) {

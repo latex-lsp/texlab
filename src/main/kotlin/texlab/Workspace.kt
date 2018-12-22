@@ -1,7 +1,6 @@
 package texlab
 
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
-import texlab.latex.LatexDocument
 import java.io.File
 import java.net.URI
 import java.nio.file.InvalidPathException
