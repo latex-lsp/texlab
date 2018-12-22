@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.2.61'
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
 }
 
 group 'texlab'
@@ -28,6 +29,12 @@ compileTestKotlin {
 
 test {
     useJUnitPlatform()
+}
+
+shadowJar {
+    baseName = 'texlab'
+    classifier = null
+    version = null
 }
 
 mainClassName = "texlab.MainKt"
