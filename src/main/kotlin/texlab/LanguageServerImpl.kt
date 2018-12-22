@@ -35,6 +35,8 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                     change = TextDocumentSyncKind.Incremental
                 }
                 textDocumentSync = Either.forRight(syncOptions)
+                documentSymbolProvider = true
+                renameProvider = Either.forLeft(true)
             }
             InitializeResult(capabilities)
         }
