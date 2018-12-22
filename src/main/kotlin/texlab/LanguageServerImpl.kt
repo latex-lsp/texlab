@@ -24,17 +24,17 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         return CompletableFuture.supplyAsync {
+            val root = URI.create(params.rootUri)
+            synchronized(workspace) {
+                loadWorkspace(root)
+            }
+
             val capabilities = ServerCapabilities().apply {
                 val syncOptions = TextDocumentSyncOptions().apply {
                     openClose = true
                     change = TextDocumentSyncKind.Incremental
                 }
                 textDocumentSync = Either.forRight(syncOptions)
-            }
-
-            val root = URI.create(params.rootUri)
-            synchronized(workspace) {
-                loadWorkspace(root)
             }
             InitializeResult(capabilities)
         }
@@ -55,7 +55,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
         val language = getLanguageByExtension(extension) ?: return
         try {
             val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
-            workspace.create(file.toUri(), text, language)
+            workspace.create(file.toUri(), language, text)
         } catch (e: IOException) {
             e.printStackTrace()
         }

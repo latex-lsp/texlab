@@ -5,16 +5,15 @@ import java.net.URI
 
 abstract class Document(val uri: URI) {
 
-    var version: Int = -1
-        private set
+    private var version: Int = -1
 
     var text: String = ""
         private set
 
-    protected abstract fun analyze()
+    val isFile: Boolean = uri.scheme == "file"
 
     fun update(changes: List<TextDocumentContentChangeEvent>, version: Int) {
-        if (version > this.version) {
+        if (this.version > version) {
             return
         }
 
@@ -33,4 +32,6 @@ abstract class Document(val uri: URI) {
         this.version = version
         analyze()
     }
+
+    protected abstract fun analyze()
 }

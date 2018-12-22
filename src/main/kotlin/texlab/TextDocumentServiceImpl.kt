@@ -13,7 +13,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
         params.textDocument.apply {
             val language = getLanguageById(languageId) ?: return
             synchronized(workspace) {
-                workspace.create(URI.create(uri), text, language)
+                workspace.create(URI.create(uri), language, text)
             }
         }
     }

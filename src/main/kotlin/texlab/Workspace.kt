@@ -1,34 +1,16 @@
 package texlab
 
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
-import java.io.IOException
 import java.net.URI
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.PathMatcher
+import java.nio.file.InvalidPathException
+import java.nio.file.Paths
+import java.util.*
 
 class Workspace {
     private val documents = mutableListOf<Document>()
-    private val matcher: PathMatcher = FileSystems.getDefault().getPathMatcher("glob:**.{tex,sty,cls,bib}")
+    private val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
 
-    fun initialize(directory: Path) {
-        Files.walk(directory)
-                .filter { Files.isRegularFile(it) }
-                .filter { matcher.matches(it) }
-                .forEach {
-                    val extension = it.fileName.toFile().extension
-                    val language = getLanguageByExtension(extension) ?: return@forEach
-                    try {
-                        val text = Files.readAllBytes(it).toString(Charsets.UTF_8)
-                        create(it.toUri(), text, language)
-                    } catch (e: IOException) {
-                        // TODO: Log this error
-                    }
-                }
-    }
-
-    fun create(uri: URI, text: String, language: Language) {
+    fun create(uri: URI, language: Language, text: String) {
         var document = documents.firstOrNull { it.uri == uri }
         if (document == null) {
             document = when (language) {
@@ -45,7 +27,56 @@ class Workspace {
     }
 
     fun update(uri: URI, changes: List<TextDocumentContentChangeEvent>, version: Int) {
-        val document = documents.firstOrNull { it.uri == uri } ?: return
-        document.update(changes, version)
+        documents.firstOrNull { it.uri == uri }
+                ?.update(changes, version)
+    }
+
+    fun resolve(uri: URI, relativePath: String): Document? {
+        fun find(path: String): Document? {
+            return documents
+                    .filter { it.isFile }
+                    .firstOrNull { it.uri.path == path }
+        }
+
+        return try {
+            val basePath = Paths.get(uri.path).parent
+            val fullPath = basePath.resolve(relativePath).toString().replace('\\', '/')
+            var document = find(fullPath)
+            extensions.forEach { document = document ?: find("$fullPath$it") }
+            return document
+        } catch (e: InvalidPathException) {
+            null
+        }
+    }
+
+    fun relatedDocuments(uri: URI): List<Document> {
+        val edges = mutableSetOf<Pair<Document, Document>>()
+        documents.filterIsInstance<LatexDocument>()
+                .filter { it.isFile }
+                .forEach { parent ->
+                    parent.tree.includes
+                            .mapNotNull { resolve(parent.uri, it.path) }
+                            .forEach { child ->
+                                edges.add(Pair(parent, child))
+                                edges.add(Pair(child, parent))
+                            }
+                }
+
+        val results = mutableListOf<Document>()
+        val start = documents.firstOrNull { it.uri == uri } ?: return results
+        val visited = mutableSetOf<Document>()
+        val stack = Stack<Document>()
+        stack.push(start)
+        while (!stack.empty()) {
+            val current = stack.pop()
+            if (!visited.add(current)) {
+                continue
+            }
+
+            results.add(current)
+            documents.filter { edges.contains(Pair(current, it)) }
+                    .forEach { stack.push(it) }
+        }
+        return results
     }
 }
