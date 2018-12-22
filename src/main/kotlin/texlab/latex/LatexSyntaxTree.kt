@@ -7,4 +7,6 @@ class LatexSyntaxTree(text: String) {
     val includes: List<LatexInclude> = LatexInclude.analyze(root)
 
     val environments: List<LatexEnvironment> = LatexEnvironment.analyze(root)
+
+    val sections: List<LatexSection> = LatexSection.analyze(root)
 }
