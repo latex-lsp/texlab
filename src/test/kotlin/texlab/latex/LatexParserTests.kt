@@ -52,7 +52,7 @@ class LatexParserTests {
     }
 
     @Test
-    fun `it should parse commands with arguments`() {
+    fun `it should parse commands with empty arguments`() {
         val text = "\\foo{}"
         val args =
                 LatexGroupSyntax(
@@ -69,6 +69,30 @@ class LatexParserTests {
                                         name = LatexToken(0, 0, "\\foo", LatexTokenKind.COMMAND),
                                         options = null,
                                         args = listOf(args))))
+        assertEquals(tree, LatexParser.parse(text))
+    }
+
+    @Test
+    fun `it should parse commands with text arguments`() {
+        val text = "\\begin{foo}"
+        val args = listOf(
+                LatexGroupSyntax(
+                        range(0, 6, 0, 11),
+                        left = LatexToken(0, 6, "{", LatexTokenKind.BEGIN_GROUP),
+                        right = LatexToken(0, 10, "}", LatexTokenKind.END_GROUP),
+                        children = listOf(
+                                LatexTextSyntax(
+                                        range(0, 7, 0, 10),
+                                        listOf(LatexToken(0, 7, "foo", LatexTokenKind.WORD))))))
+        val tree =
+                LatexDocumentSyntax(
+                        range(0, 0, 0, 11),
+                        listOf(
+                                LatexCommandSyntax(
+                                        range(0, 0, 0, 11),
+                                        name = LatexToken(0, 0, "\\begin", LatexTokenKind.COMMAND),
+                                        options = null,
+                                        args = args)))
         assertEquals(tree, LatexParser.parse(text))
     }
 

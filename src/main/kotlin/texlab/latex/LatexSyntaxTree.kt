@@ -5,4 +5,6 @@ class LatexSyntaxTree(text: String) {
     private val root: LatexDocumentSyntax = LatexParser.parse(text)
 
     val includes: List<LatexInclude> = LatexInclude.analyze(root)
+
+    val environments: List<LatexEnvironment> = LatexEnvironment.analyze(root)
 }

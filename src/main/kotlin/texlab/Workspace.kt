@@ -7,8 +7,9 @@ import java.nio.file.Paths
 import java.util.*
 
 class Workspace {
-    private val documents = mutableListOf<Document>()
-    private val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
+
+
+    val documents = mutableListOf<Document>()
 
     fun create(uri: URI, language: Language, text: String) {
         var document = documents.firstOrNull { it.uri == uri }
@@ -38,6 +39,7 @@ class Workspace {
                     .firstOrNull { it.uri.path == path }
         }
 
+        val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
         return try {
             val basePath = Paths.get(uri.path).parent
             val fullPath = basePath.resolve(relativePath).toString().replace('\\', '/')
