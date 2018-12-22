@@ -37,6 +37,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                 textDocumentSync = Either.forRight(syncOptions)
                 documentSymbolProvider = true
                 renameProvider = Either.forLeft(true)
+                documentLinkProvider = DocumentLinkOptions(false)
             }
             InitializeResult(capabilities)
         }
@@ -68,7 +69,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
     override fun getWorkspaceService(): WorkspaceService = workspaceService
 
     override fun shutdown(): CompletableFuture<Any> {
-        return CompletableFuture.supplyAsync { }
+        return CompletableFuture.completedFuture(null)
     }
 
     override fun exit() {

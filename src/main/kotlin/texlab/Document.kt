@@ -1,9 +1,6 @@
 package texlab
 
-import org.eclipse.lsp4j.DocumentSymbol
-import org.eclipse.lsp4j.Position
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent
-import org.eclipse.lsp4j.WorkspaceEdit
+import org.eclipse.lsp4j.*
 import java.net.URI
 
 abstract class Document(val uri: URI) {
@@ -38,7 +35,9 @@ abstract class Document(val uri: URI) {
 
     protected abstract fun analyze()
 
-    abstract fun documentSymbol(): List<DocumentSymbol>
+    abstract fun documentSymbol(workspace: Workspace): List<DocumentSymbol>
 
-    abstract fun rename(documents: List<Document>, position: Position, newName: String): WorkspaceEdit?
+    abstract fun documentLink(workspace: Workspace): List<DocumentLink>
+
+    abstract fun rename(workspace: Workspace, position: Position, newName: String): WorkspaceEdit?
 }

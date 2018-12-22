@@ -1,5 +1,6 @@
 package texlab
 
+import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.WorkspaceEdit
@@ -11,12 +12,17 @@ class BibtexDocument(uri: URI) : Document(uri) {
         // TODO
     }
 
-    override fun documentSymbol(): List<DocumentSymbol> {
+    override fun documentSymbol(workspace: Workspace): List<DocumentSymbol> {
         // TODO
         return listOf()
     }
 
-    override fun rename(documents: List<Document>, position: Position, newName: String): WorkspaceEdit? {
+    override fun documentLink(workspace: Workspace): List<DocumentLink> {
+        // TODO
+        return listOf()
+    }
+
+    override fun rename(workspace: Workspace, position: Position, newName: String): WorkspaceEdit? {
         // TODO
         return null
     }

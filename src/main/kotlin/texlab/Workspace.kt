@@ -1,13 +1,14 @@
 package texlab
 
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
+import texlab.latex.LatexDocument
+import java.io.File
 import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
 
 class Workspace {
-
 
     val documents = mutableListOf<Document>()
 
@@ -34,14 +35,15 @@ class Workspace {
 
     fun resolve(uri: URI, relativePath: String): Document? {
         fun find(path: String): Document? {
+            val child = File(path).toURI()
             return documents
                     .filter { it.isFile }
-                    .firstOrNull { it.uri.path == path }
+                    .firstOrNull { it.uri == child }
         }
 
         val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
         return try {
-            val basePath = Paths.get(uri.path).parent
+            val basePath = Paths.get(File(uri).parent)
             val fullPath = basePath.resolve(relativePath).toString().replace('\\', '/')
             var document = find(fullPath)
             extensions.forEach { document = document ?: find("$fullPath$it") }

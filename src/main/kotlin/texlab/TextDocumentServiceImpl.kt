@@ -36,7 +36,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val uri = URI.create(params.textDocument.uri)
             val symbols = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?.documentSymbol()
+                    ?.documentSymbol(workspace)
                     ?.map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
                     ?.toMutableList()
                     ?: mutableListOf()
@@ -47,13 +47,26 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
         synchronized(workspace) {
             val uri = URI.create(params.textDocument.uri)
-            val documents = workspace.relatedDocuments(uri)
-            if (documents.isEmpty()) {
-                return CompletableFuture.completedFuture(null)
-            }
+            val document = workspace.documents
+                    .firstOrNull { it.uri == uri }
+                    ?: return CompletableFuture.completedFuture(null)
 
-            val edit = documents[0].rename(documents, params.position, params.newName)
+            val edit = document.rename(workspace, params.position, params.newName)
             return CompletableFuture.completedFuture(edit)
+        }
+    }
+
+    override fun documentLink(params: DocumentLinkParams): CompletableFuture<MutableList<DocumentLink>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val links = workspace.documents
+                    .filter { it.isFile }
+                    .firstOrNull { it.uri == uri }
+                    ?.documentLink(workspace)
+                    ?.toMutableList()
+                    ?: mutableListOf()
+
+            return CompletableFuture.completedFuture(links)
         }
     }
 }

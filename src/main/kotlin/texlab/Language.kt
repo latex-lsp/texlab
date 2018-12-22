@@ -18,13 +18,13 @@ fun getLanguageById(id: String): Language? {
 
 fun getLanguageByExtension(extension: String): Language? {
     return when (extension.toLowerCase()) {
-        ".tex" ->
+        "tex" ->
             Language.LATEX
-        ".sty" ->
+        "sty" ->
             Language.LATEX
-        ".cls" ->
+        "cls" ->
             Language.LATEX
-        ".bib" ->
+        "bib" ->
             Language.BIBTEX
         else ->
             null

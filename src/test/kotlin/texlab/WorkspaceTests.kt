@@ -5,12 +5,14 @@ import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.net.URI
 
 class WorkspaceTests {
-    private val document1 = URI.create("file:///foo/bar.tex")
-    private val document2 = URI.create("file:///foo/baz/qux.tex")
-    private val document3 = URI.create("file:///foo/baz.bib")
+
+    private val document1 = File("foo/bar.tex").toURI()
+    private val document2 = File("foo/baz/qux.tex").toURI()
+    private val document3 = File("foo/baz.bib").toURI()
 
     private fun Workspace.verifyRelatedDocuments(expected: List<URI>) {
         val actual = relatedDocuments(expected[0]).map { it.uri }
