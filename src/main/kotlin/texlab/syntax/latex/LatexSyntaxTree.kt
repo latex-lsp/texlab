@@ -10,5 +10,7 @@ class LatexSyntaxTree(text: String) {
 
     val sections: List<LatexSection> = LatexSection.analyze(root)
 
-    val labelDefinitions: List<LatexLabelDefinition> = LatexLabelDefinition.analyze(root)
+    val labelDefinitions: List<LatexLabel> = LatexLabel.findDefinitions(root)
+
+    val labelReferences: List<LatexLabel> = LatexLabel.findReferences(root)
 }
