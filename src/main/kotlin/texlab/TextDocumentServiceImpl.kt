@@ -7,10 +7,7 @@ import texlab.completion.AggregateProvider
 import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
-import texlab.completion.latex.LatexKernelCommandProvider
-import texlab.completion.latex.LatexKernelEnvironmentProvider
-import texlab.completion.latex.LatexUserCommandProvider
-import texlab.completion.latex.LatexUserEnvironmentProvider
+import texlab.completion.latex.*
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
@@ -19,6 +16,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     private val completionProvider: CompletionProvider =
             OrderByQualityProvider(
                     AggregateProvider(
+                            LatexIncludeProvider(workspace),
+                            LatexBibliographyProvider(workspace),
                             LatexKernelEnvironmentProvider(),
                             LatexUserEnvironmentProvider(),
                             LatexKernelCommandProvider(),
