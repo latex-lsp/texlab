@@ -20,6 +20,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexBibliographyProvider(workspace),
                             PgfLibraryProvider(),
                             TikzLibraryProvider(),
+                            LatexColorProvider(),
                             DefineColorModelProvider(),
                             DefineColorSetModelProvider(),
                             LatexKernelEnvironmentProvider(),
