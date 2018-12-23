@@ -2,9 +2,19 @@ package texlab.completion
 
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
+import org.eclipse.lsp4j.InsertTextFormat
 
 object CompletionItemFactory {
     private const val KERNEL = "built-in"
+
+    fun createSnippet(name: String, unit: String?, template: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Snippet
+            detail = unit ?: KERNEL
+            insertText = template
+            insertTextFormat = InsertTextFormat.Snippet
+        }
+    }
 
     fun createCommand(name: String, unit: String?): CompletionItem {
         return CompletionItem(name).apply {
