@@ -8,6 +8,7 @@ import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.LatexKernelCommandProvider
+import texlab.completion.latex.LatexUserCommandProvider
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
@@ -16,7 +17,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     private val completionProvider: CompletionProvider =
             OrderByQualityProvider(
                     AggregateProvider(
-                            LatexKernelCommandProvider()))
+                            LatexKernelCommandProvider(),
+                            LatexUserCommandProvider()))
 
     companion object {
         private const val MAX_COMPLETIONS_ITEMS_COUNT = 100

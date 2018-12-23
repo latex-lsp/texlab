@@ -10,9 +10,8 @@ class LatexKernelCommandProvider : LatexCommandProvider() {
     private val items = KernelPrimitives
             .COMMANDS
             .map { CompletionItemFactory.createCommand(it, null) }
-            .asSequence()
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): Sequence<CompletionItem> {
+    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

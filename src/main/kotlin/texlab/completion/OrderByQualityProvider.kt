@@ -11,10 +11,10 @@ import texlab.syntax.latex.LatexTextSyntax
 
 class OrderByQualityProvider(private val provider: CompletionProvider) : CompletionProvider {
 
-    override fun getItems(request: CompletionRequest): Sequence<CompletionItem> {
+    override fun getItems(request: CompletionRequest): List<CompletionItem> {
         val name = getName(request)
         return if (name == null) {
-            sequenceOf()
+            listOf()
         } else {
             provider.getItems(request)
                     .sortedByDescending { getQuality(it.label, name) }

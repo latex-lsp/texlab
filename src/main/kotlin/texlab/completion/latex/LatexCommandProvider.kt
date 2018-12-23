@@ -9,7 +9,7 @@ import texlab.syntax.latex.LatexCommandSyntax
 
 abstract class LatexCommandProvider : CompletionProvider {
 
-    override fun getItems(request: CompletionRequest): Sequence<CompletionItem> {
+    override fun getItems(request: CompletionRequest): List<CompletionItem> {
         return if (request.document is LatexDocument) {
             val command = request.document
                     .tree
@@ -20,14 +20,14 @@ abstract class LatexCommandProvider : CompletionProvider {
             if (command is LatexCommandSyntax) {
                 getItems(request, command)
             } else {
-                sequenceOf()
+                listOf()
             }
         } else {
-            sequenceOf()
+            listOf()
         }
     }
 
-    protected abstract fun getItems(request: CompletionRequest, command: LatexCommandSyntax): Sequence<CompletionItem>
+    protected abstract fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
 }
 
 //public abstract class LatexCommandProvider : ICompletionProvider
