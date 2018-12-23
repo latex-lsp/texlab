@@ -2,7 +2,7 @@ package texlab.syntax.latex
 
 class LatexSyntaxTree(text: String) {
 
-    private val root: LatexDocumentSyntax = LatexParser.parse(text)
+    val root: LatexDocumentSyntax = LatexParser.parse(text)
 
     val includes: List<LatexInclude> = LatexInclude.analyze(root)
 

@@ -3,10 +3,24 @@ package texlab
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
+import texlab.completion.AggregateProvider
+import texlab.completion.CompletionProvider
+import texlab.completion.CompletionRequest
+import texlab.completion.OrderByQualityProvider
+import texlab.completion.latex.LatexKernelCommandProvider
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
+
+    private val completionProvider: CompletionProvider =
+            OrderByQualityProvider(
+                    AggregateProvider(
+                            LatexKernelCommandProvider()))
+
+    companion object {
+        private const val MAX_COMPLETIONS_ITEMS_COUNT = 100
+    }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
@@ -67,6 +81,18 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     ?: mutableListOf()
 
             return CompletableFuture.completedFuture(links)
+        }
+    }
+
+    override fun completion(params: CompletionParams):
+            CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = CompletionRequest(uri, relatedDocuments, params.position)
+            val items = completionProvider.getItems(request).toList()
+            val list = CompletionList(items.size == MAX_COMPLETIONS_ITEMS_COUNT, items)
+            return CompletableFuture.completedFuture(Either.forRight(list))
         }
     }
 }

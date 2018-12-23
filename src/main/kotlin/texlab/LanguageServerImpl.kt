@@ -38,6 +38,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                 documentSymbolProvider = true
                 renameProvider = Either.forLeft(true)
                 documentLinkProvider = DocumentLinkOptions(false)
+                completionProvider = CompletionOptions(false, listOf("\\", "{", "}"))
             }
             InitializeResult(capabilities)
         }
