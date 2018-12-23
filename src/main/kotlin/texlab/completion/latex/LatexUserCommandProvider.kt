@@ -13,8 +13,8 @@ class LatexUserCommandProvider : LatexCommandProvider() {
                 .filterIsInstance<LatexDocument>()
                 .flatMap { it.tree.root.descendants() }
                 .filterIsInstance<LatexCommandSyntax>()
+                .minus(command)
                 .map { it.name.text.substring(1) }
-                .filter { it != command.name.text }
                 .distinct()
                 .map { CompletionItemFactory.createCommand(it, "unknown") }
     }
