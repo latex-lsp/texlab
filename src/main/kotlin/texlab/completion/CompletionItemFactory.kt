@@ -30,6 +30,12 @@ object CompletionItemFactory {
         }
     }
 
+    fun createLabel(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Field
+        }
+    }
+
     fun createFile(path: String): CompletionItem {
         return CompletionItem(path).apply {
             kind = CompletionItemKind.File

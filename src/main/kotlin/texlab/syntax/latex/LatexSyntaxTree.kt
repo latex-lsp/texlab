@@ -9,4 +9,6 @@ class LatexSyntaxTree(text: String) {
     val environments: List<LatexEnvironment> = LatexEnvironment.analyze(root)
 
     val sections: List<LatexSection> = LatexSection.analyze(root)
+
+    val labelDefinitions: List<LatexLabelDefinition> = LatexLabelDefinition.analyze(root)
 }
