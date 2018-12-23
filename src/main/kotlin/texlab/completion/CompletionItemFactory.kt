@@ -13,5 +13,12 @@ class CompletionItemFactory {
                 detail = unit ?: KERNEL
             }
         }
+
+        fun createEnvironment(name: String, unit: String?): CompletionItem {
+            return CompletionItem(name).apply {
+                kind = CompletionItemKind.EnumMember
+                detail = unit ?: KERNEL
+            }
+        }
     }
 }

@@ -29,15 +29,3 @@ abstract class LatexCommandProvider : CompletionProvider {
 
     protected abstract fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
 }
-
-//public abstract class LatexCommandProvider : ICompletionProvider
-//{
-//    public IEnumerable<CompletionItem> GetItems(CompletionRequest request)
-//    {
-//        return request.Nodes.Count > 0 && request.Nodes[0] is LatexCommandSyntax command
-//        ? GetItems(request, command)
-//        : Enumerable.Empty<CompletionItem>();
-//    }
-//
-//    protected abstract IEnumerable<CompletionItem> GetItems(CompletionRequest request, LatexCommandSyntax command);
-//}
