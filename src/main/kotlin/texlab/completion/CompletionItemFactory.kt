@@ -39,4 +39,16 @@ object CompletionItemFactory {
             commitCharacters = listOf(" ")
         }
     }
+
+    fun createColor(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Color
+        }
+    }
+
+    fun createColorModel(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Color
+        }
+    }
 }
