@@ -18,6 +18,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     AggregateProvider(
                             LatexIncludeProvider(workspace),
                             LatexBibliographyProvider(workspace),
+                            PgfLibraryProvider(),
+                            TikzLibraryProvider(),
                             LatexKernelEnvironmentProvider(),
                             LatexUserEnvironmentProvider(),
                             LatexKernelCommandProvider(),

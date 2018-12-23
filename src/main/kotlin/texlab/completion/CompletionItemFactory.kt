@@ -25,4 +25,18 @@ object CompletionItemFactory {
             kind = CompletionItemKind.File
         }
     }
+
+    fun createPgfLibrary(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Class
+            commitCharacters = listOf(" ")
+        }
+    }
+
+    fun createTikzLibrary(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Class
+            commitCharacters = listOf(" ")
+        }
+    }
 }
