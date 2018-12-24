@@ -2,7 +2,6 @@ package texlab
 
 import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentSymbol
-import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import texlab.syntax.CharStream
 import java.net.URI
@@ -42,6 +41,4 @@ abstract class Document(val uri: URI) {
     abstract fun documentSymbol(workspace: Workspace): List<DocumentSymbol>
 
     abstract fun documentLink(workspace: Workspace): List<DocumentLink>
-
-    abstract fun foldingRange(): List<FoldingRange>
 }

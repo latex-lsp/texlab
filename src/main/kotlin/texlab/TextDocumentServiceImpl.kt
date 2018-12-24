@@ -3,11 +3,12 @@ package texlab
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
-import texlab.completion.AggregateProvider
+import texlab.completion.AggregateCompletionProvider
 import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
+import texlab.folding.*
 import texlab.rename.AggregateRenamer
 import texlab.rename.LatexEnvironmentRenamer
 import texlab.rename.RenameRequest
@@ -19,7 +20,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
 
     private val completionProvider: CompletionProvider =
             OrderByQualityProvider(
-                    AggregateProvider(
+                    AggregateCompletionProvider(
                             LatexIncludeProvider(workspace),
                             LatexBibliographyProvider(workspace),
                             PgfLibraryProvider(),
@@ -35,6 +36,11 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexUserCommandProvider()))
 
     private val renamer: Renamer = AggregateRenamer(LatexEnvironmentRenamer)
+
+    private val foldingProvider: FoldingProvider =
+            AggregateFoldingProvider(
+                    LatexEnvironmentFoldingProvider,
+                    LatexSectionFoldingProvider)
 
     companion object {
         private const val MAX_COMPLETIONS_ITEMS_COUNT = 100
@@ -118,9 +124,9 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     .firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
 
-            val foldings = document.foldingRange().toMutableList()
+            val request = FoldingRequest(document)
+            val foldings = foldingProvider.fold(request).toMutableList()
             return CompletableFuture.completedFuture(foldings)
         }
     }
 }
-

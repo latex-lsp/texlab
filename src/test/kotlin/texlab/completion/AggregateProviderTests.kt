@@ -7,7 +7,7 @@ import texlab.Language
 class AggregateProviderTests {
 
     private fun verifyItems(provider1: CompletionProvider, provider2: CompletionProvider, vararg expected: String) {
-        val aggregate = AggregateProvider(provider1, provider2)
+        val aggregate = AggregateCompletionProvider(provider1, provider2)
         val workspace = CompletionTestsHelper.createWorkspace(Language.LATEX to "foo")
         val request = CompletionTestsHelper.createRequest(workspace, 0, 0, 0)
         val actual = aggregate.getItems(request).map { it.label }.toTypedArray()
