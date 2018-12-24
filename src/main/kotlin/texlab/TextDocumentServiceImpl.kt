@@ -17,6 +17,10 @@ import texlab.rename.AggregateRenamer
 import texlab.rename.LatexEnvironmentRenamer
 import texlab.rename.RenameRequest
 import texlab.rename.Renamer
+import texlab.symbol.AggregateSymbolProvider
+import texlab.symbol.LatexEnvironmentSymbolProvider
+import texlab.symbol.SymbolProvider
+import texlab.symbol.SymbolRequest
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
@@ -38,6 +42,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexUserEnvironmentProvider(),
                             LatexKernelCommandProvider(),
                             LatexUserCommandProvider()))
+
+    private val symbolProvider: SymbolProvider = AggregateSymbolProvider(LatexEnvironmentSymbolProvider)
 
     private val renamer: Renamer = AggregateRenamer(LatexEnvironmentRenamer)
 
@@ -78,12 +84,15 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>> {
         synchronized(workspace) {
             val uri = URI.create(params.textDocument.uri)
-            val symbols = workspace.documents
+            val document = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?.documentSymbol(workspace)
-                    ?.map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
-                    ?.toMutableList()
-                    ?: mutableListOf()
+                    ?: return CompletableFuture.completedFuture(null)
+
+            val request = SymbolRequest(document)
+            val symbols = symbolProvider
+                    .getSymbols(request)
+                    .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
+                    .toMutableList()
             return CompletableFuture.completedFuture(symbols)
         }
     }

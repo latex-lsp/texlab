@@ -1,11 +1,11 @@
 package texlab
 
-import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import texlab.syntax.CharStream
+import texlab.syntax.latex.LatexSyntaxTree
 import java.net.URI
 
-abstract class Document(val uri: URI) {
+sealed class Document(val uri: URI) {
 
     private var version: Int = -1
 
@@ -36,6 +36,20 @@ abstract class Document(val uri: URI) {
     }
 
     protected abstract fun analyze()
+}
 
-    abstract fun documentSymbol(workspace: Workspace): List<DocumentSymbol>
+class LatexDocument(uri: URI) : Document(uri) {
+
+    var tree: LatexSyntaxTree = LatexSyntaxTree(text)
+
+    override fun analyze() {
+        tree = LatexSyntaxTree(text)
+    }
+}
+
+class BibtexDocument(uri: URI) : Document(uri) {
+
+    override fun analyze() {
+        // TODO
+    }
 }
