@@ -1,6 +1,8 @@
 package texlab
 
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.DocumentLink
+import org.eclipse.lsp4j.DocumentSymbol
+import org.eclipse.lsp4j.FoldingRange
 import java.net.URI
 
 class BibtexDocument(uri: URI) : Document(uri) {
@@ -17,11 +19,6 @@ class BibtexDocument(uri: URI) : Document(uri) {
     override fun documentLink(workspace: Workspace): List<DocumentLink> {
         // TODO
         return emptyList()
-    }
-
-    override fun rename(workspace: Workspace, position: Position, newName: String): WorkspaceEdit? {
-        // TODO
-        return null
     }
 
     override fun foldingRange(): List<FoldingRange> {

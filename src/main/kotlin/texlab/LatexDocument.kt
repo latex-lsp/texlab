@@ -1,7 +1,9 @@
 package texlab
 
-import org.eclipse.lsp4j.*
-import texlab.syntax.latex.LatexEnvironmentRenamer
+import org.eclipse.lsp4j.DocumentLink
+import org.eclipse.lsp4j.DocumentSymbol
+import org.eclipse.lsp4j.FoldingRange
+import org.eclipse.lsp4j.FoldingRangeKind
 import texlab.syntax.latex.LatexEnvironmentSymbolFinder
 import texlab.syntax.latex.LatexSection
 import texlab.syntax.latex.LatexSyntaxTree
@@ -17,11 +19,6 @@ class LatexDocument(uri: URI) : Document(uri) {
 
     override fun documentSymbol(workspace: Workspace): List<DocumentSymbol> {
         return LatexEnvironmentSymbolFinder.find(tree)
-    }
-
-    override fun rename(workspace: Workspace, position: Position, newName: String): WorkspaceEdit? {
-        val edits = LatexEnvironmentRenamer.rename(tree, position, newName)
-        return WorkspaceEdit(mutableMapOf(uri.toString() to edits))
     }
 
     override fun documentLink(workspace: Workspace): List<DocumentLink> {

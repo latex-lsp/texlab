@@ -8,6 +8,10 @@ import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
+import texlab.rename.AggregateRenamer
+import texlab.rename.LatexEnvironmentRenamer
+import texlab.rename.RenameRequest
+import texlab.rename.Renamer
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
@@ -29,6 +33,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexUserEnvironmentProvider(),
                             LatexKernelCommandProvider(),
                             LatexUserCommandProvider()))
+
+    private val renamer: Renamer = AggregateRenamer(LatexEnvironmentRenamer)
 
     companion object {
         private const val MAX_COMPLETIONS_ITEMS_COUNT = 100
@@ -73,12 +79,9 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
         synchronized(workspace) {
             val uri = URI.create(params.textDocument.uri)
-            val document = workspace.documents
-                    .firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
-
-            val edit = document.rename(workspace, params.position, params.newName)
-            return CompletableFuture.completedFuture(edit)
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = RenameRequest(uri, relatedDocuments, params.position, params.newName)
+            return CompletableFuture.completedFuture(renamer.rename(request))
         }
     }
 
