@@ -1,6 +1,5 @@
 package texlab
 
-import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import texlab.syntax.CharStream
@@ -39,6 +38,4 @@ abstract class Document(val uri: URI) {
     protected abstract fun analyze()
 
     abstract fun documentSymbol(workspace: Workspace): List<DocumentSymbol>
-
-    abstract fun documentLink(workspace: Workspace): List<DocumentLink>
 }

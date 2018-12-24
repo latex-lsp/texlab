@@ -1,6 +1,5 @@
 package texlab
 
-import org.eclipse.lsp4j.DocumentLink
 import org.eclipse.lsp4j.DocumentSymbol
 import java.net.URI
 
@@ -11,11 +10,6 @@ class BibtexDocument(uri: URI) : Document(uri) {
     }
 
     override fun documentSymbol(workspace: Workspace): List<DocumentSymbol> {
-        // TODO
-        return emptyList()
-    }
-
-    override fun documentLink(workspace: Workspace): List<DocumentLink> {
         // TODO
         return emptyList()
     }

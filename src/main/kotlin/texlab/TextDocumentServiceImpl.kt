@@ -9,6 +9,10 @@ import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
 import texlab.folding.*
+import texlab.link.AggregateLinkProvider
+import texlab.link.LatexIncludeLinkProvider
+import texlab.link.LinkProvider
+import texlab.link.LinkRequest
 import texlab.rename.AggregateRenamer
 import texlab.rename.LatexEnvironmentRenamer
 import texlab.rename.RenameRequest
@@ -41,6 +45,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             AggregateFoldingProvider(
                     LatexEnvironmentFoldingProvider,
                     LatexSectionFoldingProvider)
+
+    private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
 
     companion object {
         private const val MAX_COMPLETIONS_ITEMS_COUNT = 100
@@ -94,13 +100,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     override fun documentLink(params: DocumentLinkParams): CompletableFuture<MutableList<DocumentLink>> {
         synchronized(workspace) {
             val uri = URI.create(params.textDocument.uri)
-            val links = workspace.documents
-                    .filter { it.isFile }
-                    .firstOrNull { it.uri == uri }
-                    ?.documentLink(workspace)
-                    ?.toMutableList()
-                    ?: mutableListOf()
-
+            val request = LinkRequest(uri, workspace)
+            val links = linkProvider.getLinks(request).toMutableList()
             return CompletableFuture.completedFuture(links)
         }
     }
