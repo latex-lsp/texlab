@@ -39,6 +39,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                 renameProvider = Either.forLeft(true)
                 documentLinkProvider = DocumentLinkOptions(false)
                 completionProvider = CompletionOptions(false, listOf("\\", "{", "}"))
+                foldingRangeProvider = Either.forLeft(true)
             }
             InitializeResult(capabilities)
         }

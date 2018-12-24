@@ -107,5 +107,17 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             return CompletableFuture.completedFuture(Either.forRight(list))
         }
     }
+
+    override fun foldingRange(params: FoldingRangeRequestParams): CompletableFuture<MutableList<FoldingRange>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val document = workspace.documents
+                    .firstOrNull { it.uri == uri }
+                    ?: return CompletableFuture.completedFuture(null)
+
+            val foldings = document.foldingRange().toMutableList()
+            return CompletableFuture.completedFuture(foldings)
+        }
+    }
 }
 

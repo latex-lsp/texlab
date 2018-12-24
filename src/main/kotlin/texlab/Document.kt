@@ -41,4 +41,6 @@ abstract class Document(val uri: URI) {
     abstract fun documentLink(workspace: Workspace): List<DocumentLink>
 
     abstract fun rename(workspace: Workspace, position: Position, newName: String): WorkspaceEdit?
+
+    abstract fun foldingRange(): List<FoldingRange>
 }
