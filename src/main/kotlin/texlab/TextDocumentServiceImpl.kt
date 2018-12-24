@@ -13,14 +13,8 @@ import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
 import texlab.link.LinkRequest
-import texlab.rename.AggregateRenamer
-import texlab.rename.LatexEnvironmentRenamer
-import texlab.rename.RenameRequest
-import texlab.rename.Renamer
-import texlab.symbol.AggregateSymbolProvider
-import texlab.symbol.LatexEnvironmentSymbolProvider
-import texlab.symbol.SymbolProvider
-import texlab.symbol.SymbolRequest
+import texlab.rename.*
+import texlab.symbol.*
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
@@ -43,9 +37,15 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexKernelCommandProvider(),
                             LatexUserCommandProvider()))
 
-    private val symbolProvider: SymbolProvider = AggregateSymbolProvider(LatexEnvironmentSymbolProvider)
+    private val symbolProvider: SymbolProvider =
+            AggregateSymbolProvider(
+                    LatexEnvironmentSymbolProvider,
+                    LatexLabelSymbolProvider)
 
-    private val renamer: Renamer = AggregateRenamer(LatexEnvironmentRenamer)
+    private val renamer: Renamer =
+            AggregateRenamer(
+                    LatexEnvironmentRenamer,
+                    LatexLabelRenamer)
 
     private val foldingProvider: FoldingProvider =
             AggregateFoldingProvider(
