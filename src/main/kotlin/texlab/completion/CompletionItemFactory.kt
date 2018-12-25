@@ -67,4 +67,10 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Color
         }
     }
+
+    fun createPackage(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Class
+        }
+    }
 }

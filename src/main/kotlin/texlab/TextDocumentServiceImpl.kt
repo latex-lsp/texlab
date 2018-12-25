@@ -8,6 +8,7 @@ import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
+import texlab.completion.latex.data.LatexResolver
 import texlab.folding.*
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
@@ -19,12 +20,14 @@ import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
+    private val resolver = LatexResolver.create()
 
     private val completionProvider: CompletionProvider =
             OrderByQualityProvider(
                     AggregateCompletionProvider(
                             LatexIncludeProvider(workspace),
                             LatexBibliographyProvider(workspace),
+                            LatexPackageImportProvider(resolver),
                             PgfLibraryProvider(),
                             TikzLibraryProvider(),
                             LatexColorProvider(),
