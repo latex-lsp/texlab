@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class CharStreamTests {
-
     @Test
     fun `it should update the position when seeking`() {
         val stream = CharStream("foo\nbar-baz")

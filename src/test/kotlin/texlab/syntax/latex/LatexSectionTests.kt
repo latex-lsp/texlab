@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class LatexSectionTests {
-
     @Test
     fun `it should find numbered sections`() {
         val text = "\\section{Foo Bar Baz}"

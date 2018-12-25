@@ -1,6 +1,6 @@
 package texlab.completion.latex
 
-class DefineColorModelProvider : LatexColorModelProvider() {
+object DefineColorModelProvider : LatexColorModelProvider() {
 
     override val commandNames: List<String> = listOf("\\definecolor")
 

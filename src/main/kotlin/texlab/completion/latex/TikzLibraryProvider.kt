@@ -5,7 +5,7 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class TikzLibraryProvider : LatexArgumentProvider() {
+object TikzLibraryProvider : LatexArgumentProvider() {
     private val libraries = arrayOf(
             "3d",
             "angles",
@@ -85,7 +85,7 @@ class TikzLibraryProvider : LatexArgumentProvider() {
 
     override val argumentIndex: Int = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

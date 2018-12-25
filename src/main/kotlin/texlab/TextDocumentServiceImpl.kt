@@ -30,17 +30,17 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                                     LatexBibliographyProvider(workspace),
                                     LatexClassImportProvider(resolver),
                                     LatexPackageImportProvider(resolver),
-                                    PgfLibraryProvider(),
-                                    TikzLibraryProvider(),
-                                    LatexColorProvider(),
-                                    DefineColorModelProvider(),
-                                    DefineColorSetModelProvider(),
-                                    LatexLabelProvider(),
-                                    LatexBeginCommandProvider(),
-                                    LatexKernelEnvironmentProvider(),
-                                    LatexUserEnvironmentProvider(),
-                                    LatexKernelCommandProvider(),
-                                    LatexUserCommandProvider())))
+                                    PgfLibraryProvider,
+                                    TikzLibraryProvider,
+                                    LatexColorProvider,
+                                    DefineColorModelProvider,
+                                    DefineColorSetModelProvider,
+                                    LatexLabelProvider,
+                                    LatexBeginCommandProvider,
+                                    LatexKernelEnvironmentProvider,
+                                    LatexUserEnvironmentProvider,
+                                    LatexKernelCommandProvider,
+                                    LatexUserCommandProvider)))
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
@@ -133,7 +133,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val uri = URI.create(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
-            val items = completionProvider.getItems(request).toList()
+            val items = completionProvider.complete(request).toList()
             val list = CompletionList(items.size == completionProvider.limit, items)
             return CompletableFuture.completedFuture(Either.forRight(list))
         }

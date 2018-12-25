@@ -6,13 +6,13 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class LatexLabelProvider : LatexArgumentProvider() {
+object LatexLabelProvider : LatexArgumentProvider() {
 
     override val commandNames: List<String> = listOf("\\ref", "\\autoref")
 
     override val argumentIndex: Int = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return request.relatedDocuments
                 .filterIsInstance<LatexDocument>()
                 .flatMap { it.tree.labelDefinitions }

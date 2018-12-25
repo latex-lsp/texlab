@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class LatexIncludeTests {
-
     @Test
     fun `it should find includes`() {
         val text = "\\include{foo}\n\\input{bar/qux}"

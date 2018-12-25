@@ -9,7 +9,7 @@ import texlab.syntax.latex.LatexCommandSyntax
 
 abstract class LatexCommandProvider : CompletionProvider {
 
-    override fun getItems(request: CompletionRequest): List<CompletionItem> {
+    override fun complete(request: CompletionRequest): List<CompletionItem> {
         return if (request.document is LatexDocument) {
             val command = request.document
                     .tree
@@ -18,7 +18,7 @@ abstract class LatexCommandProvider : CompletionProvider {
                     .lastOrNull { it.range.contains(request.position) }
 
             if (command is LatexCommandSyntax) {
-                getItems(request, command)
+                complete(request, command)
             } else {
                 listOf()
             }
@@ -27,5 +27,5 @@ abstract class LatexCommandProvider : CompletionProvider {
         }
     }
 
-    protected abstract fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
+    protected abstract fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
 }

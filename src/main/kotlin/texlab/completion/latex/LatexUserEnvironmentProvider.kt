@@ -6,26 +6,32 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.contains
 import texlab.syntax.latex.LatexCommandSyntax
+import texlab.syntax.latex.LatexEnvironment
 
-class LatexUserEnvironmentProvider : LatexEnvironmentProvider() {
+object LatexUserEnvironmentProvider : LatexEnvironmentProvider() {
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         if (request.document !is LatexDocument) {
             return emptyList()
         }
 
-        val environment = request.document
+        val current = request.document
                 .tree
                 .environments
                 .firstOrNull {
                     it.beginNameRange.contains(request.position) ||
                             it.endNameRange.contains(request.position)
-                } ?: return emptyList()
+                }
+        val excluded = if (current == null) {
+            emptyList<LatexEnvironment>()
+        } else {
+            listOf(current)
+        }
 
         return request.relatedDocuments
                 .filterIsInstance<LatexDocument>()
                 .flatMap { it.tree.environments }
-                .minus(environment)
+                .minus(excluded)
                 .flatMap { listOf(it.beginName, it.endName) }
                 .filter { it != "" }
                 .distinct()

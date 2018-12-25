@@ -11,7 +11,7 @@ abstract class LatexColorModelProvider : LatexArgumentProvider() {
 
     private val items: List<CompletionItem> = models.map { CompletionItemFactory.createColorModel(it) }
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

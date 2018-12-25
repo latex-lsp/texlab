@@ -14,7 +14,7 @@ class LatexPackageImportProvider(resolver: LatexResolver) : LatexArgumentProvide
     override val commandNames = listOf("""\usepackage""")
     override val argumentIndex = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

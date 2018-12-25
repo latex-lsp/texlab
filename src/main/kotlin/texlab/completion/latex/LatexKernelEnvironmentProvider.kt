@@ -5,13 +5,13 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class LatexKernelEnvironmentProvider : LatexEnvironmentProvider() {
+object LatexKernelEnvironmentProvider : LatexEnvironmentProvider() {
 
     private val items = KernelPrimitives
             .ENVIRONMENTS
             .map { CompletionItemFactory.createEnvironment(it, null) }
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

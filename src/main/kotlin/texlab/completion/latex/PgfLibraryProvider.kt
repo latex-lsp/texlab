@@ -5,7 +5,7 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class PgfLibraryProvider : LatexArgumentProvider() {
+object PgfLibraryProvider : LatexArgumentProvider() {
     private val libraries = arrayOf(
             "arrows",
             "arrows.meta",
@@ -55,7 +55,7 @@ class PgfLibraryProvider : LatexArgumentProvider() {
 
     override val argumentIndex: Int = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

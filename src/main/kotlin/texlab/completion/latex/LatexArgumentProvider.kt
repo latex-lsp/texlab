@@ -11,12 +11,11 @@ import texlab.syntax.latex.LatexSyntaxNode
 import texlab.syntax.latex.LatexTextSyntax
 
 abstract class LatexArgumentProvider : CompletionProvider {
-
     abstract val commandNames: List<String>
 
     abstract val argumentIndex: Int
 
-    override fun getItems(request: CompletionRequest): List<CompletionItem> {
+    override fun complete(request: CompletionRequest): List<CompletionItem> {
         return if (request.document is LatexDocument) {
             val nodes = request.document
                     .tree
@@ -29,7 +28,7 @@ abstract class LatexArgumentProvider : CompletionProvider {
             if (command == null) {
                 listOf()
             } else {
-                getItems(request, command)
+                complete(request, command)
             }
         } else {
             listOf()
@@ -64,5 +63,5 @@ abstract class LatexArgumentProvider : CompletionProvider {
         return null
     }
 
-    protected abstract fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
+    protected abstract fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
 }

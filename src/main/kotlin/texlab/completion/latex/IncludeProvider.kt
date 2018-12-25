@@ -14,7 +14,7 @@ abstract class IncludeProvider<T>(private val workspace: Workspace,
 
     override val argumentIndex: Int = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return workspace.documents
                 .filterIsInstance(documentClass)
                 .filter { !request.relatedDocuments.contains(it) }

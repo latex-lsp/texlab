@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class LatexEnvironmentTests {
-
     @Test
     fun `it should parse nested environments`() {
         val text = "\\begin{a}\\begin{b}\\end{c}\\end{d}"

@@ -14,7 +14,7 @@ class LatexClassImportProvider(resolver: LatexResolver) : LatexArgumentProvider(
     override val commandNames = listOf("""\documentclass""")
     override val argumentIndex = 0
 
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

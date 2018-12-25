@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class LatexParserTests {
-
     private fun range(startLine: Int, startCharacter: Int, endLine: Int, endCharacter: Int): Range {
         val start = Position(startLine, startCharacter)
         val end = Position(endLine, endCharacter)

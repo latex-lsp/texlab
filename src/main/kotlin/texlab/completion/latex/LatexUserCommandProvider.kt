@@ -6,9 +6,8 @@ import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class LatexUserCommandProvider : LatexCommandProvider() {
-
-    override fun getItems(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+object LatexUserCommandProvider : LatexCommandProvider() {
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         return request.relatedDocuments
                 .filterIsInstance<LatexDocument>()
                 .flatMap { it.tree.root.descendants() }

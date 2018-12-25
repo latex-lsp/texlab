@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import java.util.*
 
 class TokenBufferTests {
-
     private fun <T> createBuffer(vararg items: T): TokenBuffer<T> {
         val queue = ArrayDeque<T>()
         items.forEach { queue.offer(it) }

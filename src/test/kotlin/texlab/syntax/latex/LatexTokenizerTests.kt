@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class LatexTokenizerTests {
-
     private fun LatexTokenizer.verify(
             line: Int,
             character: Int,

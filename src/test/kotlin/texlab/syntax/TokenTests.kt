@@ -8,7 +8,6 @@ import texlab.syntax.latex.LatexToken
 import texlab.syntax.latex.LatexTokenKind
 
 class TokenTests {
-
     @Test
     fun `it should provide computed properties`() {
         val token = LatexToken(42, 13, "foo", LatexTokenKind.WORD)
