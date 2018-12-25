@@ -4,8 +4,8 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
 import texlab.completion.AggregateCompletionProvider
-import texlab.completion.CompletionProvider
 import texlab.completion.CompletionRequest
+import texlab.completion.LimitedCompletionProvider
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexResolver
@@ -22,24 +22,25 @@ import java.util.concurrent.CompletableFuture
 class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
     private val resolver = LatexResolver.create()
 
-    private val completionProvider: CompletionProvider =
-            OrderByQualityProvider(
-                    AggregateCompletionProvider(
-                            LatexIncludeProvider(workspace),
-                            LatexBibliographyProvider(workspace),
-                            LatexPackageImportProvider(resolver),
-                            LatexClassImportProvider(resolver),
-                            PgfLibraryProvider(),
-                            TikzLibraryProvider(),
-                            LatexColorProvider(),
-                            DefineColorModelProvider(),
-                            DefineColorSetModelProvider(),
-                            LatexLabelProvider(),
-                            LatexBeginCommandProvider(),
-                            LatexKernelEnvironmentProvider(),
-                            LatexUserEnvironmentProvider(),
-                            LatexKernelCommandProvider(),
-                            LatexUserCommandProvider()))
+    private val completionProvider: LimitedCompletionProvider =
+            LimitedCompletionProvider(
+                    OrderByQualityProvider(
+                            AggregateCompletionProvider(
+                                    LatexIncludeProvider(workspace),
+                                    LatexBibliographyProvider(workspace),
+                                    LatexClassImportProvider(resolver),
+                                    LatexPackageImportProvider(resolver),
+                                    PgfLibraryProvider(),
+                                    TikzLibraryProvider(),
+                                    LatexColorProvider(),
+                                    DefineColorModelProvider(),
+                                    DefineColorSetModelProvider(),
+                                    LatexLabelProvider(),
+                                    LatexBeginCommandProvider(),
+                                    LatexKernelEnvironmentProvider(),
+                                    LatexUserEnvironmentProvider(),
+                                    LatexKernelCommandProvider(),
+                                    LatexUserCommandProvider())))
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
@@ -57,10 +58,6 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     LatexSectionFoldingProvider)
 
     private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
-
-    companion object {
-        private const val MAX_COMPLETIONS_ITEMS_COUNT = 100
-    }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
@@ -137,7 +134,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
             val items = completionProvider.getItems(request).toList()
-            val list = CompletionList(items.size == MAX_COMPLETIONS_ITEMS_COUNT, items)
+            val list = CompletionList(items.size == completionProvider.limit, items)
             return CompletableFuture.completedFuture(Either.forRight(list))
         }
     }
