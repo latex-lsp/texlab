@@ -28,6 +28,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                             LatexIncludeProvider(workspace),
                             LatexBibliographyProvider(workspace),
                             LatexPackageImportProvider(resolver),
+                            LatexClassImportProvider(resolver),
                             PgfLibraryProvider(),
                             TikzLibraryProvider(),
                             LatexColorProvider(),

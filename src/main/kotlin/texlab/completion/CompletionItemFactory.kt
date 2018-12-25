@@ -73,4 +73,10 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Class
         }
     }
+
+    fun createClass(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Class
+        }
+    }
 }
