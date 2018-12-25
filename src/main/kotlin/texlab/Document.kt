@@ -1,46 +1,38 @@
 package texlab
 
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent
-import texlab.syntax.CharStream
 import texlab.syntax.latex.LatexSyntaxTree
 import java.net.URI
 
 sealed class Document(val uri: URI) {
-
-    private var version: Int = -1
-
-    var text: String = ""
-        private set
-
     val isFile: Boolean = uri.scheme == "file"
 
-    fun update(changes: List<TextDocumentContentChangeEvent>, version: Int) {
-        if (this.version > version) {
-            return
-        }
+    var text: String = ""
 
-        changes.forEach { change ->
-            text = if (change.range == null) {
-                change.text
-            } else {
-                val stream = CharStream(text)
-                stream.seek(change.range.start)
-                val left = text.substring(0, stream.index)
-                stream.seek(change.range.end)
-                val right = text.substring(stream.index)
-                left + change.text + right
-            }
-        }
-        this.version = version
-        analyze()
+    var version: Int = -1
+
+    override fun equals(other: Any?): Boolean {
+        return other is Document && uri == other.uri
     }
 
-    protected abstract fun analyze()
+    override fun hashCode(): Int = uri.hashCode()
+
+    abstract fun analyze()
+
+    companion object {
+        fun create(uri: URI, language: Language): Document {
+            return when (language) {
+                Language.LATEX ->
+                    LatexDocument(uri)
+                Language.BIBTEX ->
+                    BibtexDocument(uri)
+            }
+        }
+    }
 }
 
 class LatexDocument(uri: URI) : Document(uri) {
-
     var tree: LatexSyntaxTree = LatexSyntaxTree(text)
+        private set
 
     override fun analyze() {
         tree = LatexSyntaxTree(text)
@@ -48,7 +40,6 @@ class LatexDocument(uri: URI) : Document(uri) {
 }
 
 class BibtexDocument(uri: URI) : Document(uri) {
-
     override fun analyze() {
         // TODO
     }

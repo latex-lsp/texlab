@@ -32,7 +32,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
             val capabilities = ServerCapabilities().apply {
                 val syncOptions = TextDocumentSyncOptions().apply {
                     openClose = true
-                    change = TextDocumentSyncKind.Incremental
+                    change = TextDocumentSyncKind.Full
                 }
                 textDocumentSync = Either.forRight(syncOptions)
                 documentSymbolProvider = true
@@ -60,7 +60,10 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
         val language = getLanguageByExtension(extension) ?: return
         try {
             val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
-            workspace.create(file.toUri(), language, text)
+            val document = Document.create(file.toUri(), language)
+            document.text = text
+            document.analyze()
+            workspace.documents.add(document)
         } catch (e: IOException) {
             e.printStackTrace()
         }

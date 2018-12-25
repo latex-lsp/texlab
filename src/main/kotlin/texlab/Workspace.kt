@@ -1,6 +1,5 @@
 package texlab
 
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import java.io.File
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -8,29 +7,7 @@ import java.nio.file.Paths
 import java.util.*
 
 class Workspace {
-
     val documents = mutableListOf<Document>()
-
-    fun create(uri: URI, language: Language, text: String) {
-        var document = documents.firstOrNull { it.uri == uri }
-        if (document == null) {
-            document = when (language) {
-                Language.LATEX ->
-                    LatexDocument(uri)
-                Language.BIBTEX ->
-                    BibtexDocument(uri)
-            }
-
-            val change = TextDocumentContentChangeEvent(text)
-            document.update(listOf(change), 0)
-            documents.add(document)
-        }
-    }
-
-    fun update(uri: URI, changes: List<TextDocumentContentChangeEvent>, version: Int) {
-        documents.firstOrNull { it.uri == uri }
-                ?.update(changes, version)
-    }
 
     fun resolve(uri: URI, relativePath: String): Document? {
         fun find(path: String): Document? {

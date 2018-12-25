@@ -66,7 +66,11 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
         params.textDocument.apply {
             val language = getLanguageById(languageId) ?: return
             synchronized(workspace) {
-                workspace.create(URI.create(uri), language, text)
+                val document = Document.create(URI.create(uri), language)
+                document.text = text
+                document.version = version
+                document.analyze()
+                workspace.documents.add(document)
             }
         }
     }
@@ -74,7 +78,14 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     override fun didChange(params: DidChangeTextDocumentParams) {
         val uri = URI.create(params.textDocument.uri)
         synchronized(workspace) {
-            workspace.update(uri, params.contentChanges, params.textDocument.version)
+            val document = workspace.documents.first { it.uri == uri }
+            if (document.version <= params.textDocument.version) {
+                params.contentChanges.forEach {
+                    document.text = it.text
+                }
+                document.version = params.textDocument.version
+                document.analyze()
+            }
         }
     }
 
