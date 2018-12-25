@@ -11,7 +11,6 @@ import java.nio.file.Paths
 
 abstract class IncludeProvider<T>(private val workspace: Workspace,
                                   private val documentClass: Class<T>) : LatexArgumentProvider() where T : Document {
-
     override val argumentIndex: Int = 0
 
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {

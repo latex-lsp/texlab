@@ -12,7 +12,6 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
 class LanguageServerImpl : LanguageServer, LanguageClientAware {
-
     private val workspace: Workspace = Workspace()
     private val textDocumentService = TextDocumentServiceImpl(workspace)
     private val workspaceService = WorkspaceServiceImpl()

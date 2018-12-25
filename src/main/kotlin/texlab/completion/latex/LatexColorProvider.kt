@@ -6,7 +6,6 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexColorProvider : LatexArgumentProvider() {
-
     private val colors: Array<String> = arrayOf(
             "black",
             "blue",

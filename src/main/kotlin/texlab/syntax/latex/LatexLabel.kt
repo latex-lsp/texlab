@@ -1,7 +1,6 @@
 package texlab.syntax.latex
 
 data class LatexLabel(val command: LatexCommandSyntax) {
-
     val name: LatexToken
         get() = (command.args[0].children[0] as LatexTextSyntax).words[0]
 

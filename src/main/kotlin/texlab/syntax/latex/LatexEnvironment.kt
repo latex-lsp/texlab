@@ -4,7 +4,6 @@ import org.eclipse.lsp4j.Range
 import java.util.*
 
 data class LatexEnvironment(val begin: LatexCommandSyntax, val end: LatexCommandSyntax) {
-
     val beginName: String
         get() = begin.extractWord(0) ?: ""
 

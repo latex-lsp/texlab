@@ -9,7 +9,6 @@ import texlab.syntax.latex.LatexCommandSyntax
 import texlab.syntax.latex.LatexEnvironment
 
 object LatexUserEnvironmentProvider : LatexEnvironmentProvider() {
-
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
         if (request.document !is LatexDocument) {
             return emptyList()

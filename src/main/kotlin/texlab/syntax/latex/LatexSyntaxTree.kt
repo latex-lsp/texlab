@@ -1,7 +1,6 @@
 package texlab.syntax.latex
 
 class LatexSyntaxTree(text: String) {
-
     val root: LatexDocumentSyntax = LatexParser.parse(text)
 
     val includes: List<LatexInclude> = LatexInclude.analyze(root)

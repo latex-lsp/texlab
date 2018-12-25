@@ -8,7 +8,6 @@ import texlab.contains
 import texlab.syntax.latex.LatexCommandSyntax
 
 abstract class LatexCommandProvider : CompletionProvider {
-
     override fun complete(request: CompletionRequest): List<CompletionItem> {
         return if (request.document is LatexDocument) {
             val command = request.document

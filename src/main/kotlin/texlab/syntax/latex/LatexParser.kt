@@ -5,7 +5,6 @@ import org.eclipse.lsp4j.Range
 import texlab.syntax.TokenBuffer
 
 class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
-
     constructor(text: String) : this(TokenBuffer(LatexTokenizer(text)))
 
     fun document(): LatexDocumentSyntax {

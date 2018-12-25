@@ -10,7 +10,6 @@ import texlab.syntax.latex.LatexGroupSyntax
 import texlab.syntax.latex.LatexTextSyntax
 
 class OrderByQualityProvider(private val provider: CompletionProvider) : CompletionProvider {
-
     override fun complete(request: CompletionRequest): List<CompletionItem> {
         val name = getName(request)
         return if (name == null) {

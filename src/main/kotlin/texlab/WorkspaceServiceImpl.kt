@@ -5,7 +5,6 @@ import org.eclipse.lsp4j.DidChangeWatchedFilesParams
 import org.eclipse.lsp4j.services.WorkspaceService
 
 class WorkspaceServiceImpl : WorkspaceService {
-
     override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
     }
 

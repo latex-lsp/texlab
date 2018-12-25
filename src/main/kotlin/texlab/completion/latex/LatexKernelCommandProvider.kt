@@ -6,7 +6,6 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexKernelCommandProvider : LatexCommandProvider() {
-
     private val items = KernelPrimitives
             .COMMANDS
             .map { CompletionItemFactory.createCommand(it, null) }

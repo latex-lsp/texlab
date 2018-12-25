@@ -6,7 +6,6 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 abstract class LatexColorModelProvider : LatexArgumentProvider() {
-
     private val models: Array<String> = arrayOf("gray", "rgb", "RGB", "HTML", "cmyk")
 
     private val items: List<CompletionItem> = models.map { CompletionItemFactory.createColorModel(it) }

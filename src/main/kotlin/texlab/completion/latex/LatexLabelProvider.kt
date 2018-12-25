@@ -7,7 +7,6 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexLabelProvider : LatexArgumentProvider() {
-
     override val commandNames: List<String> = listOf("\\ref", "\\autoref")
 
     override val argumentIndex: Int = 0

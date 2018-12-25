@@ -7,6 +7,5 @@ import java.net.URI
 data class CompletionRequest(val uri: URI,
                              val relatedDocuments: List<Document>,
                              val position: Position) {
-
     val document: Document = relatedDocuments.first { it.uri == uri }
 }

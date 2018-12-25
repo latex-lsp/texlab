@@ -12,6 +12,7 @@ class LatexPackageImportProvider(resolver: LatexResolver) : LatexArgumentProvide
             .map { CompletionItemFactory.createPackage(it.nameWithoutExtension) }
 
     override val commandNames = listOf("""\usepackage""")
+
     override val argumentIndex = 0
 
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {

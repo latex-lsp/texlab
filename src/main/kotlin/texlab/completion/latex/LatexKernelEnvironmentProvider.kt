@@ -6,7 +6,6 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexKernelEnvironmentProvider : LatexEnvironmentProvider() {
-
     private val items = KernelPrimitives
             .ENVIRONMENTS
             .map { CompletionItemFactory.createEnvironment(it, null) }
