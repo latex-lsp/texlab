@@ -2,6 +2,7 @@ package texlab
 
 import org.eclipse.lsp4j.Position
 import texlab.completion.CompletionRequest
+import texlab.folding.FoldingRequest
 import java.io.File
 
 class WorkspaceBuilder {
@@ -21,5 +22,10 @@ class WorkspaceBuilder {
         val uri = File(name).toURI()
         val position = Position(line, character)
         return CompletionRequest(uri, workspace.relatedDocuments(uri), position)
+    }
+
+    fun folding(name: String): FoldingRequest {
+        val uri = File(name).toURI()
+        return FoldingRequest(workspace.documents.first { it.uri == uri })
     }
 }
