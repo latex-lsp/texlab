@@ -44,11 +44,13 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
+                    LatexCommandSymbolProvider,
                     LatexEnvironmentSymbolProvider,
                     LatexLabelSymbolProvider)
 
     private val renamer: Renamer =
             AggregateRenamer(
+                    LatexCommandRenamer,
                     LatexEnvironmentRenamer,
                     LatexLabelRenamer)
 
