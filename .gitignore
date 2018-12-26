@@ -57,7 +57,7 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 ### Gradle Patch ###
-**/build/
+# **/build/
 
 # IntelliJ
 .idea
