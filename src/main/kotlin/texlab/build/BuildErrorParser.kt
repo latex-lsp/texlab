@@ -8,7 +8,7 @@ object BuildErrorParser {
     private const val MAX_LINE_LENGTH = 79
 
     private val PACKAGE_MESSAGE_REGEX = """^\([a-zA-Z_\-]+\)\s*(?<Message>.*)$""".toRegex()
-    private val FILE_REGEX = """\((?<File>[^\r\n]+\.(tex|sty|cls))""".toRegex()
+    private val FILE_REGEX = """\((?<File>[^\r\n()]+\.(tex|sty|cls))""".toRegex()
     private val TEX_ERROR_REGEX = """^! ((?<Message1>(.|\r|\n)*?)\r?\nl\.(?<Line>\d+)|(?<Message2>[^\r\n]*))""".toRegex(RegexOption.MULTILINE)
     private val WARNING_REGEX = """(LaTeX|Package [a-zA-Z_\-]+) Warning: (?<Message>[^\r\n]*)""".toRegex()
     private val BAD_BOX_REGEX = """(?<Message>(Ov|Und)erfull \\[hv]box[^\r\n]*lines? (?<Line>\d+)[^\r\n]*)""".toRegex()
@@ -86,6 +86,7 @@ object BuildErrorParser {
         }
 
         val basePath = Paths.get(File(parent).parent)
+        println(match.groups["File"]!!.value)
         val fullPath = basePath.resolve(match.groups["File"]!!.value).normalize()
         val uri = if (fullPath.startsWith(basePath)) {
             fullPath.toUri()
