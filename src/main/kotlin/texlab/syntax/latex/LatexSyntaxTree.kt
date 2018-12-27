@@ -12,4 +12,6 @@ class LatexSyntaxTree(text: String) {
     val labelDefinitions: List<LatexLabel> = LatexLabel.findDefinitions(root)
 
     val labelReferences: List<LatexLabel> = LatexLabel.findReferences(root)
+
+    val isStandalone: Boolean = environments.any { it.beginName == "document" || it.endName == "document" }
 }

@@ -2,7 +2,9 @@ package texlab
 
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.*
+import texlab.build.*
 import java.io.IOException
 import java.net.URI
 import java.nio.file.FileSystems
@@ -19,6 +21,7 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
 
     override fun connect(client: LanguageClient) {
         this.client = client
+        this.textDocumentService.client = client
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
@@ -77,5 +80,41 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
     }
 
     override fun exit() {
+    }
+
+    @JsonRequest("textDocument/build", useSegment = false)
+    fun build(params: BuildParams): CompletableFuture<BuildStatus> {
+        return CompletableFuture.supplyAsync {
+            val childUri = URI.create(params.textDocument.uri)
+            val parent = workspace.relatedDocuments(childUri)
+                    .filterIsInstance<LatexDocument>()
+                    .firstOrNull { it.tree.isStandalone }
+                    ?: workspace.documents.first { it.uri == childUri }
+
+            val config = client.configuration<BuildConfig>("latex.build", parent.uri)
+            val (status, allErrors) = BuildEngine.build(parent.uri, config)
+
+            for (document in workspace.documents.filterIsInstance<LatexDocument>()) {
+                val diagnostics = PublishDiagnosticsParams(document.uri.toString(), emptyList())
+                client.publishDiagnostics(diagnostics)
+            }
+
+            for ((uri, errors) in allErrors.groupBy { it.uri }) {
+                val diagnostics = errors.map { error ->
+                    val position = Position(error.line ?: 0, 0)
+                    val severity = when (error.kind) {
+                        BuildErrorKind.ERROR ->
+                            DiagnosticSeverity.Error
+                        BuildErrorKind.WARNING ->
+                            DiagnosticSeverity.Warning
+                    }
+                    val range = Range(position, position)
+                    Diagnostic(range, error.message, severity, "texlab")
+                }
+                client.publishDiagnostics(PublishDiagnosticsParams(uri.toString(), diagnostics))
+            }
+
+            status
+        }
     }
 }

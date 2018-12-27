@@ -2,6 +2,7 @@ package texlab
 
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.TextDocumentService
 import texlab.completion.AggregateCompletionProvider
 import texlab.completion.CompletionRequest
@@ -20,6 +21,8 @@ import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
+    lateinit var client: LanguageClient
+
     private val resolver = LatexResolver.create()
 
     private val completionProvider: LimitedCompletionProvider =
