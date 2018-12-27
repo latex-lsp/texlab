@@ -4,7 +4,10 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.*
-import texlab.build.*
+import texlab.build.BuildConfig
+import texlab.build.BuildEngine
+import texlab.build.BuildParams
+import texlab.build.BuildStatus
 import java.io.IOException
 import java.net.URI
 import java.nio.file.FileSystems
@@ -100,20 +103,10 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
             }
 
             for ((uri, errors) in allErrors.groupBy { it.uri }) {
-                val diagnostics = errors.map { error ->
-                    val position = Position(error.line ?: 0, 0)
-                    val severity = when (error.kind) {
-                        BuildErrorKind.ERROR ->
-                            DiagnosticSeverity.Error
-                        BuildErrorKind.WARNING ->
-                            DiagnosticSeverity.Warning
-                    }
-                    val range = Range(position, position)
-                    Diagnostic(range, error.message, severity, "texlab")
-                }
-                client.publishDiagnostics(PublishDiagnosticsParams(uri.toString(), diagnostics))
+                val diagnostics = PublishDiagnosticsParams(uri.toString(), errors.map { it.toDiagnostic() })
+                client.publishDiagnostics(diagnostics)
             }
-
+            
             status
         }
     }

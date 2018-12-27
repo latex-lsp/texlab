@@ -86,7 +86,6 @@ object BuildErrorParser {
         }
 
         val basePath = Paths.get(File(parent).parent)
-        println(match.groups["File"]!!.value)
         val fullPath = basePath.resolve(match.groups["File"]!!.value).normalize()
         val uri = if (fullPath.startsWith(basePath)) {
             fullPath.toUri()
