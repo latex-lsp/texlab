@@ -28,7 +28,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     lateinit var client: LanguageClientExtensions
     private val resolver = LatexResolver.create()
 
-    private val databaseFile = Paths.get(javaClass.protectionDomain.codeSource.location.toURI())
+    private val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
+    private val databaseFile = databaseDirectory.resolve("components.json")
     private val database =
             LatexComponentDatabase.loadOrCreate(databaseFile, resolver, object : LatexComponentDatabaseListener {
                 override fun onStartIndexing(file: File) {
