@@ -6,10 +6,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageServer
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
-import texlab.build.BuildConfig
-import texlab.build.BuildEngine
-import texlab.build.BuildParams
-import texlab.build.BuildStatus
+import texlab.build.*
 import java.io.IOException
 import java.net.URI
 import java.nio.file.FileSystems
@@ -104,7 +101,14 @@ class LanguageServerImpl : LanguageServer {
             client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
 
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            val (status, allErrors) = BuildEngine.build(parent.uri, config)
+            val listener = object : BuildListener {
+                override fun stdout(line: String) {
+                    client.logMessage(MessageParams(MessageType.Log, line))
+                }
+
+                override fun stderr(line: String) = stdout(line)
+            }
+            val (status, allErrors) = BuildEngine.build(parent.uri, config, listener)
 
             for (document in workspace.documents.filterIsInstance<LatexDocument>()) {
                 val diagnostics = PublishDiagnosticsParams(document.uri.toString(), emptyList())

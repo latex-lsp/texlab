@@ -7,12 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
-interface BuildListener {
-    fun stdout(line: String)
-
-    fun stderr(line: String)
-}
-
 object BuildEngine {
     fun build(uri: URI, config: BuildConfig, listener: BuildListener? = null): BuildResult {
         if (uri.scheme != "file") {
