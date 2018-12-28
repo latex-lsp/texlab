@@ -8,6 +8,8 @@ import texlab.completion.CompletionRequest
 import texlab.completion.LimitedCompletionProvider
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.latex.*
+import texlab.completion.latex.data.LatexComponentDatabase
+import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexResolver
 import texlab.folding.*
 import texlab.link.AggregateLinkProvider
@@ -16,13 +18,27 @@ import texlab.link.LinkProvider
 import texlab.link.LinkRequest
 import texlab.rename.*
 import texlab.symbol.*
+import java.io.File
 import java.net.URI
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+
 
 class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
     lateinit var client: LanguageClientExtensions
-
     private val resolver = LatexResolver.create()
+
+    private val databaseFile = Paths.get(javaClass.protectionDomain.codeSource.location.toURI())
+    private val database =
+            LatexComponentDatabase.loadOrCreate(databaseFile, resolver, object : LatexComponentDatabaseListener {
+                override fun onStartIndexing(file: File) {
+                    client.setStatus(StatusParams(ServerStatus.INDEXING, file.name))
+                }
+
+                override fun onStopIndexing() {
+                    client.setStatus(StatusParams(ServerStatus.IDLE))
+                }
+            })
 
     private val completionProvider: LimitedCompletionProvider =
             LimitedCompletionProvider(
@@ -39,8 +55,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                                     DefineColorSetModelProvider,
                                     LatexLabelProvider,
                                     LatexBeginCommandProvider,
+                                    LatexComponentEnvironmentProvider(database),
                                     LatexKernelEnvironmentProvider,
                                     LatexUserEnvironmentProvider,
+                                    LatexComponentCommandProvider(database),
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider)))
 

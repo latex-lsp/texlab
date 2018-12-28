@@ -5,6 +5,14 @@ class LatexSyntaxTree(text: String) {
 
     val includes: List<LatexInclude> = LatexInclude.analyze(root)
 
+    val components: List<String> = includes.mapNotNull {
+        when (it.command.name.text) {
+            "\\usepackage" -> it.path + ".sty"
+            "\\documentclass" -> it.path + ".cls"
+            else -> null
+        }
+    }
+
     val environments: List<LatexEnvironment> = LatexEnvironment.analyze(root)
 
     val sections: List<LatexSection> = LatexSection.analyze(root)

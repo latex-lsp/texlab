@@ -3,7 +3,8 @@ package texlab.syntax.latex
 data class LatexInclude(val command: LatexCommandSyntax, val path: String) {
     companion object {
         private val COMMAND_NAMES =
-                arrayOf("\\include", "\\input", "\\bibliography", "\\addbibresource", "\\usepackage")
+                arrayOf("\\include", "\\input", "\\bibliography",
+                        "\\addbibresource", "\\usepackage", "\\documentclass")
 
         fun analyze(root: LatexSyntaxNode): List<LatexInclude> {
             return root.descendants()
