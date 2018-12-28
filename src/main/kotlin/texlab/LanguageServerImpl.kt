@@ -3,7 +3,9 @@ package texlab
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
-import org.eclipse.lsp4j.services.*
+import org.eclipse.lsp4j.services.LanguageServer
+import org.eclipse.lsp4j.services.TextDocumentService
+import org.eclipse.lsp4j.services.WorkspaceService
 import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
@@ -16,13 +18,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
-class LanguageServerImpl : LanguageServer, LanguageClientAware {
+class LanguageServerImpl : LanguageServer {
     private val workspace: Workspace = Workspace()
     private val textDocumentService = TextDocumentServiceImpl(workspace)
     private val workspaceService = WorkspaceServiceImpl()
-    private lateinit var client: LanguageClient
+    private lateinit var client: LanguageClientExtensions
 
-    override fun connect(client: LanguageClient) {
+    fun connect(client: LanguageClientExtensions) {
         this.client = client
         this.textDocumentService.client = client
     }
@@ -48,6 +50,10 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
             }
             InitializeResult(capabilities)
         }
+    }
+
+    override fun initialized(params: InitializedParams?) {
+        client.setStatus(StatusParams(ServerStatus.IDLE, null))
     }
 
     private fun loadWorkspace(root: URI) {
@@ -94,6 +100,9 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                     .firstOrNull { it.tree.isStandalone }
                     ?: workspace.documents.first { it.uri == childUri }
 
+            val parentName = Paths.get(parent.uri).fileName
+            client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
+
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
             val (status, allErrors) = BuildEngine.build(parent.uri, config)
 
@@ -106,7 +115,8 @@ class LanguageServerImpl : LanguageServer, LanguageClientAware {
                 val diagnostics = PublishDiagnosticsParams(uri.toString(), errors.map { it.toDiagnostic() })
                 client.publishDiagnostics(diagnostics)
             }
-            
+
+            client.setStatus(StatusParams(ServerStatus.IDLE))
             status
         }
     }
