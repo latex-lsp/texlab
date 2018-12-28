@@ -2,6 +2,7 @@ package texlab.build
 
 import java.io.File
 import java.net.URI
+import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -18,7 +19,7 @@ object BuildErrorParser {
     fun parse(parent: URI, log: String): List<BuildError> {
         val newLog = prepareLog(log)
         val ranges = FILE_REGEX.findAll(newLog)
-                .map { getFileRange(parent, newLog, it) }
+                .mapNotNull { getFileRange(parent, newLog, it) }
                 .sortedBy { it.length }
                 .toList()
 
@@ -77,7 +78,7 @@ object BuildErrorParser {
         return newLines.joinToString(System.lineSeparator())
     }
 
-    private fun getFileRange(parent: URI, log: String, match: MatchResult): FileRange {
+    private fun getFileRange(parent: URI, log: String, match: MatchResult): FileRange? {
         var balance = 1
         var end = match.range.first + 1
         while (balance > 0 && end < log.length) {
@@ -89,15 +90,18 @@ object BuildErrorParser {
             end++
         }
 
-        val basePath = Paths.get(File(parent).parent)
-        val fullPath = basePath.resolve(match.groups[1]!!.value).normalize()
-        val uri = if (fullPath.startsWith(basePath)) {
-            fullPath.toUri()
-        } else {
+        return try {
+            val basePath = Paths.get(File(parent).parent)
+            val fullPath = basePath.resolve(match.groups[1]!!.value).normalize()
+            val uri = if (fullPath.startsWith(basePath)) {
+                fullPath.toUri()
+            } else {
+                null
+            }
+            FileRange(uri, match.range.start, end)
+        } catch (e: InvalidPathException) {
             null
         }
-
-        return FileRange(uri, match.range.start, end)
     }
 
     private fun Matcher.tryGroup(name: String): String? {
