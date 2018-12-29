@@ -1,5 +1,6 @@
 package texlab.syntax.latex
 
+import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import texlab.syntax.SyntaxNode
 
@@ -30,18 +31,24 @@ sealed class LatexSyntaxNode : SyntaxNode() {
     }
 }
 
-data class LatexDocumentSyntax(override val range: Range,
-                               val children: List<LatexSyntaxNode>) : LatexSyntaxNode()
+data class LatexDocumentSyntax(val children: List<LatexSyntaxNode>) : LatexSyntaxNode() {
+    override val range = if (children.isEmpty()) {
+        Range(Position(0, 0), Position(0, 0))
+    } else {
+        Range(children.first().start, children.last().end)
+    }
+}
 
-data class LatexGroupSyntax(override val range: Range,
-                            val left: LatexToken,
-                            val right: LatexToken?,
-                            val children: List<LatexSyntaxNode>) : LatexSyntaxNode()
+data class LatexGroupSyntax(val left: LatexToken,
+                            val children: List<LatexSyntaxNode>,
+                            val right: LatexToken?) : LatexSyntaxNode() {
+    override val range = Range(left.start, right?.end ?: children.lastOrNull()?.end ?: left.end)
+}
 
-data class LatexCommandSyntax(override val range: Range,
-                              val name: LatexToken,
+data class LatexCommandSyntax(val name: LatexToken,
                               val options: LatexGroupSyntax?,
                               val args: List<LatexGroupSyntax>) : LatexSyntaxNode() {
+    override val range = Range(name.start, args.lastOrNull()?.end ?: options?.end ?: name.end)
 
     fun extractText(index: Int): LatexTextSyntax? {
         return if (args.size > index && args[index].children.size == 1) {
@@ -67,5 +74,6 @@ data class LatexCommandSyntax(override val range: Range,
 }
 
 
-data class LatexTextSyntax(override val range: Range,
-                           val words: List<LatexToken>) : LatexSyntaxNode()
+data class LatexTextSyntax(val words: List<LatexToken>) : LatexSyntaxNode() {
+    override val range = Range(words.first().start, words.last().end)
+}

@@ -1,7 +1,5 @@
 package texlab.syntax.latex
 
-import org.eclipse.lsp4j.Position
-import org.eclipse.lsp4j.Range
 import texlab.syntax.TokenBuffer
 
 class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
@@ -9,12 +7,7 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
 
     fun document(): LatexDocumentSyntax {
         val children = content(LatexScope.DOCUMENT)
-        val range = if (children.isEmpty()) {
-            Range(Position(0, 0), Position(0, 0))
-        } else {
-            Range(children.first().start, children.last().end)
-        }
-        return LatexDocumentSyntax(range, children)
+        return LatexDocumentSyntax(children)
     }
 
     private fun content(scope: LatexScope): List<LatexSyntaxNode> {
@@ -67,9 +60,7 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
             null
         }
 
-        val end = right?.end ?: children.lastOrNull()?.end ?: left.end
-        val range = Range(left.start, end)
-        return LatexGroupSyntax(range, left, right, children)
+        return LatexGroupSyntax(left, children, right)
     }
 
     private fun command(): LatexCommandSyntax {
@@ -85,9 +76,7 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
             args.add(group(LatexScope.GROUP))
         }
 
-        val end = args.lastOrNull()?.end ?: options?.end ?: name.end
-        val range = Range(name.start, end)
-        return LatexCommandSyntax(range, name, options, args)
+        return LatexCommandSyntax(name, options, args)
     }
 
     private fun text(scope: LatexScope): LatexTextSyntax {
@@ -101,8 +90,7 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
                 break
             }
         }
-        val range = Range(words.first().start, words.last().end)
-        return LatexTextSyntax(range, words)
+        return LatexTextSyntax(words)
     }
 
     companion object {
