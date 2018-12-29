@@ -1,5 +1,6 @@
 package texlab
 
+import texlab.syntax.bibtex.BibtexSyntaxTree
 import texlab.syntax.latex.LatexSyntaxTree
 import java.net.URI
 
@@ -31,7 +32,7 @@ sealed class Document(val uri: URI) {
 }
 
 class LatexDocument(uri: URI) : Document(uri) {
-    var tree: LatexSyntaxTree = LatexSyntaxTree(text)
+    lateinit var tree: LatexSyntaxTree
         private set
 
     override fun analyze() {
@@ -40,7 +41,10 @@ class LatexDocument(uri: URI) : Document(uri) {
 }
 
 class BibtexDocument(uri: URI) : Document(uri) {
+    lateinit var tree: BibtexSyntaxTree
+        private set
+
     override fun analyze() {
-        // TODO
+        tree = BibtexSyntaxTree(text)
     }
 }

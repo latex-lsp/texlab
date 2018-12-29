@@ -79,4 +79,10 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Class
         }
     }
+
+    fun createCitation(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Constant
+        }
+    }
 }
