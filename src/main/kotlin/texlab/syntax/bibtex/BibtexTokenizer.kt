@@ -19,7 +19,7 @@ class BibtexTokenizer(private val stream: CharStream) : TokenSource<BibtexToken>
                 '}' -> return singleCharacter(BibtexTokenKind.END_BRACE)
                 '(' -> return singleCharacter(BibtexTokenKind.BEGIN_PAREN)
                 ')' -> return singleCharacter(BibtexTokenKind.END_PAREN)
-                '\\' -> command()
+                '\\' -> return command()
                 else -> {
                     if (c.isWhitespace()) {
                         stream.next()
