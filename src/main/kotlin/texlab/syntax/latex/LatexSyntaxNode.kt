@@ -1,17 +1,9 @@
 package texlab.syntax.latex
 
-import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import texlab.syntax.SyntaxNode
 
-sealed class LatexSyntaxNode {
-    abstract val range: Range
-
-    val start: Position
-        get() = range.start
-
-    val end: Position
-        get() = range.end
-
+sealed class LatexSyntaxNode : SyntaxNode() {
     fun descendants(): List<LatexSyntaxNode> {
         val results = mutableListOf<LatexSyntaxNode>()
 
@@ -27,6 +19,8 @@ sealed class LatexSyntaxNode {
                 is LatexCommandSyntax -> {
                     node.options?.also { visit(it) }
                     node.args.forEach { visit(it) }
+                }
+                is LatexTextSyntax -> {
                 }
             }
         }
