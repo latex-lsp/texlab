@@ -79,7 +79,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     private val foldingProvider: FoldingProvider =
             AggregateFoldingProvider(
                     LatexEnvironmentFoldingProvider,
-                    LatexSectionFoldingProvider)
+                    LatexSectionFoldingProvider,
+                    BibtexEntryFoldingProvider)
 
     private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
 
