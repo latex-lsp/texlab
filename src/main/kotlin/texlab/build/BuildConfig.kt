@@ -1,4 +1,6 @@
 package texlab.build
 
-data class BuildConfig(var executable: String = "latexmk",
-                       var args: List<String> = listOf("-pdf", "--interaction=nonstopmode"))
+import com.google.gson.annotations.SerializedName
+
+data class BuildConfig(@SerializedName("executable") val executable: String,
+                       @SerializedName("args") val args: List<String>)
