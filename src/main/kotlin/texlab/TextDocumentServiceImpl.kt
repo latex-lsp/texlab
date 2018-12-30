@@ -166,7 +166,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
             val items = completionProvider.complete(request).toList()
-            val list = CompletionList(false, items)
+            val list = CompletionList(true, items)
             return CompletableFuture.completedFuture(Either.forRight(list))
         }
     }
