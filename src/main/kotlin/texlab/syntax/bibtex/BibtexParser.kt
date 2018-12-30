@@ -88,7 +88,7 @@ class BibtexParser(private val tokens: TokenBuffer<BibtexToken>) {
         return BibtexFieldSyntax(name, assign, content, comma)
     }
 
-    private fun content(inQuotes: Boolean = false): BibtexContentSyntax {
+    private fun content(): BibtexContentSyntax {
         val token = tokens.next()
         val left = when (token.kind) {
             PREAMBLE_TYPE -> BibtexWordSyntax(token)
@@ -103,10 +103,10 @@ class BibtexParser(private val tokens: TokenBuffer<BibtexToken>) {
                 val children = mutableListOf<BibtexContentSyntax>()
                 while (canMatchContent()) {
                     val kind = tokens.peek()!!.kind
-                    if (kind == QUOTE && inQuotes) {
+                    if (kind == QUOTE) {
                         break
                     }
-                    children.add(content(true))
+                    children.add(content())
                 }
                 val right = expect(QUOTE)
                 BibtexQuotedContentSyntax(token, children, right)
@@ -114,7 +114,7 @@ class BibtexParser(private val tokens: TokenBuffer<BibtexToken>) {
             BEGIN_BRACE -> {
                 val children = mutableListOf<BibtexContentSyntax>()
                 while (canMatchContent()) {
-                    children.add(content(false))
+                    children.add(content())
                 }
                 val right = expect(END_BRACE)
                 BibtexBracedContentSyntax(token, children, right)

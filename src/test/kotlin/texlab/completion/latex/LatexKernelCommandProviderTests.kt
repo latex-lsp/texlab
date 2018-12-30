@@ -1,9 +1,8 @@
-package texlab.completion
+package texlab.completion.latex
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import texlab.completion.latex.LatexKernelCommandProvider
 
 class LatexKernelCommandProviderTests {
     @Test

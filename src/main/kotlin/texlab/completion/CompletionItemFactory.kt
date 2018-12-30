@@ -91,4 +91,10 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Class
         }
     }
+
+    fun createFieldName(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Field
+        }
+    }
 }

@@ -8,6 +8,7 @@ import texlab.completion.CompletionRequest
 import texlab.completion.LimitedCompletionProvider
 import texlab.completion.OrderByQualityProvider
 import texlab.completion.bibtex.BibtexEntryTypeProvider
+import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
@@ -64,7 +65,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                                     LatexComponentCommandProvider(database),
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider,
-                                    BibtexEntryTypeProvider)))
+                                    BibtexEntryTypeProvider,
+                                    BibtexFieldNameProvider)))
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
@@ -161,7 +163,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
             val items = completionProvider.complete(request).toList()
-            val list = CompletionList(items.size == completionProvider.limit, items)
+            val list = CompletionList(false, items)
             return CompletableFuture.completedFuture(Either.forRight(list))
         }
     }

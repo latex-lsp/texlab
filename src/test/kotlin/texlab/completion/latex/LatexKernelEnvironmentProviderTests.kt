@@ -1,10 +1,9 @@
-package texlab.completion
+package texlab.completion.latex
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import texlab.completion.latex.LatexKernelEnvironmentProvider
 
 class LatexKernelEnvironmentProviderTests {
     @Test

@@ -14,7 +14,7 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
     override fun complete(request: CompletionRequest): List<CompletionItem> {
         val name = getName(request)
         return if (name == null) {
-            listOf()
+            emptyList()
         } else {
             provider.complete(request)
                     .sortedByDescending { getQuality(it.label, name) }
@@ -42,20 +42,22 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
                         .lastOrNull { it.range.contains(request.position) }
 
                 when (node) {
-                    is BibtexDocumentSyntax -> null
+                    is BibtexDocumentSyntax -> ""
                     is BibtexDeclarationSyntax -> {
                         if (node.type.range.contains(request.position)) {
                             node.type.text.substring(1)
                         } else {
-                            null
+                            ""
                         }
                     }
-                    is BibtexCommentSyntax -> null
+                    is BibtexCommentSyntax -> {
+                        node.token.text
+                    }
                     is BibtexFieldSyntax -> {
                         if (node.name.range.contains(request.position)) {
                             node.name.text
                         } else {
-                            null
+                            ""
                         }
                     }
                     is BibtexWordSyntax -> {
@@ -66,7 +68,7 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
                     }
                     is BibtexQuotedContentSyntax -> ""
                     is BibtexBracedContentSyntax -> ""
-                    is BibtexConcatSyntax -> null
+                    is BibtexConcatSyntax -> ""
                     null -> null
                 }
             }

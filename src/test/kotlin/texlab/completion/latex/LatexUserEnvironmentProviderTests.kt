@@ -1,9 +1,9 @@
-package texlab.completion
+package texlab.completion.latex
 
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import texlab.completion.latex.LatexUserEnvironmentProvider
+import texlab.completion.CompletionRequest
 
 class LatexUserEnvironmentProviderTests {
     private fun verify(request: CompletionRequest, expected: Array<String>) {
