@@ -5,13 +5,11 @@ import texlab.BibtexDocument
 import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
+import texlab.syntax.latex.LatexCitation
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexCitationProvider : LatexArgumentProvider() {
-    override val commandNames: List<String> = listOf(
-            "\\cite", "\\nocite", "\\citet", "\\citep", "\\citet*", "\\citep*",
-            "\\citeauthor", "\\citeauthor*", "\\citeyear", "\\citeyearpar",
-            "\\citealt", "\\citealp", "\\citetext")
+    override val commandNames: List<String> = LatexCitation.COMMAND_NAMES
 
     override val argumentIndex: Int = 0
 

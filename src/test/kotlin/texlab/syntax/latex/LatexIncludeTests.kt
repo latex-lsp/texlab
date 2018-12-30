@@ -10,7 +10,7 @@ class LatexIncludeTests {
         val root = LatexParser.parse(text)
         val include1 = LatexInclude(root.children[0] as LatexCommandSyntax, "foo")
         val include2 = LatexInclude(root.children[1] as LatexCommandSyntax, "bar/qux")
-        val includes = LatexInclude.analyze(root)
+        val includes = LatexInclude.find(root)
         assertEquals(2, includes.size)
         assertEquals(include1, includes[0])
         assertEquals(include2, includes[1])
@@ -22,7 +22,7 @@ class LatexIncludeTests {
         val root = LatexParser.parse(text)
         val include1 = LatexInclude(root.children[0] as LatexCommandSyntax, "foo")
         val include2 = LatexInclude(root.children[1] as LatexCommandSyntax, "bar")
-        val includes = LatexInclude.analyze(root)
+        val includes = LatexInclude.find(root)
         assertEquals(2, includes.size)
         assertEquals(include1, includes[0])
         assertEquals(include2, includes[1])
@@ -33,7 +33,7 @@ class LatexIncludeTests {
         val text = "\\include{foo bar.tex}"
         val root = LatexParser.parse(text)
         val expected = LatexInclude(root.children[0] as LatexCommandSyntax, "foo bar.tex")
-        val includes = LatexInclude.analyze(root)
+        val includes = LatexInclude.find(root)
         assertEquals(1, includes.size)
         assertEquals(expected, includes[0])
     }
@@ -42,6 +42,6 @@ class LatexIncludeTests {
     fun `it should ignore invalid commands`() {
         val text = "\\include \\input{}"
         val root = LatexParser.parse(text)
-        assertEquals(0, LatexInclude.analyze(root).size)
+        assertEquals(0, LatexInclude.find(root).size)
     }
 }

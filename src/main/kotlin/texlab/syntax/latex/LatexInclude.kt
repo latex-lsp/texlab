@@ -6,7 +6,7 @@ data class LatexInclude(val command: LatexCommandSyntax, val path: String) {
                 arrayOf("\\include", "\\input", "\\bibliography",
                         "\\addbibresource", "\\usepackage", "\\documentclass")
 
-        fun analyze(root: LatexSyntaxNode): List<LatexInclude> {
+        fun find(root: LatexSyntaxNode): List<LatexInclude> {
             return root.descendants()
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { COMMAND_NAMES.contains(it.name.text) }

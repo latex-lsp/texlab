@@ -9,7 +9,7 @@ class LatexSectionTests {
         val text = "\\section{Foo Bar Baz}"
         val tree = LatexParser.parse(text)
         val expected = LatexSection(tree.children[0] as LatexCommandSyntax, "Foo Bar Baz", 1)
-        val actual = LatexSection.analyze(tree)
+        val actual = LatexSection.find(tree)
         assertEquals(1, actual.size)
         assertEquals(expected, actual[0])
     }
@@ -19,7 +19,7 @@ class LatexSectionTests {
         val text = "\\paragraph*{Foo}"
         val tree = LatexParser.parse(text)
         val expected = LatexSection(tree.children[0] as LatexCommandSyntax, "Foo", 4)
-        val actual = LatexSection.analyze(tree)
+        val actual = LatexSection.find(tree)
         assertEquals(1, actual.size)
         assertEquals(expected, actual[0])
     }
@@ -28,7 +28,7 @@ class LatexSectionTests {
     fun `it should ignore invalid chapters`() {
         val text = "\\chapter*"
         val tree = LatexParser.parse(text)
-        val actual = LatexSection.analyze(tree)
+        val actual = LatexSection.find(tree)
         assertEquals(0, actual.size)
     }
 }

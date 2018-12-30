@@ -14,7 +14,7 @@ class LatexEnvironmentTests {
         val environment2 = LatexEnvironment(
                 tree.children[0] as LatexCommandSyntax,
                 tree.children[3] as LatexCommandSyntax)
-        val environments = LatexEnvironment.analyze(tree)
+        val environments = LatexEnvironment.find(tree)
         assertEquals(2, environments.size)
         assertEquals(environment1, environments[0])
         assertEquals(environment2, environments[1])
@@ -27,7 +27,7 @@ class LatexEnvironmentTests {
         val expected = LatexEnvironment(
                 tree.children[0] as LatexCommandSyntax,
                 tree.children[1] as LatexCommandSyntax)
-        val environments = LatexEnvironment.analyze(tree)
+        val environments = LatexEnvironment.find(tree)
         assertEquals(1, environments.size)
         assertEquals(expected, environments[0])
     }
@@ -36,7 +36,7 @@ class LatexEnvironmentTests {
     fun `it should ignore unmatched delimiters`() {
         val text = "\\end{a}\\begin{b}"
         val tree = LatexParser.parse(text)
-        val environments = LatexEnvironment.analyze(tree)
+        val environments = LatexEnvironment.find(tree)
         assertEquals(0, environments.size)
     }
 
@@ -44,7 +44,7 @@ class LatexEnvironmentTests {
     fun `it should ignore invalid delimiters`() {
         val text = "\\begin\\end"
         val tree = LatexParser.parse(text)
-        val environments = LatexEnvironment.analyze(tree)
+        val environments = LatexEnvironment.find(tree)
         assertEquals(0, environments.size)
     }
 }

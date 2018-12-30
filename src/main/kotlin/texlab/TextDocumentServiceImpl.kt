@@ -3,10 +3,7 @@ package texlab
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
-import texlab.completion.AggregateCompletionProvider
-import texlab.completion.CompletionRequest
-import texlab.completion.LimitedCompletionProvider
-import texlab.completion.OrderByQualityProvider
+import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.latex.*
@@ -43,7 +40,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                 }
             })
 
-    private val completionProvider: LimitedCompletionProvider =
+    private val completionProvider: CompletionProvider =
             LimitedCompletionProvider(
                     OrderByQualityProvider(
                             AggregateCompletionProvider(
@@ -72,13 +69,16 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             AggregateSymbolProvider(
                     LatexCommandSymbolProvider,
                     LatexEnvironmentSymbolProvider,
-                    LatexLabelSymbolProvider)
+                    LatexLabelSymbolProvider,
+                    LatexCitationSymbolProvider,
+                    BibtexEntrySymbolProvider)
 
     private val renamer: Renamer =
             AggregateRenamer(
                     LatexCommandRenamer,
                     LatexEnvironmentRenamer,
-                    LatexLabelRenamer)
+                    LatexLabelRenamer,
+                    BibtexEntryRenamer)
 
     private val foldingProvider: FoldingProvider =
             AggregateFoldingProvider(

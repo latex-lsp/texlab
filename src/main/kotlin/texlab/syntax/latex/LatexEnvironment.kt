@@ -28,7 +28,7 @@ data class LatexEnvironment(val begin: LatexCommandSyntax, val end: LatexCommand
     companion object {
         private val COMMAND_NAMES = arrayOf("\\begin", "\\end")
 
-        fun analyze(root: LatexSyntaxNode): List<LatexEnvironment> {
+        fun find(root: LatexSyntaxNode): List<LatexEnvironment> {
             val environments = mutableListOf<LatexEnvironment>()
             val stack = Stack<LatexEnvironmentDelimiter>()
             root.descendants()
