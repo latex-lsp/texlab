@@ -31,7 +31,7 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
                 when (node) {
                     is LatexGroupSyntax -> ""
                     is LatexCommandSyntax -> node.name.text.substring(1)
-                    is LatexTextSyntax -> node.words[0].text
+                    is LatexTextSyntax -> node.words.last().text
                     is LatexDocumentSyntax -> null
                     null -> null
                 }
