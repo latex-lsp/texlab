@@ -30,9 +30,11 @@ data class BibtexPreambleSyntax(val type: BibtexToken,
 data class BibtexStringSyntax(val type: BibtexToken,
                               val left: BibtexToken?,
                               val name: BibtexToken?,
+                              val assign: BibtexToken?,
                               val value: BibtexContentSyntax?,
                               val right: BibtexToken?) : BibtexDeclarationSyntax() {
-    override val range = Range(type.start, right?.end ?: value?.end ?: name?.end ?: left?.end ?: type.end)
+    override val range = Range(type.start,
+            right?.end ?: value?.end ?: assign?.end ?: name?.end ?: left?.end ?: type.end)
 }
 
 data class BibtexEntrySyntax(val type: BibtexToken,

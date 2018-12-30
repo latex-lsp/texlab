@@ -41,16 +41,17 @@ class BibtexParser(private val tokens: TokenBuffer<BibtexToken>) {
     private fun string(): BibtexStringSyntax {
         val type = tokens.next()
 
-        val left = expect(BEGIN_BRACE, BEGIN_PAREN) ?: return BibtexStringSyntax(type, null, null, null, null)
-        val name = expect(WORD) ?: return BibtexStringSyntax(type, left, null, null, null)
+        val left = expect(BEGIN_BRACE, BEGIN_PAREN) ?: return BibtexStringSyntax(type, null, null, null, null, null)
+        val name = expect(WORD) ?: return BibtexStringSyntax(type, left, null, null, null, null)
+        val assign = expect(ASSIGN) ?: return BibtexStringSyntax(type, left, name, null, null, null)
 
         if (!canMatchContent()) {
-            return BibtexStringSyntax(type, left, name, null, null)
+            return BibtexStringSyntax(type, left, name, assign, null, null)
         }
         val value = content()
 
         val right = expect(END_BRACE, END_PAREN)
-        return BibtexStringSyntax(type, left, name, value, right)
+        return BibtexStringSyntax(type, left, name, assign, value, right)
     }
 
     private fun entry(): BibtexEntrySyntax {
