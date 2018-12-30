@@ -85,4 +85,10 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Constant
         }
     }
+
+    fun createEntryType(name: String): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Class
+        }
+    }
 }

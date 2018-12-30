@@ -7,7 +7,7 @@ class BibtexParser(private val tokens: TokenBuffer<BibtexToken>) {
     constructor(text: String) : this(TokenBuffer(BibtexTokenizer(text)))
 
     fun document(): BibtexDocumentSyntax {
-        val children = mutableListOf<BibtexDeclarationSyntax>()
+        val children = mutableListOf<BibtexDocumentItemSyntax>()
         while (tokens.available) {
             when (tokens.peek()!!.kind) {
                 PREAMBLE_TYPE ->

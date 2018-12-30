@@ -4,6 +4,7 @@ import org.eclipse.lsp4j.CompletionItem
 import texlab.BibtexDocument
 import texlab.LatexDocument
 import texlab.contains
+import texlab.syntax.bibtex.*
 import texlab.syntax.latex.LatexCommandSyntax
 import texlab.syntax.latex.LatexDocumentSyntax
 import texlab.syntax.latex.LatexGroupSyntax
@@ -21,23 +22,54 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
     }
 
     private fun getName(request: CompletionRequest): String? {
-        if (request.document is LatexDocument) {
-            val node = request.document
-                    .tree
-                    .root
-                    .descendants()
-                    .lastOrNull { it.range.contains(request.position) }
+        return when (request.document) {
+            is LatexDocument -> {
+                val node = request.document.tree.root
+                        .descendants()
+                        .lastOrNull { it.range.contains(request.position) }
 
-            return when (node) {
-                is LatexGroupSyntax -> ""
-                is LatexCommandSyntax -> node.name.text.substring(1)
-                is LatexTextSyntax -> node.words[0].text
-                is LatexDocumentSyntax -> null
-                null -> null
+                when (node) {
+                    is LatexGroupSyntax -> ""
+                    is LatexCommandSyntax -> node.name.text.substring(1)
+                    is LatexTextSyntax -> node.words[0].text
+                    is LatexDocumentSyntax -> null
+                    null -> null
+                }
             }
-        } else {
-            request.document as BibtexDocument
-            return null
+            is BibtexDocument -> {
+                val node = request.document.tree.root
+                        .descendants()
+                        .lastOrNull { it.range.contains(request.position) }
+
+                when (node) {
+                    is BibtexDocumentSyntax -> null
+                    is BibtexDeclarationSyntax -> {
+                        if (node.type.range.contains(request.position)) {
+                            node.type.text.substring(1)
+                        } else {
+                            null
+                        }
+                    }
+                    is BibtexCommentSyntax -> null
+                    is BibtexFieldSyntax -> {
+                        if (node.name.range.contains(request.position)) {
+                            node.name.text
+                        } else {
+                            null
+                        }
+                    }
+                    is BibtexWordSyntax -> {
+                        node.token.text
+                    }
+                    is BibtexCommandSyntax -> {
+                        node.token.text.substring(1)
+                    }
+                    is BibtexQuotedContentSyntax -> ""
+                    is BibtexBracedContentSyntax -> ""
+                    is BibtexConcatSyntax -> null
+                    null -> null
+                }
+            }
         }
     }
 

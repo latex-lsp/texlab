@@ -7,6 +7,7 @@ import texlab.completion.AggregateCompletionProvider
 import texlab.completion.CompletionRequest
 import texlab.completion.LimitedCompletionProvider
 import texlab.completion.OrderByQualityProvider
+import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
@@ -62,7 +63,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                                     LatexUserEnvironmentProvider,
                                     LatexComponentCommandProvider(database),
                                     LatexKernelCommandProvider,
-                                    LatexUserCommandProvider)))
+                                    LatexUserCommandProvider,
+                                    BibtexEntryTypeProvider)))
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
