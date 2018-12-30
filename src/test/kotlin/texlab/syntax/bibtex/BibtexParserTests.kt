@@ -8,7 +8,7 @@ class BibtexParserTests {
     @ParameterizedTest
     @ValueSource(ints = [1, 2, 3, 4])
     fun `parse and show should be inverses of each other`(index: Int) {
-        val text = javaClass.getResourceAsStream("Example$index.bib")
+        val text = javaClass.getResourceAsStream("Example$index.txt")
                 .readBytes()
                 .toString(Charsets.UTF_8)
 
