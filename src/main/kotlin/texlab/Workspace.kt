@@ -5,6 +5,7 @@ import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
+import javax.swing.JOptionPane
 
 class Workspace {
     val documents = mutableListOf<Document>()
@@ -15,6 +16,10 @@ class Workspace {
             return documents
                     .filter { it.isFile }
                     .firstOrNull { it.uri == child }
+        }
+
+        if (uri.scheme != "file") {
+            return null
         }
 
         val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
