@@ -27,26 +27,25 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
-        return CompletableFuture.supplyAsync {
-            val root = URI.create(params.rootUri)
-            synchronized(workspace) {
-                loadWorkspace(root)
-            }
-
-            val capabilities = ServerCapabilities().apply {
-                val syncOptions = TextDocumentSyncOptions().apply {
-                    openClose = true
-                    change = TextDocumentSyncKind.Full
-                }
-                textDocumentSync = Either.forRight(syncOptions)
-                documentSymbolProvider = true
-                renameProvider = Either.forLeft(true)
-                documentLinkProvider = DocumentLinkOptions(false)
-                completionProvider = CompletionOptions(false, listOf("\\", "{", "}", "@"))
-                foldingRangeProvider = Either.forLeft(true)
-            }
-            InitializeResult(capabilities)
+        val root = URI.create(params.rootUri)
+        synchronized(workspace) {
+            loadWorkspace(root)
         }
+
+        val capabilities = ServerCapabilities().apply {
+            val syncOptions = TextDocumentSyncOptions().apply {
+                openClose = true
+                change = TextDocumentSyncKind.Full
+            }
+            textDocumentSync = Either.forRight(syncOptions)
+            documentSymbolProvider = true
+            renameProvider = Either.forLeft(true)
+            documentLinkProvider = DocumentLinkOptions(false)
+            completionProvider = CompletionOptions(false, listOf("\\", "{", "}", "@"))
+            foldingRangeProvider = Either.forLeft(true)
+        }
+
+        return CompletableFuture.completedFuture(InitializeResult(capabilities))
     }
 
     override fun initialized(params: InitializedParams?) {

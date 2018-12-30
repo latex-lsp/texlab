@@ -92,11 +92,14 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
         params.textDocument.apply {
             val language = getLanguageById(languageId) ?: return
             synchronized(workspace) {
-                val document = Document.create(URI.create(uri), language)
+                val uri = URI.create(uri)
+                val document = workspace.documents.firstOrNull { it.uri == uri } ?: Document.create(uri, language)
                 document.text = text
                 document.version = version
                 document.analyze()
-                workspace.documents.add(document)
+                if (!workspace.documents.contains(document)) {
+                    workspace.documents.add(document)
+                }
             }
         }
     }

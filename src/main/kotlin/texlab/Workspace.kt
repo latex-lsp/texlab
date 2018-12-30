@@ -5,7 +5,6 @@ import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
-import javax.swing.JOptionPane
 
 class Workspace {
     val documents = mutableListOf<Document>()
