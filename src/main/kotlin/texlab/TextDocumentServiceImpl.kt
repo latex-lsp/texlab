@@ -1,5 +1,6 @@
 package texlab
 
+import com.overzealous.remark.Remark
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
@@ -17,6 +18,8 @@ import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
 import texlab.link.LinkRequest
+import texlab.metadata.CtanPackageMetadataProvider
+import texlab.metadata.PackageMetadataProvider
 import texlab.rename.*
 import texlab.symbol.*
 import java.io.File
@@ -95,6 +98,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             AggregateDefinitionProvider(
                     LatexLabelDefinitionProvider,
                     BibtexEntryDefinitionProvider)
+
+    private val metadataProvider: PackageMetadataProvider = CtanPackageMetadataProvider()
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
@@ -176,6 +181,26 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val items = completionProvider.complete(request).toList()
             val list = CompletionList(true, items)
             return CompletableFuture.completedFuture(Either.forRight(list))
+        }
+    }
+
+    override fun resolveCompletionItem(unresolved: CompletionItem): CompletableFuture<CompletionItem> {
+        return CompletableFuture.supplyAsync<CompletionItem> {
+            if (unresolved.kind == CompletionItemKind.Class) {
+                val metadata = metadataProvider.getMetadata(unresolved.label)
+                if (metadata != null) {
+                    val description = Remark().convert(metadata.descriptions.firstOrNull()?.text)
+                    val documentation = MarkupContent().apply {
+                        kind = MarkupKind.MARKDOWN
+                        value = description
+                    }
+
+                    unresolved.detail = metadata.caption
+                    unresolved.setDocumentation(documentation)
+                }
+            }
+
+            unresolved
         }
     }
 

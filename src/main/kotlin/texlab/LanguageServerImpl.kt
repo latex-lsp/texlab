@@ -41,7 +41,7 @@ class LanguageServerImpl : LanguageServer {
             documentSymbolProvider = true
             renameProvider = Either.forLeft(true)
             documentLinkProvider = DocumentLinkOptions(false)
-            completionProvider = CompletionOptions(false, listOf("\\", "{", "}", "@"))
+            completionProvider = CompletionOptions(true, listOf("\\", "{", "}", "@"))
             foldingRangeProvider = Either.forLeft(true)
             definitionProvider = true
         }
