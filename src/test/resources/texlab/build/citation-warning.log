@@ -6,9 +6,9 @@ entering extended mode
 (./parent.tex
 LaTeX2e <2017-04-15>
 Babel <3.10> and hyphenation patterns for 84 language(s) loaded.
-(d:/TexLive/texmf-dist/tex/latex/base/article.cls
+(/TexLive/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
-(d:/TexLive/texmf-dist/tex/latex/base/size10.clo
+(/TexLive/texmf-dist/tex/latex/base/size10.clo
 File: size10.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
 )
 \c@part=\count79
@@ -43,7 +43,7 @@ LaTeX Warning: Citation `foo' on page 1 undefined on input line 6.
 
 [1
 
-{d:/TexLive/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./parent.aux)
+{/TexLive/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./parent.aux)
 
 LaTeX Warning: There were undefined references.
 
@@ -56,7 +56,7 @@ Here is how much of TeX's memory you used:
  3948 words of font info for 15 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  23i,4n,21p,116b,107s stack positions out of 5000i,500n,10000p,200000b,80000s
-<d:/TexLive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><d:/TexLive/
+</TexLive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></TexLive/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
 Output written on parent.pdf (1 page, 17339 bytes).
 PDF statistics:
