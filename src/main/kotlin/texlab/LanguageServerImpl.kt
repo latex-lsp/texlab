@@ -44,6 +44,7 @@ class LanguageServerImpl : LanguageServer {
             completionProvider = CompletionOptions(true, listOf("\\", "{", "}", "@"))
             foldingRangeProvider = Either.forLeft(true)
             definitionProvider = true
+            hoverProvider = true
         }
 
         return CompletableFuture.completedFuture(InitializeResult(capabilities))

@@ -12,7 +12,7 @@ class CtanPackageMetadataProvider : PackageMetadataProvider {
             val json = URL("https://ctan.org/json/2.0/pkg/$name").readText()
             val mapper = jacksonObjectMapper()
                     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            return mapper.readValue<PackageMetadata>(json)
+            mapper.readValue<PackageMetadata>(json)
         } catch (e: IOException) {
             null
         }

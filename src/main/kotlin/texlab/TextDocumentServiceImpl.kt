@@ -1,6 +1,5 @@
 package texlab
 
-import com.overzealous.remark.Remark
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
@@ -189,14 +188,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             if (unresolved.kind == CompletionItemKind.Class) {
                 val metadata = metadataProvider.getMetadata(unresolved.label)
                 if (metadata != null) {
-                    val description = Remark().convert(metadata.descriptions.firstOrNull()?.text)
-                    val documentation = MarkupContent().apply {
-                        kind = MarkupKind.MARKDOWN
-                        value = description
-                    }
-
                     unresolved.detail = metadata.caption
-                    unresolved.setDocumentation(documentation)
+                    unresolved.setDocumentation(metadata.description)
                 }
             }
 
@@ -224,6 +217,31 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val request = DefinitionRequest(uri, relatedDocuments, params.position)
             val location = definitionProvider.find(request)
             return CompletableFuture.completedFuture(location?.let { mutableListOf(it) })
+        }
+    }
+
+    override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover> {
+        val include = synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val document = workspace.documents
+                    .filterIsInstance<LatexDocument>()
+                    .firstOrNull { it.uri == uri }
+                    ?: return CompletableFuture.completedFuture(null)
+
+            document.tree.includes
+                    .filter { it.command.name.text == "\\usepackage" || it.command.name.text == "\\documentclass" }
+                    .firstOrNull { it.command.range.contains(params.position) }
+                    ?: return CompletableFuture.completedFuture(null)
+        }
+
+        return CompletableFuture.supplyAsync {
+            val metadata = metadataProvider.getMetadata(include.path)
+            val description = metadata?.description
+            if (description != null) {
+                Hover(description)
+            } else {
+                null
+            }
         }
     }
 }
