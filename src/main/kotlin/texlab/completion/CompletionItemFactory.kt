@@ -44,14 +44,14 @@ object CompletionItemFactory {
 
     fun createPgfLibrary(name: String): CompletionItem {
         return CompletionItem(name).apply {
-            kind = CompletionItemKind.Class
+            kind = CompletionItemKind.Module
             commitCharacters = listOf(" ")
         }
     }
 
     fun createTikzLibrary(name: String): CompletionItem {
         return CompletionItem(name).apply {
-            kind = CompletionItemKind.Class
+            kind = CompletionItemKind.Module
             commitCharacters = listOf(" ")
         }
     }
@@ -88,7 +88,7 @@ object CompletionItemFactory {
 
     fun createEntryType(name: String): CompletionItem {
         return CompletionItem(name).apply {
-            kind = CompletionItemKind.Class
+            kind = CompletionItemKind.Interface
         }
     }
 
