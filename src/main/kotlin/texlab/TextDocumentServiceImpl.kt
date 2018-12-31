@@ -10,10 +10,7 @@ import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexResolver
-import texlab.definition.AggregateDefinitionProvider
-import texlab.definition.DefinitionProvider
-import texlab.definition.DefinitionRequest
-import texlab.definition.LatexLabelDefinitionProvider
+import texlab.definition.*
 import texlab.folding.*
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
@@ -92,7 +89,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
 
     private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
 
-    private val definitionProvider: DefinitionProvider = AggregateDefinitionProvider(LatexLabelDefinitionProvider)
+    private val definitionProvider: DefinitionProvider =
+            AggregateDefinitionProvider(
+                    LatexLabelDefinitionProvider,
+                    BibtexEntryDefinitionProvider)
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {

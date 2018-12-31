@@ -40,8 +40,7 @@ object BibtexEntryRenamer : Renamer {
     }
 
     private fun findEntry(document: BibtexDocument, position: Position): Token? {
-        return document.tree.root
-                .descendants()
+        return document.tree.root.children
                 .filterIsInstance<BibtexEntrySyntax>()
                 .firstOrNull { it.name != null && it.name.range.contains(position) }?.name
     }
