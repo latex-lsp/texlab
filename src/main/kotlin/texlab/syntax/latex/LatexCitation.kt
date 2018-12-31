@@ -6,9 +6,15 @@ data class LatexCitation(val command: LatexCommandSyntax) {
 
     companion object {
         val COMMAND_NAMES = listOf(
-                "\\cite", "\\nocite", "\\citet", "\\citep", "\\citet*", "\\citep*",
-                "\\citeauthor", "\\citeauthor*", "\\citeyear", "\\citeyearpar",
-                "\\citealt", "\\citealp", "\\citetext")
+                "\\cite", "\\cite*", "\\Cite", "\\nocite", "\\citet", "\\citep", "\\citet*", "\\citep*",
+                "\\citeauthor", "\\citeauthor*", "\\Citeauthor", "\\Citeauthor*", "\\citetitle", "\\citetitle*",
+                "\\citeyear", "\\citeyear*", "\\citedate", "\\citedate*", "\\citeurl", "\\fullcite",
+                "\\citeyearpar", "\\citealt", "\\citealp", "\\citetext", "\\parencite", "\\parencite*",
+                "\\Parencite", "\\footcite", "\\footfullcite", "\\footcitetext", "\\textcite", "\\Textcite",
+                "\\smartcite", "\\Smartcite", "\\supercite", "\\autocite", "\\Autocite", "\\autocite*",
+                "\\Autocite*", "\\volcite", "\\Volcite", "\\pvolcite", "\\Pvolcite", "\\fvolcite", "\\ftvolcite",
+                "\\svolcite", "\\Svolcite", "\\tvolcite", "\\Tvolcite", "\\avolcite", "\\Avolcite", "\\notecite",
+                "\\notecite", "\\pnotecite", "\\Pnotecite", "\\fnotecite")
 
         fun find(root: LatexSyntaxNode): List<LatexCitation> {
             return root.descendants()
