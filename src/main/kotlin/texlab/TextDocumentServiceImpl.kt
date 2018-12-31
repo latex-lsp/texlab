@@ -10,6 +10,10 @@ import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexResolver
+import texlab.definition.AggregateDefinitionProvider
+import texlab.definition.DefinitionProvider
+import texlab.definition.DefinitionRequest
+import texlab.definition.LatexLabelDefinitionProvider
 import texlab.folding.*
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
@@ -87,6 +91,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     BibtexEntryFoldingProvider)
 
     private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
+
+    private val definitionProvider: DefinitionProvider = AggregateDefinitionProvider(LatexLabelDefinitionProvider)
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
@@ -181,6 +187,16 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val request = FoldingRequest(document)
             val foldings = foldingProvider.fold(request).toMutableList()
             return CompletableFuture.completedFuture(foldings)
+        }
+    }
+
+    override fun definition(params: TextDocumentPositionParams): CompletableFuture<MutableList<out Location>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = DefinitionRequest(uri, relatedDocuments, params.position)
+            val location = definitionProvider.find(request)
+            return CompletableFuture.completedFuture(location?.let { mutableListOf(it) })
         }
     }
 }

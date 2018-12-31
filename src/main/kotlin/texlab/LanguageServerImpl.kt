@@ -43,6 +43,7 @@ class LanguageServerImpl : LanguageServer {
             documentLinkProvider = DocumentLinkOptions(false)
             completionProvider = CompletionOptions(false, listOf("\\", "{", "}", "@"))
             foldingRangeProvider = Either.forLeft(true)
+            definitionProvider = true
         }
 
         return CompletableFuture.completedFuture(InitializeResult(capabilities))
