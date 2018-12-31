@@ -6,11 +6,10 @@ import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexKernelCommandProvider : LatexCommandProvider() {
-    private val items = KernelPrimitives
-            .COMMANDS
+    val ITEMS = KernelPrimitives.COMMANDS
             .map { CompletionItemFactory.createCommand(it, null) }
 
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
-        return items
+        return ITEMS
     }
 }

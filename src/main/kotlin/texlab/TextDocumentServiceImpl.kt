@@ -6,6 +6,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
+import texlab.completion.bibtex.BibtexKernelCommandProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
@@ -64,7 +65,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider,
                                     BibtexEntryTypeProvider,
-                                    BibtexFieldNameProvider)))
+                                    BibtexFieldNameProvider,
+                                    BibtexKernelCommandProvider)))
 
     private val symbolProvider: SymbolProvider =
             AggregateSymbolProvider(
