@@ -21,6 +21,7 @@ import texlab.metadata.CtanPackageMetadataProvider
 import texlab.metadata.PackageMetadataProvider
 import texlab.rename.*
 import texlab.symbol.*
+import texlab.syntax.bibtex.BibtexEntrySyntax
 import java.io.File
 import java.net.URI
 import java.nio.file.Paths
@@ -242,6 +243,26 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             } else {
                 null
             }
+        }
+    }
+
+    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val document = workspace.documents
+                    .filterIsInstance<BibtexDocument>()
+                    .firstOrNull { it.uri == uri }
+                    ?: return CompletableFuture.completedFuture(null)
+
+            val settings = BibtexFormatterSettings(params.options.isInsertSpaces, params.options.tabSize, 120)
+
+            val edits = mutableListOf<TextEdit>()
+            for (entry in document.tree.root.children.filterIsInstance<BibtexEntrySyntax>()) {
+                val text = StringBuilder()
+                BibtexFormatter.format(text, entry, settings)
+                edits.add(TextEdit(entry.range, text.toString()))
+            }
+            return CompletableFuture.completedFuture(edits)
         }
     }
 }

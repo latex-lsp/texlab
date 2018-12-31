@@ -45,6 +45,7 @@ class LanguageServerImpl : LanguageServer {
             foldingRangeProvider = Either.forLeft(true)
             definitionProvider = true
             hoverProvider = true
+            documentFormattingProvider = true
         }
 
         return CompletableFuture.completedFuture(InitializeResult(capabilities))

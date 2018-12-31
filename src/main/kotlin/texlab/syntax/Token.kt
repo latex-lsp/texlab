@@ -19,4 +19,7 @@ abstract class Token {
         get () = Range(start, end)
 
     abstract val text: String
+
+    val length: Int
+        get() = text.length
 }
