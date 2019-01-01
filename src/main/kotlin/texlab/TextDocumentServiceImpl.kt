@@ -255,12 +255,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     ?: return CompletableFuture.completedFuture(null)
 
             val settings = BibtexFormatterSettings(params.options.isInsertSpaces, params.options.tabSize, 120)
-
+            val formatter = BibtexFormatter(settings)
             val edits = mutableListOf<TextEdit>()
             for (entry in document.tree.root.children.filterIsInstance<BibtexEntrySyntax>()) {
-                val text = StringBuilder()
-                BibtexFormatter.format(text, entry, settings)
-                edits.add(TextEdit(entry.range, text.toString()))
+                edits.add(TextEdit(entry.range, formatter.format(entry)))
             }
             return CompletableFuture.completedFuture(edits)
         }

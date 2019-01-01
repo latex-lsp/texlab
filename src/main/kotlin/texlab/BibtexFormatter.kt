@@ -2,27 +2,24 @@ package texlab
 
 import texlab.syntax.bibtex.*
 
-object BibtexFormatter {
-    fun format(builder: StringBuilder, entry: BibtexEntrySyntax, settings: BibtexFormatterSettings) {
-        builder.append(entry.type.text)
-        builder.append("{")
-        builder.append(entry.name?.text ?: return)
-        builder.append(",")
-        builder.appendln()
-        for (field in entry.fields) {
-            format(builder, field, settings)
-        }
-        builder.append("}")
+class BibtexFormatter(private val settings: BibtexFormatterSettings) {
+    fun format(entry: BibtexEntrySyntax): String = buildString {
+        append(entry.type.text.toLowerCase())
+        append("{")
+        append(entry.name?.text ?: return@buildString)
+        appendln(",")
+        entry.fields.forEach { append(format(it)) }
+        append("}")
     }
 
-    private fun format(builder: StringBuilder, field: BibtexFieldSyntax, settings: BibtexFormatterSettings) {
-        builder.append(settings.indent)
-        builder.append(field.name.text)
-        builder.append(" = ")
+    private fun format(field: BibtexFieldSyntax): String = buildString {
+        append(settings.indent)
+        append(field.name.text.toLowerCase())
+        append(" = ")
         val startLength = settings.tabSize + field.name.text.length + 3
 
-        val tokens = getTokens(field.content ?: return)
-        builder.append(tokens[0].text)
+        val tokens = descendants(field.content ?: return@buildString)
+        append(tokens[0].text)
 
         var length = startLength + tokens[0].length
         for (i in 1 until tokens.size) {
@@ -37,20 +34,20 @@ object BibtexFormatter {
             }
 
             if (length + current.length + spaceLength > settings.lineLength) {
-                builder.appendln()
-                builder.append(settings.indent)
+                appendln()
+                append(settings.indent)
                 for (j in 0 until startLength - settings.tabSize + 1) {
-                    builder.append(" ")
+                    append(" ")
                 }
                 length = startLength
             } else if (insertSpace) {
-                builder.append(" ")
+                append(" ")
                 length++
             }
-            builder.append(current.text)
+            append(current.text)
             length += current.length
         }
-        builder.appendln(",")
+        appendln(",")
     }
 
     private fun shouldInsertSpace(previous: BibtexToken, current: BibtexToken): Boolean {
@@ -61,7 +58,7 @@ object BibtexFormatter {
         return previous.end.character < current.start.character
     }
 
-    private fun getTokens(content: BibtexContentSyntax): List<BibtexToken> {
+    private fun descendants(content: BibtexContentSyntax): List<BibtexToken> {
         val tokens = mutableListOf<BibtexToken>()
         fun visit(node: BibtexContentSyntax) {
             when (node) {
