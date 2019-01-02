@@ -13,6 +13,10 @@ import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
 import texlab.folding.*
+import texlab.formatting.BibtexFormatter
+import texlab.formatting.BibtexFormatterSettings
+import texlab.formatting.BibtexStyle
+import texlab.formatting.NamingStyle
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
@@ -21,7 +25,7 @@ import texlab.metadata.CtanPackageMetadataProvider
 import texlab.metadata.PackageMetadataProvider
 import texlab.rename.*
 import texlab.symbol.*
-import texlab.syntax.bibtex.BibtexEntrySyntax
+import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
 import java.net.URI
 import java.nio.file.Paths
@@ -254,10 +258,11 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     .firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
 
-            val settings = BibtexFormatterSettings(params.options.isInsertSpaces, params.options.tabSize, 120)
+            val style = BibtexStyle(NamingStyle.LOWER_CASE, NamingStyle.LOWER_CASE, 120)
+            val settings = BibtexFormatterSettings(params.options.isInsertSpaces, params.options.tabSize, style)
             val formatter = BibtexFormatter(settings)
             val edits = mutableListOf<TextEdit>()
-            for (entry in document.tree.root.children.filterIsInstance<BibtexEntrySyntax>()) {
+            for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
                 edits.add(TextEdit(entry.range, formatter.format(entry)))
             }
             return CompletableFuture.completedFuture(edits)
