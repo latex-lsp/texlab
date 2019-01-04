@@ -14,9 +14,7 @@ import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
 import texlab.folding.*
 import texlab.formatting.BibtexFormatter
-import texlab.formatting.BibtexFormatterSettings
-import texlab.formatting.BibtexStyle
-import texlab.formatting.NamingStyle
+import texlab.formatting.BibtexFormatterConfig
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
@@ -257,21 +255,23 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
     }
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-        synchronized(workspace) {
+        return CompletableFuture.supplyAsync {
             val uri = URI.create(params.textDocument.uri)
-            val document = workspace.documents
-                    .filterIsInstance<BibtexDocument>()
-                    .firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
-
-            val style = BibtexStyle(NamingStyle.LOWER_CASE, NamingStyle.LOWER_CASE, 120)
-            val settings = BibtexFormatterSettings(params.options.isInsertSpaces, params.options.tabSize, style)
-            val formatter = BibtexFormatter(settings)
-            val edits = mutableListOf<TextEdit>()
-            for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
-                edits.add(TextEdit(entry.range, formatter.format(entry)))
+            val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
+            synchronized(workspace) {
+                val document =
+                        workspace.documents
+                                .filterIsInstance<BibtexDocument>()
+                                .firstOrNull { it.uri == uri }
+                                ?: return@supplyAsync null
+                val formatter =
+                        BibtexFormatter(params.options.isInsertSpaces, params.options.tabSize, config.lineLength)
+                val edits = mutableListOf<TextEdit>()
+                for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
+                    edits.add(TextEdit(entry.range, formatter.format(entry)))
+                }
+                edits
             }
-            return CompletableFuture.completedFuture(edits)
         }
     }
 

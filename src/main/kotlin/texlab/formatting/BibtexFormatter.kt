@@ -1,8 +1,17 @@
 package texlab.formatting
 
 import texlab.syntax.bibtex.*
+import java.util.*
 
-class BibtexFormatter(private val settings: BibtexFormatterSettings) {
+class BibtexFormatter(insertSpaces: Boolean,
+                      private val tabSize: Int,
+                      private val lineLength: Int) {
+    private val indent: String = if (insertSpaces) {
+        Collections.nCopies(tabSize, " ").joinToString("")
+    } else {
+        "\t"
+    }
+
     fun format(declaration: BibtexDeclarationSyntax): String {
         return when (declaration) {
             is BibtexPreambleSyntax ->
@@ -15,14 +24,14 @@ class BibtexFormatter(private val settings: BibtexFormatterSettings) {
     }
 
     fun format(preamble: BibtexPreambleSyntax): String = buildString {
-        append(settings.style.types.formatType(preamble.type.text))
+        append(format(preamble.type))
         append("{")
         append(format(preamble.content ?: return@buildString, length))
         append("}")
     }
 
     fun format(string: BibtexStringSyntax): String = buildString {
-        append(settings.style.types.formatType(string.type.text))
+        append(format(string.type))
         append("{")
         append(string.name?.text)
         append(" = ")
@@ -31,7 +40,7 @@ class BibtexFormatter(private val settings: BibtexFormatterSettings) {
     }
 
     fun format(entry: BibtexEntrySyntax): String = buildString {
-        append(settings.style.types.formatType(entry.type.text))
+        append(format(entry.type))
         append("{")
         append(entry.name?.text ?: return@buildString)
         appendln(",")
@@ -40,10 +49,10 @@ class BibtexFormatter(private val settings: BibtexFormatterSettings) {
     }
 
     fun format(field: BibtexFieldSyntax): String = buildString {
-        append(settings.indent)
-        append(settings.style.fields.format(field.name.text))
+        append(indent)
+        append(format(field.name))
         append(" = ")
-        val align = settings.tabSize + field.name.text.length + 3
+        val align = tabSize + field.name.text.length + 3
         append(format(field.content ?: return@buildString, align))
         appendln(",")
     }
@@ -64,10 +73,10 @@ class BibtexFormatter(private val settings: BibtexFormatterSettings) {
                 0
             }
 
-            if (length + current.length + spaceLength > settings.style.lineLength) {
+            if (length + current.length + spaceLength > lineLength) {
                 appendln()
-                append(settings.indent)
-                for (j in 0 until align - settings.tabSize + 1) {
+                append(indent)
+                for (j in 0 until align - tabSize + 1) {
                     append(" ")
                 }
                 length = align
@@ -78,6 +87,10 @@ class BibtexFormatter(private val settings: BibtexFormatterSettings) {
             append(current.text)
             length += current.length
         }
+    }
+
+    private fun format(token: BibtexToken): String {
+        return token.text.toLowerCase()
     }
 
     private fun shouldInsertSpace(previous: BibtexToken, current: BibtexToken): Boolean {
