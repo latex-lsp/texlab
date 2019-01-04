@@ -23,6 +23,10 @@ import texlab.link.LinkProvider
 import texlab.link.LinkRequest
 import texlab.metadata.CtanPackageMetadataProvider
 import texlab.metadata.PackageMetadataProvider
+import texlab.references.AggregateReferenceProvider
+import texlab.references.LatexLabelReferenceProvider
+import texlab.references.ReferenceProvider
+import texlab.references.ReferenceRequest
 import texlab.rename.*
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
@@ -104,6 +108,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     BibtexEntryDefinitionProvider)
 
     private val metadataProvider: PackageMetadataProvider = CtanPackageMetadataProvider()
+
+    private val referenceProvider: ReferenceProvider = AggregateReferenceProvider(LatexLabelReferenceProvider)
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
@@ -266,6 +272,16 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                 edits.add(TextEdit(entry.range, formatter.format(entry)))
             }
             return CompletableFuture.completedFuture(edits)
+        }
+    }
+
+    override fun references(params: ReferenceParams): CompletableFuture<MutableList<out Location>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = ReferenceRequest(uri, relatedDocuments, params.position)
+            val references = referenceProvider.getReferences(request)?.toMutableList()
+            return CompletableFuture.completedFuture(references)
         }
     }
 }
