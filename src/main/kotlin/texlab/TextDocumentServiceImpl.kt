@@ -22,10 +22,7 @@ import texlab.link.LinkProvider
 import texlab.link.LinkRequest
 import texlab.metadata.CtanPackageMetadataProvider
 import texlab.metadata.PackageMetadataProvider
-import texlab.references.AggregateReferenceProvider
-import texlab.references.LatexLabelReferenceProvider
-import texlab.references.ReferenceProvider
-import texlab.references.ReferenceRequest
+import texlab.references.*
 import texlab.rename.*
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
@@ -108,7 +105,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
 
     private val metadataProvider: PackageMetadataProvider = CtanPackageMetadataProvider()
 
-    private val referenceProvider: ReferenceProvider = AggregateReferenceProvider(LatexLabelReferenceProvider)
+    private val referenceProvider: ReferenceProvider =
+            AggregateReferenceProvider(
+                    LatexLabelReferenceProvider,
+                    BibtexEntryReferenceProvider)
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
