@@ -3,6 +3,7 @@ package texlab
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.TextDocumentService
+import texlab.build.*
 import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -282,6 +283,42 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val request = ReferenceRequest(uri, relatedDocuments, params.position)
             val references = referenceProvider.getReferences(request)?.toMutableList()
             return CompletableFuture.completedFuture(references)
+        }
+    }
+
+    fun build(params: BuildParams): CompletableFuture<BuildStatus> {
+        return CompletableFuture.supplyAsync {
+            val childUri = URI.create(params.textDocument.uri)
+            val parent = workspace.relatedDocuments(childUri)
+                    .filterIsInstance<LatexDocument>()
+                    .firstOrNull { it.tree.isStandalone }
+                    ?: workspace.documents.first { it.uri == childUri }
+
+            val parentName = Paths.get(parent.uri).fileName
+            client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
+
+            val config = client.configuration<BuildConfig>("latex.build", parent.uri)
+            val listener = object : BuildListener {
+                override fun stdout(line: String) {
+                    client.logMessage(MessageParams(MessageType.Log, line))
+                }
+
+                override fun stderr(line: String) = stdout(line)
+            }
+            val (status, allErrors) = BuildEngine.build(parent.uri, config, listener)
+
+            for (document in workspace.documents.filterIsInstance<LatexDocument>()) {
+                val diagnostics = PublishDiagnosticsParams(document.uri.toString(), emptyList())
+                client.publishDiagnostics(diagnostics)
+            }
+
+            for ((uri, errors) in allErrors.groupBy { it.uri }) {
+                val diagnostics = PublishDiagnosticsParams(uri.toString(), errors.map { it.toDiagnostic() })
+                client.publishDiagnostics(diagnostics)
+            }
+
+            client.setStatus(StatusParams(ServerStatus.IDLE))
+            status
         }
     }
 }
