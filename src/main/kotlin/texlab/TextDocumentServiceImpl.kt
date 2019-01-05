@@ -13,6 +13,7 @@ import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
+import texlab.diagnostics.*
 import texlab.folding.*
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
@@ -110,6 +111,13 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
+    private val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
+
+    private val diagnosticsProvider: DiagnosticsProvider =
+            AggregateDiagnosticsProvider(
+                    buildDiagnosticsProvider,
+                    BibtexEntryDiagnosticsProvider)
+
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {
             val language = getLanguageById(languageId) ?: return
@@ -122,6 +130,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                 if (!workspace.documents.contains(document)) {
                     workspace.documents.add(document)
                 }
+                publishDiagnostics(uri)
             }
         }
     }
@@ -136,6 +145,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
                 }
                 document.version = params.textDocument.version
                 document.analyze()
+                publishDiagnostics(uri)
             }
         }
     }
@@ -307,18 +317,24 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             }
             val (status, allErrors) = BuildEngine.build(parent.uri, config, listener)
 
-            for (document in workspace.documents.filterIsInstance<LatexDocument>()) {
-                val diagnostics = PublishDiagnosticsParams(document.uri.toString(), emptyList())
-                client.publishDiagnostics(diagnostics)
-            }
+            buildDiagnosticsProvider.diagnosticsByUri = allErrors
+                    .groupBy { it.uri }
+                    .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
 
-            for ((uri, errors) in allErrors.groupBy { it.uri }) {
-                val diagnostics = PublishDiagnosticsParams(uri.toString(), errors.map { it.toDiagnostic() })
-                client.publishDiagnostics(diagnostics)
+            for (document in workspace.documents) {
+                publishDiagnostics(document.uri)
             }
 
             client.setStatus(StatusParams(ServerStatus.IDLE))
             status
         }
+    }
+
+    private fun publishDiagnostics(uri: URI) {
+        val relatedDocuments = workspace.relatedDocuments(uri)
+        val request = DiagnosticsRequest(uri, relatedDocuments)
+        val diagnostics = diagnosticsProvider.getDiagnostics(request)
+        val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
+        client.publishDiagnostics(params)
     }
 }
