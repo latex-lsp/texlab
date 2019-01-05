@@ -28,9 +28,11 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
-        val root = URI.create(params.rootUri)
-        synchronized(workspace) {
-            loadWorkspace(root)
+        if (params.rootUri != null) {
+            val root = URI.create(params.rootUri)
+            synchronized(workspace) {
+                loadWorkspace(root)
+            }
         }
 
         val capabilities = ServerCapabilities().apply {
