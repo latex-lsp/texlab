@@ -8,9 +8,22 @@ data class LatexUnit(val file: File,
                      val references: List<File>,
                      val likelyPrimitives: Set<String>) {
     fun checkPrimitives(candidates: Iterable<String>): LatexPrimitives {
-        val testCode = buildTestCode(candidates)
-        val log = LatexCompiler.compile(testCode, format) ?: ""
+        val testCode = buildString {
+            appendln(buildCodeHeader(file.nameWithoutExtension, kind))
+            appendln("\\usepackage{etoolbox}")
+            appendln("\\begin{document}")
 
+            for (candidate in candidates) {
+                appendln("\\ifcsundef{$candidate}{} {")
+                appendln("\\ifcsundef{end$candidate}")
+                appendln("{ \\wlog{cmd:$candidate} }")
+                appendln("{ \\wlog{env:$candidate} } }")
+            }
+
+            appendln("\\end{document}")
+        }
+
+        val log = LatexCompiler.compile(testCode, format) ?: ""
         val commands = mutableListOf<String>()
         val environments = mutableListOf<String>()
         for (line in log.lines()) {
@@ -22,23 +35,6 @@ data class LatexUnit(val file: File,
         }
 
         return LatexPrimitives(commands, environments)
-    }
-
-    private fun buildTestCode(candidates: Iterable<String>): String {
-        val code = buildCodeHeader(file.nameWithoutExtension, kind)
-                .appendln("""\usepackage{etoolbox}""")
-                .appendln("""\begin{document}""")
-
-        for (candidate in candidates) {
-            code.appendln("""\ifcsundef{$candidate}{}{
-                                        \ifcsundef{end$candidate}
-                                            { \wlog{cmd:$candidate} }
-                                            { \wlog{env:$candidate} }
-                                    }""")
-        }
-
-        code.appendln("""\end{document}""")
-        return code.toString()
     }
 
     companion object {
@@ -57,10 +53,11 @@ data class LatexUnit(val file: File,
                 else -> LatexFormat.LATEX
             }
 
-            val testCode = buildCodeHeader(file.nameWithoutExtension, kind)
-                    .appendln("""\listfiles""")
-                    .appendln("""\begin{document} \end{document}""")
-                    .toString()
+            val testCode = buildString {
+                appendln(buildCodeHeader(file.nameWithoutExtension, kind))
+                appendln("\\listfiles")
+                appendln("\\begin{document} \\end{document}")
+            }
             val log = LatexCompiler.compile(testCode, format) ?: return null
 
             val includes = extractIncludes(log, kind, resolver)
@@ -89,15 +86,11 @@ data class LatexUnit(val file: File,
                     .toList()
         }
 
-        private fun buildCodeHeader(name: String, kind: LatexUnitKind): StringBuilder {
-            val builder = StringBuilder()
-            val line = when (kind) {
-                LatexUnitKind.STY -> """\documentclass{article} \usepackage{$name}"""
-                LatexUnitKind.CLS -> """\documentclass{$name}"""
+        private fun buildCodeHeader(name: String, kind: LatexUnitKind): String = buildString {
+            when (kind) {
+                LatexUnitKind.STY -> appendln("\\documentclass{article} \\usepackage{$name}")
+                LatexUnitKind.CLS -> appendln("\\documentclass{$name}")
             }
-
-            builder.appendln(line)
-            return builder
         }
     }
 }
