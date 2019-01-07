@@ -17,6 +17,10 @@ import texlab.diagnostics.*
 import texlab.folding.*
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
+import texlab.highlight.AggregateHighlightProvider
+import texlab.highlight.HighlightProvider
+import texlab.highlight.HighlightRequest
+import texlab.highlight.LatexLabelHighlightProvider
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
@@ -103,6 +107,9 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             AggregateDefinitionProvider(
                     LatexLabelDefinitionProvider,
                     BibtexEntryDefinitionProvider)
+
+    private val highlightProvider: HighlightProvider =
+            AggregateHighlightProvider(LatexLabelHighlightProvider)
 
     private val metadataProvider: PackageMetadataProvider = CtanPackageMetadataProvider()
 
@@ -293,6 +300,19 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
             val request = ReferenceRequest(uri, relatedDocuments, params.position)
             val references = referenceProvider.getReferences(request)?.toMutableList()
             return CompletableFuture.completedFuture(references)
+        }
+    }
+
+    override fun documentHighlight(params: TextDocumentPositionParams):
+            CompletableFuture<MutableList<out DocumentHighlight>> {
+        synchronized(workspace) {
+            val uri = URI.create(params.textDocument.uri)
+            val document = workspace.documents.firstOrNull { it.uri == uri }
+                    ?: return CompletableFuture.completedFuture(null)
+
+            val request = HighlightRequest(document, params.position)
+            val highlights = highlightProvider.getHighlights(request)
+            return CompletableFuture.completedFuture(highlights?.toMutableList())
         }
     }
 

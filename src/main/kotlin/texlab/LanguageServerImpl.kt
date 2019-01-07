@@ -50,6 +50,7 @@ class LanguageServerImpl : LanguageServer {
             hoverProvider = true
             documentFormattingProvider = true
             referencesProvider = true
+            documentHighlightProvider = true
         }
 
         return CompletableFuture.completedFuture(InitializeResult(capabilities))
