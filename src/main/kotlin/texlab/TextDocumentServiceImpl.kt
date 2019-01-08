@@ -2,7 +2,6 @@ package texlab
 
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.eclipse.lsp4j.services.TextDocumentService
 import texlab.build.*
 import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
@@ -36,9 +35,8 @@ import java.net.URI
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
-
-class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentService {
-    lateinit var client: LanguageClientExtensions
+class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocumentService {
+    lateinit var client: CustomLanguageClient
     private val resolver = LatexResolver.create()
 
     private val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
@@ -316,7 +314,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : TextDocumentSe
         }
     }
 
-    fun build(params: BuildParams): CompletableFuture<BuildStatus> {
+    override fun build(params: BuildParams): CompletableFuture<BuildStatus> {
         return CompletableFuture.supplyAsync {
             val childUri = URI.create(params.textDocument.uri)
             val parent = workspace.relatedDocuments(childUri)

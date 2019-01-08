@@ -2,12 +2,9 @@ package texlab
 
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
+import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
 import org.eclipse.lsp4j.services.LanguageServer
-import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
-import texlab.build.BuildParams
-import texlab.build.BuildStatus
 import java.io.IOException
 import java.net.URI
 import java.nio.file.FileSystems
@@ -20,9 +17,9 @@ class LanguageServerImpl : LanguageServer {
     private val workspace: Workspace = Workspace()
     private val textDocumentService = TextDocumentServiceImpl(workspace)
     private val workspaceService = WorkspaceServiceImpl()
-    private lateinit var client: LanguageClientExtensions
+    private lateinit var client: CustomLanguageClient
 
-    fun connect(client: LanguageClientExtensions) {
+    fun connect(client: CustomLanguageClient) {
         this.client = client
         this.textDocumentService.client = client
     }
@@ -84,7 +81,8 @@ class LanguageServerImpl : LanguageServer {
         }
     }
 
-    override fun getTextDocumentService(): TextDocumentService = textDocumentService
+    @JsonDelegate
+    override fun getTextDocumentService(): CustomTextDocumentService = textDocumentService
 
     override fun getWorkspaceService(): WorkspaceService = workspaceService
 
@@ -93,10 +91,5 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun exit() {
-    }
-
-    @JsonRequest("textDocument/build", useSegment = false)
-    fun build(params: BuildParams): CompletableFuture<BuildStatus> {
-        return textDocumentService.build(params)
     }
 }
