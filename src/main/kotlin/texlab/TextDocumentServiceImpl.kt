@@ -317,10 +317,12 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun build(params: BuildParams): CompletableFuture<BuildStatus> {
         return CompletableFuture.supplyAsync {
             val childUri = URI.create(params.textDocument.uri)
-            val parent = workspace.relatedDocuments(childUri)
-                    .filterIsInstance<LatexDocument>()
-                    .firstOrNull { it.tree.isStandalone }
-                    ?: workspace.documents.first { it.uri == childUri }
+            val parent = synchronized(workspace) {
+                workspace.relatedDocuments(childUri)
+                        .filterIsInstance<LatexDocument>()
+                        .firstOrNull { it.tree.isStandalone }
+                        ?: workspace.documents.first { it.uri == childUri }
+            }
 
             val parentName = Paths.get(parent.uri).fileName
             client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
@@ -339,8 +341,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                     .groupBy { it.uri }
                     .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
 
-            for (document in workspace.documents) {
-                publishDiagnostics(document.uri)
+            synchronized(workspace) {
+                for (document in workspace.documents) {
+                    publishDiagnostics(document.uri)
+                }
             }
 
             client.setStatus(StatusParams(ServerStatus.IDLE))
