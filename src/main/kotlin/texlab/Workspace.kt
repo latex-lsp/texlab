@@ -63,4 +63,11 @@ class Workspace {
         }
         return results
     }
+
+    fun findParent(childUri: URI): Document {
+        return relatedDocuments(childUri)
+                .filterIsInstance<LatexDocument>()
+                .firstOrNull { it.tree.isStandalone }
+                ?: documents.first { it.uri == childUri }
+    }
 }

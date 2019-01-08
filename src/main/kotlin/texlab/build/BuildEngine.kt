@@ -9,10 +9,6 @@ import java.util.concurrent.CompletableFuture
 
 object BuildEngine {
     fun build(uri: URI, config: BuildConfig, listener: BuildListener? = null): BuildResult {
-        if (uri.scheme != "file") {
-            return BuildResult(BuildStatus.FAILURE, emptyList())
-        }
-
         val texPath = Paths.get(uri)
         val command = listOf(config.executable, *config.args.toTypedArray(), texPath.toString())
         return try {

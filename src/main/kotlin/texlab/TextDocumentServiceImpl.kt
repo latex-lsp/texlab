@@ -16,6 +16,9 @@ import texlab.diagnostics.*
 import texlab.folding.*
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
+import texlab.forwardSearch.ForwardSearchConfig
+import texlab.forwardSearch.ForwardSearchStatus
+import texlab.forwardSearch.ForwardSearchTool
 import texlab.highlight.AggregateHighlightProvider
 import texlab.highlight.HighlightProvider
 import texlab.highlight.HighlightRequest
@@ -318,10 +321,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
         return CompletableFuture.supplyAsync {
             val childUri = URI.create(params.textDocument.uri)
             val parent = synchronized(workspace) {
-                workspace.relatedDocuments(childUri)
-                        .filterIsInstance<LatexDocument>()
-                        .firstOrNull { it.tree.isStandalone }
-                        ?: workspace.documents.first { it.uri == childUri }
+                workspace.findParent(childUri)
             }
 
             val parentName = Paths.get(parent.uri).fileName
@@ -349,6 +349,18 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
             client.setStatus(StatusParams(ServerStatus.IDLE))
             status
+        }
+    }
+
+    override fun forwardSearch(params: TextDocumentPositionParams): CompletableFuture<ForwardSearchStatus> {
+        return CompletableFuture.supplyAsync {
+            val childUri = URI.create(params.textDocument.uri)
+            val parent = synchronized(workspace) {
+                workspace.findParent(childUri)
+            }
+
+            val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
+            ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
         }
     }
 
