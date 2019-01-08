@@ -28,8 +28,8 @@ object ForwardSearchTool {
         val command = listOf(config.executable, *args)
         return try {
             val process = ProcessBuilder(command)
-                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                    .redirectError(ProcessBuilder.Redirect.PIPE)
                     .start()
             process.waitFor()
             ForwardSearchStatus.SUCCESS
