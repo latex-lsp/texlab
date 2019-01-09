@@ -28,7 +28,7 @@ import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
 import texlab.link.LinkRequest
 import texlab.metadata.CtanPackageMetadataProvider
-import texlab.metadata.PackageMetadataProvider
+import texlab.metadata.MetadataProvider
 import texlab.references.*
 import texlab.rename.*
 import texlab.symbol.*
@@ -112,7 +112,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     private val highlightProvider: HighlightProvider =
             AggregateHighlightProvider(LatexLabelHighlightProvider)
 
-    private val metadataProvider: PackageMetadataProvider = CtanPackageMetadataProvider()
+    private val metadataProvider: MetadataProvider = CtanPackageMetadataProvider()
 
     private val referenceProvider: ReferenceProvider =
             AggregateReferenceProvider(
@@ -216,8 +216,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
             if (unresolved.kind == CompletionItemKind.Class) {
                 val metadata = metadataProvider.getMetadata(unresolved.label)
                 if (metadata != null) {
-                    unresolved.detail = metadata.caption
-                    unresolved.setDocumentation(metadata.description)
+                    unresolved.detail = metadata.detail
+                    unresolved.setDocumentation(metadata.documentation)
                 }
             }
 
@@ -264,7 +264,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
         return CompletableFuture.supplyAsync {
             val metadata = metadataProvider.getMetadata(include.path)
-            val description = metadata?.description
+            val description = metadata?.documentation
             if (description != null) {
                 Hover(description)
             } else {
