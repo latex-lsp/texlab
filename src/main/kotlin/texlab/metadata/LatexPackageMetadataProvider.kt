@@ -9,7 +9,7 @@ import org.eclipse.lsp4j.MarkupKind
 import java.io.IOException
 import java.net.URL
 
-class CtanPackageMetadataProvider : MetadataProvider {
+class LatexPackageMetadataProvider : MetadataProvider {
     override fun getMetadata(name: String): Metadata? {
         return try {
             val json = URL("https://ctan.org/json/2.0/pkg/$name").readText()

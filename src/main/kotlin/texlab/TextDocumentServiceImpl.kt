@@ -27,12 +27,13 @@ import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
 import texlab.link.LinkRequest
-import texlab.metadata.CtanPackageMetadataProvider
-import texlab.metadata.MetadataProvider
+import texlab.metadata.BibtexEntryTypeMetadataProvider
+import texlab.metadata.LatexPackageMetadataProvider
 import texlab.references.*
 import texlab.rename.*
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
+import texlab.syntax.bibtex.BibtexEntrySyntax
 import java.io.File
 import java.net.URI
 import java.nio.file.Paths
@@ -112,7 +113,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     private val highlightProvider: HighlightProvider =
             AggregateHighlightProvider(LatexLabelHighlightProvider)
 
-    private val metadataProvider: MetadataProvider = CtanPackageMetadataProvider()
+    private val packageMetadataProvider = LatexPackageMetadataProvider()
+    private val bibtexEntryTypeMetadataProvider = BibtexEntryTypeMetadataProvider()
 
     private val referenceProvider: ReferenceProvider =
             AggregateReferenceProvider(
@@ -213,12 +215,16 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun resolveCompletionItem(unresolved: CompletionItem): CompletableFuture<CompletionItem> {
         return CompletableFuture.supplyAsync<CompletionItem> {
-            if (unresolved.kind == CompletionItemKind.Class) {
-                val metadata = metadataProvider.getMetadata(unresolved.label)
-                if (metadata != null) {
-                    unresolved.detail = metadata.detail
-                    unresolved.setDocumentation(metadata.documentation)
-                }
+            val provider = when (unresolved.kind) {
+                CompletionItemKind.Class -> packageMetadataProvider
+                CompletionItemKind.Interface -> bibtexEntryTypeMetadataProvider
+                else -> null
+            }
+
+            val metadata = provider?.getMetadata(unresolved.label)
+            if (metadata != null) {
+                unresolved.detail = metadata.detail
+                unresolved.setDocumentation(metadata.documentation)
             }
 
             unresolved
@@ -249,21 +255,38 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     }
 
     override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover> {
-        val include = synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+        val uri = URI.create(params.textDocument.uri)
+        val (name, provider) = synchronized(workspace) {
             val document = workspace.documents
-                    .filterIsInstance<LatexDocument>()
                     .firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
 
-            document.tree.includes
-                    .filter { it.command.name.text == "\\usepackage" || it.command.name.text == "\\documentclass" }
-                    .firstOrNull { it.command.range.contains(params.position) }
-                    ?: return CompletableFuture.completedFuture(null)
+            val name = when (document) {
+                is LatexDocument -> {
+                    document.tree.includes
+                            .filter { it.isUnitImport }
+                            .firstOrNull { it.command.range.contains(params.position) }?.path
+                            ?: return CompletableFuture.completedFuture(null)
+
+                }
+                is BibtexDocument -> {
+                    document.tree.root.children
+                            .filterIsInstance<BibtexEntrySyntax>()
+                            .firstOrNull { it.type.range.contains(params.position) }?.type?.text?.substring(1)
+                            ?: return CompletableFuture.completedFuture(null)
+                }
+            }
+
+            val provider = when (document) {
+                is LatexDocument -> packageMetadataProvider
+                is BibtexDocument -> bibtexEntryTypeMetadataProvider
+            }
+
+            name to provider
         }
 
         return CompletableFuture.supplyAsync {
-            val metadata = metadataProvider.getMetadata(include.path)
+            val metadata = provider.getMetadata(name)
             val description = metadata?.documentation
             if (description != null) {
                 Hover(description)
