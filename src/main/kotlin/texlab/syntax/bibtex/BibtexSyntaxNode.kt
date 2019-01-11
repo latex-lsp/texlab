@@ -62,6 +62,10 @@ sealed class BibtexDocumentItemSyntax : BibtexSyntaxNode()
 
 sealed class BibtexDeclarationSyntax : BibtexDocumentItemSyntax() {
     abstract val type: BibtexToken
+
+    abstract val left: BibtexToken?
+
+    abstract val right: BibtexToken?
 }
 
 data class BibtexCommentSyntax(val token: BibtexToken) : BibtexDocumentItemSyntax() {
@@ -69,28 +73,28 @@ data class BibtexCommentSyntax(val token: BibtexToken) : BibtexDocumentItemSynta
 }
 
 data class BibtexPreambleSyntax(override val type: BibtexToken,
-                                val left: BibtexToken?,
+                                override val left: BibtexToken?,
                                 val content: BibtexContentSyntax?,
-                                val right: BibtexToken?) : BibtexDeclarationSyntax() {
+                                override val right: BibtexToken?) : BibtexDeclarationSyntax() {
     override val range = Range(type.start, right?.end ?: content?.end ?: left?.end ?: type.end)
 }
 
 data class BibtexStringSyntax(override val type: BibtexToken,
-                              val left: BibtexToken?,
+                              override val left: BibtexToken?,
                               val name: BibtexToken?,
                               val assign: BibtexToken?,
                               val value: BibtexContentSyntax?,
-                              val right: BibtexToken?) : BibtexDeclarationSyntax() {
+                              override val right: BibtexToken?) : BibtexDeclarationSyntax() {
     override val range = Range(type.start,
             right?.end ?: value?.end ?: assign?.end ?: name?.end ?: left?.end ?: type.end)
 }
 
 data class BibtexEntrySyntax(override val type: BibtexToken,
-                             val left: BibtexToken?,
+                             override val left: BibtexToken?,
                              val name: BibtexToken?,
                              val comma: BibtexToken?,
                              val fields: List<BibtexFieldSyntax>,
-                             val right: BibtexToken?) : BibtexDeclarationSyntax() {
+                             override val right: BibtexToken?) : BibtexDeclarationSyntax() {
     override val range = Range(type.start,
             right?.end ?: fields.lastOrNull()?.end ?: comma?.end ?: name?.end ?: left?.end ?: type.end)
 }

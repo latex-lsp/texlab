@@ -3,9 +3,9 @@ package texlab.folding
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeKind
 import texlab.BibtexDocument
-import texlab.syntax.bibtex.BibtexEntrySyntax
+import texlab.syntax.bibtex.BibtexDeclarationSyntax
 
-object BibtexEntryFoldingProvider : FoldingProvider {
+object BibtexDeclarationFoldingProvider : FoldingProvider {
     override fun fold(request: FoldingRequest): List<FoldingRange> {
         if (request.document !is BibtexDocument) {
             return emptyList()
@@ -13,20 +13,17 @@ object BibtexEntryFoldingProvider : FoldingProvider {
 
         return request.document.tree.root
                 .children
-                .filterIsInstance<BibtexEntrySyntax>()
+                .filterIsInstance<BibtexDeclarationSyntax>()
                 .mapNotNull { fold(it) }
     }
 
-    private fun fold(entry: BibtexEntrySyntax): FoldingRange? {
-        if (entry.right == null) {
-            return null
-        }
-
+    private fun fold(entry: BibtexDeclarationSyntax): FoldingRange? {
+        val right = entry.right ?: return null
         return FoldingRange().apply {
             startLine = entry.type.line
             startCharacter = entry.type.character
-            endLine = entry.right.line
-            endCharacter = entry.right.character
+            endLine = right.line
+            endCharacter = right.character
             kind = FoldingRangeKind.Region
         }
     }

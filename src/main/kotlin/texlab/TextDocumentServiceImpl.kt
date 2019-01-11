@@ -101,7 +101,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
             AggregateFoldingProvider(
                     LatexEnvironmentFoldingProvider,
                     LatexSectionFoldingProvider,
-                    BibtexEntryFoldingProvider)
+                    BibtexDeclarationFoldingProvider)
 
     private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
 
