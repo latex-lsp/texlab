@@ -3,6 +3,7 @@ package texlab
 import org.eclipse.lsp4j.Position
 import texlab.completion.CompletionRequest
 import texlab.folding.FoldingRequest
+import texlab.link.LinkRequest
 import texlab.rename.RenameRequest
 import java.io.File
 
@@ -28,6 +29,11 @@ class WorkspaceBuilder {
     fun folding(path: String): FoldingRequest {
         val uri = File(path).toURI()
         return FoldingRequest(workspace.documents.first { it.uri == uri })
+    }
+
+    fun link(path: String): LinkRequest {
+        val uri = File(path).toURI()
+        return LinkRequest(workspace, uri)
     }
 
     fun rename(path: String, line: Int, character: Int, newName: String): RenameRequest {

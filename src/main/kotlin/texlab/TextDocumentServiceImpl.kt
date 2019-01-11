@@ -195,7 +195,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun documentLink(params: DocumentLinkParams): CompletableFuture<MutableList<DocumentLink>> {
         synchronized(workspace) {
             val uri = URI.create(params.textDocument.uri)
-            val request = LinkRequest(uri, workspace)
+            val request = LinkRequest(workspace, uri)
             val links = linkProvider.getLinks(request).toMutableList()
             return CompletableFuture.completedFuture(links)
         }
