@@ -41,7 +41,16 @@ class LatexLabelRenamerTests {
         WorkspaceBuilder()
                 .document("foo.tex", "\\foo{bar}")
                 .rename("foo.tex", 0, 5, "baz")
-                .let { BibtexEntryRenamer.rename(it) }
+                .let { LatexLabelRenamer.rename(it) }
+                .also { assertNull(it) }
+    }
+
+    @Test
+    fun `it should process BibTeX documents`() {
+        WorkspaceBuilder()
+                .document("foo.bib", "")
+                .rename("foo.bib", 0, 0, "bar")
+                .let { LatexLabelRenamer.rename(it) }
                 .also { assertNull(it) }
     }
 }

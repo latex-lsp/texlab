@@ -16,9 +16,9 @@ class AggregateFoldingProviderTests {
 
     @Test
     fun `it should merge foldings from all providers`() {
-        val folding1 = FoldingRange()
-        val folding2 = FoldingRange()
-        val folding3 = FoldingRange()
+        val folding1 = FoldingRange().apply { startLine = 1 }
+        val folding2 = FoldingRange().apply { startLine = 2 }
+        val folding3 = FoldingRange().apply { startLine = 3 }
         val provider1 = createProvider(folding1, folding2)
         val provider2 = createProvider(folding3)
         val request = WorkspaceBuilder()

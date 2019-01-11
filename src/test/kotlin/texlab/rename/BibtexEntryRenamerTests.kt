@@ -43,4 +43,13 @@ class BibtexEntryRenamerTests {
                 .let { BibtexEntryRenamer.rename(it) }
                 .also { assertNull(it) }
     }
+
+    @Test
+    fun `it should not process LaTeX documents`() {
+        WorkspaceBuilder()
+                .document("foo.tex", "")
+                .rename("foo.tex", 0, 0, "bar")
+                .let { BibtexEntryRenamer.rename(it) }
+                .also { assertNull(it) }
+    }
 }

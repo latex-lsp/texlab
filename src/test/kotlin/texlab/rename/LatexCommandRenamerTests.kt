@@ -37,7 +37,7 @@ class LatexCommandRenamerTests {
         WorkspaceBuilder()
                 .document("foo.bib", "\\foo \\bar")
                 .rename("foo.bib", 0, 1, "baz")
-                .let { LatexEnvironmentRenamer.rename(it) }
+                .let { LatexCommandRenamer.rename(it) }
                 .also { Assertions.assertNull(it) }
     }
 }
