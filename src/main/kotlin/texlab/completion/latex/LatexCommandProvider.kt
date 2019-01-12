@@ -14,7 +14,8 @@ abstract class LatexCommandProvider : CompletionProvider {
                     .tree
                     .root
                     .descendants()
-                    .lastOrNull { it.range.contains(request.position) }
+                    .filterIsInstance<LatexCommandSyntax>()
+                    .lastOrNull { it.name.range.contains(request.position) }
 
             if (command is LatexCommandSyntax) {
                 complete(request, command)
