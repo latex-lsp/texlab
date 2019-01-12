@@ -6,13 +6,13 @@ import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import texlab.syntax.bibtex.BibtexParser
 
 class BibtexFormatterTests {
-    private fun verify(source: String, expected: String) {
+    private fun verify(source: String, expected: String, lineLength: Int = 30) {
         val entry = BibtexParser.parse(source)
                 .children
                 .filterIsInstance<BibtexDeclarationSyntax>()
                 .first()
 
-        val formatter = BibtexFormatter(true, 4, 30)
+        val formatter = BibtexFormatter(true, 4, lineLength)
         val actual = formatter
                 .format(entry)
                 .replace(System.lineSeparator(), "\n")
@@ -31,6 +31,17 @@ class BibtexFormatterTests {
             }
         """.trimIndent()
         verify(source, expected)
+    }
+
+    @Test
+    fun `it should not wrap long lines with a line length of zero`() {
+        val source = "@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}"
+        val expected = """
+            @article{foo,
+                bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},
+            }
+        """.trimIndent()
+        verify(source, expected, 0)
     }
 
     @Test

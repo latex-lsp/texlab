@@ -5,7 +5,15 @@ import java.util.*
 
 class BibtexFormatter(insertSpaces: Boolean,
                       private val tabSize: Int,
-                      private val lineLength: Int) {
+                      private var lineLength: Int) {
+    init {
+        lineLength = if (lineLength <= 0) {
+            Int.MAX_VALUE
+        } else {
+            lineLength
+        }
+    }
+
     private val indent: String = if (insertSpaces) {
         Collections.nCopies(tabSize, " ").joinToString("")
     } else {
