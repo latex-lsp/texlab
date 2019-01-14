@@ -2,7 +2,10 @@ package texlab
 
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import texlab.build.*
+import texlab.build.BuildConfig
+import texlab.build.BuildEngine
+import texlab.build.BuildParams
+import texlab.build.BuildStatus
 import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -349,16 +352,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
             val parentName = Paths.get(parent.uri).fileName
             client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
-
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            val listener = object : BuildListener {
-                override fun stdout(line: String) {
-                    client.logMessage(MessageParams(MessageType.Log, line))
-                }
-
-                override fun stderr(line: String) = stdout(line)
-            }
-            val (status, allErrors) = BuildEngine.build(parent.uri, config, listener)
+            val (status, allErrors) = BuildEngine.build(parent.uri, config)
 
             buildDiagnosticsProvider.diagnosticsByUri = allErrors
                     .groupBy { it.uri }
