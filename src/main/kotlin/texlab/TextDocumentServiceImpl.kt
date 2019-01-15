@@ -39,6 +39,7 @@ import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import texlab.syntax.bibtex.BibtexEntrySyntax
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
@@ -59,10 +60,13 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                 }
             })
 
+    private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
+
     private val completionProvider: CompletionProvider =
             LimitedCompletionProvider(
                     OrderByQualityProvider(
                             AggregateCompletionProvider(
+                                    includeGraphicsProvider,
                                     LatexIncludeProvider(workspace),
                                     LatexBibliographyProvider(workspace),
                                     LatexClassImportProvider(resolver),
@@ -130,6 +134,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
             AggregateDiagnosticsProvider(
                     buildDiagnosticsProvider,
                     BibtexEntryDiagnosticsProvider)
+
+    fun initialize(root: Path?) {
+        includeGraphicsProvider.root = root
+    }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
         params.textDocument.apply {

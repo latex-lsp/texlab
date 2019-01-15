@@ -1,5 +1,6 @@
 package texlab
 
+import com.sun.jndi.toolkit.url.Uri
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
@@ -25,11 +26,14 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
-        if (params.rootUri != null) {
+        if (params.rootUri != null && params.rootUri.startsWith("file")) {
             val root = URI.create(params.rootUri)
             synchronized(workspace) {
                 loadWorkspace(root)
             }
+            textDocumentService.initialize(Paths.get(root))
+        } else {
+            textDocumentService.initialize(null)
         }
 
         val capabilities = ServerCapabilities().apply {
