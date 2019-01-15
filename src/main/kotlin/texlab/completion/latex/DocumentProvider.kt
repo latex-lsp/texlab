@@ -9,8 +9,9 @@ import texlab.syntax.latex.LatexCommandSyntax
 import java.net.URI
 import java.nio.file.Paths
 
-abstract class IncludeProvider<T>(private val workspace: Workspace,
-                                  private val documentClass: Class<T>) : LatexArgumentProvider() where T : Document {
+abstract class DocumentProvider<T>(private val workspace: Workspace,
+                                   private val documentClass: Class<T>,
+                                   private val includeExtension: Boolean) : LatexArgumentProvider() where T : Document {
     override val argumentIndex: Int = 0
 
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
@@ -23,7 +24,16 @@ abstract class IncludeProvider<T>(private val workspace: Workspace,
 
     private fun relativize(base: URI, relative: URI): String {
         val pathAbsolute = Paths.get(relative)
-        val pathBase = Paths.get(base).parent
-        return pathBase.relativize(pathAbsolute).toString().replace('\\', '/')
+        var path = Paths.get(base)
+                .parent
+                .relativize(pathAbsolute)
+                .toString()
+                .replace('\\', '/')
+
+        if (!includeExtension && path.contains('.')) {
+            path = path.substring(0, path.lastIndexOf('.'))
+        }
+
+        return path
     }
 }

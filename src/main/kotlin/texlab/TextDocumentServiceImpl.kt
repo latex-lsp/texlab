@@ -68,6 +68,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                             AggregateCompletionProvider(
                                     includeGraphicsProvider,
                                     LatexIncludeProvider(workspace),
+                                    LatexInputProvider(workspace),
                                     LatexBibliographyProvider(workspace),
                                     LatexClassImportProvider(resolver),
                                     LatexPackageImportProvider(resolver),

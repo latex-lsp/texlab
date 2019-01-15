@@ -1,6 +1,5 @@
 package texlab
 
-import com.sun.jndi.toolkit.url.Uri
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
