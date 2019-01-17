@@ -9,8 +9,6 @@ sealed class Document(val uri: URI) {
 
     var text: String = ""
 
-    var version: Int = -1
-
     override fun equals(other: Any?): Boolean {
         return other is Document && uri == other.uri
     }

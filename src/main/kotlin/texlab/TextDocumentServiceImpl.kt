@@ -147,7 +147,6 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                 val uri = URI.create(uri)
                 val document = workspace.documents.firstOrNull { it.uri == uri } ?: Document.create(uri, language)
                 document.text = text
-                document.version = version
                 document.analyze()
                 if (!workspace.documents.contains(document)) {
                     workspace.documents.add(document)
@@ -161,14 +160,9 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
         val uri = URI.create(params.textDocument.uri)
         synchronized(workspace) {
             val document = workspace.documents.first { it.uri == uri }
-            if (document.version <= params.textDocument.version) {
-                params.contentChanges.forEach {
-                    document.text = it.text
-                }
-                document.version = params.textDocument.version
-                document.analyze()
-                publishDiagnostics(uri)
-            }
+            params.contentChanges.forEach { document.text = it.text }
+            document.analyze()
+            publishDiagnostics(uri)
         }
     }
 
