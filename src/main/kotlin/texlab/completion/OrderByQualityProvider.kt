@@ -24,9 +24,11 @@ class OrderByQualityProvider(private val provider: CompletionProvider) : Complet
     private fun getName(request: CompletionRequest): String? {
         return when (request.document) {
             is LatexDocument -> {
-                val node = request.document.tree.root
-                        .descendants()
-                        .lastOrNull { it.range.contains(request.position) }
+                val descendants = request.document.tree.root.descendants()
+                val node = descendants
+                        .filterIsInstance<LatexCommandSyntax>()
+                        .lastOrNull { it.name.range.contains(request.position) }
+                        ?: descendants.lastOrNull { it.range.contains(request.position) }
 
                 when (node) {
                     is LatexGroupSyntax -> ""
