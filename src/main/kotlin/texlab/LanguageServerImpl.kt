@@ -26,7 +26,7 @@ class LanguageServerImpl : LanguageServer {
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         if (params.rootUri != null && params.rootUri.startsWith("file")) {
-            val root = URI.create(params.rootUri)
+            val root = URIHelper.parse(params.rootUri)
             synchronized(workspace) {
                 loadWorkspace(root)
             }

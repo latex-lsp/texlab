@@ -144,7 +144,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
         params.textDocument.apply {
             val language = getLanguageById(languageId) ?: return
             synchronized(workspace) {
-                val uri = URI.create(uri)
+                val uri = URIHelper.parse(uri)
                 val document = workspace.documents.firstOrNull { it.uri == uri } ?: Document.create(uri, language)
                 document.text = text
                 document.analyze()
@@ -157,7 +157,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
-        val uri = URI.create(params.textDocument.uri)
+        val uri = URIHelper.parse(params.textDocument.uri)
         synchronized(workspace) {
             val document = workspace.documents.first { it.uri == uri }
             params.contentChanges.forEach { document.text = it.text }
@@ -175,7 +175,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun documentSymbol(params: DocumentSymbolParams):
             CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
@@ -191,7 +191,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = RenameRequest(uri, relatedDocuments, params.position, params.newName)
             return CompletableFuture.completedFuture(renamer.rename(request))
@@ -200,7 +200,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun documentLink(params: DocumentLinkParams): CompletableFuture<MutableList<DocumentLink>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val request = LinkRequest(workspace, uri)
             val links = linkProvider.getLinks(request).toMutableList()
             return CompletableFuture.completedFuture(links)
@@ -210,7 +210,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun completion(params: CompletionParams):
             CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
             val items = completionProvider.complete(request).toList()
@@ -239,7 +239,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun foldingRange(params: FoldingRangeRequestParams): CompletableFuture<MutableList<FoldingRange>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
@@ -252,7 +252,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun definition(params: TextDocumentPositionParams): CompletableFuture<MutableList<out Location>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = DefinitionRequest(uri, relatedDocuments, params.position)
             val location = definitionProvider.find(request)
@@ -261,7 +261,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     }
 
     override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover> {
-        val uri = URI.create(params.textDocument.uri)
+        val uri = URIHelper.parse(params.textDocument.uri)
         val (name, provider) = synchronized(workspace) {
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
@@ -304,7 +304,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
         return CompletableFuture.supplyAsync {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
             synchronized(workspace) {
                 val document =
@@ -325,7 +325,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun references(params: ReferenceParams): CompletableFuture<MutableList<out Location>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = ReferenceRequest(uri, relatedDocuments, params.position)
             val references = referenceProvider.getReferences(request)?.toMutableList()
@@ -336,7 +336,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun documentHighlight(params: TextDocumentPositionParams):
             CompletableFuture<MutableList<out DocumentHighlight>> {
         synchronized(workspace) {
-            val uri = URI.create(params.textDocument.uri)
+            val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents.firstOrNull { it.uri == uri }
                     ?: return CompletableFuture.completedFuture(null)
 
@@ -348,7 +348,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun build(params: BuildParams): CompletableFuture<BuildStatus> {
         return CompletableFuture.supplyAsync {
-            val childUri = URI.create(params.textDocument.uri)
+            val childUri = URIHelper.parse(params.textDocument.uri)
             val parent = synchronized(workspace) {
                 workspace.findParent(childUri)
             }
@@ -375,7 +375,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun forwardSearch(params: TextDocumentPositionParams): CompletableFuture<ForwardSearchStatus> {
         return CompletableFuture.supplyAsync {
-            val childUri = URI.create(params.textDocument.uri)
+            val childUri = URIHelper.parse(params.textDocument.uri)
             val parent = synchronized(workspace) {
                 workspace.findParent(childUri)
             }
