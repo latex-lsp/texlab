@@ -174,6 +174,15 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
+        CompletableFuture.supplyAsync {
+            val uri = URIHelper.parse(params.textDocument.uri)
+            val config = client.configuration<BuildConfig>("latex.build", uri)
+            if (config.onSave) {
+                val document = workspace.findParent(uri)
+                val identifier = TextDocumentIdentifier(document.uri.toString())
+                build(BuildParams(identifier)).get()
+            }
+        }
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {

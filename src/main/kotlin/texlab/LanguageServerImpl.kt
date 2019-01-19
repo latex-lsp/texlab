@@ -38,6 +38,7 @@ class LanguageServerImpl : LanguageServer {
         val capabilities = ServerCapabilities().apply {
             val syncOptions = TextDocumentSyncOptions().apply {
                 openClose = true
+                save = SaveOptions(false)
                 change = TextDocumentSyncKind.Full
             }
             textDocumentSync = Either.forRight(syncOptions)
