@@ -1,6 +1,7 @@
 package texlab
 
 import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import texlab.build.BuildConfig
 import texlab.build.BuildEngine
@@ -353,7 +354,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     }
 
     override fun build(params: BuildParams): CompletableFuture<BuildStatus> {
-        return CompletableFuture.supplyAsync {
+        return CompletableFutures.computeAsync { cancelChecker ->
             val childUri = URIHelper.parse(params.textDocument.uri)
             val parent = synchronized(workspace) {
                 workspace.findParent(childUri)
@@ -362,7 +363,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
             val parentName = Paths.get(parent.uri).fileName
             client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            val (status, allErrors) = BuildEngine.build(parent.uri, config)
+            val (status, allErrors) = BuildEngine.build(parent.uri, config, cancelChecker)
 
             buildDiagnosticsProvider.diagnosticsByUri = allErrors
                     .groupBy { it.uri }
@@ -373,7 +374,6 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                     publishDiagnostics(document.uri)
                 }
             }
-
             client.setStatus(StatusParams(ServerStatus.IDLE))
             status
         }
