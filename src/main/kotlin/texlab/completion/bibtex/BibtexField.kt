@@ -702,4 +702,11 @@ enum class BibtexField {
                     The `biblatex` package employs the generic field name `institution` in both cases."""
         }
     }
+
+    companion object {
+        fun parse(name: String): BibtexField? {
+            return BibtexField.values()
+                    .firstOrNull { it.toString() == name }
+        }
+    }
 }

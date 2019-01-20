@@ -130,7 +130,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     private val hoverProvider: HoverProvider =
             AggregateHoverProvider(
                     LatexComponentHoverProvider,
-                    BibtexEntryTypeHoverProvider)
+                    BibtexEntryTypeHoverProvider,
+                    BibtexFieldHoverProvider)
 
     private val referenceProvider: ReferenceProvider =
             AggregateReferenceProvider(
