@@ -14,7 +14,7 @@ object BibtexEntryTypeHoverProvider : HoverProvider {
 
         val name = request.document.tree.root.children
                 .filterIsInstance<BibtexEntrySyntax>()
-                .firstOrNull { it.type.range.contains(request.position) }?.type?.text?.substring(1)
+                .firstOrNull { it.type.range.contains(request.position) }?.type?.text?.substring(1)?.toLowerCase()
                 ?: return null
 
         val metadata = BibtexEntryTypeMetadataProvider.getMetadata(name)
