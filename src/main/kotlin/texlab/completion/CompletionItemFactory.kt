@@ -1,8 +1,7 @@
 package texlab.completion
 
-import org.eclipse.lsp4j.CompletionItem
-import org.eclipse.lsp4j.CompletionItemKind
-import org.eclipse.lsp4j.InsertTextFormat
+import org.eclipse.lsp4j.*
+import texlab.completion.bibtex.BibtexField
 
 object CompletionItemFactory {
     private const val KERNEL = "built-in"
@@ -92,9 +91,13 @@ object CompletionItemFactory {
         }
     }
 
-    fun createFieldName(name: String): CompletionItem {
-        return CompletionItem(name).apply {
+    fun createFieldName(field: BibtexField): CompletionItem {
+        return CompletionItem(field.toString()).apply {
             kind = CompletionItemKind.Field
+            setDocumentation(MarkupContent().apply {
+                kind = MarkupKind.MARKDOWN
+                value = field.documentation()
+            })
         }
     }
 }
