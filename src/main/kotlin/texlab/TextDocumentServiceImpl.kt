@@ -28,17 +28,17 @@ import texlab.highlight.AggregateHighlightProvider
 import texlab.highlight.HighlightProvider
 import texlab.highlight.HighlightRequest
 import texlab.highlight.LatexLabelHighlightProvider
+import texlab.hover.*
 import texlab.link.AggregateLinkProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.link.LinkProvider
 import texlab.link.LinkRequest
 import texlab.metadata.BibtexEntryTypeMetadataProvider
-import texlab.metadata.LatexPackageMetadataProvider
+import texlab.metadata.LatexComponentMetadataProvider
 import texlab.references.*
 import texlab.rename.*
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
-import texlab.syntax.bibtex.BibtexEntrySyntax
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
@@ -127,8 +127,10 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     private val highlightProvider: HighlightProvider =
             AggregateHighlightProvider(LatexLabelHighlightProvider)
 
-    private val packageMetadataProvider = LatexPackageMetadataProvider()
-    private val bibtexEntryTypeMetadataProvider = BibtexEntryTypeMetadataProvider()
+    private val hoverProvider: HoverProvider =
+            AggregateHoverProvider(
+                    LatexComponentHoverProvider,
+                    BibtexEntryTypeHoverProvider)
 
     private val referenceProvider: ReferenceProvider =
             AggregateReferenceProvider(
@@ -238,8 +240,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
     override fun resolveCompletionItem(unresolved: CompletionItem): CompletableFuture<CompletionItem> {
         return CompletableFuture.supplyAsync<CompletionItem> {
             val provider = when (unresolved.kind) {
-                CompletionItemKind.Class -> packageMetadataProvider
-                CompletionItemKind.Interface -> bibtexEntryTypeMetadataProvider
+                CompletionItemKind.Class -> LatexComponentMetadataProvider
+                CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
                 else -> null
             }
 
@@ -278,44 +280,9 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
 
     override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover> {
         val uri = URIHelper.parse(params.textDocument.uri)
-        val (name, provider) = synchronized(workspace) {
-            val document = workspace.documents
-                    .firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
-
-            val name = when (document) {
-                is LatexDocument -> {
-                    document.tree.includes
-                            .filter { it.isUnitImport }
-                            .firstOrNull { it.command.range.contains(params.position) }?.path
-                            ?: return CompletableFuture.completedFuture(null)
-
-                }
-                is BibtexDocument -> {
-                    document.tree.root.children
-                            .filterIsInstance<BibtexEntrySyntax>()
-                            .firstOrNull { it.type.range.contains(params.position) }?.type?.text?.substring(1)
-                            ?: return CompletableFuture.completedFuture(null)
-                }
-            }
-
-            val provider = when (document) {
-                is LatexDocument -> packageMetadataProvider
-                is BibtexDocument -> bibtexEntryTypeMetadataProvider
-            }
-
-            name to provider
-        }
-
-        return CompletableFuture.supplyAsync {
-            val metadata = provider.getMetadata(name)
-            val description = metadata?.documentation
-            if (description != null) {
-                Hover(description)
-            } else {
-                null
-            }
-        }
+        val relatedDocuments = synchronized(workspace) { workspace.relatedDocuments(uri) }
+        val request = HoverRequest(uri, relatedDocuments, params.position)
+        return CompletableFuture.completedFuture(hoverProvider.getHover(request))
     }
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {

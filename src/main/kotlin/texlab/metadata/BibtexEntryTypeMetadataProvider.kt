@@ -3,22 +3,19 @@ package texlab.metadata
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
 
-class BibtexEntryTypeMetadataProvider : MetadataProvider {
-    private val trimRegex = Regex("""^[ \t]+""", RegexOption.MULTILINE)
-
+object BibtexEntryTypeMetadataProvider : MetadataProvider {
     override fun getMetadata(name: String): Metadata? {
-        return if (documentationByName.containsKey(name)) {
-            val documentation = MarkupContent().apply {
-                kind = MarkupKind.MARKDOWN
-                value = documentationByName.getValue(name).replace(trimRegex, "")
-            }
-            Metadata(name, name, documentation)
-        } else {
-            null
+        val markdown = DOCUMENTATION_BY_NAME[name] ?: return null
+        val documentation = MarkupContent().apply {
+            kind = MarkupKind.MARKDOWN
+            value = markdown.replace(TRIM_REGEX, "")
         }
+        return Metadata(name, name, documentation)
     }
 
-    private val documentationByName = mapOf(
+    private val TRIM_REGEX = Regex("""^[ \t]+""", RegexOption.MULTILINE)
+
+    private val DOCUMENTATION_BY_NAME = mapOf(
             "article" to
                     """An article in a journal, magazine, newspaper, or other periodical which forms a
                     self-contained unit with its own title. The title of the periodical is given in the
