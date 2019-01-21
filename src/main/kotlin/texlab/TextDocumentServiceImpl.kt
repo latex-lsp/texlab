@@ -13,7 +13,6 @@ import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
-import texlab.completion.latex.data.LatexComponentDatabaseListener
 import texlab.completion.latex.data.LatexComponentSourcePrefetcher
 import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
@@ -48,20 +47,16 @@ import java.util.concurrent.CompletableFuture
 class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocumentService {
     lateinit var client: CustomLanguageClient
 
-    private inner class DatabaseListener : LatexComponentDatabaseListener {
-        override fun onStartIndexing(file: File) {
-            client.setStatus(StatusParams(ServerStatus.INDEXING, file.name))
-        }
-
-        override fun onStopIndexing() {
-            client.setStatus(StatusParams(ServerStatus.IDLE))
+    private val progressListener = object : ProgressListener {
+        override fun onReportProgress(params: ProgressParams) {
+            client.progress(params)
         }
     }
 
     private val resolver = LatexResolver.create()
     private val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
     private val databaseFile = databaseDirectory.resolve("components.json")
-    private val database = LatexComponentDatabase.loadOrCreate(databaseFile, resolver, DatabaseListener())
+    private val database = LatexComponentDatabase.loadOrCreate(databaseFile, resolver, progressListener)
 
     init {
         LatexComponentSourcePrefetcher.start(workspace, database)
@@ -337,10 +332,8 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                 workspace.findParent(childUri)
             }
 
-            val parentName = Paths.get(parent.uri).fileName
-            client.setStatus(StatusParams(ServerStatus.BUILDING, parentName.toString()))
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            val (status, allErrors) = BuildEngine.build(parent.uri, config, cancelChecker)
+            val (status, allErrors) = BuildEngine.build(parent.uri, config, cancelChecker, progressListener)
 
             buildDiagnosticsProvider.diagnosticsByUri = allErrors
                     .groupBy { it.uri }
@@ -351,7 +344,6 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                     publishDiagnostics(document.uri)
                 }
             }
-            client.setStatus(StatusParams(ServerStatus.IDLE))
             status
         }
     }

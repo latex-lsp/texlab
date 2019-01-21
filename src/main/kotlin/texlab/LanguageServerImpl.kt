@@ -58,7 +58,6 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun initialized(params: InitializedParams?) {
-        client.setStatus(StatusParams(ServerStatus.IDLE, null))
     }
 
     private fun loadWorkspace(root: URI) {

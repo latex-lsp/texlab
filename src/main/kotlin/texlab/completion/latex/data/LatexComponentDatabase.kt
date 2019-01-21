@@ -6,6 +6,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import texlab.ProgressListener
+import texlab.ProgressParams
 import texlab.completion.latex.KernelPrimitives
 import java.io.File
 import java.nio.file.Files
@@ -15,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 class LatexComponentDatabase(private val databaseFile: Path,
                              private val resolver: LatexResolver,
                              components: List<LatexComponent>,
-                             private val listener: LatexComponentDatabaseListener?) : LatexComponentSource {
+                             private val listener: ProgressListener?) : LatexComponentSource {
     private val componentsByName = ConcurrentHashMap<String, LatexComponent>()
     private val channel = Channel<File>(Channel.UNLIMITED)
 
@@ -46,7 +48,9 @@ class LatexComponentDatabase(private val databaseFile: Path,
             return
         }
 
-        listener?.onStartIndexing(file)
+        val progressParams = ProgressParams("index", "Indexing...", file.name)
+        listener?.onReportProgress(progressParams)
+
         val unitsByFile = loadRelatedUnits(file)
         if (unitsByFile == null) {
             componentsByName[file.name] =
@@ -61,7 +65,7 @@ class LatexComponentDatabase(private val databaseFile: Path,
 
         for (units in components) {
             val unit = units.first()
-            listener?.onStartIndexing(unit.file)
+            listener?.onReportProgress(progressParams.copy(message = unit.file.name))
 
             val candidates = unit.likelyPrimitives.toMutableSet()
             candidates.removeAll(KernelPrimitives.COMMANDS)
@@ -78,8 +82,8 @@ class LatexComponentDatabase(private val databaseFile: Path,
             names.forEach { componentsByName[it] = component }
         }
 
+        listener?.onReportProgress(progressParams.copy(done = true))
         save()
-        listener?.onStopIndexing()
     }
 
     private fun loadRelatedUnits(file: File): Map<File, LatexUnit>? {
@@ -99,7 +103,7 @@ class LatexComponentDatabase(private val databaseFile: Path,
     companion object {
         fun loadOrCreate(databaseFile: Path,
                          resolver: LatexResolver,
-                         listener: LatexComponentDatabaseListener?): LatexComponentDatabase {
+                         listener: ProgressListener?): LatexComponentDatabase {
             return if (Files.exists(databaseFile)) {
                 val json = Files.readAllBytes(databaseFile).toString(Charsets.UTF_8)
                 val mapper = jacksonObjectMapper()
