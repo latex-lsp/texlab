@@ -44,7 +44,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
-class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocumentService {
+class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentService {
     lateinit var client: CustomLanguageClient
 
     private val progressListener = object : ProgressListener {
@@ -133,7 +133,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
-    private val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
+    val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
 
     private val diagnosticsProvider: DiagnosticsProvider =
             AggregateDiagnosticsProvider(
@@ -333,18 +333,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
             }
 
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            val (status, allErrors) = BuildEngine.build(parent.uri, config, cancelChecker, progressListener)
-
-            buildDiagnosticsProvider.diagnosticsByUri = allErrors
-                    .groupBy { it.uri }
-                    .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
-
-            synchronized(workspace) {
-                for (document in workspace.documents) {
-                    publishDiagnostics(document.uri)
-                }
-            }
-            status
+            BuildEngine.build(parent.uri, config, cancelChecker, progressListener)
         }
     }
 
@@ -360,7 +349,7 @@ class TextDocumentServiceImpl(private val workspace: Workspace) : CustomTextDocu
         }
     }
 
-    private fun publishDiagnostics(uri: URI) {
+    fun publishDiagnostics(uri: URI) {
         val relatedDocuments = workspace.relatedDocuments(uri)
         val request = DiagnosticsRequest(uri, relatedDocuments)
         val diagnostics = diagnosticsProvider.getDiagnostics(request)

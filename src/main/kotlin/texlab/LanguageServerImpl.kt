@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture
 class LanguageServerImpl : LanguageServer {
     private val workspace: Workspace = Workspace()
     private val textDocumentService = TextDocumentServiceImpl(workspace)
-    private val workspaceService = WorkspaceServiceImpl()
+    private val workspaceService = WorkspaceServiceImpl(textDocumentService)
     private lateinit var client: CustomLanguageClient
 
     fun connect(client: CustomLanguageClient) {
@@ -58,6 +58,10 @@ class LanguageServerImpl : LanguageServer {
     }
 
     override fun initialized(params: InitializedParams?) {
+        val watcher = FileSystemWatcher("**/*.log", WatchKind.Create or WatchKind.Change)
+        val options = DidChangeWatchedFilesRegistrationOptions(listOf(watcher))
+        val registration = Registration("log-watcher", "workspace/didChangeWatchedFiles", options)
+        client.registerCapability(RegistrationParams(listOf(registration)))
     }
 
     private fun loadWorkspace(root: URI) {
