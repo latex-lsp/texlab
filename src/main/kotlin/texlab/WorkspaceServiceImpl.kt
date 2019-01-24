@@ -1,5 +1,8 @@
 package texlab
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams
 import org.eclipse.lsp4j.services.WorkspaceService
@@ -7,9 +10,11 @@ import texlab.build.BuildErrorParser
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import kotlin.coroutines.CoroutineContext
 
-class WorkspaceServiceImpl(private val service: TextDocumentServiceImpl) : WorkspaceService {
-    override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
+class WorkspaceServiceImpl(override val coroutineContext: CoroutineContext,
+                           private val service: TextDocumentServiceImpl) : WorkspaceService, CoroutineScope {
+    override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) = runBlocking {
         for (change in params.changes) {
             val logPath = File(URIHelper.parse(change.uri)).toPath()
             val texPath = logPath.resolveSibling(logPath.toFile().nameWithoutExtension + ".tex")
@@ -24,7 +29,7 @@ class WorkspaceServiceImpl(private val service: TextDocumentServiceImpl) : Works
                             .groupBy { it.uri }
                             .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
 
-                    synchronized(service.workspace) {
+                    service.workspace.withLock {
                         service.workspace.documents.forEach { service.publishDiagnostics(it.uri) }
                     }
                 } catch (e: IOException) {

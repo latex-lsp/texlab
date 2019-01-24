@@ -1,5 +1,9 @@
 package texlab
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
@@ -13,10 +17,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
-class LanguageServerImpl : LanguageServer {
+class LanguageServerImpl : LanguageServer, CoroutineScope by GlobalScope {
     private val workspace: Workspace = Workspace()
-    private val textDocumentService = TextDocumentServiceImpl(workspace)
-    private val workspaceService = WorkspaceServiceImpl(textDocumentService)
+    private val textDocumentService = TextDocumentServiceImpl(coroutineContext, workspace)
+    private val workspaceService = WorkspaceServiceImpl(coroutineContext, textDocumentService)
     private lateinit var client: CustomLanguageClient
 
     fun connect(client: CustomLanguageClient) {
@@ -24,10 +28,10 @@ class LanguageServerImpl : LanguageServer {
         this.textDocumentService.client = client
     }
 
-    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
+    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> = future {
         if (params.rootUri != null && params.rootUri.startsWith("file")) {
             val root = URIHelper.parse(params.rootUri)
-            synchronized(workspace) {
+            workspace.withLock {
                 loadWorkspace(root)
             }
             textDocumentService.initialize(Paths.get(root))
@@ -54,8 +58,9 @@ class LanguageServerImpl : LanguageServer {
             documentHighlightProvider = true
         }
 
-        return CompletableFuture.completedFuture(InitializeResult(capabilities))
+        InitializeResult(capabilities)
     }
+
 
     override fun initialized(params: InitializedParams?) {
         val watcher = FileSystemWatcher("**/*.log", WatchKind.Create or WatchKind.Change)
@@ -93,8 +98,8 @@ class LanguageServerImpl : LanguageServer {
 
     override fun getWorkspaceService(): WorkspaceService = workspaceService
 
-    override fun shutdown(): CompletableFuture<Any> {
-        return CompletableFuture.completedFuture(null)
+    override fun shutdown(): CompletableFuture<Any?> = future {
+        null
     }
 
     override fun exit() {

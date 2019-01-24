@@ -1,12 +1,13 @@
 package texlab
 
+import kotlinx.coroutines.sync.Mutex
 import java.io.File
 import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 import java.util.*
 
-class Workspace {
+class Workspace : Mutex by Mutex() {
     val documents = mutableListOf<Document>()
 
     fun resolve(uri: URI, relativePath: String): Document? {

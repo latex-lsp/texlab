@@ -1,7 +1,10 @@
 package texlab
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import texlab.build.BuildConfig
 import texlab.build.BuildEngine
@@ -43,8 +46,10 @@ import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.CoroutineContext
 
-class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentService {
+class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
+                              val workspace: Workspace) : CustomTextDocumentService, CoroutineScope {
     lateinit var client: CustomLanguageClient
 
     private val progressListener = object : ProgressListener {
@@ -145,34 +150,39 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        params.textDocument.apply {
-            val language = getLanguageById(languageId) ?: return
-            synchronized(workspace) {
-                val uri = URIHelper.parse(uri)
-                val document = workspace.documents.firstOrNull { it.uri == uri } ?: Document.create(uri, language)
-                if (!workspace.documents.contains(document)) {
-                    workspace.documents.add(document)
-                }
+        launch {
+            params.textDocument.apply {
+                val language = getLanguageById(languageId) ?: return@launch
+                workspace.withLock {
+                    val uri = URIHelper.parse(uri)
+                    val document = workspace.documents.firstOrNull { it.uri == uri }
+                            ?: Document.create(uri, language)
+                    if (!workspace.documents.contains(document)) {
+                        workspace.documents.add(document)
+                    }
 
-                document.text = text
+                    document.text = text
+                    document.analyze()
+                    publishDiagnostics(uri)
+                }
+            }
+        }
+    }
+
+    override fun didChange(params: DidChangeTextDocumentParams) {
+        launch {
+            val uri = URIHelper.parse(params.textDocument.uri)
+            workspace.withLock {
+                val document = workspace.documents.first { it.uri == uri }
+                params.contentChanges.forEach { document.text = it.text }
                 document.analyze()
                 publishDiagnostics(uri)
             }
         }
     }
 
-    override fun didChange(params: DidChangeTextDocumentParams) {
-        val uri = URIHelper.parse(params.textDocument.uri)
-        synchronized(workspace) {
-            val document = workspace.documents.first { it.uri == uri }
-            params.contentChanges.forEach { document.text = it.text }
-            document.analyze()
-            publishDiagnostics(uri)
-        }
-    }
-
     override fun didSave(params: DidSaveTextDocumentParams) {
-        CompletableFuture.supplyAsync {
+        launch {
             val uri = URIHelper.parse(params.textDocument.uri)
             val config = client.configuration<BuildConfig>("latex.build", uri)
             if (config.onSave) {
@@ -186,167 +196,160 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     override fun didClose(params: DidCloseTextDocumentParams) {
     }
 
-    override fun documentSymbol(params: DocumentSymbolParams):
-            CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>> {
-        synchronized(workspace) {
+    override fun documentSymbol(params: DocumentSymbolParams)
+            : CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
+                    ?: return@future null
 
             val request = SymbolRequest(document)
-            val symbols = symbolProvider
-                    .getSymbols(request)
+            symbolProvider.getSymbols(request)
                     .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
                     .toMutableList()
-            return CompletableFuture.completedFuture(symbols)
         }
     }
 
-    override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> {
-        synchronized(workspace) {
+    override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = RenameRequest(uri, relatedDocuments, params.position, params.newName)
-            return CompletableFuture.completedFuture(renamer.rename(request))
+            renamer.rename(request)
         }
     }
 
-    override fun documentLink(params: DocumentLinkParams): CompletableFuture<MutableList<DocumentLink>> {
-        synchronized(workspace) {
+    override fun documentLink(params: DocumentLinkParams)
+            : CompletableFuture<MutableList<DocumentLink>> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val request = LinkRequest(workspace, uri)
-            val links = linkProvider.getLinks(request).toMutableList()
-            return CompletableFuture.completedFuture(links)
+            linkProvider.getLinks(request).toMutableList()
         }
     }
 
-    override fun completion(params: CompletionParams):
-            CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        synchronized(workspace) {
+    override fun completion(params: CompletionParams)
+            : CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = CompletionRequest(uri, relatedDocuments, params.position)
             val items = completionProvider.complete(request).toList()
             val list = CompletionList(true, items)
-            return CompletableFuture.completedFuture(Either.forRight(list))
+            Either.forRight<MutableList<CompletionItem>, CompletionList>(list)
         }
     }
 
-    override fun resolveCompletionItem(unresolved: CompletionItem): CompletableFuture<CompletionItem> {
-        return CompletableFuture.supplyAsync<CompletionItem> {
-            val provider = when (unresolved.kind) {
-                CompletionItemKind.Class -> LatexComponentMetadataProvider
-                CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
-                else -> null
-            }
-
-            val metadata = provider?.getMetadata(unresolved.label)
-            if (metadata != null) {
-                unresolved.detail = metadata.detail
-                unresolved.setDocumentation(metadata.documentation)
-            }
-
-            unresolved
+    override fun resolveCompletionItem(unresolved: CompletionItem)
+            : CompletableFuture<CompletionItem> = future {
+        val provider = when (unresolved.kind) {
+            CompletionItemKind.Class -> LatexComponentMetadataProvider
+            CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
+            else -> null
         }
+
+        val metadata = provider?.getMetadata(unresolved.label)
+        if (metadata != null) {
+            unresolved.detail = metadata.detail
+            unresolved.setDocumentation(metadata.documentation)
+        }
+
+        unresolved
     }
 
-    override fun foldingRange(params: FoldingRangeRequestParams): CompletableFuture<MutableList<FoldingRange>> {
-        synchronized(workspace) {
+    override fun foldingRange(params: FoldingRangeRequestParams)
+            : CompletableFuture<MutableList<FoldingRange>?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
+                    ?: return@future null
 
             val request = FoldingRequest(document)
-            val foldings = foldingProvider.fold(request).toMutableList()
-            return CompletableFuture.completedFuture(foldings)
+            foldingProvider.fold(request).toMutableList()
         }
     }
 
-    override fun definition(params: TextDocumentPositionParams): CompletableFuture<MutableList<out Location>> {
-        synchronized(workspace) {
+    override fun definition(params: TextDocumentPositionParams)
+            : CompletableFuture<MutableList<out Location>?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = DefinitionRequest(uri, relatedDocuments, params.position)
             val location = definitionProvider.find(request)
-            return CompletableFuture.completedFuture(location?.let { mutableListOf(it) })
+            location?.let { mutableListOf(it) }
         }
     }
 
-    override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover> {
+    override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover?> = future {
         val uri = URIHelper.parse(params.textDocument.uri)
-        val relatedDocuments = synchronized(workspace) { workspace.relatedDocuments(uri) }
+        val relatedDocuments = workspace.withLock { workspace.relatedDocuments(uri) }
         val request = HoverRequest(uri, relatedDocuments, params.position)
-        return CompletableFuture.completedFuture(hoverProvider.getHover(request))
+        hoverProvider.getHover(request)
     }
 
-    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-        return CompletableFuture.supplyAsync {
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
-            synchronized(workspace) {
-                val document =
-                        workspace.documents
-                                .filterIsInstance<BibtexDocument>()
-                                .firstOrNull { it.uri == uri }
-                                ?: return@supplyAsync null
-                val formatter =
-                        BibtexFormatter(params.options.isInsertSpaces, params.options.tabSize, config.lineLength)
-                val edits = mutableListOf<TextEdit>()
-                for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
-                    edits.add(TextEdit(entry.range, formatter.format(entry)))
-                }
-                edits
+    override fun formatting(params: DocumentFormattingParams)
+            : CompletableFuture<MutableList<out TextEdit>?> = future {
+        val uri = URIHelper.parse(params.textDocument.uri)
+        val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
+        workspace.withLock {
+            val document =
+                    workspace.documents
+                            .filterIsInstance<BibtexDocument>()
+                            .firstOrNull { it.uri == uri }
+                            ?: return@future null
+            val formatter =
+                    BibtexFormatter(params.options.isInsertSpaces, params.options.tabSize, config.lineLength)
+            val edits = mutableListOf<TextEdit>()
+            for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
+                edits.add(TextEdit(entry.range, formatter.format(entry)))
             }
+            edits
         }
     }
 
-    override fun references(params: ReferenceParams): CompletableFuture<MutableList<out Location>> {
-        synchronized(workspace) {
+    override fun references(params: ReferenceParams)
+            : CompletableFuture<MutableList<out Location>?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = ReferenceRequest(uri, relatedDocuments, params.position)
-            val references = referenceProvider.getReferences(request)?.toMutableList()
-            return CompletableFuture.completedFuture(references)
+            referenceProvider.getReferences(request)?.toMutableList()
         }
     }
 
-    override fun documentHighlight(params: TextDocumentPositionParams):
-            CompletableFuture<MutableList<out DocumentHighlight>> {
-        synchronized(workspace) {
+    override fun documentHighlight(params: TextDocumentPositionParams)
+            : CompletableFuture<MutableList<out DocumentHighlight>?> = future {
+        workspace.withLock {
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents.firstOrNull { it.uri == uri }
-                    ?: return CompletableFuture.completedFuture(null)
+                    ?: return@future null
 
             val request = HighlightRequest(document, params.position)
-            val highlights = highlightProvider.getHighlights(request)
-            return CompletableFuture.completedFuture(highlights?.toMutableList())
+            highlightProvider.getHighlights(request)?.toMutableList()
         }
     }
 
-    override fun build(params: BuildParams): CompletableFuture<BuildStatus> {
-        return CompletableFutures.computeAsync { cancelChecker ->
-            val childUri = URIHelper.parse(params.textDocument.uri)
-            val parent = synchronized(workspace) {
-                workspace.findParent(childUri)
-            }
-
-            val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-            BuildEngine.build(parent.uri, config, cancelChecker, progressListener)
+    override fun build(params: BuildParams): CompletableFuture<BuildStatus> = future {
+        val childUri = URIHelper.parse(params.textDocument.uri)
+        val parent = workspace.withLock {
+            workspace.findParent(childUri)
         }
+
+        val config = client.configuration<BuildConfig>("latex.build", parent.uri)
+        BuildEngine.build(parent.uri, config, progressListener)
     }
 
-    override fun forwardSearch(params: TextDocumentPositionParams): CompletableFuture<ForwardSearchStatus> {
-        return CompletableFuture.supplyAsync {
-            val childUri = URIHelper.parse(params.textDocument.uri)
-            val parent = synchronized(workspace) {
-                workspace.findParent(childUri)
-            }
-
-            val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
-            ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
+    override fun forwardSearch(params: TextDocumentPositionParams)
+            : CompletableFuture<ForwardSearchStatus> = future {
+        val childUri = URIHelper.parse(params.textDocument.uri)
+        val parent = workspace.withLock {
+            workspace.findParent(childUri)
         }
+
+        val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
+        ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
     }
 
     fun publishDiagnostics(uri: URI) {

@@ -1,16 +1,17 @@
 package texlab.build
 
-import org.eclipse.lsp4j.jsonrpc.CancelChecker
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import texlab.ProgressListener
 import texlab.ProgressParams
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Paths
-import java.util.concurrent.CancellationException
-import java.util.concurrent.TimeUnit
 
 object BuildEngine {
-    fun build(uri: URI, config: BuildConfig, cancelChecker: CancelChecker, listener: ProgressListener?): BuildStatus {
+    suspend fun build(uri: URI, config: BuildConfig, listener: ProgressListener?): BuildStatus {
         val texFile = Paths.get(uri).toFile()
         val progressParams = ProgressParams("build", "Building...", texFile.name)
         listener?.onReportProgress(progressParams)
@@ -24,13 +25,16 @@ object BuildEngine {
 
             val process = ProcessBuilder(command)
                     .directory(texFile.parentFile)
+                    .directory(texFile.parentFile)
                     .redirectOutput(buildLogFile)
                     .redirectErrorStream(true)
                     .start()
 
             try {
-                while (!process.waitFor(500, TimeUnit.MILLISECONDS)) {
-                    cancelChecker.checkCanceled()
+                withContext(Dispatchers.Default) {
+                    while (process.isAlive) {
+                        delay(250)
+                    }
                 }
             } catch (e: CancellationException) {
                 process.destroy()
