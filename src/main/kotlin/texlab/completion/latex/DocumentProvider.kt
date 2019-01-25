@@ -1,5 +1,7 @@
 package texlab.completion.latex
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.CompletionItem
 import texlab.Document
 import texlab.Workspace
@@ -14,12 +16,15 @@ abstract class DocumentProvider<T>(private val workspace: Workspace,
                                    private val includeExtension: Boolean) : LatexArgumentProvider() where T : Document {
     override val argumentIndex: Int = 0
 
-    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
-        return workspace.documents
-                .filterIsInstance(documentClass)
-                .filter { !request.relatedDocuments.contains(it) }
-                .map { relativize(request.uri, it.uri) }
-                .map { CompletionItemFactory.createFile(it) }
+    override fun complete(request: CompletionRequest, command: LatexCommandSyntax)
+            : List<CompletionItem> = runBlocking {
+        workspace.withLock {
+            workspace.documents
+                    .filterIsInstance(documentClass)
+                    .filter { !request.relatedDocuments.contains(it) }
+                    .map { relativize(request.uri, it.uri) }
+                    .map { CompletionItemFactory.createFile(it) }
+        }
     }
 
     private fun relativize(base: URI, relative: URI): String {

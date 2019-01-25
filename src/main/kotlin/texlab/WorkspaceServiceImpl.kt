@@ -23,7 +23,9 @@ class WorkspaceServiceImpl(private val service: TextDocumentServiceImpl) : Works
                 val logPath = File(URIHelper.parse(change.uri)).toPath()
                 val texPath = logPath.resolveSibling(logPath.toFile().nameWithoutExtension + ".tex")
                 val texUri = texPath.toUri()
-                val document = service.workspace.documents.firstOrNull { it.uri == texUri }
+                val document = service.workspace.withLock {
+                    service.workspace.documents.firstOrNull { it.uri == texUri }
+                }
                 if (document != null) {
                     try {
                         val log = Files.readAllBytes(logPath).toString(Charsets.UTF_8)

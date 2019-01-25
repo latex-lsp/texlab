@@ -67,9 +67,11 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     init {
         launch {
             while (true) {
-                workspace.documents
-                        .map { workspace.relatedDocuments(it.uri) }
-                        .forEach { database.await().getRelatedComponents(it) }
+                val relatedDocuments = workspace.withLock {
+                    workspace.documents.map { workspace.relatedDocuments(it.uri) }
+                }
+
+                relatedDocuments.forEach { database.await().getRelatedComponents(it) }
                 delay(1000)
             }
         }
@@ -184,8 +186,9 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                 val document = workspace.documents.first { it.uri == uri }
                 params.contentChanges.forEach { document.text = it.text }
                 document.analyze()
-                publishDiagnostics(uri)
             }
+
+            publishDiagnostics(uri)
         }
     }
 
