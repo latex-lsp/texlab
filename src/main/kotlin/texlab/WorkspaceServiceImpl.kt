@@ -1,6 +1,8 @@
 package texlab
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.DidChangeConfigurationParams
@@ -12,8 +14,9 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.coroutines.CoroutineContext
 
-class WorkspaceServiceImpl(override val coroutineContext: CoroutineContext,
-                           private val service: TextDocumentServiceImpl) : CoroutineScope, WorkspaceService {
+class WorkspaceServiceImpl(private val service: TextDocumentServiceImpl) : WorkspaceService, CoroutineScope {
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
+
     override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
         launch {
             for (change in params.changes) {

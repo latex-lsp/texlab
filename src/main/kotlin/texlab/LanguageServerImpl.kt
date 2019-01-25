@@ -1,7 +1,8 @@
 package texlab
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
@@ -16,12 +17,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.CoroutineContext
 
-class LanguageServerImpl : LanguageServer, CoroutineScope by GlobalScope {
+class LanguageServerImpl : LanguageServer, CoroutineScope {
     private val workspace: Workspace = Workspace()
-    private val textDocumentService = TextDocumentServiceImpl(coroutineContext, workspace)
-    private val workspaceService = WorkspaceServiceImpl(coroutineContext, textDocumentService)
+    private val textDocumentService = TextDocumentServiceImpl(workspace)
+    private val workspaceService = WorkspaceServiceImpl(textDocumentService)
     private lateinit var client: CustomLanguageClient
+
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     fun connect(client: CustomLanguageClient) {
         this.client = client

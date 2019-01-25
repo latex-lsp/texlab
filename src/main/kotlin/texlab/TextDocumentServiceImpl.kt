@@ -46,9 +46,10 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 
-class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
-                              val workspace: Workspace) : CoroutineScope, CustomTextDocumentService {
+class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentService, CoroutineScope {
     lateinit var client: CustomLanguageClient
+
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     private val progressListener = object : ProgressListener {
         override fun onReportProgress(params: ProgressParams) {
@@ -60,7 +61,7 @@ class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
     private val database: Deferred<LatexComponentDatabase> = async {
         val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
         val databaseFile = databaseDirectory.resolve("components.json").toFile()
-        LatexComponentDatabase.loadOrCreate(coroutineContext, databaseFile, resolver.await(), progressListener)
+        LatexComponentDatabase.loadOrCreate(databaseFile, resolver.await(), progressListener)
     }
 
     init {

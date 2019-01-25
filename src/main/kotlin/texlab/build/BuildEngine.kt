@@ -31,7 +31,7 @@ object BuildEngine {
                     .start()
 
             try {
-                withContext(Dispatchers.Default) {
+                withContext(Dispatchers.IO) {
                     while (process.isAlive) {
                         delay(250)
                     }

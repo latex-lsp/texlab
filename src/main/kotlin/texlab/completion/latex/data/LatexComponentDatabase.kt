@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import texlab.ProgressListener
@@ -16,14 +16,15 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 
-class LatexComponentDatabase(override val coroutineContext: CoroutineContext,
-                             private val mapper: ObjectMapper,
+class LatexComponentDatabase(private val mapper: ObjectMapper,
                              private val databaseFile: File,
                              private val resolver: LatexResolver,
                              components: List<LatexComponent>,
                              private val listener: ProgressListener?) : CoroutineScope, LatexComponentSource {
     private val componentsByName = ConcurrentHashMap<String, LatexComponent>()
     private val channel = Channel<File>(Channel.UNLIMITED)
+
+    override val coroutineContext: CoroutineContext = Dispatchers.IO + SupervisorJob()
 
     init {
         mapper.enable(SerializationFeature.INDENT_OUTPUT)
@@ -32,7 +33,7 @@ class LatexComponentDatabase(override val coroutineContext: CoroutineContext,
             component.fileNames.forEach { componentsByName[it] = component }
         }
 
-        GlobalScope.launch(Dispatchers.IO) {
+        launch {
             for (file in channel) {
                 analyze(file)
             }
@@ -105,8 +106,7 @@ class LatexComponentDatabase(override val coroutineContext: CoroutineContext,
     }
 
     companion object {
-        fun loadOrCreate(coroutineContext: CoroutineContext,
-                         databaseFile: File,
+        fun loadOrCreate(databaseFile: File,
                          resolver: LatexResolver,
                          listener: ProgressListener?): LatexComponentDatabase {
             val mapper = jacksonObjectMapper()
@@ -116,7 +116,7 @@ class LatexComponentDatabase(override val coroutineContext: CoroutineContext,
                 emptyList()
             }
 
-            return LatexComponentDatabase(coroutineContext, mapper, databaseFile, resolver, components, listener)
+            return LatexComponentDatabase(mapper, databaseFile, resolver, components, listener)
         }
     }
 }
