@@ -1,8 +1,7 @@
 package texlab
 
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.future
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
@@ -16,7 +15,6 @@ import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
-import texlab.completion.latex.data.LatexComponentSourcePrefetcher
 import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
 import texlab.diagnostics.*
@@ -49,7 +47,7 @@ import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 
 class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
-                              val workspace: Workspace) : CustomTextDocumentService, CoroutineScope {
+                              val workspace: Workspace) : CoroutineScope, CustomTextDocumentService {
     lateinit var client: CustomLanguageClient
 
     private val progressListener = object : ProgressListener {
@@ -58,13 +56,22 @@ class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
         }
     }
 
-    private val resolver = LatexResolver.create()
-    private val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
-    private val databaseFile = databaseDirectory.resolve("components.json")
-    private val database = LatexComponentDatabase.loadOrCreate(databaseFile, resolver, progressListener)
+    private val resolver: Deferred<LatexResolver> = async { LatexResolver.create() }
+    private val database: Deferred<LatexComponentDatabase> = async {
+        val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
+        val databaseFile = databaseDirectory.resolve("components.json").toFile()
+        LatexComponentDatabase.loadOrCreate(coroutineContext, databaseFile, resolver.await(), progressListener)
+    }
 
     init {
-        LatexComponentSourcePrefetcher.start(workspace, database)
+        launch {
+            while (true) {
+                workspace.documents
+                        .map { workspace.relatedDocuments(it.uri) }
+                        .forEach { database.await().getRelatedComponents(it) }
+                delay(1000)
+            }
+        }
     }
 
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
@@ -76,8 +83,8 @@ class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
                                     LatexIncludeProvider(workspace),
                                     LatexInputProvider(workspace),
                                     LatexBibliographyProvider(workspace),
-                                    LatexClassImportProvider(resolver),
-                                    LatexPackageImportProvider(resolver),
+                                    DeferredCompletionProvider(::LatexClassImportProvider, resolver),
+                                    DeferredCompletionProvider(::LatexPackageImportProvider, resolver),
                                     PgfLibraryProvider,
                                     TikzLibraryProvider,
                                     LatexCitationProvider,
@@ -86,10 +93,10 @@ class TextDocumentServiceImpl(override val coroutineContext: CoroutineContext,
                                     DefineColorSetModelProvider,
                                     LatexLabelProvider,
                                     LatexBeginCommandProvider,
-                                    LatexComponentEnvironmentProvider(database),
+                                    DeferredCompletionProvider(::LatexComponentEnvironmentProvider, database),
                                     LatexKernelEnvironmentProvider,
                                     LatexUserEnvironmentProvider,
-                                    LatexComponentCommandProvider(database),
+                                    DeferredCompletionProvider(::LatexComponentCommandProvider, database),
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider,
                                     BibtexEntryTypeProvider,

@@ -1,8 +1,11 @@
 package texlab.completion.latex.data
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -10,23 +13,26 @@ import texlab.ProgressListener
 import texlab.ProgressParams
 import texlab.completion.latex.KernelPrimitives
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
 
-class LatexComponentDatabase(private val databaseFile: Path,
+class LatexComponentDatabase(override val coroutineContext: CoroutineContext,
+                             private val mapper: ObjectMapper,
+                             private val databaseFile: File,
                              private val resolver: LatexResolver,
                              components: List<LatexComponent>,
-                             private val listener: ProgressListener?) : LatexComponentSource {
+                             private val listener: ProgressListener?) : CoroutineScope, LatexComponentSource {
     private val componentsByName = ConcurrentHashMap<String, LatexComponent>()
     private val channel = Channel<File>(Channel.UNLIMITED)
 
     init {
+        mapper.enable(SerializationFeature.INDENT_OUTPUT)
+
         for (component in components) {
             component.fileNames.forEach { componentsByName[it] = component }
         }
 
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             for (file in channel) {
                 analyze(file)
             }
@@ -95,24 +101,22 @@ class LatexComponentDatabase(private val databaseFile: Path,
     }
 
     private fun save() {
-        val mapper = jacksonObjectMapper()
-        mapper.enable(SerializationFeature.INDENT_OUTPUT)
-        mapper.writeValue(databaseFile.toFile(), componentsByName.values)
+        mapper.writeValue(databaseFile, componentsByName.values)
     }
 
     companion object {
-        fun loadOrCreate(databaseFile: Path,
+        fun loadOrCreate(coroutineContext: CoroutineContext,
+                         databaseFile: File,
                          resolver: LatexResolver,
                          listener: ProgressListener?): LatexComponentDatabase {
-            return if (Files.exists(databaseFile)) {
-                val json = Files.readAllBytes(databaseFile).toString(Charsets.UTF_8)
-                val mapper = jacksonObjectMapper()
-                val components = mapper.readValue<List<LatexComponent>>(json)
-                LatexComponentDatabase(databaseFile, resolver, components, listener)
+            val mapper = jacksonObjectMapper()
+            val components = if (databaseFile.exists()) {
+                mapper.readValue<List<LatexComponent>>(databaseFile)
             } else {
-                LatexComponentDatabase(databaseFile, resolver, emptyList(), listener)
+                emptyList()
             }
+
+            return LatexComponentDatabase(coroutineContext, mapper, databaseFile, resolver, components, listener)
         }
     }
 }
-
