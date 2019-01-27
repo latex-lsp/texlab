@@ -6,19 +6,19 @@ import texlab.completion.bibtex.BibtexField
 object CompletionItemFactory {
     private const val KERNEL = "built-in"
 
-    fun createSnippet(name: String, unit: String?, template: String): CompletionItem {
+    fun createSnippet(name: String, component: String?, template: String): CompletionItem {
         return CompletionItem(name).apply {
             kind = CompletionItemKind.Snippet
-            detail = unit ?: KERNEL
+            detail = component ?: KERNEL
             insertText = template
             insertTextFormat = InsertTextFormat.Snippet
         }
     }
 
-    fun createCommand(name: String, unit: String?): CompletionItem {
+    fun createCommand(name: String, component: String?): CompletionItem {
         return CompletionItem(name).apply {
             kind = CompletionItemKind.Function
-            detail = unit ?: KERNEL
+            detail = component ?: KERNEL
         }
     }
 
