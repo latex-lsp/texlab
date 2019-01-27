@@ -10,6 +10,6 @@ class AggregateReferenceProvider(private vararg val providers: ReferenceProvider
                 return references
             }
         }
-        return emptyList()
+        return null
     }
 }

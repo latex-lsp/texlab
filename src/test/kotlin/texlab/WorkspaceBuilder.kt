@@ -5,6 +5,7 @@ import texlab.completion.CompletionRequest
 import texlab.diagnostics.DiagnosticsRequest
 import texlab.folding.FoldingRequest
 import texlab.link.LinkRequest
+import texlab.references.ReferenceRequest
 import texlab.rename.RenameRequest
 import java.io.File
 
@@ -40,6 +41,12 @@ class WorkspaceBuilder {
     fun link(path: String): LinkRequest {
         val uri = File(path).toURI()
         return LinkRequest(workspace, uri)
+    }
+
+    fun reference(path: String, line: Int, character: Int): ReferenceRequest {
+        val uri = File(path).toURI()
+        val position = Position(line, character)
+        return ReferenceRequest(uri, workspace.relatedDocuments(uri), position)
     }
 
     fun rename(path: String, line: Int, character: Int, newName: String): RenameRequest {
