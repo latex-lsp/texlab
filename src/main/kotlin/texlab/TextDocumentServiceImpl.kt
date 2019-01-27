@@ -99,6 +99,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                                     DeferredCompletionProvider(::LatexComponentEnvironmentProvider, database),
                                     LatexKernelEnvironmentProvider,
                                     LatexUserEnvironmentProvider,
+                                    DeferredCompletionProvider(::TikzCommandProvider, database),
                                     DeferredCompletionProvider(::LatexComponentCommandProvider, database),
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider,
