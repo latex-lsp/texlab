@@ -1,5 +1,6 @@
 package texlab.completion.latex.data
 
+import texlab.resolver.LatexResolver
 import java.io.File
 
 data class LatexUnit(val file: File,

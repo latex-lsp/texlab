@@ -3,7 +3,7 @@ package texlab.completion.latex
 import org.eclipse.lsp4j.CompletionItem
 import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
-import texlab.completion.latex.data.LatexResolver
+import texlab.resolver.LatexResolver
 import texlab.syntax.latex.LatexCommandSyntax
 
 class LatexPackageImportProvider(resolver: LatexResolver) : LatexArgumentProvider() {

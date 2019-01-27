@@ -28,8 +28,8 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     fun connect(client: CustomLanguageClient) {
+        textDocumentService.connect(client)
         this.client = client
-        this.textDocumentService.client = client
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> = future {

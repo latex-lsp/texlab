@@ -15,7 +15,6 @@ import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
-import texlab.completion.latex.data.LatexResolver
 import texlab.definition.*
 import texlab.diagnostics.*
 import texlab.folding.*
@@ -37,6 +36,9 @@ import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
 import texlab.references.*
 import texlab.rename.*
+import texlab.resolver.InvalidTexDistributionException
+import texlab.resolver.LatexResolver
+import texlab.resolver.TexDistributionError
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
@@ -47,9 +49,9 @@ import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 
 class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentService, CoroutineScope {
-    lateinit var client: CustomLanguageClient
-
     override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
+
+    private lateinit var client: CustomLanguageClient
 
     private val progressListener = object : ProgressListener {
         override fun onReportProgress(params: ProgressParams) {
@@ -57,24 +59,35 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
         }
     }
 
-    private val resolver: Deferred<LatexResolver> = async { LatexResolver.create() }
-    private val database: Deferred<LatexComponentDatabase> = async {
+    private val resolver: Deferred<LatexResolver> = async(start = CoroutineStart.LAZY) {
+        try {
+            LatexResolver.create()
+        } catch (e: InvalidTexDistributionException) {
+            val message = when (e.error) {
+                TexDistributionError.KPSEWHICH_NOT_FOUND ->
+                    """An error occured while executing `kpsewhich`.
+                        |Please make sure that your distribution is in your PATH environment variable
+                        |and provides the `kpsewhich` tool.
+                    """.trimMargin()
+                TexDistributionError.UNKNOWN_DISTRIBUTION ->
+                    """Your TeX distribution is not supported.
+                        |Please install a supported distribution.
+                    """.trimMargin()
+                TexDistributionError.INVALID_DISTRIBUTION ->
+                    """Your installed TeX distribution seems to be corrupt.
+                        |Please reinstall your distribution.
+                    """.trimMargin()
+            }
+
+            client.showMessage(MessageParams(MessageType.Error, message))
+            LatexResolver.empty()
+        }
+    }
+
+    private val database: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
         val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
         val databaseFile = databaseDirectory.resolve("components.json").toFile()
         LatexComponentDatabase.loadOrCreate(databaseFile, resolver.await(), progressListener)
-    }
-
-    init {
-        launch {
-            while (true) {
-                val relatedDocuments = workspace.withLock {
-                    workspace.documents.map { workspace.relatedDocuments(it.uri) }
-                }
-
-                relatedDocuments.forEach { database.await().getRelatedComponents(it) }
-                delay(1000)
-            }
-        }
     }
 
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
@@ -155,6 +168,21 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
             AggregateDiagnosticsProvider(
                     buildDiagnosticsProvider,
                     BibtexEntryDiagnosticsProvider)
+
+    fun connect(client: CustomLanguageClient) {
+        this.client = client
+
+        launch {
+            while (true) {
+                val relatedDocuments = workspace.withLock {
+                    workspace.documents.map { workspace.relatedDocuments(it.uri) }
+                }
+
+                relatedDocuments.forEach { database.await().getRelatedComponents(it) }
+                delay(1000)
+            }
+        }
+    }
 
     fun initialize(root: Path?) {
         includeGraphicsProvider.root = root

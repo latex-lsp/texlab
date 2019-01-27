@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import texlab.ProgressListener
 import texlab.ProgressParams
 import texlab.completion.latex.KernelPrimitives
+import texlab.resolver.LatexResolver
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
