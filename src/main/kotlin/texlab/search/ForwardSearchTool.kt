@@ -1,14 +1,11 @@
-package texlab.forwardSearch
+package texlab.search
 
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 
 object ForwardSearchTool {
-    fun search(file: File,
-               parent: File,
-               lineNumber: Int,
-               config: ForwardSearchConfig): ForwardSearchStatus {
+    fun search(file: File, parent: File, lineNumber: Int, config: ForwardSearchConfig): ForwardSearchResult {
         val pdfFile = Paths.get(parent.parent, parent.nameWithoutExtension + ".pdf").toString()
 
         fun replacePlaceholder(argument: String): String {
@@ -19,14 +16,14 @@ object ForwardSearchTool {
         }
 
         if (config.executable == null) {
-            return ForwardSearchStatus.UNCONFIGURED
+            return ForwardSearchResult(ForwardSearchStatus.UNCONFIGURED)
         }
 
         val args = config.args
                 .map { replacePlaceholder(it) }
                 .toTypedArray()
         val command = listOf(config.executable, *args)
-        return try {
+        val status = try {
             val process = ProcessBuilder(command)
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .redirectError(ProcessBuilder.Redirect.PIPE)
@@ -36,5 +33,6 @@ object ForwardSearchTool {
         } catch (e: IOException) {
             ForwardSearchStatus.ERROR
         }
+        return ForwardSearchResult(status)
     }
 }

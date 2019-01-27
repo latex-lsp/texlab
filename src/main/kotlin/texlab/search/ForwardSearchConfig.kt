@@ -1,4 +1,4 @@
-package texlab.forwardSearch
+package texlab.search
 
 import com.google.gson.annotations.SerializedName
 

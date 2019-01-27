@@ -8,7 +8,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
-import texlab.build.BuildStatus
+import texlab.build.BuildResult
 import texlab.completion.*
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -20,9 +20,6 @@ import texlab.diagnostics.*
 import texlab.folding.*
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
-import texlab.forwardSearch.ForwardSearchConfig
-import texlab.forwardSearch.ForwardSearchStatus
-import texlab.forwardSearch.ForwardSearchTool
 import texlab.highlight.AggregateHighlightProvider
 import texlab.highlight.HighlightProvider
 import texlab.highlight.HighlightRequest
@@ -39,6 +36,9 @@ import texlab.rename.*
 import texlab.resolver.InvalidTexDistributionException
 import texlab.resolver.LatexResolver
 import texlab.resolver.TexDistributionError
+import texlab.search.ForwardSearchConfig
+import texlab.search.ForwardSearchResult
+import texlab.search.ForwardSearchTool
 import texlab.symbol.*
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
@@ -371,7 +371,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
         }
     }
 
-    override fun build(params: BuildParams): CompletableFuture<BuildStatus> = future {
+    override fun build(params: BuildParams): CompletableFuture<BuildResult> = future {
         val childUri = URIHelper.parse(params.textDocument.uri)
         val parent = workspace.withLock {
             workspace.findParent(childUri)
@@ -382,7 +382,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     }
 
     override fun forwardSearch(params: TextDocumentPositionParams)
-            : CompletableFuture<ForwardSearchStatus> = future {
+            : CompletableFuture<ForwardSearchResult> = future {
         val childUri = URIHelper.parse(params.textDocument.uri)
         val parent = workspace.withLock {
             workspace.findParent(childUri)

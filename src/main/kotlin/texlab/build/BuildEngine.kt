@@ -11,7 +11,7 @@ import java.net.URI
 import java.nio.file.Paths
 
 object BuildEngine {
-    suspend fun build(uri: URI, config: BuildConfig, listener: ProgressListener?): BuildStatus {
+    suspend fun build(uri: URI, config: BuildConfig, listener: ProgressListener?): BuildResult {
         val texFile = Paths.get(uri).toFile()
         val progressParams = ProgressParams("build", "Building...", texFile.name)
         listener?.onReportProgress(progressParams)
@@ -41,13 +41,14 @@ object BuildEngine {
                 throw e
             }
 
-            if (process.exitValue() == 0) {
+            val status = if (process.exitValue() == 0) {
                 BuildStatus.SUCCESS
             } else {
                 BuildStatus.ERROR
             }
+            BuildResult(status)
         } catch (e: IOException) {
-            BuildStatus.FAILURE
+            BuildResult(BuildStatus.FAILURE)
         } finally {
             listener?.onReportProgress(progressParams.copy(done = true))
         }
