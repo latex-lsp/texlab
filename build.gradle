@@ -7,6 +7,7 @@ plugins {
     id "org.jetbrains.dokka" version "0.9.17"
     id "application"
     id "com.github.johnrengelman.shadow" version "4.0.3"
+    id "jacoco"
 }
 
 group "texlab"
@@ -51,6 +52,17 @@ shadowJar {
     baseName = "texlab"
     classifier = null
     version = null
+}
+
+jacoco {
+    toolVersion = "0.8.3"
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled false
+    }
 }
 
 mainClassName = "texlab.MainKt"
