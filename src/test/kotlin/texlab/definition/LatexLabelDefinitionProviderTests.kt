@@ -25,6 +25,15 @@ class LatexLabelDefinitionProviderTests {
     }
 
     @Test
+    fun `it should return null if no definition was found`() {
+        WorkspaceBuilder()
+                .document("foo.tex", "")
+                .definition("foo.tex", 0, 0)
+                .let { LatexLabelDefinitionProvider.find(it) }
+                .also { assertNull(it) }
+    }
+
+    @Test
     fun `it should not process BibTeX documents`() {
         WorkspaceBuilder()
                 .document("foo.bib", "")

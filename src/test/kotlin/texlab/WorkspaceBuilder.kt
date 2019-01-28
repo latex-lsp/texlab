@@ -5,6 +5,7 @@ import texlab.completion.CompletionRequest
 import texlab.definition.DefinitionRequest
 import texlab.diagnostics.DiagnosticsRequest
 import texlab.folding.FoldingRequest
+import texlab.highlight.HighlightRequest
 import texlab.link.LinkRequest
 import texlab.references.ReferenceRequest
 import texlab.rename.RenameRequest
@@ -43,6 +44,12 @@ class WorkspaceBuilder {
     fun folding(path: String): FoldingRequest {
         val uri = File(path).toURI()
         return FoldingRequest(workspace.documents.first { it.uri == uri })
+    }
+
+    fun highlight(path: String, line: Int, character: Int): HighlightRequest {
+        val uri = File(path).toURI()
+        val position = Position(line, character)
+        return HighlightRequest(workspace.documents.first { it.uri == uri }, position)
     }
 
     fun link(path: String): LinkRequest {
