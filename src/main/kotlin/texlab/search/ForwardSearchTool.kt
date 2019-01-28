@@ -28,10 +28,14 @@ object ForwardSearchTool {
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .redirectError(ProcessBuilder.Redirect.PIPE)
                     .start()
-            process.waitFor()
-            ForwardSearchStatus.SUCCESS
+            val exitCode = process.waitFor()
+            if (exitCode == 0) {
+                ForwardSearchStatus.SUCCESS
+            } else {
+                ForwardSearchStatus.ERROR
+            }
         } catch (e: IOException) {
-            ForwardSearchStatus.ERROR
+            ForwardSearchStatus.FAILURE
         }
         return ForwardSearchResult(status)
     }
