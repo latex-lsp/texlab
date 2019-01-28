@@ -2,6 +2,7 @@ package texlab
 
 import org.eclipse.lsp4j.Position
 import texlab.completion.CompletionRequest
+import texlab.definition.DefinitionRequest
 import texlab.diagnostics.DiagnosticsRequest
 import texlab.folding.FoldingRequest
 import texlab.link.LinkRequest
@@ -26,6 +27,12 @@ class WorkspaceBuilder {
         val uri = File(path).toURI()
         val position = Position(line, character)
         return CompletionRequest(uri, workspace.relatedDocuments(uri), position)
+    }
+
+    fun definition(path: String, line: Int, character: Int): DefinitionRequest {
+        val uri = File(path).toURI()
+        val position = Position(line, character)
+        return DefinitionRequest(uri, workspace.relatedDocuments(uri), position)
     }
 
     fun diagnostics(path: String): DiagnosticsRequest {

@@ -18,7 +18,7 @@ object LatexLabelDefinitionProvider : DefinitionProvider {
             val definition = document.tree.labelDefinitions
                     .firstOrNull { it.name.text == reference.name.text }
             if (definition != null) {
-                return Location(document.uri.toString(), definition.command.range)
+                return Location(document.uri.toString(), definition.name.range)
             }
         }
         return null

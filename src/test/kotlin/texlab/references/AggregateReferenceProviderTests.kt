@@ -16,7 +16,7 @@ class AggregateReferenceProviderTests {
     }
 
     @Test
-    fun `it should take the first result`() {
+    fun `it should return the first result`() {
         val provider1 = createProvider(null)
         val provider2 = createProvider(listOf(Location().apply { uri = "foo.tex" }))
         val provider3 = createProvider(listOf(Location().apply { uri = "bar.tex" }))
