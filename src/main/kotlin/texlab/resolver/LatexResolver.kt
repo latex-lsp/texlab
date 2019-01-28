@@ -23,16 +23,16 @@ class LatexResolver(val filesByName: Map<String, File>) {
         fun create(): LatexResolver {
             try {
                 val rootDirectories = findRootDirectories()
-                val kind = detectDistribution(rootDirectories[0].toFile())
-                return LatexResolver(readDatabase(rootDirectories, kind))
-            } catch (e: Exception) {
-                when (e) {
-                    is IOException, is NoSuchElementException -> {
-                        val error = TexDistributionError.INVALID_DISTRIBUTION
-                        throw InvalidTexDistributionException(error)
-                    }
-                    else -> throw e
+                val kind = detectDistribution(rootDirectories)
+                if (kind == LatexDistributionKind.UNKNOWN) {
+                    val error = TexDistributionError.UNKNOWN_DISTRIBUTION
+                    throw InvalidTexDistributionException(error)
                 }
+
+                return LatexResolver(readDatabase(rootDirectories, kind))
+            } catch (e: IOException) {
+                val error = TexDistributionError.INVALID_DISTRIBUTION
+                throw InvalidTexDistributionException(error)
             }
         }
 
@@ -45,7 +45,7 @@ class LatexResolver(val filesByName: Map<String, File>) {
                 val line = process.inputStream.bufferedReader().readLine()
                 return BraceExpansion.expand(line)
                         .map { Paths.get(it.replace("!", "")) }
-                        .filter { it.toFile().exists() }
+                        .filter { Files.exists(it) }
                         .distinct()
             } catch (e: IOException) {
                 val error = TexDistributionError.KPSEWHICH_NOT_FOUND
@@ -53,15 +53,20 @@ class LatexResolver(val filesByName: Map<String, File>) {
             }
         }
 
-        private fun detectDistribution(directory: File): LatexDistributionKind {
-            return when {
-                directory.resolve(TEXLIVE_DATABASE_PATH).exists() ->
-                    LatexDistributionKind.TEXLIVE
-                directory.resolve(MIKTEX_DATABASE_PATH).exists() ->
-                    LatexDistributionKind.MIKTEX
-                else ->
-                    LatexDistributionKind.UNKNOWN
+        private fun detectDistribution(directories: List<Path>): LatexDistributionKind {
+            val kinds = directories.map {
+                when {
+                    Files.exists(it.resolve(TEXLIVE_DATABASE_PATH)) ->
+                        LatexDistributionKind.TEXLIVE
+                    Files.exists(it.resolve(MIKTEX_DATABASE_PATH)) ->
+                        LatexDistributionKind.MIKTEX
+                    else ->
+                        LatexDistributionKind.UNKNOWN
+                }
             }
+
+            return kinds.firstOrNull { it != LatexDistributionKind.UNKNOWN }
+                    ?: LatexDistributionKind.UNKNOWN
         }
 
         private fun readDatabase(rootDirectories: List<Path>, kind: LatexDistributionKind)
@@ -70,8 +75,13 @@ class LatexResolver(val filesByName: Map<String, File>) {
             for (directory in rootDirectories) {
                 val database = when (kind) {
                     LatexDistributionKind.TEXLIVE -> {
-                        val lines = Files.readAllLines(directory.resolve(TEXLIVE_DATABASE_PATH))
-                        parseTexliveDatabase(directory, lines)
+                        val file = directory.resolve(TEXLIVE_DATABASE_PATH)
+                        if (Files.exists(file)) {
+                            val lines = Files.readAllLines(file)
+                            parseTexliveDatabase(directory, lines)
+                        } else {
+                            emptySequence()
+                        }
                     }
                     LatexDistributionKind.MIKTEX -> {
                         directory.resolve(MIKTEX_DATABASE_PATH)
