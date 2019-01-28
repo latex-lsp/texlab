@@ -45,6 +45,7 @@ class LatexResolver(val filesByName: Map<String, File>) {
                 val line = process.inputStream.bufferedReader().readLine()
                 return BraceExpansion.expand(line)
                         .map { Paths.get(it.replace("!", "")) }
+                        .filter { it.toFile().exists() }
                         .distinct()
             } catch (e: IOException) {
                 val error = TexDistributionError.KPSEWHICH_NOT_FOUND
