@@ -6,6 +6,7 @@ import texlab.definition.DefinitionRequest
 import texlab.diagnostics.DiagnosticsRequest
 import texlab.folding.FoldingRequest
 import texlab.highlight.HighlightRequest
+import texlab.hover.HoverRequest
 import texlab.link.LinkRequest
 import texlab.references.ReferenceRequest
 import texlab.rename.RenameRequest
@@ -50,6 +51,12 @@ class WorkspaceBuilder {
         val uri = File(path).toURI()
         val position = Position(line, character)
         return HighlightRequest(workspace.documents.first { it.uri == uri }, position)
+    }
+
+    fun hover(path: String, line: Int, character: Int): HoverRequest {
+        val uri = File(path).toURI()
+        val position = Position(line, character)
+        return HoverRequest(uri, workspace.relatedDocuments(uri), position)
     }
 
     fun link(path: String): LinkRequest {
