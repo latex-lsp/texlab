@@ -26,6 +26,8 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     implementation "com.overzealous:remark:1.1.0"
     implementation 'me.andrz:brace-expansion:1.0.0'
+    implementation "org.zeroturnaround:zt-zip:1.13"
+    implementation "org.slf4j:slf4j-nop:1.7.25"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.2"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:5.3.2"

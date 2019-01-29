@@ -2,6 +2,7 @@ package texlab.completion
 
 import org.eclipse.lsp4j.*
 import texlab.completion.bibtex.BibtexField
+import java.nio.file.Path
 
 object CompletionItemFactory {
     private const val KERNEL = "built-in"
@@ -97,6 +98,27 @@ object CompletionItemFactory {
             setDocumentation(MarkupContent().apply {
                 kind = MarkupKind.MARKDOWN
                 value = field.documentation()
+            })
+        }
+    }
+
+    fun createCommandSymbol(name: String, component: String?, image: Path): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Function
+            detail = component ?: KERNEL
+            setDocumentation(MarkupContent().apply {
+                kind = MarkupKind.MARKDOWN
+                value = "![$name]($image|width=48,height=48)"
+            })
+        }
+    }
+
+    fun createArgumentSymbol(name: String, image: Path): CompletionItem {
+        return CompletionItem(name).apply {
+            kind = CompletionItemKind.Field
+            setDocumentation(MarkupContent().apply {
+                kind = MarkupKind.MARKDOWN
+                value = "![$name]($image|width=48,height=48)"
             })
         }
     }

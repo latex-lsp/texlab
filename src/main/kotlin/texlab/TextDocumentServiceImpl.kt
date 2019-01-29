@@ -15,6 +15,9 @@ import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
 import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
+import texlab.completion.latex.data.symbols.LatexArgumentSymbolProvider
+import texlab.completion.latex.data.symbols.LatexCommandSymbolProvider
+import texlab.completion.latex.data.symbols.LatexSymbolDatabase
 import texlab.definition.*
 import texlab.diagnostics.*
 import texlab.folding.*
@@ -84,10 +87,16 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
         }
     }
 
-    private val database: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
-        val databaseDirectory = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
-        val databaseFile = databaseDirectory.resolve("components.json").toFile()
+    private val serverDirectory: Path = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
+
+    private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
+        val databaseFile = serverDirectory.resolve("components.json").toFile()
         LatexComponentDatabase.loadOrCreate(databaseFile, resolver.await(), progressListener)
+    }
+
+    private val symbolDatabase: Deferred<LatexSymbolDatabase> = async {
+        val databaseDirectory = serverDirectory.resolve("symbols")
+        LatexSymbolDatabase.loadOrCreate(databaseDirectory)
     }
 
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
@@ -109,11 +118,13 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                                     DefineColorSetModelProvider,
                                     LatexLabelProvider,
                                     LatexBeginCommandProvider,
-                                    DeferredCompletionProvider(::LatexComponentEnvironmentProvider, database),
+                                    DeferredCompletionProvider(::LatexComponentEnvironmentProvider, componentDatabase),
                                     LatexKernelEnvironmentProvider,
                                     LatexUserEnvironmentProvider,
-                                    DeferredCompletionProvider(::TikzCommandProvider, database),
-                                    DeferredCompletionProvider(::LatexComponentCommandProvider, database),
+                                    DeferredCompletionProvider(::LatexArgumentSymbolProvider, symbolDatabase),
+                                    DeferredCompletionProvider(::LatexCommandSymbolProvider, symbolDatabase),
+                                    DeferredCompletionProvider(::TikzCommandProvider, componentDatabase),
+                                    DeferredCompletionProvider(::LatexComponentCommandProvider, componentDatabase),
                                     LatexKernelCommandProvider,
                                     LatexUserCommandProvider,
                                     BibtexEntryTypeProvider,
@@ -178,7 +189,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                     workspace.documents.map { workspace.relatedDocuments(it.uri) }
                 }
 
-                relatedDocuments.forEach { database.await().getRelatedComponents(it) }
+                relatedDocuments.forEach { componentDatabase.await().getRelatedComponents(it) }
                 delay(1000)
             }
         }
