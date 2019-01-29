@@ -33,11 +33,7 @@ object BuildErrorParser {
                 val message = messageGroup!!.lines()[0]
 
                 val file = ranges.first { it.contains(matcher.start()) }.uri
-                val line = if (file == null) {
-                    null
-                } else {
-                    matcher.tryGroup("Line")?.toInt()?.let { it - 1 }
-                }
+                val line = matcher.tryGroup("Line")?.toInt()?.let { it - 1 }
                 yield(BuildError(file ?: parent, kind, message, line))
             }
         }

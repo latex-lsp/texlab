@@ -50,9 +50,9 @@ class BuildErrorParserTests {
         val errors = arrayOf(
                 BuildError(parent, BuildErrorKind.ERROR,
                         "Package babel Error: Unknown option `foo'. Either you misspelled it or " +
-                                "the language definition file foo.ldf was not found.", null),
+                                "the language definition file foo.ldf was not found.", 392),
                 BuildError(parent, BuildErrorKind.ERROR,
-                        "Package babel Error: You haven't specified a language option.", null))
+                        "Package babel Error: You haven't specified a language option.", 425))
         verify("package-error.log", errors)
     }
 
