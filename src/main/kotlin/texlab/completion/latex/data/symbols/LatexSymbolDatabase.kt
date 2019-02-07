@@ -11,9 +11,10 @@ data class LatexSymbolDatabase(val index: LatexSymbolIndex, val directory: Path)
 
     companion object {
         fun loadOrCreate(directory: Path): LatexSymbolDatabase {
-            if (Files.exists(directory)) {
+            val indexFile = directory.resolve("index.json")
+            if (Files.exists(indexFile)) {
                 val mapper = jacksonObjectMapper()
-                val index = mapper.readValue<LatexSymbolIndex>(directory.resolve("index.json").toFile())
+                val index = mapper.readValue<LatexSymbolIndex>(indexFile.toFile())
                 return LatexSymbolDatabase(index, directory)
             }
 
