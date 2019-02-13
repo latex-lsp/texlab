@@ -20,7 +20,8 @@ $ ./gradlew build
 To use the local build with the [extension](https://github.com/efoerster/texlab-vscode), we recommend creating a symbolic link:
 
 ```shell
-$ ln -s ./../texlab-vscode/server/texlab.jar ./build/libs/texlab.jar
+$ mkdir ../texlab-vscode/server
+$ ln -s ../../texlab/build/libs/texlab.jar ./../texlab-vscode/server/texlab.jar
 ```
 
 ## Contributing
