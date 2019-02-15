@@ -22,6 +22,7 @@ deploy:
   api_key:
     secure: SLuiCY9rKUgcOYUxYlVkY01oW2O7+oJm2GrFL8yHvFI5a8iJ87/01n83qY87RsdrU6G6OJ7sOYeFBFkA6KZAXSIa6wEcd7viMKoLMT+gV7QVGc91xGXIBh/mBekuw0NHvpKcK0fo9R/EUEG2msdDgCHqSDJMMFMphNS5l3InKIskO9xa2kfmSiRxdLjFkR6BHR6iOEKRJUZb5FGi8i3EG2XJO18GLhi822toZ9GLTUyOjyiJPsCcaHAfPWiUqWV5ZW/yJ60VFmLl7N9KgZXHAEPWNw/8gBiWojWH15xcX0GhEFYQYDHEbQk9ljuAoNA52LRKBeCYbgiKqlgHD0I/R7vXhqEX+WZokO7DvZx2n95wd5Ar78hIIuYZL3f4Bj5rOGLtEjpKBgIleuzfasOrcjoob2DUVNu/MkzllnOQn6G3zDusHyAp5BO7o1T5W9kueoT77p2vbp61BLJZs0cvkHpLIvhr+QnrnzduFe+z+mGJWQRtXFHQ1/236tJcNxIoE7OVMqzpWO+t6uq/jPoRmLGWtml7DKlUpSovjjwgHc9mYAIfs+ytDj9C7ilStyKgyzNIZoUqmMjb9yD5ZklUmbSpWeZYI3ArHEZcdaITOCuzVEoOStUMzMSJ1b8BnXozPM0G50AOkTJrWExI/Vb3tyOtOIzKz8TTAj3y8d802jc=
   file: "./build/libs/texlab.jar"
+  skip_cleanup: true
   on:
     repo: efoerster/texlab
     all_branches: true
