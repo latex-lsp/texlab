@@ -24,3 +24,5 @@ deploy:
   file: "./build/libs/texlab.jar"
   on:
     repo: efoerster/texlab
+    all_branches: true
+    tags: true
