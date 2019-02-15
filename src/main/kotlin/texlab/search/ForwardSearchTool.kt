@@ -3,7 +3,6 @@ package texlab.search
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 object ForwardSearchTool {
     fun search(file: File, parent: File, lineNumber: Int, config: ForwardSearchConfig): ForwardSearchResult {
@@ -25,20 +24,11 @@ object ForwardSearchTool {
                 .toTypedArray()
         val command = listOf(config.executable, *args)
         val status = try {
-            val process = ProcessBuilder(command)
+            ProcessBuilder(command)
                     .redirectOutput(ProcessBuilder.Redirect.PIPE)
                     .redirectError(ProcessBuilder.Redirect.PIPE)
                     .start()
-            if (process.waitFor(5, TimeUnit.SECONDS)) {
-                if (process.exitValue() == 0) {
-                    ForwardSearchStatus.SUCCESS
-                } else {
-                    ForwardSearchStatus.ERROR
-                }
-            } else {
-                ForwardSearchStatus.SUCCESS
-            }
-
+            ForwardSearchStatus.SUCCESS
         } catch (e: IOException) {
             ForwardSearchStatus.FAILURE
         }
