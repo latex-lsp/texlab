@@ -108,7 +108,7 @@ object CompletionItemFactory {
             detail = component ?: KERNEL
             setDocumentation(MarkupContent().apply {
                 kind = MarkupKind.MARKDOWN
-                value = "![$name]($image|width=48,height=48)"
+                value = "![$name](${image.toUri()}|width=48,height=48)"
             })
         }
     }
@@ -118,7 +118,7 @@ object CompletionItemFactory {
             kind = CompletionItemKind.Field
             setDocumentation(MarkupContent().apply {
                 kind = MarkupKind.MARKDOWN
-                value = "![$name]($image|width=48,height=48)"
+                value = "![$name](${image.toUri()}|width=48,height=48)"
             })
         }
     }
