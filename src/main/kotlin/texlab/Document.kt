@@ -1,48 +1,43 @@
 package texlab
 
-import texlab.syntax.bibtex.BibtexSyntaxTree
-import texlab.syntax.latex.LatexSyntaxTree
+import texlab.syntax.BibtexSyntaxTree
+import texlab.syntax.LatexSyntaxTree
+import texlab.syntax.SyntaxTree
 import java.net.URI
 
-sealed class Document(val uri: URI) {
-    val isFile: Boolean = uri.scheme == "file"
+sealed class Document {
+    abstract val uri: URI
+    abstract val text: String
+    abstract val tree: SyntaxTree
 
-    var text: String = ""
+    val isFile: Boolean
+        get() = uri.scheme == "file"
 
-    override fun equals(other: Any?): Boolean {
-        return other is Document && uri == other.uri
-    }
-
-    override fun hashCode(): Int = uri.hashCode()
-
-    abstract fun analyze()
+    abstract fun copy(text: String = this.text, tree: SyntaxTree = this.tree): Document
 
     companion object {
-        fun create(uri: URI, language: Language): Document {
+        fun create(uri: URI, text: String, language: Language): Document {
             return when (language) {
-                Language.LATEX ->
-                    LatexDocument(uri)
+                Language.LATEX -> {
+                    LatexDocument(uri, text, LatexSyntaxTree(text))
+                }
                 Language.BIBTEX ->
-                    BibtexDocument(uri)
+                    BibtexDocument(uri, text, BibtexSyntaxTree(text))
             }
         }
     }
 }
 
-class LatexDocument(uri: URI) : Document(uri) {
-    lateinit var tree: LatexSyntaxTree
-        private set
-
-    override fun analyze() {
-        tree = LatexSyntaxTree(text)
-    }
+data class LatexDocument(override val uri: URI,
+                         override val text: String,
+                         override val tree: LatexSyntaxTree) : Document() {
+    override fun copy(text: String, tree: SyntaxTree): Document =
+            copy(uri = uri, text = text, tree = tree as LatexSyntaxTree)
 }
 
-class BibtexDocument(uri: URI) : Document(uri) {
-    lateinit var tree: BibtexSyntaxTree
-        private set
-
-    override fun analyze() {
-        tree = BibtexSyntaxTree(text)
-    }
+data class BibtexDocument(override val uri: URI,
+                          override val text: String,
+                          override val tree: BibtexSyntaxTree) : Document() {
+    override fun copy(text: String, tree: SyntaxTree): Document =
+            copy(uri = uri, text = text, tree = tree as BibtexSyntaxTree)
 }

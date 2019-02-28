@@ -43,6 +43,7 @@ import texlab.search.ForwardSearchConfig
 import texlab.search.ForwardSearchResult
 import texlab.search.ForwardSearchTool
 import texlab.symbol.*
+import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
 import java.net.URI
@@ -205,14 +206,13 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                 val language = getLanguageById(languageId) ?: return@launch
                 workspace.withLock {
                     val uri = URIHelper.parse(uri)
-                    val document = workspace.documents.firstOrNull { it.uri == uri }
-                            ?: Document.create(uri, language)
-                    if (!workspace.documents.contains(document)) {
-                        workspace.documents.add(document)
+                    val oldDocument = workspace.documents.firstOrNull { it.uri == uri }
+                    if (oldDocument != null) {
+                        workspace.documents.remove(oldDocument)
                     }
 
-                    document.text = text
-                    document.analyze()
+                    val document = Document.create(uri, text, language)
+                    workspace.documents.add(document)
                     publishDiagnostics(uri)
                 }
             }
@@ -223,9 +223,14 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
         launch {
             val uri = URIHelper.parse(params.textDocument.uri)
             workspace.withLock {
-                val document = workspace.documents.first { it.uri == uri }
-                params.contentChanges.forEach { document.text = it.text }
-                document.analyze()
+                assert(params.contentChanges.size == 1)
+
+                val oldDocument = workspace.documents.first { it.uri == uri }
+                workspace.documents.remove(oldDocument)
+
+                val text = params.contentChanges[0].text
+                val document = oldDocument.copy(text, LatexSyntaxTree(text))
+                workspace.documents.add(document)
             }
 
             publishDiagnostics(uri)

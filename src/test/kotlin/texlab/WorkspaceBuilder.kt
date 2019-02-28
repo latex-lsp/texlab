@@ -18,9 +18,7 @@ class WorkspaceBuilder {
     fun document(path: String, text: String): WorkspaceBuilder {
         val file = File(path)
         val language = getLanguageByExtension(file.extension)!!
-        val document = Document.create(file.toURI(), language)
-        document.text = text
-        document.analyze()
+        val document = Document.create(file.toURI(), text, language)
         workspace.documents.add(document)
         return this
     }

@@ -1,7 +1,19 @@
-package texlab.syntax.latex
+package texlab.syntax
 
-class LatexSyntaxTree(text: String) {
-    val root: LatexDocumentSyntax = LatexParser.parse(text)
+import texlab.syntax.bibtex.BibtexDocumentSyntax
+import texlab.syntax.bibtex.BibtexParser
+import texlab.syntax.latex.*
+
+sealed class SyntaxTree {
+    abstract val root: SyntaxNode
+}
+
+class BibtexSyntaxTree(text: String) : SyntaxTree() {
+    override val root: BibtexDocumentSyntax = BibtexParser.parse(text)
+}
+
+class LatexSyntaxTree(text: String) : SyntaxTree() {
+    override val root: LatexDocumentSyntax = LatexParser.parse(text)
 
     val includes: List<LatexInclude> = LatexInclude.find(root)
 

@@ -88,9 +88,7 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
         val language = getLanguageByExtension(extension) ?: return
         try {
             val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
-            val document = Document.create(file.toUri(), language)
-            document.text = text
-            document.analyze()
+            val document = Document.create(file.toUri(), text, language)
             workspace.documents.add(document)
         } catch (e: IOException) {
             e.printStackTrace()
