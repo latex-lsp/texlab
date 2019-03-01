@@ -11,7 +11,7 @@ import texlab.build.BuildEngine
 import texlab.build.BuildParams
 import texlab.build.BuildResult
 import texlab.completion.*
-import texlab.completion.bibtex.BibtexCitationGenerator
+import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
@@ -169,6 +169,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val hoverProvider: HoverProvider =
             AggregateHoverProvider(
                     LatexComponentHoverProvider,
+                    LatexCitationHoverProvider,
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 
@@ -290,34 +291,32 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun resolveCompletionItem(unresolved: CompletionItem)
-            : CompletableFuture<CompletionItem> {
+            : CompletableFuture<CompletionItem> = future {
         if (unresolved.kind == CompletionItemKind.Constant) {
             val entry = unresolved.data as JsonPrimitive
-            val citation = BibtexCitationGenerator.cite(entry.asString)
+            val citation = BibtexCitationActor.cite(entry.asString)
 
             unresolved.setDocumentation(MarkupContent().apply {
                 kind = MarkupKind.MARKDOWN
                 value = citation
             })
 
-            return future { unresolved }
+            return@future unresolved
         }
 
-        return future {
-            val provider = when (unresolved.kind) {
-                CompletionItemKind.Class -> LatexComponentMetadataProvider
-                CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
-                else -> null
-            }
-
-            val metadata = provider?.getMetadata(unresolved.label)
-            if (metadata != null) {
-                unresolved.detail = metadata.detail
-                unresolved.setDocumentation(metadata.documentation)
-            }
-
-            unresolved
+        val provider = when (unresolved.kind) {
+            CompletionItemKind.Class -> LatexComponentMetadataProvider
+            CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
+            else -> null
         }
+
+        val metadata = provider?.getMetadata(unresolved.label)
+        if (metadata != null) {
+            unresolved.detail = metadata.detail
+            unresolved.setDocumentation(metadata.documentation)
+        }
+
+        unresolved
     }
 
     override fun foldingRange(params: FoldingRangeRequestParams)

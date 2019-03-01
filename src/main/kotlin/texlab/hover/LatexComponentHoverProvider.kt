@@ -6,7 +6,7 @@ import texlab.contains
 import texlab.metadata.LatexComponentMetadataProvider
 
 object LatexComponentHoverProvider : HoverProvider {
-    override fun getHover(request: HoverRequest): Hover? {
+    override suspend fun getHover(request: HoverRequest): Hover? {
         if (request.document !is LatexDocument) {
             return null
         }

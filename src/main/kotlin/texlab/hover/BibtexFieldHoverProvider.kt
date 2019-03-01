@@ -9,7 +9,7 @@ import texlab.contains
 import texlab.syntax.bibtex.BibtexFieldSyntax
 
 object BibtexFieldHoverProvider : HoverProvider {
-    override fun getHover(request: HoverRequest): Hover? {
+    override suspend fun getHover(request: HoverRequest): Hover? {
         if (request.document !is BibtexDocument) {
             return null
         }

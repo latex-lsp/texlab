@@ -7,7 +7,7 @@ import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
 object BibtexEntryTypeHoverProvider : HoverProvider {
-    override fun getHover(request: HoverRequest): Hover? {
+    override suspend fun getHover(request: HoverRequest): Hover? {
         if (request.document !is BibtexDocument) {
             return null
         }
