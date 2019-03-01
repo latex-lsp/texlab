@@ -197,6 +197,12 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                 delay(1000)
             }
         }
+
+        launch {
+            // Force initialization of the citeproc instance
+            // in order to optimize performance
+            BibtexCitationGenerator.cite("")
+        }
     }
 
     fun initialize(root: Path?) {
