@@ -197,12 +197,6 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                 delay(1000)
             }
         }
-
-        launch {
-            // Force initialization of the citeproc instance
-            // in order to optimize performance
-            BibtexCitationGenerator.cite("")
-        }
     }
 
     fun initialize(root: Path?) {
@@ -296,31 +290,34 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun resolveCompletionItem(unresolved: CompletionItem)
-            : CompletableFuture<CompletionItem> = future {
+            : CompletableFuture<CompletionItem> {
         if (unresolved.kind == CompletionItemKind.Constant) {
             val entry = unresolved.data as JsonPrimitive
+            val citation = BibtexCitationGenerator.cite(entry.asString)
 
             unresolved.setDocumentation(MarkupContent().apply {
                 kind = MarkupKind.MARKDOWN
-                value = BibtexCitationGenerator.cite(entry.asString)
+                value = citation
             })
 
-            return@future unresolved
+            return future { unresolved }
         }
 
-        val provider = when (unresolved.kind) {
-            CompletionItemKind.Class -> LatexComponentMetadataProvider
-            CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
-            else -> null
-        }
+        return future {
+            val provider = when (unresolved.kind) {
+                CompletionItemKind.Class -> LatexComponentMetadataProvider
+                CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
+                else -> null
+            }
 
-        val metadata = provider?.getMetadata(unresolved.label)
-        if (metadata != null) {
-            unresolved.detail = metadata.detail
-            unresolved.setDocumentation(metadata.documentation)
-        }
+            val metadata = provider?.getMetadata(unresolved.label)
+            if (metadata != null) {
+                unresolved.detail = metadata.detail
+                unresolved.setDocumentation(metadata.documentation)
+            }
 
-        unresolved
+            unresolved
+        }
     }
 
     override fun foldingRange(params: FoldingRangeRequestParams)
