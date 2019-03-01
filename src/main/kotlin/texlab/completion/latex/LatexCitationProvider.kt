@@ -18,7 +18,7 @@ object LatexCitationProvider : LatexArgumentProvider() {
                 .filterIsInstance<BibtexDocument>()
                 .flatMap { it.tree.root.children }
                 .filterIsInstance<BibtexEntrySyntax>()
-                .mapNotNull { it.name?.text }
+                .filter { it.name != null }
                 .map { CompletionItemFactory.createCitation(it) }
     }
 }

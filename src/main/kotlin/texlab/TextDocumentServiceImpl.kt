@@ -1,5 +1,6 @@
 package texlab
 
+import com.google.gson.JsonPrimitive
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -10,6 +11,7 @@ import texlab.build.BuildEngine
 import texlab.build.BuildParams
 import texlab.build.BuildResult
 import texlab.completion.*
+import texlab.completion.bibtex.BibtexCitationGenerator
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
 import texlab.completion.bibtex.BibtexKernelCommandProvider
@@ -289,6 +291,17 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun resolveCompletionItem(unresolved: CompletionItem)
             : CompletableFuture<CompletionItem> = future {
+        if (unresolved.kind == CompletionItemKind.Constant) {
+            val entry = unresolved.data as JsonPrimitive
+
+            unresolved.setDocumentation(MarkupContent().apply {
+                kind = MarkupKind.MARKDOWN
+                value = BibtexCitationGenerator.cite(entry.asString)
+            })
+
+            return@future unresolved
+        }
+
         val provider = when (unresolved.kind) {
             CompletionItemKind.Class -> LatexComponentMetadataProvider
             CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider

@@ -25,13 +25,17 @@ dependencies {
     implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:0.6.0"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     implementation "com.overzealous:remark:1.1.0"
-    implementation 'me.andrz:brace-expansion:1.0.0'
     implementation "org.zeroturnaround:zt-zip:1.13"
     implementation "org.slf4j:slf4j-nop:1.7.25"
+    implementation 'me.andrz:brace-expansion:v0.1.2'
+    implementation "de.undercouch:citeproc-java:1.0.1"
+    runtime "org.citationstyles:styles:1.0"
+    runtime "org.citationstyles:locales:1.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.2"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:5.3.2"
 }
+
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"

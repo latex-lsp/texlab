@@ -2,6 +2,8 @@ package texlab.completion
 
 import org.eclipse.lsp4j.*
 import texlab.completion.bibtex.BibtexField
+import texlab.formatting.BibtexFormatter
+import texlab.syntax.bibtex.BibtexEntrySyntax
 import java.nio.file.Path
 
 object CompletionItemFactory {
@@ -80,9 +82,10 @@ object CompletionItemFactory {
         }
     }
 
-    fun createCitation(name: String): CompletionItem {
-        return CompletionItem(name).apply {
+    fun createCitation(entry: BibtexEntrySyntax): CompletionItem {
+        return CompletionItem(entry.name!!.text).apply {
             kind = CompletionItemKind.Constant
+            data = BibtexFormatter(true, 4, -1).format(entry)
         }
     }
 
