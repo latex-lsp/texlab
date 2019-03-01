@@ -25,7 +25,9 @@ class WorkspaceServiceImpl(private val service: TextDocumentServiceImpl) : Works
                     val document = workspace.documents.firstOrNull { it.uri == texUri }
                     if (document != null) {
                         try {
-                            val log = Files.readAllBytes(logPath).toString(Charsets.UTF_8)
+                            val log = withContext(Dispatchers.IO) {
+                                Files.readAllBytes(logPath).toString(Charsets.UTF_8)
+                            }
                             val allErrors = BuildErrorParser.parse(texUri, log)
 
                             service.buildDiagnosticsProvider.diagnosticsByUri = allErrors

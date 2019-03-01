@@ -1,6 +1,7 @@
 package texlab
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
@@ -233,7 +234,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                 workspaceActor.withWorkspace { workspace ->
                     val document = workspace.findParent(uri)
                     val identifier = TextDocumentIdentifier(document.uri.toString())
-                    build(BuildParams(identifier)).get()
+                    build(BuildParams(identifier)).await()
                 }
             }
         }

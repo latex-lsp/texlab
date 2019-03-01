@@ -23,18 +23,18 @@ object BuildEngine {
                 buildLogFile.delete()
             }
 
-            val process = ProcessBuilder(command)
-                    .directory(texFile.parentFile)
-                    .directory(texFile.parentFile)
-                    .redirectOutput(buildLogFile)
-                    .redirectErrorStream(true)
-                    .start()
+            val process = withContext(Dispatchers.IO) {
+                ProcessBuilder(command)
+                        .directory(texFile.parentFile)
+                        .directory(texFile.parentFile)
+                        .redirectOutput(buildLogFile)
+                        .redirectErrorStream(true)
+                        .start()
+            }
 
             try {
-                withContext(Dispatchers.IO) {
-                    while (process.isAlive) {
-                        delay(250)
-                    }
+                while (process.isAlive) {
+                    delay(250)
                 }
             } catch (e: CancellationException) {
                 process.destroy()

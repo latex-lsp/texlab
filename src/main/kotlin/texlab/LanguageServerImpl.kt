@@ -1,9 +1,6 @@
 package texlab
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.future
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
@@ -76,10 +73,13 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
     private suspend fun loadWorkspace(root: URI) {
         if (root.scheme == "file") {
             val matcher = FileSystems.getDefault().getPathMatcher("glob:**.{tex,sty,cls,bib}")
-            val files = Files.walk(Paths.get(root))
-                    .filter { Files.isRegularFile(it) }
-                    .filter { matcher.matches(it) }
-                    .toList()
+
+            val files = withContext(Dispatchers.IO) {
+                Files.walk(Paths.get(root))
+                        .filter { Files.isRegularFile(it) }
+                        .filter { matcher.matches(it) }
+                        .toList()
+            }
 
             files.forEach { loadWorkspaceFile(it) }
         }
@@ -90,7 +90,10 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
         val language = getLanguageByExtension(extension) ?: return
         try {
             workspaceActor.put {
-                val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
+                val text = withContext(Dispatchers.IO) {
+                    Files.readAllBytes(file).toString(Charsets.UTF_8)
+                }
+
                 Document.create(file.toUri(), text, language)
             }
         } catch (e: IOException) {
