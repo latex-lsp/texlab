@@ -97,7 +97,7 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
                 Document.create(file.toUri(), text, language)
             }
         } catch (e: IOException) {
-            e.printStackTrace()
+            // File is locked
         }
     }
 
