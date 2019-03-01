@@ -13,20 +13,20 @@ import texlab.rename.RenameRequest
 import java.io.File
 
 class WorkspaceBuilder {
-    val workspace = Workspace()
+    var workspace = Workspace()
 
     fun document(path: String, text: String): WorkspaceBuilder {
         val file = File(path)
         val language = getLanguageByExtension(file.extension)!!
         val document = Document.create(file.toURI(), text, language)
-        workspace.documents.add(document)
+        workspace = Workspace(workspace.documents.plus(document))
         return this
     }
 
     fun completion(path: String, line: Int, character: Int): CompletionRequest {
         val uri = File(path).toURI()
         val position = Position(line, character)
-        return CompletionRequest(uri, workspace.relatedDocuments(uri), position)
+        return CompletionRequest(uri, position, workspace)
     }
 
     fun definition(path: String, line: Int, character: Int): DefinitionRequest {

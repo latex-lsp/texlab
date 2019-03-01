@@ -12,7 +12,7 @@ class LatexIncludeProviderTests {
                 .document("bar.tex", "")
                 .document("baz.tex", "")
 
-        val provider = LatexIncludeProvider(builder.workspace)
+        val provider = LatexIncludeProvider()
 
         val expected = arrayOf("baz")
         val actual = provider

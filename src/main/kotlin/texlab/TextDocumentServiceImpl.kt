@@ -2,7 +2,6 @@ package texlab
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.future
-import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import texlab.build.BuildConfig
@@ -52,7 +51,8 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 
-class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentService, CoroutineScope {
+@ObsoleteCoroutinesApi
+class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDocumentService, CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     private lateinit var client: CustomLanguageClient
@@ -106,9 +106,9 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
                     OrderByQualityProvider(
                             AggregateCompletionProvider(
                                     includeGraphicsProvider,
-                                    LatexIncludeProvider(workspace),
-                                    LatexInputProvider(workspace),
-                                    LatexBibliographyProvider(workspace),
+                                    LatexIncludeProvider(),
+                                    LatexInputProvider(),
+                                    LatexBibliographyProvider(),
                                     DeferredCompletionProvider(::LatexClassImportProvider, resolver),
                                     DeferredCompletionProvider(::LatexPackageImportProvider, resolver),
                                     PgfLibraryProvider,
@@ -186,11 +186,11 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
         launch {
             while (true) {
-                val relatedDocuments = workspace.withLock {
+                workspaceActor.withWorkspace { workspace ->
                     workspace.documents.map { workspace.relatedDocuments(it.uri) }
+                            .forEach { componentDatabase.await().getRelatedComponents(it) }
                 }
 
-                relatedDocuments.forEach { componentDatabase.await().getRelatedComponents(it) }
                 delay(1000)
             }
         }
@@ -204,33 +204,21 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
         launch {
             params.textDocument.apply {
                 val language = getLanguageById(languageId) ?: return@launch
-                workspace.withLock {
-                    val uri = URIHelper.parse(uri)
-                    val oldDocument = workspace.documents.firstOrNull { it.uri == uri }
-                    if (oldDocument != null) {
-                        workspace.documents.remove(oldDocument)
-                    }
-
-                    val document = Document.create(uri, text, language)
-                    workspace.documents.add(document)
-                    publishDiagnostics(uri)
-                }
+                val uri = URIHelper.parse(uri)
+                workspaceActor.put { Document.create(uri, text, language) }
+                publishDiagnostics(uri)
             }
         }
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
+        assert(params.contentChanges.size == 1)
         launch {
             val uri = URIHelper.parse(params.textDocument.uri)
-            workspace.withLock {
-                assert(params.contentChanges.size == 1)
-
+            workspaceActor.put { workspace ->
                 val oldDocument = workspace.documents.first { it.uri == uri }
-                workspace.documents.remove(oldDocument)
-
                 val text = params.contentChanges[0].text
-                val document = oldDocument.copy(text, LatexSyntaxTree(text))
-                workspace.documents.add(document)
+                oldDocument.copy(text, LatexSyntaxTree(text))
             }
 
             publishDiagnostics(uri)
@@ -242,9 +230,11 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
             val uri = URIHelper.parse(params.textDocument.uri)
             val config = client.configuration<BuildConfig>("latex.build", uri)
             if (config.onSave) {
-                val document = workspace.findParent(uri)
-                val identifier = TextDocumentIdentifier(document.uri.toString())
-                build(BuildParams(identifier)).get()
+                workspaceActor.withWorkspace { workspace ->
+                    val document = workspace.findParent(uri)
+                    val identifier = TextDocumentIdentifier(document.uri.toString())
+                    build(BuildParams(identifier)).get()
+                }
             }
         }
     }
@@ -254,11 +244,11 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun documentSymbol(params: DocumentSymbolParams)
             : CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?: return@future null
+                    ?: return@withWorkspace null
 
             val request = SymbolRequest(document)
             symbolProvider.getSymbols(request)
@@ -268,7 +258,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     }
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = RenameRequest(uri, relatedDocuments, params.position, params.newName)
@@ -278,7 +268,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun documentLink(params: DocumentLinkParams)
             : CompletableFuture<MutableList<DocumentLink>> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val request = LinkRequest(workspace, uri)
             linkProvider.getLinks(request).toMutableList()
@@ -287,10 +277,9 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = CompletionRequest(uri, relatedDocuments, params.position)
+            val request = CompletionRequest(uri, params.position, workspace)
             val items = completionProvider.complete(request).toList()
             val list = CompletionList(true, items)
             Either.forRight<MutableList<CompletionItem>, CompletionList>(list)
@@ -316,11 +305,11 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun foldingRange(params: FoldingRangeRequestParams)
             : CompletableFuture<MutableList<FoldingRange>?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents
                     .firstOrNull { it.uri == uri }
-                    ?: return@future null
+                    ?: return@withWorkspace null
 
             val request = FoldingRequest(document)
             foldingProvider.fold(request).toMutableList()
@@ -329,7 +318,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun definition(params: TextDocumentPositionParams)
             : CompletableFuture<MutableList<out Location>?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = DefinitionRequest(uri, relatedDocuments, params.position)
@@ -339,22 +328,23 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     }
 
     override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover?> = future {
-        val uri = URIHelper.parse(params.textDocument.uri)
-        val relatedDocuments = workspace.withLock { workspace.relatedDocuments(uri) }
-        val request = HoverRequest(uri, relatedDocuments, params.position)
-        hoverProvider.getHover(request)
+        workspaceActor.withWorkspace { workspace ->
+            val uri = URIHelper.parse(params.textDocument.uri)
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = HoverRequest(uri, relatedDocuments, params.position)
+            hoverProvider.getHover(request)
+        }
     }
 
     override fun formatting(params: DocumentFormattingParams)
             : CompletableFuture<MutableList<out TextEdit>?> = future {
         val uri = URIHelper.parse(params.textDocument.uri)
         val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
-        workspace.withLock {
-            val document =
-                    workspace.documents
-                            .filterIsInstance<BibtexDocument>()
-                            .firstOrNull { it.uri == uri }
-                            ?: return@future null
+        workspaceActor.withWorkspace { workspace ->
+            val document = workspace.documents
+                    .filterIsInstance<BibtexDocument>()
+                    .firstOrNull { it.uri == uri }
+                    ?: return@withWorkspace null
             val formatter =
                     BibtexFormatter(params.options.isInsertSpaces, params.options.tabSize, config.lineLength)
             val edits = mutableListOf<TextEdit>()
@@ -367,7 +357,7 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun references(params: ReferenceParams)
             : CompletableFuture<MutableList<out Location>?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val relatedDocuments = workspace.relatedDocuments(uri)
             val request = ReferenceRequest(uri, relatedDocuments, params.position)
@@ -377,10 +367,10 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
 
     override fun documentHighlight(params: TextDocumentPositionParams)
             : CompletableFuture<MutableList<out DocumentHighlight>?> = future {
-        workspace.withLock {
+        workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(params.textDocument.uri)
             val document = workspace.documents.firstOrNull { it.uri == uri }
-                    ?: return@future null
+                    ?: return@withWorkspace null
 
             val request = HighlightRequest(document, params.position)
             highlightProvider.getHighlights(request)?.toMutableList()
@@ -388,31 +378,32 @@ class TextDocumentServiceImpl(val workspace: Workspace) : CustomTextDocumentServ
     }
 
     override fun build(params: BuildParams): CompletableFuture<BuildResult> = future {
-        val childUri = URIHelper.parse(params.textDocument.uri)
-        val parent = workspace.withLock {
-            workspace.findParent(childUri)
+        workspaceActor.withWorkspace { workspace ->
+            val childUri = URIHelper.parse(params.textDocument.uri)
+            val parent = workspace.findParent(childUri)
+            val config = client.configuration<BuildConfig>("latex.build", parent.uri)
+            BuildEngine.build(parent.uri, config, progressListener)
         }
-
-        val config = client.configuration<BuildConfig>("latex.build", parent.uri)
-        BuildEngine.build(parent.uri, config, progressListener)
     }
 
     override fun forwardSearch(params: TextDocumentPositionParams)
             : CompletableFuture<ForwardSearchResult> = future {
-        val childUri = URIHelper.parse(params.textDocument.uri)
-        val parent = workspace.withLock {
-            workspace.findParent(childUri)
-        }
+        workspaceActor.withWorkspace { workspace ->
+            val childUri = URIHelper.parse(params.textDocument.uri)
+            val parent = workspace.findParent(childUri)
+            val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
+            ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
 
-        val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
-        ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
+        }
     }
 
-    fun publishDiagnostics(uri: URI) {
-        val relatedDocuments = workspace.relatedDocuments(uri)
-        val request = DiagnosticsRequest(uri, relatedDocuments)
-        val diagnostics = diagnosticsProvider.getDiagnostics(request)
-        val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
-        client.publishDiagnostics(params)
+    suspend fun publishDiagnostics(uri: URI) {
+        workspaceActor.withWorkspace { workspace ->
+            val relatedDocuments = workspace.relatedDocuments(uri)
+            val request = DiagnosticsRequest(uri, relatedDocuments)
+            val diagnostics = diagnosticsProvider.getDiagnostics(request)
+            val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
+            client.publishDiagnostics(params)
+        }
     }
 }

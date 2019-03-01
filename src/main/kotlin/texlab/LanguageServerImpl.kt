@@ -2,9 +2,9 @@ package texlab
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.future.future
-import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
@@ -18,14 +18,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
+import kotlin.streams.toList
 
+@ObsoleteCoroutinesApi
 class LanguageServerImpl : LanguageServer, CoroutineScope {
-    private val workspace: Workspace = Workspace()
-    private val textDocumentService = TextDocumentServiceImpl(workspace)
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
+
+    private val workspaceActor = WorkspaceActor()
+    private val textDocumentService = TextDocumentServiceImpl(workspaceActor)
     private val workspaceService = WorkspaceServiceImpl(textDocumentService)
     private lateinit var client: CustomLanguageClient
-
-    override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     fun connect(client: CustomLanguageClient) {
         textDocumentService.connect(client)
@@ -35,9 +37,7 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> = future {
         if (params.rootUri != null && params.rootUri.startsWith("file")) {
             val root = URIHelper.parse(params.rootUri)
-            workspace.withLock {
-                loadWorkspace(root)
-            }
+            loadWorkspace(root)
             textDocumentService.initialize(Paths.get(root))
         } else {
             textDocumentService.initialize(null)
@@ -69,27 +69,30 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
     override fun initialized(params: InitializedParams?) {
         val watcher = FileSystemWatcher("**/*.log", WatchKind.Create or WatchKind.Change)
         val options = DidChangeWatchedFilesRegistrationOptions(listOf(watcher))
-        val registration = Registration("log-watcher", "workspace/didChangeWatchedFiles", options)
+        val registration = Registration("log-watcher", "workspaceActor/didChangeWatchedFiles", options)
         client.registerCapability(RegistrationParams(listOf(registration)))
     }
 
-    private fun loadWorkspace(root: URI) {
+    private suspend fun loadWorkspace(root: URI) {
         if (root.scheme == "file") {
             val matcher = FileSystems.getDefault().getPathMatcher("glob:**.{tex,sty,cls,bib}")
-            Files.walk(Paths.get(root))
+            val files = Files.walk(Paths.get(root))
                     .filter { Files.isRegularFile(it) }
                     .filter { matcher.matches(it) }
-                    .forEach { loadWorkspaceFile(it) }
+                    .toList()
+
+            files.forEach { loadWorkspaceFile(it) }
         }
     }
 
-    private fun loadWorkspaceFile(file: Path) {
+    private suspend fun loadWorkspaceFile(file: Path) {
         val extension = file.fileName.toFile().extension
         val language = getLanguageByExtension(extension) ?: return
         try {
-            val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
-            val document = Document.create(file.toUri(), text, language)
-            workspace.documents.add(document)
+            workspaceActor.put {
+                val text = Files.readAllBytes(file).toString(Charsets.UTF_8)
+                Document.create(file.toUri(), text, language)
+            }
         } catch (e: IOException) {
             e.printStackTrace()
         }

@@ -2,21 +2,19 @@ package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
 import texlab.Document
-import texlab.Workspace
 import texlab.completion.CompletionItemFactory
 import texlab.completion.CompletionRequest
 import texlab.syntax.latex.LatexCommandSyntax
 import java.net.URI
 import java.nio.file.Paths
 
-abstract class DocumentProvider<T>(private val workspace: Workspace,
-                                   private val documentClass: Class<T>,
+abstract class DocumentProvider<T>(private val documentClass: Class<T>,
                                    private val includeExtension: Boolean)
     : LatexArgumentProvider() where T : Document {
     override val argumentIndex: Int = 0
 
     override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
-        return workspace.documents
+        return request.workspace.documents
                 .filterIsInstance(documentClass)
                 .filter { !request.relatedDocuments.contains(it) }
                 .map { relativize(request.uri, it.uri) }

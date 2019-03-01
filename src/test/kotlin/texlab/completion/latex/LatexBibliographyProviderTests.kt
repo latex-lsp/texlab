@@ -12,7 +12,7 @@ class LatexBibliographyProviderTests {
                 .document("bar.bib", "")
                 .document("baz.bib", "")
 
-        val provider = LatexBibliographyProvider(builder.workspace)
+        val provider = LatexBibliographyProvider()
 
         val expected = arrayOf("baz.bib")
         val actual = provider
