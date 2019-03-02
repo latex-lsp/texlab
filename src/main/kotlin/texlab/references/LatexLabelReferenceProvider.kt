@@ -1,19 +1,22 @@
 package texlab.references
 
 import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.ReferenceParams
 import texlab.LatexDocument
 import texlab.contains
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 
-object LatexLabelReferenceProvider : ReferenceProvider {
-    override fun getReferences(request: ReferenceRequest): List<Location>? {
+object LatexLabelReferenceProvider : FeatureProvider<ReferenceParams, Location> {
+    override suspend fun get(request: FeatureRequest<ReferenceParams>): List<Location> {
         if (request.document !is LatexDocument) {
-            return null
+            return emptyList()
         }
 
         val definition = request.document.tree
                 .labelDefinitions
-                .firstOrNull { it.command.range.contains(request.position) }
-                ?: return null
+                .firstOrNull { it.command.range.contains(request.params.position) }
+                ?: return emptyList()
 
         val references = mutableListOf<Location>()
         for (document in request.relatedDocuments.filterIsInstance<LatexDocument>()) {
@@ -23,5 +26,6 @@ object LatexLabelReferenceProvider : ReferenceProvider {
                     .also { references.addAll(it) }
         }
         return references
+
     }
 }

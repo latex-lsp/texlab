@@ -1,5 +1,6 @@
 package texlab.diagnostics
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -9,11 +10,11 @@ import texlab.WorkspaceBuilder
 
 class BibtexEntryDiagnosticsProviderTests {
     @Test
-    fun `it should raise an error if the opening brace is missing`() {
+    fun `it should raise an error if the opening brace is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_BEGIN_BRACE,
@@ -24,11 +25,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if the entry key is missing`() {
+    fun `it should raise an error if the entry key is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_ENTRY_NAME,
@@ -39,11 +40,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if the comma after entry name is missing`() {
+    fun `it should raise an error if the comma after entry name is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_COMMA,
@@ -54,11 +55,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if the closing brace is missing`() {
+    fun `it should raise an error if the closing brace is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo,")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_END_BRACE,
@@ -69,11 +70,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if '=' is missing`() {
+    fun `it should raise an error if '=' is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar}")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_ASSIGN,
@@ -84,11 +85,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if a field has no content`() {
+    fun `it should raise an error if a field has no content`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo,\nbar = }")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_CONTENT,
@@ -99,11 +100,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if two fields are not separated by a comma`() {
+    fun `it should raise an error if two fields are not separated by a comma`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo,\nfoo = bar\nbaz = qux}")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_COMMA,
@@ -114,11 +115,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if a quote is missing`() {
+    fun `it should raise an error if a quote is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar =\n\"}")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_QUOTE,
@@ -129,11 +130,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if a closing brace is missing`() {
+    fun `it should raise an error if a closing brace is missing`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = \n{")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected1 = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_END_BRACE,
@@ -149,11 +150,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should raise an error if a concat operation has no right side`() {
+    fun `it should raise an error if a concat operation has no right side`() = runBlocking {
         val diagnostics = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz \n# }")
                 .diagnostics("foo.bib")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
 
         val expected = DiagnosticFactory.create(
                 ErrorCode.BIBTEX_MISSING_CONTENT,
@@ -164,11 +165,11 @@ class BibtexEntryDiagnosticsProviderTests {
     }
 
     @Test
-    fun `it should not process LaTeX documents`() {
+    fun `it should not process LaTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.tex", "@article")
                 .diagnostics("foo.tex")
-                .let { BibtexEntryDiagnosticsProvider.getDiagnostics(it) }
+                .let { BibtexEntryDiagnosticsProvider.get(it) }
                 .also { assertTrue(it.isEmpty()) }
     }
 }

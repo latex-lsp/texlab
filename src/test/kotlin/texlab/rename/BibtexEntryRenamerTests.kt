@@ -1,5 +1,6 @@
 package texlab.rename
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,12 +14,12 @@ import java.io.File
 class BibtexEntryRenamerTests {
     @ParameterizedTest
     @CsvSource("foo.bib, 0, 9", "bar.tex, 1, 6")
-    fun `it should be able to rename an entry`(document: String, line: Int, character: Int) {
+    fun `it should be able to rename an entry`(document: String, line: Int, character: Int) = runBlocking {
         val edit = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz}")
                 .document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}")
                 .rename(document, line, character, "qux")
-                .let { BibtexEntryRenamer.rename(it) }!!
+                .let { BibtexEntryRenamer.get(it).first() }
 
         assertEquals(2, edit.changes.size)
 
@@ -36,20 +37,20 @@ class BibtexEntryRenamerTests {
     }
 
     @Test
-    fun `it should not rename unrelated structures`() {
+    fun `it should not rename unrelated structures`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz}")
                 .rename("foo.bib", 0, 14, "qux")
-                .let { BibtexEntryRenamer.rename(it) }
+                .let { BibtexEntryRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 
     @Test
-    fun `it should not process LaTeX documents`() {
+    fun `it should not process LaTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.tex", "")
                 .rename("foo.tex", 0, 0, "bar")
-                .let { BibtexEntryRenamer.rename(it) }
+                .let { BibtexEntryRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 }

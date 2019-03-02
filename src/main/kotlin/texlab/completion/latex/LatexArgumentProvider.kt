@@ -1,37 +1,38 @@
 package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import texlab.LatexDocument
-import texlab.completion.CompletionProvider
-import texlab.completion.CompletionRequest
 import texlab.contains
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 import texlab.syntax.latex.LatexGroupSyntax
 import texlab.syntax.latex.LatexSyntaxNode
 import texlab.syntax.latex.LatexTextSyntax
 
-abstract class LatexArgumentProvider : CompletionProvider {
+abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, CompletionItem> {
     abstract val commandNames: List<String>
 
     abstract val argumentIndex: Int
 
-    override fun complete(request: CompletionRequest): List<CompletionItem> {
-        return if (request.document is LatexDocument) {
-            val nodes = request.document
-                    .tree
-                    .root
-                    .descendants()
-                    .filter { it.range.contains(request.position) }
-                    .asReversed()
+    override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
+        if (request.document !is LatexDocument) {
+            return emptyList()
+        }
 
-            val command = findNonEmptyCommand(nodes) ?: findEmptyCommand(nodes)
-            if (command == null) {
-                listOf()
-            } else {
-                complete(request, command)
-            }
-        } else {
+        val nodes = request.document
+                .tree
+                .root
+                .descendants()
+                .filter { it.range.contains(request.params.position) }
+                .asReversed()
+
+        val command = findNonEmptyCommand(nodes) ?: findEmptyCommand(nodes)
+        return if (command == null) {
             listOf()
+        } else {
+            complete(request, command)
         }
     }
 
@@ -63,5 +64,6 @@ abstract class LatexArgumentProvider : CompletionProvider {
         return null
     }
 
-    protected abstract fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
+    protected abstract fun complete(request: FeatureRequest<CompletionParams>,
+                                    command: LatexCommandSyntax): List<CompletionItem>
 }

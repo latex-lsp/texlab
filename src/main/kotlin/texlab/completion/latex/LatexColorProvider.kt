@@ -1,8 +1,9 @@
 package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import texlab.completion.CompletionItemFactory
-import texlab.completion.CompletionRequest
+import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 object LatexColorProvider : LatexArgumentProvider() {
@@ -107,7 +108,8 @@ object LatexColorProvider : LatexArgumentProvider() {
 
     override val argumentIndex: Int = 0
 
-    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: FeatureRequest<CompletionParams>,
+                          command: LatexCommandSyntax): List<CompletionItem> {
         return items
     }
 }

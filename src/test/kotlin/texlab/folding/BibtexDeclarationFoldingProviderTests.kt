@@ -1,5 +1,6 @@
 package texlab.folding
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.FoldingRangeKind
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -8,11 +9,11 @@ import texlab.WorkspaceBuilder
 
 class BibtexDeclarationFoldingProviderTests {
     @Test
-    fun `it should provide foldings for entries`() {
+    fun `it should provide foldings for entries`() = runBlocking {
         val foldings = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz\n}")
                 .folding("foo.bib")
-                .let { BibtexDeclarationFoldingProvider.fold(it) }
+                .let { BibtexDeclarationFoldingProvider.get(it) }
 
         assertEquals(1, foldings.size)
         val folding = foldings[0]
@@ -24,11 +25,11 @@ class BibtexDeclarationFoldingProviderTests {
     }
 
     @Test
-    fun `it should provide foldings for strings`() {
+    fun `it should provide foldings for strings`() = runBlocking {
         val foldings = WorkspaceBuilder()
                 .document("foo.bib", "@string{foo = \"bar\"}")
                 .folding("foo.bib")
-                .let { BibtexDeclarationFoldingProvider.fold(it) }
+                .let { BibtexDeclarationFoldingProvider.get(it) }
 
         assertEquals(1, foldings.size)
         val folding = foldings[0]
@@ -40,11 +41,11 @@ class BibtexDeclarationFoldingProviderTests {
     }
 
     @Test
-    fun `it should not provide foldings for LaTeX documents`() {
+    fun `it should not provide foldings for LaTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.tex", "@article{foo, }")
                 .folding("foo.tex")
-                .let { BibtexDeclarationFoldingProvider.fold(it) }
+                .let { BibtexDeclarationFoldingProvider.get(it) }
                 .also { assertTrue(it.isEmpty()) }
     }
 }

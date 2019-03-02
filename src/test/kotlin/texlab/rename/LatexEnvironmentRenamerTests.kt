@@ -1,5 +1,6 @@
 package texlab.rename
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -9,11 +10,11 @@ import texlab.WorkspaceBuilder
 
 class LatexEnvironmentRenamerTests {
     @Test
-    fun `it should rename unmatched environments`() {
+    fun `it should rename unmatched environments`() = runBlocking {
         val edit = WorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 8, "baz")
-                .let { LatexEnvironmentRenamer.rename(it) }!!
+                .let { LatexEnvironmentRenamer.get(it).first() }
 
         assertEquals(1, edit.changes.keys.size)
         val changes = edit.changes.getValue(edit.changes.keys.first())
@@ -25,20 +26,20 @@ class LatexEnvironmentRenamerTests {
     }
 
     @Test
-    fun `it should not rename unrelated environments`() {
+    fun `it should not rename unrelated environments`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 5, "baz")
-                .let { LatexEnvironmentRenamer.rename(it) }
+                .let { LatexEnvironmentRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 
     @Test
-    fun `it should not process BibTeX documents`() {
+    fun `it should not process BibTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.bib", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.bib", 0, 8, "baz")
-                .let { LatexEnvironmentRenamer.rename(it) }
+                .let { LatexEnvironmentRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 }

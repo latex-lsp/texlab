@@ -1,16 +1,17 @@
 package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import texlab.LatexDocument
-import texlab.completion.CompletionProvider
-import texlab.completion.CompletionRequest
 import texlab.contains
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-abstract class LatexCommandProvider : CompletionProvider {
-    override fun complete(request: CompletionRequest): List<CompletionItem> {
+abstract class LatexCommandProvider : FeatureProvider<CompletionParams, CompletionItem> {
+    override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
         if (request.document !is LatexDocument) {
             return emptyList()
         }
@@ -18,7 +19,7 @@ abstract class LatexCommandProvider : CompletionProvider {
         val command = request.document.tree.root
                 .descendants()
                 .filterIsInstance<LatexCommandSyntax>()
-                .lastOrNull { getCompletionRange(it).contains(request.position) }
+                .lastOrNull { getCompletionRange(it).contains(request.params.position) }
 
         return if (command is LatexCommandSyntax) {
             complete(request, command)
@@ -33,5 +34,6 @@ abstract class LatexCommandProvider : CompletionProvider {
         return Range(start, end)
     }
 
-    protected abstract fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem>
+    protected abstract fun complete(request: FeatureRequest<CompletionParams>,
+                                    command: LatexCommandSyntax): List<CompletionItem>
 }

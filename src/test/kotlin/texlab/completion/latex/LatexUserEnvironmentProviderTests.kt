@@ -1,20 +1,22 @@
 package texlab.completion.latex
 
+import kotlinx.coroutines.runBlocking
+import org.eclipse.lsp4j.CompletionParams
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import texlab.completion.CompletionRequest
+import texlab.provider.FeatureRequest
 
 class LatexUserEnvironmentProviderTests {
-    private fun verify(request: CompletionRequest, expected: Array<String>) {
-        LatexUserEnvironmentProvider.complete(request)
+    private fun verify(request: FeatureRequest<CompletionParams>, expected: Array<String>) = runBlocking<Unit> {
+        LatexUserEnvironmentProvider.get(request)
                 .map { it.label }
                 .toTypedArray()
                 .also { assertArrayEquals(expected, it) }
     }
 
     @Test
-    fun `it should include environments from related documents`() {
+    fun `it should include environments from related documents`() = runBlocking<Unit> {
         val expected = arrayOf("foo")
         WorkspaceBuilder()
                 .document("foo.tex", "\\include{bar.tex}\n\\begin{}")
@@ -24,7 +26,7 @@ class LatexUserEnvironmentProviderTests {
     }
 
     @Test
-    fun `it should not include the current environment`() {
+    fun `it should not include the current environment`() = runBlocking<Unit> {
         val expected = arrayOf<String>()
         WorkspaceBuilder()
                 .document("foo.tex", "\\begin{}")

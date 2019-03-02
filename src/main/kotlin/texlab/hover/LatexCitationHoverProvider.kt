@@ -4,42 +4,51 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
+import org.eclipse.lsp4j.TextDocumentPositionParams
 import texlab.BibtexDocument
 import texlab.LatexDocument
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.contains
 import texlab.formatting.BibtexFormatter
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
 @ObsoleteCoroutinesApi
-object LatexCitationHoverProvider : HoverProvider {
-    override suspend fun getHover(request: HoverRequest): Hover? {
-        val key = getKey(request) ?: return null
+object LatexCitationHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
+    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
+        val key = getKey(request) ?: return emptyList()
 
         val entry = request.relatedDocuments
                 .filterIsInstance<BibtexDocument>()
                 .flatMap { it.tree.root.children.filterIsInstance<BibtexEntrySyntax>() }
                 .firstOrNull { it.name?.text == key }
-                ?: return null
+                ?: return emptyList()
 
         val formatter = BibtexFormatter(insertSpaces = true, tabSize = 4, lineLength = -1)
-        return Hover(MarkupContent().apply {
+        val hover = Hover(MarkupContent().apply {
             kind = MarkupKind.MARKDOWN
             value = BibtexCitationActor.cite(formatter.format(entry))
         })
+
+        return listOf(hover)
     }
 
-    private fun getKey(request: HoverRequest): String? {
+    private fun getKey(request: FeatureRequest<TextDocumentPositionParams>): String? {
+        if (request.params.position == null) {
+            return null
+        }
+
         return when (request.document) {
             is LatexDocument -> {
                 request.document.tree.citations
-                        .firstOrNull { it.command.range.contains(request.position) }
+                        .firstOrNull { it.command.range.contains(request.params.position) }
                         ?.name?.text
             }
             is BibtexDocument -> {
                 request.document.tree.root.children
                         .filterIsInstance<BibtexEntrySyntax>()
-                        .firstOrNull { it.name != null && it.name.range.contains(request.position) }
+                        .firstOrNull { it.name != null && it.name.range.contains(request.params.position) }
                         ?.name?.text
             }
         }

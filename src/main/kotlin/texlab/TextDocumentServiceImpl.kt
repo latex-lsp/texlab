@@ -10,7 +10,7 @@ import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
 import texlab.build.BuildResult
-import texlab.completion.*
+import texlab.completion.OrderByQualityProvider
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -20,24 +20,30 @@ import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.symbols.LatexArgumentSymbolProvider
 import texlab.completion.latex.data.symbols.LatexCommandSymbolProvider
 import texlab.completion.latex.data.symbols.LatexSymbolDatabase
-import texlab.definition.*
-import texlab.diagnostics.*
-import texlab.folding.*
+import texlab.definition.BibtexEntryDefinitionProvider
+import texlab.definition.LatexLabelDefinitionProvider
+import texlab.diagnostics.BibtexEntryDiagnosticsProvider
+import texlab.diagnostics.ManualDiagnosticsProvider
+import texlab.folding.BibtexDeclarationFoldingProvider
+import texlab.folding.LatexEnvironmentFoldingProvider
+import texlab.folding.LatexSectionFoldingProvider
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
-import texlab.highlight.AggregateHighlightProvider
-import texlab.highlight.HighlightProvider
-import texlab.highlight.HighlightRequest
 import texlab.highlight.LatexLabelHighlightProvider
-import texlab.hover.*
-import texlab.link.AggregateLinkProvider
+import texlab.hover.BibtexEntryTypeHoverProvider
+import texlab.hover.BibtexFieldHoverProvider
+import texlab.hover.LatexCitationHoverProvider
+import texlab.hover.LatexComponentHoverProvider
 import texlab.link.LatexIncludeLinkProvider
-import texlab.link.LinkProvider
-import texlab.link.LinkRequest
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
-import texlab.references.*
-import texlab.rename.*
+import texlab.provider.*
+import texlab.references.BibtexEntryReferenceProvider
+import texlab.references.LatexLabelReferenceProvider
+import texlab.rename.BibtexEntryRenamer
+import texlab.rename.LatexCommandRenamer
+import texlab.rename.LatexEnvironmentRenamer
+import texlab.rename.LatexLabelRenamer
 import texlab.resolver.InvalidTexDistributionException
 import texlab.resolver.LatexResolver
 import texlab.resolver.TexDistributionError
@@ -104,84 +110,87 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
-    private val completionProvider: CompletionProvider =
-            LimitedCompletionProvider(
-                    OrderByQualityProvider(
-                            AggregateCompletionProvider(
-                                    includeGraphicsProvider,
-                                    LatexIncludeProvider(),
-                                    LatexInputProvider(),
-                                    LatexBibliographyProvider(),
-                                    DeferredCompletionProvider(::LatexClassImportProvider, resolver),
-                                    DeferredCompletionProvider(::LatexPackageImportProvider, resolver),
-                                    PgfLibraryProvider,
-                                    TikzLibraryProvider,
-                                    LatexCitationProvider,
-                                    LatexColorProvider,
-                                    DefineColorModelProvider,
-                                    DefineColorSetModelProvider,
-                                    LatexLabelProvider,
-                                    LatexBeginCommandProvider,
-                                    DeferredCompletionProvider(::LatexComponentEnvironmentProvider, componentDatabase),
-                                    LatexKernelEnvironmentProvider,
-                                    LatexUserEnvironmentProvider,
-                                    DeferredCompletionProvider(::LatexArgumentSymbolProvider, symbolDatabase),
-                                    DeferredCompletionProvider(::LatexCommandSymbolProvider, symbolDatabase),
-                                    DeferredCompletionProvider(::TikzCommandProvider, componentDatabase),
-                                    DeferredCompletionProvider(::LatexComponentCommandProvider, componentDatabase),
-                                    LatexKernelCommandProvider,
-                                    LatexUserCommandProvider,
-                                    BibtexEntryTypeProvider,
-                                    BibtexFieldNameProvider,
-                                    BibtexKernelCommandProvider)))
 
-    private val symbolProvider: SymbolProvider =
-            AggregateSymbolProvider(
+    private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
+            LimitedProvider(
+                    OrderByQualityProvider(
+                            DistinctProvider(
+                                    AggregateProvider(
+                                            includeGraphicsProvider,
+                                            LatexIncludeProvider(),
+                                            LatexInputProvider(),
+                                            LatexBibliographyProvider(),
+                                            DeferredProvider(::LatexClassImportProvider, resolver),
+                                            DeferredProvider(::LatexPackageImportProvider, resolver),
+                                            PgfLibraryProvider,
+                                            TikzLibraryProvider,
+                                            LatexCitationProvider,
+                                            LatexColorProvider,
+                                            DefineColorModelProvider,
+                                            DefineColorSetModelProvider,
+                                            LatexLabelProvider,
+                                            LatexBeginCommandProvider,
+                                            DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase),
+                                            LatexKernelEnvironmentProvider,
+                                            LatexUserEnvironmentProvider,
+                                            DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase),
+                                            DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase),
+                                            DeferredProvider(::TikzCommandProvider, componentDatabase),
+                                            DeferredProvider(::LatexComponentCommandProvider, componentDatabase),
+                                            LatexKernelCommandProvider,
+                                            LatexUserCommandProvider,
+                                            BibtexEntryTypeProvider,
+                                            BibtexFieldNameProvider,
+                                            BibtexKernelCommandProvider)) { it.label }))
+
+    private val symbolProvider: FeatureProvider<DocumentSymbolParams, DocumentSymbol> =
+            AggregateProvider(
                     LatexCommandSymbolProvider,
                     LatexEnvironmentSymbolProvider,
                     LatexLabelSymbolProvider,
                     LatexCitationSymbolProvider,
                     BibtexEntrySymbolProvider)
 
-    private val renamer: Renamer =
-            AggregateRenamer(
+    private val renameProvider: FeatureProvider<RenameParams, WorkspaceEdit> =
+            AggregateProvider(
                     LatexCommandRenamer,
                     LatexEnvironmentRenamer,
                     LatexLabelRenamer,
                     BibtexEntryRenamer)
 
-    private val foldingProvider: FoldingProvider =
-            AggregateFoldingProvider(
+    private val foldingProvider: FeatureProvider<FoldingRangeRequestParams, FoldingRange> =
+            AggregateProvider(
                     LatexEnvironmentFoldingProvider,
                     LatexSectionFoldingProvider,
                     BibtexDeclarationFoldingProvider)
 
-    private val linkProvider: LinkProvider = AggregateLinkProvider(LatexIncludeLinkProvider)
+    private val linkProvider: FeatureProvider<DocumentLinkParams, DocumentLink> =
+            AggregateProvider(LatexIncludeLinkProvider)
 
-    private val definitionProvider: DefinitionProvider =
-            AggregateDefinitionProvider(
+    private val definitionProvider: FeatureProvider<TextDocumentPositionParams, Location> =
+            AggregateProvider(
                     LatexLabelDefinitionProvider,
                     BibtexEntryDefinitionProvider)
 
-    private val highlightProvider: HighlightProvider =
-            AggregateHighlightProvider(LatexLabelHighlightProvider)
+    private val highlightProvider: FeatureProvider<TextDocumentPositionParams, DocumentHighlight> =
+            AggregateProvider(LatexLabelHighlightProvider)
 
-    private val hoverProvider: HoverProvider =
-            AggregateHoverProvider(
+    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, Hover> =
+            AggregateProvider(
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 
-    private val referenceProvider: ReferenceProvider =
-            AggregateReferenceProvider(
+    private val referenceProvider: FeatureProvider<ReferenceParams, Location> =
+            AggregateProvider(
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
     val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
 
-    private val diagnosticsProvider: DiagnosticsProvider =
-            AggregateDiagnosticsProvider(
+    private val diagnosticsProvider: FeatureProvider<Unit, Diagnostic> =
+            AggregateProvider(
                     buildDiagnosticsProvider,
                     BibtexEntryDiagnosticsProvider)
 
@@ -247,47 +256,25 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun documentSymbol(params: DocumentSymbolParams)
-            : CompletableFuture<MutableList<Either<SymbolInformation, DocumentSymbol>>?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val document = workspace.documents
-                    .firstOrNull { it.uri == uri }
-                    ?: return@withWorkspace null
-
-            val request = SymbolRequest(document)
-            symbolProvider.getSymbols(request)
-                    .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
-                    .toMutableList()
-        }
+            : CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> = future {
+        runFeature(symbolProvider, params.textDocument, params)
+                .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
     }
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = RenameRequest(uri, relatedDocuments, params.position, params.newName)
-            renamer.rename(request)
-        }
+        runFeature(renameProvider, params.textDocument, params).firstOrNull()
     }
 
     override fun documentLink(params: DocumentLinkParams)
-            : CompletableFuture<MutableList<DocumentLink>> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val request = LinkRequest(workspace, uri)
-            linkProvider.getLinks(request).toMutableList()
-        }
+            : CompletableFuture<List<DocumentLink>> = future {
+        runFeature(linkProvider, params.textDocument, params)
     }
 
     override fun completion(params: CompletionParams)
-            : CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val request = CompletionRequest(uri, params.position, workspace)
-            val items = completionProvider.complete(request).toList()
-            val list = CompletionList(true, items)
-            Either.forRight<MutableList<CompletionItem>, CompletionList>(list)
-        }
+            : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
+        val items = runFeature(completionProvider, params.textDocument, params)
+        val list = CompletionList(true, items)
+        Either.forRight<List<CompletionItem>, CompletionList>(list)
     }
 
     override fun resolveCompletionItem(unresolved: CompletionItem)
@@ -320,36 +307,18 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun foldingRange(params: FoldingRangeRequestParams)
-            : CompletableFuture<MutableList<FoldingRange>?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val document = workspace.documents
-                    .firstOrNull { it.uri == uri }
-                    ?: return@withWorkspace null
-
-            val request = FoldingRequest(document)
-            foldingProvider.fold(request).toMutableList()
-        }
+            : CompletableFuture<List<FoldingRange>> = future {
+        runFeature(foldingProvider, params.textDocument, params)
     }
 
     override fun definition(params: TextDocumentPositionParams)
-            : CompletableFuture<MutableList<out Location>?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = DefinitionRequest(uri, relatedDocuments, params.position)
-            val location = definitionProvider.find(request)
-            location?.let { mutableListOf(it) }
-        }
+            : CompletableFuture<List<Location>> = future {
+        runFeature(definitionProvider, params.textDocument, params)
     }
 
-    override fun hover(params: TextDocumentPositionParams): CompletableFuture<Hover?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = HoverRequest(uri, relatedDocuments, params.position)
-            hoverProvider.getHover(request)
-        }
+    override fun hover(params: TextDocumentPositionParams)
+            : CompletableFuture<Hover?> = future {
+        runFeature(hoverProvider, params.textDocument, params).firstOrNull()
     }
 
     override fun formatting(params: DocumentFormattingParams)
@@ -372,25 +341,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun references(params: ReferenceParams)
-            : CompletableFuture<MutableList<out Location>?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = ReferenceRequest(uri, relatedDocuments, params.position)
-            referenceProvider.getReferences(request)?.toMutableList()
-        }
+            : CompletableFuture<List<Location>> = future {
+        runFeature(referenceProvider, params.textDocument, params)
     }
 
     override fun documentHighlight(params: TextDocumentPositionParams)
-            : CompletableFuture<MutableList<out DocumentHighlight>?> = future {
-        workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
-            val document = workspace.documents.firstOrNull { it.uri == uri }
-                    ?: return@withWorkspace null
-
-            val request = HighlightRequest(document, params.position)
-            highlightProvider.getHighlights(request)?.toMutableList()
-        }
+            : CompletableFuture<List<DocumentHighlight>> = future {
+        runFeature(highlightProvider, params.textDocument, params)
     }
 
     override fun build(params: BuildParams): CompletableFuture<BuildResult> = future {
@@ -409,17 +366,25 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             val parent = workspace.findParent(childUri)
             val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
             ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
-
         }
     }
 
     suspend fun publishDiagnostics(uri: URI) {
         workspaceActor.withWorkspace { workspace ->
-            val relatedDocuments = workspace.relatedDocuments(uri)
-            val request = DiagnosticsRequest(uri, relatedDocuments)
-            val diagnostics = diagnosticsProvider.getDiagnostics(request)
+            val request = FeatureRequest(uri, workspace, Unit)
+            val diagnostics = diagnosticsProvider.get(request)
             val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
             client.publishDiagnostics(params)
+        }
+    }
+
+    private suspend fun <T, R> runFeature(provider: FeatureProvider<T, R>,
+                                          document: TextDocumentIdentifier,
+                                          params: T): List<R> {
+        return workspaceActor.withWorkspace { workspace ->
+            val uri = URIHelper.parse(document.uri)
+            val request = FeatureRequest(uri, workspace, params)
+            provider.get(request)
         }
     }
 }

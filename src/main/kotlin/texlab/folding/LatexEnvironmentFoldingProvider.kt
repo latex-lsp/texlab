@@ -2,10 +2,13 @@ package texlab.folding
 
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeKind
+import org.eclipse.lsp4j.FoldingRangeRequestParams
 import texlab.LatexDocument
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 
-object LatexEnvironmentFoldingProvider : FoldingProvider {
-    override fun fold(request: FoldingRequest): List<FoldingRange> {
+object LatexEnvironmentFoldingProvider : FeatureProvider<FoldingRangeRequestParams, FoldingRange> {
+    override suspend fun get(request: FeatureRequest<FoldingRangeRequestParams>): List<FoldingRange> {
         if (request.document !is LatexDocument) {
             return emptyList()
         }

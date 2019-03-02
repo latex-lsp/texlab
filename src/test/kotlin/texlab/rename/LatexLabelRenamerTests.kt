@@ -1,5 +1,6 @@
 package texlab.rename
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions
@@ -14,12 +15,12 @@ import java.io.File
 class LatexLabelRenamerTests {
     @ParameterizedTest
     @CsvSource("foo.tex, 0, 7", "bar.tex, 0, 5")
-    fun `it should be able to rename a label`(document: String, line: Int, character: Int) {
+    fun `it should be able to rename a label`(document: String, line: Int, character: Int) = runBlocking {
         val edit = WorkspaceBuilder()
                 .document("foo.tex", "\\label{foo}\n\\include{bar}")
                 .document("bar.tex", "\\ref{foo}")
                 .rename(document, line, character, "bar")
-                .let { LatexLabelRenamer.rename(it) }!!
+                .let { LatexLabelRenamer.get(it).first() }
 
         Assertions.assertEquals(2, edit.changes.size)
 
@@ -37,20 +38,20 @@ class LatexLabelRenamerTests {
     }
 
     @Test
-    fun `it should not rename unrelated structures`() {
+    fun `it should not rename unrelated structures`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.tex", "\\foo{bar}")
                 .rename("foo.tex", 0, 5, "baz")
-                .let { LatexLabelRenamer.rename(it) }
+                .let { LatexLabelRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 
     @Test
-    fun `it should process BibTeX documents`() {
+    fun `it should process BibTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.bib", "")
                 .rename("foo.bib", 0, 0, "bar")
-                .let { LatexLabelRenamer.rename(it) }
+                .let { LatexLabelRenamer.get(it).firstOrNull() }
                 .also { assertNull(it) }
     }
 }

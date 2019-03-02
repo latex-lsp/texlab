@@ -4,10 +4,12 @@ import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import texlab.BibtexDocument
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.*
 
-object BibtexEntryDiagnosticsProvider : DiagnosticsProvider {
-    override fun getDiagnostics(request: DiagnosticsRequest): List<Diagnostic> {
+object BibtexEntryDiagnosticsProvider : FeatureProvider<Unit, Diagnostic> {
+    override suspend fun get(request: FeatureRequest<Unit>): List<Diagnostic> {
         if (request.document !is BibtexDocument) {
             return emptyList()
         }
@@ -64,7 +66,7 @@ object BibtexEntryDiagnosticsProvider : DiagnosticsProvider {
         return diagnostics
     }
 
-    fun getDiagnostics(content: BibtexContentSyntax): List<Diagnostic> {
+    private fun getDiagnostics(content: BibtexContentSyntax): List<Diagnostic> {
         val errors = mutableListOf<Diagnostic>()
         fun visit(node: BibtexContentSyntax) {
             when (node) {

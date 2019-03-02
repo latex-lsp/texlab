@@ -1,5 +1,6 @@
 package texlab.rename
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions
@@ -10,12 +11,12 @@ import java.io.File
 
 class LatexCommandRenamerTests {
     @Test
-    fun `it should rename commands in related documents`() {
+    fun `it should rename commands in related documents`() = runBlocking {
         val edit = WorkspaceBuilder()
                 .document("foo.tex", "\\include{bar.tex}\n\\baz")
                 .document("bar.tex", "\\baz")
                 .rename("foo.tex", 1, 2, "qux")
-                .let { LatexCommandRenamer.rename(it) }!!
+                .let { LatexCommandRenamer.get(it).first() }
 
         assertEquals(2, edit.changes.size)
 
@@ -33,11 +34,11 @@ class LatexCommandRenamerTests {
     }
 
     @Test
-    fun `it should not process BibTeX documents`() {
+    fun `it should not process BibTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.bib", "\\foo \\bar")
                 .rename("foo.bib", 0, 1, "baz")
-                .let { LatexCommandRenamer.rename(it) }
+                .let { LatexCommandRenamer.get(it).firstOrNull() }
                 .also { Assertions.assertNull(it) }
     }
 }

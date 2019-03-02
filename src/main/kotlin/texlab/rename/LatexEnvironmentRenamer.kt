@@ -1,26 +1,30 @@
 package texlab.rename
 
+import org.eclipse.lsp4j.RenameParams
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.WorkspaceEdit
 import texlab.LatexDocument
 import texlab.contains
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 
-object LatexEnvironmentRenamer : Renamer {
-    override fun rename(request: RenameRequest): WorkspaceEdit? {
+object LatexEnvironmentRenamer : FeatureProvider<RenameParams, WorkspaceEdit> {
+    override suspend fun get(request: FeatureRequest<RenameParams>): List<WorkspaceEdit> {
         if (request.document !is LatexDocument) {
-            return null
+            return emptyList()
         }
 
         for (environment in request.document.tree.environments) {
-            val begin = environment.beginNameRange.contains(request.position)
-            val end = environment.endNameRange.contains(request.position)
+            val begin = environment.beginNameRange.contains(request.params.position)
+            val end = environment.endNameRange.contains(request.params.position)
             if (begin || end) {
                 val edits = listOf(
-                        TextEdit(environment.beginNameRange, request.newName),
-                        TextEdit(environment.endNameRange, request.newName))
-                return WorkspaceEdit(mutableMapOf(request.uri.toString() to edits))
+                        TextEdit(environment.beginNameRange, request.params.newName),
+                        TextEdit(environment.endNameRange, request.params.newName))
+                return listOf(WorkspaceEdit(mutableMapOf(request.uri.toString() to edits)))
             }
         }
-        return null
+
+        return emptyList()
     }
 }

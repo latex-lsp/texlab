@@ -12,7 +12,7 @@ class BibtexEntryTypeMetadataProviderTests {
     }
 
     @Test
-    fun `it should return null when using an invalid entry type`() {
+    fun `it should return nothing when using an invalid entry type`() {
         val metadata = BibtexEntryTypeMetadataProvider.getMetadata("foo")
         assertNull(metadata)
     }

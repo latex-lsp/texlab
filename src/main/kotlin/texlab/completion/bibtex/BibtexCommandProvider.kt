@@ -1,21 +1,22 @@
 package texlab.completion.bibtex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import texlab.BibtexDocument
-import texlab.completion.CompletionProvider
-import texlab.completion.CompletionRequest
 import texlab.contains
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexCommandSyntax
 
-abstract class BibtexCommandProvider : CompletionProvider {
-    override fun complete(request: CompletionRequest): List<CompletionItem> {
-        if (request.document !is BibtexDocument) {
+abstract class BibtexCommandProvider : FeatureProvider<CompletionParams, CompletionItem> {
+    override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
+        if (request.document !is BibtexDocument || request.params.position == null) {
             return emptyList()
         }
 
         val command = request.document.tree.root
                 .descendants()
-                .lastOrNull { it.range.contains(request.position) }
+                .lastOrNull { it.range.contains(request.params.position) }
 
         return if (command is BibtexCommandSyntax) {
             complete(request, command)
@@ -24,5 +25,6 @@ abstract class BibtexCommandProvider : CompletionProvider {
         }
     }
 
-    protected abstract fun complete(request: CompletionRequest, command: BibtexCommandSyntax): List<CompletionItem>
+    protected abstract fun complete(request: FeatureRequest<CompletionParams>,
+                                    command: BibtexCommandSyntax): List<CompletionItem>
 }

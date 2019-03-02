@@ -1,9 +1,10 @@
 package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import texlab.completion.CompletionItemFactory
-import texlab.completion.CompletionRequest
 import texlab.completion.latex.data.LatexComponentSource
+import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 class TikzCommandProvider(private val database: LatexComponentSource) : LatexCommandProvider() {
@@ -641,7 +642,8 @@ class TikzCommandProvider(private val database: LatexComponentSource) : LatexCom
             "x",
             "y")
 
-    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: FeatureRequest<CompletionParams>,
+                          command: LatexCommandSyntax): List<CompletionItem> {
         val components = database.getRelatedComponents(request.relatedDocuments)
         return if (components.any { it.fileNames.contains("tikz.sty") }) {
             items.map { CompletionItemFactory.createCommand(it, "tikz.sty") }

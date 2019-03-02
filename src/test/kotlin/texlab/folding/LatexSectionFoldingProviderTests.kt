@@ -1,5 +1,6 @@
 package texlab.folding
 
+import kotlinx.coroutines.runBlocking
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeKind
 import org.junit.jupiter.api.Assertions
@@ -9,7 +10,7 @@ import texlab.WorkspaceBuilder
 
 class LatexSectionFoldingProviderTests {
     @Test
-    fun `it should work with multiple levels of nesting`() {
+    fun `it should work with multiple levels of nesting`() = runBlocking<Unit> {
         val text = "\\section{Foo}\nfoo\n\\subsection{Bar}\nbar\n\\section{Baz}\nbaz\n\\section{Qux}"
 
         val folding1 = FoldingRange().apply {
@@ -38,18 +39,18 @@ class LatexSectionFoldingProviderTests {
         WorkspaceBuilder()
                 .document("foo.tex", text)
                 .folding("foo.tex")
-                .let { LatexSectionFoldingProvider.fold(it) }
+                .let { LatexSectionFoldingProvider.get(it) }
                 .sortedBy { it.startLine }
                 .toTypedArray()
                 .also { assertArrayEquals(expected, it) }
     }
 
     @Test
-    fun `it should not process BibTeX documents`() {
+    fun `it should not process BibTeX documents`() = runBlocking<Unit> {
         WorkspaceBuilder()
                 .document("foo.bib", "")
                 .folding("foo.bib")
-                .let { LatexSectionFoldingProvider.fold(it) }
+                .let { LatexSectionFoldingProvider.get(it) }
                 .also { Assertions.assertEquals(0, it.size) }
     }
 }

@@ -1,15 +1,7 @@
 package texlab
 
-import org.eclipse.lsp4j.Position
-import texlab.completion.CompletionRequest
-import texlab.definition.DefinitionRequest
-import texlab.diagnostics.DiagnosticsRequest
-import texlab.folding.FoldingRequest
-import texlab.highlight.HighlightRequest
-import texlab.hover.HoverRequest
-import texlab.link.LinkRequest
-import texlab.references.ReferenceRequest
-import texlab.rename.RenameRequest
+import org.eclipse.lsp4j.*
+import texlab.provider.FeatureRequest
 import java.io.File
 
 class WorkspaceBuilder {
@@ -23,55 +15,73 @@ class WorkspaceBuilder {
         return this
     }
 
-    fun completion(path: String, line: Int, character: Int): CompletionRequest {
+    fun <T> request(path: String, paramsFactory: (TextDocumentIdentifier) -> T): FeatureRequest<T> {
+        val uri = File(path).toURI()
+        val identifier = TextDocumentIdentifier(uri.toString())
+        val params = paramsFactory(identifier)
+        return FeatureRequest(uri, workspace, params)
+    }
+
+
+    fun <T> positionRequest(path: String,
+                            line: Int,
+                            character: Int,
+                            paramsFactory: (TextDocumentIdentifier, Position) -> T): FeatureRequest<T> {
         val uri = File(path).toURI()
         val position = Position(line, character)
-        return CompletionRequest(uri, position, workspace)
+        val identifier = TextDocumentIdentifier(uri.toString())
+        val params = paramsFactory(identifier, position)
+        return FeatureRequest(uri, workspace, params)
     }
 
-    fun definition(path: String, line: Int, character: Int): DefinitionRequest {
-        val uri = File(path).toURI()
-        val position = Position(line, character)
-        return DefinitionRequest(uri, workspace.relatedDocuments(uri), position)
+    fun completion(path: String, line: Int, character: Int): FeatureRequest<CompletionParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            CompletionParams(identifier, position)
+        }
     }
 
-    fun diagnostics(path: String): DiagnosticsRequest {
-        val uri = File(path).toURI()
-        return DiagnosticsRequest(uri, workspace.relatedDocuments(uri))
+    fun definition(path: String, line: Int, character: Int): FeatureRequest<TextDocumentPositionParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            TextDocumentPositionParams(identifier, position)
+        }
     }
 
-    fun folding(path: String): FoldingRequest {
-        val uri = File(path).toURI()
-        return FoldingRequest(workspace.documents.first { it.uri == uri })
+    fun diagnostics(path: String): FeatureRequest<Unit> {
+        return request(path) { _ -> Unit }
     }
 
-    fun highlight(path: String, line: Int, character: Int): HighlightRequest {
-        val uri = File(path).toURI()
-        val position = Position(line, character)
-        return HighlightRequest(workspace.documents.first { it.uri == uri }, position)
+    fun folding(path: String): FeatureRequest<FoldingRangeRequestParams> {
+        return request(path) { FoldingRangeRequestParams(it) }
     }
 
-    fun hover(path: String, line: Int, character: Int): HoverRequest {
-        val uri = File(path).toURI()
-        val position = Position(line, character)
-        return HoverRequest(uri, workspace.relatedDocuments(uri), position)
+    fun highlight(path: String, line: Int, character: Int): FeatureRequest<TextDocumentPositionParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            TextDocumentPositionParams(identifier, position)
+        }
     }
 
-    fun link(path: String): LinkRequest {
-        val uri = File(path).toURI()
-        return LinkRequest(workspace, uri)
+    fun hover(path: String, line: Int, character: Int): FeatureRequest<TextDocumentPositionParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            TextDocumentPositionParams(identifier, position)
+        }
     }
 
-    fun reference(path: String, line: Int, character: Int): ReferenceRequest {
-        val uri = File(path).toURI()
-        val position = Position(line, character)
-        return ReferenceRequest(uri, workspace.relatedDocuments(uri), position)
+    fun link(path: String): FeatureRequest<DocumentLinkParams> {
+        return request(path) { DocumentLinkParams(it) }
     }
 
-    fun rename(path: String, line: Int, character: Int, newName: String): RenameRequest {
-        val uri = File(path).toURI()
-        val relatedDocuments = workspace.relatedDocuments(uri)
-        val position = Position(line, character)
-        return RenameRequest(uri, relatedDocuments, position, newName)
+    fun reference(path: String, line: Int, character: Int): FeatureRequest<ReferenceParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            ReferenceParams().apply {
+                textDocument = identifier
+                setPosition(position)
+            }
+        }
+    }
+
+    fun rename(path: String, line: Int, character: Int, newName: String): FeatureRequest<RenameParams> {
+        return positionRequest(path, line, character) { identifier, position ->
+            RenameParams(identifier, position, newName)
+        }
     }
 }

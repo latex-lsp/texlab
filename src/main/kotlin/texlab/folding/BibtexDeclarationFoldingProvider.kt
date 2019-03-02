@@ -2,11 +2,14 @@ package texlab.folding
 
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.FoldingRangeKind
+import org.eclipse.lsp4j.FoldingRangeRequestParams
 import texlab.BibtexDocument
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 
-object BibtexDeclarationFoldingProvider : FoldingProvider {
-    override fun fold(request: FoldingRequest): List<FoldingRange> {
+object BibtexDeclarationFoldingProvider : FeatureProvider<FoldingRangeRequestParams, FoldingRange> {
+    override suspend fun get(request: FeatureRequest<FoldingRangeRequestParams>): List<FoldingRange> {
         if (request.document !is BibtexDocument) {
             return emptyList()
         }

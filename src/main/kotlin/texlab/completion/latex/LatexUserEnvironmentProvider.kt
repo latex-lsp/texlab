@@ -1,15 +1,16 @@
 package texlab.completion.latex
 
 import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionParams
 import texlab.LatexDocument
 import texlab.completion.CompletionItemFactory
-import texlab.completion.CompletionRequest
 import texlab.contains
+import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
-import texlab.syntax.latex.LatexEnvironment
 
 object LatexUserEnvironmentProvider : LatexEnvironmentProvider() {
-    override fun complete(request: CompletionRequest, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: FeatureRequest<CompletionParams>,
+                          command: LatexCommandSyntax): List<CompletionItem> {
         if (request.document !is LatexDocument) {
             return emptyList()
         }
@@ -18,11 +19,11 @@ object LatexUserEnvironmentProvider : LatexEnvironmentProvider() {
                 .tree
                 .environments
                 .firstOrNull {
-                    it.beginNameRange.contains(request.position) ||
-                            it.endNameRange.contains(request.position)
+                    it.beginNameRange.contains(request.params.position) ||
+                            it.endNameRange.contains(request.params.position)
                 }
         val excluded = if (current == null) {
-            emptyList<LatexEnvironment>()
+            emptyList()
         } else {
             listOf(current)
         }
