@@ -16,6 +16,9 @@ data class LatexEnvironment(val begin: LatexCommandSyntax, val end: LatexCommand
     val endNameRange: Range
         get() = getNameRange(end)
 
+    val range: Range
+        get() = Range(begin.start, end.end)
+
     private fun getNameRange(delimiter: LatexCommandSyntax): Range {
         val group = delimiter.args[0]
         return if (group.children.isNotEmpty()) {

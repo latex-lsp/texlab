@@ -30,10 +30,7 @@ import texlab.folding.LatexSectionFoldingProvider
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
 import texlab.highlight.LatexLabelHighlightProvider
-import texlab.hover.BibtexEntryTypeHoverProvider
-import texlab.hover.BibtexFieldHoverProvider
-import texlab.hover.LatexCitationHoverProvider
-import texlab.hover.LatexComponentHoverProvider
+import texlab.hover.*
 import texlab.link.LatexIncludeLinkProvider
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
@@ -179,6 +176,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             AggregateProvider(
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
+                    LatexMathEnvironmentHoverProvider,
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 
