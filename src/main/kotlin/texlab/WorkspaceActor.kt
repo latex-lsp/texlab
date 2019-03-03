@@ -35,7 +35,7 @@ class WorkspaceActor : CoroutineScope {
         return action(get())
     }
 
-    suspend fun put(updater: suspend (Workspace) -> Document) {
+    fun put(updater: (Workspace) -> Document) = runBlocking {
         actor.send(WorkspaceAction.Put(updater))
     }
 }

@@ -89,13 +89,10 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
         val extension = file.fileName.toFile().extension
         val language = getLanguageByExtension(extension) ?: return
         try {
-            workspaceActor.put {
-                val text = withContext(Dispatchers.IO) {
-                    Files.readAllBytes(file).toString(Charsets.UTF_8)
-                }
-
-                Document.create(file.toUri(), text, language)
+            val text = withContext(Dispatchers.IO) {
+                Files.readAllBytes(file).toString(Charsets.UTF_8)
             }
+            workspaceActor.put { Document.create(file.toUri(), text, language) }
         } catch (e: IOException) {
             // File is locked
         }

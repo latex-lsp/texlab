@@ -231,11 +231,12 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        launch {
-            params.textDocument.apply {
-                val language = getLanguageById(languageId) ?: return@launch
-                val uri = URIHelper.parse(uri)
-                workspaceActor.put { Document.create(uri, text, language) }
+        params.textDocument.apply {
+            val language = getLanguageById(languageId) ?: return
+            val uri = URIHelper.parse(uri)
+            workspaceActor.put { Document.create(uri, text, language) }
+
+            launch {
                 publishDiagnostics(uri)
             }
         }
@@ -243,14 +244,14 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun didChange(params: DidChangeTextDocumentParams) {
         assert(params.contentChanges.size == 1)
-        launch {
-            val uri = URIHelper.parse(params.textDocument.uri)
-            workspaceActor.put { workspace ->
-                val oldDocument = workspace.documents.first { it.uri == uri }
-                val text = params.contentChanges[0].text
-                oldDocument.copy(text, LatexSyntaxTree(text))
-            }
+        val uri = URIHelper.parse(params.textDocument.uri)
+        workspaceActor.put { workspace ->
+            val oldDocument = workspace.documents.first { it.uri == uri }
+            val text = params.contentChanges[0].text
+            oldDocument.copy(text, LatexSyntaxTree(text))
+        }
 
+        launch {
             publishDiagnostics(uri)
         }
     }
