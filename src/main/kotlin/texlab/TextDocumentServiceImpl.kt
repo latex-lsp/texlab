@@ -52,6 +52,7 @@ import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -96,8 +97,15 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     private val serverDirectory: Path = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
 
+    private val homeDirectory: Path = Paths.get(System.getProperty("user.home"))
+    private val databaseDirectory: Path = homeDirectory.resolve(".texlab")
+
+    init {
+        Files.createDirectory(databaseDirectory)
+    }
+
     private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
-        val databaseFile = serverDirectory.resolve("components.json").toFile()
+        val databaseFile = databaseDirectory.resolve("components.json").toFile()
         LatexComponentDatabase.loadOrCreate(databaseFile, resolver.await(), progressListener)
     }
 
