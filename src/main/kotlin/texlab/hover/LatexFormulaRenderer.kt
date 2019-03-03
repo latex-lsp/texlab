@@ -1,5 +1,7 @@
 package texlab.hover
 
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.MarkupKind
 import org.scilab.forge.jlatexmath.ParseException
 import org.scilab.forge.jlatexmath.TeXConstants
 import org.scilab.forge.jlatexmath.TeXFormula
@@ -10,6 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.imageio.ImageIO
 import javax.swing.JLabel
+import javax.swing.JOptionPane
 
 object LatexFormulaRenderer {
     val ENVIRONMENTS = arrayOf("align", "align", "alignat", "aligned", "alignedat",
@@ -17,14 +20,14 @@ object LatexFormulaRenderer {
             "gather", "gathered", "matrix", "multline", "pmatrix", "smallmatrix",
             "split", "subarray", "Vmatrix", "vmatrix")
 
-    fun renderBase64(text: String): String? {
+    fun render(text: String): MarkupContent? {
         var code = text
         for (environment in ENVIRONMENTS) {
             code = code.replace("\\begin{$environment*}", "\\begin{$environment}")
             code = code.replace("\\end{$environment*}", "\\end{$environment}")
         }
-        code = code.replace("\\begin{equation}", "\\begin{align}")
-        code = code.replace("\\end{equation}", "\\end{align}")
+        code = code.replace("\\begin{equation}", "\\[")
+        code = code.replace("\\end{equation}", "\\]")
 
         try {
             val formula = TeXFormula(code)
@@ -45,9 +48,14 @@ object LatexFormulaRenderer {
             stream.use {
                 ImageIO.write(image, "png", stream)
                 val bytes = stream.toByteArray()
-                return Base64.getEncoder().encodeToString(bytes)
+                val base64 = Base64.getEncoder().encodeToString(bytes)
+                return MarkupContent().apply {
+                    kind = MarkupKind.MARKDOWN
+                    value = "![formula](data:image/png;base64,$base64)"
+                }
             }
         } catch (e: ParseException) {
+            JOptionPane.showMessageDialog(null, code + "\n" + e.toString())
             return null
         }
     }

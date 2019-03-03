@@ -177,6 +177,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
                     LatexMathEnvironmentHoverProvider,
+                    LatexEquationHoverProvider,
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 

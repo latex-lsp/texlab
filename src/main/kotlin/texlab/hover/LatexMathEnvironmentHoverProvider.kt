@@ -1,36 +1,23 @@
 package texlab.hover
 
-import org.eclipse.lsp4j.Hover
-import org.eclipse.lsp4j.MarkupContent
-import org.eclipse.lsp4j.MarkupKind
-import org.eclipse.lsp4j.TextDocumentPositionParams
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.Range
 import texlab.LatexDocument
 import texlab.contains
-import texlab.provider.FeatureProvider
-import texlab.provider.FeatureRequest
 
 
-object LatexMathEnvironmentHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
-    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
-        if (request.document !is LatexDocument) {
-            return emptyList()
-        }
-
-        val environment = request.document.tree
+object LatexMathEnvironmentHoverProvider : LatexMathHoverProvider() {
+    override fun getCodeRange(document: LatexDocument, position: Position): Range? {
+        val environment = document.tree
                 .environments
-                .firstOrNull { it.range.contains(request.params.position) }
-                ?: return emptyList()
+                .firstOrNull { it.range.contains(position) }
+                ?: return null
 
         val name = environment.beginName.replace("*", "")
-        if (!LatexFormulaRenderer.ENVIRONMENTS.contains(name)) {
-            return emptyList()
+        return if (LatexFormulaRenderer.ENVIRONMENTS.contains(name)) {
+            environment.range
+        } else {
+            null
         }
-
-        val source = request.document.tree.extract(environment.range)
-        val base64 = LatexFormulaRenderer.renderBase64(source) ?: return emptyList()
-        return listOf(Hover(MarkupContent().apply {
-            kind = MarkupKind.MARKDOWN
-            value = "![formula](data:image/png;base64,$base64)"
-        }))
     }
 }
