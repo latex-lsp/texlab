@@ -26,7 +26,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     implementation "com.overzealous:remark:1.1.0"
     implementation "org.zeroturnaround:zt-zip:1.13"
-    implementation "org.slf4j:slf4j-nop:1.7.25"
+    implementation "org.slf4j:slf4j-simple:1.7.26"
     implementation "me.andrz:brace-expansion:v0.1.3"
     implementation "org.scilab.forge:jlatexmath:1.0.7"
     implementation "de.undercouch:citeproc-java:1.0.1"

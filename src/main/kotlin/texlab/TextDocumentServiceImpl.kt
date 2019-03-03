@@ -6,6 +6,8 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
@@ -60,6 +62,10 @@ import kotlin.coroutines.CoroutineContext
 
 @ObsoleteCoroutinesApi
 class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDocumentService, CoroutineScope {
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger("")
+    }
+
     override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
     private lateinit var client: CustomLanguageClient
@@ -382,7 +388,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     suspend fun publishDiagnostics(uri: URI) {
         workspaceActor.withWorkspace { workspace ->
-            val request = FeatureRequest(uri, workspace, Unit)
+            val request = FeatureRequest(uri, workspace, Unit, logger)
             val diagnostics = diagnosticsProvider.get(request)
             val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
             client.publishDiagnostics(params)
@@ -394,7 +400,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                                           params: T): List<R> {
         return workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(document.uri)
-            val request = FeatureRequest(uri, workspace, params)
+            val request = FeatureRequest(uri, workspace, params, logger)
             provider.get(request)
         }
     }
