@@ -17,6 +17,9 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
                 LatexTokenKind.WORD -> {
                     children.add(text(scope))
                 }
+                LatexTokenKind.MATH -> {
+                    children.add(text(scope))
+                }
                 LatexTokenKind.COMMAND -> {
                     children.add(command())
                 }
@@ -84,7 +87,8 @@ class LatexParser(private val tokens: TokenBuffer<LatexToken>) {
         while (tokens.available) {
             val kind = tokens.peek()!!.kind
             val opts = kind == LatexTokenKind.END_OPTIONS && scope != LatexScope.OPTIONS
-            if (kind == LatexTokenKind.WORD || kind == LatexTokenKind.BEGIN_OPTIONS || opts) {
+            if (kind == LatexTokenKind.WORD || kind == LatexTokenKind.MATH ||
+                    kind == LatexTokenKind.BEGIN_OPTIONS || opts) {
                 words.add(tokens.next())
             } else {
                 break

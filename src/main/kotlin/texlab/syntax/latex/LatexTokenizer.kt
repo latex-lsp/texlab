@@ -18,6 +18,7 @@ class LatexTokenizer(private val stream: CharStream) : TokenSource<LatexToken> {
                 '}' -> return delimiter(LatexTokenKind.END_GROUP)
                 '[' -> return delimiter(LatexTokenKind.BEGIN_OPTIONS)
                 ']' -> return delimiter(LatexTokenKind.END_OPTIONS)
+                '$' -> return math()
                 '\\' -> return command()
                 else -> {
                     if (c.isWhitespace()) {
@@ -36,6 +37,17 @@ class LatexTokenizer(private val stream: CharStream) : TokenSource<LatexToken> {
         stream.next()
         val text = stream.text.substring(stream.index - 1, stream.index)
         return LatexToken(startPosition, text, kind)
+    }
+
+    private fun math(): LatexToken {
+        val startPosition = stream.position
+        val startIndex = stream.index
+        stream.next()
+        if (stream.available && stream.peek() == '$') {
+            stream.next()
+        }
+        val text = stream.text.substring(startIndex, stream.index)
+        return LatexToken(startPosition, text, LatexTokenKind.MATH)
     }
 
     private fun command(): LatexToken {
@@ -64,7 +76,7 @@ class LatexTokenizer(private val stream: CharStream) : TokenSource<LatexToken> {
     private fun word(): LatexToken {
         fun isWordChar(c: Char): Boolean {
             return !c.isWhitespace() && c != '%' && c != '{' &&
-                    c != '}' && c != '[' && c != ']' && c != '\\'
+                    c != '}' && c != '[' && c != ']' && c != '\\' && c != '$'
         }
 
         val startPosition = stream.position

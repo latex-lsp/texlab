@@ -5,10 +5,10 @@ import org.eclipse.lsp4j.Range
 import texlab.LatexDocument
 import texlab.contains
 
-object LatexEquationHoverProvider : LatexMathHoverProvider() {
+object LatexMathInlineHoverProvider : LatexMathHoverProvider() {
     override fun getCodeRange(document: LatexDocument, position: Position): Range? {
-        return document.tree.equations
-                .firstOrNull { it.range.contains(position) }
-                ?.range
+        return document.tree.inlines
+                .map { it.range }
+                .firstOrNull { it.contains(position) }
     }
 }

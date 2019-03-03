@@ -49,6 +49,8 @@ class LatexSyntaxTree(override val text: String) : SyntaxTree() {
 
     val equations: List<LatexEquation> = LatexEquation.find(root)
 
+    val inlines: List<LatexInline> = LatexInline.find(root)
+
     val isStandalone: Boolean = environments.any { it.beginName == "document" || it.endName == "document" }
 
 }

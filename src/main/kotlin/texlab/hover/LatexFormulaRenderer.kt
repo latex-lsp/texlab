@@ -12,7 +12,6 @@ import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.imageio.ImageIO
 import javax.swing.JLabel
-import javax.swing.JOptionPane
 
 object LatexFormulaRenderer {
     val ENVIRONMENTS = arrayOf("align", "align", "alignat", "aligned", "alignedat",
@@ -55,7 +54,6 @@ object LatexFormulaRenderer {
                 }
             }
         } catch (e: ParseException) {
-            JOptionPane.showMessageDialog(null, code + "\n" + e.toString())
             return null
         }
     }
