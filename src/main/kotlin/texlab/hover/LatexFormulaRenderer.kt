@@ -27,6 +27,7 @@ object LatexFormulaRenderer {
         }
         code = code.replace("\\begin{equation}", "\\[")
         code = code.replace("\\end{equation}", "\\]")
+        code = code.replace("\\coloneqq", ":=")
 
         try {
             val formula = TeXFormula(code)
