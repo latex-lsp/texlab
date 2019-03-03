@@ -1,10 +1,15 @@
 package texlab
 
 import org.eclipse.lsp4j.*
+import org.slf4j.LoggerFactory
 import texlab.provider.FeatureRequest
 import java.io.File
 
 class WorkspaceBuilder {
+    companion object {
+        private val logger = LoggerFactory.getLogger(::WorkspaceBuilder::class.java)
+    }
+
     var workspace = Workspace()
 
     fun document(path: String, text: String): WorkspaceBuilder {
@@ -19,7 +24,7 @@ class WorkspaceBuilder {
         val uri = File(path).toURI()
         val identifier = TextDocumentIdentifier(uri.toString())
         val params = paramsFactory(identifier)
-        return FeatureRequest(uri, workspace, params)
+        return FeatureRequest(uri, workspace, params, logger)
     }
 
 
@@ -31,7 +36,7 @@ class WorkspaceBuilder {
         val position = Position(line, character)
         val identifier = TextDocumentIdentifier(uri.toString())
         val params = paramsFactory(identifier, position)
-        return FeatureRequest(uri, workspace, params)
+        return FeatureRequest(uri, workspace, params, logger)
     }
 
     fun completion(path: String, line: Int, character: Int): FeatureRequest<CompletionParams> {
