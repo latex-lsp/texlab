@@ -36,7 +36,10 @@ import texlab.hover.*
 import texlab.link.LatexIncludeLinkProvider
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
-import texlab.provider.*
+import texlab.provider.AggregateProvider
+import texlab.provider.DeferredProvider
+import texlab.provider.FeatureProvider
+import texlab.provider.FeatureRequest
 import texlab.references.BibtexEntryReferenceProvider
 import texlab.references.LatexLabelReferenceProvider
 import texlab.rename.BibtexEntryRenamer
@@ -125,36 +128,36 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
 
     private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
-            LimitedProvider(
-                    OrderByQualityProvider(
-                            DistinctProvider(
-                                    AggregateProvider(
-                                            includeGraphicsProvider,
-                                            LatexIncludeProvider(),
-                                            LatexInputProvider(),
-                                            LatexBibliographyProvider(),
-                                            DeferredProvider(::LatexClassImportProvider, resolver),
-                                            DeferredProvider(::LatexPackageImportProvider, resolver),
-                                            PgfLibraryProvider,
-                                            TikzLibraryProvider,
-                                            LatexCitationProvider,
-                                            LatexColorProvider,
-                                            DefineColorModelProvider,
-                                            DefineColorSetModelProvider,
-                                            LatexLabelProvider,
-                                            LatexBeginCommandProvider,
-                                            DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase),
-                                            LatexKernelEnvironmentProvider,
-                                            LatexUserEnvironmentProvider,
-                                            DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase),
-                                            DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase),
-                                            DeferredProvider(::TikzCommandProvider, componentDatabase),
-                                            DeferredProvider(::LatexComponentCommandProvider, componentDatabase),
-                                            LatexKernelCommandProvider,
-                                            LatexUserCommandProvider,
-                                            BibtexEntryTypeProvider,
-                                            BibtexFieldNameProvider,
-                                            BibtexKernelCommandProvider)) { it.label }))
+            AggregateProvider(includeGraphicsProvider,
+                    LatexIncludeProvider(),
+                    LatexInputProvider(),
+                    LatexBibliographyProvider(),
+                    DeferredProvider(::LatexClassImportProvider, resolver),
+                    DeferredProvider(::LatexPackageImportProvider, resolver),
+                    PgfLibraryProvider,
+                    TikzLibraryProvider,
+                    LatexCitationProvider,
+                    LatexColorProvider,
+                    DefineColorModelProvider,
+                    DefineColorSetModelProvider,
+                    LatexLabelProvider,
+                    LatexBeginCommandProvider,
+                    DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase),
+                    LatexKernelEnvironmentProvider,
+                    LatexUserEnvironmentProvider,
+                    DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase),
+                    DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase),
+                    DeferredProvider(::TikzCommandProvider, componentDatabase),
+                    DeferredProvider(::LatexComponentCommandProvider, componentDatabase),
+                    LatexKernelCommandProvider,
+                    LatexUserCommandProvider,
+                    BibtexEntryTypeProvider,
+                    BibtexFieldNameProvider,
+                    BibtexKernelCommandProvider)
+                    .map { items -> items.distinctBy { it.label } }
+                    .let { OrderByQualityProvider(it) }
+                    .map { it.take(50) }
+
 
     private val symbolProvider: FeatureProvider<DocumentSymbolParams, DocumentSymbol> =
             AggregateProvider(
