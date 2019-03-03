@@ -101,7 +101,9 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val databaseDirectory: Path = homeDirectory.resolve(".texlab")
 
     init {
-        Files.createDirectory(databaseDirectory)
+        if (!Files.exists(databaseDirectory)) {
+            Files.createDirectory(databaseDirectory)
+        }
     }
 
     private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
