@@ -1,5 +1,5 @@
 package texlab.metadata
 
 interface MetadataProvider {
-    fun getMetadata(name: String): Metadata?
+    suspend fun getMetadata(name: String): Metadata?
 }

@@ -4,15 +4,20 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.overzealous.remark.Remark
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
 import java.io.IOException
 import java.net.URL
 
 object LatexComponentMetadataProvider : MetadataProvider {
-    override fun getMetadata(name: String): Metadata? {
+    override suspend fun getMetadata(name: String): Metadata? {
         return try {
-            val json = URL("https://ctan.org/json/2.0/pkg/$name").readText()
+            val json = withContext(Dispatchers.IO) {
+                URL("https://ctan.org/json/2.0/pkg/$name").readText()
+            }
+
             val mapper = jacksonObjectMapper()
                     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             val result = mapper.readValue<Component>(json)

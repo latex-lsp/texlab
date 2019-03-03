@@ -4,7 +4,7 @@ import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
 
 object BibtexEntryTypeMetadataProvider : MetadataProvider {
-    override fun getMetadata(name: String): Metadata? {
+    override suspend fun getMetadata(name: String): Metadata? {
         val markdown = DOCUMENTATION_BY_NAME[name] ?: return null
         val documentation = MarkupContent().apply {
             kind = MarkupKind.MARKDOWN
