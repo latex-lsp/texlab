@@ -5,14 +5,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
+import texlab.provider.FeatureProviderTests.NumberProvider
 
 class DeferredProviderTests {
-    private class NumberProvider(val number: Int) : FeatureProvider<Unit, Int> {
-        override suspend fun get(request: FeatureRequest<Unit>): List<Int> {
-            return listOf(number)
-        }
-    }
-
     @Test
     fun `it should eventually provide the source to the given provider`() = runBlocking {
         val request = WorkspaceBuilder()

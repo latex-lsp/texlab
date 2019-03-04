@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
 
 class FeatureProviderTests {
-    private class NumberProvider(val number: Int) : FeatureProvider<Unit, Int> {
+    class NumberProvider(val number: Int) : FeatureProvider<Unit, Int> {
         override suspend fun get(request: FeatureRequest<Unit>): List<Int> {
             return listOf(number)
         }
