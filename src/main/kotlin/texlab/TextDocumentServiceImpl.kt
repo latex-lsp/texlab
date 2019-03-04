@@ -36,7 +36,6 @@ import texlab.hover.*
 import texlab.link.LatexIncludeLinkProvider
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
-import texlab.provider.AggregateProvider
 import texlab.provider.DeferredProvider
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
@@ -128,7 +127,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
 
     private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
-            AggregateProvider(includeGraphicsProvider,
+            FeatureProvider.concat(includeGraphicsProvider,
                     LatexIncludeProvider(),
                     LatexInputProvider(),
                     LatexBibliographyProvider(),
@@ -160,7 +159,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
 
     private val symbolProvider: FeatureProvider<DocumentSymbolParams, DocumentSymbol> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexCommandSymbolProvider,
                     LatexEnvironmentSymbolProvider,
                     LatexLabelSymbolProvider,
@@ -168,31 +167,31 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexEntrySymbolProvider)
 
     private val renameProvider: FeatureProvider<RenameParams, WorkspaceEdit> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexCommandRenamer,
                     LatexEnvironmentRenamer,
                     LatexLabelRenamer,
                     BibtexEntryRenamer)
 
     private val foldingProvider: FeatureProvider<FoldingRangeRequestParams, FoldingRange> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexEnvironmentFoldingProvider,
                     LatexSectionFoldingProvider,
                     BibtexDeclarationFoldingProvider)
 
     private val linkProvider: FeatureProvider<DocumentLinkParams, DocumentLink> =
-            AggregateProvider(LatexIncludeLinkProvider)
+            FeatureProvider.concat(LatexIncludeLinkProvider)
 
     private val definitionProvider: FeatureProvider<TextDocumentPositionParams, Location> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexLabelDefinitionProvider,
                     BibtexEntryDefinitionProvider)
 
     private val highlightProvider: FeatureProvider<TextDocumentPositionParams, DocumentHighlight> =
-            AggregateProvider(LatexLabelHighlightProvider)
+            FeatureProvider.concat(LatexLabelHighlightProvider)
 
     private val hoverProvider: FeatureProvider<TextDocumentPositionParams, Hover> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
                     LatexMathEnvironmentHoverProvider,
@@ -203,14 +202,14 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexFieldHoverProvider)
 
     private val referenceProvider: FeatureProvider<ReferenceParams, Location> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
     val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
 
     private val diagnosticsProvider: FeatureProvider<Unit, Diagnostic> =
-            AggregateProvider(
+            FeatureProvider.concat(
                     buildDiagnosticsProvider,
                     BibtexEntryDiagnosticsProvider)
 

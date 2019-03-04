@@ -4,7 +4,6 @@ import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionParams
 import texlab.completion.CompletionItemFactory
 import texlab.completion.latex.LatexArgumentProvider
-import texlab.provider.AggregateProvider
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
@@ -29,12 +28,11 @@ class LatexArgumentSymbolProvider(private val database: LatexSymbolDatabase)
         }
     }
 
-    val provider =
-            database.index.arguments
-                    .groupBy { it.command }
-                    .values
-                    .map { Provider(it) }
-                    .let { AggregateProvider(*it.toTypedArray()) }
+    val provider = database.index.arguments
+            .groupBy { it.command }
+            .values
+            .map { Provider(it) }
+            .let { FeatureProvider.concat(*it.toTypedArray()) }
 
     override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
         return provider.get(request)

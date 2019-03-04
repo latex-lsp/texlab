@@ -11,4 +11,14 @@ interface FeatureProvider<T, R> {
             }
         }
     }
+
+    companion object {
+        fun <T, R> concat(vararg providers: FeatureProvider<T, R>): FeatureProvider<T, R> {
+            return object : FeatureProvider<T, R> {
+                override suspend fun get(request: FeatureRequest<T>): List<R> {
+                    return providers.flatMap { it.get(request) }
+                }
+            }
+        }
+    }
 }
