@@ -11,14 +11,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.streams.toList
 
-class IncludeGraphicsProvider : LatexArgumentProvider() {
-    var root: Path? = null
-
+class IncludeGraphicsProvider(val root: Path?) : LatexArgumentProvider() {
     override val commandNames: List<String> = listOf("\\includegraphics")
 
     override val argumentIndex: Int = 0
 
-    override fun complete(request: FeatureRequest<CompletionParams>, command: LatexCommandSyntax): List<CompletionItem> {
+    override fun complete(request: FeatureRequest<CompletionParams>, command: LatexCommandSyntax)
+            : List<CompletionItem> {
         if (request.uri.scheme != "file") {
             return emptyList()
         }

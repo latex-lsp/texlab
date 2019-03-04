@@ -108,6 +108,8 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val homeDirectory: Path = Paths.get(System.getProperty("user.home"))
     private val databaseDirectory: Path = homeDirectory.resolve(".texlab")
 
+    private val workspaceRootDirectory: CompletableDeferred<Path?> = CompletableDeferred()
+
     init {
         if (!Files.exists(databaseDirectory)) {
             Files.createDirectory(databaseDirectory)
@@ -124,10 +126,9 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         LatexSymbolDatabase.loadOrCreate(databaseDirectory)
     }
 
-    private val includeGraphicsProvider: IncludeGraphicsProvider = IncludeGraphicsProvider()
-
     private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
-            FeatureProvider.concat(includeGraphicsProvider,
+            FeatureProvider.concat(
+                    DeferredProvider(::IncludeGraphicsProvider, workspaceRootDirectory),
                     LatexIncludeProvider(),
                     LatexInputProvider(),
                     LatexBibliographyProvider(),
@@ -229,7 +230,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     fun initialize(root: Path?) {
-        includeGraphicsProvider.root = root
+        workspaceRootDirectory.complete(root)
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
