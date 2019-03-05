@@ -52,6 +52,7 @@ import texlab.search.ForwardSearchConfig
 import texlab.search.ForwardSearchResult
 import texlab.search.ForwardSearchTool
 import texlab.symbol.*
+import texlab.syntax.BibtexSyntaxTree
 import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
@@ -251,7 +252,11 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         workspaceActor.put { workspace ->
             val oldDocument = workspace.documents.first { it.uri == uri }
             val text = params.contentChanges[0].text
-            oldDocument.copy(text, LatexSyntaxTree(text))
+            val tree = when (oldDocument) {
+                is LatexDocument -> LatexSyntaxTree(text)
+                is BibtexDocument -> BibtexSyntaxTree(text)
+            }
+            oldDocument.copy(text, tree)
         }
 
         launch {
