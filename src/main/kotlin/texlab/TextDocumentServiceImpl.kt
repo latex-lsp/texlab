@@ -242,6 +242,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
             launch {
                 publishDiagnostics(uri)
+                resolveIncludes()
             }
         }
     }
@@ -261,6 +262,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
         launch {
             publishDiagnostics(uri)
+            resolveIncludes()
         }
     }
 
@@ -401,6 +403,27 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             val diagnostics = diagnosticsProvider.get(request)
             val params = PublishDiagnosticsParams(uri.toString(), diagnostics)
             client.publishDiagnostics(params)
+        }
+    }
+
+    private suspend fun resolveIncludes() {
+        workspaceActor.withWorkspace { workspace ->
+            for (parent in workspace.documents.filterIsInstance<LatexDocument>()) {
+                for (include in parent.tree.includes) {
+                    if (workspace.resolveDocument(parent.uri, include.path) != null) {
+                        continue
+                    }
+
+                    for (target in workspace.resolveLinkTargets(parent.uri, include.path)) {
+                        val path = Paths.get(target)
+                        val child = Workspace.load(path)
+                        if (child != null) {
+                            workspaceActor.put { child }
+                            break
+                        }
+                    }
+                }
+            }
         }
     }
 

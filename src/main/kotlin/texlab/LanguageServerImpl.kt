@@ -7,7 +7,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
 import org.eclipse.lsp4j.services.LanguageServer
 import org.eclipse.lsp4j.services.WorkspaceService
-import java.io.IOException
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -86,15 +85,9 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
     }
 
     private suspend fun loadWorkspaceFile(file: Path) {
-        val extension = file.fileName.toFile().extension
-        val language = getLanguageByExtension(extension) ?: return
-        try {
-            val text = withContext(Dispatchers.IO) {
-                Files.readAllBytes(file).toString(Charsets.UTF_8)
-            }
-            workspaceActor.put { Document.create(file.toUri(), text, language) }
-        } catch (e: IOException) {
-            // File is locked
+        val document = Workspace.load(file)
+        if (document != null) {
+            workspaceActor.put { document }
         }
     }
 

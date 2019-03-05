@@ -1,33 +1,46 @@
 package texlab
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
 data class Workspace(val documents: List<Document> = listOf()) {
-    fun resolve(uri: URI, relativePath: String): Document? {
-        fun find(path: String): Document? {
-            val child = File(path).toURI()
-            return documents
-                    .filter { it.isFile }
-                    .firstOrNull { it.uri == child }
+    fun resolveDocument(uri: URI, relativePath: String): Document? {
+        for (target in resolveLinkTargets(uri, relativePath)) {
+            val child = File(target).toURI()
+            val document = documents.filter { it.isFile }.firstOrNull { it.uri == child }
+            if (document != null) {
+                return document
+            }
         }
+        return null
+    }
 
+    fun resolveLinkTargets(uri: URI, relativePath: String): List<String> {
         if (uri.scheme != "file") {
-            return null
+            return emptyList()
         }
 
+        val targets = mutableListOf<String>()
         val extensions = arrayOf(".tex", ".sty", ".cls", ".bib")
         return try {
             val basePath = Paths.get(File(uri).parent)
-            val fullPath = basePath.resolve(relativePath).toString().replace('\\', '/')
-            var document = find(fullPath)
-            extensions.forEach { document = document ?: find("$fullPath$it") }
-            return document
+            val fullPath = basePath.resolve(relativePath)
+                    .normalize()
+                    .toString()
+                    .replace('\\', '/')
+            targets.add(fullPath)
+            extensions.forEach { targets.add("$fullPath$it") }
+            return targets
         } catch (e: InvalidPathException) {
-            null
+            emptyList()
         }
     }
 
@@ -37,7 +50,7 @@ data class Workspace(val documents: List<Document> = listOf()) {
                 .filter { it.isFile }
                 .forEach { parent ->
                     parent.tree.includes
-                            .mapNotNull { resolve(parent.uri, it.path) }
+                            .mapNotNull { resolveDocument(parent.uri, it.path) }
                             .forEach { child ->
                                 edges.add(Pair(parent, child))
                                 edges.add(Pair(child, parent))
@@ -67,5 +80,21 @@ data class Workspace(val documents: List<Document> = listOf()) {
                 .filterIsInstance<LatexDocument>()
                 .firstOrNull { it.tree.isStandalone }
                 ?: documents.first { it.uri == childUri }
+    }
+
+    companion object {
+        suspend fun load(file: Path): Document? {
+            val extension = file.fileName.toFile().extension
+            val language = getLanguageByExtension(extension) ?: return null
+            return try {
+                val text = withContext(Dispatchers.IO) {
+                    Files.readAllBytes(file).toString(Charsets.UTF_8)
+                }
+                Document.create(file.toUri(), text, language)
+            } catch (e: IOException) {
+                // File is locked
+                null
+            }
+        }
     }
 }

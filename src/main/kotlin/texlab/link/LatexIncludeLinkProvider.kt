@@ -22,7 +22,7 @@ object LatexIncludeLinkProvider : FeatureProvider<DocumentLinkParams, DocumentLi
     private fun resolve(request: FeatureRequest<DocumentLinkParams>,
                         include: LatexInclude): DocumentLink? {
         val range = include.command.args[0].children[0].range
-        val target = request.workspace.resolve(request.uri, include.path) ?: return null
+        val target = request.workspace.resolveDocument(request.uri, include.path) ?: return null
         return DocumentLink(range, target.uri.toString())
     }
 }
