@@ -12,10 +12,12 @@ data class LatexLabel(val command: LatexCommandSyntax) {
                     .mapNotNull { analyze(it) }
         }
 
+        val REFERENCE_COMMANDS = listOf("\\ref", "\\autoref", "\\eqref")
+
         fun findReferences(root: LatexSyntaxNode): List<LatexLabel> {
             return root.descendants()
                     .filterIsInstance<LatexCommandSyntax>()
-                    .filter { it.name.text == "\\ref" || it.name.text == "\\autoref" }
+                    .filter { REFERENCE_COMMANDS.contains(it.name.text) }
                     .mapNotNull { analyze(it) }
         }
 

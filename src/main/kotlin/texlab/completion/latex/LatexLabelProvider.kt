@@ -6,9 +6,10 @@ import texlab.LatexDocument
 import texlab.completion.CompletionItemFactory
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
+import texlab.syntax.latex.LatexLabel
 
 object LatexLabelProvider : LatexArgumentProvider() {
-    override val commandNames: List<String> = listOf("\\ref", "\\autoref", "\\eqref")
+    override val commandNames: List<String> = LatexLabel.REFERENCE_COMMANDS
 
     override val argumentIndex: Int = 0
 
