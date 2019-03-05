@@ -5,7 +5,7 @@ import de.undercouch.citeproc.CSL
 import de.undercouch.citeproc.bibtex.BibTeXConverter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
-import java.text.ParseException
+import org.jbibtex.ParseException
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("BlockingMethodInNonBlockingContext")
