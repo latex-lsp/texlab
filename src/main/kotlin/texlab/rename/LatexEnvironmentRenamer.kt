@@ -8,10 +8,10 @@ import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexEnvironmentRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
-    override suspend fun get(request: FeatureRequest<RenameParams>): List<WorkspaceEdit> {
+object LatexEnvironmentRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+    override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         if (request.document !is LatexDocument) {
-            return emptyList()
+            return null
         }
 
         for (environment in request.document.tree.environments) {
@@ -21,10 +21,10 @@ object LatexEnvironmentRenamer : FeatureProvider<RenameParams, List<WorkspaceEdi
                 val edits = listOf(
                         TextEdit(environment.beginNameRange, request.params.newName),
                         TextEdit(environment.endNameRange, request.params.newName))
-                return listOf(WorkspaceEdit(mutableMapOf(request.uri.toString() to edits)))
+                return WorkspaceEdit(mapOf(request.uri.toString() to edits))
             }
         }
 
-        return emptyList()
+        return null
     }
 }

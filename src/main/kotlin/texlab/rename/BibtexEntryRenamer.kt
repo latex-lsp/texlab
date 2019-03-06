@@ -12,12 +12,12 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.Token
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
-    override suspend fun get(request: FeatureRequest<RenameParams>): List<WorkspaceEdit> {
+object BibtexEntryRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+    override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         val token = when (request.document) {
             is BibtexDocument -> findEntry(request.document, request.params.position)
             is LatexDocument -> findCitation(request.document, request.params.position)
-        } ?: return emptyList()
+        } ?: return null
 
         val changes = mutableMapOf<String, List<TextEdit>>()
         for (document in request.relatedDocuments) {
@@ -39,7 +39,7 @@ object BibtexEntryRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
             changes[document.uri.toString()] = edits
         }
 
-        return listOf(WorkspaceEdit(changes))
+        return WorkspaceEdit(changes)
     }
 
     private fun findEntry(document: BibtexDocument, position: Position): Token? {

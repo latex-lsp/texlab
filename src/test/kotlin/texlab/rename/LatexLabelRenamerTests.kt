@@ -20,7 +20,7 @@ class LatexLabelRenamerTests {
                 .document("bar.tex", "\\ref{foo}")
         val edit = builder
                 .rename(document, line, character, "bar")
-                .let { LatexLabelRenamer.get(it).first() }
+                .let { LatexLabelRenamer.get(it)!! }
 
         Assertions.assertEquals(2, edit.changes.size)
 
@@ -42,7 +42,7 @@ class LatexLabelRenamerTests {
         WorkspaceBuilder()
                 .document("foo.tex", "\\foo{bar}")
                 .rename("foo.tex", 0, 5, "baz")
-                .let { LatexLabelRenamer.get(it).firstOrNull() }
+                .let { LatexLabelRenamer.get(it) }
                 .also { assertNull(it) }
     }
 
@@ -51,7 +51,7 @@ class LatexLabelRenamerTests {
         WorkspaceBuilder()
                 .document("foo.bib", "")
                 .rename("foo.bib", 0, 0, "bar")
-                .let { LatexLabelRenamer.get(it).firstOrNull() }
+                .let { LatexLabelRenamer.get(it) }
                 .also { assertNull(it) }
     }
 }

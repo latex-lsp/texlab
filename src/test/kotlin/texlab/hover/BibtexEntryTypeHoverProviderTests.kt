@@ -1,7 +1,8 @@
 package texlab.hover
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
 
@@ -12,7 +13,7 @@ class BibtexEntryTypeHoverProviderTests {
                 .document("foo.bib", "@article")
                 .hover("foo.bib", 0, 2)
                 .let { BibtexEntryTypeHoverProvider.get(it) }
-                .also { assertTrue(it.isNotEmpty()) }
+                .also { assertNotNull(it) }
     }
 
     @Test
@@ -21,7 +22,7 @@ class BibtexEntryTypeHoverProviderTests {
                 .document("foo.bib", "@article{foo, bar = {baz}}")
                 .hover("foo.bib", 0, 10)
                 .let { BibtexEntryTypeHoverProvider.get(it) }
-                .also { assertTrue(it.isEmpty()) }
+                .also { assertNull(it) }
     }
 
     @Test
@@ -30,6 +31,6 @@ class BibtexEntryTypeHoverProviderTests {
                 .document("foo.tex", "")
                 .hover("foo.tex", 0, 0)
                 .let { BibtexEntryTypeHoverProvider.get(it) }
-                .also { assertTrue(it.isEmpty()) }
+                .also { assertNull(it) }
     }
 }

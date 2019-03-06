@@ -9,21 +9,20 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryTypeHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
-    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
+object BibtexEntryTypeHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover?> {
+    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): Hover? {
         if (request.document !is BibtexDocument) {
-            return emptyList()
+            return null
         }
 
         val name = request.document.tree.root.children
                 .filterIsInstance<BibtexEntrySyntax>()
                 .firstOrNull { it.type.range.contains(request.params.position) }
                 ?.type?.text?.substring(1)?.toLowerCase()
-                ?: return emptyList()
+                ?: return null
 
         val metadata = BibtexEntryTypeMetadataProvider.getMetadata(name)
-        val documentation = metadata?.documentation ?: return emptyList()
-        return listOf(Hover(documentation))
-
+        val documentation = metadata?.documentation ?: return null
+        return Hover(documentation)
     }
 }

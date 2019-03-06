@@ -165,8 +165,8 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     LatexCitationSymbolProvider,
                     BibtexEntrySymbolProvider)
 
-    private val renameProvider: FeatureProvider<RenameParams, List<WorkspaceEdit>> =
-            FeatureProvider.concat(
+    private val renameProvider: FeatureProvider<RenameParams, WorkspaceEdit?> =
+            FeatureProvider.choice(
                     LatexCommandRenamer,
                     LatexEnvironmentRenamer,
                     LatexLabelRenamer,
@@ -189,14 +189,14 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     private val highlightProvider: FeatureProvider<TextDocumentPositionParams, List<DocumentHighlight>> =
             FeatureProvider.concat(LatexLabelHighlightProvider)
 
-    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, List<Hover>> =
-            FeatureProvider.concat(
+    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, Hover?> =
+            FeatureProvider.choice(
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
                     LatexMathEnvironmentHoverProvider,
                     LatexMathEquationHoverProvider,
                     LatexMathInlineHoverProvider,
-                    DeferredProvider(::LatexCommandHoverProvider, componentDatabase, emptyList()),
+                    DeferredProvider(::LatexCommandHoverProvider, componentDatabase, null),
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 
@@ -290,7 +290,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
-        runFeature(renameProvider, params.textDocument, params).firstOrNull()
+        runFeature(renameProvider, params.textDocument, params)
     }
 
     override fun documentLink(params: DocumentLinkParams)
@@ -351,7 +351,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun hover(params: TextDocumentPositionParams)
             : CompletableFuture<Hover?> = future {
-        runFeature(hoverProvider, params.textDocument, params).firstOrNull()
+        runFeature(hoverProvider, params.textDocument, params)
     }
 
     override fun formatting(params: DocumentFormattingParams)
@@ -432,9 +432,9 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    private suspend fun <T, R> runFeature(provider: FeatureProvider<T, List<R>>,
+    private suspend fun <T, R> runFeature(provider: FeatureProvider<T, R>,
                                           document: TextDocumentIdentifier,
-                                          params: T): List<R> {
+                                          params: T): R {
         return workspaceActor.withWorkspace { workspace ->
             val uri = URIHelper.parse(document.uri)
             val request = FeatureRequest(uri, workspace, params, logger)

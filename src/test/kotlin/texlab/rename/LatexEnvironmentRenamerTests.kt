@@ -14,7 +14,7 @@ class LatexEnvironmentRenamerTests {
         val edit = WorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 8, "baz")
-                .let { LatexEnvironmentRenamer.get(it).first() }
+                .let { LatexEnvironmentRenamer.get(it)!! }
 
         assertEquals(1, edit.changes.keys.size)
         val changes = edit.changes.getValue(edit.changes.keys.first())
@@ -30,7 +30,7 @@ class LatexEnvironmentRenamerTests {
         WorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 5, "baz")
-                .let { LatexEnvironmentRenamer.get(it).firstOrNull() }
+                .let { LatexEnvironmentRenamer.get(it) }
                 .also { assertNull(it) }
     }
 
@@ -39,7 +39,7 @@ class LatexEnvironmentRenamerTests {
         WorkspaceBuilder()
                 .document("foo.bib", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.bib", 0, 8, "baz")
-                .let { LatexEnvironmentRenamer.get(it).firstOrNull() }
+                .let { LatexEnvironmentRenamer.get(it) }
                 .also { assertNull(it) }
     }
 }

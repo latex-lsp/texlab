@@ -15,23 +15,21 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
 @ObsoleteCoroutinesApi
-object LatexCitationHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
-    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
-        val key = getKey(request) ?: return emptyList()
-
+object LatexCitationHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover?> {
+    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): Hover? {
+        val key = getKey(request) ?: return null
         val entry = request.relatedDocuments
                 .filterIsInstance<BibtexDocument>()
                 .flatMap { it.tree.root.children.filterIsInstance<BibtexEntrySyntax>() }
                 .firstOrNull { it.name?.text == key }
-                ?: return emptyList()
+                ?: return null
 
         val formatter = BibtexFormatter(insertSpaces = true, tabSize = 4, lineLength = -1)
-        val hover = Hover(MarkupContent().apply {
+        val markup = MarkupContent().apply {
             kind = MarkupKind.MARKDOWN
             value = BibtexCitationActor.cite(formatter.format(entry))
-        })
-
-        return listOf(hover)
+        }
+        return Hover(markup)
     }
 
     private fun getKey(request: FeatureRequest<TextDocumentPositionParams>): String? {

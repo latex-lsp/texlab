@@ -20,7 +20,7 @@ class BibtexEntryRenamerTests {
 
         val edit = builder
                 .rename(document, line, character, "qux")
-                .let { BibtexEntryRenamer.get(it).first() }
+                .let { BibtexEntryRenamer.get(it)!! }
 
         assertEquals(2, edit.changes.size)
 
@@ -42,7 +42,7 @@ class BibtexEntryRenamerTests {
         WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz}")
                 .rename("foo.bib", 0, 14, "qux")
-                .let { BibtexEntryRenamer.get(it).firstOrNull() }
+                .let { BibtexEntryRenamer.get(it) }
                 .also { assertNull(it) }
     }
 
@@ -51,7 +51,7 @@ class BibtexEntryRenamerTests {
         WorkspaceBuilder()
                 .document("foo.tex", "")
                 .rename("foo.tex", 0, 0, "bar")
-                .let { BibtexEntryRenamer.get(it).firstOrNull() }
+                .let { BibtexEntryRenamer.get(it) }
                 .also { assertNull(it) }
     }
 }

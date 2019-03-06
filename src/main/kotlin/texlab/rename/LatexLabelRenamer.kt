@@ -8,17 +8,17 @@ import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexLabelRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
-    override suspend fun get(request: FeatureRequest<RenameParams>): List<WorkspaceEdit> {
+object LatexLabelRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+    override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         if (request.document !is LatexDocument) {
-            return emptyList()
+            return null
         }
 
         val label = request.document.tree
                 .labelReferences
                 .plus(request.document.tree.labelDefinitions)
                 .firstOrNull { it.name.range.contains(request.params.position) }
-                ?: return emptyList()
+                ?: return null
 
         val changes = mutableMapOf<String, List<TextEdit>>()
         for (document in request.relatedDocuments.filterIsInstance<LatexDocument>()) {
@@ -29,6 +29,6 @@ object LatexLabelRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
             changes[document.uri.toString()] = edits
         }
 
-        return listOf(WorkspaceEdit(changes))
+        return WorkspaceEdit(changes)
     }
 }

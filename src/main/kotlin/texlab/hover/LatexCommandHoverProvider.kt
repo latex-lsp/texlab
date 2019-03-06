@@ -12,26 +12,27 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 class LatexCommandHoverProvider(private val database: LatexComponentSource) :
-        FeatureProvider<TextDocumentPositionParams, List<Hover>> {
-    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
+        FeatureProvider<TextDocumentPositionParams, Hover?> {
+    override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): Hover? {
         if (request.document !is LatexDocument) {
-            return emptyList()
+            return null
         }
 
         val command = request.document.tree.root
                 .descendants()
                 .filterIsInstance<LatexCommandSyntax>()
                 .firstOrNull { it.name.range.contains(request.params.position) }
-                ?: return emptyList()
+                ?: return null
 
         val components = database.getRelatedComponents(request.relatedDocuments)
                 .filter { it.commands.contains(command.name.text.substring(1)) }
                 .flatMap { it.fileNames }
 
         val separator = System.lineSeparator().repeat(2)
-        return listOf(Hover(MarkupContent().apply {
+        val markup = MarkupContent().apply {
             kind = MarkupKind.MARKDOWN
             value = components.joinToString(separator)
-        }))
+        }
+        return Hover(markup)
     }
 }

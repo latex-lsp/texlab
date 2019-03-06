@@ -9,16 +9,16 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-object LatexCommandRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> {
-    override suspend fun get(request: FeatureRequest<RenameParams>): List<WorkspaceEdit> {
+object LatexCommandRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+    override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         if (request.document !is LatexDocument) {
-            return emptyList()
+            return null
         }
 
         val command = request.document.tree.root
                 .descendants()
                 .filterIsInstance<LatexCommandSyntax>()
-                .firstOrNull { it.name.range.contains(request.params.position) } ?: return emptyList()
+                .firstOrNull { it.name.range.contains(request.params.position) } ?: return null
 
         val changes = mutableMapOf<String, List<TextEdit>>()
         for (document in request.relatedDocuments.filterIsInstance<LatexDocument>()) {
@@ -29,6 +29,6 @@ object LatexCommandRenamer : FeatureProvider<RenameParams, List<WorkspaceEdit>> 
             changes[document.uri.toString()] = edits
         }
 
-        return listOf(WorkspaceEdit(changes))
+        return WorkspaceEdit(changes)
     }
 }

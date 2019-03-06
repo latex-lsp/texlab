@@ -1,8 +1,7 @@
 package texlab.provider
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
 
@@ -50,5 +49,31 @@ class FeatureProviderTests {
         assertEquals(2, result.size)
         assertEquals(firstProvider.number, result[0])
         assertEquals(secondProvider.number, result[1])
+    }
+
+    @Test
+    fun `it should return a result when a provider has a result`() = runBlocking {
+        val request = WorkspaceBuilder()
+                .document("foo.tex", "")
+                .request("foo.tex") {}
+
+        val firstProvider = NumberProvider(null)
+        val secondProvider = NumberProvider(2)
+        val provider = FeatureProvider.choice(firstProvider, secondProvider)
+        val result = provider.get(request)
+        assertEquals(result, secondProvider.number)
+    }
+
+    @Test
+    fun `it should return nothing when no provider has a result`() = runBlocking {
+        val request = WorkspaceBuilder()
+                .document("foo.tex", "")
+                .request("foo.tex") {}
+
+        val firstProvider = NumberProvider(null)
+        val secondProvider = NumberProvider(null)
+        val provider = FeatureProvider.choice(firstProvider, secondProvider)
+        val result = provider.get(request)
+        assertNull(result)
     }
 }

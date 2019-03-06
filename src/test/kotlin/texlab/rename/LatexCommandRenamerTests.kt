@@ -17,7 +17,7 @@ class LatexCommandRenamerTests {
 
         val edit = builder
                 .rename("foo.tex", 1, 2, "qux")
-                .let { LatexCommandRenamer.get(it).first() }
+                .let { LatexCommandRenamer.get(it)!! }
 
         assertEquals(2, edit.changes.size)
 
@@ -39,7 +39,7 @@ class LatexCommandRenamerTests {
         WorkspaceBuilder()
                 .document("foo.bib", "\\foo \\bar")
                 .rename("foo.bib", 0, 1, "baz")
-                .let { LatexCommandRenamer.get(it).firstOrNull() }
+                .let { LatexCommandRenamer.get(it) }
                 .also { Assertions.assertNull(it) }
     }
 }

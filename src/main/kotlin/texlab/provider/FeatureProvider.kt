@@ -21,5 +21,18 @@ interface FeatureProvider<T, R> {
                 providers.flatMap { it.get(request) }
             }
         }
+
+        fun <T, R> choice(vararg providers: FeatureProvider<T, R?>): FeatureProvider<T, R?> {
+            return create { request ->
+                for (provider in providers) {
+                    val result = provider.get(request)
+                    if (result != null) {
+                        return@create result
+                    }
+                }
+
+                null
+            }
+        }
     }
 }
