@@ -9,10 +9,14 @@ object ForwardSearchTool {
         val pdfFile = Paths.get(parent.parent, parent.nameWithoutExtension + ".pdf").toString()
 
         fun replacePlaceholder(argument: String): String {
-            return argument
-                    .replace("%f", file.path)
-                    .replace("%p", pdfFile)
-                    .replace("%l", lineNumber.toString())
+            return if (argument.startsWith('"') && argument.endsWith('"')) {
+                argument
+            } else {
+                argument
+                        .replace("%f", file.path)
+                        .replace("%p", pdfFile)
+                        .replace("%l", lineNumber.toString())
+            }
         }
 
         if (config.executable == null) {
@@ -22,6 +26,7 @@ object ForwardSearchTool {
         val args = config.args
                 .map { replacePlaceholder(it) }
                 .toTypedArray()
+
         val command = listOf(config.executable, *args)
         val status = try {
             ProcessBuilder(command)
