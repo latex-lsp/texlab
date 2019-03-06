@@ -36,6 +36,7 @@ import texlab.hover.*
 import texlab.link.LatexIncludeLinkProvider
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
+import texlab.metadata.MetadataProvider
 import texlab.provider.DeferredProvider
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
@@ -318,28 +319,30 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun resolveCompletionItem(unresolved: CompletionItem)
             : CompletableFuture<CompletionItem> = future {
-        if (unresolved.kind == CompletionItemKind.Constant) {
-            val entry = unresolved.data as JsonPrimitive
-            val citation = BibtexCitationActor.cite(entry.asString)
-
-            unresolved.setDocumentation(MarkupContent().apply {
-                kind = MarkupKind.MARKDOWN
-                value = citation
-            })
-
-            return@future unresolved
+        suspend fun resolveFromMetadataProvider(provider: MetadataProvider) {
+            val metadata = provider.getMetadata(unresolved.label)
+            unresolved.detail = metadata?.detail
+            unresolved.setDocumentation(metadata?.documentation)
         }
 
-        val provider = when (unresolved.kind) {
-            CompletionItemKind.Class -> LatexComponentMetadataProvider
-            CompletionItemKind.Interface -> BibtexEntryTypeMetadataProvider
-            else -> null
-        }
+        when (unresolved.kind) {
+            CompletionItemKind.Constant -> {
+                val entry = unresolved.data as JsonPrimitive
+                val citation = BibtexCitationActor.cite(entry.asString)
 
-        val metadata = provider?.getMetadata(unresolved.label)
-        if (metadata != null) {
-            unresolved.detail = metadata.detail
-            unresolved.setDocumentation(metadata.documentation)
+                unresolved.setDocumentation(MarkupContent().apply {
+                    kind = MarkupKind.MARKDOWN
+                    value = citation
+                })
+            }
+            CompletionItemKind.Class -> {
+                resolveFromMetadataProvider(LatexComponentMetadataProvider)
+            }
+            CompletionItemKind.Interface -> {
+                resolveFromMetadataProvider(BibtexEntryTypeMetadataProvider)
+            }
+            else -> {
+            }
         }
 
         unresolved
