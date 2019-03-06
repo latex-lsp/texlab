@@ -7,7 +7,7 @@ import texlab.LatexDocument
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexEnvironmentFoldingProvider : FeatureProvider<FoldingRangeRequestParams, FoldingRange> {
+object LatexEnvironmentFoldingProvider : FeatureProvider<FoldingRangeRequestParams, List<FoldingRange>> {
     override suspend fun get(request: FeatureRequest<FoldingRangeRequestParams>): List<FoldingRange> {
         if (request.document !is LatexDocument) {
             return emptyList()

@@ -7,7 +7,7 @@ import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexLabelDefinitionProvider : FeatureProvider<TextDocumentPositionParams, Location> {
+object LatexLabelDefinitionProvider : FeatureProvider<TextDocumentPositionParams, List<Location>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Location> {
         if (request.document !is LatexDocument) {
             return emptyList()

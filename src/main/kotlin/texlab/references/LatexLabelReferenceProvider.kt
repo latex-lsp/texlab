@@ -7,7 +7,7 @@ import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexLabelReferenceProvider : FeatureProvider<ReferenceParams, Location> {
+object LatexLabelReferenceProvider : FeatureProvider<ReferenceParams, List<Location>> {
     override suspend fun get(request: FeatureRequest<ReferenceParams>): List<Location> {
         if (request.document !is LatexDocument) {
             return emptyList()

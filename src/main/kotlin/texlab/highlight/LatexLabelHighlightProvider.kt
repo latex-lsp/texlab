@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexLabel
 
-object LatexLabelHighlightProvider : FeatureProvider<TextDocumentPositionParams, DocumentHighlight> {
+object LatexLabelHighlightProvider : FeatureProvider<TextDocumentPositionParams, List<DocumentHighlight>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<DocumentHighlight> {
         if (request.document !is LatexDocument) {
             return emptyList()

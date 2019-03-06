@@ -7,7 +7,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexInclude
 
-object LatexIncludeLinkProvider : FeatureProvider<DocumentLinkParams, DocumentLink> {
+object LatexIncludeLinkProvider : FeatureProvider<DocumentLinkParams, List<DocumentLink>> {
     override suspend fun get(request: FeatureRequest<DocumentLinkParams>): List<DocumentLink> {
         if (request.document !is LatexDocument) {
             return emptyList()

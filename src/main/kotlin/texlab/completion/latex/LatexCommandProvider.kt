@@ -10,7 +10,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-abstract class LatexCommandProvider : FeatureProvider<CompletionParams, CompletionItem> {
+abstract class LatexCommandProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
     override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
         if (request.document !is LatexDocument) {
             return emptyList()

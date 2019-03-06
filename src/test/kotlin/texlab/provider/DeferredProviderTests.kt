@@ -2,7 +2,8 @@ package texlab.provider
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
 import texlab.provider.FeatureProviderTests.NumberProvider
@@ -15,10 +16,10 @@ class DeferredProviderTests {
                 .request("foo.tex") {}
 
         val deferred = CompletableDeferred<Int>()
-        val deferredProvider = DeferredProvider(::NumberProvider, deferred)
+        val deferredProvider = DeferredProvider(::NumberProvider, deferred, null)
         deferred.complete(42)
         val result = deferredProvider.get(request)
-        assertTrue(result.isNotEmpty())
+        assertNotNull(result)
     }
 
     @Test
@@ -28,8 +29,8 @@ class DeferredProviderTests {
                 .request("foo.tex") {}
 
         val deferred = CompletableDeferred<Int>()
-        val deferredProvider = DeferredProvider(::NumberProvider, deferred)
+        val deferredProvider = DeferredProvider(::NumberProvider, deferred, null)
         val result = deferredProvider.get(request)
-        assertTrue(result.isEmpty())
+        assertNull(result)
     }
 }

@@ -8,7 +8,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.*
 
-object BibtexEntryDiagnosticsProvider : FeatureProvider<Unit, Diagnostic> {
+object BibtexEntryDiagnosticsProvider : FeatureProvider<Unit, List<Diagnostic>> {
     override suspend fun get(request: FeatureRequest<Unit>): List<Diagnostic> {
         if (request.document !is BibtexDocument) {
             return emptyList()

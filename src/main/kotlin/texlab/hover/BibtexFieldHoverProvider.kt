@@ -11,7 +11,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexFieldSyntax
 
-object BibtexFieldHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
+object BibtexFieldHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
         if (request.document !is BibtexDocument) {
             return emptyList()

@@ -8,7 +8,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexLabel
 
-object LatexLabelSymbolProvider : FeatureProvider<DocumentSymbolParams, DocumentSymbol> {
+object LatexLabelSymbolProvider : FeatureProvider<DocumentSymbolParams, List<DocumentSymbol>> {
     override suspend fun get(request: FeatureRequest<DocumentSymbolParams>): List<DocumentSymbol> {
         if (request.document !is LatexDocument) {
             return emptyList()

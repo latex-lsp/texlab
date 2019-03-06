@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryDefinitionProvider : FeatureProvider<TextDocumentPositionParams, Location> {
+object BibtexEntryDefinitionProvider : FeatureProvider<TextDocumentPositionParams, List<Location>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Location> {
         if (request.document !is LatexDocument) {
             return emptyList()

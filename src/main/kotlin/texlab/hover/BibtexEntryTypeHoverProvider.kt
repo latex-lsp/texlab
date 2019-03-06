@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryTypeHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
+object BibtexEntryTypeHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
         if (request.document !is BibtexDocument) {
             return emptyList()

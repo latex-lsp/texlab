@@ -8,7 +8,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexCommandSyntax
 
-abstract class BibtexCommandProvider : FeatureProvider<CompletionParams, CompletionItem> {
+abstract class BibtexCommandProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
     override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
         if (request.document !is BibtexDocument || request.params.position == null) {
             return emptyList()

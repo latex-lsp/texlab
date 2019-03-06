@@ -13,8 +13,8 @@ import texlab.syntax.latex.LatexDocumentSyntax
 import texlab.syntax.latex.LatexGroupSyntax
 import texlab.syntax.latex.LatexTextSyntax
 
-class OrderByQualityProvider(private val provider: FeatureProvider<CompletionParams, CompletionItem>)
-    : FeatureProvider<CompletionParams, CompletionItem> {
+class OrderByQualityProvider(private val provider: FeatureProvider<CompletionParams, List<CompletionItem>>)
+    : FeatureProvider<CompletionParams, List<CompletionItem>> {
 
     override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {
         val name = getName(request)

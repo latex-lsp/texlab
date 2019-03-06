@@ -12,7 +12,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 class LatexCommandHoverProvider(private val database: LatexComponentSource) :
-        FeatureProvider<TextDocumentPositionParams, Hover> {
+        FeatureProvider<TextDocumentPositionParams, List<Hover>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
         if (request.document !is LatexDocument) {
             return emptyList()

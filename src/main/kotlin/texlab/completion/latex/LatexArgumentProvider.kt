@@ -11,7 +11,7 @@ import texlab.syntax.latex.LatexGroupSyntax
 import texlab.syntax.latex.LatexSyntaxNode
 import texlab.syntax.latex.LatexTextSyntax
 
-abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, CompletionItem> {
+abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
     abstract val commandNames: List<String>
 
     abstract val argumentIndex: Int

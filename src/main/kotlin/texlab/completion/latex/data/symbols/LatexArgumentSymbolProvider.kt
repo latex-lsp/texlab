@@ -9,7 +9,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 class LatexArgumentSymbolProvider(private val database: LatexSymbolDatabase)
-    : FeatureProvider<CompletionParams, CompletionItem> {
+    : FeatureProvider<CompletionParams, List<CompletionItem>> {
 
     private inner class Provider(private val symbols: List<LatexArgumentSymbol>) : LatexArgumentProvider() {
         override val commandNames: List<String> = listOf(symbols[0].command)

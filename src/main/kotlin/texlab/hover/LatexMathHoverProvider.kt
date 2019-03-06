@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
 
-abstract class LatexMathHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
+abstract class LatexMathHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
         if (request.document !is LatexDocument) {
             return emptyList()

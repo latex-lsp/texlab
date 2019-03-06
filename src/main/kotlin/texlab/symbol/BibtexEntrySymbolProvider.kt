@@ -8,7 +8,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntrySymbolProvider : FeatureProvider<DocumentSymbolParams, DocumentSymbol> {
+object BibtexEntrySymbolProvider : FeatureProvider<DocumentSymbolParams, List<DocumentSymbol>> {
     override suspend fun get(request: FeatureRequest<DocumentSymbolParams>): List<DocumentSymbol> {
         if (request.document !is BibtexDocument) {
             return emptyList()

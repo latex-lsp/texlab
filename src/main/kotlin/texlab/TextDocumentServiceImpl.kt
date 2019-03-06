@@ -128,11 +128,11 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     }
 
     private val completionLimit = 50
-    private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
+    private val completionProvider: FeatureProvider<CompletionParams, List<CompletionItem>> =
             FeatureProvider.concat(
                     LatexIncludeProvider,
-                    DeferredProvider(::LatexClassImportProvider, resolver),
-                    DeferredProvider(::LatexPackageImportProvider, resolver),
+                    DeferredProvider(::LatexClassImportProvider, resolver, emptyList()),
+                    DeferredProvider(::LatexPackageImportProvider, resolver, emptyList()),
                     PgfLibraryProvider,
                     TikzLibraryProvider,
                     LatexCitationProvider,
@@ -141,13 +141,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     DefineColorSetModelProvider,
                     LatexLabelProvider,
                     LatexBeginCommandProvider,
-                    DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase),
+                    DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase, emptyList()),
                     LatexKernelEnvironmentProvider,
                     LatexUserEnvironmentProvider,
-                    DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase),
-                    DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase),
-                    DeferredProvider(::TikzCommandProvider, componentDatabase),
-                    DeferredProvider(::LatexComponentCommandProvider, componentDatabase),
+                    DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase, emptyList()),
+                    DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase, emptyList()),
+                    DeferredProvider(::TikzCommandProvider, componentDatabase, emptyList()),
+                    DeferredProvider(::LatexComponentCommandProvider, componentDatabase, emptyList()),
                     LatexKernelCommandProvider,
                     LatexUserCommandProvider,
                     BibtexEntryTypeProvider,
@@ -157,8 +157,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     .let { OrderByQualityProvider(it) }
                     .map { it.take(completionLimit) }
 
-
-    private val symbolProvider: FeatureProvider<DocumentSymbolParams, DocumentSymbol> =
+    private val symbolProvider: FeatureProvider<DocumentSymbolParams, List<DocumentSymbol>> =
             FeatureProvider.concat(
                     LatexCommandSymbolProvider,
                     LatexEnvironmentSymbolProvider,
@@ -166,49 +165,49 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     LatexCitationSymbolProvider,
                     BibtexEntrySymbolProvider)
 
-    private val renameProvider: FeatureProvider<RenameParams, WorkspaceEdit> =
+    private val renameProvider: FeatureProvider<RenameParams, List<WorkspaceEdit>> =
             FeatureProvider.concat(
                     LatexCommandRenamer,
                     LatexEnvironmentRenamer,
                     LatexLabelRenamer,
                     BibtexEntryRenamer)
 
-    private val foldingProvider: FeatureProvider<FoldingRangeRequestParams, FoldingRange> =
+    private val foldingProvider: FeatureProvider<FoldingRangeRequestParams, List<FoldingRange>> =
             FeatureProvider.concat(
                     LatexEnvironmentFoldingProvider,
                     LatexSectionFoldingProvider,
                     BibtexDeclarationFoldingProvider)
 
-    private val linkProvider: FeatureProvider<DocumentLinkParams, DocumentLink> =
+    private val linkProvider: FeatureProvider<DocumentLinkParams, List<DocumentLink>> =
             FeatureProvider.concat(LatexIncludeLinkProvider)
 
-    private val definitionProvider: FeatureProvider<TextDocumentPositionParams, Location> =
+    private val definitionProvider: FeatureProvider<TextDocumentPositionParams, List<Location>> =
             FeatureProvider.concat(
                     LatexLabelDefinitionProvider,
                     BibtexEntryDefinitionProvider)
 
-    private val highlightProvider: FeatureProvider<TextDocumentPositionParams, DocumentHighlight> =
+    private val highlightProvider: FeatureProvider<TextDocumentPositionParams, List<DocumentHighlight>> =
             FeatureProvider.concat(LatexLabelHighlightProvider)
 
-    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, Hover> =
+    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, List<Hover>> =
             FeatureProvider.concat(
                     LatexComponentHoverProvider,
                     LatexCitationHoverProvider,
                     LatexMathEnvironmentHoverProvider,
                     LatexMathEquationHoverProvider,
                     LatexMathInlineHoverProvider,
-                    DeferredProvider(::LatexCommandHoverProvider, componentDatabase),
+                    DeferredProvider(::LatexCommandHoverProvider, componentDatabase, emptyList()),
                     BibtexEntryTypeHoverProvider,
                     BibtexFieldHoverProvider)
 
-    private val referenceProvider: FeatureProvider<ReferenceParams, Location> =
+    private val referenceProvider: FeatureProvider<ReferenceParams, List<Location>> =
             FeatureProvider.concat(
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
     val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
 
-    private val diagnosticsProvider: FeatureProvider<Unit, Diagnostic> =
+    private val diagnosticsProvider: FeatureProvider<Unit, List<Diagnostic>> =
             FeatureProvider.concat(
                     buildDiagnosticsProvider,
                     BibtexEntryDiagnosticsProvider)
@@ -433,7 +432,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    private suspend fun <T, R> runFeature(provider: FeatureProvider<T, R>,
+    private suspend fun <T, R> runFeature(provider: FeatureProvider<T, List<R>>,
                                           document: TextDocumentIdentifier,
                                           params: T): List<R> {
         return workspaceActor.withWorkspace { workspace ->

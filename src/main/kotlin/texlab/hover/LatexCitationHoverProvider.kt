@@ -15,7 +15,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
 @ObsoleteCoroutinesApi
-object LatexCitationHoverProvider : FeatureProvider<TextDocumentPositionParams, Hover> {
+object LatexCitationHoverProvider : FeatureProvider<TextDocumentPositionParams, List<Hover>> {
     override suspend fun get(request: FeatureRequest<TextDocumentPositionParams>): List<Hover> {
         val key = getKey(request) ?: return emptyList()
 

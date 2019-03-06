@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryReferenceProvider : FeatureProvider<ReferenceParams, Location> {
+object BibtexEntryReferenceProvider : FeatureProvider<ReferenceParams, List<Location>> {
     override suspend fun get(request: FeatureRequest<ReferenceParams>): List<Location> {
         if (request.document !is BibtexDocument) {
             return emptyList()

@@ -10,7 +10,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexEntrySyntax
 import texlab.syntax.bibtex.BibtexFieldSyntax
 
-object BibtexFieldNameProvider : FeatureProvider<CompletionParams, CompletionItem> {
+object BibtexFieldNameProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
     private val ITEMS = BibtexField.values().map { CompletionItemFactory.createFieldName(it) }
 
     override suspend fun get(request: FeatureRequest<CompletionParams>): List<CompletionItem> {

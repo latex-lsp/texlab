@@ -5,7 +5,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import java.net.URI
 
-class ManualDiagnosticsProvider : FeatureProvider<Unit, Diagnostic> {
+class ManualDiagnosticsProvider : FeatureProvider<Unit, List<Diagnostic>> {
     var diagnosticsByUri: Map<URI, List<Diagnostic>> = mapOf()
 
     override suspend fun get(request: FeatureRequest<Unit>): List<Diagnostic> {

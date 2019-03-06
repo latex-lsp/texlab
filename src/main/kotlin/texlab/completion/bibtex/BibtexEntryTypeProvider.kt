@@ -9,7 +9,7 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 
-object BibtexEntryTypeProvider : FeatureProvider<CompletionParams, CompletionItem> {
+object BibtexEntryTypeProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
     private val ENTRY_TYPES = arrayOf("preamble", "string", "article", "book", "mvbook", "inbook", "bookinbook",
             "suppbook", "booklet", "collection", "mvcollection", "incollection", "suppcollection", "manual", "misc",
             "online", "patent", "periodical", "suppperiodical", "proceedings", "mvproceedings", "inproceedings",
