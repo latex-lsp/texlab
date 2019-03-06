@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import java.io.File
 
 class ManualDiagnosticsProviderTests {
     @Test
@@ -14,12 +13,11 @@ class ManualDiagnosticsProviderTests {
         val provider = ManualDiagnosticsProvider()
         val diagnostic1 = Diagnostic().apply { code = "1" }
         val diagnostic2 = Diagnostic().apply { code = "2" }
-        val uri = File("foo.tex").toURI()
+        val builder = WorkspaceBuilder().document("foo.tex", "")
+        val uri = builder.uri("foo.tex")
         provider.diagnosticsByUri = mapOf(uri to listOf(diagnostic1, diagnostic2))
 
-        val request = WorkspaceBuilder()
-                .document("foo.tex", "")
-                .diagnostics("foo.tex")
+        val request = builder.diagnostics("foo.tex")
 
         val diagnostics = provider.get(request)
         assertArrayEquals(arrayOf(diagnostic1, diagnostic2), diagnostics.toTypedArray())

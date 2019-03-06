@@ -7,20 +7,21 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import java.io.File
 
 class LatexIncludeLinkProviderTests {
     @Test
     fun `it should provide links to related documents`() = runBlocking {
-        val links = WorkspaceBuilder()
+        val builder = WorkspaceBuilder()
                 .document("foo.tex", "\\input{bar.tex}")
                 .document("bar.tex", "")
+
+        val links = builder
                 .link("foo.tex")
                 .let { LatexIncludeLinkProvider.get(it) }
 
         assertEquals(1, links.size)
         assertEquals(Range(Position(0, 7), Position(0, 14)), links[0].range)
-        assertEquals(File("bar.tex").toURI().toString(), links[0].target)
+        assertEquals(builder.uri("bar.tex").toString(), links[0].target)
     }
 
     @Test

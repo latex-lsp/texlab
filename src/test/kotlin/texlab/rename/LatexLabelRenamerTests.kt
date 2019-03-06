@@ -10,27 +10,27 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import texlab.WorkspaceBuilder
-import java.io.File
 
 class LatexLabelRenamerTests {
     @ParameterizedTest
     @CsvSource("foo.tex, 0, 7", "bar.tex, 0, 5")
     fun `it should be able to rename a label`(document: String, line: Int, character: Int) = runBlocking {
-        val edit = WorkspaceBuilder()
+        val builder = WorkspaceBuilder()
                 .document("foo.tex", "\\label{foo}\n\\include{bar}")
                 .document("bar.tex", "\\ref{foo}")
+        val edit = builder
                 .rename(document, line, character, "bar")
                 .let { LatexLabelRenamer.get(it).first() }
 
         Assertions.assertEquals(2, edit.changes.size)
 
-        val document1 = File("foo.tex").toURI().toString()
+        val document1 = builder.uri("foo.tex").toString()
         val change1 = edit.changes.getValue(document1)
         assertEquals(1, change1.size)
         assertEquals(Range(Position(0, 7), Position(0, 10)), change1[0].range)
         assertEquals("bar", change1[0].newText)
 
-        val document2 = File("bar.tex").toURI().toString()
+        val document2 = builder.uri("bar.tex").toString()
         val change2 = edit.changes.getValue(document2)
         assertEquals(1, change2.size)
         assertEquals(Range(Position(0, 5), Position(0, 8)), change2[0].range)

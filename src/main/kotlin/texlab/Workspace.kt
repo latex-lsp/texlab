@@ -36,6 +36,7 @@ data class Workspace(val documents: List<Document> = listOf()) {
                     .normalize()
                     .toString()
                     .replace('\\', '/')
+                    .let { URIHelper.normalizeDriveLetter(it) }
             targets.add(fullPath)
             extensions.forEach { targets.add("$fullPath$it") }
             return targets
@@ -84,7 +85,7 @@ data class Workspace(val documents: List<Document> = listOf()) {
 
     companion object {
         suspend fun load(file: Path): Document? {
-            val extension = file.fileName.toFile().extension
+            val extension = file.fileName?.toFile()?.extension ?: return null
             val language = getLanguageByExtension(extension) ?: return null
             return try {
                 val text = withContext(Dispatchers.IO) {

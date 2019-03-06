@@ -4,6 +4,7 @@ import org.eclipse.lsp4j.*
 import org.slf4j.LoggerFactory
 import texlab.provider.FeatureRequest
 import java.io.File
+import java.net.URI
 
 class WorkspaceBuilder {
     companion object {
@@ -12,27 +13,31 @@ class WorkspaceBuilder {
 
     var workspace = Workspace()
 
+    fun uri(path: String): URI {
+        val file = File(path)
+        return URIHelper.parse(file.toURI().toString())
+    }
+
     fun document(path: String, text: String): WorkspaceBuilder {
         val file = File(path)
         val language = getLanguageByExtension(file.extension)!!
-        val document = Document.create(file.toURI(), text, language)
+        val document = Document.create(uri(path), text, language)
         workspace = Workspace(workspace.documents.plus(document))
         return this
     }
 
     fun <T> request(path: String, paramsFactory: (TextDocumentIdentifier) -> T): FeatureRequest<T> {
-        val uri = File(path).toURI()
+        val uri = uri(path)
         val identifier = TextDocumentIdentifier(uri.toString())
         val params = paramsFactory(identifier)
         return FeatureRequest(uri, workspace, params, logger)
     }
 
-
-    fun <T> positionRequest(path: String,
-                            line: Int,
-                            character: Int,
-                            paramsFactory: (TextDocumentIdentifier, Position) -> T): FeatureRequest<T> {
-        val uri = File(path).toURI()
+    private fun <T> positionRequest(path: String,
+                                    line: Int,
+                                    character: Int,
+                                    paramsFactory: (TextDocumentIdentifier, Position) -> T): FeatureRequest<T> {
+        val uri = uri(path)
         val position = Position(line, character)
         val identifier = TextDocumentIdentifier(uri.toString())
         val params = paramsFactory(identifier, position)

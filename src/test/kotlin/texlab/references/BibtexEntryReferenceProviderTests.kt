@@ -8,19 +8,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import java.io.File
 
 class BibtexEntryReferenceProviderTests {
     @Test
     fun `it should find citations in related documents`() = runBlocking<Unit> {
-        val uri = File("bar.tex").toURI().toString()
-        val range = Range(Position(1, 0), Position(1, 10))
-        val location = Location(uri, range)
-        WorkspaceBuilder()
+        val builder = WorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = {baz}}")
                 .document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}")
                 .document("baz.tex", "\\cite{foo}")
-                .reference("foo.bib", 0, 9)
+
+        val uri = builder.uri("bar.tex").toString()
+        val range = Range(Position(1, 0), Position(1, 10))
+        val location = Location(uri, range)
+        builder.reference("foo.bib", 0, 9)
                 .let { BibtexEntryReferenceProvider.get(it) }
                 .also { assertEquals(1, it.size) }
                 .also { assertEquals(location, it[0]) }

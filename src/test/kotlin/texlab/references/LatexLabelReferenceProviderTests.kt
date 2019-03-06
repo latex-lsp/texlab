@@ -8,12 +8,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
-import java.io.File
 
 class LatexLabelReferenceProviderTests {
     @Test
     fun `it should find labels in related documents`() = runBlocking<Unit> {
-        val uri = File("bar.tex").toURI().toString()
+        val builder = WorkspaceBuilder()
+                .document("foo.tex", "\\label{foo}")
+                .document("bar.tex", "\\input{foo.tex}\n\\ref{foo}")
+                .document("baz.tex", "\\ref{foo}")
+
+        val uri = builder.uri("bar.tex").toString()
         val range = Range(Position(1, 0), Position(1, 9))
         val location = Location(uri, range)
         WorkspaceBuilder()

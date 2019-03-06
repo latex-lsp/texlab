@@ -232,6 +232,9 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     fun initialize(root: Path?) {
         workspaceRootDirectory.complete(root)
+        launch {
+            resolveIncludes()
+        }
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
