@@ -12,7 +12,7 @@ import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
 import texlab.build.BuildResult
-import texlab.completion.OrderByQualityProvider
+import texlab.completion.MatchQualityComparator
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -153,9 +153,6 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexEntryTypeProvider,
                     BibtexFieldNameProvider,
                     BibtexKernelCommandProvider)
-                    .map { items -> items.distinctBy { it.label } }
-                    .let { OrderByQualityProvider(it) }
-                    .map { it.take(completionLimit) }
 
     private val symbolProvider: FeatureProvider<DocumentSymbolParams, List<DocumentSymbol>> =
             FeatureProvider.concat(
@@ -300,10 +297,19 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
-        val items = runFeature(completionProvider, params.textDocument, params)
+        val items = workspaceActor.withWorkspace { workspace ->
+            val uri = URIHelper.parse(params.textDocument.uri)
+            val request = FeatureRequest(uri, workspace, params, logger)
+            val comparator = MatchQualityComparator(request.document, params.position)
+
+            completionProvider.get(request)
+                    .distinctBy { it.label }
+                    .sortedWith(comparator)
+                    .take(completionLimit)
+        }
+
         val allIncludes = items.all {
-            it.kind == CompletionItemKind.Folder ||
-                    it.kind == CompletionItemKind.File
+            it.kind == CompletionItemKind.Folder || it.kind == CompletionItemKind.File
         }
         val isIncomplete = !allIncludes || items.size > completionLimit
         val list = CompletionList(isIncomplete, items)

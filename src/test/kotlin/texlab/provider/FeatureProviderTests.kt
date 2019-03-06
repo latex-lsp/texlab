@@ -1,7 +1,8 @@
 package texlab.provider
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import texlab.WorkspaceBuilder
 
@@ -16,24 +17,6 @@ class FeatureProviderTests {
         override suspend fun get(request: FeatureRequest<Unit>): List<Int> {
             return listOf(number)
         }
-    }
-
-    @Test
-    fun `it should create a new provider that maps the result`() = runBlocking {
-        val request = WorkspaceBuilder()
-                .document("foo.tex", "")
-                .request("foo.tex") {}
-
-        val provider = NumberProvider(1)
-        val firstResult = provider.get(request)
-
-        val transform = { x: Int? -> x?.plus(1) }
-        val result = provider
-                .map { transform(it) }
-                .get(request)
-
-        assertNotNull(result)
-        assertEquals(transform(firstResult), result)
     }
 
     @Test
