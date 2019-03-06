@@ -49,7 +49,7 @@ class LanguageServerImpl : LanguageServer, CoroutineScope {
             documentSymbolProvider = true
             renameProvider = Either.forLeft(true)
             documentLinkProvider = DocumentLinkOptions(false)
-            completionProvider = CompletionOptions(true, listOf("\\", "{", "}", "@"))
+            completionProvider = CompletionOptions(true, listOf("\\", "{", "}", "@", "/"))
             foldingRangeProvider = Either.forLeft(true)
             definitionProvider = true
             hoverProvider = true

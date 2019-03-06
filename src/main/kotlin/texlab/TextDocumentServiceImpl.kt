@@ -127,12 +127,10 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         LatexSymbolDatabase.loadOrCreate(databaseDirectory)
     }
 
+    private val completionLimit = 50
     private val completionProvider: FeatureProvider<CompletionParams, CompletionItem> =
             FeatureProvider.concat(
-                    DeferredProvider(::IncludeGraphicsProvider, workspaceRootDirectory),
-                    LatexIncludeProvider(),
-                    LatexInputProvider(),
-                    LatexBibliographyProvider(),
+                    LatexIncludeProvider,
                     DeferredProvider(::LatexClassImportProvider, resolver),
                     DeferredProvider(::LatexPackageImportProvider, resolver),
                     PgfLibraryProvider,
@@ -157,7 +155,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexKernelCommandProvider)
                     .map { items -> items.distinctBy { it.label } }
                     .let { OrderByQualityProvider(it) }
-                    .map { it.take(50) }
+                    .map { it.take(completionLimit) }
 
 
     private val symbolProvider: FeatureProvider<DocumentSymbolParams, DocumentSymbol> =
@@ -304,7 +302,12 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
         val items = runFeature(completionProvider, params.textDocument, params)
-        val list = CompletionList(true, items)
+        val allIncludes = items.all {
+            it.kind == CompletionItemKind.Folder ||
+                    it.kind == CompletionItemKind.File
+        }
+        val isIncomplete = !allIncludes || items.size > completionLimit
+        val list = CompletionList(isIncomplete, items)
         Either.forRight<List<CompletionItem>, CompletionList>(list)
     }
 

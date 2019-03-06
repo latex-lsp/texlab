@@ -38,6 +38,13 @@ object CompletionItemFactory {
         }
     }
 
+    fun createFolder(path: String): CompletionItem {
+        return CompletionItem(path).apply {
+            kind = CompletionItemKind.Folder
+            commitCharacters = listOf("/")
+        }
+    }
+
     fun createFile(path: String): CompletionItem {
         return CompletionItem(path).apply {
             kind = CompletionItemKind.File
