@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/efoerster/texlab.svg?token=ecjo579NH2soHXd6GykN&branch=master)](https://travis-ci.com/efoerster/texlab) [![codecov](https://codecov.io/gh/efoerster/texlab/branch/master/graph/badge.svg?token=485LvHBRXW)](https://codecov.io/gh/efoerster/texlab)
+[![Build Status](https://dev.azure.com/ericfoerster/texlab/_apis/build/status/efoerster.texlab?branchName=master)](https://dev.azure.com/ericfoerster/texlab/_build/latest?definitionId=2&branchName=master)
+[![codecov](https://codecov.io/gh/efoerster/texlab/branch/master/graph/badge.svg?token=485LvHBRXW)](https://codecov.io/gh/efoerster/texlab)
 
 # TexLab
 

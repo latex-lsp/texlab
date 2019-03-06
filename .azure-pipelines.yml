@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - master
+  tags:
+    include:
+      - v*
+jobs:
+- job: JDK8
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  steps:
+  - task: Gradle@2
+    inputs:
+      tasks: 'test jacocoTestReport'
+      jdkVersionOption: '1.8'
+      publishJUnitResults: false
+    displayName: 'Build and Test'
+  - script: |
+      bash <(curl -s https://codecov.io/bash)
+    env:
+      CODECOV_TOKEN: $(codecovToken)
+    displayName: 'Upload Test Results to Codecov'
+  - task: GitHubRelease@0
+    inputs:
+      gitHubConnection: efoerster
+      repositoryName: efoerster/texlab
+      assets: build/libs/texlab.jar
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+    displayName: 'Publish to GitHub'
+- job: JDK11
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  steps:
+  - task: Gradle@2
+    inputs:
+      tasks: 'test jacocoTestReport'
+      jdkVersionOption: '1.11'
+      publishJUnitResults: false 
+    displayName: 'Build and Test'
