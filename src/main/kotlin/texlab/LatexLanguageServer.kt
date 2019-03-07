@@ -6,12 +6,12 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate
+import org.eclipse.lsp4j.services.LanguageServer
+import org.eclipse.lsp4j.services.WorkspaceService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import texlab.build.BuildConfig
-import texlab.build.BuildEngine
-import texlab.build.BuildParams
-import texlab.build.BuildResult
+import texlab.build.*
 import texlab.completion.MatchQualityEvaluator
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.bibtex.BibtexEntryTypeProvider
@@ -59,21 +59,25 @@ import texlab.syntax.BibtexSyntaxTree
 import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
+import java.io.IOException
 import java.net.URI
+import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
+import kotlin.streams.toList
 
 @ObsoleteCoroutinesApi
-class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDocumentService, CoroutineScope {
-    companion object {
-        private val logger: Logger = LoggerFactory.getLogger("")
-    }
-
+class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceService, CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
 
-    private lateinit var client: CustomLanguageClient
+    private val logger: Logger = LoggerFactory.getLogger("")
+    private lateinit var client: LatexLanguageClient
+
+    private var workspaceRootDirectory: Path? = null
+    private val workspaceActor = WorkspaceActor()
 
     private val progressListener = object : ProgressListener {
         override fun onReportProgress(params: ProgressParams) {
@@ -106,18 +110,17 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    private val workspaceRootDirectory: CompletableDeferred<Path?> = CompletableDeferred()
 
     private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
         LatexComponentDatabase.loadOrCreate(
-                LanguageServerConfig.COMPONENT_DATABASE_FILE.toFile(),
+                LatexLanguageServerConfig.COMPONENT_DATABASE_FILE.toFile(),
                 resolver.await(),
                 progressListener)
     }
 
     private val symbolDatabase: Deferred<LatexSymbolDatabase> = async {
         LatexSymbolDatabase.loadOrCreate(
-                LanguageServerConfig.SYMBOL_DATABASE_DIRECTORY)
+                LatexLanguageServerConfig.SYMBOL_DATABASE_DIRECTORY)
     }
 
     private val completionProvider: FeatureProvider<CompletionParams, List<CompletionItem>> =
@@ -194,7 +197,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     LatexLabelReferenceProvider,
                     BibtexEntryReferenceProvider)
 
-    val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
+    private val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
     private val latexDiagnosticsProvider: LatexDiagnosticsProvider = LatexDiagnosticsProvider()
 
     private val diagnosticsProvider: FeatureProvider<Unit, List<Diagnostic>> =
@@ -203,7 +206,12 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexEntryDiagnosticsProvider,
                     latexDiagnosticsProvider)
 
-    fun connect(client: CustomLanguageClient) {
+    @JsonDelegate
+    override fun getTextDocumentService(): LatexTextDocumentService = this
+
+    override fun getWorkspaceService(): WorkspaceService = this
+
+    fun connect(client: LatexLanguageClient) {
         this.client = client
 
         launch {
@@ -218,11 +226,78 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    fun initialize(root: Path?) {
-        workspaceRootDirectory.complete(root)
+    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> = future {
+        if (params.rootUri != null && params.rootUri.startsWith("file")) {
+            val root = URIHelper.parse(params.rootUri)
+            loadWorkspace(root)
+            workspaceRootDirectory = Paths.get(root)
+        }
+
+        val capabilities = ServerCapabilities().apply {
+            val syncOptions = TextDocumentSyncOptions().apply {
+                openClose = true
+                save = SaveOptions(true)
+                change = TextDocumentSyncKind.Full
+            }
+            textDocumentSync = Either.forRight(syncOptions)
+            documentSymbolProvider = true
+            renameProvider = Either.forLeft(true)
+            documentLinkProvider = DocumentLinkOptions(false)
+            completionProvider = CompletionOptions(true, listOf("\\", "{", "}", "@", "/"))
+            foldingRangeProvider = Either.forLeft(true)
+            definitionProvider = true
+            hoverProvider = true
+            documentFormattingProvider = true
+            referencesProvider = true
+            documentHighlightProvider = true
+        }
+
         launch {
             resolveIncludes()
         }
+
+        InitializeResult(capabilities)
+    }
+
+
+    override fun initialized(params: InitializedParams?) {
+        val watcher = FileSystemWatcher("**/*.log", WatchKind.Create or WatchKind.Change)
+        val options = DidChangeWatchedFilesRegistrationOptions(listOf(watcher))
+        val registration = Registration("log-watcher", "workspace/didChangeWatchedFiles", options)
+        client.registerCapability(RegistrationParams(listOf(registration)))
+    }
+
+    override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
+        launch {
+            for (change in params.changes) {
+                val logPath = File(URIHelper.parse(change.uri)).toPath()
+                val texPath = logPath.resolveSibling(logPath.toFile().nameWithoutExtension + ".tex")
+                val texUri = texPath.toUri()
+
+                workspaceActor.withWorkspace { workspace ->
+                    val document = workspace.documents.firstOrNull { it.uri == texUri }
+                    if (document != null) {
+                        try {
+                            val log = withContext(Dispatchers.IO) {
+                                Files.readAllBytes(logPath).toString(Charsets.UTF_8)
+                            }
+                            val allErrors = BuildErrorParser.parse(texUri, log)
+
+                            buildDiagnosticsProvider.diagnosticsByUri = allErrors
+                                    .groupBy { it.uri }
+                                    .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
+
+                            workspace.documents.forEach { publishDiagnostics(it.uri) }
+                        } catch (e: IOException) {
+                            // File is still locked
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun didChangeConfiguration(params: DidChangeConfigurationParams) {
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
@@ -302,13 +377,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             completionProvider.get(request)
                     .distinctBy { it.label }
                     .sortedByDescending { qualityEvaluator.evaluate(it) }
-                    .take(LanguageServerConfig.COMPLETION_LIMIT)
+                    .take(LatexLanguageServerConfig.COMPLETION_LIMIT)
         }
 
         val allIncludes = items.all {
             it.kind == CompletionItemKind.Folder || it.kind == CompletionItemKind.File
         }
-        val isIncomplete = !allIncludes || items.size > LanguageServerConfig.COMPLETION_LIMIT
+        val isIncomplete = !allIncludes || items.size > LatexLanguageServerConfig.COMPLETION_LIMIT
         val list = CompletionList(isIncomplete, items)
         Either.forRight<List<CompletionItem>, CompletionList>(list)
     }
@@ -407,7 +482,14 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    suspend fun publishDiagnostics(uri: URI) {
+    override fun shutdown(): CompletableFuture<Any?> = future {
+        null
+    }
+
+    override fun exit() {
+    }
+
+    private suspend fun publishDiagnostics(uri: URI) {
         workspaceActor.withWorkspace { workspace ->
             val request = FeatureRequest(uri, workspace, Unit, logger)
             val diagnostics = diagnosticsProvider.get(request)
@@ -453,6 +535,29 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             val uri = URIHelper.parse(document.uri)
             val request = FeatureRequest(uri, workspace, params, logger)
             provider.get(request)
+        }
+    }
+
+
+    private suspend fun loadWorkspace(root: URI) {
+        if (root.scheme == "file") {
+            val matcher = FileSystems.getDefault().getPathMatcher("glob:**.{tex,sty,cls,bib}")
+
+            val files = withContext(Dispatchers.IO) {
+                Files.walk(Paths.get(root))
+                        .filter { Files.isRegularFile(it) }
+                        .filter { matcher.matches(it) }
+                        .toList()
+            }
+
+            files.forEach { loadWorkspaceFile(it) }
+        }
+    }
+
+    private suspend fun loadWorkspaceFile(file: Path) {
+        val document = Workspace.load(file)
+        if (document != null) {
+            workspaceActor.put { document }
         }
     }
 }

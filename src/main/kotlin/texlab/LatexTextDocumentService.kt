@@ -10,7 +10,7 @@ import texlab.search.ForwardSearchResult
 import java.util.concurrent.CompletableFuture
 
 @JsonSegment("textDocument")
-interface CustomTextDocumentService : TextDocumentService {
+interface LatexTextDocumentService : TextDocumentService {
     @JsonRequest
     fun build(params: BuildParams): CompletableFuture<BuildResult>
 

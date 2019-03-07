@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-object LanguageServerConfig {
+object LatexLanguageServerConfig {
     private val SERVER_DIRECTORY: Path = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
 
     private val HOME_DIRECTORY: Path = Paths.get(System.getProperty("user.home"))
