@@ -25,6 +25,7 @@ import texlab.completion.latex.data.symbols.LatexSymbolDatabase
 import texlab.definition.BibtexEntryDefinitionProvider
 import texlab.definition.LatexLabelDefinitionProvider
 import texlab.diagnostics.BibtexEntryDiagnosticsProvider
+import texlab.diagnostics.LatexDiagnosticsProvider
 import texlab.diagnostics.ManualDiagnosticsProvider
 import texlab.folding.BibtexDeclarationFoldingProvider
 import texlab.folding.LatexEnvironmentFoldingProvider
@@ -204,11 +205,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     BibtexEntryReferenceProvider)
 
     val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
+    private val latexDiagnosticsProvider: LatexDiagnosticsProvider = LatexDiagnosticsProvider()
 
     private val diagnosticsProvider: FeatureProvider<Unit, List<Diagnostic>> =
             FeatureProvider.concat(
                     buildDiagnosticsProvider,
-                    BibtexEntryDiagnosticsProvider)
+                    BibtexEntryDiagnosticsProvider,
+                    latexDiagnosticsProvider)
 
     fun connect(client: CustomLanguageClient) {
         this.client = client
@@ -239,6 +242,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             workspaceActor.put { Document.create(uri, text, language) }
 
             launch {
+                latexDiagnosticsProvider.update(uri, text)
                 publishDiagnostics(uri)
                 resolveIncludes()
             }
@@ -267,6 +271,9 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     override fun didSave(params: DidSaveTextDocumentParams) {
         launch {
             val uri = URIHelper.parse(params.textDocument.uri)
+            latexDiagnosticsProvider.update(uri, params.text)
+            publishDiagnostics(uri)
+
             val config = client.configuration<BuildConfig>("latex.build", uri)
             if (config.onSave) {
                 workspaceActor.withWorkspace { workspace ->
