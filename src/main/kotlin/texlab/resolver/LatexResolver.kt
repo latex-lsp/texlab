@@ -1,6 +1,5 @@
 package texlab.resolver
 
-import me.andrz.brace.BraceExpansion
 import texlab.getString
 import java.io.File
 import java.io.IOException
@@ -23,6 +22,7 @@ class LatexResolver(val filesByName: Map<String, File>) {
         fun create(): LatexResolver {
             try {
                 val rootDirectories = findRootDirectories()
+                println(rootDirectories)
                 val kind = detectDistribution(rootDirectories)
                 if (kind == LatexDistributionKind.UNKNOWN) {
                     val error = TexDistributionError.UNKNOWN_DISTRIBUTION
@@ -38,12 +38,9 @@ class LatexResolver(val filesByName: Map<String, File>) {
 
         private fun findRootDirectories(): List<Path> {
             try {
-                val process = ProcessBuilder("kpsewhich", "-var-value", "TEXMF")
-                        .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                        .start()
-                process.waitFor()
-                val line = process.inputStream.bufferedReader().readLine()
-                return BraceExpansion.expand(line)
+                val texmf = runKpsewhich("-var-value", "TEXMF")
+                return runKpsewhich("--expand-braces=$texmf")
+                        .split(';')
                         .map { Paths.get(it.replace("!", "")) }
                         .filter { Files.exists(it) }
                         .distinct()
@@ -51,6 +48,14 @@ class LatexResolver(val filesByName: Map<String, File>) {
                 val error = TexDistributionError.KPSEWHICH_NOT_FOUND
                 throw InvalidTexDistributionException(error)
             }
+        }
+
+        private fun runKpsewhich(vararg args: String): String {
+            val process = ProcessBuilder("kpsewhich", *args)
+                    .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                    .start()
+            process.waitFor()
+            return process.inputStream.bufferedReader().readLine()
         }
 
         private fun detectDistribution(directories: List<Path>): LatexDistributionKind {
