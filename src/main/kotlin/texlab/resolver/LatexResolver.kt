@@ -9,12 +9,16 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
-private const val TEXLIVE_DATABASE_PATH = "ls-R"
-private const val MIKTEX_DATABASE_PATH = "miktex/data/le"
-
 class LatexResolver(val filesByName: Map<String, File>) {
     companion object {
+        private const val TEXLIVE_DATABASE_PATH = "ls-R"
+        private const val MIKTEX_DATABASE_PATH = "miktex/data/le"
+        private const val FNDB_SIGNATURE = 0x42444e46
+        private const val FNDB_WORD_SIZE = 4
+        private const val FNDB_TABLE_POINTER_OFFSET = 4 * FNDB_WORD_SIZE
+        private const val FNDB_TABLE_SIZE_OFFSET = 6 * FNDB_WORD_SIZE
+        private const val FNDB_ENTRY_SIZE = 4 * FNDB_WORD_SIZE
+
         fun empty(): LatexResolver {
             return LatexResolver(emptyMap())
         }
@@ -126,18 +130,18 @@ class LatexResolver(val filesByName: Map<String, File>) {
         }
 
         private fun parseMiktexDatabase(buffer: ByteBuffer): Sequence<File> = sequence {
-            if (buffer.getInt(0) != 0x42444e46) { // signature of fndb file
+            if (buffer.getInt(0) != FNDB_SIGNATURE) {
                 val error = TexDistributionError.INVALID_DISTRIBUTION
                 throw InvalidTexDistributionException(error)
             }
 
-            val tableAddress = buffer.getInt(4 * 4) // pointer to first record
-            val tableSize = buffer.getInt(6 * 4) // number of files (records)
+            val tableAddress = buffer.getInt(FNDB_TABLE_POINTER_OFFSET)
+            val tableSize = buffer.getInt(FNDB_TABLE_SIZE_OFFSET)
 
             for (i in 0 until tableSize) {
-                val offset = tableAddress + i * 16
+                val offset = tableAddress + i * FNDB_ENTRY_SIZE
                 val fileName = buffer.getString(buffer.getInt(offset))
-                val directory = buffer.getString(buffer.getInt(offset + 4))
+                val directory = buffer.getString(buffer.getInt(offset + FNDB_WORD_SIZE))
                 val file = Paths.get(directory, fileName).toFile()
                 yield(file)
             }

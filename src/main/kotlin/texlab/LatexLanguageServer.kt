@@ -110,7 +110,6 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         }
     }
 
-
     private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
         LatexComponentDatabase.loadOrCreate(
                 LatexLanguageServerConfig.COMPONENT_DATABASE_FILE.toFile(),
@@ -258,7 +257,6 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
         InitializeResult(capabilities)
     }
-
 
     override fun initialized(params: InitializedParams?) {
         val watcher = FileSystemWatcher("**/*.log", WatchKind.Create or WatchKind.Change)
@@ -537,7 +535,6 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
             provider.get(request)
         }
     }
-
 
     private suspend fun loadWorkspace(root: URI) {
         if (root.scheme == "file") {
