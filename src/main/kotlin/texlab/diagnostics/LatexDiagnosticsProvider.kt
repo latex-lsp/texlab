@@ -20,4 +20,8 @@ class LatexDiagnosticsProvider : FeatureProvider<Unit, List<Diagnostic>> {
     suspend fun update(uri: URI, text: String) {
         diagnosticsByUri[uri] = LatexLinter.lint(text)
     }
+
+    fun clear(uri: URI) {
+        diagnosticsByUri.remove(uri)
+    }
 }

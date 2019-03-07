@@ -26,6 +26,7 @@ import texlab.definition.BibtexEntryDefinitionProvider
 import texlab.definition.LatexLabelDefinitionProvider
 import texlab.diagnostics.BibtexEntryDiagnosticsProvider
 import texlab.diagnostics.LatexDiagnosticsProvider
+import texlab.diagnostics.LatexLinterConfig
 import texlab.diagnostics.ManualDiagnosticsProvider
 import texlab.folding.BibtexDeclarationFoldingProvider
 import texlab.folding.LatexEnvironmentFoldingProvider
@@ -231,7 +232,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             workspaceActor.put { Document.create(uri, text, language) }
 
             launch {
-                latexDiagnosticsProvider.update(uri, text)
+                runLinter(uri, text)
                 publishDiagnostics(uri)
                 resolveIncludes()
             }
@@ -260,7 +261,7 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
     override fun didSave(params: DidSaveTextDocumentParams) {
         launch {
             val uri = URIHelper.parse(params.textDocument.uri)
-            latexDiagnosticsProvider.update(uri, params.text)
+            runLinter(uri, params.text)
             publishDiagnostics(uri)
 
             val config = client.configuration<BuildConfig>("latex.build", uri)
@@ -433,6 +434,15 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun runLinter(uri: URI, text: String) {
+        val config = client.configuration<LatexLinterConfig>("latex.lint", uri)
+        if (config.onSave) {
+            latexDiagnosticsProvider.update(uri, text)
+        } else {
+            latexDiagnosticsProvider.clear(uri)
         }
     }
 
