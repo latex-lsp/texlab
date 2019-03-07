@@ -12,7 +12,7 @@ import texlab.build.BuildConfig
 import texlab.build.BuildEngine
 import texlab.build.BuildParams
 import texlab.build.BuildResult
-import texlab.completion.MatchQualityComparator
+import texlab.completion.MatchQualityEvaluator
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.bibtex.BibtexEntryTypeProvider
 import texlab.completion.bibtex.BibtexFieldNameProvider
@@ -294,14 +294,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
 
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
+        val uri = URIHelper.parse(params.textDocument.uri)
         val items = workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(params.textDocument.uri)
             val request = FeatureRequest(uri, workspace, params, logger)
-            val comparator = MatchQualityComparator(request.document, params.position)
-
+            val qualityEvaluator = MatchQualityEvaluator(request.document, params.position)
             completionProvider.get(request)
                     .distinctBy { it.label }
-                    .sortedWith(comparator)
+                    .sortedByDescending { qualityEvaluator.evaluate(it) }
                     .take(LanguageServerConfig.COMPLETION_LIMIT)
         }
 
