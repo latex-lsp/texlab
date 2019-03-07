@@ -59,7 +59,6 @@ import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import java.io.File
 import java.net.URI
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -106,30 +105,20 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
         }
     }
 
-    private val serverDirectory: Path = Paths.get(javaClass.protectionDomain.codeSource.location.toURI()).parent
-
-    private val homeDirectory: Path = Paths.get(System.getProperty("user.home"))
-    private val databaseDirectory: Path = homeDirectory.resolve(".texlab")
-
     private val workspaceRootDirectory: CompletableDeferred<Path?> = CompletableDeferred()
 
-    init {
-        if (!Files.exists(databaseDirectory)) {
-            Files.createDirectory(databaseDirectory)
-        }
-    }
-
     private val componentDatabase: Deferred<LatexComponentDatabase> = async(start = CoroutineStart.LAZY) {
-        val databaseFile = databaseDirectory.resolve("components.json").toFile()
-        LatexComponentDatabase.loadOrCreate(databaseFile, resolver.await(), progressListener)
+        LatexComponentDatabase.loadOrCreate(
+                LanguageServerConfig.COMPONENT_DATABASE_FILE.toFile(),
+                resolver.await(),
+                progressListener)
     }
 
     private val symbolDatabase: Deferred<LatexSymbolDatabase> = async {
-        val databaseDirectory = serverDirectory.resolve("symbols")
-        LatexSymbolDatabase.loadOrCreate(databaseDirectory)
+        LatexSymbolDatabase.loadOrCreate(
+                LanguageServerConfig.SYMBOL_DATABASE_DIRECTORY)
     }
 
-    private val completionLimit = 50
     private val completionProvider: FeatureProvider<CompletionParams, List<CompletionItem>> =
             FeatureProvider.concat(
                     LatexIncludeProvider,
@@ -313,13 +302,13 @@ class TextDocumentServiceImpl(val workspaceActor: WorkspaceActor) : CustomTextDo
             completionProvider.get(request)
                     .distinctBy { it.label }
                     .sortedWith(comparator)
-                    .take(completionLimit)
+                    .take(LanguageServerConfig.COMPLETION_LIMIT)
         }
 
         val allIncludes = items.all {
             it.kind == CompletionItemKind.Folder || it.kind == CompletionItemKind.File
         }
-        val isIncomplete = !allIncludes || items.size > completionLimit
+        val isIncomplete = !allIncludes || items.size > LanguageServerConfig.COMPLETION_LIMIT
         val list = CompletionList(isIncomplete, items)
         Either.forRight<List<CompletionItem>, CompletionList>(list)
     }
