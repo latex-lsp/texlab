@@ -15,7 +15,7 @@ import texlab.syntax.latex.LatexTextSyntax
 class MatchQualityEvaluator(document: Document, private val position: Position) {
     private val query: String? = when (document) {
         is LatexDocument -> {
-            val descendants = document.tree.root.descendants()
+            val descendants = document.tree.root.descendants
             val node = descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .lastOrNull { it.name.range.contains(position) }

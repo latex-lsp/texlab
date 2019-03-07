@@ -10,7 +10,7 @@ data class LatexInline(val begin: LatexToken, val end: LatexToken) {
         fun find(root: LatexSyntaxNode): List<LatexInline> {
             val inlines = mutableListOf<LatexInline>()
             var begin: LatexToken? = null
-            for (text in root.descendants().filterIsInstance<LatexTextSyntax>()) {
+            for (text in root.descendants.filterIsInstance<LatexTextSyntax>()) {
                 for (math in text.words.filter { it.kind == LatexTokenKind.MATH }) {
                     if (begin == null) {
                         begin = math

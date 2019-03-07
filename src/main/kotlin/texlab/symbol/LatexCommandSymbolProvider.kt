@@ -14,7 +14,7 @@ object LatexCommandSymbolProvider : FeatureProvider<DocumentSymbolParams, List<D
             return emptyList()
         }
 
-        return request.document.tree.root.descendants()
+        return request.document.tree.root.descendants
                 .filterIsInstance<LatexCommandSyntax>()
                 .map { DocumentSymbol(it.name.text, SymbolKind.Method, it.name.range, it.name.range) }
     }

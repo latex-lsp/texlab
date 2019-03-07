@@ -17,7 +17,7 @@ data class LatexCitation(val command: LatexCommandSyntax) {
                 "\\notecite", "\\pnotecite", "\\Pnotecite", "\\fnotecite")
 
         fun find(root: LatexSyntaxNode): List<LatexCitation> {
-            return root.descendants()
+            return root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { COMMAND_NAMES.contains(it.name.text) }
                     .mapNotNull { analyze(it) }

@@ -34,7 +34,7 @@ data class LatexEnvironment(val begin: LatexCommandSyntax, val end: LatexCommand
         fun find(root: LatexSyntaxNode): List<LatexEnvironment> {
             val environments = mutableListOf<LatexEnvironment>()
             val stack = Stack<LatexEnvironmentDelimiter>()
-            root.descendants()
+            root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { COMMAND_NAMES.contains(it.name.text) }
                     .mapNotNull { analyze(it) }

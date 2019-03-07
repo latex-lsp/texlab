@@ -8,7 +8,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
 class TikzCommandProvider(private val database: LatexComponentSource) : LatexCommandProvider() {
-    private val items = listOf(
+    private val commands = listOf(
             "afterdecoration",
             "anchor",
             "anchorborder",
@@ -642,11 +642,13 @@ class TikzCommandProvider(private val database: LatexComponentSource) : LatexCom
             "x",
             "y")
 
+    private val items = commands.map { CompletionItemFactory.createCommand(it, "tikz.sty") }
+
     override fun complete(request: FeatureRequest<CompletionParams>,
                           command: LatexCommandSyntax): List<CompletionItem> {
         val components = database.getRelatedComponents(request.relatedDocuments)
         return if (components.any { it.fileNames.contains("tikz.sty") }) {
-            items.map { CompletionItemFactory.createCommand(it, "tikz.sty") }
+            items
         } else {
             emptyList()
         }

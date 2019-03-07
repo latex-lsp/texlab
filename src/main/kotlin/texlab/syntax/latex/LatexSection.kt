@@ -11,7 +11,7 @@ data class LatexSection(val command: LatexCommandSyntax, val text: String, val l
                 "\\subparagraph", "\\subparagraph*")
 
         fun find(root: LatexSyntaxNode): List<LatexSection> {
-            return root.descendants()
+            return root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { COMMAND_NAMES.contains(it.name.text) }
                     .mapNotNull { analyze(it) }

@@ -6,7 +6,7 @@ data class LatexLabel(val command: LatexCommandSyntax) {
 
     companion object {
         fun findDefinitions(root: LatexSyntaxNode): List<LatexLabel> {
-            return root.descendants()
+            return root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { it.name.text == "\\label" }
                     .mapNotNull { analyze(it) }
@@ -15,7 +15,7 @@ data class LatexLabel(val command: LatexCommandSyntax) {
         val REFERENCE_COMMANDS = listOf("\\ref", "\\autoref", "\\eqref")
 
         fun findReferences(root: LatexSyntaxNode): List<LatexLabel> {
-            return root.descendants()
+            return root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { REFERENCE_COMMANDS.contains(it.name.text) }
                     .mapNotNull { analyze(it) }

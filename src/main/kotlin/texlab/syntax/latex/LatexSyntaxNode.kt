@@ -5,9 +5,8 @@ import org.eclipse.lsp4j.Range
 import texlab.syntax.SyntaxNode
 
 sealed class LatexSyntaxNode : SyntaxNode() {
-    fun descendants(): List<LatexSyntaxNode> {
+    val descendants: List<LatexSyntaxNode> by lazy {
         val results = mutableListOf<LatexSyntaxNode>()
-
         fun visit(node: LatexSyntaxNode) {
             results.add(node)
             when (node) {
@@ -25,9 +24,8 @@ sealed class LatexSyntaxNode : SyntaxNode() {
                 }
             }
         }
-
         visit(this)
-        return results
+        results
     }
 }
 

@@ -10,7 +10,7 @@ data class LatexEquation(val begin: LatexCommandSyntax, val end: LatexCommandSyn
         fun find(root: LatexSyntaxNode): List<LatexEquation> {
             val equations = mutableListOf<LatexEquation>()
             var begin: LatexCommandSyntax? = null
-            for (command in root.descendants().filterIsInstance<LatexCommandSyntax>()) {
+            for (command in root.descendants.filterIsInstance<LatexCommandSyntax>()) {
                 if (command.name.text == "\\[") {
                     begin = command
                 } else if (command.name.text == "\\]" && begin != null) {

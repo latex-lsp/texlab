@@ -19,7 +19,7 @@ class LatexCommandHoverProvider(private val database: LatexComponentSource) :
         }
 
         val command = request.document.tree.root
-                .descendants()
+                .descendants
                 .filterIsInstance<LatexCommandSyntax>()
                 .firstOrNull { it.name.range.contains(request.params.position) }
                 ?: return null

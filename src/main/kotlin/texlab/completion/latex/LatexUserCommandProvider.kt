@@ -12,11 +12,13 @@ object LatexUserCommandProvider : LatexCommandProvider() {
                           command: LatexCommandSyntax): List<CompletionItem> {
         return request.relatedDocuments
                 .filterIsInstance<LatexDocument>()
-                .flatMap { it.tree.root.descendants() }
+                .flatMap { it.tree.root.descendants }
+                .asSequence()
                 .filterIsInstance<LatexCommandSyntax>()
                 .minus(command)
                 .map { it.name.text.substring(1) }
                 .distinct()
                 .map { CompletionItemFactory.createCommand(it, "unknown") }
+                .toList()
     }
 }

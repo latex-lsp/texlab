@@ -10,7 +10,7 @@ data class LatexInclude(val command: LatexCommandSyntax, val path: String) {
                         "\\addbibresource", "\\usepackage", "\\documentclass")
 
         fun find(root: LatexSyntaxNode): List<LatexInclude> {
-            return root.descendants()
+            return root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { COMMAND_NAMES.contains(it.name.text) }
                     .mapNotNull { analyze(it) }

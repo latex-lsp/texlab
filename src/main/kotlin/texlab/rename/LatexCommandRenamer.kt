@@ -16,13 +16,13 @@ object LatexCommandRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
         }
 
         val command = request.document.tree.root
-                .descendants()
+                .descendants
                 .filterIsInstance<LatexCommandSyntax>()
                 .firstOrNull { it.name.range.contains(request.params.position) } ?: return null
 
         val changes = mutableMapOf<String, List<TextEdit>>()
         for (document in request.relatedDocuments.filterIsInstance<LatexDocument>()) {
-            val edits = document.tree.root.descendants()
+            val edits = document.tree.root.descendants
                     .filterIsInstance<LatexCommandSyntax>()
                     .filter { it.name.text == command.name.text }
                     .map { TextEdit(it.name.range, "\\" + request.params.newName) }

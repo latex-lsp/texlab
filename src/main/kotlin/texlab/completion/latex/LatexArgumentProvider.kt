@@ -21,10 +21,7 @@ abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, List<Co
             return emptyList()
         }
 
-        val nodes = request.document
-                .tree
-                .root
-                .descendants()
+        val nodes = request.document.tree.root.descendants
                 .filter { it.range.contains(request.params.position) }
                 .asReversed()
 

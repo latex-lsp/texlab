@@ -16,8 +16,7 @@ abstract class LatexCommandProvider : FeatureProvider<CompletionParams, List<Com
             return emptyList()
         }
 
-        val command = request.document.tree.root
-                .descendants()
+        val command = request.document.tree.root.descendants
                 .filterIsInstance<LatexCommandSyntax>()
                 .lastOrNull { getCompletionRange(it).contains(request.params.position) }
 
