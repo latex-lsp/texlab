@@ -8,15 +8,15 @@ import kotlin.coroutines.CoroutineContext
 class WorkspaceActor : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
-    private val actor = actor<WorkspaceAction> {
+    private val actor = actor<Action> {
         var documents = listOf<Document>()
         for (message in channel) {
             val workspace = Workspace(documents)
             when (message) {
-                is WorkspaceAction.Get -> {
+                is Action.Get -> {
                     message.response.complete(workspace)
                 }
-                is WorkspaceAction.Put -> {
+                is Action.Put -> {
                     val document = message.updater(workspace)
                     documents = documents.filterNot { it.uri == document.uri }
                             .plus(document)
@@ -27,7 +27,7 @@ class WorkspaceActor : CoroutineScope {
 
     suspend fun get(): Workspace {
         val response = CompletableDeferred<Workspace>()
-        actor.send(WorkspaceAction.Get(response))
+        actor.send(Action.Get(response))
         return response.await()
     }
 
@@ -36,6 +36,12 @@ class WorkspaceActor : CoroutineScope {
     }
 
     fun put(updater: (Workspace) -> Document) = runBlocking {
-        actor.send(WorkspaceAction.Put(updater))
+        actor.send(Action.Put(updater))
+    }
+
+    private sealed class Action {
+        class Get(val response: CompletableDeferred<Workspace>) : Action()
+
+        class Put(val updater: (Workspace) -> Document) : Action()
     }
 }
