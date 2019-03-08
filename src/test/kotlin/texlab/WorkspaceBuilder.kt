@@ -18,12 +18,16 @@ class WorkspaceBuilder {
         return URIHelper.parse(file.toURI().toString())
     }
 
-    fun document(path: String, text: String): WorkspaceBuilder {
-        val file = File(path)
+    fun document(uri: URI, text: String): WorkspaceBuilder {
+        val file = File(uri)
         val language = getLanguageByExtension(file.extension)!!
-        val document = Document.create(uri(path), text, language)
-        workspace = Workspace(workspace.documents.plus(document))
+        val document = Document.create(uri, text, language)
+        workspace = Workspace(workspace.documentsByUri.plus(Pair(document.uri, document)))
         return this
+    }
+
+    fun document(path: String, text: String): WorkspaceBuilder {
+        return document(uri(path), text)
     }
 
     fun <T> request(path: String, paramsFactory: (TextDocumentIdentifier) -> T): FeatureRequest<T> {

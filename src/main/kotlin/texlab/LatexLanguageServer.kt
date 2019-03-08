@@ -216,7 +216,8 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         launch {
             while (true) {
                 workspaceActor.withWorkspace { workspace ->
-                    workspace.documents.map { workspace.relatedDocuments(it.uri) }
+                    workspace.documentsByUri.values
+                            .map { workspace.relatedDocuments(it.uri) }
                             .forEach { componentDatabase.await().getRelatedComponents(it) }
                 }
 
@@ -273,7 +274,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                 val texUri = texPath.toUri()
 
                 workspaceActor.withWorkspace { workspace ->
-                    val document = workspace.documents.firstOrNull { it.uri == texUri }
+                    val document = workspace.documentsByUri[texUri]
                     if (document != null) {
                         try {
                             val log = withContext(Dispatchers.IO) {
@@ -285,7 +286,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                                     .groupBy { it.uri }
                                     .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
 
-                            workspace.documents.forEach { publishDiagnostics(it.uri) }
+                            workspace.documentsByUri.values.forEach { publishDiagnostics(it.uri) }
                         } catch (e: IOException) {
                             // File is still locked
                         }
@@ -316,7 +317,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         assert(params.contentChanges.size == 1)
         val uri = URIHelper.parse(params.textDocument.uri)
         workspaceActor.put { workspace ->
-            val oldDocument = workspace.documents.first { it.uri == uri }
+            val oldDocument = workspace.documentsByUri.getValue(uri)
             val text = params.contentChanges[0].text
             val tree = when (oldDocument) {
                 is LatexDocument -> LatexSyntaxTree(text)
@@ -433,21 +434,17 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
     }
 
     override fun formatting(params: DocumentFormattingParams)
-            : CompletableFuture<MutableList<out TextEdit>?> = future {
+            : CompletableFuture<List<TextEdit>?> = future {
         val uri = URIHelper.parse(params.textDocument.uri)
         val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
         workspaceActor.withWorkspace { workspace ->
-            val document = workspace.documents
-                    .filterIsInstance<BibtexDocument>()
-                    .firstOrNull { it.uri == uri }
+            val document = workspace.documentsByUri[uri] as? BibtexDocument
                     ?: return@withWorkspace null
             val formatter =
                     BibtexFormatter(params.options.isInsertSpaces, params.options.tabSize, config.lineLength)
-            val edits = mutableListOf<TextEdit>()
-            for (entry in document.tree.root.children.filterIsInstance<BibtexDeclarationSyntax>()) {
-                edits.add(TextEdit(entry.range, formatter.format(entry)))
-            }
-            edits
+            document.tree.root.children
+                    .filterIsInstance<BibtexDeclarationSyntax>()
+                    .map { TextEdit(it.range, formatter.format(it)) }
         }
     }
 
@@ -498,7 +495,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     private suspend fun resolveIncludes() {
         workspaceActor.withWorkspace { workspace ->
-            for (parent in workspace.documents.filterIsInstance<LatexDocument>()) {
+            for (parent in workspace.documentsByUri.values.filterIsInstance<LatexDocument>()) {
                 for (include in parent.tree.includes) {
                     if (workspace.resolveDocument(parent.uri, include.path) != null) {
                         continue

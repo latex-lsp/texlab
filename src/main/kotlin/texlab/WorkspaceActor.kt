@@ -2,6 +2,7 @@ package texlab
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.actor
+import java.net.URI
 import kotlin.coroutines.CoroutineContext
 
 @ObsoleteCoroutinesApi
@@ -9,17 +10,16 @@ class WorkspaceActor : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
     private val actor = actor<Action> {
-        var documents = listOf<Document>()
+        val documentsByUri = mutableMapOf<URI, Document>()
         for (message in channel) {
-            val workspace = Workspace(documents)
+            val workspace = Workspace(documentsByUri)
             when (message) {
                 is Action.Get -> {
                     message.response.complete(workspace)
                 }
                 is Action.Put -> {
                     val document = message.updater(workspace)
-                    documents = documents.filterNot { it.uri == document.uri }
-                            .plus(document)
+                    documentsByUri[document.uri] = document
                 }
             }
         }

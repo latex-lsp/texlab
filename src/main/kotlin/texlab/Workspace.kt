@@ -11,15 +11,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-data class Workspace(val documents: List<Document> = listOf()) {
+class Workspace(val documentsByUri: Map<URI, Document> = emptyMap()) {
     fun resolveDocument(uri: URI, relativePath: String): Document? {
         for (target in resolveLinkTargets(uri, relativePath)) {
             val child = File(target).toURI()
-            val document = documents.filter { it.isFile }.firstOrNull { it.uri == child }
-            if (document != null) {
+            val document = documentsByUri[child]
+            if (document != null && document.isFile) {
                 return document
             }
         }
+
         return null
     }
 
@@ -47,7 +48,8 @@ data class Workspace(val documents: List<Document> = listOf()) {
 
     fun relatedDocuments(uri: URI): List<Document> {
         val edges = mutableSetOf<Pair<Document, Document>>()
-        documents.filterIsInstance<LatexDocument>()
+        documentsByUri.values
+                .filterIsInstance<LatexDocument>()
                 .filter { it.isFile }
                 .forEach { parent ->
                     parent.tree.includes
@@ -59,7 +61,7 @@ data class Workspace(val documents: List<Document> = listOf()) {
                 }
 
         val results = mutableListOf<Document>()
-        val start = documents.firstOrNull { it.uri == uri } ?: return results
+        val start = documentsByUri[uri] ?: return results
         val visited = mutableSetOf<Document>()
         val stack = Stack<Document>()
         stack.push(start)
@@ -70,8 +72,8 @@ data class Workspace(val documents: List<Document> = listOf()) {
             }
 
             results.add(current)
-            documents.filter { edges.contains(Pair(current, it)) }
-                    .forEach { stack.push(it) }
+            documentsByUri.filterValues { edges.contains(Pair(current, it)) }
+                    .forEach { stack.push(it.value) }
         }
         return results
     }
@@ -80,7 +82,7 @@ data class Workspace(val documents: List<Document> = listOf()) {
         return relatedDocuments(childUri)
                 .filterIsInstance<LatexDocument>()
                 .firstOrNull { it.tree.isStandalone }
-                ?: documents.first { it.uri == childUri }
+                ?: documentsByUri.getValue(childUri)
     }
 
     companion object {

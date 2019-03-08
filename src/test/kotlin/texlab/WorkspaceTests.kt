@@ -14,51 +14,55 @@ class WorkspaceTests {
 
     @Test
     fun `it should append extensions when analyzing includes`() {
-        val workspace = WorkspaceBuilder()
-                .document("foo.tex", "\\include{bar/baz}")
+        val builder = WorkspaceBuilder()
+        val uri = builder.uri("foo.tex")
+        val workspace = builder
+                .document(uri, "\\include{bar/baz}")
                 .document("bar/baz.tex", "")
                 .workspace
 
-        val expected = workspace.documents
-                .map { it.uri }
-                .toTypedArray()
-        val actual = relatedDocuments(workspace, workspace.documents[0].uri)
+        val expected = workspace.documentsByUri.keys.toTypedArray()
+        val actual = relatedDocuments(workspace, uri)
         assertArrayEquals(expected, actual)
     }
 
     @Test
     fun `it should ignore invalid includes`() {
-        val workspace = WorkspaceBuilder()
-                .document("foo.tex", "\\include{<foo>?|bar|:}\n\\include{}")
+        val builder = WorkspaceBuilder()
+        val uri = builder.uri("foo.tex")
+        val workspace = builder
+                .document(uri, "\\include{<foo>?|bar|:}\n\\include{}")
                 .workspace
 
-        val expected = arrayOf(workspace.documents[0].uri)
-        val actual = relatedDocuments(workspace, workspace.documents[0].uri)
+        val expected = arrayOf(uri)
+        val actual = relatedDocuments(workspace, uri)
         assertArrayEquals(expected, actual)
     }
 
     @Test
     fun `it should find related bibliographies`() {
-        val workspace = WorkspaceBuilder()
-                .document("foo.tex", "\\addbibresource{bar.bib}")
+        val builder = WorkspaceBuilder()
+        val uri = builder.uri("foo.tex")
+        val workspace = builder
+                .document(uri, "\\addbibresource{bar.bib}")
                 .document("bar.bib", "")
                 .workspace
 
-        val expected = workspace.documents
-                .map { it.uri }
-                .toTypedArray()
-        val actual = relatedDocuments(workspace, workspace.documents[0].uri)
+        val expected = workspace.documentsByUri.keys.toTypedArray()
+        val actual = relatedDocuments(workspace, uri)
         assertArrayEquals(expected, actual)
     }
 
     @Test
     fun `it should ignore includes that cannot be resolved`() {
-        val workspace = WorkspaceBuilder()
-                .document("foo.tex", "\\include{bar.tex}")
+        val builder = WorkspaceBuilder()
+        val uri = builder.uri("foo.tex")
+        val workspace = builder
+                .document(uri, "\\include{bar.tex}")
                 .workspace
 
-        val expected = arrayOf(workspace.documents[0].uri)
-        val actual = relatedDocuments(workspace, workspace.documents[0].uri)
+        val expected = arrayOf(uri)
+        val actual = relatedDocuments(workspace, uri)
         assertArrayEquals(expected, actual)
     }
 
@@ -69,10 +73,8 @@ class WorkspaceTests {
                 .document("bar.tex", "\\input{foo.tex}")
                 .workspace
 
-        val expected = workspace.documents
-                .map { it.uri }
-                .toTypedArray()
-        val actual = relatedDocuments(workspace, workspace.documents[0].uri)
+        val expected = workspace.documentsByUri.keys.toTypedArray()
+        val actual = relatedDocuments(workspace, workspace.documentsByUri.keys.first())
         assertArrayEquals(expected, actual)
     }
 }
