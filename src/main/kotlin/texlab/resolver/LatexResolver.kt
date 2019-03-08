@@ -26,7 +26,6 @@ class LatexResolver(val filesByName: Map<String, File>) {
         fun create(): LatexResolver {
             try {
                 val rootDirectories = findRootDirectories()
-                println(rootDirectories)
                 val kind = detectDistribution(rootDirectories)
                 if (kind == LatexDistributionKind.UNKNOWN) {
                     val error = TexDistributionError.UNKNOWN_DISTRIBUTION
