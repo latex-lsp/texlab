@@ -1,11 +1,11 @@
-[![Build Status](https://dev.azure.com/ericfoerster/texlab/_apis/build/status/efoerster.texlab?branchName=master)](https://dev.azure.com/ericfoerster/texlab/_build/latest?definitionId=2&branchName=master)
-[![codecov](https://codecov.io/gh/efoerster/texlab/branch/master/graph/badge.svg?token=485LvHBRXW)](https://codecov.io/gh/efoerster/texlab)
+[![Build Status](https://dev.azure.com/latex-lsp/texlab/_apis/build/status/latex-lsp.texlab?branchName=master)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=6&branchName=master)
+[![codecov](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
 
 # TexLab
 
 A cross-platform implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol)
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
-We provide an [extension](https://github.com/efoerster/texlab-vscode) for [Visual Studio Code](https://code.visualstudio.com).
+We provide an [extension](https://github.com/latex-lsp/texlab-vscode) for [Visual Studio Code](https://code.visualstudio.com).
 
 Learn more about the project on our [website](https://texlab.netlify.com).
 
@@ -18,7 +18,7 @@ To compile the server and run the tests execute the following command in the pro
 ./gradlew build
 ```
 
-To use the local build with the [extension](https://github.com/efoerster/texlab-vscode), we recommend creating a symbolic link:
+To use the local build with the [extension](https://github.com/latex-lsp/texlab-vscode), we recommend creating a symbolic link:
 
 ```shell
 mkdir ../texlab-vscode/server

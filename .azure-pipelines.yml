@@ -23,8 +23,8 @@ jobs:
     displayName: 'Upload Test Results to Codecov'
   - task: GitHubRelease@0
     inputs:
-      gitHubConnection: efoerster
-      repositoryName: efoerster/texlab
+      gitHubConnection: latex-lsp
+      repositoryName: latex-lsp/texlab
       assets: build/libs/texlab.jar
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
     displayName: 'Publish to GitHub'
