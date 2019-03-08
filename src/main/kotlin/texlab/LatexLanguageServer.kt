@@ -12,49 +12,33 @@ import org.eclipse.lsp4j.services.WorkspaceService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import texlab.build.*
-import texlab.completion.MatchQualityEvaluator
+import texlab.completion.CompletionProvider
 import texlab.completion.bibtex.BibtexCitationActor
-import texlab.completion.bibtex.BibtexEntryTypeProvider
-import texlab.completion.bibtex.BibtexFieldNameProvider
-import texlab.completion.bibtex.BibtexKernelCommandProvider
-import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
-import texlab.completion.latex.data.symbols.LatexArgumentSymbolProvider
-import texlab.completion.latex.data.symbols.LatexCommandSymbolProvider
 import texlab.completion.latex.data.symbols.LatexSymbolDatabase
-import texlab.definition.BibtexEntryDefinitionProvider
-import texlab.definition.LatexLabelDefinitionProvider
-import texlab.diagnostics.BibtexEntryDiagnosticsProvider
-import texlab.diagnostics.LatexDiagnosticsProvider
+import texlab.definition.DefinitionProvider
+import texlab.diagnostics.DiagnosticsProvider
 import texlab.diagnostics.LatexLinterConfig
-import texlab.diagnostics.ManualDiagnosticsProvider
-import texlab.folding.BibtexDeclarationFoldingProvider
-import texlab.folding.LatexEnvironmentFoldingProvider
-import texlab.folding.LatexSectionFoldingProvider
+import texlab.folding.FoldingProvider
 import texlab.formatting.BibtexFormatter
 import texlab.formatting.BibtexFormatterConfig
 import texlab.highlight.LatexLabelHighlightProvider
-import texlab.hover.*
+import texlab.hover.HoverProvider
 import texlab.link.LatexIncludeLinkProvider
 import texlab.metadata.BibtexEntryTypeMetadataProvider
 import texlab.metadata.LatexComponentMetadataProvider
 import texlab.metadata.MetadataProvider
-import texlab.provider.DeferredProvider
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
-import texlab.references.BibtexEntryReferenceProvider
-import texlab.references.LatexLabelReferenceProvider
-import texlab.rename.BibtexEntryRenamer
-import texlab.rename.LatexCommandRenamer
-import texlab.rename.LatexEnvironmentRenamer
-import texlab.rename.LatexLabelRenamer
+import texlab.references.ReferenceProvider
+import texlab.rename.RenameProvider
 import texlab.resolver.InvalidTexDistributionException
 import texlab.resolver.LatexResolver
 import texlab.resolver.TexDistributionError
 import texlab.search.ForwardSearchConfig
 import texlab.search.ForwardSearchResult
 import texlab.search.ForwardSearchTool
-import texlab.symbol.*
+import texlab.symbol.SymbolProvider
 import texlab.syntax.BibtexSyntaxTree
 import texlab.syntax.LatexSyntaxTree
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
@@ -122,88 +106,9 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                 LatexLanguageServerConfig.SYMBOL_DATABASE_DIRECTORY)
     }
 
-    private val completionProvider: FeatureProvider<CompletionParams, List<CompletionItem>> =
-            FeatureProvider.concat(
-                    LatexIncludeProvider,
-                    DeferredProvider(::LatexClassImportProvider, resolver, emptyList()),
-                    DeferredProvider(::LatexPackageImportProvider, resolver, emptyList()),
-                    PgfLibraryProvider,
-                    TikzLibraryProvider,
-                    LatexCitationProvider,
-                    LatexColorProvider,
-                    DefineColorModelProvider,
-                    DefineColorSetModelProvider,
-                    LatexLabelProvider,
-                    LatexBeginCommandProvider,
-                    DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase, emptyList()),
-                    LatexKernelEnvironmentProvider,
-                    LatexUserEnvironmentProvider,
-                    DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase, emptyList()),
-                    DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase, emptyList()),
-                    DeferredProvider(::TikzCommandProvider, componentDatabase, emptyList()),
-                    DeferredProvider(::LatexComponentCommandProvider, componentDatabase, emptyList()),
-                    LatexKernelCommandProvider,
-                    LatexUserCommandProvider,
-                    BibtexEntryTypeProvider,
-                    BibtexFieldNameProvider,
-                    BibtexKernelCommandProvider)
-
-    private val symbolProvider: FeatureProvider<DocumentSymbolParams, List<DocumentSymbol>> =
-            FeatureProvider.concat(
-                    LatexCommandSymbolProvider,
-                    LatexEnvironmentSymbolProvider,
-                    LatexLabelSymbolProvider,
-                    LatexCitationSymbolProvider,
-                    BibtexEntrySymbolProvider)
-
-    private val renameProvider: FeatureProvider<RenameParams, WorkspaceEdit?> =
-            FeatureProvider.choice(
-                    LatexCommandRenamer,
-                    LatexEnvironmentRenamer,
-                    LatexLabelRenamer,
-                    BibtexEntryRenamer)
-
-    private val foldingProvider: FeatureProvider<FoldingRangeRequestParams, List<FoldingRange>> =
-            FeatureProvider.concat(
-                    LatexEnvironmentFoldingProvider,
-                    LatexSectionFoldingProvider,
-                    BibtexDeclarationFoldingProvider)
-
-    private val linkProvider: FeatureProvider<DocumentLinkParams, List<DocumentLink>> =
-            FeatureProvider.concat(LatexIncludeLinkProvider)
-
-    private val definitionProvider: FeatureProvider<TextDocumentPositionParams, List<Location>> =
-            FeatureProvider.concat(
-                    LatexLabelDefinitionProvider,
-                    BibtexEntryDefinitionProvider)
-
-    private val highlightProvider: FeatureProvider<TextDocumentPositionParams, List<DocumentHighlight>> =
-            FeatureProvider.concat(LatexLabelHighlightProvider)
-
-    private val hoverProvider: FeatureProvider<TextDocumentPositionParams, Hover?> =
-            FeatureProvider.choice(
-                    LatexComponentHoverProvider,
-                    LatexCitationHoverProvider,
-                    LatexMathEnvironmentHoverProvider,
-                    LatexMathEquationHoverProvider,
-                    LatexMathInlineHoverProvider,
-                    DeferredProvider(::LatexCommandHoverProvider, componentDatabase, null),
-                    BibtexEntryTypeHoverProvider,
-                    BibtexFieldHoverProvider)
-
-    private val referenceProvider: FeatureProvider<ReferenceParams, List<Location>> =
-            FeatureProvider.concat(
-                    LatexLabelReferenceProvider,
-                    BibtexEntryReferenceProvider)
-
-    private val buildDiagnosticsProvider: ManualDiagnosticsProvider = ManualDiagnosticsProvider()
-    private val latexDiagnosticsProvider: LatexDiagnosticsProvider = LatexDiagnosticsProvider()
-
-    private val diagnosticsProvider: FeatureProvider<Unit, List<Diagnostic>> =
-            FeatureProvider.concat(
-                    buildDiagnosticsProvider,
-                    BibtexEntryDiagnosticsProvider,
-                    latexDiagnosticsProvider)
+    private val completionProvider = CompletionProvider(resolver, componentDatabase, symbolDatabase)
+    private val hoverProvider = HoverProvider(componentDatabase)
+    private val diagnosticsProvider = DiagnosticsProvider()
 
     @JsonDelegate
     override fun getTextDocumentService(): LatexTextDocumentService = this
@@ -282,7 +187,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                             }
                             val allErrors = BuildErrorParser.parse(texUri, log)
 
-                            buildDiagnosticsProvider.diagnosticsByUri = allErrors
+                            diagnosticsProvider.buildProvider.diagnosticsByUri = allErrors
                                     .groupBy { it.uri }
                                     .mapValues { errors -> errors.value.map { it.toDiagnostic() } }
 
@@ -354,30 +259,22 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun documentSymbol(params: DocumentSymbolParams)
             : CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> = future {
-        runFeature(symbolProvider, params.textDocument, params)
+        runFeature(SymbolProvider, params.textDocument, params)
                 .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
     }
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
-        runFeature(renameProvider, params.textDocument, params)
+        runFeature(RenameProvider, params.textDocument, params)
     }
 
     override fun documentLink(params: DocumentLinkParams)
             : CompletableFuture<List<DocumentLink>> = future {
-        runFeature(linkProvider, params.textDocument, params)
+        runFeature(LatexIncludeLinkProvider, params.textDocument, params)
     }
 
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
-        val uri = URIHelper.parse(params.textDocument.uri)
-        val items = workspaceActor.withWorkspace { workspace ->
-            val request = FeatureRequest(uri, workspace, params, logger)
-            val qualityEvaluator = MatchQualityEvaluator(request.document, params.position)
-            completionProvider.get(request)
-                    .distinctBy { it.label }
-                    .sortedByDescending { qualityEvaluator.evaluate(it) }
-                    .take(LatexLanguageServerConfig.COMPLETION_LIMIT)
-        }
+        val items = runFeature(completionProvider, params.textDocument, params)
 
         val allIncludes = items.all {
             it.kind == CompletionItemKind.Folder || it.kind == CompletionItemKind.File
@@ -420,12 +317,12 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun foldingRange(params: FoldingRangeRequestParams)
             : CompletableFuture<List<FoldingRange>> = future {
-        runFeature(foldingProvider, params.textDocument, params)
+        runFeature(FoldingProvider, params.textDocument, params)
     }
 
     override fun definition(params: TextDocumentPositionParams)
             : CompletableFuture<List<Location>> = future {
-        runFeature(definitionProvider, params.textDocument, params)
+        runFeature(DefinitionProvider, params.textDocument, params)
     }
 
     override fun hover(params: TextDocumentPositionParams)
@@ -450,12 +347,12 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun references(params: ReferenceParams)
             : CompletableFuture<List<Location>> = future {
-        runFeature(referenceProvider, params.textDocument, params)
+        runFeature(ReferenceProvider, params.textDocument, params)
     }
 
     override fun documentHighlight(params: TextDocumentPositionParams)
             : CompletableFuture<List<DocumentHighlight>> = future {
-        runFeature(highlightProvider, params.textDocument, params)
+        runFeature(LatexLabelHighlightProvider, params.textDocument, params)
     }
 
     override fun build(params: BuildParams): CompletableFuture<BuildResult> = future {
@@ -517,9 +414,9 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
     private suspend fun runLinter(uri: URI, text: String) {
         val config = client.configuration<LatexLinterConfig>("latex.lint", uri)
         if (config.onSave) {
-            latexDiagnosticsProvider.update(uri, text)
+            diagnosticsProvider.latexProvider.update(uri, text)
         } else {
-            latexDiagnosticsProvider.clear(uri)
+            diagnosticsProvider.latexProvider.clear(uri)
         }
     }
 
