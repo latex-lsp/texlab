@@ -43,7 +43,7 @@ class LatexResolver(val filesByName: Map<String, File>) {
             try {
                 val texmf = runKpsewhich("-var-value", "TEXMF")
                 return runKpsewhich("--expand-braces=$texmf")
-                        .split(';')
+                        .split(File.pathSeparatorChar)
                         .map { Paths.get(it.replace("!", "")) }
                         .filter { Files.exists(it) }
                         .distinct()
