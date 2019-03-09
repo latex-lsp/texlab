@@ -34,7 +34,7 @@ jobs:
   steps:
   - task: Gradle@2
     inputs:
-      tasks: 'test jacocoTestReport'
+      tasks: 'build jacocoTestReport'
       jdkVersionOption: '1.11'
       publishJUnitResults: false 
     displayName: 'Build and Test'
