@@ -12,7 +12,7 @@ jobs:
   steps:
   - task: Gradle@2
     inputs:
-      tasks: 'test jacocoTestReport'
+      tasks: 'build test jacocoTestReport'
       jdkVersionOption: '1.8'
       publishJUnitResults: false
     displayName: 'Build and Test'
