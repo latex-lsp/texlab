@@ -1,0 +1,40 @@
+{
+  "name": "texlab",
+  "version": "0.5.0",
+  "description": "LaTeX Language Server",
+  "main": "out/main.js",
+  "repository": "https://github.com/efoerster/texlab.git",
+  "author": "Eric Förster <efoerster@users.noreply.github.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "tslint --project .",
+    "format": "prettier --write \"src/**/*.{ts,json}\" \"*.{json,md}\"",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/out/"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.2",
+    "@types/node": "^10.11.0",
+    "jest": "^23.6.0",
+    "prettier": "^1.14.3",
+    "ts-jest": "^23.10.2",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "vscode-languageserver": "^5.1.0",
+    "vscode-uri": "^1.0.6"
+  }
+}
