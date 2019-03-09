@@ -25,7 +25,7 @@ jobs:
     inputs:
       gitHubConnection: latex-lsp
       repositoryName: latex-lsp/texlab
-      assets: $(System.DefaultWorkingDirectory)/build/libs/texlab.jar
+      assets: build/libs/texlab.jar
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
     displayName: 'Publish to GitHub'
 - job: JDK11
