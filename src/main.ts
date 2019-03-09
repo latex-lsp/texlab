@@ -3,9 +3,11 @@ import {
   ProposedFeatures,
   TextDocuments,
 } from 'vscode-languageserver';
+import { Workspace } from './workspace';
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments();
+const workspace = new Workspace();
 
 connection.onInitialize(() => {
   return {
