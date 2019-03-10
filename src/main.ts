@@ -1,11 +1,14 @@
 import {
+  CancellationToken,
   combineFeatures,
   createConnection,
   Features,
   ProposedFeatures,
+  TextDocumentIdentifier,
   TextDocuments,
 } from 'vscode-languageserver';
-import { BuildConfig, buildDocument } from './build';
+import { BuildConfig, BuildFeature } from './build';
+import { FeatureContext, LanguageFeature } from './feature';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
 import { Uri } from './uri';
@@ -20,6 +23,8 @@ const features = combineFeatures(ProposedFeatures.all, customFeatures);
 const connection = createConnection(features);
 const documents = new TextDocuments();
 const workspace = new Workspace();
+
+const buildFeature = new BuildFeature(connection.console, connection.window);
 
 connection.onInitialize(() => {
   return {
@@ -66,22 +71,24 @@ connection.onDocumentHighlight(() => null);
 connection.onRequest(
   BuildTextDocumentRequest.type,
   async ({ textDocument }, cancellationToken) => {
-    const uri = Uri.parse(textDocument.uri);
-    const parent = workspace.findParent(uri)!;
     const config: BuildConfig = await connection.workspace.getConfiguration({
       section: 'latex.build',
-      scopeUri: textDocument.uri,
     });
 
-    return buildDocument(
-      parent.uri,
-      config,
-      connection.window,
-      connection.console,
-      cancellationToken,
-    );
+    return runFeature(buildFeature, textDocument, config, cancellationToken);
   },
 );
 
 documents.listen(connection);
 connection.listen();
+
+function runFeature<T, R>(
+  feature: LanguageFeature<T, R>,
+  document: TextDocumentIdentifier,
+  params: T,
+  cancellationToken?: CancellationToken,
+): Promise<R> {
+  const uri = Uri.parse(document.uri);
+  const context = new FeatureContext(uri, workspace, params);
+  return feature.execute(context, cancellationToken);
+}
