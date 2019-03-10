@@ -121,3 +121,26 @@ export class LatexTextSyntax extends SyntaxNode {
     };
   }
 }
+
+export function descendants(root: LatexSyntaxNode) {
+  const results: LatexSyntaxNode[] = [];
+  function visit(node: LatexSyntaxNode) {
+    results.push(node);
+    switch (node.kind) {
+      case LatexSyntaxKind.Document:
+      case LatexSyntaxKind.Group:
+        node.children.forEach(visit);
+        break;
+      case LatexSyntaxKind.Command:
+        if (node.options !== undefined) {
+          visit(node.options);
+        }
+        node.args.forEach(visit);
+        break;
+      case LatexSyntaxKind.Text:
+        break;
+    }
+  }
+  visit(root);
+  return results;
+}

@@ -56,4 +56,11 @@ describe('LaTeX Lexer', () => {
     verify(lexer, 0, 0, '\\foo*', LatexTokenKind.Command);
     expect(lexer.next()).toBeUndefined();
   });
+
+  it('should be able to tokenize math delimiters', () => {
+    const lexer = new LatexLexer('$$ $ $');
+    verify(lexer, 0, 0, '$$', LatexTokenKind.Math);
+    verify(lexer, 0, 3, '$', LatexTokenKind.Math);
+    verify(lexer, 0, 5, '$', LatexTokenKind.Math);
+  });
 });
