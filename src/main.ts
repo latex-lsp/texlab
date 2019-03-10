@@ -5,7 +5,10 @@ import {
   ProposedFeatures,
   TextDocuments,
 } from 'vscode-languageserver';
+import { BuildConfig, buildDocument } from './build';
+import { BuildTextDocumentRequest } from './protocol/build';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
+import { Uri } from './uri';
 import { Workspace } from './workspace';
 
 const customFeatures: Features<{}, {}, {}, {}, ProgressListener> = {
@@ -60,6 +63,25 @@ connection.onHover(() => null);
 connection.onDocumentFormatting(() => null);
 connection.onReferences(() => null);
 connection.onDocumentHighlight(() => null);
+connection.onRequest(
+  BuildTextDocumentRequest.type,
+  async ({ textDocument }, cancellationToken) => {
+    const uri = Uri.parse(textDocument.uri);
+    const parent = workspace.findParent(uri);
+    const config: BuildConfig = await connection.workspace.getConfiguration({
+      section: 'latex.build',
+      scopeUri: textDocument.uri,
+    });
+
+    return buildDocument(
+      parent.uri,
+      config,
+      connection.window,
+      connection.console,
+      cancellationToken,
+    );
+  },
+);
 
 documents.listen(connection);
 connection.listen();
