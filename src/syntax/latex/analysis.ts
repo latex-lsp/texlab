@@ -8,6 +8,7 @@ import {
 } from './ast';
 import { LatexToken, LatexTokenKind } from './lexer';
 import { parse } from './parser';
+import { Language } from '../../language';
 
 export const INCLUDE_COMMANDS = [
   '\\include',
@@ -186,6 +187,7 @@ export class LatexInline {
 }
 
 export class LatexSyntaxTree {
+  public readonly language: Language.Latex;
   public readonly root: LatexDocumentSyntax;
   public readonly descendants: LatexSyntaxNode[];
   public readonly includes: LatexInclude[];
@@ -200,6 +202,7 @@ export class LatexSyntaxTree {
   public readonly isStandalone: boolean;
 
   constructor(public readonly text: string) {
+    this.language = Language.Latex;
     this.root = parse(text);
     this.descendants = descendants(this.root);
     this.includes = [];

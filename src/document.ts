@@ -1,18 +1,18 @@
 import { Language } from './language';
+import { BibtexSyntaxTree } from './syntax/bibtex/analysis';
+import { LatexSyntaxTree } from './syntax/latex/analysis';
 import { Uri } from './uri';
 
 export interface LatexDocument {
-  language: Language.Latex;
   uri: Uri;
   text: string;
-  tree: any; // TODO
+  tree: LatexSyntaxTree;
 }
 
 export interface BibtexDocument {
-  language: Language.Bibtex;
   uri: Uri;
   text: string;
-  tree: any; // TODO
+  tree: BibtexSyntaxTree;
 }
 
 export type Document = LatexDocument | BibtexDocument;

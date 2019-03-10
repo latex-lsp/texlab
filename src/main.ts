@@ -67,7 +67,7 @@ connection.onRequest(
   BuildTextDocumentRequest.type,
   async ({ textDocument }, cancellationToken) => {
     const uri = Uri.parse(textDocument.uri);
-    const parent = workspace.findParent(uri);
+    const parent = workspace.findParent(uri)!;
     const config: BuildConfig = await connection.workspace.getConfiguration({
       section: 'latex.build',
       scopeUri: textDocument.uri,
