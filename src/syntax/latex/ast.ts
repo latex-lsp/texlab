@@ -41,9 +41,9 @@ export class LatexGroupSyntax extends SyntaxNode {
   public readonly range: Range;
 
   constructor(
-    public left: LatexToken,
-    public children: LatexSyntaxNode[],
-    public right: LatexToken | undefined,
+    public readonly left: LatexToken,
+    public readonly children: LatexSyntaxNode[],
+    public readonly right: LatexToken | undefined,
   ) {
     super();
     this.kind = LatexSyntaxKind.Group;
@@ -65,6 +65,10 @@ export class LatexGroupSyntax extends SyntaxNode {
 }
 
 export class LatexCommandSyntax extends SyntaxNode {
+  public static is(node: LatexSyntaxNode): node is LatexCommandSyntax {
+    return node.kind === LatexSyntaxKind.Command;
+  }
+
   public readonly kind: LatexSyntaxKind.Command;
   public readonly range: Range;
 
@@ -100,15 +104,19 @@ export class LatexCommandSyntax extends SyntaxNode {
     }
   }
 
-  public extractWord(index: number): string | undefined {
+  public extractWord(index: number): LatexToken | undefined {
     const text = this.extractText(index);
     return text === undefined || text.words.length !== 1
       ? undefined
-      : text.words[0].text;
+      : text.words[0];
   }
 }
 
 export class LatexTextSyntax extends SyntaxNode {
+  public static is(node: LatexSyntaxNode): node is LatexTextSyntax {
+    return node.kind === LatexSyntaxKind.Text;
+  }
+
   public readonly kind: LatexSyntaxKind.Text;
   public readonly range: Range;
 
