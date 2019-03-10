@@ -28,7 +28,7 @@ export class Workspace {
 
     const edges: Edge[] = [];
     this.documents.forEach(parent => {
-      if (parent.uri.isFile && parent.tree.language === Language.Latex) {
+      if (parent.uri.isFile() && parent.tree.language === Language.Latex) {
         parent.tree.includes.forEach(include => {
           const child = this.resolveDocument(parent.uri, include.path);
           if (child !== undefined) {
@@ -65,29 +65,25 @@ export class Workspace {
   }
 
   public resolveDocument(uri: Uri, relativePath: string): Document | undefined {
-    this.resolveLinkTargets(uri, relativePath).forEach(target => {
-      const childUri = Uri.file(target);
-      const document = this.documents.find(x => x.uri.equals(childUri));
-      if (document !== undefined && document.uri.isFile) {
+    for (const target of this.resolveLinkTargets(uri, relativePath)) {
+      const document = this.documents.find(x => x.uri.equals(target));
+      if (document !== undefined && document.uri.isFile()) {
         return document;
       }
-    });
+    }
     return undefined;
   }
 
-  public resolveLinkTargets(uri: Uri, relativePath: string): string[] {
-    if (!uri.isFile) {
+  public resolveLinkTargets(uri: Uri, relativePath: string): Uri[] {
+    if (!uri.isFile()) {
       return [];
     }
 
     const targets: string[] = [];
     const basePath = path.dirname(uri.fsPath);
-    const fullPath = path
-      .normalize(path.resolve(basePath, relativePath))
-      .replace('\\', '/');
-
+    const fullPath = path.normalize(path.resolve(basePath, relativePath));
     targets.push(fullPath);
     EXTENSIONS.forEach(extension => targets.push(fullPath + extension));
-    return targets;
+    return targets.map(x => Uri.file(x));
   }
 }

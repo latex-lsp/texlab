@@ -3,7 +3,7 @@ export enum Language {
   Bibtex,
 }
 
-function getLanguageById(id: string): Language | undefined {
+export function getLanguageById(id: string): Language | undefined {
   switch (id) {
     case 'latex':
       return Language.Latex;
@@ -14,13 +14,15 @@ function getLanguageById(id: string): Language | undefined {
   }
 }
 
-function getLanguageByExtension(extension: string): Language | undefined {
+export function getLanguageByExtension(
+  extension: string,
+): Language | undefined {
   switch (extension.toLowerCase()) {
-    case 'tex':
-    case 'sty':
-    case 'cls':
+    case '.tex':
+    case '.sty':
+    case '.cls':
       return Language.Latex;
-    case 'bib':
+    case '.bib':
       return Language.Bibtex;
     default:
       return undefined;
