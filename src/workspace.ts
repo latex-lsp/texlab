@@ -1,5 +1,5 @@
-import Uri from 'vscode-uri';
 import { Document } from './document';
+import { Uri } from './uri';
 
 export class Workspace {
   public readonly documents: Document[] = [];

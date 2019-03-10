@@ -1,5 +1,5 @@
-import Uri from 'vscode-uri';
 import { Language } from './language';
+import { Uri } from './uri';
 
 export interface LatexDocument {
   language: Language.Latex;
