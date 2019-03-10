@@ -1,11 +1,20 @@
 import {
+  combineFeatures,
   createConnection,
+  Features,
   ProposedFeatures,
   TextDocuments,
 } from 'vscode-languageserver';
+import { ProgressFeature, ProgressListener } from './protocol/progress';
 import { Workspace } from './workspace';
 
-const connection = createConnection(ProposedFeatures.all);
+const customFeatures: Features<{}, {}, {}, {}, ProgressListener> = {
+  __brand: 'features',
+  window: ProgressFeature,
+};
+
+const features = combineFeatures(ProposedFeatures.all, customFeatures);
+const connection = createConnection(features);
 const documents = new TextDocuments();
 const workspace = new Workspace();
 
