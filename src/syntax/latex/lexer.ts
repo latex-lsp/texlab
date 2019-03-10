@@ -1,6 +1,7 @@
 import { Position } from 'vscode-languageserver';
+import { isWhiteSpace, isCommandChar } from '../character';
 import { CharStream } from '../charStream';
-import { Token } from '../token';
+import { Token, TokenSource } from '../token';
 
 export enum LatexTokenKind {
   Command,
@@ -22,7 +23,7 @@ export class LatexToken extends Token {
   }
 }
 
-export class LatexLexer {
+export class LatexLexer implements TokenSource<LatexToken> {
   private readonly stream: CharStream;
 
   constructor(text: string) {
@@ -81,10 +82,6 @@ export class LatexLexer {
   }
 
   private command(): LatexToken {
-    function isCommandChar(c: string): boolean {
-      return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '@';
-    }
-
     const startPostion = this.stream.position;
     const startIndex = this.stream.index;
     this.stream.next();
@@ -130,15 +127,4 @@ export class LatexLexer {
     const text = this.stream.text.substring(startIndex, this.stream.index);
     return new LatexToken(startPosition, text, LatexTokenKind.Word);
   }
-}
-
-function isWhiteSpace(c: string): boolean {
-  return (
-    c === ' ' ||
-    c === '\f' ||
-    c === '\n' ||
-    c === '\r' ||
-    c === '\t' ||
-    c === '\v'
-  );
 }
