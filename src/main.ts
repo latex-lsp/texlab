@@ -5,12 +5,15 @@ import {
   createConnection,
   Features,
   ProposedFeatures,
+  ServerCapabilities,
   TextDocumentIdentifier,
-  TextDocuments,
+  TextDocumentSyncKind,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildFeature } from './build';
+import { Document } from './document';
 import { FeatureContext, LanguageFeature } from './feature';
 import { ForwardSearchConfig, ForwardSearchFeature } from './forwardSearch';
+import { getLanguageById } from './language';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ForwardSearchRequest } from './protocol/forwardSearch';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
@@ -24,43 +27,72 @@ const customFeatures: Features<{}, {}, {}, {}, ProgressListener> = {
 
 const features = combineFeatures(ProposedFeatures.all, customFeatures);
 const connection = createConnection(features);
-const documents = new TextDocuments();
 const workspace = new Workspace();
 
 const buildFeature = new BuildFeature(connection.console, connection.window);
 const forwardSearchFeature = new ForwardSearchFeature();
 
-connection.onInitialize(() => {
-  return {
-    capabilities: {
-      textDocumentSync: {
-        change: documents.syncKind,
-        save: { includeText: true },
-        openClose: true,
-      },
-      documentSymbolProvider: true,
-      renameProvider: true,
-      documentLinkProvider: { resolveProvider: false },
-      completionProvider: {
-        resolveProvider: true,
-        triggerCharacters: ['\\', '{', '}', '@', '/'],
-      },
-      foldingRangeProvider: true,
-      definitionProvider: true,
-      hoverProvider: true,
-      documentFormattingProvider: true,
-      referencesProvider: true,
-      documentHighlightProvider: true,
+connection.onInitialize(async ({ rootUri }) => {
+  if (rootUri) {
+    const root = Uri.parse(rootUri);
+    if (root.isFile()) {
+      await workspace.loadDirectory(root);
+      await workspace.loadIncludes();
+      connection.console.log(workspace.documents.length.toString());
+    }
+  }
+
+  const capabilities: ServerCapabilities = {
+    textDocumentSync: {
+      change: TextDocumentSyncKind.Full,
+      save: { includeText: true },
+      openClose: true,
     },
+    documentSymbolProvider: true,
+    renameProvider: true,
+    documentLinkProvider: { resolveProvider: false },
+    completionProvider: {
+      resolveProvider: true,
+      triggerCharacters: ['\\', '{', '}', '@', '/'],
+    },
+    foldingRangeProvider: true,
+    definitionProvider: true,
+    hoverProvider: true,
+    documentFormattingProvider: true,
+    referencesProvider: true,
+    documentHighlightProvider: true,
   };
+
+  return { capabilities };
 });
 
 connection.onInitialized(() => {});
 connection.onDidChangeWatchedFiles(() => {});
-connection.onDidOpenTextDocument(() => {});
-connection.onDidChangeTextDocument(() => {});
+
+connection.onDidOpenTextDocument(async ({ textDocument }) => {
+  const language = getLanguageById(textDocument.languageId);
+  if (language === undefined) {
+    return;
+  }
+
+  const uri = Uri.parse(textDocument.uri);
+  const document = Document.create(uri, textDocument.text, language);
+  workspace.put(document);
+
+  await workspace.loadIncludes();
+});
+
+connection.onDidChangeTextDocument(async ({ textDocument, contentChanges }) => {
+  const uri = Uri.parse(textDocument.uri);
+  const text = contentChanges[0].text;
+  const { tree } = workspace.documents.find(x => x.uri.equals(uri))!;
+  const document = Document.create(uri, text, tree.language);
+  workspace.put(document);
+
+  await workspace.loadIncludes();
+});
+
 connection.onDidSaveTextDocument(() => {});
-connection.onDidCloseTextDocument(() => {});
 connection.onDocumentSymbol(() => null);
 connection.onRenameRequest(() => null);
 connection.onDocumentLinks(() => null);
@@ -97,7 +129,6 @@ connection.onRequest(ForwardSearchRequest.type, async params => {
   });
 });
 
-documents.listen(connection);
 connection.listen();
 
 function runFeature<T, R>(

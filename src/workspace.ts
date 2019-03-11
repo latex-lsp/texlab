@@ -1,6 +1,8 @@
+import * as fs from 'fs';
 import * as path from 'path';
+import { walk } from 'walk';
 import { Document } from './document';
-import { Language } from './language';
+import { getLanguageByExtension, Language } from './language';
 import { Uri } from './uri';
 
 const EXTENSIONS = ['.tex', '.sty', '.cls', '.bib'];
@@ -17,6 +19,70 @@ export class Workspace {
       ...this.documents.filter(x => !x.uri.equals(document.uri)),
       document,
     ];
+  }
+
+  public async loadDirectory(uri: Uri) {
+    if (!uri.isFile()) {
+      return;
+    }
+
+    return new Promise(resolve => {
+      const walker = walk(uri.fsPath);
+
+      walker.on('file', async (root, { name }, next) => {
+        console.log(name);
+        if (EXTENSIONS.includes(path.extname(name))) {
+          const fileUri = Uri.file(path.join(root, name));
+          await this.loadFile(fileUri);
+        }
+
+        next();
+      });
+
+      walker.on('errors', (_root, _nodeStatsArray, next) => next());
+
+      walker.on('end', () => {
+        resolve();
+      });
+    });
+  }
+
+  public async loadFile(uri: Uri): Promise<Document | undefined> {
+    if (!uri.isFile() || this.documents.some(x => x.uri.equals(uri))) {
+      return undefined;
+    }
+
+    let text: string;
+    try {
+      text = (await fs.promises.readFile(uri.fsPath)).toString();
+    } catch (error) {
+      return undefined;
+    }
+
+    const language = getLanguageByExtension(path.extname(uri.fsPath));
+    if (language === undefined) {
+      return undefined;
+    }
+
+    const document = Document.create(uri, text, language);
+    if (document !== undefined) {
+      this.put(document);
+    }
+
+    return document;
+  }
+
+  public async loadIncludes() {
+    for (const { tree, uri } of this.documents) {
+      if (tree.language !== Language.Latex) {
+        continue;
+      }
+
+      tree.includes
+        .filter(x => this.resolveDocument(uri, x.path) !== undefined)
+        .flatMap(x => this.resolveLinkTargets(uri, x.path))
+        .forEach(x => this.loadFile(x));
+    }
   }
 
   public findParent(uri: Uri): Document | undefined {
