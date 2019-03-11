@@ -116,6 +116,10 @@ export class BibtexStringSyntax extends SyntaxNode {
 }
 
 export class BibtexEntrySyntax extends SyntaxNode {
+  public static is(node: BibtexSyntaxNode): node is BibtexEntrySyntax {
+    return node.kind === BibtexSyntaxKind.Entry;
+  }
+
   public readonly kind: BibtexSyntaxKind.Entry;
   public readonly range: Range;
 
@@ -173,7 +177,7 @@ export class BibtexFieldSyntax extends SyntaxNode {
   }
 }
 
-type BibtexContentSyntax =
+export type BibtexContentSyntax =
   | BibtexWordSyntax
   | BibtexCommandSyntax
   | BibtexQuotedContentSyntax
@@ -266,7 +270,11 @@ export class BibtexConcatSyntax extends SyntaxNode {
 
 export function descendants(root: BibtexSyntaxNode) {
   const results: BibtexSyntaxNode[] = [];
-  function visit(node: BibtexSyntaxNode) {
+  function visit(node: BibtexSyntaxNode | undefined) {
+    if (node === undefined) {
+      return;
+    }
+
     results.push(node);
     switch (node.kind) {
       case BibtexSyntaxKind.Document:
@@ -275,22 +283,16 @@ export function descendants(root: BibtexSyntaxNode) {
       case BibtexSyntaxKind.Comment:
         break;
       case BibtexSyntaxKind.Preamble:
-        if (node.content !== undefined) {
-          visit(node.content);
-        }
+        visit(node.content);
         break;
       case BibtexSyntaxKind.String:
-        if (node.value !== undefined) {
-          visit(node.value);
-        }
+        visit(node.value);
         break;
       case BibtexSyntaxKind.Entry:
         node.fields.forEach(visit);
         break;
       case BibtexSyntaxKind.Field:
-        if (node.content !== undefined) {
-          visit(node.content);
-        }
+        visit(node.content);
         break;
       case BibtexSyntaxKind.Word:
         break;
@@ -304,9 +306,7 @@ export function descendants(root: BibtexSyntaxNode) {
         break;
       case BibtexSyntaxKind.Concat:
         visit(node.left);
-        if (node.right !== undefined) {
-          visit(node.right);
-        }
+        visit(node.right);
         break;
     }
   }
