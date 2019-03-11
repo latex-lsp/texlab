@@ -1,10 +1,9 @@
 import * as cp from 'child_process';
 import * as path from 'path';
-import { CancellationToken } from 'vscode-jsonrpc';
 import { RemoteConsole } from 'vscode-languageserver';
 import { BuildResult, BuildStatus } from './protocol/build';
 import { ProgressListener, ProgressParams } from './protocol/progress';
-import { FeatureContext, FeatureProvider } from './provider';
+import { FeatureProvider } from './provider';
 
 export interface BuildConfig {
   executable: string;
@@ -12,17 +11,15 @@ export interface BuildConfig {
   onSave: boolean;
 }
 
-export class BuildProvider
-  implements FeatureProvider<BuildConfig, BuildResult> {
-  constructor(
-    private console: RemoteConsole,
-    private progressListener: ProgressListener,
-  ) {}
+export type BuildProvider = FeatureProvider<BuildConfig, BuildResult>;
 
-  public execute(
-    context: FeatureContext<BuildConfig>,
-    cancellationToken?: CancellationToken,
-  ): Promise<BuildResult> {
+type BuildProviderFactory = (
+  console: RemoteConsole,
+  listener: ProgressListener,
+) => BuildProvider;
+
+export const BuildProvider: BuildProviderFactory = (console, listener) => ({
+  execute: (context, cancellationToken) => {
     const { params: config, uri, workspace } = context;
     const parent = workspace.findParent(uri)!;
     const name = path.basename(parent.uri.fsPath);
@@ -33,14 +30,14 @@ export class BuildProvider
       title: 'Building',
       message: name,
     };
-    this.progressListener.progress(progress);
+    listener.progress(progress);
 
     const process = cp.spawn(config.executable, [...config.args, name], {
       cwd: directory,
     });
 
     const appendLog = (data: string | Buffer) => {
-      this.console.log(data.toString());
+      console.log(data.toString());
     };
 
     process.stdout.on('data', appendLog);
@@ -62,7 +59,7 @@ export class BuildProvider
 
       process.on('error', () => resolve({ status: BuildStatus.Failure }));
     }).finally(() => {
-      this.progressListener.progress({ ...progress, done: true });
+      listener.progress({ ...progress, done: true });
     });
-  }
-}
+  },
+});

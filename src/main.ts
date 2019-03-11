@@ -29,7 +29,7 @@ const features = combineFeatures(ProposedFeatures.all, customFeatures);
 const connection = createConnection(features);
 const workspace = new Workspace();
 
-const buildProvider = new BuildProvider(connection.console, connection.window);
+const buildProvider = BuildProvider(connection.console, connection.window);
 
 connection.onInitialize(async ({ rootUri }) => {
   if (rootUri) {
