@@ -1,4 +1,6 @@
+import { Position } from 'vscode-languageserver';
 import { Language } from '../../language';
+import * as range from '../../range';
 import {
   BibtexDocumentSyntax,
   BibtexEntrySyntax,
@@ -18,5 +20,15 @@ export class BibtexSyntaxTree {
     this.root = parse(text);
     this.descendants = descendants(this.root);
     this.entries = this.root.children.filter(BibtexEntrySyntax.is);
+  }
+
+  public find(position: Position): BibtexSyntaxNode | undefined {
+    for (let i = this.descendants.length - 1; i >= 0; i--) {
+      const node = this.descendants[i];
+      if (range.contains(node, position)) {
+        return node;
+      }
+    }
+    return undefined;
   }
 }

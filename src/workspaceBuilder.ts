@@ -1,4 +1,6 @@
 import * as path from 'path';
+import { CompletionParams } from 'vscode-languageserver';
+import { FeatureContext } from './feature';
 import { getLanguageByExtension, Language } from './language';
 import { BibtexSyntaxTree } from './syntax/bibtex/analysis';
 import { LatexSyntaxTree } from './syntax/latex/analysis';
@@ -26,5 +28,20 @@ export class WorkspaceBuilder {
     }
     this.workspace.put({ uri, tree });
     return uri;
+  }
+
+  public completion(
+    uri: Uri,
+    line: number,
+    character: number,
+  ): FeatureContext<CompletionParams> {
+    const params: CompletionParams = {
+      position: { line, character },
+      context: undefined,
+      textDocument: {
+        uri: uri.toString(true),
+      },
+    };
+    return new FeatureContext(uri, this.workspace, params);
   }
 }

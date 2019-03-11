@@ -1,4 +1,6 @@
-import { Range } from 'vscode-languageserver';
+import { Position, Range } from 'vscode-languageserver';
+import { Language } from '../../language';
+import * as range from '../../range';
 import {
   descendants,
   LatexCommandSyntax,
@@ -8,7 +10,6 @@ import {
 } from './ast';
 import { LatexToken, LatexTokenKind } from './lexer';
 import { parse } from './parser';
-import { Language } from '../../language';
 
 export const INCLUDE_COMMANDS = [
   '\\include',
@@ -218,6 +219,16 @@ export class LatexSyntaxTree {
     this.isStandalone = this.environments.some(
       x => x.beginName === 'document' || x.endName === 'document',
     );
+  }
+
+  public find(position: Position): LatexSyntaxNode | undefined {
+    for (let i = this.descendants.length - 1; i >= 0; i--) {
+      const node = this.descendants[i];
+      if (range.contains(node, position)) {
+        return node;
+      }
+    }
+    return undefined;
   }
 
   private analyze() {

@@ -1,3 +1,4 @@
+import 'array-flat-polyfill';
 import { CancellationToken } from 'vscode-languageserver';
 import { Document } from './document';
 import { Uri } from './uri';
