@@ -1,4 +1,4 @@
-import { Position } from 'vscode-languageserver';
+import { Position, Range } from 'vscode-languageserver';
 
 export abstract class Token {
   constructor(public readonly start: Position, public readonly text: string) {}
@@ -19,6 +19,13 @@ export abstract class Token {
     return {
       line: this.line,
       character: this.character + this.length,
+    };
+  }
+
+  public get range(): Range {
+    return {
+      start: this.start,
+      end: this.end,
     };
   }
 }
