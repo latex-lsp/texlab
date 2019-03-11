@@ -6,7 +6,18 @@ import { Uri } from './uri';
 const EXTENSIONS = ['.tex', '.sty', '.cls', '.bib'];
 
 export class Workspace {
-  public readonly documents: Document[] = [];
+  private _documents: Document[] = [];
+
+  public get documents(): ReadonlyArray<Document> {
+    return this._documents;
+  }
+
+  public put(document: Document) {
+    this._documents = [
+      ...this.documents.filter(x => !x.uri.equals(document.uri)),
+      document,
+    ];
+  }
 
   public findParent(uri: Uri): Document | undefined {
     for (const document of this.relatedDocuments(uri)) {

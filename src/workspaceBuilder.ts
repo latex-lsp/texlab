@@ -24,7 +24,7 @@ export class WorkspaceBuilder {
         tree = new LatexSyntaxTree(text);
         break;
     }
-    this.workspace.documents.push({ uri, tree });
+    this.workspace.put({ uri, tree });
     return uri;
   }
 }
