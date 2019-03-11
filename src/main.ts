@@ -9,6 +9,7 @@ import {
   TextDocumentSyncKind,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
+import { completionProvider } from './completion';
 import { Document } from './document';
 import { ForwardSearchConfig, ForwardSearchProvider } from './forwardSearch';
 import { getLanguageById } from './language';
@@ -95,7 +96,7 @@ connection.onDidSaveTextDocument(() => {});
 connection.onDocumentSymbol(() => null);
 connection.onRenameRequest(() => null);
 connection.onDocumentLinks(() => null);
-connection.onCompletion(() => null);
+connection.onCompletion(params => runProvider(completionProvider, params));
 connection.onCompletionResolve(x => x);
 connection.onFoldingRanges(() => null);
 connection.onDefinition(() => null);
@@ -106,12 +107,16 @@ connection.onDocumentHighlight(() => null);
 
 connection.onRequest(
   BuildTextDocumentRequest.type,
-  async ({ textDocument }, cancellationToken) => {
+  async (params, cancellationToken) => {
     const config: BuildConfig = await connection.workspace.getConfiguration({
       section: 'latex.build',
     });
 
-    return runProvider(buildProvider, textDocument, config, cancellationToken);
+    return runProvider(
+      buildProvider,
+      { ...params, ...config },
+      cancellationToken,
+    );
   },
 );
 
@@ -122,7 +127,7 @@ connection.onRequest(ForwardSearchRequest.type, async params => {
     },
   );
 
-  return runProvider(forwardSearchProvider, params.textDocument, {
+  return runProvider(forwardSearchProvider, {
     ...params,
     ...config,
   });
@@ -132,11 +137,10 @@ connection.listen();
 
 function runProvider<T, R>(
   provider: FeatureProvider<T, R>,
-  document: TextDocumentIdentifier,
-  params: T,
+  params: { textDocument: TextDocumentIdentifier } & T,
   cancellationToken?: CancellationToken,
 ): Promise<R> {
-  const uri = Uri.parse(document.uri);
+  const uri = Uri.parse(params.textDocument.uri);
   const context = new FeatureContext(uri, workspace, params);
   return provider.execute(context, cancellationToken);
 }
