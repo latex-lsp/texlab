@@ -11,7 +11,7 @@ import {
 import { BuildConfig, BuildProvider } from './build';
 import { completionProvider } from './completion';
 import { Document } from './document';
-import { ForwardSearchConfig, ForwardSearchProvider } from './forwardSearch';
+import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
 import { getLanguageById } from './language';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ForwardSearchRequest } from './protocol/forwardSearch';
@@ -30,7 +30,6 @@ const connection = createConnection(features);
 const workspace = new Workspace();
 
 const buildProvider = new BuildProvider(connection.console, connection.window);
-const forwardSearchProvider = new ForwardSearchProvider();
 
 connection.onInitialize(async ({ rootUri }) => {
   if (rootUri) {

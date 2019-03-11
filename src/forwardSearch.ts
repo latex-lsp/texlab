@@ -1,31 +1,26 @@
 import * as cp from 'child_process';
 import * as path from 'path';
-import {
-  CancellationToken,
-  TextDocumentPositionParams,
-} from 'vscode-languageserver';
+import { TextDocumentPositionParams } from 'vscode-languageserver';
 import {
   ForwardSearchResult,
   ForwardSearchStatus,
 } from './protocol/forwardSearch';
-import { FeatureContext, FeatureProvider } from './provider';
+import { FeatureProvider } from './provider';
 
 export interface ForwardSearchConfig {
   executable?: string;
   args: string[];
 }
 
-export type ForwardSearchProviderParams = TextDocumentPositionParams &
-  ForwardSearchConfig;
+export type ForwardSearchProvider = FeatureProvider<
+  TextDocumentPositionParams & ForwardSearchConfig,
+  ForwardSearchResult
+>;
 
-const TIMEOUT = 250;
+const SUCESS_DELAY = 250;
 
-export class ForwardSearchProvider
-  implements FeatureProvider<ForwardSearchProviderParams, ForwardSearchResult> {
-  public async execute(
-    context: FeatureContext<ForwardSearchProviderParams>,
-    _cancellationToken?: CancellationToken,
-  ): Promise<ForwardSearchResult> {
+export const forwardSearchProvider: ForwardSearchProvider = {
+  execute: async context => {
     const { uri, params, workspace } = context;
     const { position, executable, args } = params;
 
@@ -58,8 +53,8 @@ export class ForwardSearchProvider
 
       setTimeout(
         () => resolve({ status: ForwardSearchStatus.Success }),
-        TIMEOUT,
+        SUCESS_DELAY,
       );
     });
-  }
-}
+  },
+};
