@@ -30,9 +30,11 @@ export abstract class LanguageFeature<T, R> {
   ): LanguageFeature<T, R[]> {
     return {
       execute: async (context, cancellationToken) => {
-        return Promise.all(
+        const results = await Promise.all(
           features.map(x => x.execute(context, cancellationToken)),
-        ).then(x => x.flat());
+        );
+
+        return results.flat();
       },
     };
   }
