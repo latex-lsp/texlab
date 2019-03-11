@@ -80,7 +80,8 @@ export class Workspace {
 
       tree.includes
         .filter(x => this.resolveDocument(uri, x.path) !== undefined)
-        .flatMap(x => this.resolveLinkTargets(uri, x.path))
+        .map(x => this.resolveLinkTargets(uri, x.path))
+        .reduce<Uri[]>((acc, x) => acc.concat(x), [])
         .forEach(x => this.loadFile(x));
     }
   }

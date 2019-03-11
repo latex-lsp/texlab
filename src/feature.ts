@@ -1,4 +1,3 @@
-import 'array-flat-polyfill';
 import { CancellationToken } from 'vscode-languageserver';
 import { Document } from './document';
 import { Uri } from './uri';
@@ -35,7 +34,7 @@ export abstract class LanguageFeature<T, R> {
           features.map(x => x.execute(context, cancellationToken)),
         );
 
-        return results.flat();
+        return new Array<R>().concat(...results);
       },
     };
   }

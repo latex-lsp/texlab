@@ -1,4 +1,3 @@
-import 'array-flat-polyfill';
 import {
   CancellationToken,
   combineFeatures,
