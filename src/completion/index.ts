@@ -1,13 +1,13 @@
 import { CompletionItem, CompletionParams } from 'vscode-languageserver';
-import { FeatureContext, LanguageFeature } from '../feature';
 import { Language } from '../language';
 import { BIBTEX_FIELDS } from '../metadata/bibtexField';
 import { BIBTEX_TYPES } from '../metadata/bibtexType';
+import { concat, FeatureContext, FeatureProvider } from '../provider';
 import * as range from '../range';
 import { BibtexSyntaxKind } from '../syntax/bibtex/ast';
 import * as factory from './factory';
 
-export type CompletionProvider = LanguageFeature<
+export type CompletionProvider = FeatureProvider<
   CompletionParams,
   CompletionItem[]
 >;
@@ -61,7 +61,7 @@ export class BibtexEntryTypeProvider implements CompletionProvider {
   }
 }
 
-export const CompletionProvider = LanguageFeature.concat(
+export const completionProvider = concat(
   new BibtexFieldNameProvider(),
   new BibtexEntryTypeProvider(),
 );

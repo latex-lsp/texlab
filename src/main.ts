@@ -8,14 +8,14 @@ import {
   TextDocumentIdentifier,
   TextDocumentSyncKind,
 } from 'vscode-languageserver';
-import { BuildConfig, BuildFeature } from './build';
+import { BuildConfig, BuildProvider } from './build';
 import { Document } from './document';
-import { FeatureContext, LanguageFeature } from './feature';
-import { ForwardSearchConfig, ForwardSearchFeature } from './forwardSearch';
+import { ForwardSearchConfig, ForwardSearchProvider } from './forwardSearch';
 import { getLanguageById } from './language';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ForwardSearchRequest } from './protocol/forwardSearch';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
+import { FeatureContext, FeatureProvider } from './provider';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
 
@@ -28,8 +28,8 @@ const features = combineFeatures(ProposedFeatures.all, customFeatures);
 const connection = createConnection(features);
 const workspace = new Workspace();
 
-const buildFeature = new BuildFeature(connection.console, connection.window);
-const forwardSearchFeature = new ForwardSearchFeature();
+const buildProvider = new BuildProvider(connection.console, connection.window);
+const forwardSearchProvider = new ForwardSearchProvider();
 
 connection.onInitialize(async ({ rootUri }) => {
   if (rootUri) {
@@ -111,7 +111,7 @@ connection.onRequest(
       section: 'latex.build',
     });
 
-    return runFeature(buildFeature, textDocument, config, cancellationToken);
+    return runProvider(buildProvider, textDocument, config, cancellationToken);
   },
 );
 
@@ -122,7 +122,7 @@ connection.onRequest(ForwardSearchRequest.type, async params => {
     },
   );
 
-  return runFeature(forwardSearchFeature, params.textDocument, {
+  return runProvider(forwardSearchProvider, params.textDocument, {
     ...params,
     ...config,
   });
@@ -130,13 +130,13 @@ connection.onRequest(ForwardSearchRequest.type, async params => {
 
 connection.listen();
 
-function runFeature<T, R>(
-  feature: LanguageFeature<T, R>,
+function runProvider<T, R>(
+  provider: FeatureProvider<T, R>,
   document: TextDocumentIdentifier,
   params: T,
   cancellationToken?: CancellationToken,
 ): Promise<R> {
   const uri = Uri.parse(document.uri);
   const context = new FeatureContext(uri, workspace, params);
-  return feature.execute(context, cancellationToken);
+  return provider.execute(context, cancellationToken);
 }

@@ -4,26 +4,26 @@ import {
   CancellationToken,
   TextDocumentPositionParams,
 } from 'vscode-languageserver';
-import { FeatureContext, LanguageFeature } from './feature';
 import {
   ForwardSearchResult,
   ForwardSearchStatus,
 } from './protocol/forwardSearch';
+import { FeatureContext, FeatureProvider } from './provider';
 
 export interface ForwardSearchConfig {
   executable?: string;
   args: string[];
 }
 
-export type ForwardSearchFeatureParams = TextDocumentPositionParams &
+export type ForwardSearchProviderParams = TextDocumentPositionParams &
   ForwardSearchConfig;
 
 const TIMEOUT = 250;
 
-export class ForwardSearchFeature
-  implements LanguageFeature<ForwardSearchFeatureParams, ForwardSearchResult> {
+export class ForwardSearchProvider
+  implements FeatureProvider<ForwardSearchProviderParams, ForwardSearchResult> {
   public async execute(
-    context: FeatureContext<ForwardSearchFeatureParams>,
+    context: FeatureContext<ForwardSearchProviderParams>,
     _cancellationToken?: CancellationToken,
   ): Promise<ForwardSearchResult> {
     const { uri, params, workspace } = context;

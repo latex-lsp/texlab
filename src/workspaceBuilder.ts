@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { CompletionParams } from 'vscode-languageserver';
-import { FeatureContext } from './feature';
 import { getLanguageByExtension, Language } from './language';
+import { FeatureContext } from './provider';
 import { BibtexSyntaxTree } from './syntax/bibtex/analysis';
 import { LatexSyntaxTree } from './syntax/latex/analysis';
 import { Uri } from './uri';

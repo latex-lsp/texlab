@@ -2,9 +2,9 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import { CancellationToken } from 'vscode-jsonrpc';
 import { RemoteConsole } from 'vscode-languageserver';
-import { FeatureContext, LanguageFeature } from './feature';
 import { BuildResult, BuildStatus } from './protocol/build';
 import { ProgressListener, ProgressParams } from './protocol/progress';
+import { FeatureContext, FeatureProvider } from './provider';
 
 export interface BuildConfig {
   executable: string;
@@ -12,7 +12,8 @@ export interface BuildConfig {
   onSave: boolean;
 }
 
-export class BuildFeature implements LanguageFeature<BuildConfig, BuildResult> {
+export class BuildProvider
+  implements FeatureProvider<BuildConfig, BuildResult> {
   constructor(
     private console: RemoteConsole,
     private progressListener: ProgressListener,
