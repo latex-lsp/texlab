@@ -160,6 +160,11 @@ array-equal@^1.0.0:
   resolved "https://registry.yarnpkg.com/array-equal/-/array-equal-1.0.0.tgz#8c2a5ef2472fd9ea742b04c77a75093ba2757c93"
   integrity sha1-jCpe8kcv2ep0KwTHenUJO6J1fJM=
 
+array-flat-polyfill@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/array-flat-polyfill/-/array-flat-polyfill-1.0.0.tgz#9c6c0070f5700f0e2f657fdc60da0c131b864759"
+  integrity sha512-6pYKb6u8B7spg6joZYoRcJPKgAGyjl+mIF3w5qbiMqr6MCZB6X5HQuFNi8irha1csvWywI1EefGK/ya0VczJkw==
+
 array-unique@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/array-unique/-/array-unique-0.2.1.tgz#a1d97ccafcbc2625cc70fadceb36a50c58b01a53"

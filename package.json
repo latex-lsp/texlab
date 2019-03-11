@@ -34,6 +34,7 @@
     "typescript": "^3.0.3"
   },
   "dependencies": {
+    "array-flat-polyfill": "^1.0.0",
     "vscode-languageserver": "^5.1.0",
     "vscode-uri": "^1.0.6"
   }
