@@ -4,7 +4,12 @@ import {
   InsertTextFormat,
   MarkupKind,
 } from 'vscode-languageserver';
-import { BibtexField, getFieldDocumentation, getFieldName } from './constants';
+import {
+  BibtexField,
+  getFieldDocumentation,
+  getFieldName,
+} from '../metadata/bibtexField';
+import { getTypeDocumentation } from '../metadata/bibtexType';
 
 const KERNEL_DETAIL: string = 'built-in';
 
@@ -118,6 +123,10 @@ export function createEntryType(name: string): CompletionItem {
   return {
     label: name,
     kind: CompletionItemKind.Interface,
+    documentation: {
+      kind: MarkupKind.Markdown,
+      value: getTypeDocumentation(name),
+    },
   };
 }
 

@@ -1,14 +1,18 @@
 import { CompletionItem, CompletionParams } from 'vscode-languageserver';
 import { FeatureContext, LanguageFeature } from '../feature';
 import { Language } from '../language';
+import { BIBTEX_FIELDS } from '../metadata/bibtexField';
+import { BIBTEX_TYPES } from '../metadata/bibtexType';
 import * as range from '../range';
 import { BibtexSyntaxKind } from '../syntax/bibtex/ast';
-import { BIBTEX_FIELDS } from './constants';
 import * as factory from './factory';
 
-type CompletionProvider = LanguageFeature<CompletionParams, CompletionItem[]>;
+export type CompletionProvider = LanguageFeature<
+  CompletionParams,
+  CompletionItem[]
+>;
 
-class BibtexFieldNameProvider implements CompletionProvider {
+export class BibtexFieldNameProvider implements CompletionProvider {
   private static ITEMS = BIBTEX_FIELDS.map(factory.createFieldName);
 
   public async execute(
@@ -35,6 +39,29 @@ class BibtexFieldNameProvider implements CompletionProvider {
   }
 }
 
+export class BibtexEntryTypeProvider implements CompletionProvider {
+  private static ITEMS = BIBTEX_TYPES.map(factory.createEntryType);
+
+  public async execute(
+    context: FeatureContext<CompletionParams>,
+  ): Promise<CompletionItem[]> {
+    const { document, params } = context;
+    if (document.tree.language !== Language.Bibtex) {
+      return [];
+    }
+
+    for (const node of document.tree.root.children) {
+      if (node.kind !== BibtexSyntaxKind.Comment) {
+        if (range.contains(node.type.range, params.position)) {
+          return BibtexEntryTypeProvider.ITEMS;
+        }
+      }
+    }
+    return [];
+  }
+}
+
 export const CompletionProvider = LanguageFeature.concat(
   new BibtexFieldNameProvider(),
+  new BibtexEntryTypeProvider(),
 );
