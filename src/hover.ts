@@ -4,9 +4,11 @@ import {
   TextDocumentPositionParams,
 } from 'vscode-languageserver';
 import { Language } from './language';
+import { getFieldDocumentation, parseFieldName } from './metadata/bibtexField';
 import { getTypeDocumentation } from './metadata/bibtexType';
 import { choice, FeatureContext, FeatureProvider } from './provider';
 import * as range from './range';
+import { BibtexFieldSyntax } from './syntax/bibtex/ast';
 
 export type HoverProvider = FeatureProvider<
   TextDocumentPositionParams,
@@ -40,4 +42,38 @@ export class BibtexEntryTypeHoverProvider implements HoverProvider {
   }
 }
 
-export const hoverProvider = choice(new BibtexEntryTypeHoverProvider());
+export class BibtexFieldHoverProvider implements HoverProvider {
+  public async execute(
+    context: FeatureContext<TextDocumentPositionParams>,
+  ): Promise<Hover | undefined> {
+    const { document, params } = context;
+    if (document.tree.language !== Language.Bibtex) {
+      return undefined;
+    }
+
+    const node = document.tree.descendants
+      .filter(BibtexFieldSyntax.is)
+      .find(x => range.contains(x.name.range, params.position));
+
+    if (node === undefined) {
+      return undefined;
+    }
+
+    const field = parseFieldName(node.name.text);
+    if (field === undefined) {
+      return undefined;
+    }
+
+    return {
+      contents: {
+        kind: MarkupKind.Markdown,
+        value: getFieldDocumentation(field),
+      },
+    };
+  }
+}
+
+export const hoverProvider = choice(
+  new BibtexEntryTypeHoverProvider(),
+  new BibtexFieldHoverProvider(),
+);

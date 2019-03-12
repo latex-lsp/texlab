@@ -152,6 +152,10 @@ export class BibtexEntrySyntax extends SyntaxNode {
 }
 
 export class BibtexFieldSyntax extends SyntaxNode {
+  public static is(node: BibtexSyntaxNode): node is BibtexFieldSyntax {
+    return node.kind === BibtexSyntaxKind.Field;
+  }
+
   public readonly kind: BibtexSyntaxKind.Field;
   public readonly range: Range;
 

@@ -44,7 +44,7 @@ export function choice<T, R>(
   return {
     execute: async (context, cancellationToken) => {
       for (const provider of providers) {
-        const result = provider.execute(context, cancellationToken);
+        const result = await provider.execute(context, cancellationToken);
         if (result !== undefined) {
           return result;
         }
