@@ -1,6 +1,9 @@
-import * as cp from 'child_process';
 import * as path from 'path';
-import { TextDocumentPositionParams } from 'vscode-languageserver';
+import {
+  CancellationTokenSource,
+  TextDocumentPositionParams,
+} from 'vscode-languageserver';
+import { ProcessBuilder, ProcessStatus } from './process';
 import {
   ForwardSearchResult,
   ForwardSearchStatus,
@@ -17,7 +20,17 @@ export type ForwardSearchProvider = FeatureProvider<
   ForwardSearchResult
 >;
 
-const SUCCESS_DELAY = 250;
+function toForwardSearchResult(status: ProcessStatus): ForwardSearchResult {
+  switch (status) {
+    case ProcessStatus.Success:
+    case ProcessStatus.Error:
+      return { status: ForwardSearchStatus.Success };
+    case ProcessStatus.Failure:
+      return { status: ForwardSearchStatus.Failure };
+  }
+}
+
+const WAIT_TIME = 1000;
 
 export const forwardSearchProvider: ForwardSearchProvider = {
   execute: async context => {
@@ -45,16 +58,21 @@ export const forwardSearchProvider: ForwardSearchProvider = {
         .replace('%l', position.line.toString());
     };
 
-    const process = cp.spawn(executable, args.map(replacePlaceholder));
-    return new Promise(resolve => {
-      process.on('error', () =>
-        resolve({ status: ForwardSearchStatus.Failure }),
-      );
+    const cancellationTokenSource = new CancellationTokenSource();
+    setTimeout(() => {
+      cancellationTokenSource.cancel();
+    }, WAIT_TIME);
 
-      setTimeout(
-        () => resolve({ status: ForwardSearchStatus.Success }),
-        SUCCESS_DELAY,
+    try {
+      return toForwardSearchResult(
+        await new ProcessBuilder(executable)
+          .args(...args.map(replacePlaceholder))
+          .start(cancellationTokenSource.token, true),
       );
-    });
+    } catch {
+      return { status: ForwardSearchStatus.Success };
+    } finally {
+      cancellationTokenSource.dispose();
+    }
   },
 };
