@@ -30,7 +30,6 @@ export class Workspace {
       const walker = walk(uri.fsPath);
 
       walker.on('file', async (root, { name }, next) => {
-        console.log(name);
         if (EXTENSIONS.includes(path.extname(name))) {
           const fileUri = Uri.file(path.join(root, name));
           await this.loadFile(fileUri);
