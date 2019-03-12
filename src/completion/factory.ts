@@ -120,13 +120,16 @@ export function createClass(name: string): CompletionItem {
 }
 
 export function createEntryType(name: string): CompletionItem {
+  const markdown = getTypeDocumentation(name);
+  const documentation =
+    markdown === undefined
+      ? undefined
+      : { kind: MarkupKind.Markdown, value: markdown };
+
   return {
     label: name,
     kind: CompletionItemKind.Interface,
-    documentation: {
-      kind: MarkupKind.Markdown,
-      value: getTypeDocumentation(name),
-    },
+    documentation,
   };
 }
 
