@@ -1,4 +1,8 @@
-import { CompletionItem, CompletionParams } from 'vscode-languageserver';
+import {
+  CompletionItem,
+  CompletionParams,
+  TextDocumentPositionParams,
+} from 'vscode-languageserver';
 import { Language } from '../language';
 import { BIBTEX_FIELDS } from '../metadata/bibtexField';
 import { BIBTEX_TYPES } from '../metadata/bibtexType';
@@ -8,15 +12,15 @@ import { BibtexSyntaxKind } from '../syntax/bibtex/ast';
 import * as factory from './factory';
 
 export type CompletionProvider = FeatureProvider<
-  CompletionParams,
+  TextDocumentPositionParams,
   CompletionItem[]
 >;
 
-export class BibtexFieldNameProvider implements CompletionProvider {
+export class BibtexFieldNameCompletionProvider implements CompletionProvider {
   private static ITEMS = BIBTEX_FIELDS.map(factory.createFieldName);
 
   public async execute(
-    context: FeatureContext<CompletionParams>,
+    context: FeatureContext<TextDocumentPositionParams>,
   ): Promise<CompletionItem[]> {
     const { document, params } = context;
     if (document.tree.language !== Language.Bibtex) {
@@ -35,15 +39,15 @@ export class BibtexFieldNameProvider implements CompletionProvider {
       node.name !== undefined &&
       !range.contains(node.name.range, params.position);
 
-    return field || entry ? BibtexFieldNameProvider.ITEMS : [];
+    return field || entry ? BibtexFieldNameCompletionProvider.ITEMS : [];
   }
 }
 
-export class BibtexEntryTypeProvider implements CompletionProvider {
+export class BibtexEntryTypeCompletionProvider implements CompletionProvider {
   private static ITEMS = BIBTEX_TYPES.map(factory.createEntryType);
 
   public async execute(
-    context: FeatureContext<CompletionParams>,
+    context: FeatureContext<TextDocumentPositionParams>,
   ): Promise<CompletionItem[]> {
     const { document, params } = context;
     if (document.tree.language !== Language.Bibtex) {
@@ -53,7 +57,7 @@ export class BibtexEntryTypeProvider implements CompletionProvider {
     for (const node of document.tree.root.children) {
       if (node.kind !== BibtexSyntaxKind.Comment) {
         if (range.contains(node.type.range, params.position)) {
-          return BibtexEntryTypeProvider.ITEMS;
+          return BibtexEntryTypeCompletionProvider.ITEMS;
         }
       }
     }
@@ -62,6 +66,6 @@ export class BibtexEntryTypeProvider implements CompletionProvider {
 }
 
 export const completionProvider = concat(
-  new BibtexFieldNameProvider(),
-  new BibtexEntryTypeProvider(),
+  new BibtexFieldNameCompletionProvider(),
+  new BibtexEntryTypeCompletionProvider(),
 );

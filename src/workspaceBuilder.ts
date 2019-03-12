@@ -1,7 +1,10 @@
 import * as path from 'path';
-import { CompletionParams } from 'vscode-languageserver';
+import {
+  CompletionParams,
+  TextDocumentPositionParams,
+} from 'vscode-languageserver';
 import { getLanguageByExtension, Language } from './language';
-import { FeatureContext } from './provider';
+import { FeatureContext, FeatureProvider } from './provider';
 import { BibtexSyntaxTree } from './syntax/bibtex/analysis';
 import { LatexSyntaxTree } from './syntax/latex/analysis';
 import { Uri } from './uri';
@@ -30,18 +33,38 @@ export class WorkspaceBuilder {
     return uri;
   }
 
-  public completion(
+  public context(
     uri: Uri,
     line: number,
     character: number,
-  ): FeatureContext<CompletionParams> {
-    const params: CompletionParams = {
+  ): FeatureContext<TextDocumentPositionParams> {
+    const params: TextDocumentPositionParams = {
       position: { line, character },
-      context: undefined,
       textDocument: {
         uri: uri.toString(true),
       },
     };
     return new FeatureContext(uri, this.workspace, params);
   }
+}
+
+export interface SingleFileRunOptions<T, R> {
+  provider: FeatureProvider<T, R>;
+  file: string;
+  text: string;
+  line: number;
+  character: number;
+}
+
+export function runSingleFile<R>({
+  provider,
+  file,
+  text,
+  line,
+  character,
+}: SingleFileRunOptions<TextDocumentPositionParams, R>): Promise<R> {
+  const builder = new WorkspaceBuilder();
+  const uri = builder.document(file, text);
+  const context = builder.context(uri, line, character);
+  return provider.execute(context);
 }

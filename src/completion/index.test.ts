@@ -1,37 +1,14 @@
-import { CompletionItem } from 'vscode-languageserver';
 import { BIBTEX_FIELDS, getFieldName } from '../metadata/bibtexField';
 import { BIBTEX_TYPES } from '../metadata/bibtexType';
-import { WorkspaceBuilder } from '../workspaceBuilder';
+import { runSingleFile } from '../workspaceBuilder';
 import {
-  BibtexEntryTypeProvider,
-  BibtexFieldNameProvider,
-  CompletionProvider,
+  BibtexEntryTypeCompletionProvider,
+  BibtexFieldNameCompletionProvider,
 } from './index';
 
-interface SingleFileRunOptions {
-  provider: CompletionProvider;
-  file: string;
-  text: string;
-  line: number;
-  character: number;
-}
-
-function runSingleFile({
-  provider,
-  file,
-  text,
-  line,
-  character,
-}: SingleFileRunOptions): Promise<CompletionItem[]> {
-  const builder = new WorkspaceBuilder();
-  const uri = builder.document(file, text);
-  const context = builder.completion(uri, line, character);
-  return provider.execute(context);
-}
-
-describe('BibtexFieldNameProvider', () => {
+describe('BibtexFieldNameCompletionProvider', () => {
   const FIELDS = BIBTEX_FIELDS.map(getFieldName);
-  const provider = new BibtexFieldNameProvider();
+  const provider = new BibtexFieldNameCompletionProvider();
 
   it('should provide completion inside entries', async () => {
     const items = await runSingleFile({
@@ -67,8 +44,8 @@ describe('BibtexFieldNameProvider', () => {
   });
 });
 
-describe('BibtexEntryTypeProvider', () => {
-  const provider = new BibtexEntryTypeProvider();
+describe('BibtexEntryTypeCompletionProvider', () => {
+  const provider = new BibtexEntryTypeCompletionProvider();
 
   it('should provide completion after @', async () => {
     const items = await runSingleFile({
