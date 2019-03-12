@@ -17,7 +17,7 @@ export type ForwardSearchProvider = FeatureProvider<
   ForwardSearchResult
 >;
 
-const SUCESS_DELAY = 250;
+const SUCCESS_DELAY = 250;
 
 export const forwardSearchProvider: ForwardSearchProvider = {
   execute: async context => {
@@ -53,7 +53,7 @@ export const forwardSearchProvider: ForwardSearchProvider = {
 
       setTimeout(
         () => resolve({ status: ForwardSearchStatus.Success }),
-        SUCESS_DELAY,
+        SUCCESS_DELAY,
       );
     });
   },
