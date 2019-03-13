@@ -1,14 +1,10 @@
 import { BIBTEX_FIELDS, getFieldName } from '../metadata/bibtexField';
-import { BIBTEX_TYPES } from '../metadata/bibtexType';
 import { runSingleFile } from '../workspaceBuilder';
-import {
-  BibtexEntryTypeCompletionProvider,
-  BibtexFieldNameCompletionProvider,
-} from './index';
+import { BibtexFieldNameCompletionProvider } from './bibtexFieldName';
 
 describe('BibtexFieldNameCompletionProvider', () => {
+  const provider = BibtexFieldNameCompletionProvider;
   const FIELDS = BIBTEX_FIELDS.map(getFieldName);
-  const provider = new BibtexFieldNameCompletionProvider();
 
   it('should provide completion inside entries', async () => {
     const items = await runSingleFile({
@@ -42,29 +38,14 @@ describe('BibtexFieldNameCompletionProvider', () => {
     });
     expect(items).toEqual([]);
   });
-});
 
-describe('BibtexEntryTypeCompletionProvider', () => {
-  const provider = new BibtexEntryTypeCompletionProvider();
-
-  it('should provide completion after @', async () => {
+  it('should not provide completion inside LaTeX commands', async () => {
     const items = await runSingleFile({
       provider,
-      file: 'foo.bib',
-      text: '@',
+      file: 'foo.tex',
+      text: '\\foo',
       line: 0,
       character: 1,
-    });
-    expect(items.map(x => x.label)).toEqual(BIBTEX_TYPES);
-  });
-
-  it('should not provide completion inside entries', async () => {
-    const items = await runSingleFile({
-      provider,
-      file: 'foo.bib',
-      text: '@article{foo,}',
-      line: 0,
-      character: 11,
     });
     expect(items).toEqual([]);
   });

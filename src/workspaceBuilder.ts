@@ -1,8 +1,5 @@
 import * as path from 'path';
-import {
-  CompletionParams,
-  TextDocumentPositionParams,
-} from 'vscode-languageserver';
+import { TextDocumentPositionParams } from 'vscode-languageserver';
 import { getLanguageByExtension, Language } from './language';
 import { FeatureContext, FeatureProvider } from './provider';
 import { BibtexSyntaxTree } from './syntax/bibtex/analysis';

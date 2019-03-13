@@ -1,6 +1,7 @@
 import {
   CancellationToken,
   combineFeatures,
+  CompletionItemKind,
   createConnection,
   Features,
   ProposedFeatures,
@@ -96,7 +97,20 @@ connection.onDidSaveTextDocument(() => {});
 connection.onDocumentSymbol(() => null);
 connection.onRenameRequest(() => null);
 connection.onDocumentLinks(() => null);
-connection.onCompletion(params => runProvider(completionProvider, params));
+
+connection.onCompletion(async params => {
+  const items = await runProvider(completionProvider, params);
+  const allIncludes = items.every(
+    x =>
+      x.kind === CompletionItemKind.Folder ||
+      x.kind === CompletionItemKind.File,
+  );
+  return {
+    isIncomplete: !allIncludes,
+    items,
+  };
+});
+
 connection.onCompletionResolve(x => x);
 connection.onFoldingRanges(() => null);
 connection.onDefinition(() => null);
