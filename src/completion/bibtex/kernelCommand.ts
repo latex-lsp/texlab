@@ -14,7 +14,9 @@ export const BibtexKernelCommandCompletionProvider: CompletionProvider = {
     }
 
     const command = document.tree.find(params.position);
-    return command !== undefined && command.kind === BibtexSyntaxKind.Command
+    return command !== undefined &&
+      command.kind === BibtexSyntaxKind.Command &&
+      command.token.character !== params.position.character
       ? ITEMS
       : [];
   },

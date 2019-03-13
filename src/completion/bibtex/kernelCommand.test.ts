@@ -16,6 +16,17 @@ describe('BibtexKernelCommandProvider', () => {
     expect(items.map(x => x.label)).toEqual(KERNEL_COMMANDS);
   });
 
+  it('should not provide completion at the start of a BibTeX command', async () => {
+    const items = await runSingleFile({
+      provider,
+      file: 'foo.bib',
+      text: '@article{foo, bar = \\baz}',
+      line: 0,
+      character: 20,
+    });
+    expect(items).toEqual([]);
+  });
+
   it('should not provide completion inside BibTeX keys', async () => {
     const items = await runSingleFile({
       provider,
