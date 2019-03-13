@@ -1,8 +1,19 @@
 import { concat } from '../provider';
-import { BibtexEntryTypeCompletionProvider } from './bibtexEntryType';
-import { BibtexFieldNameCompletionProvider } from './bibtexFieldName';
+import { BibtexEntryTypeCompletionProvider } from './bibtex/entryType';
+import { BibtexFieldNameCompletionProvider } from './bibtex/fieldName';
+import { BibtexKernelCommandCompletionProvider } from './bibtex/kernelCommand';
+import { DistinctCompletionProvider } from './distinct';
+import { LimitedCompletionProvider } from './limited';
+import { OrderByQualityCompletionProvider } from './orderByQuality';
 
-export const completionProvider = concat(
-  BibtexFieldNameCompletionProvider,
-  BibtexEntryTypeCompletionProvider,
+export const completionProvider = LimitedCompletionProvider(
+  OrderByQualityCompletionProvider(
+    DistinctCompletionProvider(
+      concat(
+        BibtexFieldNameCompletionProvider,
+        BibtexEntryTypeCompletionProvider,
+        BibtexKernelCommandCompletionProvider,
+      ),
+    ),
+  ),
 );

@@ -1,5 +1,5 @@
 import { Position } from 'vscode-languageserver';
-import { isWhiteSpace, isCommandChar } from '../character';
+import { isCommandChar, isWhiteSpace } from '../character';
 import { CharStream } from '../charStream';
 import { Token, TokenSource } from '../token';
 

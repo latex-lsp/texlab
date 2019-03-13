@@ -1,6 +1,6 @@
-import { BIBTEX_TYPES } from '../metadata/bibtexType';
-import { runSingleFile } from '../workspaceBuilder';
-import { BibtexEntryTypeCompletionProvider } from './bibtexEntryType';
+import { BIBTEX_TYPES } from '../../metadata/bibtexType';
+import { runSingleFile } from '../../workspaceBuilder';
+import { BibtexEntryTypeCompletionProvider } from './entryType';
 
 describe('BibtexEntryTypeCompletionProvider', () => {
   const provider = BibtexEntryTypeCompletionProvider;

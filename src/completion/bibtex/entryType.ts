@@ -1,9 +1,9 @@
-import { Language } from '../language';
-import { BIBTEX_TYPES } from '../metadata/bibtexType';
-import * as range from '../range';
-import { BibtexSyntaxKind } from '../syntax/bibtex/ast';
-import * as factory from './factory';
-import { CompletionProvider } from './provider';
+import { Language } from '../../language';
+import { BIBTEX_TYPES } from '../../metadata/bibtexType';
+import * as range from '../../range';
+import { BibtexSyntaxKind } from '../../syntax/bibtex/ast';
+import * as factory from '../factory';
+import { CompletionProvider } from '../provider';
 
 const ITEMS = BIBTEX_TYPES.map(factory.createEntryType);
 

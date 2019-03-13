@@ -1,6 +1,6 @@
-import { BIBTEX_FIELDS, getFieldName } from '../metadata/bibtexField';
-import { runSingleFile } from '../workspaceBuilder';
-import { BibtexFieldNameCompletionProvider } from './bibtexFieldName';
+import { BIBTEX_FIELDS, getFieldName } from '../../metadata/bibtexField';
+import { runSingleFile } from '../../workspaceBuilder';
+import { BibtexFieldNameCompletionProvider } from './fieldName';
 
 describe('BibtexFieldNameCompletionProvider', () => {
   const provider = BibtexFieldNameCompletionProvider;
