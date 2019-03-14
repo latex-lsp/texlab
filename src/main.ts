@@ -13,7 +13,7 @@ import { BuildConfig, BuildProvider } from './build';
 import { completionProvider } from './completion';
 import { Document } from './document';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
-import { hoverProvider } from './hover';
+import { hoverProvider } from './hover/index';
 import { getLanguageById } from './language';
 import { linkProvider } from './link';
 import { BuildTextDocumentRequest } from './protocol/build';
