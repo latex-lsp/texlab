@@ -54,3 +54,20 @@ export function choice<T, R>(
     },
   };
 }
+
+export function deferred<S, T, R>(
+  factory: (source: S) => FeatureProvider<T, R>,
+  source: Promise<S>,
+  defaultValue: R,
+): FeatureProvider<T, R> {
+  let provider: FeatureProvider<T, R>;
+  source.then(x => (provider = factory(x)));
+
+  return {
+    execute: async (context, cancellationToken) => {
+      return provider !== undefined
+        ? provider.execute(context, cancellationToken)
+        : defaultValue;
+    },
+  };
+}
