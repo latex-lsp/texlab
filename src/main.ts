@@ -10,17 +10,27 @@ import {
   TextDocumentSyncKind,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
-import { completionProvider } from './completion';
+import { CompletionProvider } from './completion';
 import { definitonProvider } from './definition';
 import { Document } from './document';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
 import { hoverProvider } from './hover/index';
 import { getLanguageById } from './language';
 import { linkProvider } from './link';
+import {
+  INVALID_DISTRIBUTION_MESSAGE,
+  KPSEWHICH_NOT_FOUND_MESSAGE,
+  UNKNOWN_DISTRIBUTION_MESSAGE,
+} from './messages';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ForwardSearchRequest } from './protocol/forwardSearch';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
 import { FeatureContext, FeatureProvider } from './provider';
+import {
+  createResolver,
+  TexDistributionError,
+  TexDistributionErrorKind,
+} from './resolver';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
 
@@ -33,6 +43,24 @@ const features = combineFeatures(ProposedFeatures.all, customFeatures);
 const connection = createConnection(features);
 const workspace = new Workspace();
 
+const resolver = createResolver();
+resolver.catch(error => {
+  if (error instanceof TexDistributionError) {
+    switch (error.kind) {
+      case TexDistributionErrorKind.KpsewhichNotFound:
+        connection.window.showErrorMessage(KPSEWHICH_NOT_FOUND_MESSAGE);
+        break;
+      case TexDistributionErrorKind.UnknownDistribution:
+        connection.window.showErrorMessage(UNKNOWN_DISTRIBUTION_MESSAGE);
+        break;
+      case TexDistributionErrorKind.InvalidDistribution:
+        connection.window.showErrorMessage(INVALID_DISTRIBUTION_MESSAGE);
+        break;
+    }
+  }
+});
+
+const completionProvider = CompletionProvider(resolver);
 const buildProvider = BuildProvider(connection.console, connection.window);
 
 connection.onInitialize(async ({ rootUri }) => {
@@ -41,7 +69,6 @@ connection.onInitialize(async ({ rootUri }) => {
     if (root.isFile()) {
       await workspace.loadDirectory(root);
       await workspace.loadIncludes();
-      connection.console.log(workspace.documents.length.toString());
     }
   }
 
