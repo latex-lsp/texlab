@@ -39,12 +39,12 @@ describe('BibtexEntryDefintionProvider', () => {
       file: 'foo.tex',
       text: '\\foo',
       line: 0,
-      character: 7,
+      character: 2,
     });
     expect(actual).toEqual([]);
   });
 
-  it('should return an empty array if used inside a BibTeX document', async () => {
+  it('should return an empty array if used inside of a BibTeX document', async () => {
     const actual = await runSingleFile({
       provider,
       file: 'foo.bib',
