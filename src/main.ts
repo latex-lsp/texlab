@@ -15,6 +15,7 @@ import { Document } from './document';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
 import { hoverProvider } from './hover';
 import { getLanguageById } from './language';
+import { linkProvider } from './link';
 import { BuildTextDocumentRequest } from './protocol/build';
 import { ForwardSearchRequest } from './protocol/forwardSearch';
 import { ProgressFeature, ProgressListener } from './protocol/progress';
@@ -96,7 +97,7 @@ connection.onDidChangeTextDocument(async ({ textDocument, contentChanges }) => {
 connection.onDidSaveTextDocument(() => {});
 connection.onDocumentSymbol(() => null);
 connection.onRenameRequest(() => null);
-connection.onDocumentLinks(() => null);
+connection.onDocumentLinks(params => runProvider(linkProvider, params));
 
 connection.onCompletion(async params => {
   const items = await runProvider(completionProvider, params);
