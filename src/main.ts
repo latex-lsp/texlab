@@ -11,6 +11,7 @@ import {
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { completionProvider } from './completion';
+import { definitonProvider } from './definition';
 import { Document } from './document';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
 import { hoverProvider } from './hover/index';
@@ -114,7 +115,7 @@ connection.onCompletion(async params => {
 
 connection.onCompletionResolve(x => x);
 connection.onFoldingRanges(() => null);
-connection.onDefinition(() => null);
+connection.onDefinition(params => runProvider(definitonProvider, params));
 connection.onHover(params => runProvider(hoverProvider, params));
 connection.onDocumentFormatting(() => null);
 connection.onReferences(() => null);
