@@ -9,6 +9,7 @@ import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
 import { LatexIncludeCompletionProvider } from './latex/include';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
+import { LatexLabelCompletionProvider } from './latex/label';
 import { LatexUserCommandCompletionProvider } from './latex/userCommand';
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
@@ -26,6 +27,7 @@ export const CompletionProvider: CompletionProviderFactory = resolver =>
             BibtexFieldNameCompletionProvider,
             BibtexEntryTypeCompletionProvider,
             BibtexKernelCommandCompletionProvider,
+            LatexLabelCompletionProvider,
             LatexColorModelCompletionProvider,
             deferred(LatexClassImportCompletionProvider, resolver, []),
             LatexBeginCommandCompletionProvider,
