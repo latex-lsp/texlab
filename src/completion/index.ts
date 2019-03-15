@@ -4,6 +4,7 @@ import { BibtexEntryTypeCompletionProvider } from './bibtex/entryType';
 import { BibtexFieldNameCompletionProvider } from './bibtex/fieldName';
 import { BibtexKernelCommandCompletionProvider } from './bibtex/kernelCommand';
 import { DistinctCompletionProvider } from './distinct';
+import { LatexBeginCommandCompletionProvider } from './latex/beginCommand';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
 import { LatexIncludeCompletionProvider } from './latex/include';
@@ -27,6 +28,7 @@ export const CompletionProvider: CompletionProviderFactory = resolver =>
             BibtexKernelCommandCompletionProvider,
             LatexColorModelCompletionProvider,
             deferred(LatexClassImportCompletionProvider, resolver, []),
+            LatexBeginCommandCompletionProvider,
             LatexKernelCommandProvider,
             LatexUserCommandCompletionProvider,
           ),
