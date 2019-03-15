@@ -8,14 +8,16 @@ import {
   ServerCapabilities,
   TextDocumentIdentifier,
   TextDocumentSyncKind,
+  TextEdit,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { CompletionProvider } from './completion';
 import { definitonProvider } from './definition';
 import { Document } from './document';
+import { BibtexFormatter, BibtexFormatterConfig } from './formatting/bibtex';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
 import { hoverProvider } from './hover/index';
-import { getLanguageById } from './language';
+import { getLanguageById, Language } from './language';
 import { linkProvider } from './link';
 import {
   INVALID_DISTRIBUTION_MESSAGE,
@@ -31,6 +33,7 @@ import {
   TexDistributionError,
   TexDistributionErrorKind,
 } from './resolver';
+import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
 
@@ -144,7 +147,41 @@ connection.onCompletionResolve(x => x);
 connection.onFoldingRanges(() => null);
 connection.onDefinition(params => runProvider(definitonProvider, params));
 connection.onHover(params => runProvider(hoverProvider, params));
-connection.onDocumentFormatting(() => null);
+
+connection.onDocumentFormatting(async params => {
+  const uri = Uri.parse(params.textDocument.uri);
+  const document = workspace.documents.find(x => x.uri.equals(uri));
+  if (document === undefined || document.tree.language !== Language.Bibtex) {
+    return null;
+  }
+
+  const { insertSpaces, tabSize } = params.options;
+  const config: BibtexFormatterConfig = await connection.workspace.getConfiguration(
+    { section: 'bibtex.formatting' },
+  );
+
+  const formatter = new BibtexFormatter(
+    insertSpaces,
+    tabSize,
+    config.lineLength,
+  );
+
+  const edits: TextEdit[] = [];
+  document.tree.root.children.forEach(declaration => {
+    switch (declaration.kind) {
+      case BibtexSyntaxKind.Preamble:
+      case BibtexSyntaxKind.String:
+      case BibtexSyntaxKind.Entry:
+        edits.push({
+          range: declaration.range,
+          newText: formatter.format(declaration),
+        });
+        break;
+    }
+  });
+  return edits;
+});
+
 connection.onReferences(() => null);
 connection.onDocumentHighlight(() => null);
 
