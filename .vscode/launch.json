@@ -6,6 +6,7 @@
       "request": "launch",
       "name": "Launch Program",
       "program": "${workspaceFolder}\\out\\main.js",
+      "args": ["--stdio"],
       "preLaunchTask": "npm: watch",
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
     },
