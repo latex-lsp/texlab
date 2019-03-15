@@ -12,6 +12,8 @@ import {
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { CompletionProvider } from './completion';
+import { LatexComponentDatabase } from './completion/latex/data/component';
+import { COMPONENT_DATABASE_FILE } from './config';
 import { definitonProvider } from './definition';
 import { Document } from './document';
 import { BibtexFormatter, BibtexFormatterConfig } from './formatting/bibtex';
@@ -63,7 +65,13 @@ resolver.catch(error => {
   }
 });
 
-const completionProvider = CompletionProvider(resolver);
+const componentDatabase = LatexComponentDatabase.create(
+  COMPONENT_DATABASE_FILE,
+  resolver,
+  connection.window,
+);
+
+const completionProvider = CompletionProvider(resolver, componentDatabase);
 const buildProvider = BuildProvider(connection.console, connection.window);
 
 connection.onInitialize(async ({ rootUri }) => {
@@ -112,7 +120,7 @@ connection.onDidOpenTextDocument(async ({ textDocument }) => {
   const document = Document.create(uri, textDocument.text, language);
   workspace.put(document);
 
-  await workspace.loadIncludes();
+  await onDidOpenOrChange();
 });
 
 connection.onDidChangeTextDocument(async ({ textDocument, contentChanges }) => {
@@ -122,7 +130,7 @@ connection.onDidChangeTextDocument(async ({ textDocument, contentChanges }) => {
   const document = Document.create(uri, text, tree.language);
   workspace.put(document);
 
-  await workspace.loadIncludes();
+  await onDidOpenOrChange();
 });
 
 connection.onDidSaveTextDocument(() => {});
@@ -223,4 +231,14 @@ function runProvider<T, R>(
   const uri = Uri.parse(params.textDocument.uri);
   const context = new FeatureContext(uri, workspace, params);
   return provider.execute(context, cancellationToken);
+}
+
+async function onDidOpenOrChange() {
+  await workspace.loadIncludes();
+
+  workspace.documents
+    .map(x => workspace.relatedDocuments(x.uri))
+    .forEach(documents =>
+      componentDatabase.then(x => x.relatedComponents(documents)),
+    );
 }

@@ -7,6 +7,8 @@ import { DistinctCompletionProvider } from './distinct';
 import { LatexBeginCommandCompletionProvider } from './latex/beginCommand';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
+import { LatexComponentCommandCompletionProvider } from './latex/componentCommand';
+import { LatexComponentDatabase } from './latex/data/component';
 import { LatexIncludeCompletionProvider } from './latex/include';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
 import { LatexLabelCompletionProvider } from './latex/label';
@@ -15,9 +17,12 @@ import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
 
-type CompletionProviderFactory = (resolver: Promise<TexResolver>) => Provider;
+type Factory = (
+  resolver: Promise<TexResolver>,
+  database: Promise<LatexComponentDatabase>,
+) => Provider;
 
-export const CompletionProvider: CompletionProviderFactory = resolver =>
+export const CompletionProvider: Factory = (resolver, database) =>
   concat(
     LatexIncludeCompletionProvider,
     LimitedCompletionProvider(
@@ -30,6 +35,7 @@ export const CompletionProvider: CompletionProviderFactory = resolver =>
             LatexLabelCompletionProvider,
             LatexColorModelCompletionProvider,
             deferred(LatexClassImportCompletionProvider, resolver, []),
+            deferred(LatexComponentCommandCompletionProvider, database, []),
             LatexBeginCommandCompletionProvider,
             LatexKernelCommandProvider,
             LatexUserCommandCompletionProvider,
