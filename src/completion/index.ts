@@ -6,6 +6,7 @@ import { BibtexKernelCommandCompletionProvider } from './bibtex/kernelCommand';
 import { DistinctCompletionProvider } from './distinct';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
+import { LatexUserCommandCompletionProvider } from './latex/userCommand';
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
@@ -22,6 +23,7 @@ export const CompletionProvider: CompletionProviderFactory = resolver =>
           BibtexKernelCommandCompletionProvider,
           deferred(LatexClassImportCompletionProvider, resolver, []),
           LatexKernelCommandProvider,
+          LatexUserCommandCompletionProvider,
         ),
       ),
     ),

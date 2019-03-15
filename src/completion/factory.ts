@@ -13,6 +13,8 @@ import { getTypeDocumentation } from '../metadata/bibtexType';
 
 const KERNEL_DETAIL: string = 'built-in';
 
+export const USER_COMPONENT: string = 'unknown';
+
 function getDetail(component: string | undefined) {
   return component === undefined ? KERNEL_DETAIL : component;
 }
