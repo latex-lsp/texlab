@@ -19,6 +19,7 @@ import { LatexUserEnvironmentCompletionProvider } from './latex/userEnvironment'
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
+import { LatexPgfLibraryCompletionProvider } from './latex/pgfLibrary';
 
 type Factory = (
   resolver: Promise<TexResolver>,
@@ -35,6 +36,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             BibtexFieldNameCompletionProvider,
             BibtexEntryTypeCompletionProvider,
             BibtexKernelCommandCompletionProvider,
+            LatexPgfLibraryCompletionProvider,
             LatexLabelCompletionProvider,
             LatexColorModelCompletionProvider,
             deferred(LatexComponentEnvironmentCompletionProvider, database, []),
