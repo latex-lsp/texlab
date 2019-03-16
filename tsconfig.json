@@ -5,7 +5,8 @@
     "lib": ["es6"],
     "rootDir": "src",
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*"]
 }

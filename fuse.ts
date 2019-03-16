@@ -1,8 +1,14 @@
-import { FuseBox, Plugin, QuantumPlugin } from 'fuse-box';
+import {
+  BannerPlugin,
+  FuseBox,
+  JSONPlugin,
+  Plugin,
+  QuantumPlugin,
+} from 'fuse-box';
 import { context, task } from 'fuse-box/sparky';
 
 const BUNDLE_NAME = 'texlab';
-const INSTRUCTIONS = '> main.ts';
+const INSTRUCTIONS = '> src/main.ts';
 
 interface Context {
   createFuse(isProduction: boolean): FuseBox;
@@ -15,7 +21,10 @@ context(
         ? false
         : { inline: false, vendor: false };
 
-      const plugins: Plugin[] = [];
+      const plugins: Plugin[] = [
+        JSONPlugin(),
+        BannerPlugin('#!/usr/bin/env node'),
+      ];
       if (isProduction) {
         plugins.push(
           QuantumPlugin({
@@ -30,7 +39,7 @@ context(
       }
 
       return FuseBox.init({
-        homeDir: 'src',
+        homeDir: '.',
         target: 'server@es6',
         output: 'dist/$name.js',
         sourceMaps,
