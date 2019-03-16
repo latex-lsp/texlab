@@ -1,9 +1,8 @@
 import {
   CancellationToken,
   CompletionItem,
-  TextDocumentPositionParams,
   Position,
-  Range,
+  TextDocumentPositionParams,
 } from 'vscode-languageserver';
 import { Language } from '../../language';
 import { FeatureContext } from '../../provider';
@@ -14,7 +13,6 @@ import {
   LatexSyntaxNode,
 } from '../../syntax/latex/ast';
 import { CompletionProvider } from '../provider';
-import { posix } from 'path';
 
 export interface LatexArgumentCompletionProvider {
   commandNames: string[];

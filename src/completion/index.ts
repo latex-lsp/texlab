@@ -14,6 +14,7 @@ import { LatexKernelCommandProvider } from './latex/kernelCommand';
 import { LatexKernelEnvironmentCompletionProvider } from './latex/kernelEnvironment';
 import { LatexLabelCompletionProvider } from './latex/label';
 import { LatexUserCommandCompletionProvider } from './latex/userCommand';
+import { LatexUserEnvironmentCompletionProvider } from './latex/userEnvironment';
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
@@ -36,6 +37,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             LatexLabelCompletionProvider,
             LatexColorModelCompletionProvider,
             LatexKernelEnvironmentCompletionProvider,
+            LatexUserEnvironmentCompletionProvider,
             LatexBeginCommandCompletionProvider,
             deferred(LatexClassImportCompletionProvider, resolver, []),
             deferred(LatexComponentCommandCompletionProvider, database, []),
