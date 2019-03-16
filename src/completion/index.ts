@@ -6,6 +6,7 @@ import { BibtexKernelCommandCompletionProvider } from './bibtex/kernelCommand';
 import { DistinctCompletionProvider } from './distinct';
 import { LatexBeginCommandCompletionProvider } from './latex/beginCommand';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
+import { LatexColorCompletionProvider } from './latex/color';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
 import { LatexComponentCommandCompletionProvider } from './latex/componentCommand';
 import { LatexComponentEnvironmentCompletionProvider } from './latex/componentEnvironment';
@@ -40,6 +41,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             LatexPgfLibraryCompletionProvider,
             LatexTikzLibraryCompletionProvider,
             LatexLabelCompletionProvider,
+            LatexColorCompletionProvider,
             LatexColorModelCompletionProvider,
             deferred(LatexComponentEnvironmentCompletionProvider, database, []),
             LatexKernelEnvironmentCompletionProvider,
