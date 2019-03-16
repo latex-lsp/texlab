@@ -22,6 +22,7 @@ import { LatexUserEnvironmentCompletionProvider } from './latex/userEnvironment'
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
+import { LatexPackageImportCompletionProvider } from './latex/packageImport';
 
 type Factory = (
   resolver: Promise<TexResolver>,
@@ -48,6 +49,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             LatexUserEnvironmentCompletionProvider,
             LatexBeginCommandCompletionProvider,
             deferred(LatexClassImportCompletionProvider, resolver, []),
+            deferred(LatexPackageImportCompletionProvider, resolver, []),
             deferred(LatexComponentCommandCompletionProvider, database, []),
             LatexKernelCommandProvider,
             LatexUserCommandCompletionProvider,
