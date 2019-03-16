@@ -38,6 +38,7 @@ import {
 import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
+import { foldingProvider } from './folding';
 
 const customFeatures: Features<{}, {}, {}, {}, ProgressListener> = {
   __brand: 'features',
@@ -152,7 +153,7 @@ connection.onCompletion(async params => {
 });
 
 connection.onCompletionResolve(x => x);
-connection.onFoldingRanges(() => null);
+connection.onFoldingRanges(params => runProvider(foldingProvider, params));
 connection.onDefinition(params => runProvider(definitonProvider, params));
 connection.onHover(params => runProvider(hoverProvider, params));
 
