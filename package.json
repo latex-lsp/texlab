@@ -9,7 +9,7 @@
     "dist": "ts-node fuse dist",
     "watch": "ts-node fuse",
     "lint": "tslint --project .",
-    "format": "prettier --write \"src/**/*.{ts,json}\" \"*.{json,md}\"",
+    "format": "prettier --write \"src/**/*.{ts,json}\" \"*.{ts,json,yml,md}\" \".vscode/**/*.{json}\"",
     "test": "jest"
   },
   "jest": {

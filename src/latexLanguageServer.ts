@@ -211,7 +211,9 @@ export class LatexLanguageServer extends LanguageServer {
 
     const { insertSpaces, tabSize } = params.options;
     const config: BibtexFormatterConfig = await this.connection.workspace.getConfiguration(
-      { section: 'bibtex.formatting' },
+      {
+        section: 'bibtex.formatting',
+      },
     );
 
     const formatter = new BibtexFormatter(
