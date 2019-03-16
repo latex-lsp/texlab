@@ -133,7 +133,9 @@ export class Workspace {
 
       results.push(current);
       this.documents.forEach(document => {
-        if (edges.some(x => x.document1 === document)) {
+        if (
+          edges.some(x => x.document1 === document && x.document2 === current)
+        ) {
           stack.push(document);
         }
       });

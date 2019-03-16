@@ -57,4 +57,13 @@ describe('Workspace', () => {
     const workspace = builder.workspace;
     expect(workspace.findParent(uri)!.uri).toEqual(uri);
   });
+
+  it('should ignore unrelated documents', () => {
+    const builder = new WorkspaceBuilder();
+    const uri = builder.document('foo.tex', '\\include{bar}');
+    builder.document('bar.tex', '');
+    builder.document('baz.tex', '');
+    const workspace = builder.workspace;
+    expect(workspace.relatedDocuments(uri)).toHaveLength(2);
+  });
 });
