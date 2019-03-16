@@ -4,11 +4,9 @@ import * as factory from '../factory';
 import { CompletionProvider } from '../provider';
 import { LatexArgumentCompletionProvider } from './argument';
 
-type LatexClassImportCompletionProviderFactory = (
-  resolver: TexResolver,
-) => CompletionProvider;
+type Factory = (resolver: TexResolver) => CompletionProvider;
 
-export const LatexClassImportCompletionProvider: LatexClassImportCompletionProviderFactory = resolver => {
+export const LatexClassImportCompletionProvider: Factory = resolver => {
   const items = [...resolver.filesByName.values()]
     .filter(x => path.extname(x) === '.cls')
     .map(x => factory.createClass(path.basename(x, '.cls')));

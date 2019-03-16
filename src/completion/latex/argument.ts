@@ -24,11 +24,11 @@ export interface LatexArgumentCompletionProvider {
   ): Promise<CompletionItem[]>;
 }
 
-type LatexArgumentCompletionProviderFactory = (
+type Factory = (
   provider: LatexArgumentCompletionProvider,
 ) => CompletionProvider;
 
-export const LatexArgumentCompletionProvider: LatexArgumentCompletionProviderFactory = provider => ({
+export const LatexArgumentCompletionProvider: Factory = provider => ({
   execute: async (context, cancellationToken) => {
     const { document, params } = context;
     if (document.tree.language !== Language.Latex) {

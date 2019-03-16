@@ -14,7 +14,11 @@ export interface LatexComponent {
   environments: string[];
 }
 
-export class LatexComponentDatabase {
+export interface LatexComponentSource {
+  relatedComponents(documents: Document[]): LatexComponent[];
+}
+
+export class LatexComponentDatabase implements LatexComponentSource {
   public static async create(
     databaseFile: string,
     resolver: Promise<TexResolver>,
@@ -51,20 +55,6 @@ export class LatexComponentDatabase {
     this.analyzer = new LatexComponentAnalyzer(resolver, this.componentsByName);
   }
 
-  public getComponent(fileName: string): LatexComponent | undefined {
-    const component = this.componentsByName.get(fileName);
-    if (component !== undefined) {
-      return component;
-    }
-
-    const file = this.resolver.filesByName.get(fileName);
-    if (file !== undefined) {
-      this.queue.add(() => this.analyze(file));
-    }
-
-    return undefined;
-  }
-
   public relatedComponents(documents: Document[]): LatexComponent[] {
     const components = new Set<LatexComponent>();
     for (const { tree } of documents) {
@@ -88,6 +78,20 @@ export class LatexComponentDatabase {
     }
 
     return [...components];
+  }
+
+  private getComponent(fileName: string): LatexComponent | undefined {
+    const component = this.componentsByName.get(fileName);
+    if (component !== undefined) {
+      return component;
+    }
+
+    const file = this.resolver.filesByName.get(fileName);
+    if (file !== undefined) {
+      this.queue.add(() => this.analyze(file));
+    }
+
+    return undefined;
   }
 
   private async analyze(file: string) {

@@ -16,11 +16,9 @@ export interface LatexCommandCompletionProvider {
   ): Promise<CompletionItem[]>;
 }
 
-type LatexCommandCompletionProviderFactory = (
-  provider: LatexCommandCompletionProvider,
-) => CompletionProvider;
+type Factory = (provider: LatexCommandCompletionProvider) => CompletionProvider;
 
-export const LatexCommandCompletionProvider: LatexCommandCompletionProviderFactory = provider => ({
+export const LatexCommandCompletionProvider: Factory = provider => ({
   execute: async (context, cancellationToken) => {
     const { document, params } = context;
     if (document.tree.language !== Language.Latex) {

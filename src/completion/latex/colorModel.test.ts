@@ -19,10 +19,21 @@ describe('LatexColorModelCompletionProvider', () => {
     const items = await runSingleFile({
       provider,
       file: 'foo.tex',
-      text: '\\definecolorset{}',
+      text: '\\definecolorset{rgb}',
       line: 0,
       character: 16,
     });
     expect(items.map(x => x.label)).toEqual(COLOR_MODELS);
+  });
+
+  it('should not provide completion for BibTeX documents', async () => {
+    const items = await runSingleFile({
+      provider,
+      file: 'foo.bib',
+      text: '',
+      line: 0,
+      character: 0,
+    });
+    expect(items).toEqual([]);
   });
 });

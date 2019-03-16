@@ -1,25 +1,24 @@
 import { CompletionItem } from 'vscode-languageserver';
 import * as factory from '../factory';
 import { CompletionProvider } from '../provider';
-import { LatexCommandCompletionProvider } from './command';
 import { LatexComponentSource } from './data/component';
+import { LatexEnvironmentCompletionProvider } from './environment';
 
 type Factory = (database: LatexComponentSource) => CompletionProvider;
 
-export const LatexComponentCommandCompletionProvider: Factory = database =>
-  LatexCommandCompletionProvider({
+export const LatexComponentEnvironmentCompletionProvider: Factory = database =>
+  LatexEnvironmentCompletionProvider({
     execute: async ({ relatedDocuments }) => {
       const items: CompletionItem[] = [];
-      for (const component of database.relatedComponents(relatedDocuments)) {
-        component.commands.forEach(command => {
-          const item = factory.createCommand(
-            command,
+      database.relatedComponents(relatedDocuments).forEach(component => {
+        component.environments.forEach(environment => {
+          const item = factory.createEnvironment(
+            environment,
             component.fileNames.join(', '),
           );
           items.push(item);
         });
-      }
-
+      });
       return items;
     },
   });

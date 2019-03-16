@@ -8,7 +8,8 @@ import { LatexBeginCommandCompletionProvider } from './latex/beginCommand';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
 import { LatexComponentCommandCompletionProvider } from './latex/componentCommand';
-import { LatexComponentDatabase } from './latex/data/component';
+import { LatexComponentEnvironmentCompletionProvider } from './latex/componentEnvironment';
+import { LatexComponentSource } from './latex/data/component';
 import { LatexIncludeCompletionProvider } from './latex/include';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
 import { LatexKernelEnvironmentCompletionProvider } from './latex/kernelEnvironment';
@@ -21,7 +22,7 @@ import { CompletionProvider as Provider } from './provider';
 
 type Factory = (
   resolver: Promise<TexResolver>,
-  database: Promise<LatexComponentDatabase>,
+  database: Promise<LatexComponentSource>,
 ) => Provider;
 
 export const CompletionProvider: Factory = (resolver, database) =>
@@ -36,6 +37,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             BibtexKernelCommandCompletionProvider,
             LatexLabelCompletionProvider,
             LatexColorModelCompletionProvider,
+            deferred(LatexComponentEnvironmentCompletionProvider, database, []),
             LatexKernelEnvironmentCompletionProvider,
             LatexUserEnvironmentCompletionProvider,
             LatexBeginCommandCompletionProvider,
