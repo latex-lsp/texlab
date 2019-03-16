@@ -15,14 +15,15 @@ import { LatexIncludeCompletionProvider } from './latex/include';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
 import { LatexKernelEnvironmentCompletionProvider } from './latex/kernelEnvironment';
 import { LatexLabelCompletionProvider } from './latex/label';
+import { LatexPackageImportCompletionProvider } from './latex/packageImport';
 import { LatexPgfLibraryCompletionProvider } from './latex/pgfLibrary';
+import { LatexTikzCommandCompletionProvider } from './latex/tikzCommand';
 import { LatexTikzLibraryCompletionProvider } from './latex/tikzLibrary';
 import { LatexUserCommandCompletionProvider } from './latex/userCommand';
 import { LatexUserEnvironmentCompletionProvider } from './latex/userEnvironment';
 import { LimitedCompletionProvider } from './limited';
 import { OrderByQualityCompletionProvider } from './orderByQuality';
 import { CompletionProvider as Provider } from './provider';
-import { LatexPackageImportCompletionProvider } from './latex/packageImport';
 
 type Factory = (
   resolver: Promise<TexResolver>,
@@ -51,6 +52,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             deferred(LatexClassImportCompletionProvider, resolver, []),
             deferred(LatexPackageImportCompletionProvider, resolver, []),
             deferred(LatexComponentCommandCompletionProvider, database, []),
+            deferred(LatexTikzCommandCompletionProvider, database, []),
             LatexKernelCommandProvider,
             LatexUserCommandCompletionProvider,
           ),
