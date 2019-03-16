@@ -7,13 +7,13 @@ program
   .version(metadata.version)
   .option('--node-ipc')
   .option('--stdio')
-  .option('--socket')
-  .on('command:*', () => {
-    program.outputHelp();
-    process.exit(1);
-  });
+  .option('--socket');
 
 program.parse(process.argv);
+
+if (!program.nodeIpc && !program.stdio && !program.socket) {
+  program.help();
+}
 
 const server = new LatexLanguageServer();
 server.listen();
