@@ -88,3 +88,6 @@ typings/
 
 # TypeScript output
 out/
+
+# dist
+dist/
