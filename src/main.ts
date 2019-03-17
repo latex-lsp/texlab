@@ -7,13 +7,14 @@ program
   .version(metadata.version)
   .option('--node-ipc')
   .option('--stdio')
-  .option('--socket');
+  .option('--socket')
+  .option('--clientProcessId');
 
 program.parse(process.argv);
 
-if (!program.nodeIpc && !program.stdio && !program.socket) {
+try {
+  const server = new LatexLanguageServer();
+  server.listen();
+} catch {
   program.help();
 }
-
-const server = new LatexLanguageServer();
-server.listen();
