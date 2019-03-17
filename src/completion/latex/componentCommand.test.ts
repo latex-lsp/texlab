@@ -8,7 +8,7 @@ describe('LatexComponentCommandCompletionProvider', () => {
       relatedComponents: () => {
         return [
           {
-            fileNames: ['amsmath.sty'],
+            fileNames: ['lipsum.sty'],
             commands: ['lipsum'],
             environments: [],
             references: [],

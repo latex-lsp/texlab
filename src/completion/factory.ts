@@ -3,6 +3,7 @@ import {
   CompletionItemKind,
   InsertTextFormat,
   MarkupKind,
+  MarkupContent,
 } from 'vscode-languageserver';
 import {
   BibtexField,
@@ -143,5 +144,37 @@ export function createFieldName(field: BibtexField): CompletionItem {
       kind: MarkupKind.Markdown,
       value: getFieldDocumentation(field),
     },
+  };
+}
+
+export function createCommandSymbol(
+  name: string,
+  component: string | undefined,
+  image: string,
+): CompletionItem {
+  const detail = getDetail(component);
+  return {
+    label: name,
+    detail,
+    kind: CompletionItemKind.Function,
+    documentation: createImage(name, image),
+  };
+}
+
+export function createArgumentSymbol(
+  name: string,
+  image: string,
+): CompletionItem {
+  return {
+    label: name,
+    kind: CompletionItemKind.Field,
+    documentation: createImage(name, image),
+  };
+}
+
+function createImage(name: string, image: string): MarkupContent {
+  return {
+    kind: MarkupKind.Markdown,
+    value: `![${name}](data:image/png;base64,${image}|width=48,height=48)`,
   };
 }

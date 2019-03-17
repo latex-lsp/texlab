@@ -11,6 +11,8 @@ import { LatexColorModelCompletionProvider } from './latex/colorModel';
 import { LatexComponentCommandCompletionProvider } from './latex/componentCommand';
 import { LatexComponentEnvironmentCompletionProvider } from './latex/componentEnvironment';
 import { LatexComponentSource } from './latex/data/component';
+import { LatexArgumentSymbolCompletionProvider } from './latex/data/symbols/argument';
+import { LatexCommandSymbolCompletionProvider } from './latex/data/symbols/command';
 import { LatexIncludeCompletionProvider } from './latex/include';
 import { LatexKernelCommandProvider } from './latex/kernelCommand';
 import { LatexKernelEnvironmentCompletionProvider } from './latex/kernelEnvironment';
@@ -40,6 +42,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             BibtexFieldNameCompletionProvider,
             BibtexEntryTypeCompletionProvider,
             BibtexKernelCommandCompletionProvider,
+            LatexArgumentSymbolCompletionProvider,
             LatexPgfLibraryCompletionProvider,
             LatexTikzLibraryCompletionProvider,
             LatexLabelCompletionProvider,
@@ -49,6 +52,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             LatexKernelEnvironmentCompletionProvider,
             LatexUserEnvironmentCompletionProvider,
             LatexBeginCommandCompletionProvider,
+            deferred(LatexCommandSymbolCompletionProvider, database, []),
             deferred(LatexClassImportCompletionProvider, resolver, []),
             deferred(LatexPackageImportCompletionProvider, resolver, []),
             deferred(LatexComponentCommandCompletionProvider, database, []),
