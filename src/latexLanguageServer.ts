@@ -58,6 +58,7 @@ import {
 import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
+import { diagnosticsProvider } from './diagnostics';
 
 export class LatexLanguageServer extends LanguageServer {
   private readonly workspace = new Workspace();
@@ -290,6 +291,19 @@ export class LatexLanguageServer extends LanguageServer {
       .forEach(documents =>
         this.componentDatabase.then(x => x.relatedComponents(documents)),
       );
+
+    for (const document of this.workspace.documents) {
+      await this.publishDiagnostics(document.uri);
+    }
+  }
+
+  private async publishDiagnostics(uri: Uri) {
+    const params = { textDocument: { uri: uri.toString() } };
+    const diagnostics = await this.runProvider(diagnosticsProvider, params);
+    await this.connection.sendDiagnostics({
+      uri: uri.toString(),
+      diagnostics,
+    });
   }
 
   private async runProvider<T, R>(
