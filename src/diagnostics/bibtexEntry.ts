@@ -36,11 +36,6 @@ export const BibtexEntryDiagnosticsProvider: DiagnosticsProvider = {
         continue;
       }
 
-      if (entry.comma === undefined) {
-        add(ErrorCode.MissingComma, entry.name.end);
-        continue;
-      }
-
       for (let i = 0; i < entry.fields.length; i++) {
         const field = entry.fields[i];
         if (field.assign === undefined) {
@@ -104,7 +99,7 @@ function analyzeContent(content: BibtexContentSyntax): Diagnostic[] {
   return diagnostics;
 }
 
-enum ErrorCode {
+export enum ErrorCode {
   MissingBeginBrace,
   MissingEntryName,
   MissingComma,
@@ -114,7 +109,7 @@ enum ErrorCode {
   MissingQuote,
 }
 
-function createDiagnostic(code: ErrorCode, range: Range): Diagnostic {
+export function createDiagnostic(code: ErrorCode, range: Range): Diagnostic {
   let message: string;
   switch (code) {
     case ErrorCode.MissingBeginBrace:
