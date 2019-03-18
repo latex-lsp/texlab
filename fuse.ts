@@ -60,9 +60,6 @@ context(
                   uglify: true,
                   treeshake: true,
                   bakeApiIntoBundle: BUNDLE_NAME,
-                  api: core => {
-                    core.solveComputed('vscode-languageserver/lib/files.js');
-                  },
                 }),
               ]
             : []),
