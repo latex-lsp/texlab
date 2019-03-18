@@ -1,5 +1,4 @@
-import { RequestType } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier } from 'vscode-languageserver';
+import { RequestType, TextDocumentIdentifier } from 'vscode-languageserver';
 
 export interface BuildTextDocumentParams {
   /**
