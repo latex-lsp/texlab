@@ -5,16 +5,26 @@ import {
 } from 'vscode-languageserver';
 import { concat, FeatureContext } from '../provider';
 import { BibtexEntryDiagnosticsProvider } from './bibtexEntry';
+import { LatexDiagnosticsProvider } from './latex';
 import { DiagnosticsProvider } from './provider';
 
 class DefaultDiagnosticsProvider implements DiagnosticsProvider {
-  private readonly provider = concat(BibtexEntryDiagnosticsProvider);
+  public readonly latexProvider: LatexDiagnosticsProvider;
+  private readonly allProviders: DiagnosticsProvider;
+
+  constructor() {
+    this.latexProvider = new LatexDiagnosticsProvider();
+    this.allProviders = concat(
+      BibtexEntryDiagnosticsProvider,
+      this.latexProvider,
+    );
+  }
 
   public execute(
     context: FeatureContext<{ textDocument: TextDocumentIdentifier }>,
     cancellationToken?: CancellationToken,
   ): Promise<Diagnostic[]> {
-    return this.provider.execute(context, cancellationToken);
+    return this.allProviders.execute(context, cancellationToken);
   }
 }
 

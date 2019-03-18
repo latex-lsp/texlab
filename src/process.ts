@@ -10,6 +10,7 @@ interface ProcessInfo {
   directory?: string;
   stdout?: DataHandler;
   stderr?: DataHandler;
+  stdin?: string;
 }
 
 export type DataHandler = (data: Buffer | string) => void;
@@ -42,6 +43,11 @@ export class ProcessBuilder {
     return this;
   }
 
+  public input(text: string): ProcessBuilder {
+    this.info.stdin = text;
+    return this;
+  }
+
   public directory(directory: string): ProcessBuilder {
     this.info.directory = directory;
     return this;
@@ -52,7 +58,7 @@ export class ProcessBuilder {
     keepAlive: boolean = false,
   ): Promise<ProcessStatus> {
     return new Promise((resolve, reject) => {
-      const { executable, args, directory, stdout, stderr } = this.info;
+      const { executable, args, directory, stdout, stderr, stdin } = this.info;
       const process = cp.spawn(executable, args, {
         env,
         cwd: directory,
@@ -64,6 +70,11 @@ export class ProcessBuilder {
 
       if (stderr) {
         process.stderr.on('data', stderr);
+      }
+
+      if (stdin) {
+        process.stdin.write(stdin);
+        process.stdin.end();
       }
 
       if (cancellationToken) {

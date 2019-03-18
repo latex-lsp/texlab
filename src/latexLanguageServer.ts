@@ -8,6 +8,7 @@ import {
   DefinitionLink,
   DidChangeTextDocumentParams,
   DidOpenTextDocumentParams,
+  DidSaveTextDocumentParams,
   DocumentFormattingParams,
   DocumentLink,
   DocumentLinkParams,
@@ -27,6 +28,8 @@ import { CompletionProvider } from './completion';
 import { LatexComponentDatabase } from './completion/latex/data/component';
 import { COMPONENT_DATABASE_FILE } from './config';
 import { definitonProvider } from './definition';
+import { diagnosticsProvider } from './diagnostics';
+import { LatexLinterConfig } from './diagnostics/latex';
 import { Document } from './document';
 import { foldingProvider } from './folding';
 import { BibtexFormatter, BibtexFormatterConfig } from './formatting/bibtex';
@@ -58,7 +61,6 @@ import {
 import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
-import { diagnosticsProvider } from './diagnostics';
 
 export class LatexLanguageServer extends LanguageServer {
   private readonly workspace = new Workspace();
@@ -145,9 +147,9 @@ export class LatexLanguageServer extends LanguageServer {
     return { capabilities };
   }
 
-  public didOpenTextDocument({
+  public async didOpenTextDocument({
     textDocument,
-  }: DidOpenTextDocumentParams): void {
+  }: DidOpenTextDocumentParams): Promise<void> {
     const language = getLanguageById(textDocument.languageId);
     if (language === undefined) {
       return;
@@ -157,6 +159,7 @@ export class LatexLanguageServer extends LanguageServer {
     const document = Document.create(uri, textDocument.text, language);
     this.workspace.put(document);
 
+    await this.runLinter(uri, textDocument.text);
     this.onDidOpenOrChange();
   }
 
@@ -171,6 +174,15 @@ export class LatexLanguageServer extends LanguageServer {
     this.workspace.put(document);
 
     this.onDidOpenOrChange();
+  }
+
+  public async didSaveTextDocument({
+    textDocument,
+    text,
+  }: DidSaveTextDocumentParams): Promise<void> {
+    const uri = Uri.parse(textDocument.uri);
+    await this.runLinter(uri, text!);
+    await this.publishDiagnostics(uri);
   }
 
   public async hover(
@@ -294,6 +306,20 @@ export class LatexLanguageServer extends LanguageServer {
 
     for (const document of this.workspace.documents) {
       await this.publishDiagnostics(document.uri);
+    }
+  }
+
+  private async runLinter(uri: Uri, text: string) {
+    const config: LatexLinterConfig = await this.connection.workspace.getConfiguration(
+      {
+        section: 'latex.lint',
+      },
+    );
+
+    if (config.onSave) {
+      await diagnosticsProvider.latexProvider.update(uri, text);
+    } else {
+      diagnosticsProvider.latexProvider.clear(uri);
     }
   }
 
