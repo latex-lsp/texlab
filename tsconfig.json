@@ -3,10 +3,12 @@
     "module": "commonjs",
     "target": "es6",
     "lib": ["es6"],
-    "rootDir": "src",
+    "rootDir": ".",
+    "outDir": "out",
     "sourceMap": true,
     "strict": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.ts"]
 }
