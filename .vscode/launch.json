@@ -8,7 +8,7 @@
       "program": "${workspaceFolder}/dist/texlab.js",
       "args": ["--stdio"],
       "sourceMapPathOverrides": {
-        "*": "${workspaceFolder}/*"
+        "src/*": "${workspaceFolder}/*"
       }
     },
     {
@@ -28,7 +28,7 @@
       "port": 6009,
       "restart": true,
       "sourceMapPathOverrides": {
-        "*": "${workspaceFolder}/*"
+        "src/*": "${workspaceFolder}/*"
       }
     }
   ]

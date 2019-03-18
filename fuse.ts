@@ -12,34 +12,6 @@ import { EOL } from 'os';
 const BUNDLE_NAME = 'texlab';
 const INSTRUCTIONS = '> src/main.ts';
 
-class ShebangPlugin implements Plugin {
-  public test = /\.js$/;
-
-  private readonly SHEBANG = '#!/usr/bin/env node' + EOL;
-
-  constructor(private isProduction: boolean) {}
-
-  public preBundle(ctx: WorkFlowContext) {
-    if (this.isProduction) {
-      return;
-    }
-
-    ctx.source.addContent(this.SHEBANG);
-  }
-
-  public async producerEnd(producer: BundleProducer) {
-    if (!this.isProduction) {
-      return;
-    }
-
-    for (const bundle of producer.bundles.values()) {
-      const code = bundle.generatedCode.toString();
-      const buffer = Buffer.from(this.SHEBANG + code);
-      await bundle.context.output.writeCurrent(buffer);
-    }
-  }
-}
-
 interface Context {
   createFuse(isProduction: boolean): FuseBox;
 }
@@ -86,3 +58,31 @@ task('dist', async ({ createFuse }: Context) => {
 
   await fuse.run();
 });
+
+class ShebangPlugin implements Plugin {
+  public test = /\.js$/;
+
+  private readonly SHEBANG = '#!/usr/bin/env node' + EOL;
+
+  constructor(private isProduction: boolean) {}
+
+  public preBundle(ctx: WorkFlowContext) {
+    if (this.isProduction) {
+      return;
+    }
+
+    ctx.source.addContent(this.SHEBANG);
+  }
+
+  public async producerEnd(producer: BundleProducer) {
+    if (!this.isProduction) {
+      return;
+    }
+
+    for (const bundle of producer.bundles.values()) {
+      const code = bundle.generatedCode.toString();
+      const buffer = Buffer.from(this.SHEBANG + code);
+      await bundle.context.output.writeCurrent(buffer);
+    }
+  }
+}
