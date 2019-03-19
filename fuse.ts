@@ -32,6 +32,10 @@ context(
                   uglify: true,
                   treeshake: true,
                   bakeApiIntoBundle: BUNDLE_NAME,
+                  api: core => {
+                    core.solveComputed('jsdom/lib/jsdom/utils.js');
+                    core.solveComputed('parse5/lib/index.js');
+                  },
                 }),
               ]
             : []),
