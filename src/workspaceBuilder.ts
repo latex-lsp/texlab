@@ -1,5 +1,8 @@
 import * as path from 'path';
-import { TextDocumentPositionParams } from 'vscode-languageserver';
+import {
+  RenameParams,
+  TextDocumentPositionParams,
+} from 'vscode-languageserver';
 import { Document } from './document';
 import { getLanguageByExtension } from './language';
 import { FeatureContext, FeatureProvider } from './provider';
@@ -23,14 +26,16 @@ export class WorkspaceBuilder {
 
   public context(
     uri: Uri,
-    line: number,
-    character: number,
-  ): FeatureContext<TextDocumentPositionParams> {
-    const params: TextDocumentPositionParams = {
-      position: { line, character },
+    line: number = 0,
+    character: number = 0,
+    newName: string = '',
+  ): FeatureContext<RenameParams> {
+    const params: RenameParams = {
       textDocument: {
         uri: uri.toString(true),
       },
+      position: { line, character },
+      newName,
     };
     return new FeatureContext(uri, this.workspace, params);
   }

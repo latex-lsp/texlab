@@ -23,6 +23,8 @@ import {
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   TextEdit,
+  WorkspaceEdit,
+  RenameParams,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { CompletionProvider } from './completion';
@@ -65,6 +67,7 @@ import {
 import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
+import { renameProvider } from './rename';
 
 export class LatexLanguageServer extends LanguageServer {
   private readonly workspace = new Workspace();
@@ -281,6 +284,12 @@ export class LatexLanguageServer extends LanguageServer {
       }
     });
     return edits;
+  }
+
+  public async rename(
+    params: RenameParams,
+  ): Promise<WorkspaceEdit | undefined | null> {
+    return this.runProvider(renameProvider, params);
   }
 
   public async documentLinks(
