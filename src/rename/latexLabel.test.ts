@@ -1,6 +1,6 @@
+import { Range, WorkspaceEdit } from 'vscode-languageserver';
 import { WorkspaceBuilder } from '../workspaceBuilder';
 import { LatexLabelRenameProvider } from './latexLabel';
-import { WorkspaceEdit, Range } from 'vscode-languageserver';
 
 describe('LatexLabelRenameProvider', () => {
   const provider = LatexLabelRenameProvider;

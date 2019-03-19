@@ -26,12 +26,12 @@ export const BibtexEntryRenameProvider: RenameProvider = {
     for (const { uri, tree } of relatedDocuments) {
       switch (tree.language) {
         case Language.Latex:
-          changes![uri.toString()] = tree.citations
+          changes[uri.toString()] = tree.citations
             .filter(x => x.name.text === token!.text)
             .map(x => ({ range: x.name.range, newText: params.newName }));
           break;
         case Language.Bibtex:
-          changes![uri.toString()] = tree.entries
+          changes[uri.toString()] = tree.entries
             .filter(x => x.name !== undefined && x.name.text === token!.text)
             .map(x => ({ range: x.name!.range, newText: params.newName }));
           break;
