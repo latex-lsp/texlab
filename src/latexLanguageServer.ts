@@ -34,7 +34,7 @@ import { Document } from './document';
 import { foldingProvider } from './folding';
 import { BibtexFormatter, BibtexFormatterConfig } from './formatting/bibtex';
 import { ForwardSearchConfig, forwardSearchProvider } from './forwardSearch';
-import { hoverProvider } from './hover';
+import { HoverProvider } from './hover';
 import { getLanguageById, Language } from './language';
 import { LanguageServer } from './languageServer';
 import { linkProvider } from './link';
@@ -76,6 +76,8 @@ export class LatexLanguageServer extends LanguageServer {
     this.resolver,
     this.componentDatabase,
   );
+
+  private readonly hoverProvider = HoverProvider(this.componentDatabase);
 
   private readonly buildProvider = BuildProvider(
     this.connection.console,
@@ -189,7 +191,7 @@ export class LatexLanguageServer extends LanguageServer {
   public async hover(
     params: TextDocumentPositionParams,
   ): Promise<Hover | undefined | null> {
-    return this.runProvider(hoverProvider, params);
+    return this.runProvider(this.hoverProvider, params);
   }
 
   public async completion(
