@@ -16,6 +16,8 @@ import {
   Hover,
   InitializeParams,
   InitializeResult,
+  Location,
+  ReferenceParams,
   ServerCapabilities,
   TextDocumentIdentifier,
   TextDocumentPositionParams,
@@ -54,6 +56,7 @@ import {
   ForwardSearchResult,
 } from './protocol/forwardSearch';
 import { FeatureContext, FeatureProvider } from './provider';
+import { referenceProvider } from './references';
 import {
   createResolver,
   TexDistributionError,
@@ -234,6 +237,12 @@ export class LatexLanguageServer extends LanguageServer {
     params: TextDocumentPositionParams,
   ): Promise<Definition | DefinitionLink[] | undefined | null> {
     return this.runProvider(definitonProvider, params);
+  }
+
+  public async references(
+    params: ReferenceParams,
+  ): Promise<Location[] | undefined | null> {
+    return this.runProvider(referenceProvider, params);
   }
 
   public async documentFormatting(
