@@ -1,9 +1,9 @@
 import {
   CompletionItem,
-  CompletionItemKind,
+  CompletionItemKind as LspCompletionItemKind,
   InsertTextFormat,
-  MarkupKind,
   MarkupContent,
+  MarkupKind,
 } from 'vscode-languageserver';
 import {
   BibtexField,
@@ -20,6 +20,26 @@ function getDetail(component: string | undefined) {
   return component === undefined ? KERNEL_DETAIL : component;
 }
 
+export enum CompletionItemKind {
+  Snippet,
+  Command,
+  Environment,
+  Label,
+  Folder,
+  File,
+  PgfLibrary,
+  TikzLibrary,
+  Color,
+  ColorModel,
+  Package,
+  Class,
+  EntryType,
+  FieldName,
+  CommandSymbol,
+  ArgumentSymbol,
+  Image,
+}
+
 export function createSnippet(
   name: string,
   component: string | undefined,
@@ -27,7 +47,8 @@ export function createSnippet(
 ): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Snippet,
+    kind: LspCompletionItemKind.Snippet,
+    data: CompletionItemKind.Snippet,
     detail: getDetail(component),
     insertText: template,
     insertTextFormat: InsertTextFormat.Snippet,
@@ -40,7 +61,8 @@ export function createCommand(
 ): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Function,
+    kind: LspCompletionItemKind.Function,
+    data: CompletionItemKind.Command,
     detail: getDetail(component),
   };
 }
@@ -51,7 +73,8 @@ export function createEnvironment(
 ): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.EnumMember,
+    kind: LspCompletionItemKind.EnumMember,
+    data: CompletionItemKind.Environment,
     detail: getDetail(component),
   };
 }
@@ -59,14 +82,16 @@ export function createEnvironment(
 export function createLabel(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Field,
+    kind: LspCompletionItemKind.Field,
+    data: CompletionItemKind.Label,
   };
 }
 
 export function createFolder(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Folder,
+    kind: LspCompletionItemKind.Folder,
+    data: CompletionItemKind.Folder,
     commitCharacters: ['/'],
   };
 }
@@ -74,14 +99,16 @@ export function createFolder(name: string): CompletionItem {
 export function createFile(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.File,
+    kind: LspCompletionItemKind.File,
+    data: CompletionItemKind.File,
   };
 }
 
 export function createPgfLibrary(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Module,
+    kind: LspCompletionItemKind.Module,
+    data: CompletionItemKind.PgfLibrary,
     commitCharacters: [' '],
   };
 }
@@ -89,7 +116,8 @@ export function createPgfLibrary(name: string): CompletionItem {
 export function createTikzLibrary(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Module,
+    kind: LspCompletionItemKind.Module,
+    data: CompletionItemKind.TikzLibrary,
     commitCharacters: [' '],
   };
 }
@@ -97,28 +125,32 @@ export function createTikzLibrary(name: string): CompletionItem {
 export function createColor(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Color,
+    kind: LspCompletionItemKind.Color,
+    data: CompletionItemKind.Color,
   };
 }
 
 export function createColorModel(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Color,
+    kind: LspCompletionItemKind.Color,
+    data: CompletionItemKind.ColorModel,
   };
 }
 
 export function createPackage(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Class,
+    kind: LspCompletionItemKind.Class,
+    data: CompletionItemKind.Package,
   };
 }
 
 export function createClass(name: string): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Class,
+    kind: LspCompletionItemKind.Class,
+    data: CompletionItemKind.Class,
   };
 }
 
@@ -131,7 +163,8 @@ export function createEntryType(name: string): CompletionItem {
 
   return {
     label: name,
-    kind: CompletionItemKind.Interface,
+    kind: LspCompletionItemKind.Interface,
+    data: CompletionItemKind.EntryType,
     documentation,
   };
 }
@@ -139,7 +172,8 @@ export function createEntryType(name: string): CompletionItem {
 export function createFieldName(field: BibtexField): CompletionItem {
   return {
     label: getFieldName(field),
-    kind: CompletionItemKind.Field,
+    kind: LspCompletionItemKind.Field,
+    data: CompletionItemKind.FieldName,
     documentation: {
       kind: MarkupKind.Markdown,
       value: getFieldDocumentation(field),
@@ -156,7 +190,8 @@ export function createCommandSymbol(
   return {
     label: name,
     detail,
-    kind: CompletionItemKind.Function,
+    kind: LspCompletionItemKind.Function,
+    data: CompletionItemKind.CommandSymbol,
     documentation: createImage(name, image),
   };
 }
@@ -167,7 +202,8 @@ export function createArgumentSymbol(
 ): CompletionItem {
   return {
     label: name,
-    kind: CompletionItemKind.Field,
+    kind: LspCompletionItemKind.Field,
+    data: CompletionItemKind.ArgumentSymbol,
     documentation: createImage(name, image),
   };
 }

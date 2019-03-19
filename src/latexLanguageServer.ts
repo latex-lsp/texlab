@@ -1,7 +1,6 @@
 import {
   CancellationToken,
   CompletionItem,
-  CompletionItemKind,
   CompletionList,
   CompletionParams,
   Definition,
@@ -25,6 +24,7 @@ import {
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { CompletionProvider } from './completion';
+import { CompletionItemKind } from './completion/factory';
 import { LatexComponentDatabase } from './completion/latex/data/component';
 import { COMPONENT_DATABASE_FILE } from './config';
 import { definitonProvider } from './definition';
@@ -43,6 +43,7 @@ import {
   KPSEWHICH_NOT_FOUND_MESSAGE,
   UNKNOWN_DISTRIBUTION_MESSAGE,
 } from './messages';
+import { getComponentMetadata } from './metadata/component';
 import {
   BuildResult,
   BuildTextDocumentParams,
@@ -205,6 +206,26 @@ export class LatexLanguageServer extends LanguageServer {
       isIncomplete: !allIncludes,
       items,
     };
+  }
+
+  public async completionResolve(
+    item: CompletionItem,
+  ): Promise<CompletionItem> {
+    switch (item.data as CompletionItemKind) {
+      case CompletionItemKind.Class:
+      case CompletionItemKind.Package: {
+        const metadata = await getComponentMetadata(item.label);
+        if (metadata !== undefined) {
+          item.detail = metadata.caption;
+          item.documentation = metadata.documentation;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+
+    return item;
   }
 
   public async definition(
