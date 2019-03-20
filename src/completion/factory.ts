@@ -11,6 +11,7 @@ import {
   getFieldName,
 } from '../metadata/bibtexField';
 import { getTypeDocumentation } from '../metadata/bibtexType';
+import { BibtexEntrySyntax } from '../syntax/bibtex/ast';
 
 const KERNEL_DETAIL: string = 'built-in';
 
@@ -35,6 +36,7 @@ export enum CompletionItemKind {
   Class,
   EntryType,
   FieldName,
+  Citation,
   CommandSymbol,
   ArgumentSymbol,
   Image,
@@ -166,6 +168,14 @@ export function createEntryType(name: string): CompletionItem {
     kind: LspCompletionItemKind.Interface,
     data: CompletionItemKind.EntryType,
     documentation,
+  };
+}
+
+export function createCitation(entry: BibtexEntrySyntax): CompletionItem {
+  return {
+    label: entry.name!.text,
+    kind: LspCompletionItemKind.Constant,
+    data: CompletionItemKind.Citation,
   };
 }
 

@@ -18,13 +18,13 @@ import {
   InitializeResult,
   Location,
   ReferenceParams,
+  RenameParams,
   ServerCapabilities,
   TextDocumentIdentifier,
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   TextEdit,
   WorkspaceEdit,
-  RenameParams,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
 import { CompletionProvider } from './completion';
@@ -59,6 +59,7 @@ import {
 } from './protocol/forwardSearch';
 import { FeatureContext, FeatureProvider } from './provider';
 import { referenceProvider } from './references';
+import { renameProvider } from './rename';
 import {
   createResolver,
   TexDistributionError,
@@ -67,7 +68,6 @@ import {
 import { BibtexSyntaxKind } from './syntax/bibtex/ast';
 import { Uri } from './uri';
 import { Workspace } from './workspace';
-import { renameProvider } from './rename';
 
 export class LatexLanguageServer extends LanguageServer {
   private readonly workspace = new Workspace();

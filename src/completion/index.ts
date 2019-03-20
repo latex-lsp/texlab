@@ -5,6 +5,7 @@ import { BibtexFieldNameCompletionProvider } from './bibtex/fieldName';
 import { BibtexKernelCommandCompletionProvider } from './bibtex/kernelCommand';
 import { DistinctCompletionProvider } from './distinct';
 import { LatexBeginCommandCompletionProvider } from './latex/beginCommand';
+import { LatexCitationCompletionProvider } from './latex/citation';
 import { LatexClassImportCompletionProvider } from './latex/classImport';
 import { LatexColorCompletionProvider } from './latex/color';
 import { LatexColorModelCompletionProvider } from './latex/colorModel';
@@ -42,6 +43,7 @@ export const CompletionProvider: Factory = (resolver, database) =>
             BibtexFieldNameCompletionProvider,
             BibtexEntryTypeCompletionProvider,
             BibtexKernelCommandCompletionProvider,
+            LatexCitationCompletionProvider,
             LatexArgumentSymbolCompletionProvider,
             LatexPgfLibraryCompletionProvider,
             LatexTikzLibraryCompletionProvider,
