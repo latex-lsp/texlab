@@ -7,9 +7,8 @@
       "name": "Launch Program",
       "program": "${workspaceFolder}/dist/texlab.js",
       "args": ["--stdio"],
-      "sourceMapPathOverrides": {
-        "src/*": "${workspaceFolder}/*"
-      }
+      "preLaunchTask": "npm: watch",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     },
     {
       "type": "node",
@@ -17,6 +16,8 @@
       "name": "Launch Tests",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "args": ["--runInBand"],
+      "preLaunchTask": "npm: watch",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "windows": {
         "program": "${workspaceFolder}/node_modules/jest/bin/jest"
       }
@@ -27,9 +28,8 @@
       "name": "Attach to Server",
       "port": 6009,
       "restart": true,
-      "sourceMapPathOverrides": {
-        "src/*": "${workspaceFolder}/*"
-      }
+      "preLaunchTask": "npm: watch",
+      "outFiles": ["${workspaceRoot}/dist/**/*.js"]
     }
   ]
 }

@@ -9,8 +9,9 @@
     "texlab": "dist/texlab.js"
   },
   "scripts": {
-    "dist": "ts-node fuse dist",
-    "watch": "ts-node fuse",
+    "dist": "ts-node fuse",
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
     "lint": "tslint --project .",
     "format": "prettier --write \"src/**/*.{ts,json}\" \"*.{ts,json,yml,md}\" \".vscode/**/*.{json}\"",
     "test": "jest"

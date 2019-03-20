@@ -1,10 +1,8 @@
 import * as program from 'commander';
-import * as metadata from '../package.json';
 import { LatexLanguageServer } from './latexLanguageServer';
 
 program
-  .description(metadata.description)
-  .version(metadata.version)
+  .description('LaTeX Language Server')
   .option('--node-ipc')
   .option('--stdio')
   .option('--socket')
