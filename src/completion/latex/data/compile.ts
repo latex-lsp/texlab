@@ -39,10 +39,14 @@ export async function compile(
     const cancellationTokenSource = new CancellationTokenSource();
     setTimeout(() => cancellationTokenSource.cancel(), TIMEOUT);
 
-    await new ProcessBuilder(executable)
-      .args('-interaction=batchmode', '-shell-escape', 'code.tex')
-      .directory(directory)
-      .start(cancellationTokenSource.token);
+    try {
+      await new ProcessBuilder(executable)
+        .args('-interaction=batchmode', '-shell-escape', 'code.tex')
+        .directory(directory)
+        .start(cancellationTokenSource.token);
+    } catch {
+      return undefined;
+    }
 
     const logFile = path.join(directory, 'code.log');
     if (fs.existsSync(logFile)) {

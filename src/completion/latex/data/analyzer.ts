@@ -18,11 +18,13 @@ export class LatexComponentAnalyzer {
     KERNEL_ENVIRONMENTS.forEach(x => candidates.delete(x));
 
     const references = unit.references.map(x => path.basename(x));
-    for (const reference of references) {
-      const component = this.componentsByName.get(reference)!;
-      component.commands.forEach(x => candidates.delete(x));
-      component.environments.forEach(x => candidates.delete(x));
-    }
+    references
+      .map(x => this.componentsByName.get(x))
+      .filter((x): x is LatexComponent => x !== undefined)
+      .forEach(reference => {
+        reference.commands.forEach(x => candidates.delete(x));
+        reference.environments.forEach(x => candidates.delete(x));
+      });
 
     const fileNames = units.map(x => path.basename(x.file));
     const { commands, environments } = await unit.checkPrimitives([
