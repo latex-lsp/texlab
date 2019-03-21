@@ -47,6 +47,7 @@ import {
   KPSEWHICH_NOT_FOUND_MESSAGE,
   UNKNOWN_DISTRIBUTION_MESSAGE,
 } from './messages';
+import { generateBibliography } from './metadata/bibtexEntry';
 import { getComponentMetadata } from './metadata/component';
 import {
   BuildResult,
@@ -219,20 +220,21 @@ export class LatexLanguageServer extends LanguageServer {
   public async completionResolve(
     item: CompletionItem,
   ): Promise<CompletionItem> {
-    switch (item.data as CompletionItemKind) {
+    switch (item.data.kind) {
       case CompletionItemKind.Class:
-      case CompletionItemKind.Package: {
+      case CompletionItemKind.Package:
         const metadata = await getComponentMetadata(item.label);
         if (metadata !== undefined) {
           item.detail = metadata.caption;
           item.documentation = metadata.documentation;
         }
         break;
-      }
+      case CompletionItemKind.Citation:
+        item.documentation = generateBibliography(item.data.entry);
+        break;
       default:
         break;
     }
-
     return item;
   }
 
