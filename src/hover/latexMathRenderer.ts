@@ -8,6 +8,7 @@ mathjax.config({
       processEscapes: true,
     },
   },
+  displayErrors: false,
 });
 
 interface Svg {
