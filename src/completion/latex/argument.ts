@@ -35,9 +35,7 @@ export const LatexArgumentCompletionProvider: Factory = provider => ({
       return [];
     }
 
-    const nodes = document.tree.descendants
-      .filter(x => range.contains(x.range, params.position))
-      .reverse();
+    const nodes = document.tree.findAll(params.position);
 
     const command =
       findNonEmptyCommand(provider, nodes, params.position) ||

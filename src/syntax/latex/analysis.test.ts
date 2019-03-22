@@ -8,7 +8,7 @@ import {
   LatexSection,
   LatexSyntaxTree,
 } from './analysis';
-import { LatexCommandSyntax } from './ast';
+import { LatexCommandSyntax, LatexSyntaxNode } from './ast';
 import { LatexToken, LatexTokenKind } from './lexer';
 
 describe('LaTeX Analysis', () => {
@@ -225,5 +225,21 @@ describe('LaTeX Analysis', () => {
     const text = '\\begin{document}\\end{document}';
     const tree = new LatexSyntaxTree(text);
     expect(tree.isStandalone).toBeTruthy();
+  });
+
+  it('should cache the result of findAll', () => {
+    const text = '\\foo{bar}\\baz';
+    const tree = new LatexSyntaxTree(text);
+    const expected1 = [
+      tree.descendants[3],
+      tree.descendants[2],
+      tree.descendants[1],
+      tree.descendants[0],
+    ];
+    expect(tree.findAll({ line: 0, character: 7 })).toEqual(expected1);
+    expect(tree.findAll({ line: 0, character: 7 })).toEqual(expected1);
+
+    const expected2 = [tree.descendants[4], tree.descendants[0]];
+    expect(tree.findAll({ line: 0, character: 12 })).toEqual(expected2);
   });
 });

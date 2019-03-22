@@ -187,6 +187,11 @@ export class LatexInline {
   }
 }
 
+interface FindAllCache {
+  position: Position;
+  nodes: LatexSyntaxNode[];
+}
+
 export class LatexSyntaxTree {
   public readonly language: Language.Latex;
   public readonly root: LatexDocumentSyntax;
@@ -201,6 +206,7 @@ export class LatexSyntaxTree {
   public readonly equations: LatexEquation[];
   public readonly inlines: LatexInline[];
   public readonly isStandalone: boolean;
+  private findAllCache: FindAllCache | undefined;
 
   constructor(public readonly text: string) {
     this.language = Language.Latex;
@@ -219,6 +225,7 @@ export class LatexSyntaxTree {
     this.isStandalone = this.environments.some(
       x => x.beginName === 'document' || x.endName === 'document',
     );
+    this.findAllCache = undefined;
   }
 
   public find(position: Position): LatexSyntaxNode | undefined {
@@ -229,6 +236,22 @@ export class LatexSyntaxTree {
       }
     }
     return undefined;
+  }
+
+  public findAll(position: Position): LatexSyntaxNode[] {
+    if (this.findAllCache !== undefined) {
+      const { line, character } = this.findAllCache.position;
+      if (line === position.line && character === position.character) {
+        return this.findAllCache.nodes;
+      }
+    }
+
+    const nodes = this.descendants
+      .filter(x => range.contains(x.range, position))
+      .reverse();
+
+    this.findAllCache = { position, nodes };
+    return nodes;
   }
 
   private analyze() {
