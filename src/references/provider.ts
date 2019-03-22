@@ -1,4 +1,7 @@
-import { Location, ReferenceParams } from 'vscode-languageserver';
+import { Location, TextDocumentPositionParams } from 'vscode-languageserver';
 import { FeatureProvider } from '../provider';
 
-export type ReferenceProvider = FeatureProvider<ReferenceParams, Location[]>;
+export type ReferenceProvider = FeatureProvider<
+  TextDocumentPositionParams,
+  Location[]
+>;
