@@ -1,5 +1,5 @@
-import PromiseQueue from 'easy-promise-queue';
 import * as fs from 'fs';
+import PromiseQueue from 'p-queue';
 import * as path from 'path';
 import { Document } from '../../../document';
 import { Language } from '../../../language';
