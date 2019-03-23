@@ -1,5 +1,5 @@
 import CleanWebpackPlugin from 'clean-webpack-plugin';
-import * as path from 'path';
+import path from 'path';
 import { BannerPlugin, Configuration } from 'webpack';
 
 const config: Configuration = {

@@ -1,5 +1,5 @@
-import * as cp from 'child_process';
-import * as kill from 'tree-kill';
+import cp from 'child_process';
+import kill from 'tree-kill';
 import { CancellationToken } from 'vscode-jsonrpc';
 
 const { ELECTRON_RUN_AS_NODE, ...env } = process.env;

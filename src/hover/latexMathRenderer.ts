@@ -1,5 +1,5 @@
-import * as parser from 'fast-xml-parser';
-import * as mathjax from 'mathjax-node';
+import parser from 'fast-xml-parser';
+import mathjax from 'mathjax-node';
 
 mathjax.config({
   MathJax: {

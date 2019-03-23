@@ -1,6 +1,6 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import PromiseQueue from 'p-queue';
-import * as path from 'path';
+import path from 'path';
 import { Document } from '../../../document';
 import { Language } from '../../../language';
 import { ProgressListener, ProgressParams } from '../../../protocol/progress';

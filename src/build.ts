@@ -1,4 +1,4 @@
-import * as path from 'path';
+import path from 'path';
 import { RemoteConsole } from 'vscode-languageserver';
 import { ProcessBuilder, ProcessStatus } from './process';
 import { BuildResult, BuildStatus } from './protocol/build';

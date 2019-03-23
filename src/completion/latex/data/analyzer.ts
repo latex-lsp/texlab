@@ -1,4 +1,4 @@
-import * as path from 'path';
+import path from 'path';
 import { TexResolver } from '../../../resolver';
 import { KERNEL_COMMANDS, KERNEL_ENVIRONMENTS } from '../../kernel';
 import { LatexComponent } from './component';

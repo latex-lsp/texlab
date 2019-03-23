@@ -1,4 +1,4 @@
-import * as https from 'https';
+import https from 'https';
 import { MarkupContent, MarkupKind } from 'vscode-languageserver';
 import { toMarkdown } from './markdown';
 

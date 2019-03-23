@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import { walk } from 'walk';
 import { Document } from './document';
 import { getLanguageByExtension, Language } from './language';

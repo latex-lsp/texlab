@@ -1,4 +1,4 @@
-import * as program from 'commander';
+import program from 'commander';
 import { LatexLanguageServer } from './latexLanguageServer';
 
 program

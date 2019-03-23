@@ -1,4 +1,4 @@
-import * as os from 'os';
+import os from 'os';
 import { MarkupKind } from 'vscode-languageserver';
 import { LatexComponentSource } from '../completion/latex/data/component';
 import { Language } from '../language';

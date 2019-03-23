@@ -1,4 +1,4 @@
-import * as path from 'path';
+import path from 'path';
 import { TexResolver } from '../../resolver';
 import * as factory from '../factory';
 import { CompletionProvider } from '../provider';
