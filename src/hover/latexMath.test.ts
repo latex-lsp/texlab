@@ -40,18 +40,6 @@ describe('LatexMathHoverProvider', () => {
     expect(actual).toBeDefined();
   });
 
-  it('should not render invalid math', async () => {
-    const actual = await runSingleFile({
-      provider,
-      file: 'foo.tex',
-      text: '$\\[ x &= 0 \\]$',
-      line: 0,
-      character: 1,
-    });
-
-    expect(actual).toBeUndefined();
-  });
-
   it('should not render math when hovering outside of a math expression', async () => {
     const actual = await runSingleFile({
       provider,
