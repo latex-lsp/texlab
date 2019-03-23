@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   CancellationToken,
+  CancellationTokenSource,
   CompletionItem,
   CompletionList,
   CompletionParams,
@@ -218,6 +219,23 @@ export class LatexLanguageServer extends LanguageServer {
     const uri = Uri.parse(textDocument.uri);
     await this.runLinter(uri, text!);
     await this.publishDiagnostics(uri);
+
+    const config: BuildConfig = await this.connection.workspace.getConfiguration(
+      {
+        section: 'latex.build',
+      },
+    );
+    if (config.onSave) {
+      const parent = this.workspace.findParent(uri);
+      if (parent !== undefined) {
+        const tokenSource = new CancellationTokenSource();
+        await this.build(
+          { textDocument: { uri: parent.uri.toString() } },
+          tokenSource.token,
+        );
+        tokenSource.dispose();
+      }
+    }
   }
 
   public async didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
