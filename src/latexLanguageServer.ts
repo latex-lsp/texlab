@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   CancellationToken,
   CompletionItem,
@@ -5,7 +7,12 @@ import {
   CompletionParams,
   Definition,
   DefinitionLink,
+  Diagnostic,
+  DiagnosticSeverity,
   DidChangeTextDocumentParams,
+  DidChangeWatchedFilesNotification,
+  DidChangeWatchedFilesParams,
+  DidChangeWatchedFilesRegistrationOptions,
   DidOpenTextDocumentParams,
   DidSaveTextDocumentParams,
   DocumentFormattingParams,
@@ -17,6 +24,7 @@ import {
   InitializeParams,
   InitializeResult,
   Location,
+  Range,
   ReferenceParams,
   RenameParams,
   ServerCapabilities,
@@ -24,6 +32,7 @@ import {
   TextDocumentPositionParams,
   TextDocumentSyncKind,
   TextEdit,
+  WatchKind,
   WorkspaceEdit,
 } from 'vscode-languageserver';
 import { BuildConfig, BuildProvider } from './build';
@@ -33,6 +42,7 @@ import { LatexComponentDatabase } from './completion/latex/data/component';
 import { COMPONENT_DATABASE_FILE } from './config';
 import { definitonProvider } from './definition';
 import { diagnosticsProvider } from './diagnostics';
+import { BuildErrorKind, parseLog } from './diagnostics/buildLog';
 import { LatexLinterConfig } from './diagnostics/latex';
 import { Document } from './document';
 import { foldingProvider } from './folding';
@@ -157,6 +167,21 @@ export class LatexLanguageServer extends LanguageServer {
     return { capabilities };
   }
 
+  public async initialized() {
+    const options: DidChangeWatchedFilesRegistrationOptions = {
+      watchers: [
+        {
+          globPattern: '**/*.log',
+          kind: WatchKind.Create | WatchKind.Change,
+        },
+      ],
+    };
+    await this.connection.client.register(
+      DidChangeWatchedFilesNotification.type,
+      options,
+    );
+  }
+
   public async didOpenTextDocument({
     textDocument,
   }: DidOpenTextDocumentParams): Promise<void> {
@@ -193,6 +218,55 @@ export class LatexLanguageServer extends LanguageServer {
     const uri = Uri.parse(textDocument.uri);
     await this.runLinter(uri, text!);
     await this.publishDiagnostics(uri);
+  }
+
+  public async didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
+    for (const change of params.changes) {
+      const { scheme: logScheme, fsPath: logPath } = Uri.parse(change.uri);
+      if (logScheme !== 'file') {
+        continue;
+      }
+
+      const dirname = path.dirname(logPath);
+      const texPath = path.join(
+        dirname,
+        path.basename(logPath).slice(0, -4) + '.tex',
+      );
+      const texUri = Uri.file(texPath);
+      const document = this.workspace.documents.find(x => x.uri.equals(texUri));
+      if (document !== undefined) {
+        const diagnosticsByUri = new Map<string, Diagnostic[]>();
+        diagnosticsProvider.buildProvider.diagnosticsByUri = diagnosticsByUri;
+        try {
+          const log = await fs.promises.readFile(logPath);
+          const allErrors = parseLog(texUri, log.toString());
+          allErrors
+            .map(x => x.uri.toString())
+            .forEach(x => diagnosticsByUri.set(x, []));
+
+          for (const { uri, kind, message, line } of allErrors) {
+            const diagnostics = diagnosticsByUri.get(uri.toString())!;
+            const severity =
+              kind === BuildErrorKind.Error
+                ? DiagnosticSeverity.Error
+                : DiagnosticSeverity.Warning;
+
+            diagnostics.push({
+              message,
+              severity,
+              range: Range.create(line || 0, 0, line || 0, 0),
+              source: 'LaTeX',
+            });
+          }
+        } catch {
+          // File is still locked
+        }
+      }
+    }
+
+    for (const { uri } of this.workspace.documents) {
+      await this.publishDiagnostics(uri);
+    }
   }
 
   public async hover(

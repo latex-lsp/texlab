@@ -16,6 +16,7 @@
     "no-console": false,
     "no-conditional-assignment": false,
     "import-blacklist": [true, "vscode-uri"],
-    "no-submodule-imports": [true, "fuse-box", "mathjax3", "jsdom-global"]
+    "no-submodule-imports": [true, "fuse-box", "mathjax3", "jsdom-global"],
+    "no-bitwise": false
   }
 }

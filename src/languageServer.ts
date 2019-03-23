@@ -70,7 +70,7 @@ export abstract class LanguageServer {
     this.connection.onInitialize(this.initialize.bind(this));
     this.connection.onInitialized(this.initialized.bind(this));
     this.connection.onShutdown(this.shutdown.bind(this));
-    this.connection.onInitialized(this.exit.bind(this));
+    this.connection.onExit(this.exit.bind(this));
     this.connection.onDidChangeConfiguration(
       this.didChangeConfiguration.bind(this),
     );

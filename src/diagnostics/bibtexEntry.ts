@@ -139,7 +139,7 @@ export function createDiagnostic(code: ErrorCode, range: Range): Diagnostic {
   }
 
   return {
-    source: 'bibtex',
+    source: 'BibTeX',
     range,
     message,
     severity: DiagnosticSeverity.Error,

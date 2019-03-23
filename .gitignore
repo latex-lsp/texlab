@@ -91,3 +91,6 @@ out/
 
 # dist
 dist/
+
+# build logs
+!test/logs/
