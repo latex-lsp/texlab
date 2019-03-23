@@ -1,4 +1,7 @@
-import Cite = require('citation-js');
+import '@citation-js/plugin-bibtex';
+import '@citation-js/plugin-csl';
+
+import { Cite } from '@citation-js/core';
 import { MarkupContent, MarkupKind } from 'vscode-languageserver';
 import { BibtexSyntaxTree } from '../syntax/bibtex/analysis';
 import { toMarkdown } from './markdown';

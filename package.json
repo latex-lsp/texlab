@@ -33,6 +33,9 @@
     ]
   },
   "devDependencies": {
+    "@citation-js/core": "^0.4.0-rc.4",
+    "@citation-js/plugin-bibtex": "^0.4.0-rc.4",
+    "@citation-js/plugin-csl": "^0.4.0-rc.4",
     "@types/glob": "^7.1.1",
     "@types/jest": "^23.3.2",
     "@types/jsdom": "^12.2.3",
@@ -46,6 +49,7 @@
     "fast-xml-parser": "^3.12.14",
     "jest": "^23.6.0",
     "mathjax3": "^3.0.0-beta.3",
+    "null-loader": "^0.1.1",
     "p-queue": "^4.0.0",
     "prettier": "^1.14.3",
     "tree-kill": "^1.2.1",
@@ -54,15 +58,12 @@
     "ts-node": "^8.0.3",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
+    "turndown": "^5.0.3",
     "typescript": "^3.0.3",
     "vscode-languageserver": "^5.3.0-next.4",
     "vscode-uri": "^1.0.6",
     "walk": "^2.3.14",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0"
-  },
-  "dependencies": {
-    "citation-js": "^0.4.0-12",
-    "turndown": "^5.0.3"
   }
 }
