@@ -11,18 +11,13 @@ Learn more about the project on our [website](https://texlab.netlify.com).
 
 ## Getting Started
 
-This project uses [Gradle](https://gradle.org/).
-To compile the server and run the tests execute the following command in the project directory:
+This project uses [Yarn](https://yarnpkg.com/). See `package.json` for all available scripts.
+In order to use the local build with the [extension](https://github.com/latex-lsp/texlab-vscode), create a symbolic link:
 
 ```shell
-./gradlew build
-```
-
-To use the local build with the [extension](https://github.com/latex-lsp/texlab-vscode), we recommend creating a symbolic link:
-
-```shell
-mkdir ../texlab-vscode/server
-ln -s ../../texlab/build/libs/texlab.jar ./../texlab-vscode/server/texlab.jar
+yarn link
+cd ../texlab-vscode
+yarn link texlab
 ```
 
 ## Contributing
