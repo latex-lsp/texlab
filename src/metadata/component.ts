@@ -1,6 +1,6 @@
 import * as https from 'https';
-import * as TurndownService from 'turndown';
 import { MarkupContent, MarkupKind } from 'vscode-languageserver';
+import { toMarkdown } from './markdown';
 
 export interface ComponentMetadata {
   caption: string;
@@ -18,8 +18,6 @@ interface Package {
   descriptions: PackageDescription[];
   errors?: any;
 }
-
-const turndownService = new TurndownService();
 
 export async function getComponentMetadata(
   name: string,
@@ -46,7 +44,7 @@ function parseResponse(response: any): ComponentMetadata | undefined {
       caption,
       documentation: {
         kind: MarkupKind.Markdown,
-        value: turndownService.turndown(description.text),
+        value: toMarkdown(description.text),
       },
     };
   }

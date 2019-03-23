@@ -1,9 +1,7 @@
 import Cite = require('citation-js');
-import * as TurndownService from 'turndown';
 import { MarkupContent, MarkupKind } from 'vscode-languageserver';
 import { BibtexSyntaxTree } from '../syntax/bibtex/analysis';
-
-const turndownService = new TurndownService();
+import { toMarkdown } from './markdown';
 
 export function generateBibliography(code: string): MarkupContent | undefined {
   if (!validate(code)) {
@@ -17,10 +15,9 @@ export function generateBibliography(code: string): MarkupContent | undefined {
       template: 'apa',
       lang: 'en-US',
     });
-    const markdown = turndownService.turndown(html);
     return {
       kind: MarkupKind.Markdown,
-      value: markdown,
+      value: toMarkdown(html),
     };
   } catch (err) {
     return undefined;
