@@ -13,7 +13,6 @@ const config: Configuration = {
     devtoolModuleFilenameTemplate: '../[resource-path]',
   },
   externals: {
-    'mathjax-node': 'commonjs mathjax-node',
     'citation-js': 'commonjs citation-js',
     turndown: 'commonjs turndown',
   },

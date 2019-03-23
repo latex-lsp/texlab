@@ -45,6 +45,7 @@
     "del": "^4.0.0",
     "fast-xml-parser": "^3.12.14",
     "jest": "^23.6.0",
+    "mathjax3": "^3.0.0-beta.3",
     "p-queue": "^4.0.0",
     "prettier": "^1.14.3",
     "tree-kill": "^1.2.1",
@@ -62,7 +63,6 @@
   },
   "dependencies": {
     "citation-js": "^0.4.0-12",
-    "mathjax-node": "^2.1.1",
     "turndown": "^5.0.3"
   }
 }

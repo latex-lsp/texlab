@@ -1,15 +1,24 @@
 import parser from 'fast-xml-parser';
-import mathjax from 'mathjax-node';
+import { liteAdaptor } from 'mathjax3/mathjax3/adaptors/liteAdaptor';
+import { HTMLDocument } from 'mathjax3/mathjax3/handlers/html/HTMLDocument';
+import { HTMLMathItem } from 'mathjax3/mathjax3/handlers/html/HTMLMathItem';
+import { TeX } from 'mathjax3/mathjax3/input/tex';
+import { AllPackages } from 'mathjax3/mathjax3/input/tex/AllPackages';
+import { SVG } from 'mathjax3/mathjax3/output/svg';
 
-mathjax.config({
-  MathJax: {
-    tex2jax: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      processEscapes: true,
-    },
-  },
-  displayErrors: false,
+// Workaround for math tables, see issue #184.
+// https://github.com/mathjax/mathjax-v3/issues/184
+(global as any).top = true;
+
+const inputJax = new TeX({ packages: AllPackages });
+const outputJax = new SVG();
+const adaptor = liteAdaptor();
+const html = new HTMLDocument('', adaptor, {
+  InputJax: inputJax,
+  OutputJax: outputJax,
 });
+
+type MathItem = HTMLMathItem<any, any, any>;
 
 interface Svg {
   style: string;
@@ -19,7 +28,9 @@ interface Svg {
 }
 
 interface SvgContainer {
-  svg: Svg;
+  'mjx-container': {
+    svg: Svg;
+  };
 }
 
 const xmlParserOptions: Partial<parser.X2jOptions> = {
@@ -29,30 +40,47 @@ const xmlParserOptions: Partial<parser.X2jOptions> = {
 };
 
 const j2xParser = new parser.j2xParser(xmlParserOptions);
-
-const SVG_BACKGROUND = 'white';
-const SVG_SCALE = 1.25;
-const SVG_PADDING_FACTOR = 0.05;
+const svgOptions = {
+  scale: 1.25,
+  padding: 0.05,
+  background: 'white',
+  emSize: 16,
+  exSize: 8,
+  containerWidth: 500,
+  lineWidth: Number.MAX_VALUE,
+};
 
 export async function renderMath(
-  math: string,
+  texCode: string,
   inline: boolean,
 ): Promise<string> {
-  const result = await mathjax.typeset({
-    math,
-    speakText: false,
-    svg: true,
-    format: inline ? 'inline-TeX' : 'TeX',
-  });
+  const math: MathItem = new html.options.MathItem(texCode, inputJax, !inline);
+  math.setMetrics(
+    svgOptions.emSize,
+    svgOptions.exSize,
+    svgOptions.containerWidth,
+    svgOptions.lineWidth,
+    1,
+  );
 
-  const container: SvgContainer = parser.parse(result.svg!, xmlParserOptions);
+  math.compile(html);
+  math.typeset(html);
+
+  const { 'mjx-container': container }: SvgContainer = parser.parse(
+    adaptor.outerHTML(math.typesetRoot),
+    xmlParserOptions,
+  );
+
   const { svg } = container;
-  svg.style += `background-color: ${SVG_BACKGROUND}`;
-
-  scale(svg, SVG_SCALE);
-  addPadding(svg, SVG_PADDING_FACTOR);
+  addStyleProperty(svg, 'background-color', svgOptions.background);
+  scale(svg, svgOptions.scale);
+  addPadding(svg, svgOptions.padding);
 
   return j2xParser.parse(container);
+}
+
+function addStyleProperty(svg: Svg, key: string, value: string) {
+  svg.style = [...svg.style.split(';'), `${key}: ${value}`].join(';');
 }
 
 function scale(svg: Svg, factor: number) {
