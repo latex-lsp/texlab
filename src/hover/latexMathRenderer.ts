@@ -50,10 +50,7 @@ const svgOptions = {
   lineWidth: Number.MAX_VALUE,
 };
 
-export async function renderMath(
-  texCode: string,
-  inline: boolean,
-): Promise<string> {
+export function renderMath(texCode: string, inline: boolean): string {
   const math: MathItem = new html.options.MathItem(texCode, inputJax, !inline);
   math.setMetrics(
     svgOptions.emSize,

@@ -60,7 +60,7 @@ export const LatexMathHoverProvider: HoverProvider = {
 
     const code = extractText(tree.text, range);
     try {
-      const svg = await renderMath(code, element instanceof LatexInline);
+      const svg = renderMath(code, element instanceof LatexInline);
       const encodedSvg = Buffer.from(svg).toString('base64');
       return {
         contents: {
