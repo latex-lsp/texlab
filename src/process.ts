@@ -64,15 +64,15 @@ export class ProcessBuilder {
         cwd: directory,
       });
 
-      if (stdout) {
+      if (stdout && process.stdout) {
         process.stdout.on('data', stdout);
       }
 
-      if (stderr) {
+      if (stderr && process.stderr) {
         process.stderr.on('data', stderr);
       }
 
-      if (stdin) {
+      if (stdin && process.stdin) {
         process.stdin.write(stdin);
         process.stdin.end();
       }
