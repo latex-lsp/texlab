@@ -1,5 +1,5 @@
 import { EOL } from 'os';
-import * as path from 'path';
+import path from 'path';
 import { Uri } from '../uri';
 
 export enum BuildErrorKind {
