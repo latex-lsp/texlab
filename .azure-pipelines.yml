@@ -14,6 +14,8 @@ steps:
     displayName: 'Install Node.js'
   - script: |
       yarn install
+    displayName: 'Install Dependencies'
+  - script: |
       yarn build
     displayName: 'Build'
   - script: |
@@ -28,6 +30,12 @@ steps:
   - script: |
       yarn dist
     displayName: 'Bundle'
+  - task: Npm@1
+    inputs:
+      command: publish
+      publishEndpoint: efoerster
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+    displayName: 'Publish to NPM'
   - task: GitHubRelease@0
     inputs:
       gitHubConnection: latex-lsp
