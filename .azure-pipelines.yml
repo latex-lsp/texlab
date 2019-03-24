@@ -19,14 +19,20 @@ steps:
       yarn build
     displayName: 'Build'
   - script: |
-      yarn test --coverage
+      yarn test:ci
     displayName: 'Test'
-  - script: |
-      npm install -g codecov    
-      codecov
-    env:
-      CODECOV_TOKEN: $(codecovToken)
-    displayName: 'Upload Test Report to Codecov'
+  - task: PublishTestResults@2
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: 'junit.xml'
+    condition: succeededOrFailed()
+    displayName: 'Publish Test Results'
+  - task: PublishCodeCoverageResults@1
+    inputs: 
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/*coverage.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/**/coverage'
+    displayName: 'Publish Coverage Results'
   - script: |
       yarn dist
     displayName: 'Bundle'

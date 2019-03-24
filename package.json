@@ -17,7 +17,8 @@
     "watch": "tsc -p . --watch",
     "lint": "tslint --project .",
     "format": "prettier --write \"src/**/*.{ts,json}\" \"*.{ts,json,yml,md}\" \".vscode/**/*.{json}\"",
-    "test": "jest"
+    "test": "jest",
+    "test:ci": "jest --ci --coverage --reporters=default --reporters=jest-junit"
   },
   "jest": {
     "preset": "ts-jest",
@@ -30,6 +31,11 @@
     ],
     "modulePaths": [
       "<rootDir>/src/"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "text",
+      "cobertura"
     ]
   },
   "devDependencies": {
@@ -37,7 +43,7 @@
     "@citation-js/plugin-bibtex": "^0.4.0-rc.4",
     "@citation-js/plugin-csl": "^0.4.0-rc.4",
     "@types/glob": "^7.1.1",
-    "@types/jest": "^23.3.2",
+    "@types/jest": "^24.0.11",
     "@types/jsdom": "^12.2.3",
     "@types/mock-fs": "^3.6.30",
     "@types/node": "^10.11.0",
@@ -48,14 +54,15 @@
     "commander": "^2.19.0",
     "del": "^4.0.0",
     "fast-xml-parser": "^3.12.14",
-    "jest": "^23.6.0",
+    "jest": "^24.5.0",
+    "jest-junit": "^6.3.0",
     "mathjax3": "^3.0.0-beta.3",
     "mock-fs": "^4.8.0",
     "null-loader": "^0.1.1",
     "p-queue": "^4.0.0",
     "prettier": "^1.14.3",
     "tree-kill": "^1.2.1",
-    "ts-jest": "^23.10.2",
+    "ts-jest": "^24.0.0",
     "ts-loader": "^5.3.3",
     "ts-node": "^8.0.3",
     "tslint": "^5.11.0",
