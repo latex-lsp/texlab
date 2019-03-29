@@ -12,13 +12,10 @@ steps:
   inputs:
     tasks: 'build jacocoTestReport'
     jdkVersionOption: '1.8'
-    publishJUnitResults: false
+    publishJUnitResults: true
+    testResultsFiles: '**/jacocoTestReport.xml'
+    codeCoverageToolOption: 'jaCoCo'
   displayName: 'Build and Test'
-- script: |
-    bash <(curl -s https://codecov.io/bash)
-  env:
-    CODECOV_TOKEN: $(codecovToken)
-  displayName: 'Upload Test Results to Codecov'
 - task: GitHubRelease@0
   inputs:
     gitHubConnection: latex-lsp
