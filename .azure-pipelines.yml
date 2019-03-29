@@ -10,7 +10,7 @@ pool:
 steps:
 - task: Gradle@2
   inputs:
-    tasks: 'build jacocoTestReport'
+    tasks: 'build'
     jdkVersionOption: '1.8'
     publishJUnitResults: true
     testResultsFiles: '**/jacocoTestReport.xml'
