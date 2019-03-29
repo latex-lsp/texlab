@@ -1,6 +1,7 @@
 [![Build Status](https://dev.azure.com/latex-lsp/texlab/_apis/build/status/latex-lsp.texlab?branchName=master)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
 [![Coverage](https://img.shields.io/azure-devops/coverage/latex-lsp/texlab/8.svg?logo=azuredevops)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
 [![Maintainability](https://api.codeclimate.com/v1/badges/9ce99ec1116b43ee3fc4/maintainability)](https://codeclimate.com/github/latex-lsp/texlab/maintainability)
+[![Dependabot](https://api.dependabot.com/badges/status?host=github&repo=latex-lsp/texlab)](https://dependabot.com)
 
 # TexLab
 
