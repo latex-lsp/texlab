@@ -12,9 +12,6 @@ steps:
   inputs:
     tasks: 'build'
     jdkVersionOption: '1.8'
-    publishJUnitResults: true
-    testResultsFiles: '**/jacocoTestReport.xml'
-    codeCoverageToolOption: 'jaCoCo'
   displayName: 'Build and Test'
 - task: GitHubRelease@0
   inputs:
