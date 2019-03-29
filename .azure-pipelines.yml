@@ -10,12 +10,15 @@ pool:
 steps:
 - task: Gradle@2
   inputs:
-    tasks: 'build'
+    tasks: 'build jacocoTestReport'
     jdkVersionOption: '1.8'
-    publishJUnitResults: true
-    testResultsFiles: '**/jacocoTestReport.xml'
-    codeCoverageToolOption: 'jaCoCo'
   displayName: 'Build and Test'
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: jaCoCo
+    summaryFileLocation: '**/jacocoTestReport.xml'
+    reportDirectory: '**/jacoco/test/html'
+  displayName: 'Publish Coverage Results'
 - task: GitHubRelease@0
   inputs:
     gitHubConnection: latex-lsp
