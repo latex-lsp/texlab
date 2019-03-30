@@ -99,7 +99,7 @@ class LatexResolver(val filesByName: Map<String, File>) {
                                     .filter { it.extension.matches(Regex("""fndb-\d+""")) }
                                     .map { ByteBuffer.wrap(Files.readAllBytes(it.toPath())) }
                                     .map { it.order(ByteOrder.LITTLE_ENDIAN) }
-                                    .flatMap { parseMiktexDatabase(it) }
+                                    .flatMap { parseMiktexDatabase(rootDirectories, it) }
                         } else {
                             emptySequence()
                         }
@@ -131,7 +131,8 @@ class LatexResolver(val filesByName: Map<String, File>) {
             }
         }
 
-        private fun parseMiktexDatabase(buffer: ByteBuffer): Sequence<File> = sequence {
+        private fun parseMiktexDatabase(rootDirectories: List<Path>,
+                                        buffer: ByteBuffer): Sequence<File> = sequence {
             if (buffer.getInt(0) != FNDB_SIGNATURE) {
                 val error = TexDistributionError.INVALID_DISTRIBUTION
                 throw InvalidTexDistributionException(error)
@@ -144,8 +145,12 @@ class LatexResolver(val filesByName: Map<String, File>) {
                 val offset = tableAddress + i * FNDB_ENTRY_SIZE
                 val fileName = buffer.getString(buffer.getInt(offset))
                 val directory = buffer.getString(buffer.getInt(offset + FNDB_WORD_SIZE))
-                val file = Paths.get(directory, fileName).toFile()
-                yield(file)
+                rootDirectories.forEach {
+                    val file = Paths.get(it.toString(), directory, fileName).toFile()
+                    if (file.exists()) {
+                        yield(file)
+                    }
+                }
             }
         }
     }
