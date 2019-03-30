@@ -321,8 +321,9 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
     }
 
     override fun definition(params: TextDocumentPositionParams)
-            : CompletableFuture<List<Location>> = future {
+            : CompletableFuture<Either<List<Location>, List<LocationLink>>> = future {
         runFeature(DefinitionProvider, params.textDocument, params)
+                .let { Either.forLeft<List<Location>, List<LocationLink>>(it) }
     }
 
     override fun hover(params: TextDocumentPositionParams)
