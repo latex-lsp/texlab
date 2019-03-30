@@ -11,12 +11,12 @@ data class LatexUnit(val file: File,
     fun checkPrimitives(candidates: Iterable<String>): LatexPrimitives {
         val testCode = buildString {
             appendln(buildCodeHeader(file.nameWithoutExtension, kind))
-            appendln("\\usepackage{etoolbox}")
+            appendln("\\makeatletter")
             appendln("\\begin{document}")
 
             for (candidate in candidates) {
-                appendln("\\ifcsundef{$candidate}{} {")
-                appendln("\\ifcsundef{end$candidate}")
+                appendln("\\@ifundefined{$candidate}{} {")
+                appendln("\\@ifundefined{end$candidate}")
                 appendln("{ \\wlog{cmd:$candidate} }")
                 appendln("{ \\wlog{env:$candidate} } }")
             }
