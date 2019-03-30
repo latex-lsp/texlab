@@ -92,14 +92,17 @@ class LatexResolver(val filesByName: Map<String, File>) {
                         }
                     }
                     LatexDistributionKind.MIKTEX -> {
-                        directory.resolve(MIKTEX_DATABASE_PATH)
-                                .toFile()
-                                .listFiles()
-                                .asSequence()
-                                .filter { it.extension.matches(Regex("""fndb-\d+""")) }
-                                .map { ByteBuffer.wrap(Files.readAllBytes(it.toPath())) }
-                                .map { it.order(ByteOrder.LITTLE_ENDIAN) }
-                                .flatMap { parseMiktexDatabase(it) }
+                        val databaseDirectory = directory.resolve(MIKTEX_DATABASE_PATH).toFile()
+                        if (databaseDirectory.exists()) {
+                            databaseDirectory.listFiles()
+                                    .asSequence()
+                                    .filter { it.extension.matches(Regex("""fndb-\d+""")) }
+                                    .map { ByteBuffer.wrap(Files.readAllBytes(it.toPath())) }
+                                    .map { it.order(ByteOrder.LITTLE_ENDIAN) }
+                                    .flatMap { parseMiktexDatabase(it) }
+                        } else {
+                            emptySequence()
+                        }
                     }
                     LatexDistributionKind.UNKNOWN -> {
                         val error = TexDistributionError.UNKNOWN_DISTRIBUTION
