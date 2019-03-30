@@ -22,7 +22,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.1.1-eap13-125"
-    implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:0.6.0"
+    implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:0.7.0"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     implementation "com.overzealous:remark:1.1.0"
     implementation "org.zeroturnaround:zt-zip:1.13"
