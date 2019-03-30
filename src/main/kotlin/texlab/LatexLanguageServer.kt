@@ -75,7 +75,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         } catch (e: InvalidTexDistributionException) {
             val message = when (e.error) {
                 TexDistributionError.KPSEWHICH_NOT_FOUND ->
-                    """An error occured while executing `kpsewhich`.
+                    """An error occurred while executing `kpsewhich`.
                         |Please make sure that your distribution is in your PATH environment variable
                         |and provides the `kpsewhich` tool.
                     """.trimMargin()
