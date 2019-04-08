@@ -18,7 +18,7 @@ class MatchQualityEvaluator(document: Document, private val position: Position) 
             val descendants = document.tree.root.descendants
             val node = descendants
                     .filterIsInstance<LatexCommandSyntax>()
-                    .lastOrNull { it.name.range.contains(position) }
+                    .lastOrNull { it.name.range.contains(position) && it.name.character != position.character }
                     ?: descendants.lastOrNull { it.range.contains(position) }
 
             when (node) {
