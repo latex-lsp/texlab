@@ -4,6 +4,7 @@ import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionParams
 import texlab.LatexDocument
 import texlab.contains
+import texlab.containsExclusive
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
@@ -26,10 +27,13 @@ abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, List<Co
                 .asReversed()
 
         val command = findNonEmptyCommand(nodes) ?: findEmptyCommand(nodes)
-        return if (command == null) {
-            listOf()
-        } else {
-            complete(request, command)
+        return when {
+            command == null ->
+                emptyList()
+            command.args[argumentIndex].range.containsExclusive(request.params.position) ->
+                complete(request, command)
+            else ->
+                emptyList()
         }
     }
 
@@ -54,7 +58,8 @@ abstract class LatexArgumentProvider : FeatureProvider<CompletionParams, List<Co
             val group = nodes[index] as LatexGroupSyntax
             val command = nodes[index + 1] as LatexCommandSyntax
             if (commandNames.contains(command.name.text) &&
-                    command.args.size > argumentIndex && command.args[argumentIndex] == group) {
+                    command.args.size > argumentIndex &&
+                    command.args[argumentIndex] == group) {
                 return command
             }
         }
