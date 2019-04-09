@@ -66,3 +66,6 @@ texlab.iml
 
 # End of https://www.gitignore.io/api/java,kotlin,gradle
 !src/main/resources/texlab/completion/latex/data/symbols/symbols.zip
+
+# Kotlin Test
+.kotlintest

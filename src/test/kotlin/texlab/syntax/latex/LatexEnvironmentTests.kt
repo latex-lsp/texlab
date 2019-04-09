@@ -1,50 +1,39 @@
 package texlab.syntax.latex
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import io.kotlintest.matchers.collections.shouldBeEmpty
+import io.kotlintest.matchers.collections.shouldHaveSize
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
+import texlab.range
 
-class LatexEnvironmentTests {
-    @Test
-    fun `it should parse nested environments`() {
-        val text = "\\begin{a}\\begin{b}\\end{c}\\end{d}"
-        val tree = LatexParser.parse(text)
-        val environment1 = LatexEnvironment(
-                tree.children[1] as LatexCommandSyntax,
-                tree.children[2] as LatexCommandSyntax)
-        val environment2 = LatexEnvironment(
-                tree.children[0] as LatexCommandSyntax,
-                tree.children[3] as LatexCommandSyntax)
-        val environments = LatexEnvironment.find(tree)
-        assertEquals(2, environments.size)
-        assertEquals(environment1, environments[0])
-        assertEquals(environment2, environments[1])
+class LatexEnvironmentTests : StringSpec({
+    "find should handle valid environments" {
+        val root = LatexParser.parse("\\begin{foo}\n\\end{bar}")
+        val environments = LatexEnvironment.find(root)
+        environments.shouldHaveSize(1)
+        environments[0].beginName.shouldBe("foo")
+        environments[0].beginNameRange.shouldBe(range(0, 7, 0, 10))
+        environments[0].endName.shouldBe("bar")
+        environments[0].endNameRange.shouldBe(range(1, 5, 1, 8))
+        environments[0].range.shouldBe(range(0, 0, 1, 9))
     }
 
-    @Test
-    fun `it should parse environments with empty names`() {
-        val text = "\\begin{}\\end{}"
-        val tree = LatexParser.parse(text)
-        val expected = LatexEnvironment(
-                tree.children[0] as LatexCommandSyntax,
-                tree.children[1] as LatexCommandSyntax)
-        val environments = LatexEnvironment.find(tree)
-        assertEquals(1, environments.size)
-        assertEquals(expected, environments[0])
+    "find should handle environments with empty names" {
+        val root = LatexParser.parse("\\begin{}\\end{}")
+        val environments = LatexEnvironment.find(root)
+        environments.shouldHaveSize(1)
+        environments[0].begin.name.text.shouldBe("\\begin")
+        environments[0].beginName.shouldBe("")
+        environments[0].beginNameRange.shouldBe(range(0, 7, 0, 7))
+        environments[0].end.name.text.shouldBe("\\end")
+        environments[0].endName.shouldBe("")
+        environments[0].endNameRange.shouldBe(range(0, 13, 0, 13))
+        environments[0].range.shouldBe(range(0, 0, 0, 14))
     }
 
-    @Test
-    fun `it should ignore unmatched delimiters`() {
-        val text = "\\end{a}\\begin{b}"
-        val tree = LatexParser.parse(text)
-        val environments = LatexEnvironment.find(tree)
-        assertEquals(0, environments.size)
+    "find should ignore unmatched delimiters" {
+        val root = LatexParser.parse("\\end{foo}\n\\begin{bar}\\end")
+        val environments = LatexEnvironment.find(root)
+        environments.shouldBeEmpty()
     }
-
-    @Test
-    fun `it should ignore invalid delimiters`() {
-        val text = "\\begin\\end"
-        val tree = LatexParser.parse(text)
-        val environments = LatexEnvironment.find(tree)
-        assertEquals(0, environments.size)
-    }
-}
+})

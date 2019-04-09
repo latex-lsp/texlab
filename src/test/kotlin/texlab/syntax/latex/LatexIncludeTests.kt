@@ -1,47 +1,25 @@
 package texlab.syntax.latex
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
+import io.kotlintest.matchers.collections.shouldHaveSize
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 
-class LatexIncludeTests {
-    @Test
-    fun `it should find includes`() {
-        val text = "\\include{foo}\n\\input{bar/qux}"
-        val root = LatexParser.parse(text)
-        val include1 = LatexInclude(root.children[0] as LatexCommandSyntax, "foo")
-        val include2 = LatexInclude(root.children[1] as LatexCommandSyntax, "bar/qux")
+class LatexIncludeTests : StringSpec({
+    "find should handle valid includes" {
+        val root = LatexParser.parse("\\usepackage{foo}\n\\include{bar baz}")
         val includes = LatexInclude.find(root)
-        assertEquals(2, includes.size)
-        assertEquals(include1, includes[0])
-        assertEquals(include2, includes[1])
+        includes.shouldHaveSize(2)
+        includes[0].path.shouldBe("foo")
+        includes[0].isUnitImport.shouldBeTrue()
+        includes[1].path.shouldBe("bar baz")
+        includes[1].isUnitImport.shouldBeFalse()
     }
 
-    @Test
-    fun `it should find bibliographies`() {
-        val text = "\\addbibresource{foo}\n\\bibliography{bar}"
-        val root = LatexParser.parse(text)
-        val include1 = LatexInclude(root.children[0] as LatexCommandSyntax, "foo")
-        val include2 = LatexInclude(root.children[1] as LatexCommandSyntax, "bar")
+    "find should handle invalid includes" {
+        val root = LatexParser.parse("\\documentclass\n\\input{}")
         val includes = LatexInclude.find(root)
-        assertEquals(2, includes.size)
-        assertEquals(include1, includes[0])
-        assertEquals(include2, includes[1])
+        includes.shouldHaveSize(0)
     }
-
-    @Test
-    fun `it should handle paths with spaces`() {
-        val text = "\\include{foo bar.tex}"
-        val root = LatexParser.parse(text)
-        val expected = LatexInclude(root.children[0] as LatexCommandSyntax, "foo bar.tex")
-        val includes = LatexInclude.find(root)
-        assertEquals(1, includes.size)
-        assertEquals(expected, includes[0])
-    }
-
-    @Test
-    fun `it should ignore invalid commands`() {
-        val text = "\\include \\input{}"
-        val root = LatexParser.parse(text)
-        assertEquals(0, LatexInclude.find(root).size)
-    }
-}
+})

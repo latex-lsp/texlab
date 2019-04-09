@@ -1,48 +1,49 @@
 package texlab.syntax
 
+import io.kotlintest.matchers.boolean.shouldBeFalse
+import io.kotlintest.matchers.boolean.shouldBeTrue
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import org.eclipse.lsp4j.Position
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 
-class CharStreamTests {
-    @Test
-    fun `it should update the position when seeking`() {
-        val stream = CharStream("foo\nbar-baz")
-        val position = Position(1, 2)
-        stream.seek(position)
-        assertEquals(position, stream.position)
-    }
-
-    @Test
-    fun `it should update the position when advancing`() {
-        val stream = CharStream("a\nb")
-        stream.next()
-        assertEquals(Position(0, 1), stream.position)
-        stream.next()
-        assertEquals(Position(1, 0), stream.position)
-        stream.next()
-        assertEquals(Position(1, 1), stream.position)
-    }
-
-    @Test
-    fun `it should not change the position when peeking`() {
-        val stream = CharStream("a\nb")
-        stream.peek()
-        assertEquals(Position(0, 0), stream.position)
-    }
-
-    @Test
-    fun `it should return the character when peeking`() {
+class CharStreamTests : StringSpec({
+    "peek should not update the position" {
         val stream = CharStream("abc")
-        assertEquals('a', stream.peek(0))
-        assertEquals('b', stream.peek(1))
-        assertEquals('c', stream.peek(2))
+        stream.peek(0).shouldBe('a')
+        stream.peek(1).shouldBe('b')
+        stream.peek(2).shouldBe('c')
+        stream.position.shouldBe(Position(0, 0))
+        stream.index.shouldBe(0)
     }
 
-    @Test
-    fun `it should be able to skip the rest of the line`() {
-        val stream = CharStream("foo\nbar")
-        stream.skipRestOfLine()
-        assertEquals(Position(1, 0), stream.position)
+    "next should update the position" {
+        val stream = CharStream("a\nb")
+        stream.position.shouldBe(Position(0, 0))
+        stream.next().shouldBe('a')
+        stream.position.shouldBe(Position(0, 1))
+        stream.next().shouldBe('\n')
+        stream.position.shouldBe(Position(1, 0))
+        stream.next().shouldBe('b')
+        stream.position.shouldBe(Position(1, 1))
     }
-}
+
+    "seek should update the position" {
+        val stream = CharStream("abc\ndef\nghi")
+        stream.seek(Position(1, 2))
+        stream.position.shouldBe(Position(1, 2))
+    }
+
+    "skipRestOfLine should update the position" {
+        val stream = CharStream("abc\ndef\nghi")
+        stream.skipRestOfLine()
+        stream.position.shouldBe(Position(1, 0))
+    }
+
+    "available should behave as expected" {
+        val stream = CharStream("a")
+        stream.available.shouldBeTrue()
+        stream.next()
+        stream.available.shouldBeFalse()
+    }
+})
+

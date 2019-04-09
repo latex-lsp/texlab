@@ -1,11 +1,15 @@
-package texlab.syntax.latex
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
+import texlab.syntax.latex.*
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+class LatexParserTests : StringSpec({
+    "it should parse the empty document" {
+        val text = ""
+        val tree = LatexDocumentSyntax(emptyList())
+        LatexParser.parse(text).shouldBe(tree)
+    }
 
-class LatexParserTests {
-    @Test
-    fun `it should parse commands without arguments and options`() {
+    "it should parse commands without arguments and options" {
         val text = "\\foo"
         val tree =
                 LatexDocumentSyntax(
@@ -14,11 +18,10 @@ class LatexParserTests {
                                         name = LatexToken(0, 0, "\\foo", LatexTokenKind.COMMAND),
                                         options = null,
                                         args = emptyList())))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse commands with options`() {
+    "it should parse commands with options" {
         val text = "\\foo[bar]"
         val opts =
                 LatexGroupSyntax(
@@ -33,11 +36,10 @@ class LatexParserTests {
                                         name = LatexToken(0, 0, "\\foo", LatexTokenKind.COMMAND),
                                         options = opts,
                                         args = emptyList())))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse commands with empty arguments`() {
+    "it should parse commands with empty arguments" {
         val text = "\\foo{}"
         val args =
                 LatexGroupSyntax(
@@ -51,11 +53,10 @@ class LatexParserTests {
                                         name = LatexToken(0, 0, "\\foo", LatexTokenKind.COMMAND),
                                         options = null,
                                         args = listOf(args))))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse commands with text arguments`() {
+    "it should parse commands with text arguments" {
         val text = "\\begin{foo}"
         val args = listOf(
                 LatexGroupSyntax(
@@ -71,11 +72,10 @@ class LatexParserTests {
                                         name = LatexToken(0, 0, "\\begin", LatexTokenKind.COMMAND),
                                         options = null,
                                         args = args)))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse text`() {
+    "it should parse text" {
         val text = "foo bar"
         val tree =
                 LatexDocumentSyntax(
@@ -84,11 +84,10 @@ class LatexParserTests {
                                         listOf(
                                                 LatexToken(0, 0, "foo", LatexTokenKind.WORD),
                                                 LatexToken(0, 4, "bar", LatexTokenKind.WORD)))))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse brackets as text (1)`() {
+    "it should parse brackets as text (1)" {
         val text = "[ ]"
         val tree =
                 LatexDocumentSyntax(
@@ -97,11 +96,10 @@ class LatexParserTests {
                                         listOf(
                                                 LatexToken(0, 0, "[", LatexTokenKind.BEGIN_OPTIONS),
                                                 LatexToken(0, 2, "]", LatexTokenKind.END_OPTIONS)))))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse brackets as text (2)`() {
+    "it should parse brackets as text (2)" {
         val text = "]"
         val tree =
                 LatexDocumentSyntax(
@@ -109,18 +107,16 @@ class LatexParserTests {
                                 LatexTextSyntax(
                                         listOf(
                                                 LatexToken(0, 0, "]", LatexTokenKind.END_OPTIONS)))))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should ignore unmatched braces`() {
+    "it should ignore unmatched braces" {
         val text = "} }"
         val tree = LatexDocumentSyntax(emptyList())
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should insert missing braces`() {
+    "it should insert missing braces" {
         val text = "{"
         val tree =
                 LatexDocumentSyntax(
@@ -129,11 +125,10 @@ class LatexParserTests {
                                         left = LatexToken(0, 0, "{", LatexTokenKind.BEGIN_GROUP),
                                         right = null,
                                         children = emptyList())))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
 
-    @Test
-    fun `it should parse nested groups`() {
+    "it should parse nested groups" {
         val text = "{\n{\n}\n}"
         val tree =
                 LatexDocumentSyntax(
@@ -146,6 +141,6 @@ class LatexParserTests {
                                                         left = LatexToken(1, 0, "{", LatexTokenKind.BEGIN_GROUP),
                                                         right = LatexToken(2, 0, "}", LatexTokenKind.END_GROUP),
                                                         children = emptyList())))))
-        assertEquals(tree, LatexParser.parse(text))
+        LatexParser.parse(text).shouldBe(tree)
     }
-}
+})
