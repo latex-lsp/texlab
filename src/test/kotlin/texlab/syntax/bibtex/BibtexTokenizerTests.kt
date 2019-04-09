@@ -1,72 +1,65 @@
 package texlab.syntax.bibtex
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Test
+import io.kotlintest.matchers.types.shouldBeNull
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 
-class BibtexTokenizerTests {
-    private fun BibtexTokenizer.verify(
-            line: Int,
-            character: Int,
-            text: String,
-            kind: BibtexTokenKind) {
-        val expected = BibtexToken(line, character, text, kind)
-        assertEquals(expected, next())
+class BibtexTokenizerTests : StringSpec({
+    fun verify(tokenizer: BibtexTokenizer,
+               line: Int,
+               character: Int,
+               text: String,
+               kind: BibtexTokenKind) {
+        val token = BibtexToken(line, character, text, kind)
+        tokenizer.next().shouldBe(token)
     }
 
-    @Test
-    fun `it should be able to tokenize words`() {
+    "it should be able to tokenize words" {
         val tokenizer = BibtexTokenizer("foo bar baz")
-        tokenizer.verify(0, 0, "foo", BibtexTokenKind.WORD)
-        tokenizer.verify(0, 4, "bar", BibtexTokenKind.WORD)
-        tokenizer.verify(0, 8, "baz", BibtexTokenKind.WORD)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "foo", BibtexTokenKind.WORD)
+        verify(tokenizer, 0, 4, "bar", BibtexTokenKind.WORD)
+        verify(tokenizer, 0, 8, "baz", BibtexTokenKind.WORD)
     }
 
-    @Test
-    fun `it should be able to tokenize commands`() {
+    "it should be able to tokenize commands" {
         val tokenizer = BibtexTokenizer("\\foo\\bar@baz")
-        tokenizer.verify(0, 0, "\\foo", BibtexTokenKind.COMMAND)
-        tokenizer.verify(0, 4, "\\bar@baz", BibtexTokenKind.COMMAND)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "\\foo", BibtexTokenKind.COMMAND)
+        verify(tokenizer, 0, 4, "\\bar@baz", BibtexTokenKind.COMMAND)
+        tokenizer.next().shouldBeNull()
     }
 
-    @Test
-    fun `it should be able to parse escape sequences`() {
+    "it should be able to parse escape sequences" {
         val tokenizer = BibtexTokenizer("\\foo*\n\\%\\**")
-        tokenizer.verify(0, 0, "\\foo*", BibtexTokenKind.COMMAND)
-        tokenizer.verify(1, 0, "\\%", BibtexTokenKind.COMMAND)
-        tokenizer.verify(1, 2, "\\*", BibtexTokenKind.COMMAND)
-        tokenizer.verify(1, 4, "*", BibtexTokenKind.WORD)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "\\foo*", BibtexTokenKind.COMMAND)
+        verify(tokenizer, 1, 0, "\\%", BibtexTokenKind.COMMAND)
+        verify(tokenizer, 1, 2, "\\*", BibtexTokenKind.COMMAND)
+        verify(tokenizer, 1, 4, "*", BibtexTokenKind.WORD)
+        tokenizer.next().shouldBeNull()
     }
 
-    @Test
-    fun `it should be able to parse delimiters`() {
+    "it should be able to parse delimiters" {
         val tokenizer = BibtexTokenizer("{}()\"")
-        tokenizer.verify(0, 0, "{", BibtexTokenKind.BEGIN_BRACE)
-        tokenizer.verify(0, 1, "}", BibtexTokenKind.END_BRACE)
-        tokenizer.verify(0, 2, "(", BibtexTokenKind.BEGIN_PAREN)
-        tokenizer.verify(0, 3, ")", BibtexTokenKind.END_PAREN)
-        tokenizer.verify(0, 4, "\"", BibtexTokenKind.QUOTE)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "{", BibtexTokenKind.BEGIN_BRACE)
+        verify(tokenizer, 0, 1, "}", BibtexTokenKind.END_BRACE)
+        verify(tokenizer, 0, 2, "(", BibtexTokenKind.BEGIN_PAREN)
+        verify(tokenizer, 0, 3, ")", BibtexTokenKind.END_PAREN)
+        verify(tokenizer, 0, 4, "\"", BibtexTokenKind.QUOTE)
+        tokenizer.next().shouldBeNull()
     }
 
-    @Test
-    fun `it should be able to parse types`() {
+    "it should be able to parse types" {
         val tokenizer = BibtexTokenizer("@pReAmBlE\n@article\n@string")
-        tokenizer.verify(0, 0, "@pReAmBlE", BibtexTokenKind.PREAMBLE_TYPE)
-        tokenizer.verify(1, 0, "@article", BibtexTokenKind.ENTRY_TYPE)
-        tokenizer.verify(2, 0, "@string", BibtexTokenKind.STRING_TYPE)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "@pReAmBlE", BibtexTokenKind.PREAMBLE_TYPE)
+        verify(tokenizer, 1, 0, "@article", BibtexTokenKind.ENTRY_TYPE)
+        verify(tokenizer, 2, 0, "@string", BibtexTokenKind.STRING_TYPE)
+        tokenizer.next().shouldBeNull()
     }
 
-    @Test
-    fun `it should be able to parse operators`() {
+    "it should be able to parse operators" {
         val tokenizer = BibtexTokenizer("=,#")
-        tokenizer.verify(0, 0, "=", BibtexTokenKind.ASSIGN)
-        tokenizer.verify(0, 1, ",", BibtexTokenKind.COMMA)
-        tokenizer.verify(0, 2, "#", BibtexTokenKind.CONCAT)
-        assertNull(tokenizer.next())
+        verify(tokenizer, 0, 0, "=", BibtexTokenKind.ASSIGN)
+        verify(tokenizer, 0, 1, ",", BibtexTokenKind.COMMA)
+        verify(tokenizer, 0, 2, "#", BibtexTokenKind.CONCAT)
+        tokenizer.next().shouldBeNull()
     }
-}
+})
