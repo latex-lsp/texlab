@@ -15,7 +15,6 @@ import texlab.build.*
 import texlab.completion.CompletionProvider
 import texlab.completion.bibtex.BibtexCitationActor
 import texlab.completion.latex.data.LatexComponentDatabase
-import texlab.completion.latex.data.symbols.LatexSymbolDatabase
 import texlab.definition.DefinitionProvider
 import texlab.diagnostics.DiagnosticsProvider
 import texlab.diagnostics.LatexLinterConfig
@@ -101,12 +100,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                 progressListener)
     }
 
-    private val symbolDatabase: Deferred<LatexSymbolDatabase> = async {
-        LatexSymbolDatabase.loadOrCreate(
-                LatexLanguageServerConfig.SYMBOL_DATABASE_DIRECTORY)
-    }
-
-    private val completionProvider = CompletionProvider(resolver, componentDatabase, symbolDatabase)
+    private val completionProvider = CompletionProvider(resolver, componentDatabase)
     private val hoverProvider = HoverProvider(componentDatabase)
     private val diagnosticsProvider = DiagnosticsProvider()
 

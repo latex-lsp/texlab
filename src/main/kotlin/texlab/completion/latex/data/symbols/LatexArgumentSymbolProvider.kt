@@ -8,29 +8,21 @@ import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.syntax.latex.LatexCommandSyntax
 
-class LatexArgumentSymbolProvider(private val database: LatexSymbolDatabase)
-    : FeatureProvider<CompletionParams, List<CompletionItem>> {
+object LatexArgumentSymbolProvider : FeatureProvider<CompletionParams, List<CompletionItem>> {
+    private class Provider(symbol: LatexArgumentSymbol) : LatexArgumentProvider() {
+        override val commandNames: List<String> = listOf("\\" + symbol.command)
 
-    private inner class Provider(private val symbols: List<LatexArgumentSymbol>) : LatexArgumentProvider() {
-        override val commandNames: List<String> = listOf(symbols[0].command)
+        override val argumentIndex: Int = symbol.index
 
-        override val argumentIndex: Int = symbols[0].index
+        val items = symbol.arguments.map { CompletionItemFactory.createArgumentSymbol(it.argument, it.image) }
 
         override fun complete(request: FeatureRequest<CompletionParams>,
                               command: LatexCommandSyntax): List<CompletionItem> {
-            return symbols.map { createItem(it) }
-        }
-
-        private fun createItem(symbol: LatexArgumentSymbol): CompletionItem {
-            return CompletionItemFactory.createArgumentSymbol(
-                    symbol.argument,
-                    database.resolve(symbol.imageId))
+            return items
         }
     }
 
-    val provider = database.index.arguments
-            .groupBy { it.command }
-            .values
+    val provider = LatexSymbolDatabase.INSTANCE.arguments
             .map { Provider(it) }
             .let { FeatureProvider.concat(*it.toTypedArray()) }
 

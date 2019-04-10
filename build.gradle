@@ -25,7 +25,6 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.1.0"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     implementation "com.overzealous:remark:1.1.0"
-    implementation "org.zeroturnaround:zt-zip:1.13"
     implementation "org.slf4j:slf4j-simple:1.7.26"
     implementation "org.scilab.forge:jlatexmath:1.0.7"
     implementation "org.apache.commons:commons-lang3:3.8.1"

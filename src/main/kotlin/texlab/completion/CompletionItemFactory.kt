@@ -4,7 +4,6 @@ import org.eclipse.lsp4j.*
 import texlab.completion.bibtex.BibtexField
 import texlab.formatting.BibtexFormatter
 import texlab.syntax.bibtex.BibtexEntrySyntax
-import java.nio.file.Path
 
 object CompletionItemFactory {
     private const val KERNEL = "built-in"
@@ -112,24 +111,25 @@ object CompletionItemFactory {
         }
     }
 
-    fun createCommandSymbol(name: String, component: String?, image: Path): CompletionItem {
+    fun createCommandSymbol(name: String, component: String?, image: String): CompletionItem {
         return CompletionItem(name).apply {
             kind = CompletionItemKind.Function
             detail = component ?: KERNEL
-            setDocumentation(MarkupContent().apply {
-                kind = MarkupKind.MARKDOWN
-                value = "![$name](${image.toUri()}|width=48,height=48)"
-            })
+            setDocumentation(createImage(name, image))
         }
     }
 
-    fun createArgumentSymbol(name: String, image: Path): CompletionItem {
+    fun createArgumentSymbol(name: String, image: String): CompletionItem {
         return CompletionItem(name).apply {
             kind = CompletionItemKind.Field
-            setDocumentation(MarkupContent().apply {
-                kind = MarkupKind.MARKDOWN
-                value = "![$name](${image.toUri()}|width=48,height=48)"
-            })
+            setDocumentation(createImage(name, image))
+        }
+    }
+
+    private fun createImage(name: String, image: String): MarkupContent {
+        return MarkupContent().apply {
+            kind = MarkupKind.MARKDOWN
+            value = "![$name](data:image/png;base64,$image|width=48,height=48)"
         }
     }
 }

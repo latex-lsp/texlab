@@ -11,15 +11,13 @@ import texlab.completion.latex.*
 import texlab.completion.latex.data.LatexComponentDatabase
 import texlab.completion.latex.data.symbols.LatexArgumentSymbolProvider
 import texlab.completion.latex.data.symbols.LatexCommandSymbolProvider
-import texlab.completion.latex.data.symbols.LatexSymbolDatabase
 import texlab.provider.DeferredProvider
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 import texlab.resolver.LatexResolver
 
 class CompletionProvider(resolver: Deferred<LatexResolver>,
-                         componentDatabase: Deferred<LatexComponentDatabase>,
-                         symbolDatabase: Deferred<LatexSymbolDatabase>)
+                         componentDatabase: Deferred<LatexComponentDatabase>)
     : FeatureProvider<CompletionParams, List<CompletionItem>> {
     private val provider = FeatureProvider.concat(
             LatexIncludeProvider,
@@ -36,8 +34,8 @@ class CompletionProvider(resolver: Deferred<LatexResolver>,
             DeferredProvider(::LatexComponentEnvironmentProvider, componentDatabase, emptyList()),
             LatexKernelEnvironmentProvider,
             LatexUserEnvironmentProvider,
-            DeferredProvider(::LatexArgumentSymbolProvider, symbolDatabase, emptyList()),
-            DeferredProvider(::LatexCommandSymbolProvider, symbolDatabase, emptyList()),
+            LatexArgumentSymbolProvider,
+            LatexCommandSymbolProvider,
             DeferredProvider(::TikzCommandProvider, componentDatabase, emptyList()),
             DeferredProvider(::LatexComponentCommandProvider, componentDatabase, emptyList()),
             LatexKernelCommandProvider,
