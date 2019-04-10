@@ -8,7 +8,7 @@ import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
 
-object LatexEnvironmentRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+object LatexEnvironmentRenameProvider : FeatureProvider<RenameParams, WorkspaceEdit?> {
     override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         if (request.document !is LatexDocument) {
             return null

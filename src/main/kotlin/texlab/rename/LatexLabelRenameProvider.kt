@@ -7,25 +7,25 @@ import texlab.LatexDocument
 import texlab.contains
 import texlab.provider.FeatureProvider
 import texlab.provider.FeatureRequest
-import texlab.syntax.latex.LatexCommandSyntax
 
-object LatexCommandRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+object LatexLabelRenameProvider : FeatureProvider<RenameParams, WorkspaceEdit?> {
     override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         if (request.document !is LatexDocument) {
             return null
         }
 
-        val command = request.document.tree.root
-                .descendants
-                .filterIsInstance<LatexCommandSyntax>()
-                .firstOrNull { it.name.range.contains(request.params.position) } ?: return null
+        val label = request.document.tree
+                .labelReferences
+                .plus(request.document.tree.labelDefinitions)
+                .firstOrNull { it.name.range.contains(request.params.position) }
+                ?: return null
 
         val changes = mutableMapOf<String, List<TextEdit>>()
         for (document in request.relatedDocuments.filterIsInstance<LatexDocument>()) {
-            val edits = document.tree.root.descendants
-                    .filterIsInstance<LatexCommandSyntax>()
-                    .filter { it.name.text == command.name.text }
-                    .map { TextEdit(it.name.range, "\\" + request.params.newName) }
+            val edits = document.tree.labelReferences
+                    .plus(document.tree.labelDefinitions)
+                    .filter { it.name.text == label.name.text }
+                    .map { TextEdit(it.name.range, request.params.newName) }
             changes[document.uri.toString()] = edits
         }
 

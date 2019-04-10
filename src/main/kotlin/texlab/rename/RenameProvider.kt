@@ -6,7 +6,7 @@ import texlab.provider.FeatureProvider
 
 object RenameProvider : FeatureProvider<RenameParams, WorkspaceEdit?> by
 FeatureProvider.choice(
-        LatexCommandRenamer,
-        LatexEnvironmentRenamer,
-        LatexLabelRenamer,
-        BibtexEntryRenamer)
+        LatexCommandRenameProvider,
+        LatexEnvironmentRenameProvider,
+        LatexLabelRenameProvider,
+        BibtexEntryRenameProvider)

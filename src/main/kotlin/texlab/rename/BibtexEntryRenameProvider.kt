@@ -12,7 +12,7 @@ import texlab.provider.FeatureRequest
 import texlab.syntax.Token
 import texlab.syntax.bibtex.BibtexEntrySyntax
 
-object BibtexEntryRenamer : FeatureProvider<RenameParams, WorkspaceEdit?> {
+object BibtexEntryRenameProvider : FeatureProvider<RenameParams, WorkspaceEdit?> {
     override suspend fun get(request: FeatureRequest<RenameParams>): WorkspaceEdit? {
         val token = when (request.document) {
             is BibtexDocument -> findEntry(request.document, request.params.position)
