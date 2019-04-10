@@ -1,26 +1,24 @@
 package texlab.formatting
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import texlab.syntax.bibtex.BibtexDeclarationSyntax
 import texlab.syntax.bibtex.BibtexParser
 
-class BibtexFormatterTests {
-    private fun verify(source: String, expected: String, lineLength: Int = 30) {
+class BibtexFormatterTests : StringSpec({
+    fun verify(source: String, expected: String, lineLength: Int = 30) {
         val entry = BibtexParser.parse(source)
                 .children
                 .filterIsInstance<BibtexDeclarationSyntax>()
                 .first()
 
         val formatter = BibtexFormatter(true, 4, lineLength)
-        val actual = formatter
-                .format(entry)
+        formatter.format(entry)
                 .replace(System.lineSeparator(), "\n")
-        assertEquals(expected, actual)
+                .shouldBe(expected)
     }
 
-    @Test
-    fun `it should wrap long lines`() {
+    "it should wrap long lines" {
         val source = "@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}"
         val expected = """
             @article{foo,
@@ -33,8 +31,7 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should not wrap long lines with a line length of zero`() {
+    "it should not wrap long lines with a line length of zero" {
         val source = "@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}"
         val expected = """
             @article{foo,
@@ -44,8 +41,7 @@ class BibtexFormatterTests {
         verify(source, expected, 0)
     }
 
-    @Test
-    fun `it should insert trailing commas`() {
+    "it should insert trailing commas" {
         val source = "@article{foo, bar = baz}"
         val expected = """
             @article{foo,
@@ -55,8 +51,7 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should insert missing braces`() {
+    "it should insert missing braces" {
         val source = "@article{foo, bar = baz,"
         val expected = """
             @article{foo,
@@ -66,8 +61,7 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should handle commands`() {
+    "it should handle commands" {
         val source = "@article{foo, bar = \"\\baz\",}"
         val expected = """
             @article{foo,
@@ -77,8 +71,7 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should handle string concatenation`() {
+    "it should handle string concatenation" {
         val source = "@article{foo, bar = \"baz\" # \"qux\"}"
         val expected = """
             @article{foo,
@@ -88,8 +81,7 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should replace parens with braces`() {
+    "it should replace parentheses with braces" {
         val source = "@article(foo,)"
         val expected = """
             @article{foo,
@@ -98,17 +90,15 @@ class BibtexFormatterTests {
         verify(source, expected)
     }
 
-    @Test
-    fun `it should handle strings`() {
+    "it should handle strings" {
         val source = "@string{foo=\"bar\"}"
         val expected = """@string{foo = "bar"}"""
         verify(source, expected)
     }
 
-    @Test
-    fun `it should handle preambles`() {
+    "it should handle preambles" {
         val source = "@preamble{\n\"foo bar baz\"}"
         val expected = "@preamble{\"foo bar baz\"}"
         verify(source, expected)
     }
-}
+})
