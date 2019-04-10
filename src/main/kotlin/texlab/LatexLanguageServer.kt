@@ -1,6 +1,7 @@
 package texlab
 
 import com.google.gson.JsonPrimitive
+import com.sun.jndi.toolkit.url.Uri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -36,6 +37,7 @@ import texlab.resolver.LatexResolver
 import texlab.resolver.TexDistributionError
 import texlab.search.ForwardSearchConfig
 import texlab.search.ForwardSearchResult
+import texlab.search.ForwardSearchStatus
 import texlab.search.ForwardSearchTool
 import texlab.symbol.SymbolProvider
 import texlab.syntax.BibtexSyntaxTree
@@ -214,7 +216,8 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun didChange(params: DidChangeTextDocumentParams) {
         assert(params.contentChanges.size == 1)
-        val uri = URIHelper.parse(params.textDocument.uri)
+        val uri = runBlocking { parseURI(params.textDocument.uri) } ?: return
+
         workspaceActor.put { workspace ->
             val oldDocument = workspace.documentsByUri.getValue(uri)
             val text = params.contentChanges[0].text
@@ -233,7 +236,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun didSave(params: DidSaveTextDocumentParams) {
         launch {
-            val uri = URIHelper.parse(params.textDocument.uri)
+            val uri = parseURI(params.textDocument.uri) ?: return@launch
             runLinter(uri, params.text)
             publishDiagnostics(uri)
 
@@ -253,22 +256,22 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun documentSymbol(params: DocumentSymbolParams)
             : CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> = future {
-        runFeature(SymbolProvider, params.textDocument, params)
+        runFeature(SymbolProvider, params.textDocument, params, emptyList())
                 .map { Either.forRight<SymbolInformation, DocumentSymbol>(it) }
     }
 
     override fun rename(params: RenameParams): CompletableFuture<WorkspaceEdit?> = future {
-        runFeature(RenameProvider, params.textDocument, params)
+        runFeature(RenameProvider, params.textDocument, params, null)
     }
 
     override fun documentLink(params: DocumentLinkParams)
             : CompletableFuture<List<DocumentLink>> = future {
-        runFeature(LatexIncludeLinkProvider, params.textDocument, params)
+        runFeature(LatexIncludeLinkProvider, params.textDocument, params, emptyList())
     }
 
     override fun completion(params: CompletionParams)
             : CompletableFuture<Either<List<CompletionItem>, CompletionList>> = future {
-        val items = runFeature(completionProvider, params.textDocument, params)
+        val items = runFeature(completionProvider, params.textDocument, params, emptyList())
 
         val allIncludes = items.all {
             it.kind == CompletionItemKind.Folder || it.kind == CompletionItemKind.File
@@ -311,23 +314,24 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun foldingRange(params: FoldingRangeRequestParams)
             : CompletableFuture<List<FoldingRange>> = future {
-        runFeature(FoldingProvider, params.textDocument, params)
+        runFeature(FoldingProvider, params.textDocument, params, emptyList())
     }
 
     override fun definition(params: TextDocumentPositionParams)
             : CompletableFuture<Either<List<Location>, List<LocationLink>>> = future {
-        runFeature(DefinitionProvider, params.textDocument, params)
+        runFeature(DefinitionProvider, params.textDocument, params, emptyList())
                 .let { Either.forLeft<List<Location>, List<LocationLink>>(it) }
     }
 
     override fun hover(params: TextDocumentPositionParams)
             : CompletableFuture<Hover?> = future {
-        runFeature(hoverProvider, params.textDocument, params)
+        runFeature(hoverProvider, params.textDocument, params, null)
     }
 
     override fun formatting(params: DocumentFormattingParams)
             : CompletableFuture<List<TextEdit>?> = future {
-        val uri = URIHelper.parse(params.textDocument.uri)
+        val uri = parseURI(params.textDocument.uri) ?: return@future null
+
         val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
         workspaceActor.withWorkspace { workspace ->
             val document = workspace.documentsByUri[uri] as? BibtexDocument
@@ -342,17 +346,19 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     override fun references(params: ReferenceParams)
             : CompletableFuture<List<Location>> = future {
-        runFeature(ReferenceProvider, params.textDocument, params)
+        runFeature(ReferenceProvider, params.textDocument, params, emptyList())
     }
 
     override fun documentHighlight(params: TextDocumentPositionParams)
             : CompletableFuture<List<DocumentHighlight>> = future {
-        runFeature(LatexLabelHighlightProvider, params.textDocument, params)
+        runFeature(LatexLabelHighlightProvider, params.textDocument, params, emptyList())
     }
 
     override fun build(params: BuildParams): CompletableFuture<BuildResult> = future {
         workspaceActor.withWorkspace { workspace ->
-            val childUri = URIHelper.parse(params.textDocument.uri)
+            val childUri = parseURI(params.textDocument.uri)
+                    ?: return@withWorkspace BuildResult(BuildStatus.FAILURE)
+
             val parent = workspace.findParent(childUri)
             val config = client.configuration<BuildConfig>("latex.build", parent.uri)
             BuildEngine.build(parent.uri, config, progressListener)
@@ -362,7 +368,9 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
     override fun forwardSearch(params: TextDocumentPositionParams)
             : CompletableFuture<ForwardSearchResult> = future {
         workspaceActor.withWorkspace { workspace ->
-            val childUri = URIHelper.parse(params.textDocument.uri)
+            val childUri = parseURI(params.textDocument.uri)
+                    ?: return@withWorkspace ForwardSearchResult(ForwardSearchStatus.FAILURE)
+
             val parent = workspace.findParent(childUri)
             val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
             ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
@@ -417,9 +425,10 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
     private suspend fun <T, R> runFeature(provider: FeatureProvider<T, R>,
                                           document: TextDocumentIdentifier,
-                                          params: T): R {
+                                          params: T,
+                                          defaultValue: R): R {
         return workspaceActor.withWorkspace { workspace ->
-            val uri = URIHelper.parse(document.uri)
+            val uri = parseURI(document.uri) ?: return@withWorkspace defaultValue
             val request = FeatureRequest(uri, workspace, params, logger)
             provider.get(request)
         }
@@ -444,6 +453,18 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         val document = Workspace.load(file)
         if (document != null) {
             workspaceActor.put { document }
+        }
+    }
+
+    private suspend fun parseURI(text: String): URI? {
+        val uri = URIHelper.parse(text)
+        return workspaceActor.withWorkspace { workspace ->
+            if (workspace.documentsByUri.containsKey(uri)) {
+                uri
+            } else {
+                logger.warn("Unknown document: $text")
+                null
+            }
         }
     }
 }
