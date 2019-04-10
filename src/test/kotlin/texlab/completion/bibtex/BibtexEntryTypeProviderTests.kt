@@ -3,12 +3,12 @@ package texlab.completion.bibtex
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexEntryTypeProviderTests {
     @Test
     fun `it should provide items when near the at sign`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "@")
                 .completion("foo.bib", 0, 1)
                 .let { BibtexEntryTypeProvider.get(it) }
@@ -17,7 +17,7 @@ class BibtexEntryTypeProviderTests {
 
     @Test
     fun `it should not provide items when inside of content`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar=\n@}")
                 .completion("foo.bib", 1, 1)
                 .let { BibtexEntryTypeProvider.get(it) }
@@ -26,7 +26,7 @@ class BibtexEntryTypeProviderTests {
 
     @Test
     fun `it should not provide items in LaTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "@")
                 .completion("foo.tex", 0, 1)
                 .let { BibtexEntryTypeProvider.get(it) }

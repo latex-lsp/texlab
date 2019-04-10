@@ -7,12 +7,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexEntryDefinitionProviderTests {
     @Test
     fun `it should find entries in related documents`() = runBlocking<Unit> {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.tex", "\\addbibresource{baz.bib}\n\\cite{foo}")
                 .document("bar.bib", "@article{foo, bar = {baz}}")
                 .document("baz.bib", "@article{foo, bar = {baz}}")
@@ -27,7 +27,7 @@ class BibtexEntryDefinitionProviderTests {
 
     @Test
     fun `it should return nothing if no definition was found`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .definition("foo.tex", 0, 0)
                 .let { BibtexEntryDefinitionProvider.get(it) }
@@ -36,7 +36,7 @@ class BibtexEntryDefinitionProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .definition("foo.bib", 0, 0)
                 .let { BibtexEntryDefinitionProvider.get(it) }

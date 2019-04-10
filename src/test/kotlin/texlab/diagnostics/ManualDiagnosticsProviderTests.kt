@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.Diagnostic
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class ManualDiagnosticsProviderTests {
     @Test
@@ -13,7 +13,7 @@ class ManualDiagnosticsProviderTests {
         val provider = ManualDiagnosticsProvider()
         val diagnostic1 = Diagnostic().apply { code = "1" }
         val diagnostic2 = Diagnostic().apply { code = "2" }
-        val builder = WorkspaceBuilder().document("foo.tex", "")
+        val builder = OldWorkspaceBuilder().document("foo.tex", "")
         val uri = builder.uri("foo.tex")
         provider.diagnosticsByUri = mapOf(uri to listOf(diagnostic1, diagnostic2))
 
@@ -26,7 +26,7 @@ class ManualDiagnosticsProviderTests {
     @Test
     fun `it should return an empty list for unknown documents`() = runBlocking {
         val provider = ManualDiagnosticsProvider()
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .diagnostics("foo.tex")
 

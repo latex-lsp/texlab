@@ -8,7 +8,7 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexLabelHighlightProviderTests {
     @Test
@@ -18,7 +18,7 @@ class LatexLabelHighlightProviderTests {
         val highlights = arrayOf(
                 DocumentHighlight(range1, DocumentHighlightKind.Write),
                 DocumentHighlight(range2, DocumentHighlightKind.Read))
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\label{foo}\n\\ref{foo}")
                 .highlight("foo.tex", 0, 7)
                 .let { LatexLabelHighlightProvider.get(it) }
@@ -27,7 +27,7 @@ class LatexLabelHighlightProviderTests {
 
     @Test
     fun `it should return nothing if no label is selected`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .highlight("foo.tex", 0, 0)
                 .let { LatexLabelHighlightProvider.get(it) }
@@ -36,7 +36,7 @@ class LatexLabelHighlightProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .highlight("foo.bib", 0, 0)
                 .let { LatexLabelHighlightProvider.get(it) }

@@ -5,13 +5,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 import texlab.provider.FeatureProviderTests.NumberProvider
 
 class DeferredProviderTests {
     @Test
     fun `it should eventually provide the source to the given provider`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .request("foo.tex") {}
 
@@ -24,7 +24,7 @@ class DeferredProviderTests {
 
     @Test
     fun `it should return nothing as long as the source is not ready`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .request("foo.tex") {}
 

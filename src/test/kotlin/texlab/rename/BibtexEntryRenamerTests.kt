@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexEntryRenamerTests {
     @ParameterizedTest
     @CsvSource("foo.bib, 0, 9", "bar.tex, 1, 6")
     fun `it should be able to rename an entry`(document: String, line: Int, character: Int) = runBlocking {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz}")
                 .document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}")
 
@@ -39,7 +39,7 @@ class BibtexEntryRenamerTests {
 
     @Test
     fun `it should not rename unrelated structures`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz}")
                 .rename("foo.bib", 0, 14, "qux")
                 .let { BibtexEntryRenamer.get(it) }
@@ -48,7 +48,7 @@ class BibtexEntryRenamerTests {
 
     @Test
     fun `it should not process LaTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .rename("foo.tex", 0, 0, "bar")
                 .let { BibtexEntryRenamer.get(it) }

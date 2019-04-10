@@ -4,12 +4,12 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexKernelEnvironmentProviderTests {
     @Test
     fun `it should provide items when inside of an environment delimiter`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\begin{}")
                 .completion("foo.tex", 0, 7)
                 .let { LatexKernelEnvironmentProvider.get(it) }
@@ -18,7 +18,7 @@ class LatexKernelEnvironmentProviderTests {
 
     @Test
     fun `it should not provide items when not inside of an environment delimiter`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\foo{}")
                 .completion("foo.tex", 0, 5)
                 .let { LatexKernelEnvironmentProvider.get(it) }

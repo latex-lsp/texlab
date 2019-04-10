@@ -7,12 +7,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexEntryReferenceProviderTests {
     @Test
     fun `it should find citations in related documents`() = runBlocking<Unit> {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = {baz}}")
                 .document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}")
                 .document("baz.tex", "\\cite{foo}")
@@ -28,7 +28,7 @@ class BibtexEntryReferenceProviderTests {
 
     @Test
     fun `it should not process LaTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .reference("foo.tex", 0, 0)
                 .let { BibtexEntryReferenceProvider.get(it) }

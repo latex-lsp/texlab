@@ -6,12 +6,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexIncludeLinkProviderTests {
     @Test
     fun `it should provide links to related documents`() = runBlocking {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.tex", "\\input{bar.tex}")
                 .document("bar.tex", "")
 
@@ -26,7 +26,7 @@ class LatexIncludeLinkProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .link("foo.bib")
                 .let { LatexIncludeLinkProvider.get(it) }

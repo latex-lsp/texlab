@@ -3,10 +3,10 @@ package texlab.completion.latex
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexUserCommandProviderTests {
-    private fun verify(builder: WorkspaceBuilder, expected: Array<String>) = runBlocking<Unit> {
+    private fun verify(builder: OldWorkspaceBuilder, expected: Array<String>) = runBlocking<Unit> {
         builder.completion("foo.tex", 1, 1)
                 .let { LatexUserCommandProvider.get(it) }
                 .map { it.label }
@@ -17,7 +17,7 @@ class LatexUserCommandProviderTests {
     @Test
     fun `it should include commands from related documents`() = runBlocking<Unit> {
         val expected = arrayOf("include", "foo")
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\include{bar.tex}\n\\")
                 .document("bar.tex", "\\foo")
                 .also { verify(it, expected) }
@@ -26,7 +26,7 @@ class LatexUserCommandProviderTests {
     @Test
     fun `it should not include the current command`() = runBlocking<Unit> {
         val expected = arrayOf("bar")
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\bar\n\\baz")
                 .also { verify(it, expected) }
     }

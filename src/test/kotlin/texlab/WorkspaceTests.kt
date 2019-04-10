@@ -1,80 +1,69 @@
-package texlab
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
+import texlab.WorkspaceBuilder
 
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Test
-import java.net.URI
-
-class WorkspaceTests {
-    private fun relatedDocuments(workspace: Workspace, uri: URI): Array<URI> {
-        return workspace
-                .relatedDocuments(uri)
-                .map { it.uri }
-                .toTypedArray()
+class WorkspaceTests : StringSpec({
+    "relatedDocuments should append extensions when analyzing includes" {
+        WorkspaceBuilder().apply {
+            val uri1 = document("foo.tex", "\\include{bar/baz}")
+            val uri2 = document("bar/baz.tex", "")
+            workspace.relatedDocuments(uri1)
+                    .map { it.uri }
+                    .shouldBe(listOf(uri1, uri2))
+        }
     }
 
-    @Test
-    fun `it should append extensions when analyzing includes`() {
-        val builder = WorkspaceBuilder()
-        val uri = builder.uri("foo.tex")
-        val workspace = builder
-                .document(uri, "\\include{bar/baz}")
-                .document("bar/baz.tex", "")
-                .workspace
-
-        val expected = workspace.documentsByUri.keys.toTypedArray()
-        val actual = relatedDocuments(workspace, uri)
-        assertArrayEquals(expected, actual)
+    "relatedDocuments should ignore invalid includes" {
+        WorkspaceBuilder().apply {
+            val uri = document("foo.tex", "\\include{<foo>?|bar|:}\n\\include{}")
+            workspace.relatedDocuments(uri)
+                    .map { it.uri }
+                    .shouldBe(listOf(uri))
+        }
     }
 
-    @Test
-    fun `it should ignore invalid includes`() {
-        val builder = WorkspaceBuilder()
-        val uri = builder.uri("foo.tex")
-        val workspace = builder
-                .document(uri, "\\include{<foo>?|bar|:}\n\\include{}")
-                .workspace
-
-        val expected = arrayOf(uri)
-        val actual = relatedDocuments(workspace, uri)
-        assertArrayEquals(expected, actual)
+    "relatedDocuments should find related bibliographies" {
+        WorkspaceBuilder().apply {
+            val uri1 = document("foo.tex", "\\addbibresource{bar.bib}")
+            val uri2 = document("bar.bib", "")
+            workspace.relatedDocuments(uri1)
+                    .map { it.uri }
+                    .shouldBe(listOf(uri1, uri2))
+        }
     }
 
-    @Test
-    fun `it should find related bibliographies`() {
-        val builder = WorkspaceBuilder()
-        val uri = builder.uri("foo.tex")
-        val workspace = builder
-                .document(uri, "\\addbibresource{bar.bib}")
-                .document("bar.bib", "")
-                .workspace
-
-        val expected = workspace.documentsByUri.keys.toTypedArray()
-        val actual = relatedDocuments(workspace, uri)
-        assertArrayEquals(expected, actual)
+    "relatedDocuments should ignore includes that cannot be resolved" {
+        WorkspaceBuilder().apply {
+            val uri = document("foo.tex", "\\include{bar.tex}")
+            workspace.relatedDocuments(uri)
+                    .map { it.uri }
+                    .shouldBe(listOf(uri))
+        }
     }
 
-    @Test
-    fun `it should ignore includes that cannot be resolved`() {
-        val builder = WorkspaceBuilder()
-        val uri = builder.uri("foo.tex")
-        val workspace = builder
-                .document(uri, "\\include{bar.tex}")
-                .workspace
-
-        val expected = arrayOf(uri)
-        val actual = relatedDocuments(workspace, uri)
-        assertArrayEquals(expected, actual)
+    "relatedDocuments should handle include cycles" {
+        WorkspaceBuilder().apply {
+            val uri1 = document("foo.tex", "\\input{bar.tex}")
+            val uri2 = document("bar.tex", "\\input{foo.tex}")
+            workspace.relatedDocuments(uri1)
+                    .map { it.uri }
+                    .shouldBe(listOf(uri1, uri2))
+        }
     }
 
-    @Test
-    fun `it should handle include cycles`() {
-        val workspace = WorkspaceBuilder()
-                .document("foo.tex", "\\input{bar.tex}")
-                .document("bar.tex", "\\input{foo.tex}")
-                .workspace
-
-        val expected = workspace.documentsByUri.keys.toTypedArray()
-        val actual = relatedDocuments(workspace, workspace.documentsByUri.keys.first())
-        assertArrayEquals(expected, actual)
+    "findParent should behave as expected" {
+        WorkspaceBuilder().apply {
+            val uri1 = document("foo.tex", "\\input{bar.tex}")
+            val uri2 = document("bar.tex", "\\begin{document}\\end{document}")
+            workspace.findParent(uri1).uri.shouldBe(uri2)
+        }
     }
-}
+
+    "findParent should return the document if there is no parent" {
+        WorkspaceBuilder().apply {
+            val uri = document("foo.tex", "")
+            document("bar.tex", "\\begin{document}\\end{document}")
+            workspace.findParent(uri).uri.shouldBe(uri)
+        }
+    }
+})

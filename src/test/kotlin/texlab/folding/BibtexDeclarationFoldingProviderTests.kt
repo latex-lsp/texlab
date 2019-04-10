@@ -5,12 +5,12 @@ import org.eclipse.lsp4j.FoldingRangeKind
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexDeclarationFoldingProviderTests {
     @Test
     fun `it should provide foldings for entries`() = runBlocking {
-        val foldings = WorkspaceBuilder()
+        val foldings = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz\n}")
                 .folding("foo.bib")
                 .let { BibtexDeclarationFoldingProvider.get(it) }
@@ -26,7 +26,7 @@ class BibtexDeclarationFoldingProviderTests {
 
     @Test
     fun `it should provide foldings for strings`() = runBlocking {
-        val foldings = WorkspaceBuilder()
+        val foldings = OldWorkspaceBuilder()
                 .document("foo.bib", "@string{foo = \"bar\"}")
                 .folding("foo.bib")
                 .let { BibtexDeclarationFoldingProvider.get(it) }
@@ -42,7 +42,7 @@ class BibtexDeclarationFoldingProviderTests {
 
     @Test
     fun `it should not provide foldings for LaTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "@article{foo, }")
                 .folding("foo.tex")
                 .let { BibtexDeclarationFoldingProvider.get(it) }

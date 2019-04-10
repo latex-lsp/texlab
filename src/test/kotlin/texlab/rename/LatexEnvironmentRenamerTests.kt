@@ -6,12 +6,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexEnvironmentRenamerTests {
     @Test
     fun `it should rename unmatched environments`() = runBlocking {
-        val edit = WorkspaceBuilder()
+        val edit = OldWorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 8, "baz")
                 .let { LatexEnvironmentRenamer.get(it)!! }
@@ -27,7 +27,7 @@ class LatexEnvironmentRenamerTests {
 
     @Test
     fun `it should not rename unrelated environments`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.tex", 0, 5, "baz")
                 .let { LatexEnvironmentRenamer.get(it) }
@@ -36,7 +36,7 @@ class LatexEnvironmentRenamerTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "\\begin{foo}\n\\end{bar}")
                 .rename("foo.bib", 0, 8, "baz")
                 .let { LatexEnvironmentRenamer.get(it) }

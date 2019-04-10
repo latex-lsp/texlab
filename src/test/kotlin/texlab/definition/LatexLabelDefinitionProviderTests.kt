@@ -7,12 +7,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexLabelDefinitionProviderTests {
     @Test
     fun `it should find labels in related documents`() = runBlocking<Unit> {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.tex", "\\label{foo}")
                 .document("bar.tex", "\\label{foo}\n\\input{baz.tex}")
                 .document("baz.tex", "\\ref{foo}")
@@ -26,7 +26,7 @@ class LatexLabelDefinitionProviderTests {
 
     @Test
     fun `it should return nothing if no definition was found`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .definition("foo.tex", 0, 0)
                 .let { LatexLabelDefinitionProvider.get(it) }
@@ -35,7 +35,7 @@ class LatexLabelDefinitionProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .definition("foo.bib", 0, 0)
                 .let { LatexLabelDefinitionProvider.get(it) }

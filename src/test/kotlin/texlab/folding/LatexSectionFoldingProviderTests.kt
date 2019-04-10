@@ -6,7 +6,7 @@ import org.eclipse.lsp4j.FoldingRangeKind
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexSectionFoldingProviderTests {
     @Test
@@ -36,7 +36,7 @@ class LatexSectionFoldingProviderTests {
         }
         val expected = arrayOf(folding1, folding2, folding3)
 
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", text)
                 .folding("foo.tex")
                 .let { LatexSectionFoldingProvider.get(it) }
@@ -47,7 +47,7 @@ class LatexSectionFoldingProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .folding("foo.bib")
                 .let { LatexSectionFoldingProvider.get(it) }

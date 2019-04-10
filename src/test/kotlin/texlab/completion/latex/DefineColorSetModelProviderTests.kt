@@ -3,12 +3,12 @@ package texlab.completion.latex
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class DefineColorSetModelProviderTests {
     @Test
     fun `it should provide items when inside of a color command`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\definecolorset{}")
                 .completion("foo.tex", 0, 16)
                 .let { DefineColorSetModelProvider.get(it) }
@@ -17,7 +17,7 @@ class DefineColorSetModelProviderTests {
 
     @Test
     fun `it should not provide items when not inside of a color command`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\definecolorset{}{}")
                 .completion("foo.tex", 0, 18)
                 .let { DefineColorSetModelProvider.get(it) }

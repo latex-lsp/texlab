@@ -6,12 +6,12 @@ import org.eclipse.lsp4j.Range
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class BibtexEntryDiagnosticsProviderTests {
     @Test
     fun `it should raise an error if the opening brace is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -26,7 +26,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if the entry key is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -41,7 +41,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if the comma after entry name is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -56,7 +56,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if the closing brace is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo,")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -71,7 +71,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if '=' is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar}")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -86,7 +86,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if a field has no content`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo,\nbar = }")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -101,7 +101,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if two fields are not separated by a comma`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo,\nfoo = bar\nbaz = qux}")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -116,7 +116,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if a quote is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar =\n\"}")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -131,7 +131,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if a closing brace is missing`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = \n{")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -151,7 +151,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should raise an error if a concat operation has no right side`() = runBlocking {
-        val diagnostics = WorkspaceBuilder()
+        val diagnostics = OldWorkspaceBuilder()
                 .document("foo.bib", "@article{foo, bar = baz \n# }")
                 .diagnostics("foo.bib")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }
@@ -166,7 +166,7 @@ class BibtexEntryDiagnosticsProviderTests {
 
     @Test
     fun `it should not process LaTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "@article")
                 .diagnostics("foo.tex")
                 .let { BibtexEntryDiagnosticsProvider.get(it) }

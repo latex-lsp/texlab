@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexLabelRenamerTests {
     @ParameterizedTest
     @CsvSource("foo.tex, 0, 7", "bar.tex, 0, 5")
     fun `it should be able to rename a label`(document: String, line: Int, character: Int) = runBlocking {
-        val builder = WorkspaceBuilder()
+        val builder = OldWorkspaceBuilder()
                 .document("foo.tex", "\\label{foo}\n\\include{bar}")
                 .document("bar.tex", "\\ref{foo}")
         val edit = builder
@@ -39,7 +39,7 @@ class LatexLabelRenamerTests {
 
     @Test
     fun `it should not rename unrelated structures`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\foo{bar}")
                 .rename("foo.tex", 0, 5, "baz")
                 .let { LatexLabelRenamer.get(it) }
@@ -48,7 +48,7 @@ class LatexLabelRenamerTests {
 
     @Test
     fun `it should process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .rename("foo.bib", 0, 0, "bar")
                 .let { LatexLabelRenamer.get(it) }

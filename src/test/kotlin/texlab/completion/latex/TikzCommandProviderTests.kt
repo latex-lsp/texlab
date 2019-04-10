@@ -3,7 +3,7 @@ package texlab.completion.latex
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 import texlab.completion.latex.data.LatexComponent
 import texlab.completion.latex.data.LatexComponentSource
 
@@ -18,7 +18,7 @@ class TikzCommandProviderTests {
 
     @Test
     fun `it should provide commands when TikZ is included`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\usepackage{tikz}\n\\")
                 .completion("foo.tex", 1, 1)
                 .let { provider.get(it) }
@@ -27,7 +27,7 @@ class TikzCommandProviderTests {
 
     @Test
     fun `it should not provide commands when TikZ is not included`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\")
                 .completion("foo.tex", 0, 1)
                 .let { provider.get(it) }

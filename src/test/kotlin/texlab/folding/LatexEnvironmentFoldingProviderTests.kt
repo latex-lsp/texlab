@@ -6,7 +6,7 @@ import org.eclipse.lsp4j.FoldingRangeKind
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class LatexEnvironmentFoldingProviderTests {
     @Test
@@ -19,7 +19,7 @@ class LatexEnvironmentFoldingProviderTests {
             kind = FoldingRangeKind.Region
         })
 
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.tex", "\\begin{foo}\n\\end{foo}")
                 .folding("foo.tex")
                 .let { LatexEnvironmentFoldingProvider.get(it) }
@@ -29,7 +29,7 @@ class LatexEnvironmentFoldingProviderTests {
 
     @Test
     fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        WorkspaceBuilder()
+        OldWorkspaceBuilder()
                 .document("foo.bib", "")
                 .folding("foo.bib")
                 .let { LatexEnvironmentFoldingProvider.get(it) }

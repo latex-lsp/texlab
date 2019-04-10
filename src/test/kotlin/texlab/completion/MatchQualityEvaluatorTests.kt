@@ -3,13 +3,13 @@ package texlab.completion
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 import texlab.completion.latex.LatexKernelCommandProvider
 
 class MatchQualityEvaluatorTests {
     @Test
     fun `it should prioritize items that begin with the query`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "\\usep")
                 .completion("foo.tex", 0, 5)
 

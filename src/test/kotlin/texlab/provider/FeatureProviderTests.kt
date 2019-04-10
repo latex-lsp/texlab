@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import texlab.WorkspaceBuilder
+import texlab.OldWorkspaceBuilder
 
 class FeatureProviderTests {
     class NumberProvider(val number: Int?) : FeatureProvider<Unit, Int?> {
@@ -21,7 +21,7 @@ class FeatureProviderTests {
 
     @Test
     fun `it should concatenate the results of the given providers`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .request("foo.tex") {}
 
@@ -36,7 +36,7 @@ class FeatureProviderTests {
 
     @Test
     fun `it should return a result when a provider has a result`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .request("foo.tex") {}
 
@@ -49,7 +49,7 @@ class FeatureProviderTests {
 
     @Test
     fun `it should return nothing when no provider has a result`() = runBlocking {
-        val request = WorkspaceBuilder()
+        val request = OldWorkspaceBuilder()
                 .document("foo.tex", "")
                 .request("foo.tex") {}
 
