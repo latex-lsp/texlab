@@ -1,45 +1,36 @@
 package texlab.highlight
 
-import kotlinx.coroutines.runBlocking
+import io.kotlintest.shouldBe
+import io.kotlintest.specs.StringSpec
 import org.eclipse.lsp4j.DocumentHighlight
 import org.eclipse.lsp4j.DocumentHighlightKind
-import org.eclipse.lsp4j.Position
-import org.eclipse.lsp4j.Range
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import texlab.OldWorkspaceBuilder
+import texlab.WorkspaceBuilder
+import texlab.range
 
-class LatexLabelHighlightProviderTests {
-    @Test
-    fun `it should highlight all references of a label`() = runBlocking<Unit> {
-        val range1 = Range(Position(0, 7), Position(0, 10))
-        val range2 = Range(Position(1, 5), Position(1, 8))
-        val highlights = arrayOf(
-                DocumentHighlight(range1, DocumentHighlightKind.Write),
-                DocumentHighlight(range2, DocumentHighlightKind.Read))
-        OldWorkspaceBuilder()
-                .document("foo.tex", "\\label{foo}\n\\ref{foo}")
-                .highlight("foo.tex", 0, 7)
-                .let { LatexLabelHighlightProvider.get(it) }
-                .also { assertArrayEquals(highlights, it.toTypedArray()) }
+class LatexLabelHighlightProviderTests : StringSpec({
+    "it should highlight all references of a label" {
+        WorkspaceBuilder().apply {
+            val highlight1 = DocumentHighlight(range(0, 7, 0, 10), DocumentHighlightKind.Write)
+            val highlight2 = DocumentHighlight(range(1, 5, 1, 8), DocumentHighlightKind.Read)
+            val uri = document("foo.tex", "\\label{foo}\n\\ref{foo}")
+            val highlights = highlight(LatexLabelHighlightProvider, uri, 0, 7)
+            highlights.shouldBe(listOf(highlight1, highlight2))
+        }
     }
 
-    @Test
-    fun `it should return nothing if no label is selected`() = runBlocking<Unit> {
-        OldWorkspaceBuilder()
-                .document("foo.tex", "")
-                .highlight("foo.tex", 0, 0)
-                .let { LatexLabelHighlightProvider.get(it) }
-                .also { assertTrue(it.isEmpty()) }
+    "it should return an empty list if no label is selected" {
+        WorkspaceBuilder().apply {
+            val uri = document("foo.tex", "")
+            val highlights = highlight(LatexLabelHighlightProvider, uri, 0, 0)
+            highlights.shouldBe(emptyList())
+        }
     }
 
-    @Test
-    fun `it should not process BibTeX documents`() = runBlocking<Unit> {
-        OldWorkspaceBuilder()
-                .document("foo.bib", "")
-                .highlight("foo.bib", 0, 0)
-                .let { LatexLabelHighlightProvider.get(it) }
-                .also { assertTrue(it.isEmpty()) }
+    "it should ignore BibTeX documents" {
+        WorkspaceBuilder().apply {
+            val uri = document("foo.bib", "")
+            val highlights = highlight(LatexLabelHighlightProvider, uri, 0, 0)
+            highlights.shouldBe(emptyList())
+        }
     }
-}
+})
