@@ -7,3 +7,4 @@ authors = [
 edition = "2018"
 
 [dependencies]
+lsp-types = "0.56.0"
