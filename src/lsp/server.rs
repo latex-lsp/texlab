@@ -1,9 +1,11 @@
-use futures::future::Future;
+use crate::lsp::codec::LspCodec;
+use futures::prelude::*;
 use jsonrpc_core::*;
 use lsp_types::*;
 use serde_json::json;
-use std::rc::Rc;
 use std::sync::Arc;
+use tokio::codec::{FramedRead, FramedWrite};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 pub type LspResult<T> = Box<Future<Item = T, Error = ()> + Send>;
 
@@ -52,7 +54,46 @@ pub trait LspServer {
     fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>>;
 }
 
-pub fn build_io_handler<T>(server: Arc<T>) -> IoHandler
+pub struct ServerBuilder {
+    handler: Arc<IoHandler>,
+}
+
+impl ServerBuilder {
+    pub fn new<T>(server: T) -> Self
+    where
+        T: LspServer + Send + Sync + 'static,
+    {
+        let server = Arc::new(server);
+        let handler = build_io_handler(server);
+
+        ServerBuilder {
+            handler: Arc::new(handler),
+        }
+    }
+
+    pub fn listen<T, U>(&self, input: T, output: U) -> impl Future<Item = (), Error = ()>
+    where
+        T: AsyncRead,
+        U: AsyncWrite,
+    {
+        let reader = FramedRead::new(input, LspCodec);
+        let writer = FramedWrite::new(output, LspCodec);
+        let handler = self.handler.clone();
+
+        reader
+            .and_then(move |request| {
+                handler
+                    .handle_request(&request)
+                    .map(|response| response.unwrap_or(String::from("")))
+                    .map_err(|_| unreachable!())
+            })
+            .forward(writer)
+            .map(|x| ())
+            .map_err(|e| panic!("{:?}", e))
+    }
+}
+
+fn build_io_handler<T>(server: Arc<T>) -> IoHandler
 where
     T: LspServer + Send + Sync + 'static,
 {
