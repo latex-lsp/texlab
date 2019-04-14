@@ -54,6 +54,15 @@ impl LatexRoot {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LatexNodeKind {
+    Environment,
+    Equation,
+    Group(LatexGroupKind),
+    Command,
+    Text,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexNode {
     Environment(Rc<LatexEnvironment>),
@@ -89,6 +98,16 @@ impl LatexNode {
             LatexNode::Group(group) => visitor.visit_group(group.clone()),
             LatexNode::Command(command) => visitor.visit_command(command.clone()),
             LatexNode::Text(text) => visitor.visit_text(text.clone()),
+        }
+    }
+
+    pub fn kind(&self) -> LatexNodeKind {
+        match self {
+            LatexNode::Environment(_) => LatexNodeKind::Environment,
+            LatexNode::Equation(_) => LatexNodeKind::Equation,
+            LatexNode::Group(group) => LatexNodeKind::Group(group.kind),
+            LatexNode::Command(_) => LatexNodeKind::Command,
+            LatexNode::Text(_) => LatexNodeKind::Text,
         }
     }
 }
@@ -152,6 +171,12 @@ impl LatexEnvironmentDelimiter {
             name_range,
         }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum LatexEnvironmentDelimiterKind {
+    Begin,
+    End,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -654,7 +679,9 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
 
     fn command_environment_equation(&mut self) -> LatexNode {
         let command = self.command();
-        if let Some((name, name_range)) = test_environment_delimiter(&command) {
+        if let Some((name, name_range)) =
+            test_environment_delimiter(&command, LatexEnvironmentDelimiterKind::Begin)
+        {
             let left = LatexEnvironmentDelimiter::new(command, name, name_range);
             LatexNode::Environment(self.environment(left))
         } else if command.name.text() == "\\[" {
@@ -692,7 +719,9 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                 LatexTokenKind::Command => {
                     let node = self.command_environment_equation();
                     if let LatexNode::Command(command) = node {
-                        if let Some((name, name_range)) = test_environment_delimiter(&command) {
+                        if let Some((name, name_range)) =
+                            test_environment_delimiter(&command, LatexEnvironmentDelimiterKind::End)
+                        {
                             let right = LatexEnvironmentDelimiter::new(command, name, name_range);
                             return Rc::new(LatexEnvironment::new(left, children, Some(right)));
                         } else {
@@ -862,8 +891,17 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
     }
 }
 
-fn test_environment_delimiter(command: &LatexCommand) -> Option<(String, Range)> {
-    if command.name.text() != "\\begin" && command.name.text() != "\\end" {
+fn test_environment_delimiter(
+    command: &LatexCommand,
+    kind: LatexEnvironmentDelimiterKind,
+) -> Option<(String, Range)> {
+    let name = if kind == LatexEnvironmentDelimiterKind::Begin {
+        "\\begin"
+    } else {
+        "\\end"
+    };
+
+    if command.name.text() != name {
         return None;
     }
 
@@ -1002,5 +1040,196 @@ impl LatexSyntaxTree {
             child.accept(&mut finder);
         }
         finder.results
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn verify(text: &str, expected: Vec<LatexNodeKind>) {
+        let actual: Vec<LatexNodeKind> = LatexSyntaxTree::from(text)
+            .descendants
+            .iter()
+            .map(|node| node.kind())
+            .collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_empty() {
+        verify("", Vec::new());
+    }
+
+    #[test]
+    fn test_command() {
+        verify("\\foo", vec![LatexNodeKind::Command]);
+        verify("\\foo@bar*", vec![LatexNodeKind::Command]);
+        verify("\\**", vec![LatexNodeKind::Command, LatexNodeKind::Text]);
+        verify("\\%", vec![LatexNodeKind::Command]);
+        verify(
+            "\\foo[bar]",
+            vec![
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Options),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "\\foo[bar]{baz}{qux}",
+            vec![
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Options),
+                LatexNodeKind::Text,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_inline() {
+        verify(
+            "$ x $",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "$x$ $$y$$",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+                LatexNodeKind::Text,
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "${\\foo}$",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Command,
+            ],
+        );
+        verify(
+            "$}$",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+                LatexNodeKind::Group(LatexGroupKind::Inline),
+            ],
+        )
+    }
+
+    #[test]
+    fn test_equation() {
+        verify(
+            "\\[foo\\]",
+            vec![
+                LatexNodeKind::Equation,
+                LatexNodeKind::Command,
+                LatexNodeKind::Text,
+                LatexNodeKind::Command,
+            ],
+        );
+        verify(
+            "\\[}foo\\]",
+            vec![
+                LatexNodeKind::Equation,
+                LatexNodeKind::Command,
+                LatexNodeKind::Text,
+                LatexNodeKind::Command,
+            ],
+        );
+        verify(
+            "\\[\\foo\\]",
+            vec![
+                LatexNodeKind::Equation,
+                LatexNodeKind::Command,
+                LatexNodeKind::Command,
+                LatexNodeKind::Command,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_group() {
+        verify("}", Vec::new());
+        verify(
+            "{{foo}}",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "{foo",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+            ],
+        );
+    }
+
+    #[test]
+    fn test_environment() {
+        verify(
+            "\\begin{a}foo\\end{b}",
+            vec![
+                LatexNodeKind::Environment,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+                LatexNodeKind::Text,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "\\begin{a}foo",
+            vec![
+                LatexNodeKind::Environment,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "\\begin{}foo\\end{}",
+            vec![
+                LatexNodeKind::Environment,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+            ],
+        );
+        verify(
+            "\\end{a}",
+            vec![
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+            ],
+        );
+        verify(
+            "{\\begin{a}foo}bar",
+            vec![
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Environment,
+                LatexNodeKind::Command,
+                LatexNodeKind::Group(LatexGroupKind::Group),
+                LatexNodeKind::Text,
+                LatexNodeKind::Text,
+                LatexNodeKind::Text,
+            ],
+        );
     }
 }
