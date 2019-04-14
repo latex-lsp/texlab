@@ -26,12 +26,20 @@ impl LatexToken {
         LatexToken { span, kind }
     }
 
+    pub fn range(&self) -> Range {
+        self.span.range
+    }
+
     pub fn start(&self) -> Position {
         self.span.start()
     }
 
     pub fn end(&self) -> Position {
         self.span.end()
+    }
+
+    pub fn text(&self) -> &str {
+        &self.span.text
     }
 }
 
@@ -187,7 +195,6 @@ pub struct LatexGroup {
 
 impl LatexGroup {
     pub fn new(
-        range: Range,
         left: LatexToken,
         children: Vec<LatexNode>,
         right: Option<LatexToken>,
@@ -226,6 +233,100 @@ pub struct LatexCommand {
     pub kind: LatexCommandKind,
 }
 
+impl LatexCommand {
+    pub fn new(
+        name: LatexToken,
+        options: Option<Rc<LatexGroup>>,
+        args: Vec<Rc<LatexGroup>>,
+    ) -> Self {
+        let end = if !args.is_empty() {
+            args[args.len() - 1].range.end
+        } else if let Some(ref options) = options {
+            options.range.end
+        } else {
+            name.end()
+        };
+        let mut command = LatexCommand {
+            range: Range::new(name.start(), end),
+            name,
+            options,
+            args,
+            kind: LatexCommandKind::Unknown,
+        };
+        command.analyze_kind();
+        command
+    }
+
+    pub fn extract_text(&self, index: usize) -> Option<&LatexText> {
+        if self.args.len() > index && self.args[index].children.len() == 1 {
+            if let LatexNode::Text(ref text) = self.args[index].children[0] {
+                Some(text)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn extract_word(&self, index: usize) -> Option<&LatexToken> {
+        let text = self.extract_text(index)?;
+        if text.words.len() == 1 {
+            Some(&text.words[0])
+        } else {
+            None
+        }
+    }
+
+    pub fn extract_content(&self, index: usize) -> Option<String> {
+        let mut words = Vec::new();
+        let text = self.extract_text(index)?;
+        for word in &text.words {
+            words.push(word.text().to_owned());
+        }
+        Some(words.join(" "))
+    }
+
+    fn analyze_kind(&mut self) {
+        let name = self.name.text();
+        if INCLUDE_COMMANDS.contains(&name) {
+            if let Some(path) = self.extract_content(0) {
+                let kind = if self.name.text() == "\\usepackage" {
+                    LatexIncludeKind::Package
+                } else if self.name.text() == "\\documentclass" {
+                    LatexIncludeKind::Class
+                } else {
+                    LatexIncludeKind::File
+                };
+                self.kind = LatexCommandKind::Include(LatexInclude::new(path, kind));
+            }
+        } else if SECTION_COMMANDS.contains(&name) {
+            if let Some(text) = self.extract_content(0) {
+                let level = SECTION_COMMANDS.binary_search(&name).unwrap() / 2;
+                self.kind = LatexCommandKind::Section(LatexSection::new(text, level));
+            }
+        } else if CITATION_COMMANDS.contains(&name) {
+            if let Some(key) = self.extract_word(0) {
+                self.kind = LatexCommandKind::Citation(LatexCitation::new(key.clone()));
+            }
+        } else if LABEL_DEFINITION_COMMANDS.contains(&name) {
+            if let Some(name) = self.extract_word(0) {
+                self.kind = LatexCommandKind::Label(LatexLabel::new(
+                    name.clone(),
+                    LatexLabelKind::Definition,
+                ));
+            }
+        } else if LABEL_REFERENCE_COMMANDS.contains(&name) {
+            if let Some(name) = self.extract_word(0) {
+                self.kind = LatexCommandKind::Label(LatexLabel::new(
+                    name.clone(),
+                    LatexLabelKind::Reference,
+                ));
+            }
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexCommandKind {
     Unknown,
@@ -234,6 +335,15 @@ pub enum LatexCommandKind {
     Citation(LatexCitation),
     Label(LatexLabel),
 }
+
+pub const INCLUDE_COMMANDS: &'static [&'static str] = &[
+    "\\include",
+    "\\input",
+    "\\bibliography",
+    "\\addbibresource",
+    "\\usepackage",
+    "\\documentclass",
+];
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexInclude {
@@ -254,17 +364,91 @@ pub enum LatexIncludeKind {
     File,
 }
 
+pub const SECTION_COMMANDS: &'static [&'static str] = &[
+    "\\chapter",
+    "\\chapter*",
+    "\\section",
+    "\\section*",
+    "\\subsection",
+    "\\subsection*",
+    "\\subsubsection",
+    "\\subsubsection*",
+    "\\paragraph",
+    "\\paragraph*",
+    "\\subparagraph",
+    "\\subparagraph*",
+];
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSection {
     pub text: String,
-    pub level: i32,
+    pub level: usize,
 }
 
 impl LatexSection {
-    pub fn new(text: String, level: i32) -> Self {
+    pub fn new(text: String, level: usize) -> Self {
         LatexSection { text, level }
     }
 }
+
+pub const CITATION_COMMANDS: &'static [&'static str] = &[
+    "\\cite",
+    "\\cite*",
+    "\\Cite",
+    "\\nocite",
+    "\\citet",
+    "\\citep",
+    "\\citet*",
+    "\\citep*",
+    "\\citeauthor",
+    "\\citeauthor*",
+    "\\Citeauthor",
+    "\\Citeauthor*",
+    "\\citetitle",
+    "\\citetitle*",
+    "\\citeyear",
+    "\\citeyear*",
+    "\\citedate",
+    "\\citedate*",
+    "\\citeurl",
+    "\\fullcite",
+    "\\citeyearpar",
+    "\\citealt",
+    "\\citealp",
+    "\\citetext",
+    "\\parencite",
+    "\\parencite*",
+    "\\Parencite",
+    "\\footcite",
+    "\\footfullcite",
+    "\\footcitetext",
+    "\\textcite",
+    "\\Textcite",
+    "\\smartcite",
+    "\\Smartcite",
+    "\\supercite",
+    "\\autocite",
+    "\\Autocite",
+    "\\autocite*",
+    "\\Autocite*",
+    "\\volcite",
+    "\\Volcite",
+    "\\pvolcite",
+    "\\Pvolcite",
+    "\\fvolcite",
+    "\\ftvolcite",
+    "\\svolcite",
+    "\\Svolcite",
+    "\\tvolcite",
+    "\\Tvolcite",
+    "\\avolcite",
+    "\\Avolcite",
+    "\\notecite",
+    "\\notecite",
+    "\\pnotecite",
+    "\\Pnotecite",
+    "\\fnotecite",
+];
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitation {
@@ -276,6 +460,10 @@ impl LatexCitation {
         LatexCitation { key }
     }
 }
+
+pub const LABEL_DEFINITION_COMMANDS: &'static [&'static str] = &["\\label"];
+
+pub const LABEL_REFERENCE_COMMANDS: &'static [&'static str] = &["\\ref", "\\autoref", "\\eqref"];
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabel {
@@ -444,19 +632,225 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         }
     }
 
-    fn root() -> LatexRoot {}
-
-    fn command(&mut self) -> LatexNode {
-        let name = self.tokens.next().unwrap();
-        let options = if self.next_of_kind(LatexTokenKind::BeginOptions) {
-
+    fn root(&mut self) -> LatexRoot {
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word
+                | LatexTokenKind::BeginOptions
+                | LatexTokenKind::EndOptions => {
+                    children.push(LatexNode::Text(self.text(false)));
+                }
+                LatexTokenKind::Command => children.push(self.command_environment_equation()),
+                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
+                LatexTokenKind::BeginGroup => children.push(LatexNode::Group(self.group())),
+                LatexTokenKind::EndGroup => {
+                    self.tokens.next();
+                }
+            }
         }
-
-        let args = Vec::new();
+        LatexRoot::new(children)
     }
 
-    fn options(&mut self) -> LatexNode {
-        
+    fn command_environment_equation(&mut self) -> LatexNode {
+        let command = self.command();
+        if let Some((name, name_range)) = test_environment_delimiter(&command) {
+            let left = LatexEnvironmentDelimiter::new(command, name, name_range);
+            LatexNode::Environment(self.environment(left))
+        } else if command.name.text() == "\\[" {
+            LatexNode::Equation(self.equation(command))
+        } else {
+            LatexNode::Command(command)
+        }
+    }
+
+    fn command(&mut self) -> Rc<LatexCommand> {
+        let name = self.tokens.next().unwrap();
+        let options = if self.next_of_kind(LatexTokenKind::BeginOptions) {
+            Some(self.options())
+        } else {
+            None
+        };
+
+        let mut args = Vec::new();
+        while self.next_of_kind(LatexTokenKind::BeginGroup) {
+            args.push(self.group());
+        }
+
+        Rc::new(LatexCommand::new(name, options, args))
+    }
+
+    fn environment(&mut self, left: LatexEnvironmentDelimiter) -> Rc<LatexEnvironment> {
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word
+                | LatexTokenKind::BeginOptions
+                | LatexTokenKind::EndOptions => {
+                    children.push(LatexNode::Text(self.text(false)));
+                }
+                LatexTokenKind::Command => {
+                    let node = self.command_environment_equation();
+                    if let LatexNode::Command(command) = node {
+                        if let Some((name, name_range)) = test_environment_delimiter(&command) {
+                            let right = LatexEnvironmentDelimiter::new(command, name, name_range);
+                            return Rc::new(LatexEnvironment::new(left, children, Some(right)));
+                        } else {
+                            children.push(LatexNode::Command(command));
+                        }
+                    } else {
+                        children.push(node);
+                    }
+                }
+                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
+                LatexTokenKind::BeginGroup => {
+                    children.push(LatexNode::Group(self.group()));
+                }
+                LatexTokenKind::EndGroup => break,
+            }
+        }
+        Rc::new(LatexEnvironment::new(left, children, None))
+    }
+
+    fn equation(&mut self, left: Rc<LatexCommand>) -> Rc<LatexEquation> {
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word
+                | LatexTokenKind::BeginOptions
+                | LatexTokenKind::EndOptions => {
+                    children.push(LatexNode::Text(self.text(false)));
+                }
+                LatexTokenKind::Command => {
+                    let node = self.command_environment_equation();
+                    if let LatexNode::Command(command) = node {
+                        if command.name.text() == "\\]" {
+                            return Rc::new(LatexEquation::new(left, children, Some(command)));
+                        } else {
+                            children.push(LatexNode::Command(command));
+                        }
+                    } else {
+                        children.push(node);
+                    }
+                }
+                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
+                LatexTokenKind::BeginGroup => {
+                    children.push(LatexNode::Group(self.group()));
+                }
+                LatexTokenKind::EndGroup => break,
+            }
+        }
+        Rc::new(LatexEquation::new(left, children, None))
+    }
+
+    fn inline(&mut self) -> Rc<LatexGroup> {
+        let left = self.tokens.next().unwrap();
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word
+                | LatexTokenKind::BeginOptions
+                | LatexTokenKind::EndOptions => {
+                    children.push(LatexNode::Text(self.text(false)));
+                }
+                LatexTokenKind::Command => children.push(self.command_environment_equation()),
+                LatexTokenKind::Math => break,
+                LatexTokenKind::BeginGroup => {
+                    children.push(LatexNode::Group(self.group()));
+                }
+                LatexTokenKind::EndGroup => break,
+            }
+        }
+
+        let right = if self.next_of_kind(LatexTokenKind::Math) {
+            self.tokens.next()
+        } else {
+            None
+        };
+
+        Rc::new(LatexGroup::new(
+            left,
+            children,
+            right,
+            LatexGroupKind::Inline,
+        ))
+    }
+
+    fn group(&mut self) -> Rc<LatexGroup> {
+        let left = self.tokens.next().unwrap();
+
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word
+                | LatexTokenKind::BeginOptions
+                | LatexTokenKind::EndOptions => children.push(LatexNode::Text(self.text(false))),
+                LatexTokenKind::Command => children.push(self.command_environment_equation()),
+                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
+                LatexTokenKind::BeginGroup => {
+                    children.push(LatexNode::Group(self.group()));
+                }
+                LatexTokenKind::EndGroup => break,
+            }
+        }
+
+        let right = if self.next_of_kind(LatexTokenKind::EndGroup) {
+            self.tokens.next()
+        } else {
+            None
+        };
+
+        Rc::new(LatexGroup::new(
+            left,
+            children,
+            right,
+            LatexGroupKind::Group,
+        ))
+    }
+
+    fn options(&mut self) -> Rc<LatexGroup> {
+        let left = self.tokens.next().unwrap();
+
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
+                    children.push(LatexNode::Text(self.text(true)));
+                }
+                LatexTokenKind::Command => children.push(self.command_environment_equation()),
+                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
+                LatexTokenKind::BeginGroup => children.push(LatexNode::Group(self.group())),
+                LatexTokenKind::EndGroup | LatexTokenKind::EndOptions => break,
+            }
+        }
+
+        let right = if self.next_of_kind(LatexTokenKind::EndOptions) {
+            self.tokens.next()
+        } else {
+            None
+        };
+
+        Rc::new(LatexGroup::new(
+            left,
+            children,
+            right,
+            LatexGroupKind::Options,
+        ))
+    }
+
+    fn text(&mut self, options: bool) -> Rc<LatexText> {
+        let mut words = Vec::new();
+        words.push(self.tokens.next().unwrap());
+        while let Some(ref token) = self.tokens.peek() {
+            if token.kind == LatexTokenKind::Word
+                || (token.kind == LatexTokenKind::EndOptions && !options)
+            {
+                words.push(self.tokens.next().unwrap());
+            } else {
+                break;
+            }
+        }
+        Rc::new(LatexText::new(words))
     }
 
     fn next_of_kind(&mut self, kind: LatexTokenKind) -> bool {
@@ -465,5 +859,148 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         } else {
             false
         }
+    }
+}
+
+fn test_environment_delimiter(command: &LatexCommand) -> Option<(String, Range)> {
+    if command.name.text() != "\\begin" && command.name.text() != "\\end" {
+        return None;
+    }
+
+    if let Some(name) = command.extract_word(0) {
+        Some((name.text().to_owned(), name.range()))
+    } else if command.args[0].children.is_empty() {
+        let name_position = command.args[0].left.end();
+        let name_range = Range::new(name_position, name_position);
+        Some((String::new(), name_range))
+    } else {
+        None
+    }
+}
+
+struct LatexFinder {
+    pub position: Option<Position>,
+    pub results: Vec<LatexNode>,
+}
+
+impl LatexFinder {
+    pub fn new(position: Option<Position>) -> Self {
+        LatexFinder {
+            position,
+            results: Vec::new(),
+        }
+    }
+
+    fn check_range(&self, node: &LatexNode) -> bool {
+        if let Some(position) = self.position {
+            range::contains(node.range(), position)
+        } else {
+            true
+        }
+    }
+}
+
+impl LatexVisitor<()> for LatexFinder {
+    fn visit_environment(&mut self, environment: Rc<LatexEnvironment>) {
+        let node = LatexNode::Environment(Rc::clone(&environment));
+        if self.check_range(&node) {
+            self.results.push(node);
+            self.visit_command(Rc::clone(&environment.left.command));
+
+            for child in &environment.children {
+                child.accept(self);
+            }
+
+            if let Some(ref right) = environment.right {
+                self.visit_command(Rc::clone(&right.command));
+            }
+        }
+    }
+
+    fn visit_equation(&mut self, equation: Rc<LatexEquation>) {
+        let node = LatexNode::Equation(Rc::clone(&equation));
+        if self.check_range(&node) {
+            self.results.push(node);
+            self.visit_command(Rc::clone(&equation.left));
+
+            for child in &equation.children {
+                child.accept(self);
+            }
+
+            if let Some(ref right) = equation.right {
+                self.visit_command(Rc::clone(&right));
+            }
+        }
+    }
+
+    fn visit_group(&mut self, group: Rc<LatexGroup>) {
+        let node = LatexNode::Group(Rc::clone(&group));
+        if self.check_range(&node) {
+            self.results.push(node);
+
+            for child in &group.children {
+                child.accept(self);
+            }
+        }
+    }
+
+    fn visit_command(&mut self, command: Rc<LatexCommand>) {
+        let node = LatexNode::Command(Rc::clone(&command));
+        if self.check_range(&node) {
+            self.results.push(node);
+
+            if let Some(ref options) = command.options {
+                self.visit_group(Rc::clone(&options));
+            }
+
+            for arg in &command.args {
+                self.visit_group(Rc::clone(&arg));
+            }
+        }
+    }
+
+    fn visit_text(&mut self, text: Rc<LatexText>) {
+        let node = LatexNode::Text(Rc::clone(&text));
+        if self.check_range(&node) {
+            self.results.push(node);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexSyntaxTree {
+    pub root: LatexRoot,
+    pub descendants: Vec<LatexNode>,
+}
+
+impl From<LatexRoot> for LatexSyntaxTree {
+    fn from(root: LatexRoot) -> Self {
+        let mut finder = LatexFinder::new(None);
+        for child in &root.children {
+            child.accept(&mut finder);
+        }
+        LatexSyntaxTree {
+            root,
+            descendants: finder.results,
+        }
+    }
+}
+
+impl From<&str> for LatexSyntaxTree {
+    fn from(text: &str) -> Self {
+        let tokens = LatexLexer::from(text);
+        let mut parser = LatexParser::new(tokens);
+        let root = parser.root();
+        LatexSyntaxTree::from(root)
+    }
+}
+
+impl LatexSyntaxTree {
+    fn find(&self, position: Position) -> Vec<LatexNode> {
+        let mut finder = LatexFinder::new(Some(position));
+        for child in &self.root.children {
+            child.accept(&mut finder);
+        }
+        finder.results
     }
 }
