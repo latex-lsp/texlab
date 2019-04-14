@@ -1,14 +1,21 @@
-mod range;
-mod syntax;
 mod lsp;
+mod range;
 mod server;
+mod syntax;
 
 use lsp::server::ServerBuilder;
 use server::LatexLspServer;
+use stderrlog::*;
 use tokio;
 use tokio_stdin_stdout;
 
 fn main() {
+    stderrlog::new()
+        .module(module_path!())
+        .timestamp(stderrlog::Timestamp::Off)
+        .init()
+        .unwrap();
+
     let server = LatexLspServer;
     let builder = ServerBuilder::new(server);
 
