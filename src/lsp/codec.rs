@@ -1,4 +1,5 @@
 use bytes::{BufMut, BytesMut};
+use log::*;
 use nom::*;
 use std::io::{Error, ErrorKind};
 use std::option::Option;
@@ -13,6 +14,11 @@ impl Decoder for LspCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        trace!(
+            "Received message:\n{}",
+            str::from_utf8(&src.to_vec()).unwrap()
+        );
+
         match parse_message(&src) {
             Ok((remaining, content)) => {
                 src.split_to(src.len() - remaining.len());
@@ -37,6 +43,8 @@ impl Encoder for LspCodec {
         dst.put(format!("Content-Length: {}\r\n", item.len()));
         dst.put("\r\n");
         dst.put(item);
+
+        trace!("Sent message:\n{}", str::from_utf8(&dst.to_vec()).unwrap());
         Ok(())
     }
 }
