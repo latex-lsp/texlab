@@ -1,5 +1,6 @@
 [package]
 name = "texlab"
+description = "LaTeX Language Server"
 version = "0.1.0"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>", 
@@ -19,3 +20,4 @@ bytes = "0.4.12"
 nom = "4.2.3"
 log = "0.4.6"
 stderrlog = "0.4.1"
+clap = "2.33"
