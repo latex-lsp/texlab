@@ -559,21 +559,7 @@ impl<'a> LatexLexer<'a> {
     }
 
     fn command(&mut self) -> LatexToken {
-        self.stream.start_span();
-        self.stream.next();
-        let mut escape = true;
-        while self.stream.satifies(|c| is_command_char(*c)) {
-            self.stream.next();
-            escape = false;
-        }
-
-        if let Some(c) = self.stream.peek() {
-            if c != '\r' && c != '\n' && (escape || c == '*') {
-                self.stream.next();
-            }
-        }
-
-        let span = self.stream.end_span();
+        let span = self.stream.command();
         LatexToken::new(span, LatexTokenKind::Command)
     }
 
@@ -629,10 +615,6 @@ impl<'a> Iterator for LatexLexer<'a> {
             }
         }
     }
-}
-
-fn is_command_char(c: char) -> bool {
-    c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '@'
 }
 
 fn is_word_char(c: char) -> bool {

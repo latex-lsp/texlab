@@ -85,6 +85,24 @@ impl<'a> CharStream<'a> {
         }
     }
 
+    pub fn command(&mut self) -> Span {
+        self.start_span();
+        self.next();
+        let mut escape = true;
+        while self.satifies(|c| is_command_char(*c)) {
+            self.next();
+            escape = false;
+        }
+
+        if let Some(c) = self.peek() {
+            if c != '\r' && c != '\n' && (escape || c == '*') {
+                self.next();
+            }
+        }
+
+        self.end_span()
+    }
+
     fn update_position(&mut self, c: char) {
         if c == '\n' {
             self.current_position.line += 1;
@@ -107,6 +125,10 @@ impl<'a> Iterator for CharStream<'a> {
             None
         }
     }
+}
+
+fn is_command_char(c: char) -> bool {
+    c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '@'
 }
 
 #[cfg(test)]
@@ -178,5 +200,26 @@ mod tests {
         let pos = Position::new(1, 2);
         stream.seek(pos);
         assert_eq!(Some('f'), stream.peek());
+    }
+
+    #[test]
+    fn test_command_basic() {
+        let mut stream = CharStream::new("\\foo@bar");
+        let span = stream.command();
+        assert_eq!(Span::new(range(0, 0, 0, 8), "\\foo@bar".to_owned()), span);
+    }
+
+    #[test]
+    fn test_command_star() {
+        let mut stream = CharStream::new("\\foo*");
+        let span = stream.command();
+        assert_eq!(Span::new(range(0, 0, 0, 5), "\\foo*".to_owned()), span);
+    }
+
+    #[test]
+    fn test_command_escape() {
+        let mut stream = CharStream::new("\\**");
+        let span = stream.command();
+        assert_eq!(Span::new(range(0, 0, 0, 2), "\\*".to_owned()), span);
     }
 }
