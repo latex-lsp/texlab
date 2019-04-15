@@ -2,6 +2,18 @@ use lsp_types::{Position, Range};
 use std::iter::Peekable;
 use std::str::CharIndices;
 
+pub trait Node {
+    fn range(&self) -> Range;
+
+    fn start(&self) -> Position {
+        self.range().start
+    }
+
+    fn end(&self) -> Position {
+        self.range().end
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Span {
     pub range: Range,
@@ -12,13 +24,11 @@ impl Span {
     pub fn new(range: Range, text: String) -> Self {
         Span { range, text }
     }
+}
 
-    pub fn start(&self) -> Position {
-        self.range.start
-    }
-
-    pub fn end(&self) -> Position {
-        self.range.end
+impl Node for Span {
+    fn range(&self) -> Range {
+        self.range
     }
 }
 

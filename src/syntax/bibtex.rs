@@ -1,5 +1,5 @@
 use crate::range;
-use crate::syntax::text::{CharStream, Span};
+use crate::syntax::text::{CharStream, Node, Span};
 use lsp_types::{Position, Range};
 use std::iter::Peekable;
 use std::rc::Rc;
