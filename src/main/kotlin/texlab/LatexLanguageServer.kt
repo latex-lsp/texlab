@@ -1,7 +1,6 @@
 package texlab
 
 import com.google.gson.JsonPrimitive
-import com.sun.jndi.toolkit.url.Uri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
@@ -240,7 +239,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
             runLinter(uri, params.text)
             publishDiagnostics(uri)
 
-            val config = client.configuration<BuildConfig>("latex.build", uri)
+            val config = client.configuration<BuildConfig>("latex.build", uri) ?: BuildConfig()
             if (config.onSave) {
                 workspaceActor.withWorkspace { workspace ->
                     val document = workspace.findParent(uri)
@@ -333,6 +332,8 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
         val uri = parseURI(params.textDocument.uri) ?: return@future null
 
         val config = client.configuration<BibtexFormatterConfig>("bibtex.formatting", uri)
+                ?: BibtexFormatterConfig()
+
         workspaceActor.withWorkspace { workspace ->
             val document = workspace.documentsByUri[uri] as? BibtexDocument
                     ?: return@withWorkspace null
@@ -360,7 +361,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
                     ?: return@withWorkspace BuildResult(BuildStatus.FAILURE)
 
             val parent = workspace.findParent(childUri)
-            val config = client.configuration<BuildConfig>("latex.build", parent.uri)
+            val config = client.configuration<BuildConfig>("latex.build", parent.uri) ?: BuildConfig()
             BuildEngine.build(parent.uri, config, progressListener)
         }
     }
@@ -373,6 +374,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
 
             val parent = workspace.findParent(childUri)
             val config = client.configuration<ForwardSearchConfig>("latex.forwardSearch", parent.uri)
+                    ?: ForwardSearchConfig()
             ForwardSearchTool.search(File(childUri), File(parent.uri), params.position.line, config)
         }
     }
@@ -415,7 +417,7 @@ class LatexLanguageServer : LanguageServer, LatexTextDocumentService, WorkspaceS
     }
 
     private suspend fun runLinter(uri: URI, text: String) {
-        val config = client.configuration<LatexLinterConfig>("latex.lint", uri)
+        val config = client.configuration<LatexLinterConfig>("latex.lint", uri) ?: LatexLinterConfig()
         if (config.onSave) {
             diagnosticsProvider.latexProvider.update(uri, text)
         } else {
