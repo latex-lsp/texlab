@@ -84,7 +84,7 @@ impl ServerBuilder {
             .and_then(move |request| {
                 handler
                     .handle_request(&request)
-                    .map(|response| response.unwrap_or(String::from("")))
+                    .map(|response| response.unwrap_or_else(String::new))
                     .map_err(|_| unreachable!())
             })
             .forward(writer)

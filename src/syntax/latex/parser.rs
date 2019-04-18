@@ -32,20 +32,24 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
                 LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
-                    children.push(LatexContent::Text(self.text(scope)));
+                    let text = Box::new(self.text(scope));
+                    children.push(LatexContent::Text(text));
                 }
                 LatexTokenKind::Command => {
-                    children.push(LatexContent::Command(self.command()));
+                    let command = Box::new(self.command());
+                    children.push(LatexContent::Command(command));
                 }
                 LatexTokenKind::Math => {
                     if scope == LatexScope::Math {
                         return children;
                     } else {
-                        children.push(LatexContent::Group(self.group(LatexGroupKind::Math)));
+                        let group = Box::new(self.group(LatexGroupKind::Math));
+                        children.push(LatexContent::Group(group));
                     }
                 }
                 LatexTokenKind::BeginGroup => {
-                    children.push(LatexContent::Group(self.group(LatexGroupKind::Group)));
+                    let group = Box::new(self.group(LatexGroupKind::Group));
+                    children.push(LatexContent::Group(group));
                 }
                 LatexTokenKind::EndGroup => {
                     if scope == LatexScope::Root {
@@ -58,7 +62,8 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                     if scope == LatexScope::Options {
                         return children;
                     } else {
-                        children.push(LatexContent::Text(self.text(scope)));
+                        let text = Box::new(self.text(scope));
+                        children.push(LatexContent::Text(text));
                     }
                 }
             }

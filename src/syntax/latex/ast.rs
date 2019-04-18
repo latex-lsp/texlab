@@ -61,9 +61,9 @@ impl SyntaxNode for LatexRoot {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexContent {
-    Group(LatexGroup),
-    Command(LatexCommand),
-    Text(LatexText),
+    Group(Box<LatexGroup>),
+    Command(Box<LatexCommand>),
+    Text(Box<LatexText>),
 }
 
 impl LatexContent {

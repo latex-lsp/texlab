@@ -63,7 +63,7 @@ impl<'a> LatexVisitor<'a> for LatexEnvironmentAnalyzer<'a> {
     fn visit_text(&mut self, text: &'a LatexText) {}
 }
 
-fn parse_delimiter<'a>(command: &'a LatexCommand) -> Option<LatexEnvironmentDelimiter<'a>> {
+fn parse_delimiter(command: &LatexCommand) -> Option<LatexEnvironmentDelimiter> {
     if !ENVIRONMENT_COMMANDS.contains(&command.name.text()) {
         return None;
     }

@@ -17,18 +17,20 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
                 BibtexTokenKind::PreambleKind => {
-                    children.push(BibtexDeclaration::Preamble(self.preamble()));
+                    let preamble = Box::new(self.preamble());
+                    children.push(BibtexDeclaration::Preamble(preamble));
                 }
                 BibtexTokenKind::StringKind => {
-                    children.push(BibtexDeclaration::String(self.string()));
+                    let string = Box::new(self.string());
+                    children.push(BibtexDeclaration::String(string));
                 }
                 BibtexTokenKind::EntryKind => {
-                    children.push(BibtexDeclaration::Entry(self.entry()));
+                    let entry = Box::new(self.entry());
+                    children.push(BibtexDeclaration::Entry(entry));
                 }
                 _ => {
-                    let token = self.tokens.next().unwrap();
-                    let comment = BibtexComment::new(token);
-                    children.push(BibtexDeclaration::Comment(comment));
+                    let comment = BibtexComment::new(self.tokens.next().unwrap());
+                    children.push(BibtexDeclaration::Comment(Box::new(comment)));
                 }
             }
         }

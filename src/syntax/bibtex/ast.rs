@@ -67,10 +67,10 @@ impl SyntaxNode for BibtexRoot {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BibtexDeclaration {
-    Comment(BibtexComment),
-    Preamble(BibtexPreamble),
-    String(BibtexString),
-    Entry(BibtexEntry),
+    Comment(Box<BibtexComment>),
+    Preamble(Box<BibtexPreamble>),
+    String(Box<BibtexString>),
+    Entry(Box<BibtexEntry>),
 }
 
 impl BibtexDeclaration {
