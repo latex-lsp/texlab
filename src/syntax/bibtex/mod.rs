@@ -6,7 +6,7 @@ use crate::range;
 use crate::syntax::bibtex::ast::*;
 use crate::syntax::bibtex::lexer::BibtexLexer;
 use crate::syntax::bibtex::parser::BibtexParser;
-use crate::syntax::text::Node;
+use crate::syntax::text::SyntaxNode;
 use lsp_types::{Position, Range};
 use std::rc::Rc;
 
@@ -52,7 +52,7 @@ impl BibtexNode {
     }
 }
 
-impl Node for BibtexNode {
+impl SyntaxNode for BibtexNode {
     fn range(&self) -> Range {
         match self {
             BibtexNode::Declaration(declaration) => declaration.range(),

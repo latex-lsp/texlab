@@ -1,4 +1,4 @@
-use crate::syntax::text::{Node, Span};
+use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
 use std::rc::Rc;
 
@@ -35,7 +35,7 @@ impl BibtexToken {
     }
 }
 
-impl Node for BibtexToken {
+impl SyntaxNode for BibtexToken {
     fn range(&self) -> Range {
         self.span.range
     }
@@ -93,7 +93,7 @@ impl BibtexDeclaration {
     }
 }
 
-impl Node for BibtexDeclaration {
+impl SyntaxNode for BibtexDeclaration {
     fn range(&self) -> Range {
         match self {
             BibtexDeclaration::Comment(comment) => comment.range,
@@ -119,7 +119,7 @@ impl BibtexComment {
     }
 }
 
-impl Node for BibtexComment {
+impl SyntaxNode for BibtexComment {
     fn range(&self) -> Range {
         self.range
     }
@@ -160,7 +160,7 @@ impl BibtexPreamble {
     }
 }
 
-impl Node for BibtexPreamble {
+impl SyntaxNode for BibtexPreamble {
     fn range(&self) -> Range {
         self.range
     }
@@ -212,7 +212,7 @@ impl BibtexString {
     }
 }
 
-impl Node for BibtexString {
+impl SyntaxNode for BibtexString {
     fn range(&self) -> Range {
         self.range
     }
@@ -264,7 +264,7 @@ impl BibtexEntry {
     }
 }
 
-impl Node for BibtexEntry {
+impl SyntaxNode for BibtexEntry {
     fn range(&self) -> Range {
         self.range
     }
@@ -306,7 +306,7 @@ impl BibtexField {
     }
 }
 
-impl Node for BibtexField {
+impl SyntaxNode for BibtexField {
     fn range(&self) -> Range {
         self.range
     }
@@ -333,7 +333,7 @@ impl BibtexContent {
     }
 }
 
-impl Node for BibtexContent {
+impl SyntaxNode for BibtexContent {
     fn range(&self) -> Range {
         match self {
             BibtexContent::Word(word) => word.range,
@@ -360,7 +360,7 @@ impl BibtexWord {
     }
 }
 
-impl Node for BibtexWord {
+impl SyntaxNode for BibtexWord {
     fn range(&self) -> Range {
         self.range
     }
@@ -381,7 +381,7 @@ impl BibtexCommand {
     }
 }
 
-impl Node for BibtexCommand {
+impl SyntaxNode for BibtexCommand {
     fn range(&self) -> Range {
         self.range
     }
@@ -418,7 +418,7 @@ impl BibtexQuotedContent {
     }
 }
 
-impl Node for BibtexQuotedContent {
+impl SyntaxNode for BibtexQuotedContent {
     fn range(&self) -> Range {
         self.range
     }
@@ -455,7 +455,7 @@ impl BibtexBracedContent {
     }
 }
 
-impl Node for BibtexBracedContent {
+impl SyntaxNode for BibtexBracedContent {
     fn range(&self) -> Range {
         self.range
     }
@@ -486,7 +486,7 @@ impl BibtexConcat {
     }
 }
 
-impl Node for BibtexConcat {
+impl SyntaxNode for BibtexConcat {
     fn range(&self) -> Range {
         self.range
     }

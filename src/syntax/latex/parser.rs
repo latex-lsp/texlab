@@ -1,8 +1,15 @@
 use crate::syntax::latex::ast::*;
-use crate::syntax::text::{Node, Span};
+use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
 use std::iter::Peekable;
-use std::rc::Rc;
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum LatexScope {
+    Root,
+    Group,
+    Options,
+    Math,
+}
 
 pub struct LatexParser<I: Iterator<Item = LatexToken>> {
     tokens: Peekable<I>,
@@ -16,229 +23,100 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
     }
 
     pub fn root(&mut self) -> LatexRoot {
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word
-                | LatexTokenKind::BeginOptions
-                | LatexTokenKind::EndOptions => {
-                    children.push(LatexNode::Text(self.text(false)));
-                }
-                LatexTokenKind::Command => children.push(self.command_environment_equation()),
-                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
-                LatexTokenKind::BeginGroup => children.push(LatexNode::Group(self.group())),
-                LatexTokenKind::EndGroup => {
-                    self.tokens.next();
-                }
-            }
-        }
+        let children = self.content(LatexScope::Root);
         LatexRoot::new(children)
     }
 
-    fn command_environment_equation(&mut self) -> LatexNode {
-        let command = self.command();
-        if let Some(name) =
-            test_environment_delimiter(&command, LatexEnvironmentDelimiterKind::Begin)
-        {
-            let left = LatexEnvironmentDelimiter::new(command, name.text, name.range);
-            LatexNode::Environment(self.environment(left))
-        } else if command.name.text() == "\\[" {
-            LatexNode::Equation(self.equation(command))
-        } else {
-            LatexNode::Command(command)
+    fn content(&mut self, scope: LatexScope) -> Vec<LatexContent> {
+        let mut children = Vec::new();
+        while let Some(ref token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
+                    children.push(LatexContent::Text(self.text(scope)));
+                }
+                LatexTokenKind::Command => {
+                    children.push(LatexContent::Command(self.command()));
+                }
+                LatexTokenKind::Math => {
+                    if scope == LatexScope::Math {
+                        return children;
+                    } else {
+                        children.push(LatexContent::Group(self.group(LatexGroupKind::Math)));
+                    }
+                }
+                LatexTokenKind::BeginGroup => {
+                    children.push(LatexContent::Group(self.group(LatexGroupKind::Group)));
+                }
+                LatexTokenKind::EndGroup => {
+                    if scope == LatexScope::Root {
+                        self.tokens.next();
+                    } else {
+                        return children;
+                    }
+                }
+                LatexTokenKind::EndOptions => {
+                    if scope == LatexScope::Options {
+                        return children;
+                    } else {
+                        children.push(LatexContent::Text(self.text(scope)));
+                    }
+                }
+            }
         }
+        children
     }
 
-    fn command(&mut self) -> Rc<LatexCommand> {
+    fn command(&mut self) -> LatexCommand {
         let name = self.tokens.next().unwrap();
         let options = if self.next_of_kind(LatexTokenKind::BeginOptions) {
-            Some(self.options())
+            Some(self.group(LatexGroupKind::Options))
         } else {
             None
         };
 
         let mut args = Vec::new();
         while self.next_of_kind(LatexTokenKind::BeginGroup) {
-            args.push(self.group());
+            args.push(self.group(LatexGroupKind::Group));
         }
 
-        Rc::new(LatexCommand::new(name, options, args))
+        LatexCommand::new(name, options, args)
     }
 
-    fn environment(&mut self, left: LatexEnvironmentDelimiter) -> Rc<LatexEnvironment> {
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word
-                | LatexTokenKind::BeginOptions
-                | LatexTokenKind::EndOptions => {
-                    children.push(LatexNode::Text(self.text(false)));
-                }
-                LatexTokenKind::Command => {
-                    let node = self.command_environment_equation();
-                    if let LatexNode::Command(command) = node {
-                        if let Some(name) =
-                            test_environment_delimiter(&command, LatexEnvironmentDelimiterKind::End)
-                        {
-                            let right =
-                                LatexEnvironmentDelimiter::new(command, name.text, name.range);
-                            return Rc::new(LatexEnvironment::new(left, children, Some(right)));
-                        } else {
-                            children.push(LatexNode::Command(command));
-                        }
-                    } else {
-                        children.push(node);
-                    }
-                }
-                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
-                LatexTokenKind::BeginGroup => {
-                    children.push(LatexNode::Group(self.group()));
-                }
-                LatexTokenKind::EndGroup => break,
-            }
-        }
-        Rc::new(LatexEnvironment::new(left, children, None))
-    }
-
-    fn equation(&mut self, left: Rc<LatexCommand>) -> Rc<LatexEquation> {
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word
-                | LatexTokenKind::BeginOptions
-                | LatexTokenKind::EndOptions => {
-                    children.push(LatexNode::Text(self.text(false)));
-                }
-                LatexTokenKind::Command => {
-                    let node = self.command_environment_equation();
-                    if let LatexNode::Command(command) = node {
-                        if command.name.text() == "\\]" {
-                            return Rc::new(LatexEquation::new(left, children, Some(command)));
-                        } else {
-                            children.push(LatexNode::Command(command));
-                        }
-                    } else {
-                        children.push(node);
-                    }
-                }
-                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
-                LatexTokenKind::BeginGroup => {
-                    children.push(LatexNode::Group(self.group()));
-                }
-                LatexTokenKind::EndGroup => break,
-            }
-        }
-        Rc::new(LatexEquation::new(left, children, None))
-    }
-
-    fn inline(&mut self) -> Rc<LatexGroup> {
+    fn group(&mut self, kind: LatexGroupKind) -> LatexGroup {
         let left = self.tokens.next().unwrap();
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word
-                | LatexTokenKind::BeginOptions
-                | LatexTokenKind::EndOptions => {
-                    children.push(LatexNode::Text(self.text(false)));
-                }
-                LatexTokenKind::Command => children.push(self.command_environment_equation()),
-                LatexTokenKind::Math => break,
-                LatexTokenKind::BeginGroup => {
-                    children.push(LatexNode::Group(self.group()));
-                }
-                LatexTokenKind::EndGroup => break,
-            }
-        }
+        let scope = match kind {
+            LatexGroupKind::Group => LatexScope::Group,
+            LatexGroupKind::Options => LatexScope::Options,
+            LatexGroupKind::Math => LatexScope::Math,
+        };
+        let children = self.content(scope);
+        let right_kind = match kind {
+            LatexGroupKind::Group => LatexTokenKind::EndGroup,
+            LatexGroupKind::Options => LatexTokenKind::EndOptions,
+            LatexGroupKind::Math => LatexTokenKind::Math,
+        };
 
-        let right = if self.next_of_kind(LatexTokenKind::Math) {
+        let right = if self.next_of_kind(right_kind) {
             self.tokens.next()
         } else {
             None
         };
 
-        Rc::new(LatexGroup::new(
-            left,
-            children,
-            right,
-            LatexGroupKind::Inline,
-        ))
+        LatexGroup::new(left, children, right, kind)
     }
 
-    fn group(&mut self) -> Rc<LatexGroup> {
-        let left = self.tokens.next().unwrap();
-
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word
-                | LatexTokenKind::BeginOptions
-                | LatexTokenKind::EndOptions => children.push(LatexNode::Text(self.text(false))),
-                LatexTokenKind::Command => children.push(self.command_environment_equation()),
-                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
-                LatexTokenKind::BeginGroup => {
-                    children.push(LatexNode::Group(self.group()));
-                }
-                LatexTokenKind::EndGroup => break,
-            }
-        }
-
-        let right = if self.next_of_kind(LatexTokenKind::EndGroup) {
-            self.tokens.next()
-        } else {
-            None
-        };
-
-        Rc::new(LatexGroup::new(
-            left,
-            children,
-            right,
-            LatexGroupKind::Group,
-        ))
-    }
-
-    fn options(&mut self) -> Rc<LatexGroup> {
-        let left = self.tokens.next().unwrap();
-
-        let mut children = Vec::new();
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
-                    children.push(LatexNode::Text(self.text(true)));
-                }
-                LatexTokenKind::Command => children.push(self.command_environment_equation()),
-                LatexTokenKind::Math => children.push(LatexNode::Group(self.inline())),
-                LatexTokenKind::BeginGroup => children.push(LatexNode::Group(self.group())),
-                LatexTokenKind::EndGroup | LatexTokenKind::EndOptions => break,
-            }
-        }
-
-        let right = if self.next_of_kind(LatexTokenKind::EndOptions) {
-            self.tokens.next()
-        } else {
-            None
-        };
-
-        Rc::new(LatexGroup::new(
-            left,
-            children,
-            right,
-            LatexGroupKind::Options,
-        ))
-    }
-
-    fn text(&mut self, options: bool) -> Rc<LatexText> {
+    fn text(&mut self, scope: LatexScope) -> LatexText {
         let mut words = Vec::new();
-        words.push(self.tokens.next().unwrap());
         while let Some(ref token) = self.tokens.peek() {
-            if token.kind == LatexTokenKind::Word
-                || (token.kind == LatexTokenKind::EndOptions && !options)
-            {
+            let kind = token.kind;
+            let opts = kind == LatexTokenKind::EndOptions && scope != LatexScope::Options;
+            if kind == LatexTokenKind::Word || kind == LatexTokenKind::BeginOptions || opts {
                 words.push(self.tokens.next().unwrap());
             } else {
                 break;
             }
         }
-        Rc::new(LatexText::new(words))
+        LatexText::new(words)
     }
 
     fn next_of_kind(&mut self, kind: LatexTokenKind) -> bool {
@@ -247,30 +125,5 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         } else {
             false
         }
-    }
-}
-
-fn test_environment_delimiter(
-    command: &LatexCommand,
-    kind: LatexEnvironmentDelimiterKind,
-) -> Option<Span> {
-    let name = if kind == LatexEnvironmentDelimiterKind::Begin {
-        "\\begin"
-    } else {
-        "\\end"
-    };
-
-    if command.name.text() != name {
-        return None;
-    }
-
-    if let Some(name) = command.extract_word(0) {
-        Some(Span::new(name.range(), name.text().to_owned()))
-    } else if command.args[0].children.is_empty() {
-        let name_position = command.args[0].left.end();
-        let name_range = Range::new(name_position, name_position);
-        Some(Span::new(name_range, String::new()))
-    } else {
-        None
     }
 }

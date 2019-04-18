@@ -2,7 +2,7 @@ use lsp_types::{Position, Range};
 use std::iter::Peekable;
 use std::str::CharIndices;
 
-pub trait Node {
+pub trait SyntaxNode {
     fn range(&self) -> Range;
 
     fn start(&self) -> Position {
@@ -26,7 +26,7 @@ impl Span {
     }
 }
 
-impl Node for Span {
+impl SyntaxNode for Span {
     fn range(&self) -> Range {
         self.range
     }
@@ -144,7 +144,7 @@ fn is_command_char(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::range;
+    use crate::range;
 
     #[test]
     fn test_peek() {
@@ -169,7 +169,7 @@ mod tests {
         stream.next();
         stream.next();
         let span = stream.end_span();
-        assert_eq!(Span::new(range(0, 1, 0, 3), "bc".to_owned()), span);
+        assert_eq!(Span::new(range::create(0, 1, 0, 3), "bc".to_owned()), span);
         assert_eq!(Position::new(0, 1), span.start());
         assert_eq!(Position::new(0, 3), span.end());
     }
@@ -182,7 +182,10 @@ mod tests {
         stream.next();
         stream.next();
         let span = stream.end_span();
-        assert_eq!(Span::new(range(0, 1, 0, 3), "😃😄".to_owned()), span);
+        assert_eq!(
+            Span::new(range::create(0, 1, 0, 3), "😃😄".to_owned()),
+            span
+        );
     }
 
     #[test]
@@ -216,20 +219,26 @@ mod tests {
     fn test_command_basic() {
         let mut stream = CharStream::new("\\foo@bar");
         let span = stream.command();
-        assert_eq!(Span::new(range(0, 0, 0, 8), "\\foo@bar".to_owned()), span);
+        assert_eq!(
+            Span::new(range::create(0, 0, 0, 8), "\\foo@bar".to_owned()),
+            span
+        );
     }
 
     #[test]
     fn test_command_star() {
         let mut stream = CharStream::new("\\foo*");
         let span = stream.command();
-        assert_eq!(Span::new(range(0, 0, 0, 5), "\\foo*".to_owned()), span);
+        assert_eq!(
+            Span::new(range::create(0, 0, 0, 5), "\\foo*".to_owned()),
+            span
+        );
     }
 
     #[test]
     fn test_command_escape() {
         let mut stream = CharStream::new("\\**");
         let span = stream.command();
-        assert_eq!(Span::new(range(0, 0, 0, 2), "\\*".to_owned()), span);
+        assert_eq!(Span::new(range::create(0, 0, 0, 2), "\\*".to_owned()), span);
     }
 }
