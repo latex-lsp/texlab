@@ -1,6 +1,5 @@
 use crate::syntax::bibtex::ast::*;
 use std::iter::Peekable;
-use std::rc::Rc;
 
 pub struct BibtexParser<I: Iterator<Item = BibtexToken>> {
     tokens: Peekable<I>,
@@ -18,18 +17,18 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
                 BibtexTokenKind::PreambleKind => {
-                    children.push(BibtexDeclaration::Preamble(Rc::new(self.preamble())));
+                    children.push(BibtexDeclaration::Preamble(self.preamble()));
                 }
                 BibtexTokenKind::StringKind => {
-                    children.push(BibtexDeclaration::String(Rc::new(self.string())));
+                    children.push(BibtexDeclaration::String(self.string()));
                 }
                 BibtexTokenKind::EntryKind => {
-                    children.push(BibtexDeclaration::Entry(Rc::new(self.entry())));
+                    children.push(BibtexDeclaration::Entry(self.entry()));
                 }
                 _ => {
                     let token = self.tokens.next().unwrap();
                     let comment = BibtexComment::new(token);
-                    children.push(BibtexDeclaration::Comment(Rc::new(comment)));
+                    children.push(BibtexDeclaration::Comment(comment));
                 }
             }
         }
@@ -100,7 +99,7 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
 
         let mut fields = Vec::new();
         while self.next_of_kind(BibtexTokenKind::Word) {
-            fields.push(Rc::new(self.field()));
+            fields.push(self.field());
         }
 
         let right = self.expect2(BibtexTokenKind::EndBrace, BibtexTokenKind::EndParen);
@@ -134,8 +133,8 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
             | BibtexTokenKind::Assign
             | BibtexTokenKind::Comma
             | BibtexTokenKind::BeginParen
-            | BibtexTokenKind::EndParen => BibtexContent::Word(Rc::new(BibtexWord::new(token))),
-            BibtexTokenKind::Command => BibtexContent::Command(Rc::new(BibtexCommand::new(token))),
+            | BibtexTokenKind::EndParen => BibtexContent::Word(BibtexWord::new(token)),
+            BibtexTokenKind::Command => BibtexContent::Command(BibtexCommand::new(token)),
             BibtexTokenKind::Quote => {
                 let mut children = Vec::new();
                 while self.can_match_content() {
@@ -145,9 +144,7 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
                     children.push(self.content());
                 }
                 let right = self.expect1(BibtexTokenKind::Quote);
-                BibtexContent::QuotedContent(Rc::new(BibtexQuotedContent::new(
-                    token, children, right,
-                )))
+                BibtexContent::QuotedContent(BibtexQuotedContent::new(token, children, right))
             }
             BibtexTokenKind::BeginBrace => {
                 let mut children = Vec::new();
@@ -155,9 +152,7 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
                     children.push(self.content());
                 }
                 let right = self.expect1(BibtexTokenKind::EndBrace);
-                BibtexContent::BracedContent(Rc::new(BibtexBracedContent::new(
-                    token, children, right,
-                )))
+                BibtexContent::BracedContent(BibtexBracedContent::new(token, children, right))
             }
             _ => unreachable!(),
         };
@@ -167,7 +162,7 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
             } else {
                 None
             };
-            BibtexContent::Concat(Rc::new(BibtexConcat::new(left, operator, right)))
+            BibtexContent::Concat(Box::new(BibtexConcat::new(left, operator, right)))
         } else {
             left
         }

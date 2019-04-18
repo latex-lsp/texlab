@@ -1,6 +1,6 @@
+use crate::range;
 use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
-use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexTokenKind {
@@ -52,43 +52,34 @@ impl BibtexRoot {
     }
 }
 
-pub trait BibtexVisitor<T> {
-    fn visit_comment(&mut self, comment: Rc<BibtexComment>) -> T;
-
-    fn visit_preamble(&mut self, preamble: Rc<BibtexPreamble>) -> T;
-
-    fn visit_string(&mut self, string: Rc<BibtexString>) -> T;
-
-    fn visit_entry(&mut self, entry: Rc<BibtexEntry>) -> T;
-
-    fn visit_field(&mut self, field: Rc<BibtexField>) -> T;
-
-    fn visit_word(&mut self, word: Rc<BibtexWord>) -> T;
-
-    fn visit_command(&mut self, command: Rc<BibtexCommand>) -> T;
-
-    fn visit_quoted_content(&mut self, content: Rc<BibtexQuotedContent>) -> T;
-
-    fn visit_braced_content(&mut self, content: Rc<BibtexBracedContent>) -> T;
-
-    fn visit_concat(&mut self, concat: Rc<BibtexConcat>) -> T;
+impl SyntaxNode for BibtexRoot {
+    fn range(&self) -> Range {
+        if self.children.is_empty() {
+            range::create(0, 0, 0, 0)
+        } else {
+            Range::new(
+                self.children[0].start(),
+                self.children[self.children.len() - 1].end(),
+            )
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BibtexDeclaration {
-    Comment(Rc<BibtexComment>),
-    Preamble(Rc<BibtexPreamble>),
-    String(Rc<BibtexString>),
-    Entry(Rc<BibtexEntry>),
+    Comment(BibtexComment),
+    Preamble(BibtexPreamble),
+    String(BibtexString),
+    Entry(BibtexEntry),
 }
 
 impl BibtexDeclaration {
-    pub fn accept<T>(&self, visitor: &mut BibtexVisitor<T>) -> T {
+    pub fn accept<'a>(&'a self, visitor: &mut BibtexVisitor<'a>) {
         match self {
-            BibtexDeclaration::Comment(comment) => visitor.visit_comment(comment.clone()),
-            BibtexDeclaration::Preamble(preamble) => visitor.visit_preamble(preamble.clone()),
-            BibtexDeclaration::String(string) => visitor.visit_string(string.clone()),
-            BibtexDeclaration::Entry(entry) => visitor.visit_entry(entry.clone()),
+            BibtexDeclaration::Comment(comment) => visitor.visit_comment(comment),
+            BibtexDeclaration::Preamble(preamble) => visitor.visit_preamble(preamble),
+            BibtexDeclaration::String(string) => visitor.visit_string(string),
+            BibtexDeclaration::Entry(entry) => visitor.visit_entry(entry),
         }
     }
 }
@@ -225,7 +216,7 @@ pub struct BibtexEntry {
     pub left: Option<BibtexToken>,
     pub key: Option<BibtexToken>,
     pub comma: Option<BibtexToken>,
-    pub fields: Vec<Rc<BibtexField>>,
+    pub fields: Vec<BibtexField>,
     pub right: Option<BibtexToken>,
 }
 
@@ -235,7 +226,7 @@ impl BibtexEntry {
         left: Option<BibtexToken>,
         key: Option<BibtexToken>,
         comma: Option<BibtexToken>,
-        fields: Vec<Rc<BibtexField>>,
+        fields: Vec<BibtexField>,
         right: Option<BibtexToken>,
     ) -> Self {
         let end = if let Some(ref right) = right {
@@ -314,21 +305,21 @@ impl SyntaxNode for BibtexField {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BibtexContent {
-    Word(Rc<BibtexWord>),
-    Command(Rc<BibtexCommand>),
-    QuotedContent(Rc<BibtexQuotedContent>),
-    BracedContent(Rc<BibtexBracedContent>),
-    Concat(Rc<BibtexConcat>),
+    Word(BibtexWord),
+    Command(BibtexCommand),
+    QuotedContent(BibtexQuotedContent),
+    BracedContent(BibtexBracedContent),
+    Concat(Box<BibtexConcat>),
 }
 
 impl BibtexContent {
-    pub fn accept<T>(&self, visitor: &mut BibtexVisitor<T>) -> T {
+    pub fn accept<'a>(&'a self, visitor: &mut BibtexVisitor<'a>) {
         match self {
-            BibtexContent::Word(word) => visitor.visit_word(word.clone()),
-            BibtexContent::Command(command) => visitor.visit_command(command.clone()),
-            BibtexContent::QuotedContent(content) => visitor.visit_quoted_content(content.clone()),
-            BibtexContent::BracedContent(content) => visitor.visit_braced_content(content.clone()),
-            BibtexContent::Concat(concat) => visitor.visit_concat(concat.clone()),
+            BibtexContent::Word(word) => visitor.visit_word(word),
+            BibtexContent::Command(command) => visitor.visit_command(command),
+            BibtexContent::QuotedContent(content) => visitor.visit_quoted_content(content),
+            BibtexContent::BracedContent(content) => visitor.visit_braced_content(content),
+            BibtexContent::Concat(concat) => visitor.visit_concat(concat),
         }
     }
 }
@@ -336,11 +327,11 @@ impl BibtexContent {
 impl SyntaxNode for BibtexContent {
     fn range(&self) -> Range {
         match self {
-            BibtexContent::Word(word) => word.range,
-            BibtexContent::Command(command) => command.range,
-            BibtexContent::QuotedContent(content) => content.range,
-            BibtexContent::BracedContent(content) => content.range,
-            BibtexContent::Concat(concat) => concat.range,
+            BibtexContent::Word(word) => word.range(),
+            BibtexContent::Command(command) => command.range(),
+            BibtexContent::QuotedContent(content) => content.range(),
+            BibtexContent::BracedContent(content) => content.range(),
+            BibtexContent::Concat(concat) => concat.range(),
         }
     }
 }
@@ -489,5 +480,82 @@ impl BibtexConcat {
 impl SyntaxNode for BibtexConcat {
     fn range(&self) -> Range {
         self.range
+    }
+}
+
+pub trait BibtexVisitor<'a> {
+    fn visit_root(&mut self, root: &'a BibtexRoot);
+
+    fn visit_comment(&mut self, comment: &'a BibtexComment);
+
+    fn visit_preamble(&mut self, preamble: &'a BibtexPreamble);
+
+    fn visit_string(&mut self, string: &'a BibtexString);
+
+    fn visit_entry(&mut self, entry: &'a BibtexEntry);
+
+    fn visit_field(&mut self, field: &'a BibtexField);
+
+    fn visit_word(&mut self, word: &'a BibtexWord);
+
+    fn visit_command(&mut self, command: &'a BibtexCommand);
+
+    fn visit_quoted_content(&mut self, content: &'a BibtexQuotedContent);
+
+    fn visit_braced_content(&mut self, content: &'a BibtexBracedContent);
+
+    fn visit_concat(&mut self, concat: &'a BibtexConcat);
+}
+
+pub struct BibtexWalker;
+
+impl BibtexWalker {
+    fn walk_root<'a>(visitor: &mut BibtexVisitor<'a>, root: &'a BibtexRoot) {
+        for declaration in &root.children {
+            declaration.accept(visitor);
+        }
+    }
+
+    fn walk_preamble<'a>(visitor: &mut BibtexVisitor<'a>, preamble: &'a BibtexPreamble) {
+        if let Some(ref content) = preamble.content {
+            content.accept(visitor);
+        }
+    }
+
+    fn walk_string<'a>(visitor: &mut BibtexVisitor<'a>, string: &'a BibtexString) {
+        if let Some(ref value) = string.value {
+            value.accept(visitor);
+        }
+    }
+
+    fn walk_entry<'a>(visitor: &mut BibtexVisitor<'a>, entry: &'a BibtexEntry) {
+        for field in &entry.fields {
+            visitor.visit_field(field);
+        }
+    }
+
+    fn walk_field<'a>(visitor: &mut BibtexVisitor<'a>, field: &'a BibtexField) {
+        if let Some(ref content) = field.content {
+            content.accept(visitor);
+        }
+    }
+
+    fn walk_quoted_content<'a>(visitor: &mut BibtexVisitor<'a>, content: &'a BibtexQuotedContent) {
+        for child in &content.children {
+            child.accept(visitor);
+        }
+    }
+
+    fn walk_braced_content<'a>(visitor: &mut BibtexVisitor<'a>, content: &'a BibtexBracedContent) {
+        for child in &content.children {
+            child.accept(visitor);
+        }
+    }
+
+    fn walk_concat<'a>(visitor: &mut BibtexVisitor<'a>, concat: &'a BibtexConcat) {
+        concat.left.accept(visitor);
+        if let Some(ref right) = concat.right {
+            right.accept(visitor);
+        }
     }
 }
