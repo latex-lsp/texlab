@@ -510,49 +510,55 @@ pub trait BibtexVisitor<'a> {
 pub struct BibtexWalker;
 
 impl BibtexWalker {
-    fn walk_root<'a>(visitor: &mut BibtexVisitor<'a>, root: &'a BibtexRoot) {
+    pub fn walk_root<'a>(visitor: &mut BibtexVisitor<'a>, root: &'a BibtexRoot) {
         for declaration in &root.children {
             declaration.accept(visitor);
         }
     }
 
-    fn walk_preamble<'a>(visitor: &mut BibtexVisitor<'a>, preamble: &'a BibtexPreamble) {
+    pub fn walk_preamble<'a>(visitor: &mut BibtexVisitor<'a>, preamble: &'a BibtexPreamble) {
         if let Some(ref content) = preamble.content {
             content.accept(visitor);
         }
     }
 
-    fn walk_string<'a>(visitor: &mut BibtexVisitor<'a>, string: &'a BibtexString) {
+    pub fn walk_string<'a>(visitor: &mut BibtexVisitor<'a>, string: &'a BibtexString) {
         if let Some(ref value) = string.value {
             value.accept(visitor);
         }
     }
 
-    fn walk_entry<'a>(visitor: &mut BibtexVisitor<'a>, entry: &'a BibtexEntry) {
+    pub fn walk_entry<'a>(visitor: &mut BibtexVisitor<'a>, entry: &'a BibtexEntry) {
         for field in &entry.fields {
             visitor.visit_field(field);
         }
     }
 
-    fn walk_field<'a>(visitor: &mut BibtexVisitor<'a>, field: &'a BibtexField) {
+    pub fn walk_field<'a>(visitor: &mut BibtexVisitor<'a>, field: &'a BibtexField) {
         if let Some(ref content) = field.content {
             content.accept(visitor);
         }
     }
 
-    fn walk_quoted_content<'a>(visitor: &mut BibtexVisitor<'a>, content: &'a BibtexQuotedContent) {
+    pub fn walk_quoted_content<'a>(
+        visitor: &mut BibtexVisitor<'a>,
+        content: &'a BibtexQuotedContent,
+    ) {
         for child in &content.children {
             child.accept(visitor);
         }
     }
 
-    fn walk_braced_content<'a>(visitor: &mut BibtexVisitor<'a>, content: &'a BibtexBracedContent) {
+    pub fn walk_braced_content<'a>(
+        visitor: &mut BibtexVisitor<'a>,
+        content: &'a BibtexBracedContent,
+    ) {
         for child in &content.children {
             child.accept(visitor);
         }
     }
 
-    fn walk_concat<'a>(visitor: &mut BibtexVisitor<'a>, concat: &'a BibtexConcat) {
+    pub fn walk_concat<'a>(visitor: &mut BibtexVisitor<'a>, concat: &'a BibtexConcat) {
         concat.left.accept(visitor);
         if let Some(ref right) = concat.right {
             right.accept(visitor);

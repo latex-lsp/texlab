@@ -1,3 +1,4 @@
+mod formatting;
 mod lsp;
 mod range;
 mod server;
