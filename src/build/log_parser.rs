@@ -126,8 +126,7 @@ impl BuildErrorParser {
         kind: BuildErrorKind,
     ) -> Vec<BuildError> {
         let mut errors = Vec::new();
-        let mut iter = regex.find_iter(&log);
-        while let Some(result) = iter.next() {
+        for result in regex.find_iter(&log) {
             let captures = regex.captures(&log[result.start()..result.end()]).unwrap();
             let message = captures
                 .name("msg")
@@ -140,11 +139,7 @@ impl BuildErrorParser {
                 .unwrap_or_default()
                 .to_owned();
 
-            if let Some(range) = ranges
-                .iter()
-                .filter(|range| range.contains(result.start()))
-                .next()
-            {
+            if let Some(range) = ranges.iter().find(|range| range.contains(result.start())) {
                 let line = captures
                     .name("line")
                     .map(|result| u64::from_str_radix(result.as_str(), 10).unwrap() - 1);
@@ -189,16 +184,15 @@ impl BuildErrorParser {
     fn create_file_range(&self, parent: Url, log: &str, result: Match) -> FileRange {
         let mut balance = 1;
         let mut end = result.start() + 1;
-        let mut chars = (&log[result.start()..]).chars();
-        chars.next();
-        while let Some(ref c) = chars.next() {
+        let mut chars = (&log[result.start() + 1..]).chars();
+        for c in chars {
             if balance <= 0 {
                 break;
             }
 
-            if *c == '(' {
+            if c == '(' {
                 balance += 1;
-            } else if *c == ')' {
+            } else if c == ')' {
                 balance -= 1;
             }
             end += c.len_utf8();

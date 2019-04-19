@@ -6,13 +6,13 @@ use lsp_types::DocumentFormattingParams;
 pub struct BibtexFormattingOptions {
     tab_size: usize,
     insert_spaces: bool,
-    line_length: usize,
+    line_length: i32,
 }
 
 impl BibtexFormattingOptions {
-    pub fn new(tab_size: usize, insert_spaces: bool, line_length: usize) -> Self {
+    pub fn new(tab_size: usize, insert_spaces: bool, line_length: i32) -> Self {
         let line_length = if line_length <= 0 {
-            std::usize::MAX
+            std::i32::MAX
         } else {
             line_length
         };
@@ -126,10 +126,10 @@ impl BibtexFormatter {
             let insert_space = should_insert_space(previous, current);
             let space_length = if insert_space { 1 } else { 0 };
 
-            if length + current_length + space_length > self.options.line_length {
+            if length + current_length + space_length > self.options.line_length as usize {
                 self.output.push('\n');
                 self.output.push_str(self.indent.as_ref());
-                for j in 0..align - self.options.tab_size + 1 {
+                for j in 0..=align - self.options.tab_size {
                     self.output.push(' ');
                 }
                 length = align;
@@ -214,7 +214,7 @@ mod tests {
     use crate::syntax::bibtex::BibtexSyntaxTree;
     use indoc::indoc;
 
-    fn verify(source: &str, expected: &str, line_length: usize) {
+    fn verify(source: &str, expected: &str, line_length: i32) {
         let tree = BibtexSyntaxTree::from(source);
         let options = BibtexFormattingOptions::new(4, true, line_length);
         let mut formatter = BibtexFormatter::new(options);
