@@ -1,20 +1,24 @@
 use crate::lsp::codec::LspCodec;
+use futures::compat::*;
 use futures::prelude::*;
-use jsonrpc_core::*;
+use jsonrpc_core::{BoxFuture, Compatibility, Error, ErrorCode, IoHandler, Params, Value};
 use lsp_types::*;
 use serde_json::json;
+use std::pin::Pin;
+use std::result::Result;
 use std::sync::Arc;
 use tokio::codec::{FramedRead, FramedWrite};
 use tokio::io::{AsyncRead, AsyncWrite};
 
-pub type LspResult<T> = Box<Future<Item = T, Error = ()> + Send>;
+pub type LspFuture<T> =
+    Pin<Box<dyn std::future::Future<Output = Result<T, String>> + Send + 'static>>;
 
 pub trait LspServer {
-    fn initialize(&self, params: InitializeParams) -> LspResult<InitializeResult>;
+    fn initialize(&self, params: InitializeParams) -> LspFuture<InitializeResult>;
 
     fn initialized(&self, params: InitializedParams);
 
-    fn shutdown(&self, params: ()) -> LspResult<()>;
+    fn shutdown(&self, params: ()) -> LspFuture<()>;
 
     fn exit(&self, params: ());
 
@@ -28,75 +32,37 @@ pub trait LspServer {
 
     fn did_close(&self, params: DidCloseTextDocumentParams);
 
-    fn completion(&self, params: CompletionParams) -> LspResult<CompletionList>;
+    fn completion(&self, params: CompletionParams) -> LspFuture<CompletionList>;
 
-    fn completion_resolve(&self, item: CompletionItem) -> LspResult<CompletionItem>;
+    fn completion_resolve(&self, item: CompletionItem) -> LspFuture<CompletionItem>;
 
-    fn hover(&self, params: TextDocumentPositionParams) -> LspResult<Option<Hover>>;
+    fn hover(&self, params: TextDocumentPositionParams) -> LspFuture<Option<Hover>>;
 
-    fn definition(&self, params: TextDocumentPositionParams) -> LspResult<Vec<Location>>;
+    fn definition(&self, params: TextDocumentPositionParams) -> LspFuture<Vec<Location>>;
 
-    fn references(&self, params: ReferenceParams) -> LspResult<Vec<Location>>;
+    fn references(&self, params: ReferenceParams) -> LspFuture<Vec<Location>>;
 
     fn document_highlight(
         &self,
         params: TextDocumentPositionParams,
-    ) -> LspResult<Vec<DocumentHighlight>>;
+    ) -> LspFuture<Vec<DocumentHighlight>>;
 
-    fn document_symbol(&self, params: DocumentSymbolParams) -> LspResult<Vec<DocumentSymbol>>;
+    fn document_symbol(&self, params: DocumentSymbolParams) -> LspFuture<Vec<DocumentSymbol>>;
 
-    fn document_link(&self, params: DocumentLinkParams) -> LspResult<Vec<DocumentLink>>;
+    fn document_link(&self, params: DocumentLinkParams) -> LspFuture<Vec<DocumentLink>>;
 
-    fn formatting(&self, params: DocumentFormattingParams) -> LspResult<Vec<TextEdit>>;
+    fn formatting(&self, params: DocumentFormattingParams) -> LspFuture<Vec<TextEdit>>;
 
-    fn rename(&self, params: RenameParams) -> LspResult<Option<WorkspaceEdit>>;
+    fn rename(&self, params: RenameParams) -> LspFuture<Option<WorkspaceEdit>>;
 
-    fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>>;
+    fn folding_range(&self, params: FoldingRangeParams) -> LspFuture<Vec<FoldingRange>>;
 }
 
-pub struct ServerBuilder {
-    handler: Arc<IoHandler>,
-}
-
-impl ServerBuilder {
-    pub fn new<T>(server: T) -> Self
-    where
-        T: LspServer + Send + Sync + 'static,
-    {
-        let server = Arc::new(server);
-        let handler = build_io_handler(server);
-
-        ServerBuilder {
-            handler: Arc::new(handler),
-        }
-    }
-
-    pub fn listen<T, U>(&self, input: T, output: U) -> impl Future<Item = (), Error = ()>
-    where
-        T: AsyncRead,
-        U: AsyncWrite,
-    {
-        let reader = FramedRead::new(input, LspCodec);
-        let writer = FramedWrite::new(output, LspCodec);
-        let handler = self.handler.clone();
-
-        reader
-            .and_then(move |request| {
-                handler
-                    .handle_request(&request)
-                    .map(|response| response.unwrap_or_else(String::new))
-                    .map_err(|_| unreachable!())
-            })
-            .forward(writer)
-            .map(|x| ())
-            .map_err(|e| panic!("{:?}", e))
-    }
-}
-
-fn build_io_handler<T>(server: Arc<T>) -> IoHandler
+pub fn build_io_handler<T>(server: T) -> IoHandler
 where
     T: LspServer + Send + Sync + 'static,
 {
+    let server = Arc::new(server);
     let mut handler = IoHandler::with_compatibility(Compatibility::V2);
 
     macro_rules! add_requests {
@@ -105,14 +71,19 @@ where
                 {
                     let server = Arc::clone(&server);
                     handler.add_method($name, move |json: Params| -> BoxFuture<Value> {
-                        match json.parse() {
-                            Ok(params) => Box::new(
-                                $request(&*server, params)
-                                    .map(|res| json!(res))
-                                    .map_err(|_| Error::new(ErrorCode::InternalError)),
-                            ),
-                            Err(error) => Box::new(futures::failed(error)),
-                        }
+                        let server = Arc::clone(&server);
+                        let future = async move {
+                            let params = json.parse()?;
+                            let result = await!($request(&*server, params)).map_err(|message| Error {
+                                code: ErrorCode::ServerError(-32000),
+                                message,
+                                data: None,
+                            })?;
+
+                            Ok(json!(result))
+                        };
+
+                        Box::new(future.boxed().compat())
                     });
                 }
             )*;

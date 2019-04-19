@@ -1,3 +1,5 @@
+#![feature(await_macro, async_await, futures_api)]
+
 mod build;
 mod formatting;
 mod lsp;
@@ -6,9 +8,9 @@ mod server;
 mod syntax;
 
 use clap::*;
-use lsp::server::ServerBuilder;
+use futures::prelude::*;
 use server::LatexLspServer;
-use stderrlog::*;
+use std::sync::Arc;
 use tokio;
 use tokio_stdin_stdout;
 
@@ -37,10 +39,12 @@ fn main() {
         .init()
         .unwrap();
 
-    let server = LatexLspServer;
-    let builder = ServerBuilder::new(server);
+    let future = async {
+        let server = LatexLspServer;
+        let stdin = tokio_stdin_stdout::stdin(0).make_sendable();
+        let stdout = tokio_stdin_stdout::stdout(0).make_sendable();
+        await!(lsp::listen(server, stdin, stdout))
+    };
 
-    let stdin = tokio_stdin_stdout::stdin(0).make_sendable();
-    let stdout = tokio_stdin_stdout::stdout(0).make_sendable();
-    tokio::run(builder.listen(stdin, stdout));
+    tokio::run(future.boxed().compat());
 }

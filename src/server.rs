@@ -1,18 +1,18 @@
-use crate::lsp::server::*;
+use crate::lsp::*;
 use futures::prelude::*;
 use lsp_types::*;
 
 pub struct LatexLspServer;
 
 impl LspServer for LatexLspServer {
-    fn initialize(&self, params: InitializeParams) -> LspResult<InitializeResult> {
-        Box::new(futures::finished(InitializeResult::default()))
+    fn initialize(&self, params: InitializeParams) -> LspFuture<InitializeResult> {
+        Box::pin(async { Ok(InitializeResult::default()) })
     }
 
     fn initialized(&self, params: InitializedParams) {}
 
-    fn shutdown(&self, params: ()) -> LspResult<()> {
-        Box::new(futures::finished(()))
+    fn shutdown(&self, params: ()) -> LspFuture<()> {
+        Box::pin(async { Ok(()) })
     }
 
     fn exit(&self, params: ()) {}
@@ -27,50 +27,50 @@ impl LspServer for LatexLspServer {
 
     fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
-    fn completion(&self, params: CompletionParams) -> LspResult<CompletionList> {
-        Box::new(futures::finished(CompletionList::default()))
+    fn completion(&self, params: CompletionParams) -> LspFuture<CompletionList> {
+        Box::pin(async { Ok(CompletionList::default()) })
     }
 
-    fn completion_resolve(&self, item: CompletionItem) -> LspResult<CompletionItem> {
-        Box::new(futures::finished(item))
+    fn completion_resolve(&self, item: CompletionItem) -> LspFuture<CompletionItem> {
+        Box::pin(async { Ok(item) })
     }
 
-    fn hover(&self, params: TextDocumentPositionParams) -> LspResult<Option<Hover>> {
-        Box::new(futures::finished(None))
+    fn hover(&self, params: TextDocumentPositionParams) -> LspFuture<Option<Hover>> {
+        Box::pin(async { Ok(None) })
     }
 
-    fn definition(&self, params: TextDocumentPositionParams) -> LspResult<Vec<Location>> {
-        Box::new(futures::finished(Vec::new()))
+    fn definition(&self, params: TextDocumentPositionParams) -> LspFuture<Vec<Location>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
-    fn references(&self, params: ReferenceParams) -> LspResult<Vec<Location>> {
-        Box::new(futures::finished(Vec::new()))
+    fn references(&self, params: ReferenceParams) -> LspFuture<Vec<Location>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
     fn document_highlight(
         &self,
         params: TextDocumentPositionParams,
-    ) -> LspResult<Vec<DocumentHighlight>> {
-        Box::new(futures::finished(Vec::new()))
+    ) -> LspFuture<Vec<DocumentHighlight>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
-    fn document_symbol(&self, params: DocumentSymbolParams) -> LspResult<Vec<DocumentSymbol>> {
-        Box::new(futures::finished(Vec::new()))
+    fn document_symbol(&self, params: DocumentSymbolParams) -> LspFuture<Vec<DocumentSymbol>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
-    fn document_link(&self, params: DocumentLinkParams) -> LspResult<Vec<DocumentLink>> {
-        Box::new(futures::finished(Vec::new()))
+    fn document_link(&self, params: DocumentLinkParams) -> LspFuture<Vec<DocumentLink>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
-    fn formatting(&self, params: DocumentFormattingParams) -> LspResult<Vec<TextEdit>> {
-        Box::new(futures::finished(Vec::new()))
+    fn formatting(&self, params: DocumentFormattingParams) -> LspFuture<Vec<TextEdit>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 
-    fn rename(&self, params: RenameParams) -> LspResult<Option<WorkspaceEdit>> {
-        Box::new(futures::finished(None))
+    fn rename(&self, params: RenameParams) -> LspFuture<Option<WorkspaceEdit>> {
+        Box::pin(async { Ok(None) })
     }
 
-    fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>> {
-        Box::new(futures::finished(Vec::new()))
+    fn folding_range(&self, params: FoldingRangeParams) -> LspFuture<Vec<FoldingRange>> {
+        Box::pin(async { Ok(Vec::new()) })
     }
 }

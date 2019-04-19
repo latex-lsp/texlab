@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 lsp-types = "0.56.0"
-futures = "0.1.26"
+futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
 jsonrpc-core = "11.0.0"
 jsonrpc-core-client = "11.0.0"
 serde_json = "1.0.39"
