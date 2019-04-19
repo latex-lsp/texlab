@@ -1,3 +1,4 @@
+mod build;
 mod formatting;
 mod lsp;
 mod range;
