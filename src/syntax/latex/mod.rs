@@ -7,6 +7,7 @@ use crate::syntax::latex::ast::LatexRoot;
 use crate::syntax::latex::lexer::LatexLexer;
 use crate::syntax::latex::parser::LatexParser;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSyntaxTree {
     pub root: LatexRoot,
 }

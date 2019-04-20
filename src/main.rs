@@ -6,6 +6,7 @@ mod lsp;
 mod range;
 mod server;
 mod syntax;
+mod workspace;
 
 use clap::*;
 use futures::prelude::*;

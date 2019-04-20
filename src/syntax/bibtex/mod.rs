@@ -6,6 +6,7 @@ use crate::syntax::bibtex::ast::BibtexRoot;
 use crate::syntax::bibtex::lexer::BibtexLexer;
 use crate::syntax::bibtex::parser::BibtexParser;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexSyntaxTree {
     pub root: BibtexRoot,
 }
