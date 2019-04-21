@@ -1,19 +1,16 @@
 mod codec;
 mod server;
 
-pub use server::{LspFuture, LspServer};
-
+use crate::server::LatexLspServer;
 use codec::LspCodec;
 use futures::compat::*;
 use futures::prelude::*;
-use jsonrpc_core::IoHandler;
 use server::build_io_handler;
 use tokio::codec::{FramedRead, FramedWrite};
 use tokio::prelude::{AsyncRead, AsyncWrite};
 
-pub async fn listen<T, I, O>(server: T, input: I, output: O) -> Result<(), ()>
+pub async fn listen<I, O>(server: LatexLspServer, input: I, output: O) -> Result<(), ()>
 where
-    T: LspServer + Send + Sync + 'static,
     I: AsyncRead,
     O: AsyncWrite,
 {
