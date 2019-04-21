@@ -1,6 +1,8 @@
 #![feature(await_macro, async_await, futures_api)]
 
 mod build;
+mod definition;
+mod feature;
 mod formatting;
 mod lsp;
 mod range;
