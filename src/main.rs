@@ -9,6 +9,7 @@ mod range;
 mod server;
 mod syntax;
 mod workspace;
+mod highlight;
 
 use clap::*;
 use futures::prelude::*;
