@@ -4,6 +4,7 @@ use crate::syntax::latex::analysis::include::LatexIncludeAnalyzer;
 use crate::syntax::latex::ast::LatexVisitor;
 use crate::syntax::latex::LatexSyntaxTree;
 use std::path::PathBuf;
+use std::rc::Rc;
 use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -28,23 +29,11 @@ pub enum SyntaxTree {
     Bibtex(BibtexSyntaxTree),
 }
 
-impl From<LatexSyntaxTree> for SyntaxTree {
-    fn from(tree: LatexSyntaxTree) -> Self {
-        SyntaxTree::Latex(tree)
-    }
-}
-
-impl From<BibtexSyntaxTree> for SyntaxTree {
-    fn from(tree: BibtexSyntaxTree) -> Self {
-        SyntaxTree::Bibtex(tree)
-    }
-}
-
 impl SyntaxTree {
     pub fn parse(text: &str, language: Language) -> Self {
         match language {
-            Language::Latex => SyntaxTree::from(LatexSyntaxTree::from(text)),
-            Language::Bibtex => SyntaxTree::from(BibtexSyntaxTree::from(text)),
+            Language::Latex => SyntaxTree::Latex(LatexSyntaxTree::from(text)),
+            Language::Bibtex => SyntaxTree::Bibtex(BibtexSyntaxTree::from(text)),
         }
     }
 }
@@ -73,27 +62,26 @@ impl Document {
 
 const DOCUMENT_EXTENSIONS: &'static [&'static str] = &[".tex", ".sty", ".cls", ".bib"];
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Workspace {
-    pub documents: Vec<Document>,
-}
-
-impl Default for Workspace {
-    fn default() -> Self {
-        Workspace::new(Vec::new())
-    }
+    pub documents: Vec<Rc<Document>>,
 }
 
 impl Workspace {
-    pub fn new(documents: Vec<Document>) -> Self {
-        Workspace { documents }
+    pub fn new() -> Self {
+        Workspace {
+            documents: Vec::new(),
+        }
     }
 
-    pub fn find(&self, uri: &Url) -> Option<&Document> {
-        self.documents.iter().find(|document| document.uri == *uri)
+    pub fn find(&self, uri: &Url) -> Option<Rc<Document>> {
+        self.documents
+            .iter()
+            .find(|document| document.uri == *uri)
+            .map(|document| Rc::clone(&document))
     }
 
-    pub fn resolve_document(&self, uri: &Url, relative_path: &str) -> Option<&Document> {
+    pub fn resolve_document(&self, uri: &Url, relative_path: &str) -> Option<Rc<Document>> {
         for target in resolve_link_targets(uri, relative_path) {
             if let Ok(target_uri) = Url::from_file_path(target) {
                 if let Some(document) = self.find(&target_uri) {
@@ -106,8 +94,8 @@ impl Workspace {
         None
     }
 
-    pub fn related_documents(&self, uri: &Url) -> Vec<&Document> {
-        let mut edges: Vec<(&Document, &Document)> = Vec::new();
+    pub fn related_documents(&self, uri: &Url) -> Vec<Rc<Document>> {
+        let mut edges: Vec<(Rc<Document>, Rc<Document>)> = Vec::new();
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 let mut analyzer = LatexIncludeAnalyzer::new();
@@ -115,8 +103,8 @@ impl Workspace {
                 for include in analyzer.included_files {
                     if let Some(ref child) = self.resolve_document(&parent.uri, include.path.text())
                     {
-                        edges.push((parent, child));
-                        edges.push((child, parent));
+                        edges.push((Rc::clone(&parent), Rc::clone(&child)));
+                        edges.push((Rc::clone(&child), Rc::clone(&parent)));
                     }
                 }
             }
@@ -124,19 +112,19 @@ impl Workspace {
 
         let mut results = Vec::new();
         if let Some(start) = self.find(uri) {
-            let mut visited: Vec<&Document> = Vec::new();
+            let mut visited: Vec<Rc<Document>> = Vec::new();
             let mut stack = Vec::new();
             stack.push(start);
             while let Some(current) = stack.pop() {
                 if visited.contains(&current) {
                     continue;
                 }
-                visited.push(current);
+                visited.push(Rc::clone(&current));
 
-                results.push(current);
+                results.push(Rc::clone(&current));
                 for edge in &edges {
                     if edge.0 == current {
-                        stack.push(edge.1);
+                        stack.push(Rc::clone(&edge.1));
                     }
                 }
             }
@@ -144,7 +132,7 @@ impl Workspace {
         results
     }
 
-    pub fn find_parent(&self, uri: &Url) -> Option<&Document> {
+    pub fn find_parent(&self, uri: &Url) -> Option<Rc<Document>> {
         for document in self.related_documents(uri) {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let mut analyzer = LatexEnvironmentAnalyzer::new();
@@ -201,7 +189,7 @@ impl WorkspaceBuilder {
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Url::from_file_path(path).unwrap();
         let document = Document::parse(uri.clone(), text.to_owned(), language);
-        self.workspace.documents.push(document);
+        self.workspace.documents.push(Rc::new(document));
         uri
     }
 }
@@ -210,7 +198,7 @@ impl WorkspaceBuilder {
 mod tests {
     use super::*;
 
-    fn verify_documents(expected: Vec<Url>, actual: Vec<&Document>) {
+    fn verify_documents(expected: Vec<Url>, actual: Vec<Rc<Document>>) {
         assert_eq!(expected.len(), actual.len());
         for i in 0..expected.len() {
             assert_eq!(expected[i], actual[i].uri);
