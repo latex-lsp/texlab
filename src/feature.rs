@@ -1,5 +1,5 @@
 use crate::workspace::{Document, Workspace};
-use lsp_types::{Position, TextDocumentIdentifier, TextDocumentPositionParams};
+use lsp_types::{DocumentLinkParams, Position, TextDocumentIdentifier, TextDocumentPositionParams};
 use std::rc::Rc;
 use url::Url;
 
@@ -50,6 +50,16 @@ impl FeatureTester {
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureTester {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.document_id, self.position);
+        FeatureRequest::new(params, self.workspace, self.document)
+    }
+}
+
+#[cfg(test)]
+impl Into<FeatureRequest<DocumentLinkParams>> for FeatureTester {
+    fn into(self) -> FeatureRequest<DocumentLinkParams> {
+        let params = DocumentLinkParams {
+            text_document: self.document_id,
+        };
         FeatureRequest::new(params, self.workspace, self.document)
     }
 }

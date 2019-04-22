@@ -4,12 +4,13 @@ mod build;
 mod definition;
 mod feature;
 mod formatting;
+mod highlight;
+mod link;
 mod lsp;
 mod range;
 mod server;
 mod syntax;
 mod workspace;
-mod highlight;
 
 use clap::*;
 use futures::prelude::*;
