@@ -62,7 +62,6 @@ mod tests {
         let request = FeatureTester::new(builder.workspace, uri1, 0, 8, "").into();
 
         let results = executor::block_on(LatexLabelReferenceProvider::execute(&request));
-
         let location = Location::new(uri2, range::create(1, 0, 1, 9));
         assert_eq!(vec![location], results);
     }

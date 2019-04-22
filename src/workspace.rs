@@ -1,7 +1,7 @@
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::analysis::environment::LatexEnvironmentAnalyzer;
 use crate::syntax::latex::analysis::include::LatexIncludeAnalyzer;
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::ast::{LatexToken, LatexVisitor};
 use crate::syntax::latex::LatexSyntaxTree;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -137,14 +137,15 @@ impl Workspace {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let mut analyzer = LatexEnvironmentAnalyzer::new();
                 analyzer.visit_root(&tree.root);
-                if analyzer.environments.iter().any(|environment| {
+                let is_standalone = analyzer.environments.iter().any(|environment| {
                     environment
                         .left
                         .name
-                        .map(|name| name.text())
+                        .map(LatexToken::text)
                         .unwrap_or_default()
                         == "document"
-                }) {
+                });
+                if is_standalone {
                     return Some(document);
                 }
             }
