@@ -15,10 +15,8 @@ mod syntax;
 mod workspace;
 
 use clap::*;
-use futures::prelude::*;
+use futures::executor::ThreadPool;
 use server::LatexLspServer;
-use std::sync::Arc;
-use tokio;
 use tokio_stdin_stdout;
 
 fn main() {
@@ -46,6 +44,7 @@ fn main() {
         .init()
         .unwrap();
 
+    let mut pool = ThreadPool::new().expect("Failed to create the thread pool");
     let future = async {
         let server = LatexLspServer;
         let stdin = tokio_stdin_stdout::stdin(0).make_sendable();
@@ -53,5 +52,5 @@ fn main() {
         await!(lsp::listen(server, stdin, stdout))
     };
 
-    tokio::run(future.boxed().compat());
+    pool.run(future).unwrap();
 }
