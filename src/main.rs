@@ -9,6 +9,7 @@ mod highlight;
 mod link;
 mod lsp;
 mod range;
+mod reference;
 mod server;
 mod syntax;
 mod workspace;
