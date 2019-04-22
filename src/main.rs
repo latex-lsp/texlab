@@ -3,6 +3,7 @@
 mod build;
 mod definition;
 mod feature;
+mod folding;
 mod formatting;
 mod highlight;
 mod link;
