@@ -53,7 +53,7 @@ mod tests {
     use futures::executor;
 
     #[test]
-    fn test_citation() {
+    fn test() {
         let mut builder = WorkspaceBuilder::new();
         let uri1 = builder.document("foo.bib", "@article{foo, bar = {baz}}");
         let uri2 = builder.document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}");
