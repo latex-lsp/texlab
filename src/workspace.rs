@@ -163,7 +163,11 @@ fn resolve_link_targets(uri: &Url, relative_path: &str) -> Vec<String> {
     let mut path = PathBuf::from(uri.path());
     path.pop();
     path.push(relative_path);
-    let path = path.to_string_lossy().replace("\\", "/");
+    let mut path = path.to_string_lossy().replace("\\", "/");
+    if cfg!(windows) && path.starts_with("/") {
+        path.remove(0);
+    }
+
     for extension in DOCUMENT_EXTENSIONS {
         targets.push(format!("{}{}", path, extension));
     }
