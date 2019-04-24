@@ -10,6 +10,7 @@ mod link;
 mod lsp;
 mod range;
 mod reference;
+mod rename;
 mod server;
 mod syntax;
 mod workspace;

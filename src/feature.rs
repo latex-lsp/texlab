@@ -2,7 +2,7 @@ use crate::workspace::{Document, Workspace};
 use futures::stream::Fold;
 use lsp_types::{
     DocumentLinkParams, FoldingRangeParams, Position, ReferenceContext, ReferenceParams,
-    TextDocumentIdentifier, TextDocumentPositionParams,
+    RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
 };
 use std::rc::Rc;
 use url::Url;
@@ -87,6 +87,18 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureTester {
             context: ReferenceContext {
                 include_declaration: false,
             },
+        };
+        FeatureRequest::new(params, self.workspace, self.document)
+    }
+}
+
+#[cfg(test)]
+impl Into<FeatureRequest<RenameParams>> for FeatureTester {
+    fn into(self) -> FeatureRequest<RenameParams> {
+        let params = RenameParams {
+            text_document: self.document_id,
+            position: self.position,
+            new_name: self.new_name,
         };
         FeatureRequest::new(params, self.workspace, self.document)
     }
