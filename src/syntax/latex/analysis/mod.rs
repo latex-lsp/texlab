@@ -1,4 +1,5 @@
 pub mod citation;
+pub mod command;
 pub mod environment;
 pub mod equation;
 pub mod include;
