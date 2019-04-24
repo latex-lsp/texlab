@@ -3,6 +3,7 @@ use crate::syntax::latex::analysis::environment::LatexEnvironmentAnalyzer;
 use crate::syntax::latex::analysis::include::LatexIncludeAnalyzer;
 use crate::syntax::latex::ast::{LatexToken, LatexVisitor};
 use crate::syntax::latex::LatexSyntaxTree;
+use path_clean::PathClean;
 use std::path::PathBuf;
 use std::rc::Rc;
 use url::Url;
@@ -82,7 +83,8 @@ impl Workspace {
     }
 
     pub fn resolve_document(&self, uri: &Url, relative_path: &str) -> Option<Rc<Document>> {
-        for target in resolve_link_targets(uri, relative_path) {
+        let targets = resolve_link_targets(uri, relative_path)?;
+        for target in targets {
             if let Ok(target_uri) = Url::from_file_path(target) {
                 if let Some(document) = self.find(&target_uri) {
                     if document.is_file() {
@@ -154,26 +156,24 @@ impl Workspace {
     }
 }
 
-fn resolve_link_targets(uri: &Url, relative_path: &str) -> Vec<String> {
+fn resolve_link_targets(uri: &Url, relative_path: &str) -> Option<Vec<String>> {
     let mut targets = Vec::new();
     if uri.scheme() != "file" {
-        return targets;
+        return None;
     }
 
-    let mut path = PathBuf::from(uri.path());
+    let mut path = uri.to_file_path().ok()?;
     path.pop();
     path.push(relative_path);
-    let mut path = path.to_string_lossy().replace("\\", "/");
-    if cfg!(windows) && path.starts_with("/") {
-        path.remove(0);
-    }
-
+    path = PathBuf::from(path.to_string_lossy().replace("\\", "/"));
+    path = path.clean();
+    let path = path.to_string_lossy().into_owned();
     for extension in DOCUMENT_EXTENSIONS {
         targets.push(format!("{}{}", path, extension));
     }
     targets.push(path);
     targets.reverse();
-    targets
+    Some(targets)
 }
 
 #[cfg(test)]
@@ -215,6 +215,15 @@ mod tests {
         let mut builder = WorkspaceBuilder::new();
         let uri1 = builder.document("foo.tex", "\\include{bar/baz}");
         let uri2 = builder.document("bar/baz.tex", "");
+        let documents = builder.workspace.related_documents(&uri1);
+        verify_documents(vec![uri1, uri2], documents);
+    }
+
+    #[test]
+    fn test_related_documents_relative_path() {
+        let mut builder = WorkspaceBuilder::new();
+        let uri1 = builder.document("foo.tex", "");
+        let uri2 = builder.document("bar/baz.tex", "\\input{../foo.tex}");
         let documents = builder.workspace.related_documents(&uri1);
         verify_documents(vec![uri1, uri2], documents);
     }
