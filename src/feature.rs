@@ -4,19 +4,19 @@ use lsp_types::{
     DocumentLinkParams, FoldingRangeParams, Position, ReferenceContext, ReferenceParams,
     RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
 };
-use std::rc::Rc;
+use std::sync::Arc;
 use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeatureRequest<T> {
     pub params: T,
     pub workspace: Workspace,
-    pub document: Rc<Document>,
-    pub related_documents: Vec<Rc<Document>>,
+    pub document: Arc<Document>,
+    pub related_documents: Vec<Arc<Document>>,
 }
 
 impl<T> FeatureRequest<T> {
-    pub fn new(params: T, workspace: Workspace, document: Rc<Document>) -> Self {
+    pub fn new(params: T, workspace: Workspace, document: Arc<Document>) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
         FeatureRequest {
             params,
@@ -30,7 +30,7 @@ impl<T> FeatureRequest<T> {
 #[cfg(test)]
 pub struct FeatureTester {
     workspace: Workspace,
-    document: Rc<Document>,
+    document: Arc<Document>,
     document_id: TextDocumentIdentifier,
     position: Position,
     new_name: String,

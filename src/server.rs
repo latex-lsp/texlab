@@ -1,10 +1,18 @@
+use crate::workspace::WorkspaceActor;
 use lsp_types::*;
+use std::sync::Arc;
 
 type LspResult<T> = Result<T, &'static str>;
 
-pub struct LatexLspServer;
+pub struct LatexLspServer {
+    workspace: Arc<WorkspaceActor>,
+}
 
 impl LatexLspServer {
+    pub fn new(workspace: Arc<WorkspaceActor>) -> Self {
+        LatexLspServer { workspace }
+    }
+
     pub async fn initialize(&self, params: InitializeParams) -> LspResult<InitializeResult> {
         Ok(InitializeResult::default())
     }

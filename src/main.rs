@@ -16,8 +16,10 @@ mod syntax;
 mod workspace;
 
 use crate::server::LatexLspServer;
+use crate::workspace::WorkspaceActor;
 use clap::*;
 use futures::executor::*;
+use futures::prelude::*;
 use tokio_stdin_stdout;
 
 fn main() {
@@ -46,8 +48,15 @@ fn main() {
         .unwrap();
 
     let mut pool = ThreadPool::new().expect("Failed to create the thread pool");
-    let server = LatexLspServer;
+    let task = run(pool.clone());
+    pool.run(task.unit_error()).unwrap();
+}
+
+async fn run(pool: ThreadPool) {
+    let workspace = await!(WorkspaceActor::spawn(pool.clone()));
+    let server = LatexLspServer::new(workspace);
     let stdin = tokio_stdin_stdout::stdin(0);
     let stdout = tokio_stdin_stdout::stdout(0);
-    pool.run(lsp::listen(server, stdin, stdout, pool.clone()));
+
+    await!(lsp::listen(server, stdin, stdout, pool.clone()));
 }
