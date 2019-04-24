@@ -1,4 +1,5 @@
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+use path_clean::PathClean;
 use regex::Captures;
 use regex::Match;
 use regex::Regex;
@@ -204,6 +205,13 @@ impl BuildErrorParser {
         let mut full_path = base_path.clone();
         full_path.push(captures.name("file").unwrap().as_str());
         let url = if full_path.starts_with(base_path) {
+            let mut full_path = PathBuf::from(full_path.to_string_lossy().replace("\\", "/"))
+                .clean()
+                .to_string_lossy()
+                .into_owned();
+            if cfg!(windows) && full_path.starts_with("/") {
+                full_path.remove(0);
+            }
             Url::from_file_path(full_path).ok()
         } else {
             None
