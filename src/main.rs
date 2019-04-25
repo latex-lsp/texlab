@@ -1,6 +1,7 @@
 #![feature(await_macro, async_await, futures_api)]
 
 mod build;
+mod completion;
 mod definition;
 mod feature;
 mod folding;

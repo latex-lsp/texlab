@@ -1,8 +1,8 @@
 use crate::workspace::{Document, Workspace};
 use futures::stream::Fold;
 use lsp_types::{
-    DocumentLinkParams, FoldingRangeParams, Position, ReferenceContext, ReferenceParams,
-    RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
+    CompletionParams, DocumentLinkParams, FoldingRangeParams, Position, ReferenceContext,
+    ReferenceParams, RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
 };
 use std::sync::Arc;
 use url::Url;
@@ -54,6 +54,18 @@ impl FeatureTester {
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureTester {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.document_id, self.position);
+        FeatureRequest::new(params, self.workspace, self.document)
+    }
+}
+
+#[cfg(test)]
+impl Into<FeatureRequest<CompletionParams>> for FeatureTester {
+    fn into(self) -> FeatureRequest<CompletionParams> {
+        let params = CompletionParams {
+            text_document: self.document_id,
+            position: self.position,
+            context: None,
+        };
         FeatureRequest::new(params, self.workspace, self.document)
     }
 }
