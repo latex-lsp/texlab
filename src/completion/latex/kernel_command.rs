@@ -1,4 +1,5 @@
 use crate::completion::factory;
+use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::FeatureRequest;
@@ -11,7 +12,7 @@ impl LatexKernelCommandCompletionProvider {
         await!(LatexCombinators::command(&request, async move |_| {
             KERNEL_COMMANDS
                 .iter()
-                .map(|name| factory::create_command((*name).to_owned(), None))
+                .map(|name| factory::create_command((*name).to_owned(), LatexComponentId::Kernel))
                 .collect()
         }))
     }
