@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexComponentId {
     Kernel,
+    Unknown,
     User(Vec<String>),
 }
 
@@ -12,6 +13,7 @@ impl LatexComponentId {
     fn detail(&self) -> String {
         match self {
             LatexComponentId::Kernel => "built-in".to_owned(),
+            LatexComponentId::Unknown => "unknown".to_owned(),
             LatexComponentId::User(files) => files.join(", "),
         }
     }

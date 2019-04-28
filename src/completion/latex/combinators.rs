@@ -10,12 +10,12 @@ use lsp_types::{CompletionItem, CompletionParams, Position};
 pub struct LatexCombinators;
 
 impl LatexCombinators {
-    pub async fn command<E, F>(
-        request: &FeatureRequest<CompletionParams>,
+    pub async fn command<'a, E, F>(
+        request: &'a FeatureRequest<CompletionParams>,
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(&LatexCommand) -> F,
+        E: Fn(&'a LatexCommand) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
