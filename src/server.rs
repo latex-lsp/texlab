@@ -1,6 +1,9 @@
 use crate::workspace::WorkspaceActor;
+use futures::executor::block_on;
+use log::*;
 use lsp_types::*;
 use std::sync::Arc;
+use walkdir::WalkDir;
 
 type LspResult<T> = Result<T, &'static str>;
 
@@ -14,26 +17,81 @@ impl LatexLspServer {
     }
 
     pub async fn initialize(&self, params: InitializeParams) -> LspResult<InitializeResult> {
-        Ok(InitializeResult::default())
+        if let Some(Ok(path)) = params.root_uri.map(|x| x.to_file_path()) {
+            for entry in WalkDir::new(path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|x| x.file_type().is_file())
+            {
+                await!(self.workspace.load(entry.path().to_path_buf()));
+            }
+        }
+
+        let workspace = await!(self.workspace.get());
+        workspace
+            .documents
+            .iter()
+            .for_each(|x| info!("{}", x.uri.as_str()));
+
+        let capabilities = ServerCapabilities {
+            text_document_sync: Some(TextDocumentSyncCapability::Options(
+                TextDocumentSyncOptions {
+                    open_close: Some(true),
+                    change: Some(TextDocumentSyncKind::Full),
+                    will_save: None,
+                    will_save_wait_until: None,
+                    save: None,
+                },
+            )),
+            hover_provider: None,
+            completion_provider: None,
+            signature_help_provider: None,
+            definition_provider: None,
+            type_definition_provider: None,
+            implementation_provider: None,
+            references_provider: None,
+            document_highlight_provider: None,
+            document_symbol_provider: None,
+            workspace_symbol_provider: None,
+            code_action_provider: None,
+            code_lens_provider: None,
+            document_formatting_provider: None,
+            document_range_formatting_provider: None,
+            document_on_type_formatting_provider: None,
+            rename_provider: None,
+            color_provider: None,
+            folding_range_provider: None,
+            execute_command_provider: None,
+            workspace: None,
+        };
+
+        Ok(InitializeResult { capabilities })
     }
 
-    pub fn initialized(&self, params: InitializedParams) {}
+    pub async fn initialized(&self, params: InitializedParams) {}
 
     pub async fn shutdown(&self, params: ()) -> LspResult<()> {
         Ok(())
     }
 
-    pub fn exit(&self, params: ()) {}
+    pub async fn exit(&self, params: ()) {}
 
-    pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
+    pub async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
 
-    pub fn did_open(&self, params: DidOpenTextDocumentParams) {}
+    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        await!(self.workspace.add(params.text_document));
+    }
 
-    pub fn did_change(&self, params: DidChangeTextDocumentParams) {}
+    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        for change in params.content_changes {
+            let uri = params.text_document.uri.clone();
+            await!(self.workspace.update(uri, change.text))
+        }
+    }
 
-    pub fn did_save(&self, params: DidSaveTextDocumentParams) {}
+    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {}
 
-    pub fn did_close(&self, params: DidCloseTextDocumentParams) {}
+    pub async fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
     pub async fn completion(&self, params: CompletionParams) -> LspResult<CompletionList> {
         Ok(CompletionList::default())

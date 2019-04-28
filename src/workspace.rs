@@ -203,7 +203,6 @@ enum Message {
 enum Error {
     InvalidLanguageId(String),
     DocumentNotFound(Url),
-    DocumentAlreadyAdded(Url),
     InvalidPath(PathBuf),
     IoError(PathBuf),
 }
@@ -239,9 +238,6 @@ impl WorkspaceActor {
                         }
                         Err(Error::DocumentNotFound(uri)) => {
                             error!("Document not found: {}", uri);
-                        }
-                        Err(Error::DocumentAlreadyAdded(uri)) => {
-                            error!("Document already part of workspace: {}", uri);
                         }
                         Err(Error::InvalidPath(path)) => {
                             error!("Invalid file path: {}", path.to_str().unwrap());
@@ -298,7 +294,7 @@ fn handle_message(
         }
         Message::Add(document) => {
             if workspace.documents.iter().any(|x| x.uri == document.uri) {
-                return Err(Error::DocumentAlreadyAdded(document.uri));
+                return Ok(None);
             }
 
             let language = Language::by_language_id(&document.language_id)
@@ -316,7 +312,7 @@ fn handle_message(
 
             let uri = Url::from_file_path(&path).map_err(|_| Error::InvalidPath(path.clone()))?;
             if workspace.documents.iter().any(|x| x.uri == uri) {
-                return Err(Error::DocumentAlreadyAdded(uri));
+                return Ok(None);
             }
 
             let text = fs::read_to_string(&path).map_err(|_| Error::IoError(path.clone()))?;

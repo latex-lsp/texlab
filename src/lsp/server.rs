@@ -1,10 +1,12 @@
 use crate::server::LatexLspServer;
+use futures::executor::ThreadPool;
 use futures::prelude::*;
+use futures::task::*;
 use jsonrpc_core::{BoxFuture, Compatibility, Error, ErrorCode, IoHandler, Params, Value};
 use serde_json::json;
 use std::sync::Arc;
 
-pub fn build_io_handler(server: LatexLspServer) -> IoHandler {
+pub fn build_io_handler(server: LatexLspServer, pool: ThreadPool) -> IoHandler {
     let server = Arc::new(server);
     let mut handler = IoHandler::with_compatibility(Compatibility::V2);
 
@@ -38,11 +40,20 @@ pub fn build_io_handler(server: LatexLspServer) -> IoHandler {
             $(
                 {
                     let server = Arc::clone(&server);
+                    let pool = pool.clone();
+
                     handler.add_notification($name, move |json: Params| {
-                        match json.parse() {
-                            Ok(params) => $request(&*server, params),
-                            Err(error) => panic!(error),
-                        }
+                        let server = Arc::clone(&server);
+                        let mut pool = pool.clone();
+
+                        let task = async move {
+                            match json.parse() {
+                                Ok(params) => await!($request(&*server, params)),
+                                Err(error) => panic!(error),
+                            }
+                        };
+
+                        pool.spawn(task).unwrap();
                     });
                 }
             )*;

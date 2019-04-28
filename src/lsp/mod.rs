@@ -18,7 +18,7 @@ where
     I: AsyncRead + Send + Sync + 'static,
     O: AsyncWrite + Send + Sync + 'static,
 {
-    let handler = Arc::new(Mutex::new(build_io_handler(server)));
+    let handler = Arc::new(Mutex::new(build_io_handler(server, pool.clone())));
     let mut reader = FramedRead::new(input, LspCodec).compat();
     let writer = Arc::new(Mutex::new(FramedWrite::new(output, LspCodec).sink_compat()));
 
