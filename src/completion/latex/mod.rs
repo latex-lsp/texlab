@@ -1,4 +1,5 @@
 mod color;
+mod color_model;
 mod combinators;
 mod kernel_command;
 mod kernel_environment;
