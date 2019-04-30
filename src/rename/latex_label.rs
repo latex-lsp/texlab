@@ -49,7 +49,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test() {
@@ -58,7 +58,7 @@ mod tests {
         let uri2 = builder.document("bar.tex", "\\ref{foo}");
         let request = FeatureTester::new(builder.workspace, uri1.clone(), 0, 7, "bar").into();
 
-        let changes = executor::block_on(LatexLabelRenameProvider::execute(&request))
+        let changes = block_on(LatexLabelRenameProvider::execute(&request))
             .unwrap()
             .changes
             .unwrap();
@@ -80,7 +80,7 @@ mod tests {
         let uri = builder.document("foo.tex", "\\foo{bar}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 5, "baz").into();
 
-        let edit = executor::block_on(LatexLabelRenameProvider::execute(&request));
+        let edit = block_on(LatexLabelRenameProvider::execute(&request));
 
         assert_eq!(None, edit);
     }
@@ -91,7 +91,7 @@ mod tests {
         let uri = builder.document("foo.bib", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "baz").into();
 
-        let edit = executor::block_on(LatexLabelRenameProvider::execute(&request));
+        let edit = block_on(LatexLabelRenameProvider::execute(&request));
 
         assert_eq!(None, edit);
     }

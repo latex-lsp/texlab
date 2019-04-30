@@ -50,7 +50,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test() {
@@ -60,7 +60,8 @@ mod tests {
         builder.document("baz.tex", "\\cite{foo}");
         let request = FeatureTester::new(builder.workspace, uri1, 0, 9, "").into();
 
-        let results = executor::block_on(BibtexEntryReferenceProvider::execute(&request));
+        let results = block_on(BibtexEntryReferenceProvider::execute(&request));
+
         let location = Location::new(uri2, range::create(1, 0, 1, 10));
         assert_eq!(vec![location], results);
     }
@@ -71,7 +72,7 @@ mod tests {
         let uri = builder.document("foo.tex", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexEntryReferenceProvider::execute(&request));
+        let results = block_on(BibtexEntryReferenceProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

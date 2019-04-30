@@ -57,7 +57,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_has_definition() {
@@ -67,7 +67,7 @@ mod tests {
         let uri2 = builder.document("baz.bib", "@article{foo, bar = {baz}}");
         let request = FeatureTester::new(builder.workspace, uri1, 1, 6, "").into();
 
-        let results = executor::block_on(LatexCitationDefinitionProvider::execute(&request));
+        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
 
         let location = Location::new(uri2, range::create(0, 9, 0, 12));
         assert_eq!(vec![location], results)
@@ -79,7 +79,7 @@ mod tests {
         let uri = builder.document("foo.tex", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexCitationDefinitionProvider::execute(&request));
+        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }
@@ -90,7 +90,7 @@ mod tests {
         let uri = builder.document("foo.bib", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexCitationDefinitionProvider::execute(&request));
+        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

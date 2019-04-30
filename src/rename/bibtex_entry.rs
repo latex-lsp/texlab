@@ -89,7 +89,7 @@ mod tests {
     use crate::feature::FeatureTester;
     use crate::range;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test() {
@@ -118,10 +118,11 @@ mod tests {
             let request =
                 FeatureTester::new(builder.workspace, uri, row.line, row.character, "qux").into();
 
-            let changes = executor::block_on(BibtexEntryRenameProvider::execute(&request))
+            let changes = block_on(BibtexEntryRenameProvider::execute(&request))
                 .unwrap()
                 .changes
                 .unwrap();
+
             assert_eq!(2, changes.len());
             assert_eq!(
                 vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
@@ -140,7 +141,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 14, "qux").into();
 
-        let edit = executor::block_on(BibtexEntryRenameProvider::execute(&request));
+        let edit = block_on(BibtexEntryRenameProvider::execute(&request));
 
         assert_eq!(None, edit);
     }

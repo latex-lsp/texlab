@@ -45,7 +45,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_has_label() {
@@ -53,7 +53,7 @@ mod tests {
         let uri = builder.document("foo.tex", "\\label{foo}\n\\ref{foo}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 7, "").into();
 
-        let results = executor::block_on(LatexLabelHighlightProvider::execute(&request));
+        let results = block_on(LatexLabelHighlightProvider::execute(&request));
 
         let highlight1 = DocumentHighlight {
             range: range::create(0, 7, 0, 10),
@@ -72,7 +72,7 @@ mod tests {
         let uri = builder.document("foo.tex", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexLabelHighlightProvider::execute(&request));
+        let results = block_on(LatexLabelHighlightProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }
@@ -83,7 +83,7 @@ mod tests {
         let uri = builder.document("foo.bib", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexLabelHighlightProvider::execute(&request));
+        let results = block_on(LatexLabelHighlightProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

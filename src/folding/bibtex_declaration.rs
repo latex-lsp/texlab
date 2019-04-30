@@ -45,7 +45,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_preamble() {
@@ -53,7 +53,7 @@ mod tests {
         let uri = builder.document("foo.bib", "\n@preamble{\"foo\"}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         let folding = FoldingRange {
             start_line: 1,
@@ -71,7 +71,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@string{foo = \"bar\"}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         let folding = FoldingRange {
             start_line: 0,
@@ -89,7 +89,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@article{foo, bar = baz\n}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         let folding = FoldingRange {
             start_line: 0,
@@ -107,7 +107,7 @@ mod tests {
         let uri = builder.document("foo.bib", "foo");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }
@@ -118,7 +118,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@article{foo,");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }
@@ -129,7 +129,7 @@ mod tests {
         let uri = builder.document("foo.tex", "@article{foo,");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(BibtexDeclarationFoldingProvider::execute(&request));
+        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

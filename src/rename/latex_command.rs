@@ -54,7 +54,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test() {
@@ -63,7 +63,7 @@ mod tests {
         let uri2 = builder.document("bar.tex", "\\baz");
         let request = FeatureTester::new(builder.workspace, uri1.clone(), 1, 2, "qux").into();
 
-        let changes = executor::block_on(LatexCommandRenameProvider::execute(&request))
+        let changes = block_on(LatexCommandRenameProvider::execute(&request))
             .unwrap()
             .changes
             .unwrap();
@@ -85,7 +85,7 @@ mod tests {
         let uri = builder.document("foo.bib", "\\foo");
         let request = FeatureTester::new(builder.workspace, uri, 0, 1, "baz").into();
 
-        let edit = executor::block_on(LatexCommandRenameProvider::execute(&request));
+        let edit = block_on(LatexCommandRenameProvider::execute(&request));
 
         assert_eq!(None, edit);
     }

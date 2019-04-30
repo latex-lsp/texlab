@@ -44,7 +44,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test() {
@@ -54,7 +54,7 @@ mod tests {
         builder.document("baz.tex", "\\baz");
         let request = FeatureTester::new(builder.workspace, uri, 1, 2, "").into();
 
-        let items = executor::block_on(LatexUserCommandCompletionProvider::execute(&request));
+        let items = block_on(LatexUserCommandCompletionProvider::execute(&request));
 
         let labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
         assert_eq!(vec!["include", "bar"], labels);

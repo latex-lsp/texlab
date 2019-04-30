@@ -41,7 +41,7 @@ mod tests {
     use crate::feature::FeatureTester;
     use crate::range;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_has_links() {
@@ -50,7 +50,7 @@ mod tests {
         let uri2 = builder.document("bar.tex", "");
         let request = FeatureTester::new(builder.workspace, uri1, 0, 0, "").into();
 
-        let results = executor::block_on(LatexIncludeLinkProvider::execute(&request));
+        let results = block_on(LatexIncludeLinkProvider::execute(&request));
 
         let link = DocumentLink {
             range: range::create(0, 7, 0, 14),
@@ -65,7 +65,7 @@ mod tests {
         let uri = builder.document("foo.tex", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexIncludeLinkProvider::execute(&request));
+        let results = block_on(LatexIncludeLinkProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }
@@ -76,7 +76,7 @@ mod tests {
         let uri = builder.document("foo.bib", "");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexIncludeLinkProvider::execute(&request));
+        let results = block_on(LatexIncludeLinkProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

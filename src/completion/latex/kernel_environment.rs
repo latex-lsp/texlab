@@ -25,7 +25,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_inside_of_empty_begin() {
@@ -33,7 +33,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\begin{}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 7, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(true, items.iter().any(|item| item.label == "document"));
     }
 
@@ -43,7 +44,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\end{foo}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(true, items.iter().any(|item| item.label == "document"));
     }
 
@@ -53,7 +55,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\begin{}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(items, Vec::new());
     }
 
@@ -63,7 +66,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\end{}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(items, Vec::new());
     }
 
@@ -73,7 +77,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\foo{bar}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(items, Vec::new());
     }
 
@@ -83,7 +88,8 @@ mod tests {
         let uri = builder.document("foo.tex", "\\begin{foo}{bar}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 14, "").into();
 
-        let items = executor::block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
+
         assert_eq!(items, Vec::new());
     }
 }

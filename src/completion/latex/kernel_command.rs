@@ -23,7 +23,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_end_of_command() {
@@ -31,7 +31,7 @@ mod tests {
         let uri = builder.document("foo.tex", "\\use");
         let request = FeatureTester::new(builder.workspace, uri, 0, 4, "").into();
 
-        let items = executor::block_on(LatexKernelCommandCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
 
         assert_eq!(true, items.iter().any(|item| item.label == "usepackage"))
     }
@@ -42,7 +42,7 @@ mod tests {
         let uri = builder.document("foo.tex", "\\use");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let items = executor::block_on(LatexKernelCommandCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
 
         assert_eq!(items, Vec::new());
     }
@@ -53,7 +53,7 @@ mod tests {
         let uri = builder.document("foo.tex", "{%\\use\n}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 4, "").into();
 
-        let items = executor::block_on(LatexKernelCommandCompletionProvider::execute(&request));
+        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
 
         assert_eq!(items, Vec::new());
     }

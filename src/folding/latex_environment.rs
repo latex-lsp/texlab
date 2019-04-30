@@ -34,7 +34,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_multiline() {
@@ -42,7 +42,7 @@ mod tests {
         let uri = builder.document("foo.tex", "\\begin{foo}\n\\end{foo}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexEnvironmentFoldingProvider::execute(&request));
+        let results = block_on(LatexEnvironmentFoldingProvider::execute(&request));
 
         let folding = FoldingRange {
             start_line: 0,
@@ -60,7 +60,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexEnvironmentFoldingProvider::execute(&request));
+        let results = block_on(LatexEnvironmentFoldingProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

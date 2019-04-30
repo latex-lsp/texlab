@@ -45,7 +45,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_nesting() {
@@ -56,7 +56,7 @@ mod tests {
         let uri = builder.document("foo.tex", text);
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexSectionFoldingProvider::execute(&request));
+        let results = block_on(LatexSectionFoldingProvider::execute(&request));
 
         let folding1 = FoldingRange {
             start_line: 0,
@@ -88,7 +88,7 @@ mod tests {
         let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
         let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
 
-        let results = executor::block_on(LatexSectionFoldingProvider::execute(&request));
+        let results = block_on(LatexSectionFoldingProvider::execute(&request));
 
         assert_eq!(results, Vec::new());
     }

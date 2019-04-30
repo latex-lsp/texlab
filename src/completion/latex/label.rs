@@ -40,7 +40,7 @@ mod tests {
     use super::*;
     use crate::feature::FeatureTester;
     use crate::workspace::WorkspaceBuilder;
-    use futures::executor;
+    use futures::executor::block_on;
 
     #[test]
     fn test_inside_of_ref() {
@@ -53,7 +53,8 @@ mod tests {
         builder.document("baz.tex", "\\label{foo}\\label{bar}\\ref{baz}");
         let request = FeatureTester::new(builder.workspace, uri, 1, 5, "").into();
 
-        let items = executor::block_on(LatexLabelCompletionProvider::execute(&request));
+        let items = block_on(LatexLabelCompletionProvider::execute(&request));
+
         let labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
         assert_eq!(vec!["foo", "bar"], labels);
     }
@@ -65,7 +66,8 @@ mod tests {
         builder.document("bar.tex", "\\label{foo}\\label{bar}");
         let request = FeatureTester::new(builder.workspace, uri, 1, 6, "").into();
 
-        let items = executor::block_on(LatexLabelCompletionProvider::execute(&request));
+        let items = block_on(LatexLabelCompletionProvider::execute(&request));
+
         assert_eq!(items, Vec::new());
     }
 }
