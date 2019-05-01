@@ -2,6 +2,7 @@ mod factory;
 mod latex;
 mod quality;
 
+use crate::completion::latex::begin_command::LatexBeginCommandCompletionProvider;
 use crate::completion::latex::color::LatexColorCompletionProvider;
 use crate::completion::latex::color_model::LatexColorModelCompletionProvider;
 use crate::completion::latex::kernel_command::LatexKernelCommandCompletionProvider;
@@ -15,7 +16,6 @@ use crate::concat_feature;
 use crate::feature::FeatureRequest;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
-use std::collections::{HashMap, HashSet};
 
 pub const COMPLETION_LIMIT: usize = 50;
 
@@ -34,6 +34,7 @@ impl CompletionProvider {
                     LatexColorCompletionProvider,
                     LatexColorModelCompletionProvider,
                     LatexLabelCompletionProvider,
+                    LatexBeginCommandCompletionProvider,
                     LatexKernelCommandCompletionProvider,
                     LatexUserCommandCompletionProvider
                 )
