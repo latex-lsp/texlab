@@ -2,6 +2,7 @@ use crate::completion::{CompletionProvider, COMPLETION_LIMIT};
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
+use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
@@ -51,7 +52,7 @@ impl LatexLspServer {
                     save: None,
                 },
             )),
-            hover_provider: None,
+            hover_provider: Some(true),
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
                 trigger_characters: Some(vec![
@@ -131,7 +132,9 @@ impl LatexLspServer {
     }
 
     pub async fn hover(&self, params: TextDocumentPositionParams) -> LspResult<Option<Hover>> {
-        Ok(None)
+        let request = request!(self, params)?;
+        let hover = await!(HoverProvider::execute(&request));
+        Ok(hover)
     }
 
     pub async fn definition(&self, params: TextDocumentPositionParams) -> LspResult<Vec<Location>> {
