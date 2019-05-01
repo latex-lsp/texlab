@@ -1,3 +1,4 @@
+use crate::completion::{CompletionProvider, COMPLETION_LIMIT};
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
@@ -51,7 +52,16 @@ impl LatexLspServer {
                 },
             )),
             hover_provider: None,
-            completion_provider: None,
+            completion_provider: Some(CompletionOptions {
+                resolve_provider: Some(true),
+                trigger_characters: Some(vec![
+                    "\\".to_owned(),
+                    "{".to_owned(),
+                    "}".to_owned(),
+                    "@".to_owned(),
+                    "/".to_owned(),
+                ]),
+            }),
             signature_help_provider: None,
             definition_provider: Some(true),
             type_definition_provider: None,
@@ -104,7 +114,16 @@ impl LatexLspServer {
     pub async fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
     pub async fn completion(&self, params: CompletionParams) -> LspResult<CompletionList> {
-        Ok(CompletionList::default())
+        let request = request!(self, params)?;
+        let items = await!(CompletionProvider::execute(&request));
+        let all_includes = items.iter().all(|item| {
+            item.kind == Some(CompletionItemKind::Folder)
+                || item.kind == Some(CompletionItemKind::File)
+        });
+        Ok(CompletionList {
+            is_incomplete: !all_includes,
+            items,
+        })
     }
 
     pub async fn completion_resolve(&self, item: CompletionItem) -> LspResult<CompletionItem> {
