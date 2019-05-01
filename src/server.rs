@@ -1,6 +1,7 @@
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
+use crate::reference::ReferenceProvider;
 use crate::request;
 use crate::workspace::WorkspaceActor;
 use log::*;
@@ -52,7 +53,7 @@ impl LatexLspServer {
             definition_provider: Some(true),
             type_definition_provider: None,
             implementation_provider: None,
-            references_provider: None,
+            references_provider: Some(true),
             document_highlight_provider: None,
             document_symbol_provider: None,
             workspace_symbol_provider: None,
@@ -115,7 +116,9 @@ impl LatexLspServer {
     }
 
     pub async fn references(&self, params: ReferenceParams) -> LspResult<Vec<Location>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let results = await!(ReferenceProvider::execute(&request));
+        Ok(results)
     }
 
     pub async fn document_highlight(
