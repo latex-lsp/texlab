@@ -3,6 +3,7 @@ use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
+use crate::rename::RenameProvider;
 use crate::request;
 use crate::workspace::WorkspaceActor;
 use log::*;
@@ -64,7 +65,7 @@ impl LatexLspServer {
             document_formatting_provider: None,
             document_range_formatting_provider: None,
             document_on_type_formatting_provider: None,
-            rename_provider: None,
+            rename_provider: Some(RenameProviderCapability::Simple(true)),
             document_link_provider: Some(DocumentLinkOptions {
                 resolve_provider: Some(false),
             }),
@@ -151,7 +152,9 @@ impl LatexLspServer {
     }
 
     pub async fn rename(&self, params: RenameParams) -> LspResult<Option<WorkspaceEdit>> {
-        Ok(None)
+        let request = request!(self, params)?;
+        let edit = await!(RenameProvider::execute(&request));
+        Ok(edit)
     }
 
     pub async fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>> {
