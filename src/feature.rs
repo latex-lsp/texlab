@@ -32,6 +32,23 @@ macro_rules! concat_feature {
     }};
 }
 
+#[macro_export]
+macro_rules! choice_feature {
+    ($request:expr) => {
+        None
+    };
+    ($request:expr, $provider:tt, $($providers:tt),*) => {{
+        $(
+            let value = await!($provider::execute($request));
+            if value.is_some() {
+                value
+            } else {
+                choice_feature!($request, $(providers),*)
+            }
+        )+
+    }};
+}
+
 #[cfg(test)]
 use lsp_types::*;
 
