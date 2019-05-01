@@ -1,11 +1,13 @@
+use crate::definition::DefinitionProvider;
+use crate::feature::FeatureRequest;
+use crate::request;
 use crate::workspace::WorkspaceActor;
-use futures::executor::block_on;
 use log::*;
 use lsp_types::*;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-type LspResult<T> = Result<T, &'static str>;
+type LspResult<T> = Result<T, String>;
 
 pub struct LatexLspServer {
     workspace: Arc<WorkspaceActor>,
@@ -46,7 +48,7 @@ impl LatexLspServer {
             hover_provider: None,
             completion_provider: None,
             signature_help_provider: None,
-            definition_provider: None,
+            definition_provider: Some(true),
             type_definition_provider: None,
             implementation_provider: None,
             references_provider: None,
@@ -106,7 +108,9 @@ impl LatexLspServer {
     }
 
     pub async fn definition(&self, params: TextDocumentPositionParams) -> LspResult<Vec<Location>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let results = await!(DefinitionProvider::execute(&request));
+        Ok(results)
     }
 
     pub async fn references(&self, params: ReferenceParams) -> LspResult<Vec<Location>> {
@@ -142,4 +146,17 @@ impl LatexLspServer {
     pub async fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>> {
         Ok(Vec::new())
     }
+}
+
+#[macro_export]
+macro_rules! request {
+    ($server:expr, $params:expr) => {{
+        let workspace = await!($server.workspace.get());
+        if let Some(document) = workspace.find(&$params.text_document.uri) {
+            Ok(FeatureRequest::new($params, workspace, document))
+        } else {
+            let msg = format!("Unknown document: {}", $params.text_document.uri);
+            Err(msg)
+        }
+    }};
 }

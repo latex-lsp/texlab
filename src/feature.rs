@@ -4,13 +4,13 @@ use std::sync::Arc;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeatureRequest<T> {
     pub params: T,
-    pub workspace: Workspace,
+    pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
 }
 
 impl<T> FeatureRequest<T> {
-    pub fn new(params: T, workspace: Workspace, document: Arc<Document>) -> Self {
+    pub fn new(params: T, workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
         FeatureRequest {
             params,
@@ -37,7 +37,7 @@ use lsp_types::*;
 
 #[cfg(test)]
 pub struct FeatureTester {
-    workspace: Workspace,
+    workspace: Arc<Workspace>,
     document: Arc<Document>,
     document_id: TextDocumentIdentifier,
     position: Position,
@@ -49,7 +49,7 @@ impl FeatureTester {
     pub fn new(workspace: Workspace, uri: Url, line: u64, character: u64, new_name: &str) -> Self {
         let document = workspace.find(&uri).unwrap();
         FeatureTester {
-            workspace,
+            workspace: Arc::new(workspace),
             document,
             document_id: TextDocumentIdentifier::new(uri),
             position: Position::new(line, character),
