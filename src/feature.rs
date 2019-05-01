@@ -1,11 +1,5 @@
 use crate::workspace::{Document, Workspace};
-use futures::stream::Fold;
-use lsp_types::{
-    CompletionParams, DocumentLinkParams, FoldingRangeParams, Position, ReferenceContext,
-    ReferenceParams, RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
-};
 use std::sync::Arc;
-use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeatureRequest<T> {
@@ -26,6 +20,20 @@ impl<T> FeatureRequest<T> {
         }
     }
 }
+
+#[macro_export]
+macro_rules! concat_feature {
+    ($request:expr, $($provider:tt), *) => {{
+        let mut items = Vec::new();
+        $(
+            items.append(&mut await!($provider::execute($request)));
+        )*
+        items
+    }};
+}
+
+#[cfg(test)]
+use lsp_types::*;
 
 #[cfg(test)]
 pub struct FeatureTester {
