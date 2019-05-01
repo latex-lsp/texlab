@@ -1,5 +1,6 @@
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
+use crate::folding::FoldingProvider;
 use crate::request;
 use crate::workspace::WorkspaceActor;
 use log::*;
@@ -62,7 +63,7 @@ impl LatexLspServer {
             document_on_type_formatting_provider: None,
             rename_provider: None,
             color_provider: None,
-            folding_range_provider: None,
+            folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             execute_command_provider: None,
             workspace: None,
         };
@@ -144,7 +145,9 @@ impl LatexLspServer {
     }
 
     pub async fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let foldings = await!(FoldingProvider::execute(&request));
+        Ok(foldings)
     }
 }
 
