@@ -43,48 +43,65 @@ impl LatexLabelHighlightProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_has_label() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\label{foo}\n\\ref{foo}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 7, "").into();
-
-        let results = block_on(LatexLabelHighlightProvider::execute(&request));
-
-        let highlight1 = DocumentHighlight {
-            range: range::create(0, 7, 0, 10),
-            kind: Some(DocumentHighlightKind::Write),
-        };
-        let highlight2 = DocumentHighlight {
-            range: range::create(1, 5, 1, 8),
-            kind: Some(DocumentHighlightKind::Read),
-        };
-        assert_eq!(vec![highlight1, highlight2], results);
+        let highlights = test_feature!(
+            LatexLabelHighlightProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\label{foo}\n\\ref{foo}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            highlights,
+            vec![
+                DocumentHighlight {
+                    range: range::create(0, 7, 0, 10),
+                    kind: Some(DocumentHighlightKind::Write),
+                },
+                DocumentHighlight {
+                    range: range::create(1, 5, 1, 8),
+                    kind: Some(DocumentHighlightKind::Read),
+                }
+            ]
+        );
     }
 
     #[test]
     fn test_no_label_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexLabelHighlightProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let highlights = test_feature!(
+            LatexLabelHighlightProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "")],
+                main_file: "foo.tex",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(highlights, Vec::new());
     }
 
     #[test]
     fn test_no_label_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexLabelHighlightProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let highlights = test_feature!(
+            LatexLabelHighlightProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "")],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(highlights, Vec::new());
     }
 }
