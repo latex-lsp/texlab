@@ -43,94 +43,125 @@ impl BibtexDeclarationFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_preamble() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "\n@preamble{\"foo\"}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        let folding = FoldingRange {
-            start_line: 1,
-            start_character: Some(0),
-            end_line: 1,
-            end_character: Some(15),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        assert_eq!(vec![folding], results);
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "\n@preamble{\"foo\"}")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            foldings,
+            vec![FoldingRange {
+                start_line: 1,
+                start_character: Some(0),
+                end_line: 1,
+                end_character: Some(15),
+                kind: Some(FoldingRangeKind::Region),
+            }]
+        );
     }
 
     #[test]
     fn test_string() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@string{foo = \"bar\"}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        let folding = FoldingRange {
-            start_line: 0,
-            start_character: Some(0),
-            end_line: 0,
-            end_character: Some(19),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        assert_eq!(vec![folding], results);
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@string{foo = \"bar\"}")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            foldings,
+            vec![FoldingRange {
+                start_line: 0,
+                start_character: Some(0),
+                end_line: 0,
+                end_character: Some(19),
+                kind: Some(FoldingRangeKind::Region),
+            }]
+        );
     }
 
     #[test]
     fn test_entry() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@article{foo, bar = baz\n}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        let folding = FoldingRange {
-            start_line: 0,
-            start_character: Some(0),
-            end_line: 1,
-            end_character: Some(0),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        assert_eq!(vec![folding], results);
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz\n}")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            foldings,
+            vec![FoldingRange {
+                start_line: 0,
+                start_character: Some(0),
+                end_line: 1,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region),
+            }]
+        );
     }
 
     #[test]
     fn test_comment() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "foo");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "foo")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(foldings, Vec::new());
     }
 
     #[test]
     fn test_entry_invalid() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@article{foo,");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo,")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(foldings, Vec::new());
     }
 
     #[test]
     fn test_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "@article{foo,");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexDeclarationFoldingProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let foldings = test_feature!(
+            BibtexDeclarationFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", ""),],
+                main_file: "foo.tex",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(foldings, Vec::new());
     }
 }

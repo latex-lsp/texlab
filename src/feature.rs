@@ -134,6 +134,22 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
 }
 
 #[cfg(test)]
+impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<FoldingRangeParams> {
+        let params = FoldingRangeParams {
+            text_document: self.identifier(),
+        };
+        let (workspace, document) = self.workspace();
+        FeatureRequest::new(
+            params,
+            workspace,
+            document,
+            Arc::new(self.component_database),
+        )
+    }
+}
+
+#[cfg(test)]
 #[macro_export]
 macro_rules! test_feature {
     ($provider:tt, $spec: expr) => {{

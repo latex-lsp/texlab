@@ -43,53 +43,63 @@ impl LatexSectionFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_nesting() {
-        let text =
-            "\\section{Foo}\nfoo\n\\subsection{Bar}\nbar\n\\section{Baz}\nbaz\n\\section{Qux}";
-
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", text);
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexSectionFoldingProvider::execute(&request));
-
-        let folding1 = FoldingRange {
-            start_line: 0,
-            start_character: Some(13),
-            end_line: 3,
-            end_character: Some(0),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        let folding2 = FoldingRange {
-            start_line: 2,
-            start_character: Some(16),
-            end_line: 3,
-            end_character: Some(0),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        let folding3 = FoldingRange {
-            start_line: 4,
-            start_character: Some(13),
-            end_line: 5,
-            end_character: Some(0),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        assert_eq!(vec![folding1, folding2, folding3], results)
+        let foldings = test_feature!(
+            LatexSectionFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\section{Foo}\nfoo\n\\subsection{Bar}\nbar\n\\section{Baz}\nbaz\n\\section{Qux}")],
+                main_file: "foo.tex",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            foldings,
+            vec![
+                FoldingRange {
+                    start_line: 0,
+                    start_character: Some(13),
+                    end_line: 3,
+                    end_character: Some(0),
+                    kind: Some(FoldingRangeKind::Region),
+                },
+                FoldingRange {
+                    start_line: 2,
+                    start_character: Some(16),
+                    end_line: 3,
+                    end_character: Some(0),
+                    kind: Some(FoldingRangeKind::Region),
+                },
+                FoldingRange {
+                    start_line: 4,
+                    start_character: Some(13),
+                    end_line: 5,
+                    end_character: Some(0),
+                    kind: Some(FoldingRangeKind::Region),
+                }
+            ]
+        );
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexSectionFoldingProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let foldings = test_feature!(
+            LatexSectionFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(foldings, Vec::new());
     }
 }

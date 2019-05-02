@@ -32,36 +32,47 @@ impl LatexEnvironmentFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_multiline() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{foo}\n\\end{foo}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexEnvironmentFoldingProvider::execute(&request));
-
-        let folding = FoldingRange {
-            start_line: 0,
-            start_character: Some(11),
-            end_line: 1,
-            end_character: Some(0),
-            kind: Some(FoldingRangeKind::Region),
-        };
-        assert_eq!(vec![folding], results);
+        let foldings = test_feature!(
+            LatexEnvironmentFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{foo}")],
+                main_file: "foo.tex",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            foldings,
+            vec![FoldingRange {
+                start_line: 0,
+                start_character: Some(11),
+                end_line: 1,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region),
+            }]
+        );
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexEnvironmentFoldingProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let foldings = test_feature!(
+            LatexEnvironmentFoldingProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
+                main_file: "foo.bib",
+                position: Position::default(),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(foldings, Vec::new());
     }
 }
