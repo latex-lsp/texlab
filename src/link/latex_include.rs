@@ -38,46 +38,63 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
     use crate::range;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_has_links() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\input{bar.tex}");
-        let uri2 = builder.document("bar.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri1, 0, 0, "").into();
-
-        let results = block_on(LatexIncludeLinkProvider::execute(&request));
-
-        let link = DocumentLink {
-            range: range::create(0, 7, 0, 14),
-            target: uri2,
-        };
-        assert_eq!(vec![link], results)
+        let links = test_feature!(
+            LatexIncludeLinkProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\input{bar.tex}"),
+                    FeatureSpec::file("bar.tex", "")
+                ],
+                main_file: "foo.tex",
+                position: Position::new(0, 15),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            links,
+            vec![DocumentLink {
+                range: range::create(0, 7, 0, 14),
+                target: FeatureSpec::uri("bar.tex"),
+            }]
+        );
     }
 
     #[test]
     fn test_no_links_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexIncludeLinkProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let links = test_feature!(
+            LatexIncludeLinkProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "")],
+                main_file: "foo.tex",
+                position: Position::new(0, 15),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(links, Vec::new());
     }
 
     #[test]
     fn test_no_links_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexIncludeLinkProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let links = test_feature!(
+            LatexIncludeLinkProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "")],
+                main_file: "foo.bib",
+                position: Position::new(0, 15),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(links, Vec::new());
     }
 }
