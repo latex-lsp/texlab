@@ -1,3 +1,4 @@
+use crate::completion::latex::data::types::LatexComponentDatabase;
 use crate::completion::{CompletionProvider, COMPLETION_LIMIT};
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
@@ -191,7 +192,12 @@ macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = await!($server.workspace.get());
         if let Some(document) = workspace.find(&$params.text_document.uri) {
-            Ok(FeatureRequest::new($params, workspace, document))
+            Ok(FeatureRequest::new(
+                $params,
+                workspace,
+                document,
+                Arc::new(LatexComponentDatabase::default()),
+            ))
         } else {
             let msg = format!("Unknown document: {}", $params.text_document.uri);
             Err(msg)

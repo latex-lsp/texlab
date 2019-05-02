@@ -1,5 +1,5 @@
 mod factory;
-mod latex;
+pub mod latex;
 mod quality;
 
 use crate::completion::latex::begin_command::LatexBeginCommandCompletionProvider;

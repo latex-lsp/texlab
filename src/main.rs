@@ -18,6 +18,7 @@ mod server;
 mod syntax;
 mod workspace;
 
+use crate::completion::latex::data::actor::LatexComponentDatabaseActor;
 use crate::server::LatexLspServer;
 use crate::workspace::WorkspaceActor;
 use clap::*;

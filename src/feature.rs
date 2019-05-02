@@ -7,16 +7,23 @@ pub struct FeatureRequest<T> {
     pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
+    pub component_database: Arc<LatexComponentDatabase>,
 }
 
 impl<T> FeatureRequest<T> {
-    pub fn new(params: T, workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
+    pub fn new(
+        params: T,
+        workspace: Arc<Workspace>,
+        document: Arc<Document>,
+        component_database: Arc<LatexComponentDatabase>,
+    ) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
         FeatureRequest {
             params,
             workspace,
             document,
             related_documents,
+            component_database,
         }
     }
 }
@@ -47,6 +54,7 @@ macro_rules! choice_feature {
     }};
 }
 
+use crate::completion::latex::data::types::LatexComponentDatabase;
 #[cfg(test)]
 use lsp_types::*;
 
@@ -57,6 +65,7 @@ pub struct FeatureTester {
     document_id: TextDocumentIdentifier,
     position: Position,
     new_name: String,
+    component_database: Arc<LatexComponentDatabase>,
 }
 
 #[cfg(test)]
@@ -69,6 +78,7 @@ impl FeatureTester {
             document_id: TextDocumentIdentifier::new(uri),
             position: Position::new(line, character),
             new_name: new_name.to_owned(),
+            component_database: Arc::new(LatexComponentDatabase::default()),
         }
     }
 }
@@ -77,7 +87,12 @@ impl FeatureTester {
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureTester {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.document_id, self.position);
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
 
@@ -89,7 +104,12 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureTester {
             position: self.position,
             context: None,
         };
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
 
@@ -99,7 +119,12 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureTester {
         let params = FoldingRangeParams {
             text_document: self.document_id,
         };
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
 
@@ -109,7 +134,12 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureTester {
         let params = DocumentLinkParams {
             text_document: self.document_id,
         };
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
 
@@ -123,7 +153,12 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureTester {
                 include_declaration: false,
             },
         };
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
 
@@ -135,6 +170,11 @@ impl Into<FeatureRequest<RenameParams>> for FeatureTester {
             position: self.position,
             new_name: self.new_name,
         };
-        FeatureRequest::new(params, self.workspace, self.document)
+        FeatureRequest::new(
+            params,
+            self.workspace,
+            self.document,
+            self.component_database,
+        )
     }
 }
