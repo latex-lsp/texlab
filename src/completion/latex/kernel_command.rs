@@ -21,40 +21,53 @@ impl LatexKernelCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_end_of_command() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\use");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 4, "").into();
-
-        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
-
-        assert_eq!(true, items.iter().any(|item| item.label == "usepackage"))
+        let items = test_feature!(
+            LatexKernelCommandCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\use")],
+                main_file: "foo.tex",
+                position: Position::new(0, 4),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items.iter().any(|item| item.label == "usepackage"), true);
     }
 
     #[test]
     fn test_start_of_command() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\use");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelCommandCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\use")],
+                main_file: "foo.tex",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
     fn test_outside_of_command() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "{%\\use\n}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 4, "").into();
-
-        let items = block_on(LatexKernelCommandCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelCommandCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "{%\\use}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 4),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 }

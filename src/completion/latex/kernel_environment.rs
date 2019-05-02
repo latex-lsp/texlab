@@ -23,73 +23,98 @@ impl LatexKernelEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_inside_of_empty_begin() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 7, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
-        assert_eq!(true, items.iter().any(|item| item.label == "document"));
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items.iter().any(|item| item.label == "document"), true);
     }
 
     #[test]
     fn test_inside_of_nonempty_end() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\end{foo}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
-        assert_eq!(true, items.iter().any(|item| item.label == "document"));
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\end{foo}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items.iter().any(|item| item.label == "document"), true);
     }
 
     #[test]
     fn test_outside_of_empty_begin() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
     fn test_outside_of_empty_end() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\end{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\end{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
     fn test_inside_of_other_command() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\foo{bar}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 6, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
     fn test_inside_second_argument() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{foo}{bar}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 14, "").into();
-
-        let items = block_on(LatexKernelEnvironmentCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 14),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 }

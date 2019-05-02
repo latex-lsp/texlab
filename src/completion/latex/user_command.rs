@@ -42,21 +42,28 @@ impl LatexUserCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\include{bar.tex}\n\\foo");
-        builder.document("bar.tex", "\\bar");
-        builder.document("baz.tex", "\\baz");
-        let request = FeatureTester::new(builder.workspace, uri, 1, 2, "").into();
-
-        let items = block_on(LatexUserCommandCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexUserCommandCompletionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\include{bar.tex}\n\\foo"),
+                    FeatureSpec::file("bar.tex", "\\bar"),
+                    FeatureSpec::file("baz.tex", "\\baz")
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 2),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         let labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
-        assert_eq!(vec!["include", "bar"], labels);
+        assert_eq!(labels, vec!["include", "bar"]);
     }
 }

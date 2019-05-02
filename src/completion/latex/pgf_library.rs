@@ -69,18 +69,23 @@ const LIBRARIES: &'static [&'static str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\usepgflibrary{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 15, "").into();
-
-        let items = block_on(LatexPgfLibraryCompletionProvider::execute(&request));
-
-        assert_eq!(true, items.iter().any(|item| item.label == "arrows"));
+        let items = test_feature!(
+            LatexPgfLibraryCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\usepgflibrary{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 15),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items.iter().any(|item| item.label == "arrows"), true);
     }
 }

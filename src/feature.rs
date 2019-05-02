@@ -1,4 +1,8 @@
-use crate::workspace::{Document, Workspace};
+use crate::completion::latex::data::types::LatexComponentDatabase;
+use crate::workspace::{Document, Workspace, WorkspaceBuilder};
+#[cfg(test)]
+use lsp_types::*;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -54,9 +58,88 @@ macro_rules! choice_feature {
     }};
 }
 
-use crate::completion::latex::data::types::LatexComponentDatabase;
 #[cfg(test)]
-use lsp_types::*;
+pub struct FeatureSpecFile {
+    name: &'static str,
+    text: &'static str,
+}
+
+#[cfg(test)]
+pub struct FeatureSpec {
+    pub files: Vec<FeatureSpecFile>,
+    pub main_file: &'static str,
+    pub position: Position,
+    pub new_name: &'static str,
+    pub component_database: LatexComponentDatabase,
+}
+
+#[cfg(test)]
+impl FeatureSpec {
+    pub fn file(name: &'static str, text: &'static str) -> FeatureSpecFile {
+        FeatureSpecFile { name, text }
+    }
+
+    pub fn uri(name: &str) -> Url {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
+        Url::from_file_path(path).unwrap()
+    }
+
+    fn identifier(&self) -> TextDocumentIdentifier {
+        let uri = Self::uri(self.main_file);
+        TextDocumentIdentifier::new(uri)
+    }
+
+    fn workspace(&self) -> (Arc<Workspace>, Arc<Document>) {
+        let mut builder = WorkspaceBuilder::new();
+        for file in &self.files {
+            builder.document(file.name, file.text);
+        }
+        let workspace = builder.workspace;
+        let main_uri = Self::uri(self.main_file);
+        let main_document = workspace.find(&main_uri).unwrap();
+        (Arc::new(workspace), main_document)
+    }
+}
+
+#[cfg(test)]
+impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
+        let params = TextDocumentPositionParams::new(self.identifier(), self.position);
+        let (workspace, document) = self.workspace();
+        FeatureRequest::new(
+            params,
+            workspace,
+            document,
+            Arc::new(self.component_database),
+        )
+    }
+}
+
+#[cfg(test)]
+impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<CompletionParams> {
+        let params = CompletionParams {
+            text_document: self.identifier(),
+            position: self.position,
+            context: None,
+        };
+        let (workspace, document) = self.workspace();
+        FeatureRequest::new(
+            params,
+            workspace,
+            document,
+            Arc::new(self.component_database),
+        )
+    }
+}
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! test_feature {
+    ($provider:tt, $spec: expr) => {{
+        futures::executor::block_on($provider::execute(&$spec.into()))
+    }};
+}
 
 #[cfg(test)]
 pub struct FeatureTester {

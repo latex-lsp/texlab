@@ -123,27 +123,38 @@ const COLOR_NAMES: &'static [&'static str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::{FeatureSpec, FeatureTester};
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_inside_color() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\color{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 7, "").into();
-
-        let items = block_on(LatexColorCompletionProvider::execute(&request));
+        let items = test_feature!(
+            LatexColorCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(true, items.iter().any(|item| item.label == "black"));
     }
 
     #[test]
     fn test_outside_color() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\color{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 8, "").into();
-
-        let items = block_on(LatexColorCompletionProvider::execute(&request));
+        let items = test_feature!(
+            LatexColorCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 8),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 }

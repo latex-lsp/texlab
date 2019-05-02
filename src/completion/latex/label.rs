@@ -38,36 +38,49 @@ impl LatexLabelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_inside_of_ref() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document(
-            "foo.tex",
-            "\\addbibresource{bar.bib}\\include{baz}\n\\ref{}",
+        let items = test_feature!(
+            LatexLabelCompletionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\addbibresource{bar.bib}\\include{baz}\n\\ref{}"
+                    ),
+                    FeatureSpec::file("bar.bib", ""),
+                    FeatureSpec::file("baz.tex", "\\label{foo}\\label{bar}\\ref{baz}")
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 5),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
         );
-        builder.document("bar.bib", "");
-        builder.document("baz.tex", "\\label{foo}\\label{bar}\\ref{baz}");
-        let request = FeatureTester::new(builder.workspace, uri, 1, 5, "").into();
-
-        let items = block_on(LatexLabelCompletionProvider::execute(&request));
-
         let labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
-        assert_eq!(vec!["foo", "bar"], labels);
+        assert_eq!(labels, vec!["foo", "bar"]);
     }
 
     #[test]
     fn test_outside_of_ref() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\include{bar}\\ref{}");
-        builder.document("bar.tex", "\\label{foo}\\label{bar}");
-        let request = FeatureTester::new(builder.workspace, uri, 1, 6, "").into();
-
-        let items = block_on(LatexLabelCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexLabelCompletionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\include{bar}\\ref{}"),
+                    FeatureSpec::file("bar.tex", "\\label{foo}\\label{bar}"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 }

@@ -50,40 +50,53 @@ const MODEL_NAMES: &'static [&'static str] = &["gray", "rgb", "RGB", "HTML", "cm
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_inside_define_color() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\definecolor{name}{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 19, "").into();
-
-        let items = block_on(LatexColorModelCompletionProvider::execute(&request));
-
-        assert_eq!(LatexColorModelCompletionProvider::generate_items(), items);
+        let items = test_feature!(
+            LatexColorModelCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 19),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items, LatexColorModelCompletionProvider::generate_items());
     }
 
     #[test]
     fn test_outside_define_color() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\definecolor{name}{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 18, "").into();
-
-        let items = block_on(LatexColorModelCompletionProvider::execute(&request));
-
+        let items = test_feature!(
+            LatexColorModelCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 18),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
-    fn test_inside_define_color_set() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\definecolorset{}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 16, "").into();
-
-        let items = block_on(LatexColorModelCompletionProvider::execute(&request));
-
-        assert_eq!(LatexColorModelCompletionProvider::generate_items(), items);
+    fn tet_inside_define_color_set() {
+        let items = test_feature!(
+            LatexColorModelCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\definecolorset{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 16),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(items, LatexColorModelCompletionProvider::generate_items());
     }
 }
