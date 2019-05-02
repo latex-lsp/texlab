@@ -53,43 +53,63 @@ impl LatexLabelDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_has_definition() {
-        let mut builder = WorkspaceBuilder::new();
-        builder.document("foo.tex", "\\label{foo}");
-        let uri1 = builder.document("bar.tex", "\\label{foo}\n\\input{baz.tex}");
-        let uri2 = builder.document("baz.tex", "\\ref{foo}");
-        let request = FeatureTester::new(builder.workspace, uri2, 0, 5, "").into();
-
-        let results = block_on(LatexLabelDefinitionProvider::execute(&request));
-
-        let location = Location::new(uri1, range::create(0, 7, 0, 10));
-        assert_eq!(vec![location], results)
+        let locations = test_feature!(
+            LatexLabelDefinitionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}"),
+                    FeatureSpec::file("bar.tex", "\\label{foo}\n\\input{baz.tex}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
+                ],
+                main_file: "baz.tex",
+                position: Position::new(0, 5),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            locations,
+            vec![Location::new(
+                FeatureSpec::uri("bar.tex"),
+                range::create(0, 7, 0, 10)
+            )]
+        );
     }
 
     #[test]
     fn test_no_definition_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexLabelDefinitionProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let locations = test_feature!(
+            LatexLabelDefinitionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", ""),],
+                main_file: "foo.tex",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(locations, Vec::new());
     }
 
     #[test]
     fn test_no_definition_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexLabelDefinitionProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let locations = test_feature!(
+            LatexLabelDefinitionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", ""),],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(locations, Vec::new());
     }
 }

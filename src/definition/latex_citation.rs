@@ -55,43 +55,63 @@ impl LatexCitationDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test_has_definition() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\addbibresource{baz.bib}\n\\cite{foo}");
-        builder.document("bar.bib", "@article{foo, bar = {baz}}");
-        let uri2 = builder.document("baz.bib", "@article{foo, bar = {baz}}");
-        let request = FeatureTester::new(builder.workspace, uri1, 1, 6, "").into();
-
-        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
-
-        let location = Location::new(uri2, range::create(0, 9, 0, 12));
-        assert_eq!(vec![location], results)
+        let locations = test_feature!(
+            LatexCitationDefinitionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\addbibresource{baz.bib}\n\\cite{foo}"),
+                    FeatureSpec::file("bar.bib", "@article{foo, bar = {baz}}"),
+                    FeatureSpec::file("baz.bib", "@article{foo, bar = {baz}}"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 6),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            locations,
+            vec![Location::new(
+                FeatureSpec::uri("baz.bib"),
+                range::create(0, 9, 0, 12)
+            )]
+        );
     }
 
     #[test]
     fn test_no_definition_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let locations = test_feature!(
+            LatexCitationDefinitionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", ""),],
+                main_file: "foo.tex",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(locations, Vec::new());
     }
 
     #[test]
     fn test_no_definition_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexCitationDefinitionProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let locations = test_feature!(
+            LatexCitationDefinitionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", ""),],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(locations, Vec::new());
     }
 }
