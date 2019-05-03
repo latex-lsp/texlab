@@ -1,29 +1,11 @@
 #![feature(await_macro, async_await, futures_api)]
 
-mod build;
-mod completion;
-mod definition;
-mod feature;
-mod folding;
-mod formatting;
-mod highlight;
-mod hover;
-mod link;
-mod lsp;
-mod metadata;
-mod range;
-mod reference;
-mod rename;
-mod server;
-mod syntax;
-mod workspace;
-
-use crate::completion::latex::data::actor::LatexComponentDatabaseActor;
-use crate::server::LatexLspServer;
-use crate::workspace::WorkspaceActor;
 use clap::*;
 use futures::executor::*;
 use futures::prelude::*;
+use texlab::lsp;
+use texlab::server::LatexLspServer;
+use texlab::workspace::WorkspaceActor;
 use tokio_stdin_stdout;
 
 fn main() {
