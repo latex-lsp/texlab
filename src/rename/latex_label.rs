@@ -47,52 +47,67 @@ impl LatexLabelRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::range;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
-    fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\label{foo}\n\\include{bar}");
-        let uri2 = builder.document("bar.tex", "\\ref{foo}");
-        let request = FeatureTester::new(builder.workspace, uri1.clone(), 0, 7, "bar").into();
-
-        let changes = block_on(LatexLabelRenameProvider::execute(&request))
-            .unwrap()
-            .changes
-            .unwrap();
-
-        assert_eq!(2, changes.len());
-        assert_eq!(
-            vec![TextEdit::new(range::create(0, 7, 0, 10), "bar".to_owned()),],
-            *changes.get(&uri1).unwrap()
+    fn test_label() {
+        let edit = test_feature!(
+            LatexLabelRenameProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}\n\\include{bar}"),
+                    FeatureSpec::file("bar.tex", "\\ref{foo}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                new_name: "bar",
+                component_database: LatexComponentDatabase::default(),
+            }
         );
-        assert_eq!(
-            vec![TextEdit::new(range::create(0, 5, 0, 8), "bar".to_owned()),],
-            *changes.get(&uri2).unwrap()
+        let mut changes = HashMap::new();
+        changes.insert(
+            FeatureSpec::uri("foo.tex"),
+            vec![TextEdit::new(range::create(0, 7, 0, 10), "bar".to_owned())],
         );
+        changes.insert(
+            FeatureSpec::uri("bar.tex"),
+            vec![TextEdit::new(range::create(0, 5, 0, 8), "bar".to_owned())],
+        );
+        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
 
     #[test]
     fn test_command_args() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\foo{bar}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 5, "baz").into();
-
-        let edit = block_on(LatexLabelRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            LatexLabelRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 5),
+                new_name: "baz",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "baz").into();
-
-        let edit = block_on(LatexLabelRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            LatexLabelRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "")],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "baz",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 }

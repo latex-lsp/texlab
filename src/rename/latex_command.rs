@@ -52,41 +52,51 @@ impl LatexCommandRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::range;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\include{bar.tex}\n\\baz");
-        let uri2 = builder.document("bar.tex", "\\baz");
-        let request = FeatureTester::new(builder.workspace, uri1.clone(), 1, 2, "qux").into();
-
-        let changes = block_on(LatexCommandRenameProvider::execute(&request))
-            .unwrap()
-            .changes
-            .unwrap();
-
-        assert_eq!(2, changes.len());
-        assert_eq!(
+        let edit = test_feature!(
+            LatexCommandRenameProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\include{bar.tex}\n\\baz"),
+                    FeatureSpec::file("bar.tex", "\\baz"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 2),
+                new_name: "qux",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        let mut changes = HashMap::new();
+        changes.insert(
+            FeatureSpec::uri("foo.tex"),
             vec![TextEdit::new(range::create(1, 0, 1, 4), "\\qux".to_owned())],
-            *changes.get(&uri1).unwrap()
         );
-        assert_eq!(
+        changes.insert(
+            FeatureSpec::uri("bar.tex"),
             vec![TextEdit::new(range::create(0, 0, 0, 4), "\\qux".to_owned())],
-            *changes.get(&uri2).unwrap()
         );
+        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "\\foo");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 1, "baz").into();
-
-        let edit = block_on(LatexCommandRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            LatexCommandRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
+                main_file: "foo.bib",
+                position: Position::new(0, 14),
+                new_name: "qux",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 }

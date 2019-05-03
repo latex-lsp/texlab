@@ -186,130 +186,27 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
 }
 
 #[cfg(test)]
+impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<RenameParams> {
+        let params = RenameParams {
+            text_document: self.identifier(),
+            position: self.position,
+            new_name: self.new_name.to_owned(),
+        };
+        let (workspace, document) = self.workspace();
+        FeatureRequest::new(
+            params,
+            workspace,
+            document,
+            Arc::new(self.component_database),
+        )
+    }
+}
+
+#[cfg(test)]
 #[macro_export]
 macro_rules! test_feature {
     ($provider:tt, $spec: expr) => {{
         futures::executor::block_on($provider::execute(&$spec.into()))
     }};
-}
-
-#[cfg(test)]
-pub struct FeatureTester {
-    workspace: Arc<Workspace>,
-    document: Arc<Document>,
-    document_id: TextDocumentIdentifier,
-    position: Position,
-    new_name: String,
-    component_database: Arc<LatexComponentDatabase>,
-}
-
-#[cfg(test)]
-impl FeatureTester {
-    pub fn new(workspace: Workspace, uri: Url, line: u64, character: u64, new_name: &str) -> Self {
-        let document = workspace.find(&uri).unwrap();
-        FeatureTester {
-            workspace: Arc::new(workspace),
-            document,
-            document_id: TextDocumentIdentifier::new(uri),
-            position: Position::new(line, character),
-            new_name: new_name.to_owned(),
-            component_database: Arc::new(LatexComponentDatabase::default()),
-        }
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
-        let params = TextDocumentPositionParams::new(self.document_id, self.position);
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<CompletionParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<CompletionParams> {
-        let params = CompletionParams {
-            text_document: self.document_id,
-            position: self.position,
-            context: None,
-        };
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<FoldingRangeParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<FoldingRangeParams> {
-        let params = FoldingRangeParams {
-            text_document: self.document_id,
-        };
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<DocumentLinkParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<DocumentLinkParams> {
-        let params = DocumentLinkParams {
-            text_document: self.document_id,
-        };
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<ReferenceParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<ReferenceParams> {
-        let params = ReferenceParams {
-            text_document: self.document_id,
-            position: self.position,
-            context: ReferenceContext {
-                include_declaration: false,
-            },
-        };
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
-}
-
-#[cfg(test)]
-impl Into<FeatureRequest<RenameParams>> for FeatureTester {
-    fn into(self) -> FeatureRequest<RenameParams> {
-        let params = RenameParams {
-            text_document: self.document_id,
-            position: self.position,
-            new_name: self.new_name,
-        };
-        FeatureRequest::new(
-            params,
-            self.workspace,
-            self.document,
-            self.component_database,
-        )
-    }
 }

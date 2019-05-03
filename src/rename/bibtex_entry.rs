@@ -5,7 +5,6 @@ use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::analysis::citation::LatexCitationAnalyzer;
 use crate::syntax::latex::ast::LatexVisitor;
 use crate::syntax::latex::LatexSyntaxTree;
-use crate::syntax::text::Span;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::RenameParams;
@@ -86,63 +85,78 @@ impl BibtexEntryRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
     use crate::range;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
-    fn test() {
-        struct Row {
-            index: usize,
-            line: u64,
-            character: u64,
-        };
+    fn test_entry() {
+        let edit = test_feature!(
+            BibtexEntryRenameProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.bib", "@article{foo, bar = baz}"),
+                    FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
+                ],
+                main_file: "foo.bib",
+                position: Position::new(0, 9),
+                new_name: "qux",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        let mut changes = HashMap::new();
+        changes.insert(
+            FeatureSpec::uri("foo.bib"),
+            vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
+        );
+        changes.insert(
+            FeatureSpec::uri("bar.tex"),
+            vec![TextEdit::new(range::create(1, 6, 1, 9), "qux".to_owned())],
+        );
+        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
+    }
 
-        for row in vec![
-            Row {
-                index: 0,
-                line: 0,
-                character: 9,
-            },
-            Row {
-                index: 1,
-                line: 1,
-                character: 6,
-            },
-        ] {
-            let mut builder = WorkspaceBuilder::new();
-            let uri1 = builder.document("foo.bib", "@article{foo, bar = baz}");
-            let uri2 = builder.document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}");
-            let uri = vec![&uri1, &uri2][row.index].clone();
-            let request =
-                FeatureTester::new(builder.workspace, uri, row.line, row.character, "qux").into();
-
-            let changes = block_on(BibtexEntryRenameProvider::execute(&request))
-                .unwrap()
-                .changes
-                .unwrap();
-
-            assert_eq!(2, changes.len());
-            assert_eq!(
-                vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
-                *changes.get(&uri1).unwrap()
-            );
-            assert_eq!(
-                vec![TextEdit::new(range::create(1, 6, 1, 9), "qux".to_owned())],
-                *changes.get(&uri2).unwrap()
-            );
-        }
+    #[test]
+    fn test_citation() {
+        let edit = test_feature!(
+            BibtexEntryRenameProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.bib", "@article{foo, bar = baz}"),
+                    FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
+                ],
+                main_file: "bar.tex",
+                position: Position::new(1, 6),
+                new_name: "qux",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        let mut changes = HashMap::new();
+        changes.insert(
+            FeatureSpec::uri("foo.bib"),
+            vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
+        );
+        changes.insert(
+            FeatureSpec::uri("bar.tex"),
+            vec![TextEdit::new(range::create(1, 6, 1, 9), "qux".to_owned())],
+        );
+        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
 
     #[test]
     fn test_field_name() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "@article{foo, bar = baz}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 14, "qux").into();
-
-        let edit = block_on(BibtexEntryRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            BibtexEntryRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
+                main_file: "foo.bib",
+                position: Position::new(0, 14),
+                new_name: "qux",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 }

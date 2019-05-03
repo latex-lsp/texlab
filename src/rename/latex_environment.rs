@@ -39,50 +39,62 @@ impl LatexEnvironmentRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::range;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
-    fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{foo}\n\\end{bar}");
-        let request = FeatureTester::new(builder.workspace, uri.clone(), 0, 8, "baz").into();
-
-        let changes = block_on(LatexEnvironmentRenameProvider::execute(&request))
-            .unwrap()
-            .changes
-            .unwrap();
-
-        assert_eq!(1, changes.len());
-        assert_eq!(
+    fn test_environment() {
+        let edit = test_feature!(
+            LatexEnvironmentRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 8),
+                new_name: "baz",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        let mut changes = HashMap::new();
+        changes.insert(
+            FeatureSpec::uri("foo.tex"),
             vec![
                 TextEdit::new(range::create(0, 7, 0, 10), "baz".to_owned()),
-                TextEdit::new(range::create(1, 5, 1, 8), "baz".to_owned())
+                TextEdit::new(range::create(1, 5, 1, 8), "baz".to_owned()),
             ],
-            *changes.get(&uri).unwrap()
         );
+        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
 
     #[test]
     fn test_command() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\begin{foo}\n\\end{bar}");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 5, "baz").into();
-
-        let edit = block_on(LatexEnvironmentRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            LatexEnvironmentRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 5),
+                new_name: "baz",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "baz").into();
-
-        let edit = block_on(LatexEnvironmentRenameProvider::execute(&request));
-
-        assert_eq!(None, edit);
+        let edit = test_feature!(
+            LatexEnvironmentRenameProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "")],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "baz",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(edit, None);
     }
 }
