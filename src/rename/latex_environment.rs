@@ -1,10 +1,8 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::latex::analysis::environment::*;
-use crate::syntax::latex::ast::LatexVisitor;
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor, SyntaxNode};
 use crate::workspace::SyntaxTree;
-use lsp_types::{Position, RenameParams, TextEdit, WorkspaceEdit};
+use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
 use std::collections::HashMap;
 
 pub struct LatexEnvironmentRenameProvider;

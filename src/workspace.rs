@@ -1,8 +1,5 @@
 use crate::syntax::bibtex::BibtexSyntaxTree;
-use crate::syntax::latex::analysis::environment::LatexEnvironmentAnalyzer;
-use crate::syntax::latex::analysis::include::LatexIncludeAnalyzer;
-use crate::syntax::latex::ast::{LatexToken, LatexVisitor};
-use crate::syntax::latex::LatexSyntaxTree;
+use crate::syntax::latex::*;
 use futures::channel::{mpsc, oneshot};
 use futures::executor::ThreadPool;
 use futures::lock::Mutex;

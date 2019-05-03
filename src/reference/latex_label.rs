@@ -1,7 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::latex::analysis::label::{LatexLabelAnalyzer, LatexLabelKind};
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::{LatexLabelAnalyzer, LatexLabelKind, LatexVisitor};
 use crate::workspace::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
 

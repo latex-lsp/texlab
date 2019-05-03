@@ -1,6 +1,5 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::analysis::environment::LatexEnvironmentAnalyzer;
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};

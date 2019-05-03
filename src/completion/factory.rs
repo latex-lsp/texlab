@@ -1,4 +1,3 @@
-use crate::completion::factory::CompletionItemData::Command;
 use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
 use serde::{Deserialize, Serialize};
 

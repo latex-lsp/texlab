@@ -1,5 +1,4 @@
-use crate::syntax::latex::analysis::include::LatexIncludeAnalyzer;
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::{LatexIncludeAnalyzer, LatexVisitor};
 use crate::workspace::{Document, SyntaxTree};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};

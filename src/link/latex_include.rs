@@ -1,7 +1,5 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::analysis::include::{LatexInclude, LatexIncludeAnalyzer};
-use crate::syntax::latex::ast::LatexVisitor;
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::latex::*;
 use crate::workspace::SyntaxTree;
 use lsp_types::{DocumentLink, DocumentLinkParams};
 

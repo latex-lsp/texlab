@@ -1,7 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::latex::analysis::label::{LatexLabel, LatexLabelAnalyzer, LatexLabelKind};
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, TextDocumentPositionParams};

@@ -1,9 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::range;
 use crate::syntax::bibtex::ast::BibtexDeclaration;
-use crate::syntax::bibtex::BibtexSyntaxTree;
-use crate::syntax::latex::analysis::citation::LatexCitationAnalyzer;
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::{Document, SyntaxTree};
 use lsp_types::{Location, TextDocumentPositionParams};

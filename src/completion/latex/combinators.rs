@@ -1,11 +1,8 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::latex::analysis::environment::ENVIRONMENT_COMMANDS;
-use crate::syntax::latex::analysis::finder::{LatexCommandFinder, LatexFinder, LatexNode};
-use crate::syntax::latex::ast::*;
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::latex::*;
 use crate::workspace::SyntaxTree;
-use lsp_types::{CompletionItem, CompletionParams, Position};
+use lsp_types::{CompletionItem, CompletionParams};
 
 pub struct LatexCombinators;
 

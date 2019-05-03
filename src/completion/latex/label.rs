@@ -1,8 +1,7 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::analysis::label::*;
-use crate::syntax::latex::ast::LatexVisitor;
+use crate::syntax::latex::*;
 use crate::workspace::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 
