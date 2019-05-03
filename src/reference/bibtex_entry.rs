@@ -48,32 +48,49 @@ impl BibtexEntryReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::range;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.bib", "@article{foo, bar = {baz}}");
-        let uri2 = builder.document("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}");
-        builder.document("baz.tex", "\\cite{foo}");
-        let request = FeatureTester::new(builder.workspace, uri1, 0, 9, "").into();
-
-        let results = block_on(BibtexEntryReferenceProvider::execute(&request));
-
-        let location = Location::new(uri2, range::create(1, 0, 1, 10));
-        assert_eq!(vec![location], results);
+        let references = test_feature!(
+            BibtexEntryReferenceProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.bib", "@article{foo, bar = {baz}}"),
+                    FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
+                    FeatureSpec::file("baz.tex", "\\cite{foo}")
+                ],
+                main_file: "foo.bib",
+                position: Position::new(0, 9),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            references,
+            vec![Location::new(
+                FeatureSpec::uri("bar.tex"),
+                range::create(1, 0, 1, 10)
+            )]
+        );
     }
 
     #[test]
     fn test_latex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(BibtexEntryReferenceProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let references = test_feature!(
+            BibtexEntryReferenceProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", ""),],
+                main_file: "foo.tex",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(references, Vec::new());
     }
 }

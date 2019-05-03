@@ -49,32 +49,49 @@ impl LatexLabelReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
-    use crate::workspace::WorkspaceBuilder;
-    use futures::executor::block_on;
+    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::feature::FeatureSpec;
+    use crate::range;
+    use crate::test_feature;
+    use lsp_types::Position;
 
     #[test]
     fn test() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\label{foo}");
-        let uri2 = builder.document("bar.tex", "\\input{foo.tex}\n\\ref{foo}");
-        builder.document("baz.tex", "\\ref{foo}");
-        let request = FeatureTester::new(builder.workspace, uri1, 0, 8, "").into();
-
-        let results = block_on(LatexLabelReferenceProvider::execute(&request));
-
-        let location = Location::new(uri2, range::create(1, 0, 1, 9));
-        assert_eq!(vec![location], results);
+        let references = test_feature!(
+            LatexLabelReferenceProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}"),
+                    FeatureSpec::file("bar.tex", "\\input{foo.tex}\n\\ref{foo}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}")
+                ],
+                main_file: "foo.tex",
+                position: Position::new(0, 8),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(
+            references,
+            vec![Location::new(
+                FeatureSpec::uri("bar.tex"),
+                range::create(1, 0, 1, 9)
+            )]
+        );
     }
 
     #[test]
     fn test_bibtex() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.bib", "");
-        let request = FeatureTester::new(builder.workspace, uri, 0, 0, "").into();
-
-        let results = block_on(LatexLabelReferenceProvider::execute(&request));
-
-        assert_eq!(results, Vec::new());
+        let references = test_feature!(
+            LatexLabelReferenceProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", ""),],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                new_name: "",
+                component_database: LatexComponentDatabase::default(),
+            }
+        );
+        assert_eq!(references, Vec::new());
     }
 }

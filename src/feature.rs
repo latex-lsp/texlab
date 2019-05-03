@@ -166,6 +166,26 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
 }
 
 #[cfg(test)]
+impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<ReferenceParams> {
+        let params = ReferenceParams {
+            text_document: self.identifier(),
+            position: self.position,
+            context: ReferenceContext {
+                include_declaration: false,
+            },
+        };
+        let (workspace, document) = self.workspace();
+        FeatureRequest::new(
+            params,
+            workspace,
+            document,
+            Arc::new(self.component_database),
+        )
+    }
+}
+
+#[cfg(test)]
 #[macro_export]
 macro_rules! test_feature {
     ($provider:tt, $spec: expr) => {{
