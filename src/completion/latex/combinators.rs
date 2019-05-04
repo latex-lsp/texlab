@@ -1,6 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::range;
 use crate::syntax::latex::*;
+use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 

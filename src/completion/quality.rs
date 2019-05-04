@@ -1,7 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::bibtex::ast::{BibtexToken, BibtexVisitor};
-use crate::syntax::bibtex::finder::{BibtexFinder, BibtexNode};
+use crate::syntax::bibtex::*;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::{Document, SyntaxTree};

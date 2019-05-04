@@ -1,7 +1,10 @@
 use crate::completion::latex::data::types::LatexComponentDatabase;
-use crate::workspace::{Document, Workspace, WorkspaceBuilder};
+#[cfg(test)]
+use crate::workspace::WorkspaceBuilder;
+use crate::workspace::{Document, Workspace};
 #[cfg(test)]
 use lsp_types::*;
+#[cfg(test)]
 use std::path::PathBuf;
 use std::sync::Arc;
 

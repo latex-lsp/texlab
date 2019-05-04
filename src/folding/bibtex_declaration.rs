@@ -1,5 +1,5 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::bibtex::ast::BibtexDeclaration;
+use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};

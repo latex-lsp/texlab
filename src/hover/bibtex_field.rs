@@ -1,7 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::metadata::bibtex_field;
-use crate::syntax::bibtex::ast::BibtexVisitor;
-use crate::syntax::bibtex::finder::{BibtexFinder, BibtexNode};
+use crate::syntax::bibtex::*;
 use crate::workspace::SyntaxTree;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
 

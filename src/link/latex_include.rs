@@ -1,5 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
+use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{DocumentLink, DocumentLinkParams};
 

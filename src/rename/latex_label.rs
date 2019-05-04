@@ -1,6 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::range;
-use crate::syntax::latex::{LatexLabelAnalyzer, LatexVisitor, SyntaxNode};
+use crate::syntax::latex::{LatexLabelAnalyzer, LatexVisitor};
+use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
 use std::collections::HashMap;

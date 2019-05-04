@@ -1,6 +1,5 @@
-use crate::syntax::bibtex::ast::*;
+use crate::syntax::bibtex::*;
 use crate::syntax::text::SyntaxNode;
-use lsp_types::DocumentFormattingParams;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFormattingOptions {

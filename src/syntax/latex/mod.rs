@@ -15,7 +15,6 @@ pub use crate::syntax::latex::analysis::include::*;
 pub use crate::syntax::latex::analysis::label::*;
 pub use crate::syntax::latex::analysis::section::*;
 pub use crate::syntax::latex::ast::*;
-pub use crate::syntax::text::{Span, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSyntaxTree {

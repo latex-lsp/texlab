@@ -1,7 +1,6 @@
 use crate::completion::latex::data::types::{LatexComponent, LatexComponentDatabase};
-use crate::workspace::{Document, SyntaxTree};
+use crate::workspace::SyntaxTree;
 use futures::channel::{mpsc, oneshot};
-use futures::compat::*;
 use futures::executor::ThreadPool;
 use futures::lock::Mutex;
 use futures::prelude::*;
