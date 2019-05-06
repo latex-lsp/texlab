@@ -6,7 +6,7 @@ pub struct BibtexField {
 pub fn get_documentation(name: &str) -> Option<&'static str> {
     BIBTEX_FIELDS
         .iter()
-        .find(|field| field.name == name)
+        .find(|field| field.name.to_lowercase() == name.to_lowercase())
         .map(|field| field.documentation)
 }
 
