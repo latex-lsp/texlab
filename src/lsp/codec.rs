@@ -40,11 +40,11 @@ impl Encoder for LspCodec {
     type Error = Error;
 
     fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        dst.put(format!("Content-Length: {}\r\n", item.len()));
-        dst.put("\r\n");
-        dst.put(item);
+        let message = format!("Content-Length: {}\r\n\r\n{}", item.len(), item);
+        trace!("Sent message:\n{}", message);
 
-        trace!("Sent message:\n{}", str::from_utf8(&dst.to_vec()).unwrap());
+        dst.reserve(message.len());
+        dst.put(message);
         Ok(())
     }
 }
