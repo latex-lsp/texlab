@@ -706,7 +706,7 @@ enum class BibtexField {
     companion object {
         fun parse(name: String): BibtexField? {
             return BibtexField.values()
-                    .firstOrNull { it.toString() == name }
+                    .firstOrNull { it.toString().equals(name, true) }
         }
     }
 }
