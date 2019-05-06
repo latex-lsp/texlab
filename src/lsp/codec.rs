@@ -14,14 +14,12 @@ impl Decoder for LspCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        trace!(
-            "Received message:\n{}",
-            str::from_utf8(&src.to_vec()).unwrap()
-        );
-
-        match parse_message(&src) {
+        match parse_message(src) {
             Ok((remaining, content)) => {
-                src.split_to(src.len() - remaining.len());
+                trace!("Received message:\n{}", content);
+
+                let offset = src.len() - remaining.len();
+                src.split_to(offset);
                 Ok(Some(content))
             }
             Err(error) => {
