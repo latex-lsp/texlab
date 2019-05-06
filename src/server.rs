@@ -9,24 +9,26 @@ use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
 use crate::workspace::WorkspaceActor;
+use jsonrpc::Result;
+use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-type LspResult<T> = Result<T, String>;
-
 pub struct LatexLspServer {
     workspace: Arc<WorkspaceActor>,
 }
 
+#[jsonrpc_server]
 impl LatexLspServer {
     pub fn new(workspace: Arc<WorkspaceActor>) -> Self {
         LatexLspServer { workspace }
     }
 
-    pub async fn initialize(&self, params: InitializeParams) -> LspResult<InitializeResult> {
+    #[jsonrpc_method("initialize")]
+    pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         if let Some(Ok(path)) = params.root_uri.map(|x| x.to_file_path()) {
             for entry in WalkDir::new(path)
                 .into_iter()
@@ -90,20 +92,26 @@ impl LatexLspServer {
         Ok(InitializeResult { capabilities })
     }
 
+    #[jsonrpc_method("initialized")]
     pub async fn initialized(&self, params: InitializedParams) {}
 
-    pub async fn shutdown(&self, params: ()) -> LspResult<()> {
+    #[jsonrpc_method("shutdown")]
+    pub async fn shutdown(&self, params: ()) -> Result<()> {
         Ok(())
     }
 
+    #[jsonrpc_method("exit")]
     pub async fn exit(&self, params: ()) {}
 
+    #[jsonrpc_method("workspace/didChangeWatchedFiles")]
     pub async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
 
+    #[jsonrpc_method("textDocument/didOpen")]
     pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
         await!(self.workspace.add(params.text_document));
     }
 
+    #[jsonrpc_method("textDocument/didChange")]
     pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
@@ -111,11 +119,14 @@ impl LatexLspServer {
         }
     }
 
+    #[jsonrpc_method("textDocument/didSave")]
     pub async fn did_save(&self, params: DidSaveTextDocumentParams) {}
 
+    #[jsonrpc_method("textDocument/didClose")]
     pub async fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
-    pub async fn completion(&self, params: CompletionParams) -> LspResult<CompletionList> {
+    #[jsonrpc_method("textDocument/completion")]
+    pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
         let items = await!(CompletionProvider::execute(&request));
         let all_includes = items.iter().all(|item| {
@@ -128,59 +139,69 @@ impl LatexLspServer {
         })
     }
 
-    pub async fn completion_resolve(&self, item: CompletionItem) -> LspResult<CompletionItem> {
+    #[jsonrpc_method("completionItem/resolve")]
+    pub async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem> {
         Ok(item)
     }
 
-    pub async fn hover(&self, params: TextDocumentPositionParams) -> LspResult<Option<Hover>> {
+    #[jsonrpc_method("textDocument/hover")]
+    pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
         let request = request!(self, params)?;
         let hover = await!(HoverProvider::execute(&request));
         Ok(hover)
     }
 
-    pub async fn definition(&self, params: TextDocumentPositionParams) -> LspResult<Vec<Location>> {
+    #[jsonrpc_method("textDocument/definition")]
+    pub async fn definition(&self, params: TextDocumentPositionParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
         let results = await!(DefinitionProvider::execute(&request));
         Ok(results)
     }
 
-    pub async fn references(&self, params: ReferenceParams) -> LspResult<Vec<Location>> {
+    #[jsonrpc_method("textDocument/references")]
+    pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
         let results = await!(ReferenceProvider::execute(&request));
         Ok(results)
     }
 
+    #[jsonrpc_method("textDocument/documentHighlight")]
     pub async fn document_highlight(
         &self,
         params: TextDocumentPositionParams,
-    ) -> LspResult<Vec<DocumentHighlight>> {
+    ) -> Result<Vec<DocumentHighlight>> {
         Ok(Vec::new())
     }
 
+    #[jsonrpc_method("textDocument/documentSymbol")]
     pub async fn document_symbol(
         &self,
         params: DocumentSymbolParams,
-    ) -> LspResult<Vec<DocumentSymbol>> {
+    ) -> Result<Vec<DocumentSymbol>> {
         Ok(Vec::new())
     }
 
-    pub async fn document_link(&self, params: DocumentLinkParams) -> LspResult<Vec<DocumentLink>> {
+    #[jsonrpc_method("textDocument/documentLink")]
+    pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
         let request = request!(self, params)?;
         let links = await!(LinkProvider::execute(&request));
         Ok(links)
     }
 
-    pub async fn formatting(&self, params: DocumentFormattingParams) -> LspResult<Vec<TextEdit>> {
+    #[jsonrpc_method("textDocument/formatting")]
+    pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
         Ok(Vec::new())
     }
 
-    pub async fn rename(&self, params: RenameParams) -> LspResult<Option<WorkspaceEdit>> {
+    #[jsonrpc_method("textDocument/rename")]
+    pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
         let request = request!(self, params)?;
         let edit = await!(RenameProvider::execute(&request));
         Ok(edit)
     }
 
-    pub async fn folding_range(&self, params: FoldingRangeParams) -> LspResult<Vec<FoldingRange>> {
+    #[jsonrpc_method("textDocument/foldingRange")]
+    pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
         let request = request!(self, params)?;
         let foldings = await!(FoldingProvider::execute(&request));
         Ok(foldings)

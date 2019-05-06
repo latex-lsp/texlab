@@ -1,5 +1,4 @@
 mod codec;
-mod server;
 
 use crate::server::LatexLspServer;
 use codec::LspCodec;
@@ -8,7 +7,7 @@ use futures::executor::ThreadPool;
 use futures::lock::Mutex;
 use futures::prelude::*;
 use futures::task::*;
-use server::build_io_handler;
+use jsonrpc::handle_message;
 use std::sync::Arc;
 use tokio::codec::{FramedRead, FramedWrite};
 use tokio::prelude::{AsyncRead, AsyncWrite};
@@ -18,20 +17,19 @@ where
     I: AsyncRead + Send + Sync + 'static,
     O: AsyncWrite + Send + Sync + 'static,
 {
-    let handler = Arc::new(Mutex::new(build_io_handler(server, pool.clone())));
+    let server = Arc::new(server);
     let mut reader = FramedRead::new(input, LspCodec).compat();
     let writer = Arc::new(Mutex::new(FramedWrite::new(output, LspCodec).sink_compat()));
 
     while let Some(content) = await!(reader.next()) {
         let mut pool = pool.clone();
-        let handler = Arc::clone(&handler);
+        let message = content.expect("Invalid message format");
+
+        let server = Arc::clone(&server);
         let writer = Arc::clone(&writer);
-
         pool.spawn(async move {
-            let message = content.expect("Invalid message format");
-            let handler = await!(handler.lock());
-
-            if let Ok(Some(response)) = await!(handler.handle_request(&message).compat()) {
+            if let Some(response) = handle_message!(message, server) {
+                let response = serde_json::to_string(&response).unwrap();
                 let mut writer = await!(writer.lock());
                 await!(writer.send(response)).expect("Cannot write into output")
             }

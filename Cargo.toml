@@ -7,11 +7,14 @@ authors = [
     "Patrick Förster <pfoerster@users.noreply.github.com>"]
 edition = "2018"
 
+[workspace]
+members = ["./jsonrpc", "./jsonrpc_derive"]
+
 [dependencies]
+jsonrpc = { path = "jsonrpc" }
+jsonrpc-derive = { path = "jsonrpc_derive" }
 lsp-types = "0.56.0"
-futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
-jsonrpc-core = "11.0.0"
-jsonrpc-core-client = "11.0.0"
+futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 serde = { version = "1.0.90", features = ["derive", "rc"] }
 serde_json = "1.0.39"
 tokio = "0.1"
