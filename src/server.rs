@@ -3,6 +3,7 @@ use crate::completion::CompletionProvider;
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
+use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
@@ -73,7 +74,7 @@ impl LatexLspServer {
             type_definition_provider: None,
             implementation_provider: None,
             references_provider: Some(true),
-            document_highlight_provider: None,
+            document_highlight_provider: Some(true),
             document_symbol_provider: None,
             workspace_symbol_provider: None,
             code_action_provider: None,
@@ -172,7 +173,9 @@ impl LatexLspServer {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let results = await!(HighlightProvider::execute(&request));
+        Ok(results)
     }
 
     #[jsonrpc_method("textDocument/documentSymbol")]
