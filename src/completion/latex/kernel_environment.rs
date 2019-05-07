@@ -13,7 +13,7 @@ impl LatexKernelEnvironmentCompletionProvider {
             KERNEL_ENVIRONMENTS
                 .iter()
                 .map(|name| {
-                    factory::create_environment((*name).to_owned(), LatexComponentId::Kernel)
+                    factory::create_environment((*name).to_owned(), &LatexComponentId::Kernel)
                 })
                 .collect()
         }))

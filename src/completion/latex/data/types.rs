@@ -24,7 +24,7 @@ impl LatexComponentDatabase {
         LatexComponentDatabase { components }
     }
 
-    pub fn related_components(&self, documents: &[&Document]) -> Vec<Arc<LatexComponent>> {
+    pub fn related_components(&self, documents: &[Arc<Document>]) -> Vec<Arc<LatexComponent>> {
         let mut start_components = Vec::new();
         for document in documents {
             if let SyntaxTree::Latex(tree) = &document.tree {

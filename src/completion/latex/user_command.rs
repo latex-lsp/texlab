@@ -27,7 +27,7 @@ impl LatexUserCommandCompletionProvider {
                             .map(|command| &command.name.text()[1..])
                             .unique()
                             .map(|name| {
-                                factory::create_command(name.to_owned(), LatexComponentId::Unknown)
+                                factory::create_command(name.to_owned(), &LatexComponentId::Unknown)
                             })
                             .for_each(|item| items.push(item));
                     }

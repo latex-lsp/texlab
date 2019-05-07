@@ -48,7 +48,7 @@ impl Into<serde_json::Value> for CompletionItemData {
 
 pub fn create_snippet(
     name: String,
-    component: LatexComponentId,
+    component: &LatexComponentId,
     template: String,
 ) -> CompletionItem {
     CompletionItem {
@@ -60,7 +60,7 @@ pub fn create_snippet(
     }
 }
 
-pub fn create_command(name: String, component: LatexComponentId) -> CompletionItem {
+pub fn create_command(name: String, component: &LatexComponentId) -> CompletionItem {
     CompletionItem {
         kind: Some(CompletionItemKind::Function),
         data: Some(CompletionItemData::Command.into()),
@@ -68,7 +68,7 @@ pub fn create_command(name: String, component: LatexComponentId) -> CompletionIt
     }
 }
 
-pub fn create_environment(name: String, component: LatexComponentId) -> CompletionItem {
+pub fn create_environment(name: String, component: &LatexComponentId) -> CompletionItem {
     CompletionItem {
         kind: Some(CompletionItemKind::EnumMember),
         data: Some(CompletionItemData::Environment.into()),

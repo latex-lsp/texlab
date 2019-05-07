@@ -12,7 +12,7 @@ impl LatexKernelCommandCompletionProvider {
         await!(LatexCombinators::command(&request, async move |_| {
             KERNEL_COMMANDS
                 .iter()
-                .map(|name| factory::create_command((*name).to_owned(), LatexComponentId::Kernel))
+                .map(|name| factory::create_command((*name).to_owned(), &LatexComponentId::Kernel))
                 .collect()
         }))
     }

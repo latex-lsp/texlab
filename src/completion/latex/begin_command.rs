@@ -11,7 +11,7 @@ impl LatexBeginCommandCompletionProvider {
         await!(LatexCombinators::command(request, async move |_| {
             let snippet = factory::create_snippet(
                 "begin".to_owned(),
-                LatexComponentId::Kernel,
+                &LatexComponentId::Kernel,
                 "begin{$1}\n\t$0\n\\end{$1}".to_owned(),
             );
             vec![snippet]

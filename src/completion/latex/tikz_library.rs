@@ -14,7 +14,7 @@ impl LatexTikzLibraryCompletionProvider {
             async move |_| {
                 LIBRARIES
                     .iter()
-                    .map(|name| factory::create_pgf_library((*name).to_owned()))
+                    .map(|name| factory::create_tikz_library((*name).to_owned()))
                     .collect()
             }
         ))
