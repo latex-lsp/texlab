@@ -4,6 +4,8 @@
 
 # TexLab
 
+_Note: The server is currently being rewritten in Rust. You can follow the progress [here](https://github.com/latex-lsp/texlab/projects/1)._
+
 A cross-platform implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol)
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
 We provide an [extension](https://github.com/latex-lsp/texlab-vscode) for [Visual Studio Code](https://code.visualstudio.com).
