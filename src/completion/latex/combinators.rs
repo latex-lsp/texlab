@@ -33,7 +33,7 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(&LatexCommand) -> F,
+        E: Fn(&'a LatexCommand) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         let find_command = |nodes: &[LatexNode<'a>], node_index: usize| {

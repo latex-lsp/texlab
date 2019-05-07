@@ -1,5 +1,6 @@
 use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexComponentId {
@@ -84,18 +85,18 @@ pub fn create_label(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_folder(name: String) -> CompletionItem {
+pub fn create_folder(path: &Path) -> CompletionItem {
     CompletionItem {
-        label: name,
+        label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(CompletionItemKind::Folder),
         data: Some(CompletionItemData::Folder.into()),
         ..CompletionItem::default()
     }
 }
 
-pub fn create_file(name: String) -> CompletionItem {
+pub fn create_file(path: &Path) -> CompletionItem {
     CompletionItem {
-        label: name,
+        label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(CompletionItemKind::File),
         data: Some(CompletionItemData::File.into()),
         ..CompletionItem::default()

@@ -3,6 +3,7 @@ pub mod color;
 pub mod color_model;
 mod combinators;
 pub mod data;
+pub mod include;
 pub mod kernel_command;
 pub mod kernel_environment;
 pub mod kernel_primitives;

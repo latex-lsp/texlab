@@ -2,16 +2,17 @@ mod factory;
 pub mod latex;
 mod quality;
 
-use crate::completion::latex::begin_command::LatexBeginCommandCompletionProvider;
-use crate::completion::latex::color::LatexColorCompletionProvider;
-use crate::completion::latex::color_model::LatexColorModelCompletionProvider;
-use crate::completion::latex::kernel_command::LatexKernelCommandCompletionProvider;
-use crate::completion::latex::kernel_environment::LatexKernelEnvironmentCompletionProvider;
-use crate::completion::latex::label::LatexLabelCompletionProvider;
-use crate::completion::latex::pgf_library::LatexPgfLibraryCompletionProvider;
-use crate::completion::latex::tikz_library::LatexTikzLibraryCompletionProvider;
-use crate::completion::latex::user_command::LatexUserCommandCompletionProvider;
-use crate::completion::quality::OrderByQualityCompletionProvider;
+use self::latex::begin_command::LatexBeginCommandCompletionProvider;
+use self::latex::color::LatexColorCompletionProvider;
+use self::latex::color_model::LatexColorModelCompletionProvider;
+use self::latex::include::LatexIncludeCompletionProvider;
+use self::latex::kernel_command::LatexKernelCommandCompletionProvider;
+use self::latex::kernel_environment::LatexKernelEnvironmentCompletionProvider;
+use self::latex::label::LatexLabelCompletionProvider;
+use self::latex::pgf_library::LatexPgfLibraryCompletionProvider;
+use self::latex::tikz_library::LatexTikzLibraryCompletionProvider;
+use self::latex::user_command::LatexUserCommandCompletionProvider;
+use self::quality::OrderByQualityCompletionProvider;
 use crate::concat_feature;
 use crate::feature::FeatureRequest;
 use itertools::Itertools;
@@ -34,6 +35,7 @@ impl CompletionProvider {
                     LatexColorCompletionProvider,
                     LatexColorModelCompletionProvider,
                     LatexLabelCompletionProvider,
+                    LatexIncludeCompletionProvider,
                     LatexBeginCommandCompletionProvider,
                     LatexKernelCommandCompletionProvider,
                     LatexUserCommandCompletionProvider
