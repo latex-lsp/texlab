@@ -5,7 +5,6 @@ use futures::executor::*;
 use futures::prelude::*;
 use texlab::lsp;
 use texlab::server::LatexLspServer;
-use texlab::workspace::WorkspaceActor;
 use tokio_stdin_stdout;
 
 fn main() {
@@ -39,10 +38,9 @@ fn main() {
 }
 
 async fn run(pool: ThreadPool) {
-    let workspace = await!(WorkspaceActor::spawn(pool.clone()));
-    let server = LatexLspServer::new(workspace);
+    let server = LatexLspServer::new();
     let stdin = tokio_stdin_stdout::stdin(0);
     let stdout = tokio_stdin_stdout::stdout(0);
 
-    await!(lsp::listen(server, stdin, stdout, pool.clone()));
+    await!(lsp::listen(server, stdin, stdout, pool));
 }

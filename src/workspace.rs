@@ -1,17 +1,12 @@
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::*;
-use futures::channel::{mpsc, oneshot};
-use futures::executor::ThreadPool;
-use futures::lock::Mutex;
-use futures::prelude::*;
-use futures::task::*;
 use log::*;
 use lsp_types::TextDocumentItem;
 use path_clean::PathClean;
 use std::ffi::OsStr;
 use std::fs;
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -190,166 +185,104 @@ fn resolve_link_targets(uri: &Url, relative_path: &str) -> Option<Vec<String>> {
     Some(targets)
 }
 
-enum Message {
-    Get(oneshot::Sender<Arc<Workspace>>),
-    Add(TextDocumentItem),
-    Load(PathBuf),
-    Update(Url, String),
+pub struct WorkspaceManager {
+    workspace: Mutex<Arc<Workspace>>,
 }
 
-enum Error {
-    InvalidLanguageId(String),
-    DocumentNotFound(Url),
-    InvalidPath(PathBuf),
-    IoError(PathBuf),
-}
-
-pub struct WorkspaceActor {
-    sender: Mutex<mpsc::Sender<Message>>,
-    receiver: Mutex<mpsc::Receiver<Message>>,
-}
-
-impl WorkspaceActor {
+impl WorkspaceManager {
     pub fn new() -> Self {
-        let (sender, receiver) = mpsc::channel(0);
-        WorkspaceActor {
-            sender: Mutex::new(sender),
-            receiver: Mutex::new(receiver),
+        WorkspaceManager {
+            workspace: Mutex::new(Arc::new(Workspace::default())),
         }
     }
 
-    pub async fn spawn(mut pool: ThreadPool) -> Arc<Self> {
-        let actor = Arc::new(WorkspaceActor::new());
-        let task = |actor: Arc<WorkspaceActor>| {
-            async move {
-                let mut workspace = Arc::new(Workspace::default());
-                let mut receiver = await!(actor.receiver.lock());
-                while let Some(message) = await!(receiver.next()) {
-                    match handle_message(&workspace, message) {
-                        Ok(Some(new_workspace)) => {
-                            workspace = new_workspace;
-                        }
-                        Ok(None) => {}
-                        Err(Error::InvalidLanguageId(id)) => {
-                            error!("Invalid language id: {}", id);
-                        }
-                        Err(Error::DocumentNotFound(uri)) => {
-                            error!("Document not found: {}", uri);
-                        }
-                        Err(Error::InvalidPath(path)) => {
-                            error!("Invalid file path: {}", path.to_str().unwrap());
-                        }
-                        Err(Error::IoError(path)) => {
-                            error!("Could not read the file: {}", path.to_str().unwrap());
-                        }
-                    }
-                }
+    pub fn get(&self) -> Arc<Workspace> {
+        let workspace = self.workspace.lock().unwrap();
+        Arc::clone(&workspace)
+    }
+
+    pub fn add(&self, document: TextDocumentItem) {
+        let language = match Language::by_language_id(&document.language_id) {
+            Some(language) => language,
+            None => {
+                error!("Invalid language id: {}", &document.language_id);
+                return;
             }
         };
 
-        pool.spawn(task(Arc::clone(&actor))).unwrap();
-        actor
+        let mut workspace = self.workspace.lock().unwrap();
+        *workspace = Self::add_or_update(&workspace, document.uri, document.text, language);
     }
 
-    pub async fn get(&self) -> Arc<Workspace> {
-        let (sender, receiver) = oneshot::channel();
-        let message = Message::Get(sender);
-        await!(self.send(message));
-        await!(receiver).unwrap()
-    }
-
-    pub async fn add(&self, document: TextDocumentItem) {
-        let message = Message::Add(document);
-        await!(self.send(message));
-    }
-
-    pub async fn load(&self, path: PathBuf) {
-        let message = Message::Load(path);
-        await!(self.send(message));
-    }
-
-    pub async fn update(&self, uri: Url, text: String) {
-        let message = Message::Update(uri, text);
-        await!(self.send(message));
-    }
-
-    async fn send(&self, message: Message) {
-        let mut sender = await!(self.sender.lock());
-        await!(sender.send(message)).unwrap();
-    }
-}
-
-fn handle_message(
-    workspace: &Arc<Workspace>,
-    message: Message,
-) -> Result<(Option<Arc<Workspace>>), Error> {
-    match message {
-        Message::Get(sender) => {
-            let workspace = Arc::clone(&workspace);
-            sender.send(workspace).unwrap();
-            Ok(None)
-        }
-        Message::Add(document) => {
-            if workspace.documents.iter().any(|x| x.uri == document.uri) {
-                return Ok(None);
+    pub fn load(&self, path: &Path) {
+        let language = match path
+            .extension()
+            .and_then(OsStr::to_str)
+            .and_then(Language::by_extension)
+        {
+            Some(language) => language,
+            None => {
+                warn!("Could not determine language: {}", path.to_string_lossy());
+                return;
             }
+        };
 
-            let language = Language::by_language_id(&document.language_id)
-                .ok_or_else(|| Error::InvalidLanguageId(document.language_id.clone()))?;
-
-            let workspace = put_document(workspace, document.uri, document.text, language);
-            Ok(Some(workspace))
-        }
-        Message::Load(path) => {
-            let language = path
-                .extension()
-                .and_then(OsStr::to_str)
-                .and_then(Language::by_extension)
-                .ok_or_else(|| Error::InvalidPath(path.clone()))?;
-
-            let uri = Url::from_file_path(&path).map_err(|_| Error::InvalidPath(path.clone()))?;
-            if workspace.documents.iter().any(|x| x.uri == uri) {
-                return Ok(None);
+        let uri = match Url::from_file_path(path) {
+            Ok(uri) => uri,
+            Err(_) => {
+                error!("Invalid path: {}", path.to_string_lossy());
+                return;
             }
+        };
 
-            let text = fs::read_to_string(&path).map_err(|_| Error::IoError(path.clone()))?;
-            let workspace = put_document(workspace, uri, text, language);
-            Ok(Some(workspace))
-        }
-        Message::Update(uri, text) => {
-            let old_document = workspace
-                .documents
-                .iter()
-                .find(|x| x.uri == uri)
-                .ok_or_else(|| Error::DocumentNotFound(uri.clone()))?;
+        let text = match fs::read_to_string(path) {
+            Ok(text) => text,
+            Err(_) => {
+                warn!("Could not open file: {}", path.to_string_lossy());
+                return;
+            }
+        };
 
-            let language = match old_document.tree {
-                SyntaxTree::Latex(_) => Language::Latex,
-                SyntaxTree::Bibtex(_) => Language::Bibtex,
-            };
-
-            let workspace = put_document(workspace, uri, text, language);
-            Ok(Some(workspace))
-        }
+        let mut workspace = self.workspace.lock().unwrap();
+        *workspace = Self::add_or_update(&workspace, uri, text, language);
     }
-}
 
-fn put_document(
-    workspace: &Arc<Workspace>,
-    uri: Url,
-    text: String,
-    language: Language,
-) -> Arc<Workspace> {
-    let document = Document::parse(uri, text, language);
-    let mut documents: Vec<Arc<Document>> = workspace
-        .documents
-        .iter()
-        .filter(|x| x.uri != document.uri)
-        .cloned()
-        .collect();
+    pub fn update(&self, uri: Url, text: String) {
+        let mut workspace = self.workspace.lock().unwrap();
 
-    documents.push(Arc::new(document));
-    Arc::new(Workspace { documents })
+        let old_document = match workspace.documents.iter().find(|x| x.uri == uri) {
+            Some(document) => document,
+            None => {
+                warn!("Document not found: {}", uri);
+                return;
+            }
+        };
+
+        let language = match old_document.tree {
+            SyntaxTree::Latex(_) => Language::Latex,
+            SyntaxTree::Bibtex(_) => Language::Bibtex,
+        };
+
+        *workspace = Self::add_or_update(&workspace, uri, text, language);
+    }
+
+    fn add_or_update(
+        workspace: &Workspace,
+        uri: Url,
+        text: String,
+        language: Language,
+    ) -> Arc<Workspace> {
+        let document = Document::parse(uri, text, language);
+        let mut documents: Vec<Arc<Document>> = workspace
+            .documents
+            .iter()
+            .filter(|x| x.uri != document.uri)
+            .cloned()
+            .collect();
+
+        documents.push(Arc::new(document));
+        Arc::new(Workspace { documents })
+    }
 }
 
 #[cfg(test)]

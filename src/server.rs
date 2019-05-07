@@ -1,5 +1,5 @@
 use crate::completion::latex::data::types::LatexComponentDatabase;
-use crate::completion::{CompletionProvider, COMPLETION_LIMIT};
+use crate::completion::CompletionProvider;
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
@@ -8,7 +8,7 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
-use crate::workspace::WorkspaceActor;
+use crate::workspace::WorkspaceManager;
 use jsonrpc::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
@@ -18,13 +18,15 @@ use std::sync::Arc;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer {
-    workspace: Arc<WorkspaceActor>,
+    workspace_manager: WorkspaceManager,
 }
 
 #[jsonrpc_server]
 impl LatexLspServer {
-    pub fn new(workspace: Arc<WorkspaceActor>) -> Self {
-        LatexLspServer { workspace }
+    pub fn new() -> Self {
+        LatexLspServer {
+            workspace_manager: WorkspaceManager::new(),
+        }
     }
 
     #[jsonrpc_method("initialize")]
@@ -35,11 +37,11 @@ impl LatexLspServer {
                 .filter_map(|e| e.ok())
                 .filter(|x| x.file_type().is_file())
             {
-                await!(self.workspace.load(entry.path().to_path_buf()));
+                self.workspace_manager.load(&entry.path());
             }
         }
 
-        let workspace = await!(self.workspace.get());
+        let workspace = self.workspace_manager.get();
         workspace
             .documents
             .iter()
@@ -93,7 +95,7 @@ impl LatexLspServer {
     }
 
     #[jsonrpc_method("initialized")]
-    pub async fn initialized(&self, params: InitializedParams) {}
+    pub fn initialized(&self, params: InitializedParams) {}
 
     #[jsonrpc_method("shutdown")]
     pub async fn shutdown(&self, params: ()) -> Result<()> {
@@ -101,29 +103,29 @@ impl LatexLspServer {
     }
 
     #[jsonrpc_method("exit")]
-    pub async fn exit(&self, params: ()) {}
+    pub fn exit(&self, params: ()) {}
 
     #[jsonrpc_method("workspace/didChangeWatchedFiles")]
-    pub async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
+    pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
 
     #[jsonrpc_method("textDocument/didOpen")]
-    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        await!(self.workspace.add(params.text_document));
+    pub fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.workspace_manager.add(params.text_document);
     }
 
     #[jsonrpc_method("textDocument/didChange")]
-    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
+    pub fn did_change(&self, params: DidChangeTextDocumentParams) {
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
-            await!(self.workspace.update(uri, change.text))
+            self.workspace_manager.update(uri, change.text);
         }
     }
 
     #[jsonrpc_method("textDocument/didSave")]
-    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {}
+    pub fn did_save(&self, params: DidSaveTextDocumentParams) {}
 
     #[jsonrpc_method("textDocument/didClose")]
-    pub async fn did_close(&self, params: DidCloseTextDocumentParams) {}
+    pub fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
     #[jsonrpc_method("textDocument/completion")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
@@ -211,7 +213,7 @@ impl LatexLspServer {
 #[macro_export]
 macro_rules! request {
     ($server:expr, $params:expr) => {{
-        let workspace = await!($server.workspace.get());
+        let workspace = $server.workspace_manager.get();
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest::new(
                 $params,

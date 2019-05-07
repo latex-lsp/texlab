@@ -38,7 +38,7 @@ pub fn jsonrpc_server(
         if is_request_method(&method) {
             requests.push(quote!(#name_str => await!(self.#ident(request))));
         } else {
-            notifications.push(quote!(#name_str => await!(self.#ident(notification))));
+            notifications.push(quote!(#name_str => self.#ident(notification)));
         }
     }
 
@@ -63,7 +63,7 @@ pub fn jsonrpc_server(
                 }
             }
 
-            pub async fn handle_notification(&self, notification: jsonrpc::Notification) {
+            pub fn handle_notification(&self, notification: jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
                     _ => log::warn!("{}: {}", "Method not found", notification.method),
@@ -100,9 +100,9 @@ pub fn jsonrpc_method(
         }
     } else {
         quote! {
-            pub async fn #name(&self, notification: jsonrpc::Notification) {
-                let handler = async move |#param_name: #param_type| #block;
-                await!(jsonrpc::handle_notification(notification, handler))
+            pub fn #name(&self, notification: jsonrpc::Notification) {
+                let handler = move |#param_name: #param_type| #block;
+                jsonrpc::handle_notification(notification, handler);
             }
         }
     };

@@ -35,14 +35,13 @@ where
     }
 }
 
-pub async fn handle_notification<'a, H, F, I>(notification: Notification, handler: H)
+pub fn handle_notification<'a, H, I>(notification: Notification, handler: H)
 where
-    H: Fn(I) -> F + Send + Sync + 'a,
-    F: Future<Output = ()> + Send,
+    H: Fn(I) -> () + Send + Sync + 'a,
     I: DeserializeOwned + Send,
 {
     match serde_json::from_value(notification.params) {
-        Ok(params) => await!(handler(params)),
+        Ok(params) => handler(params),
         Err(_) => panic!(DESERIALIZE_OBJECT_ERROR),
     }
 }
@@ -59,7 +58,7 @@ mod tests {
         Ok(i + 1)
     }
 
-    async fn panic(_params: ()) {
+    fn panic(_params: ()) {
         panic!("success");
     }
 
@@ -119,7 +118,7 @@ mod tests {
     #[should_panic(expected = "success")]
     fn test_notification_valid() {
         let notification = setup_notification();
-        block_on(handle_notification(notification, panic));
+        handle_notification(notification, panic);
     }
 
     #[test]
@@ -131,6 +130,6 @@ mod tests {
             ..notification
         };
 
-        block_on(handle_notification(notification, panic));
+        handle_notification(notification, panic);
     }
 }
