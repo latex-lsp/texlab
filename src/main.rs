@@ -1,10 +1,14 @@
 #![feature(await_macro, async_await)]
 
 use clap::*;
+use futures::compat::*;
 use futures::executor::*;
 use futures::prelude::*;
-use texlab::lsp;
+use jsonrpc::MessageHandler;
+use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
+use tokio::codec::FramedRead;
+use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
 
 fn main() {
@@ -41,6 +45,8 @@ async fn run(pool: ThreadPool) {
     let server = LatexLspServer::new();
     let stdin = tokio_stdin_stdout::stdin(0);
     let stdout = tokio_stdin_stdout::stdout(0);
-
-    await!(lsp::listen(server, stdin, stdout, pool));
+    let input = FramedRead::new(stdin, LspCodec).compat();
+    let output = FramedWrite::new(stdout, LspCodec).sink_compat();
+    let mut handler = MessageHandler::new(server, input, output, pool);
+    await!(handler.listen());
 }

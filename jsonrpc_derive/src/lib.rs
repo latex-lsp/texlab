@@ -43,33 +43,38 @@ pub fn jsonrpc_server(
     }
 
     let self_ty = &impl_.self_ty;
-    let items = &impl_.items;
     let result = quote! {
-        impl #self_ty {
-            #(#items)*
+        impl jsonrpc::Server for #self_ty {
+            fn handle_request(&self, request: jsonrpc::Request)
+                -> futures::future::BoxFuture<'_, jsonrpc::Response> {
+                use futures::prelude::*;
+                let handler = async move {
+                    match request.method.as_str() {
+                        #(#requests),*,
+                        _ => {
+                            let error = jsonrpc::Error {
+                                code: jsonrpc::ErrorCode::MethodNotFound,
+                                message: String::from("Method not found"),
+                                data: serde_json::Value::Null,
+                            };
 
-            pub async fn handle_request(&self, request: jsonrpc::Request) -> jsonrpc::Response {
-                match request.method.as_str() {
-                    #(#requests),*,
-                    _ => {
-                        let error = jsonrpc::Error {
-                            code: jsonrpc::ErrorCode::MethodNotFound,
-                            message: String::from("Method not found"),
-                            data: serde_json::Value::Null,
-                        };
-
-                        jsonrpc::Response::new(serde_json::Value::Null, Some(error), Some(request.id))
+                            jsonrpc::Response::new(serde_json::Value::Null, Some(error), Some(request.id))
+                        }
                     }
-                }
+                };
+
+                handler.boxed()
             }
 
-            pub fn handle_notification(&self, notification: jsonrpc::Notification) {
+            fn handle_notification(&self, notification: jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
                     _ => log::warn!("{}: {}", "Method not found", notification.method),
                 }
             }
         }
+
+        #impl_
     };
 
     result.into()

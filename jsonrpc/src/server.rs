@@ -1,8 +1,15 @@
 use crate::types::*;
+use futures::future::BoxFuture;
 use futures::prelude::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::json;
+
+pub trait Server {
+    fn handle_request(&self, request: Request) -> BoxFuture<'_, Response>;
+
+    fn handle_notification(&self, notification: Notification);
+}
 
 const DESERIALIZE_OBJECT_ERROR: &str = "Could not deserialize parameter object";
 
