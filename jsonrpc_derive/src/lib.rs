@@ -54,11 +54,11 @@ pub fn jsonrpc_server(
                         _ => {
                             let error = jsonrpc::Error {
                                 code: jsonrpc::ErrorCode::MethodNotFound,
-                                message: String::from("Method not found"),
+                                message: "Method not found".to_owned(),
                                 data: serde_json::Value::Null,
                             };
 
-                            jsonrpc::Response::new(serde_json::Value::Null, Some(error), Some(request.id))
+                            jsonrpc::Response::error(error, Some(request.id))
                         }
                     }
                 };

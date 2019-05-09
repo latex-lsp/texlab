@@ -37,8 +37,8 @@ where
     };
 
     match await!(handle(request.params)) {
-        Ok(result) => Response::new(json!(result), None, Some(request.id)),
-        Err(error) => Response::new(serde_json::Value::Null, Some(error), Some(request.id)),
+        Ok(result) => Response::result(json!(result), request.id),
+        Err(error) => Response::error(error, Some(request.id)),
     }
 }
 
@@ -58,7 +58,6 @@ mod tests {
     use super::*;
     use futures::executor::block_on;
 
-    const JSONRPC_VERSION: &str = "2.0";
     const METHOD_NAME: &str = "foo";
 
     async fn increment(i: i32) -> Result<i32> {
@@ -71,7 +70,7 @@ mod tests {
 
     fn setup_request<T: Serialize>(value: T) -> Request {
         Request {
-            jsonrpc: JSONRPC_VERSION.to_owned(),
+            jsonrpc: PROTOCOL_VERSION.to_owned(),
             params: json!(value),
             method: METHOD_NAME.to_owned(),
             id: 0,
@@ -80,7 +79,7 @@ mod tests {
 
     fn setup_notification() -> Notification {
         Notification {
-            jsonrpc: JSONRPC_VERSION.to_owned(),
+            jsonrpc: PROTOCOL_VERSION.to_owned(),
             method: METHOD_NAME.to_owned(),
             params: json!(()),
         }
@@ -94,7 +93,7 @@ mod tests {
         let response = block_on(handle_request(request.clone(), increment));
         let expected = Response {
             jsonrpc: request.jsonrpc,
-            result: json!(block_on(increment(value)).unwrap()),
+            result: Some(json!(block_on(increment(value)).unwrap())),
             error: None,
             id: Some(request.id),
         };
@@ -109,7 +108,7 @@ mod tests {
         let response = block_on(handle_request(request.clone(), increment));
         let expected = Response {
             jsonrpc: request.jsonrpc.clone(),
-            result: serde_json::Value::Null,
+            result: None,
             error: Some(Error {
                 code: ErrorCode::InvalidParams,
                 message: DESERIALIZE_OBJECT_ERROR.to_owned(),

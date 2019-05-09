@@ -58,9 +58,9 @@ where
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
                 }
-                Ok(Message::Response(_)) => unimplemented!(),
+                Ok(Message::Response(response)) => unimplemented!("{:?}", response),
                 Err(why) => {
-                    let response = Response::new(serde_json::Value::Null, Some(why), None);
+                    let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
                     let mut output = await!(self.output.lock());
                     await!(output.send(json));
