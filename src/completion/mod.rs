@@ -3,6 +3,7 @@ pub mod latex;
 mod quality;
 
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
+use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
 use self::latex::include::LatexIncludeCompletionProvider;
@@ -36,6 +37,7 @@ impl CompletionProvider {
                     LatexColorCompletionProvider,
                     LatexColorModelCompletionProvider,
                     LatexLabelCompletionProvider,
+                    LatexCitationCompletionProvider,
                     LatexIncludeCompletionProvider,
                     LatexBeginCommandCompletionProvider,
                     LatexTikzCommandCompletionProvider,

@@ -1,4 +1,5 @@
 pub mod begin_command;
+pub mod citation;
 pub mod color;
 pub mod color_model;
 mod combinators;

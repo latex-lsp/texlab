@@ -1,4 +1,4 @@
-use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
+use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Uri};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
@@ -20,7 +20,7 @@ impl LatexComponentId {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub enum CompletionItemData {
     Snippet,
     Command,
@@ -36,7 +36,11 @@ pub enum CompletionItemData {
     Class,
     EntryKind,
     FieldName,
-    Citation,
+    Citation {
+        #[serde(with = "url_serde")]
+        uri: Uri,
+        key: String,
+    },
     CommandSymbol,
     ArgumentSymbol,
 }
@@ -154,6 +158,15 @@ pub fn create_class(name: Cow<'static, str>) -> CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Class),
         data: Some(CompletionItemData::Class.into()),
+        ..CompletionItem::default()
+    }
+}
+
+pub fn create_citation(uri: Uri, key: String) -> CompletionItem {
+    CompletionItem {
+        label: Cow::from(key.clone()),
+        kind: Some(CompletionItemKind::Field),
+        data: Some(CompletionItemData::Citation { uri, key }.into()),
         ..CompletionItem::default()
     }
 }
