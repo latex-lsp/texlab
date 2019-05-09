@@ -1,4 +1,3 @@
-use crate::range;
 use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
 
@@ -49,7 +48,7 @@ impl LatexRoot {
 impl SyntaxNode for LatexRoot {
     fn range(&self) -> Range {
         if self.children.is_empty() {
-            range::create(0, 0, 0, 0)
+            Range::new_simple(0, 0, 0, 0)
         } else {
             Range::new(
                 self.children[0].start(),

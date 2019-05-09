@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
@@ -33,7 +32,7 @@ impl BibtexEntryReferenceProvider {
             for declaration in &tree.root.children {
                 if let BibtexDeclaration::Entry(entry) = declaration {
                     if let Some(key) = &entry.key {
-                        if range::contains(key.range(), request.params.position) {
+                        if key.range().contains(request.params.position) {
                             return Some(key.text());
                         }
                     }
@@ -49,9 +48,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test() {
@@ -73,7 +71,7 @@ mod tests {
             references,
             vec![Location::new(
                 FeatureSpec::uri("bar.tex"),
-                range::create(1, 0, 1, 10)
+                Range::new_simple(1, 0, 1, 10)
             )]
         );
     }

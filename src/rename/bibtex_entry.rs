@@ -1,12 +1,10 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexSyntaxTree};
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexSyntaxTree, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
-use lsp_types::RenameParams;
-use lsp_types::WorkspaceEdit;
-use lsp_types::{Position, TextEdit};
+use lsp_types::*;
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub struct BibtexEntryRenameProvider;
@@ -30,7 +28,10 @@ impl BibtexEntryRenameProvider {
                         .iter()
                         .filter(|citation| citation.key.text() == key_name)
                         .map(|citation| {
-                            TextEdit::new(citation.key.range(), request.params.new_name.clone())
+                            TextEdit::new(
+                                citation.key.range(),
+                                Cow::from(request.params.new_name.clone()),
+                            )
                         })
                         .for_each(|edit| edits.push(edit));
                 }
@@ -41,7 +42,7 @@ impl BibtexEntryRenameProvider {
                                 if key.text() == key_name {
                                     edits.push(TextEdit::new(
                                         key.range(),
-                                        request.params.new_name.clone(),
+                                        Cow::from(request.params.new_name.clone()),
                                     ));
                                 }
                             }
@@ -58,7 +59,7 @@ impl BibtexEntryRenameProvider {
         let mut analyzer = LatexCitationAnalyzer::new();
         analyzer.visit_root(&tree.root);
         for citation in &analyzer.citations {
-            if range::contains(citation.key.range(), position) {
+            if citation.key.range().contains(position) {
                 return Some(&citation.key.text());
             }
         }
@@ -69,7 +70,7 @@ impl BibtexEntryRenameProvider {
         for declaration in &tree.root.children {
             if let BibtexDeclaration::Entry(entry) = declaration {
                 if let Some(key) = &entry.key {
-                    if range::contains(key.range(), position) {
+                    if key.range().contains(position) {
                         return Some(&key.text());
                     }
                 }
@@ -84,7 +85,6 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
     use lsp_types::Position;
 
@@ -106,11 +106,17 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.bib"),
-            vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(0, 9, 0, 12),
+                Cow::from("qux"),
+            )],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(range::create(1, 6, 1, 9), "qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(1, 6, 1, 9),
+                Cow::from("qux"),
+            )],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
@@ -133,11 +139,17 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.bib"),
-            vec![TextEdit::new(range::create(0, 9, 0, 12), "qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(0, 9, 0, 12),
+                Cow::from("qux"),
+            )],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(range::create(1, 6, 1, 9), "qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(1, 6, 1, 9),
+                Cow::from("qux"),
+            )],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

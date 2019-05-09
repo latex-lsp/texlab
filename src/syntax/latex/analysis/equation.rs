@@ -53,11 +53,11 @@ pub const EQUATION_COMMANDS: &'static [&'static str] = &["\\[", "\\]"];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range;
     use crate::syntax::latex::LatexSyntaxTree;
     use crate::syntax::text::SyntaxNode;
+    use lsp_types::Range;
 
-    fn analyze<'a>(tree: &'a LatexSyntaxTree) -> Vec<LatexEquation<'a>> {
+    fn analyze(tree: &LatexSyntaxTree) -> Vec<LatexEquation> {
         let mut analyzer = LatexEquationAnalyzer::new();
         analyzer.visit_root(&tree.root);
         analyzer.equations
@@ -68,8 +68,8 @@ mod tests {
         let tree = LatexSyntaxTree::from("\\[ foo \\]");
         let equations = analyze(&tree);
         assert_eq!(1, equations.len());
-        assert_eq!(range::create(0, 0, 0, 2), equations[0].left.range());
-        assert_eq!(range::create(0, 7, 0, 9), equations[0].right.range());
+        assert_eq!(Range::new_simple(0, 0, 0, 2), equations[0].left.range());
+        assert_eq!(Range::new_simple(0, 7, 0, 9), equations[0].right.range());
     }
 
     #[test]

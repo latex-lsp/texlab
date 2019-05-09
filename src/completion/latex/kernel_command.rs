@@ -4,6 +4,7 @@ use crate::completion::latex::combinators::LatexCombinators;
 use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexKernelCommandCompletionProvider;
 
@@ -12,7 +13,7 @@ impl LatexKernelCommandCompletionProvider {
         await!(LatexCombinators::command(&request, async move |_| {
             KERNEL_COMMANDS
                 .iter()
-                .map(|name| factory::create_command((*name).to_owned(), &LatexComponentId::Kernel))
+                .map(|name| factory::create_command(Cow::from(*name), &LatexComponentId::Kernel))
                 .collect()
         }))
     }

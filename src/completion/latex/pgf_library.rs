@@ -2,6 +2,7 @@ use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexPgfLibraryCompletionProvider;
 
@@ -14,7 +15,7 @@ impl LatexPgfLibraryCompletionProvider {
             async move |_| {
                 LIBRARIES
                     .iter()
-                    .map(|name| factory::create_pgf_library((*name).to_owned()))
+                    .map(|name| factory::create_pgf_library(Cow::from(*name)))
                     .collect()
             }
         ))

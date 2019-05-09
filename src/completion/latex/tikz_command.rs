@@ -3,6 +3,7 @@ use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexTikzCommandCompletionProvider;
 
@@ -18,7 +19,7 @@ impl LatexTikzCommandCompletionProvider {
             {
                 COMMANDS
                     .iter()
-                    .map(|name| factory::create_command((*name).to_owned(), &id))
+                    .map(|name| factory::create_command(Cow::from(*name), &id))
                     .collect()
             } else {
                 Vec::new()

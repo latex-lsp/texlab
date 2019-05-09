@@ -82,9 +82,9 @@ impl FeatureSpec {
         FeatureSpecFile { name, text }
     }
 
-    pub fn uri(name: &str) -> Url {
+    pub fn uri(name: &str) -> Uri {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
-        Url::from_file_path(path).unwrap()
+        Uri::from_file_path(path).unwrap()
     }
 
     fn identifier(&self) -> TextDocumentIdentifier {

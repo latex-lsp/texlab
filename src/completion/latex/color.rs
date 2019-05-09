@@ -2,6 +2,7 @@ use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexColorCompletionProvider;
 
@@ -14,7 +15,7 @@ impl LatexColorCompletionProvider {
             async move |_| {
                 COLOR_NAMES
                     .iter()
-                    .map(|name| factory::create_color((*name).to_owned()))
+                    .map(|name| factory::create_color(Cow::from(*name)))
                     .collect()
             }
         ))

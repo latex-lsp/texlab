@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
@@ -18,7 +17,7 @@ impl LatexLabelHighlightProvider {
             if let Some(name) = analyzer
                 .labels
                 .iter()
-                .find(|label| range::contains(label.name.range(), request.params.position))
+                .find(|label| label.name.range().contains(request.params.position))
                 .map(|label| label.name.text())
             {
                 return analyzer
@@ -45,7 +44,7 @@ mod tests {
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_has_label() {
@@ -63,11 +62,11 @@ mod tests {
             highlights,
             vec![
                 DocumentHighlight {
-                    range: range::create(0, 7, 0, 10),
+                    range: Range::new_simple(0, 7, 0, 10),
                     kind: Some(DocumentHighlightKind::Write),
                 },
                 DocumentHighlight {
-                    range: range::create(1, 5, 1, 8),
+                    range: Range::new_simple(1, 5, 1, 8),
                     kind: Some(DocumentHighlightKind::Read),
                 }
             ]

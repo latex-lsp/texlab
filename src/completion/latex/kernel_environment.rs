@@ -4,6 +4,7 @@ use crate::completion::latex::combinators::LatexCombinators;
 use crate::completion::latex::kernel_primitives::KERNEL_ENVIRONMENTS;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexKernelEnvironmentCompletionProvider;
 
@@ -13,7 +14,7 @@ impl LatexKernelEnvironmentCompletionProvider {
             KERNEL_ENVIRONMENTS
                 .iter()
                 .map(|name| {
-                    factory::create_environment((*name).to_owned(), &LatexComponentId::Kernel)
+                    factory::create_environment(Cow::from(*name), &LatexComponentId::Kernel)
                 })
                 .collect()
         }))

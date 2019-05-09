@@ -7,6 +7,7 @@ use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexUserCommandCompletionProvider;
 
@@ -27,7 +28,7 @@ impl LatexUserCommandCompletionProvider {
                             .map(|command| &command.name.text()[1..])
                             .unique()
                             .map(|name| {
-                                factory::create_command(name.to_owned(), &LatexComponentId::Unknown)
+                                factory::create_command(Cow::from(name.to_owned()), &LatexComponentId::Unknown)
                             })
                             .for_each(|item| items.push(item));
                     }

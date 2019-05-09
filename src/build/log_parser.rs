@@ -1,12 +1,10 @@
-use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Uri};
 use path_clean::PathClean;
-use regex::Captures;
-use regex::Match;
-use regex::Regex;
+use regex::{Match, Regex};
+use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::path::PathBuf;
 use std::str;
-use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BuildErrorKind {
@@ -16,14 +14,14 @@ pub enum BuildErrorKind {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BuildError {
-    pub uri: Url,
+    pub uri: Uri,
     pub kind: BuildErrorKind,
     pub message: String,
     pub line: Option<u64>,
 }
 
 impl BuildError {
-    pub fn new(uri: Url, kind: BuildErrorKind, message: String, line: Option<u64>) -> Self {
+    pub fn new(uri: Uri, kind: BuildErrorKind, message: String, line: Option<u64>) -> Self {
         BuildError {
             uri,
             kind,
@@ -45,8 +43,8 @@ impl Into<Diagnostic> for BuildError {
             range,
             Some(severity),
             None,
-            Some("latex".to_owned()),
-            self.message,
+            Some(Cow::from("latex")),
+            Cow::from(self.message),
             None,
         )
     }
@@ -85,7 +83,7 @@ impl BuildErrorParser {
         }
     }
 
-    pub fn parse(&self, uri: Url, log: &str) -> Vec<BuildError> {
+    pub fn parse(&self, uri: Uri, log: &str) -> Vec<BuildError> {
         let log = self.prepare_log(log);
         let mut ranges: Vec<FileRange> = self
             .file_regex
@@ -121,7 +119,7 @@ impl BuildErrorParser {
 
     fn extract_matches(
         log: &str,
-        parent_uri: &Url,
+        parent_uri: &Uri,
         ranges: &[FileRange],
         regex: &Regex,
         kind: BuildErrorKind,
@@ -182,7 +180,7 @@ impl BuildErrorParser {
         new_lines.join("\n")
     }
 
-    fn create_file_range(&self, parent: Url, log: &str, result: Match) -> FileRange {
+    fn create_file_range(&self, parent: Uri, log: &str, result: Match) -> FileRange {
         let mut balance = 1;
         let mut end = result.start() + 1;
         let mut chars = (&log[result.start() + 1..]).chars();
@@ -204,7 +202,7 @@ impl BuildErrorParser {
         base_path.pop();
         let mut full_path = base_path.clone();
         full_path.push(captures.name("file").unwrap().as_str());
-        let url = if full_path.starts_with(base_path) {
+        let uri = if full_path.starts_with(base_path) {
             let mut full_path = PathBuf::from(full_path.to_string_lossy().replace("\\", "/"))
                 .clean()
                 .to_string_lossy()
@@ -212,24 +210,24 @@ impl BuildErrorParser {
             if cfg!(windows) && full_path.starts_with("/") {
                 full_path.remove(0);
             }
-            Url::from_file_path(full_path).ok()
+            Uri::from_file_path(full_path).ok()
         } else {
             None
         };
 
-        FileRange::new(url, result.start(), end)
+        FileRange::new(uri, result.start(), end)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct FileRange {
-    pub uri: Option<Url>,
+    pub uri: Option<Uri>,
     pub start: usize,
     pub end: usize,
 }
 
 impl FileRange {
-    fn new(uri: Option<Url>, start: usize, end: usize) -> Self {
+    fn new(uri: Option<Uri>, start: usize, end: usize) -> Self {
         FileRange { uri, start, end }
     }
 
@@ -259,9 +257,9 @@ mod tests {
     use super::*;
     use std::fs;
 
-    fn create_uri(name: &str) -> Url {
+    fn create_uri(name: &str) -> Uri {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
-        Url::from_file_path(path.to_str().unwrap()).unwrap()
+        Uri::from_file_path(path.to_str().unwrap()).unwrap()
     }
 
     fn verify(name: &str, expected: Vec<BuildError>) {

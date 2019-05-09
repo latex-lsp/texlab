@@ -2,6 +2,7 @@ use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexColorModelCompletionProvider;
 
@@ -38,7 +39,7 @@ impl LatexColorModelCompletionProvider {
     fn generate_items() -> Vec<CompletionItem> {
         MODEL_NAMES
             .iter()
-            .map(|name| factory::create_color_model((*name).to_owned()))
+            .map(|name| factory::create_color_model(Cow::from(*name)))
             .collect()
     }
 }

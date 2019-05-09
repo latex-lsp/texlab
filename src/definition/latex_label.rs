@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::{Document, SyntaxTree};
@@ -41,7 +40,7 @@ impl LatexLabelDefinitionProvider {
             analyzer
                 .labels
                 .iter()
-                .find(|label| range::contains(label.name.range(), request.params.position))
+                .find(|label| label.name.range().contains(request.params.position))
                 .map(|label| label.name.text())
         } else {
             None
@@ -55,7 +54,7 @@ mod tests {
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_has_definition() {
@@ -77,7 +76,7 @@ mod tests {
             locations,
             vec![Location::new(
                 FeatureSpec::uri("bar.tex"),
-                range::create(0, 7, 0, 10)
+                Range::new_simple(0, 7, 0, 10)
             )]
         );
     }

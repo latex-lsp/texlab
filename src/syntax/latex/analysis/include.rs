@@ -1,5 +1,4 @@
 use crate::syntax::latex::ast::*;
-use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexIncludeKind {

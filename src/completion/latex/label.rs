@@ -4,6 +4,7 @@ use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
 use crate::workspace::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::borrow::Cow;
 
 pub struct LatexLabelCompletionProvider;
 
@@ -23,7 +24,7 @@ impl LatexLabelCompletionProvider {
                             .labels
                             .iter()
                             .filter(|label| label.kind == LatexLabelKind::Definition)
-                            .map(|label| label.name.text().to_owned())
+                            .map(|label| Cow::from(label.name.text().to_owned()))
                             .map(factory::create_label)
                             .for_each(|item| items.push(item))
                     }

@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
@@ -42,7 +41,7 @@ impl LatexCitationDefinitionProvider {
             analyzer
                 .citations
                 .iter()
-                .find(|citation| range::contains(citation.key.range(), request.params.position))
+                .find(|citation| citation.key.range().contains(request.params.position))
                 .map(|citation| citation.key.text())
         } else {
             None
@@ -56,7 +55,7 @@ mod tests {
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_has_definition() {
@@ -78,7 +77,7 @@ mod tests {
             locations,
             vec![Location::new(
                 FeatureSpec::uri("baz.bib"),
-                range::create(0, 9, 0, 12)
+                Range::new_simple(0, 9, 0, 12)
             )]
         );
     }

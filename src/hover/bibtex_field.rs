@@ -2,7 +2,8 @@ use crate::feature::FeatureRequest;
 use crate::metadata::bibtex_field;
 use crate::syntax::bibtex::*;
 use crate::workspace::SyntaxTree;
-use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
+use lsp_types::*;
+use std::borrow::Cow;
 
 pub struct BibtexFieldHoverProvider;
 
@@ -17,7 +18,7 @@ impl BibtexFieldHoverProvider {
                     return Some(Hover {
                         contents: HoverContents::Markup(MarkupContent {
                             kind: MarkupKind::Markdown,
-                            value: documentation.to_owned(),
+                            value: Cow::from(documentation),
                         }),
                         range: None,
                     });
@@ -53,9 +54,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: bibtex_field::get_documentation("author")
-                        .unwrap()
-                        .to_owned(),
+                    value: Cow::from(bibtex_field::get_documentation("author").unwrap()),
                 }),
                 range: None,
             })

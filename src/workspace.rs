@@ -1,13 +1,12 @@
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::*;
 use log::*;
-use lsp_types::TextDocumentItem;
+use lsp_types::{TextDocumentItem, Uri};
 use path_clean::PathClean;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Language {
@@ -50,17 +49,17 @@ impl SyntaxTree {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {
-    pub uri: Url,
+    pub uri: Uri,
     pub text: String,
     pub tree: SyntaxTree,
 }
 
 impl Document {
-    pub fn new(uri: Url, text: String, tree: SyntaxTree) -> Self {
+    pub fn new(uri: Uri, text: String, tree: SyntaxTree) -> Self {
         Document { uri, text, tree }
     }
 
-    pub fn parse(uri: Url, text: String, language: Language) -> Self {
+    pub fn parse(uri: Uri, text: String, language: Language) -> Self {
         let tree = SyntaxTree::parse(&text, language);
         Document::new(uri, text, tree)
     }
@@ -84,17 +83,17 @@ impl Workspace {
         }
     }
 
-    pub fn find(&self, uri: &Url) -> Option<Arc<Document>> {
+    pub fn find(&self, uri: &Uri) -> Option<Arc<Document>> {
         self.documents
             .iter()
             .find(|document| document.uri == *uri)
             .map(|document| Arc::clone(&document))
     }
 
-    pub fn resolve_document(&self, uri: &Url, relative_path: &str) -> Option<Arc<Document>> {
+    pub fn resolve_document(&self, uri: &Uri, relative_path: &str) -> Option<Arc<Document>> {
         let targets = resolve_link_targets(uri, relative_path)?;
         for target in targets {
-            if let Ok(target_uri) = Url::from_file_path(target) {
+            if let Ok(target_uri) = Uri::from_file_path(target) {
                 if let Some(document) = self.find(&target_uri) {
                     if document.is_file() {
                         return Some(document);
@@ -105,7 +104,7 @@ impl Workspace {
         None
     }
 
-    pub fn related_documents(&self, uri: &Url) -> Vec<Arc<Document>> {
+    pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
         let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
@@ -143,7 +142,7 @@ impl Workspace {
         results
     }
 
-    pub fn find_parent(&self, uri: &Url) -> Option<Arc<Document>> {
+    pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
         for document in self.related_documents(uri) {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let mut analyzer = LatexEnvironmentAnalyzer::new();
@@ -165,7 +164,7 @@ impl Workspace {
     }
 }
 
-fn resolve_link_targets(uri: &Url, relative_path: &str) -> Option<Vec<String>> {
+fn resolve_link_targets(uri: &Uri, relative_path: &str) -> Option<Vec<String>> {
     let mut targets = Vec::new();
     if uri.scheme() != "file" {
         return None;
@@ -227,7 +226,7 @@ impl WorkspaceManager {
             }
         };
 
-        let uri = match Url::from_file_path(path) {
+        let uri = match Uri::from_file_path(path) {
             Ok(uri) => uri,
             Err(_) => {
                 error!("Invalid path: {}", path.to_string_lossy());
@@ -247,7 +246,7 @@ impl WorkspaceManager {
         *workspace = Self::add_or_update(&workspace, uri, text, language);
     }
 
-    pub fn update(&self, uri: Url, text: String) {
+    pub fn update(&self, uri: Uri, text: String) {
         let mut workspace = self.workspace.lock().unwrap();
 
         let old_document = match workspace.documents.iter().find(|x| x.uri == uri) {
@@ -268,7 +267,7 @@ impl WorkspaceManager {
 
     fn add_or_update(
         workspace: &Workspace,
-        uri: Url,
+        uri: Uri,
         text: String,
         language: Language,
     ) -> Arc<Workspace> {
@@ -298,10 +297,10 @@ impl WorkspaceBuilder {
         }
     }
 
-    pub fn document(&mut self, name: &str, text: &str) -> Url {
+    pub fn document(&mut self, name: &str, text: &str) -> Uri {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
-        let uri = Url::from_file_path(path).unwrap();
+        let uri = Uri::from_file_path(path).unwrap();
         let document = Document::parse(uri.clone(), text.to_owned(), language);
         self.workspace.documents.push(Arc::new(document));
         uri
@@ -312,7 +311,7 @@ impl WorkspaceBuilder {
 mod tests {
     use super::*;
 
-    fn verify_documents(expected: Vec<Url>, actual: Vec<Arc<Document>>) {
+    fn verify_documents(expected: Vec<Uri>, actual: Vec<Arc<Document>>) {
         assert_eq!(expected.len(), actual.len());
         for i in 0..expected.len() {
             assert_eq!(expected[i], actual[i].uri);

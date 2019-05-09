@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::bibtex::*;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
@@ -41,9 +40,9 @@ impl OrderByQualityCompletionProvider {
                 }
             }
             SyntaxTree::Bibtex(tree) => {
-                fn get_kind_query(kind: &BibtexToken, position: Position) -> Option<&str> {
-                    if range::contains(kind.range(), position) {
-                        Some(&kind.text()[1..])
+                fn get_type_query(ty: &BibtexToken, position: Position) -> Option<&str> {
+                    if ty.range().contains(position) {
+                        Some(&ty.text()[1..])
                     } else {
                         Some("")
                     }
@@ -52,12 +51,12 @@ impl OrderByQualityCompletionProvider {
                 finder.visit_root(&tree.root);
                 match finder.results.pop()? {
                     BibtexNode::Root(_) => Some(""),
-                    BibtexNode::Preamble(preamble) => get_kind_query(&preamble.kind, position),
-                    BibtexNode::String(string) => get_kind_query(&string.kind, position),
-                    BibtexNode::Entry(entry) => get_kind_query(&entry.kind, position),
+                    BibtexNode::Preamble(preamble) => get_type_query(&preamble.kind, position),
+                    BibtexNode::String(string) => get_type_query(&string.kind, position),
+                    BibtexNode::Entry(entry) => get_type_query(&entry.kind, position),
                     BibtexNode::Comment(comment) => Some(comment.token.text()),
                     BibtexNode::Field(field) => {
-                        if range::contains(field.name.range(), position) {
+                        if field.name.range().contains(position) {
                             Some(field.name.text())
                         } else {
                             Some("")

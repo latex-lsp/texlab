@@ -39,9 +39,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_has_links() {
@@ -61,7 +60,7 @@ mod tests {
         assert_eq!(
             links,
             vec![DocumentLink {
-                range: range::create(0, 7, 0, 14),
+                range: Range::new_simple(0, 7, 0, 14),
                 target: FeatureSpec::uri("bar.tex"),
             }]
         );

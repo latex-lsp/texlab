@@ -1,9 +1,9 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::{LatexLabelAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub struct LatexLabelRenameProvider;
@@ -20,7 +20,12 @@ impl LatexLabelRenameProvider {
                     .labels
                     .iter()
                     .filter(|label| label.name.text() == name)
-                    .map(|label| TextEdit::new(label.name.range(), request.params.new_name.clone()))
+                    .map(|label| {
+                        TextEdit::new(
+                            label.name.range(),
+                            Cow::from(request.params.new_name.clone()),
+                        )
+                    })
                     .collect();
                 changes.insert(document.uri.clone(), edits);
             }
@@ -35,7 +40,7 @@ impl LatexLabelRenameProvider {
             analyzer
                 .labels
                 .iter()
-                .find(|label| range::contains(label.name.range(), request.params.position))
+                .find(|label| label.name.range().contains(request.params.position))
                 .map(|label| label.name.text())
         } else {
             None
@@ -48,9 +53,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_label() {
@@ -71,11 +75,17 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.tex"),
-            vec![TextEdit::new(range::create(0, 7, 0, 10), "bar".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(0, 7, 0, 10),
+                Cow::from("bar"),
+            )],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(range::create(0, 5, 0, 8), "bar".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(0, 5, 0, 8),
+                Cow::from("bar"),
+            )],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

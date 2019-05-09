@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
@@ -76,10 +75,10 @@ impl LatexCombinators {
             let command = find_non_empty_command(&nodes).or_else(|| find_empty_command(&nodes));
 
             if let Some(command) = command {
-                if range::contains_exclusive(
-                    command.args[argument_index].range(),
-                    request.params.position,
-                ) {
+                if command.args[argument_index]
+                    .range
+                    .contains_exclusive(request.params.position)
+                {
                     return await!(execute(command));
                 }
             }

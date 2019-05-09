@@ -1,6 +1,4 @@
 use crate::syntax::latex::ast::*;
-use crate::syntax::text::{Span, SyntaxNode};
-use lsp_types::Range;
 use std::iter::Peekable;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

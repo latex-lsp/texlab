@@ -12,7 +12,6 @@ pub mod hover;
 pub mod link;
 pub mod lsp;
 pub mod metadata;
-pub mod range;
 pub mod reference;
 pub mod rename;
 pub mod server;

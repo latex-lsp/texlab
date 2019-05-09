@@ -14,7 +14,6 @@ use jsonrpc::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -61,13 +60,7 @@ impl LatexLspServer {
             hover_provider: Some(true),
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
-                trigger_characters: Some(vec![
-                    "\\".to_owned(),
-                    "{".to_owned(),
-                    "}".to_owned(),
-                    "@".to_owned(),
-                    "/".to_owned(),
-                ]),
+                trigger_characters: Some(vec!['\\', '{', '}', '@', '/']),
             }),
             signature_help_provider: None,
             definition_provider: Some(true),
@@ -229,110 +222,4 @@ macro_rules! request {
             Err(msg)
         }
     }};
-}
-
-#[derive(Debug, Eq, PartialEq, Default, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerCapabilities {
-    /// Defines how text documents are synced.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text_document_sync: Option<TextDocumentSyncCapability>,
-
-    /// The server provides hover support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub hover_provider: Option<bool>,
-
-    /// The server provides completion support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub completion_provider: Option<CompletionOptions>,
-
-    /// The server provides signature help support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub signature_help_provider: Option<SignatureHelpOptions>,
-
-    /// The server provides goto definition support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub definition_provider: Option<bool>,
-
-    /// The server provides goto type definition support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_definition_provider: Option<TypeDefinitionProviderCapability>,
-
-    /// the server provides goto implementation support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub implementation_provider: Option<ImplementationProviderCapability>,
-
-    /// The server provides find references support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub references_provider: Option<bool>,
-
-    /// The server provides document highlight support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_highlight_provider: Option<bool>,
-
-    /// The server provides document symbol support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_symbol_provider: Option<bool>,
-
-    /// The server provides workspace symbol support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub workspace_symbol_provider: Option<bool>,
-
-    /// The server provides code actions.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_action_provider: Option<CodeActionProviderCapability>,
-
-    /// The server provides code lens.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_lens_provider: Option<CodeLensOptions>,
-
-    /// The server provides document formatting.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_formatting_provider: Option<bool>,
-
-    /// The server provides document range formatting.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_range_formatting_provider: Option<bool>,
-
-    /// The server provides document formatting on typing.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_on_type_formatting_provider: Option<DocumentOnTypeFormattingOptions>,
-
-    /// The server provides rename support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rename_provider: Option<RenameProviderCapability>,
-
-    /// The server provides document link support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_link_provider: Option<DocumentLinkOptions>,
-
-    /// The server provides color provider support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub color_provider: Option<ColorProviderCapability>,
-
-    /// The server provides folding provider support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub folding_range_provider: Option<FoldingRangeProviderCapability>,
-
-    /// The server provides execute command support.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub execute_command_provider: Option<ExecuteCommandOptions>,
-
-    /// Workspace specific server capabilities
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub workspace: Option<WorkspaceCapability>,
-}
-
-#[derive(Debug, Eq, PartialEq, Default, Deserialize, Serialize)]
-pub struct InitializeResult {
-    /// The capabilities the language server provides.
-    pub capabilities: ServerCapabilities,
-}
-
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DocumentLinkOptions {
-    /// Document links have a resolve provider as well.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resolve_provider: Option<bool>,
 }

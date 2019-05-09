@@ -13,7 +13,7 @@ members = ["./jsonrpc", "./jsonrpc_derive"]
 [dependencies]
 jsonrpc = { path = "jsonrpc" }
 jsonrpc-derive = { path = "jsonrpc_derive" }
-lsp-types = "0.56.0"
+lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "8ce88a90c6753cf10d4b97d8cd6c9b8bb663c9d1" }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 serde = { version = "1.0.90", features = ["derive", "rc"] }
 serde_json = "1.0.39"

@@ -1,4 +1,3 @@
-use crate::range;
 use crate::syntax::latex::ast::*;
 use crate::syntax::text::SyntaxNode;
 use lsp_types::Position;
@@ -26,28 +25,28 @@ impl<'a> LatexFinder<'a> {
 
 impl<'a> LatexVisitor<'a> for LatexFinder<'a> {
     fn visit_root(&mut self, root: &'a LatexRoot) {
-        if range::contains(root.range(), self.position) {
+        if root.range().contains(self.position) {
             self.results.push(LatexNode::Root(root));
             LatexWalker::walk_root(self, root);
         }
     }
 
     fn visit_group(&mut self, group: &'a LatexGroup) {
-        if range::contains(group.range(), self.position) {
+        if group.range.contains(self.position) {
             self.results.push(LatexNode::Group(group));
             LatexWalker::walk_group(self, group);
         }
     }
 
     fn visit_command(&mut self, command: &'a LatexCommand) {
-        if range::contains(command.range(), self.position) {
+        if command.range.contains(self.position) {
             self.results.push(LatexNode::Command(command));
             LatexWalker::walk_command(self, command);
         }
     }
 
     fn visit_text(&mut self, text: &'a LatexText) {
-        if range::contains(text.range(), self.position) {
+        if text.range.contains(self.position) {
             self.results.push(LatexNode::Text(text));
         }
     }
@@ -69,26 +68,26 @@ impl<'a> LatexCommandFinder<'a> {
 
 impl<'a> LatexVisitor<'a> for LatexCommandFinder<'a> {
     fn visit_root(&mut self, root: &'a LatexRoot) {
-        if range::contains(root.range(), self.position) {
+        if root.range().contains(self.position) {
             LatexWalker::walk_root(self, root);
         }
     }
 
     fn visit_group(&mut self, group: &'a LatexGroup) {
-        if range::contains(group.range(), self.position) {
+        if group.range.contains(self.position) {
             LatexWalker::walk_group(self, group);
         }
     }
 
     fn visit_command(&mut self, command: &'a LatexCommand) {
-        if range::contains(command.name.range(), self.position)
+        if command.name.range().contains(self.position)
             && command.name.start().character != self.position.character
         {
             self.result = Some(command);
             return;
         }
 
-        if range::contains(command.range(), self.position) {
+        if command.range.contains(self.position) {
             LatexWalker::walk_command(self, command);
         }
     }

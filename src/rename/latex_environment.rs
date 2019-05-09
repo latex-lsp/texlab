@@ -1,9 +1,9 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub struct LatexEnvironmentRenameProvider;
@@ -16,12 +16,18 @@ impl LatexEnvironmentRenameProvider {
             for environment in &analyzer.environments {
                 if let Some(left_name) = environment.left.name {
                     if let Some(right_name) = environment.right.name {
-                        if range::contains(left_name.range(), request.params.position)
-                            || range::contains(right_name.range(), request.params.position)
+                        if left_name.range().contains(request.params.position)
+                            || right_name.range().contains(request.params.position)
                         {
                             let edits = vec![
-                                TextEdit::new(left_name.range(), request.params.new_name.clone()),
-                                TextEdit::new(right_name.range(), request.params.new_name.clone()),
+                                TextEdit::new(
+                                    left_name.range(),
+                                    Cow::from(request.params.new_name.clone()),
+                                ),
+                                TextEdit::new(
+                                    right_name.range(),
+                                    Cow::from(request.params.new_name.clone()),
+                                ),
                             ];
                             let mut changes = HashMap::new();
                             changes.insert(request.document.uri.clone(), edits);
@@ -40,9 +46,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_environment() {
@@ -60,8 +65,8 @@ mod tests {
         changes.insert(
             FeatureSpec::uri("foo.tex"),
             vec![
-                TextEdit::new(range::create(0, 7, 0, 10), "baz".to_owned()),
-                TextEdit::new(range::create(1, 5, 1, 8), "baz".to_owned()),
+                TextEdit::new(Range::new_simple(0, 7, 0, 10), Cow::from("baz")),
+                TextEdit::new(Range::new_simple(1, 5, 1, 8), Cow::from("baz")),
             ],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));

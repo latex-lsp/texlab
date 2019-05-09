@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::{LatexLabelAnalyzer, LatexLabelKind, LatexVisitor};
 use crate::workspace::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
@@ -36,7 +35,7 @@ impl LatexLabelReferenceProvider {
                 .iter()
                 .find(|label| {
                     label.kind == LatexLabelKind::Definition
-                        && range::contains(label.command.range, request.params.position)
+                        && label.command.range.contains(request.params.position)
                 })
                 .map(|label| label.name.text())
         } else {
@@ -50,9 +49,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test() {
@@ -74,7 +72,7 @@ mod tests {
             references,
             vec![Location::new(
                 FeatureSpec::uri("bar.tex"),
-                range::create(1, 0, 1, 9)
+                Range::new_simple(1, 0, 1, 9)
             )]
         );
     }

@@ -88,7 +88,7 @@ mod tests {
     use super::*;
     use crate::syntax::latex::LatexSyntaxTree;
 
-    fn analyze<'a>(tree: &'a LatexSyntaxTree) -> Vec<LatexEnvironment<'a>> {
+    fn analyze(tree: &LatexSyntaxTree) -> Vec<LatexEnvironment> {
         let mut analyzer = LatexEnvironmentAnalyzer::new();
         analyzer.visit_root(&tree.root);
         analyzer.environments

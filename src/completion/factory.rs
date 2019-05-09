@@ -1,5 +1,6 @@
 use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::path::Path;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -10,11 +11,11 @@ pub enum LatexComponentId {
 }
 
 impl LatexComponentId {
-    fn detail(&self) -> String {
+    fn detail(&self) -> Cow<'static, str> {
         match self {
-            LatexComponentId::Kernel => "built-in".to_owned(),
-            LatexComponentId::Unknown => "unknown".to_owned(),
-            LatexComponentId::User(files) => files.join(", "),
+            LatexComponentId::Kernel => Cow::from("built-in"),
+            LatexComponentId::Unknown => Cow::from("unknown"),
+            LatexComponentId::User(files) => Cow::from(files.join(", ")),
         }
     }
 }
@@ -47,9 +48,9 @@ impl Into<serde_json::Value> for CompletionItemData {
 }
 
 pub fn create_snippet(
-    name: String,
+    name: Cow<'static, str>,
     component: &LatexComponentId,
-    template: String,
+    template: Cow<'static, str>,
 ) -> CompletionItem {
     CompletionItem {
         kind: Some(CompletionItemKind::Snippet),
@@ -60,7 +61,7 @@ pub fn create_snippet(
     }
 }
 
-pub fn create_command(name: String, component: &LatexComponentId) -> CompletionItem {
+pub fn create_command(name: Cow<'static, str>, component: &LatexComponentId) -> CompletionItem {
     CompletionItem {
         kind: Some(CompletionItemKind::Function),
         data: Some(CompletionItemData::Command.into()),
@@ -68,7 +69,7 @@ pub fn create_command(name: String, component: &LatexComponentId) -> CompletionI
     }
 }
 
-pub fn create_environment(name: String, component: &LatexComponentId) -> CompletionItem {
+pub fn create_environment(name: Cow<'static, str>, component: &LatexComponentId) -> CompletionItem {
     CompletionItem {
         kind: Some(CompletionItemKind::EnumMember),
         data: Some(CompletionItemData::Environment.into()),
@@ -76,7 +77,7 @@ pub fn create_environment(name: String, component: &LatexComponentId) -> Complet
     }
 }
 
-pub fn create_label(name: String) -> CompletionItem {
+pub fn create_label(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Field),
@@ -87,7 +88,7 @@ pub fn create_label(name: String) -> CompletionItem {
 
 pub fn create_folder(path: &Path) -> CompletionItem {
     CompletionItem {
-        label: path.file_name().unwrap().to_string_lossy().into_owned(),
+        label: Cow::from(path.file_name().unwrap().to_string_lossy().into_owned()),
         kind: Some(CompletionItemKind::Folder),
         data: Some(CompletionItemData::Folder.into()),
         ..CompletionItem::default()
@@ -96,14 +97,14 @@ pub fn create_folder(path: &Path) -> CompletionItem {
 
 pub fn create_file(path: &Path) -> CompletionItem {
     CompletionItem {
-        label: path.file_name().unwrap().to_string_lossy().into_owned(),
+        label: Cow::from(path.file_name().unwrap().to_string_lossy().into_owned()),
         kind: Some(CompletionItemKind::File),
         data: Some(CompletionItemData::File.into()),
         ..CompletionItem::default()
     }
 }
 
-pub fn create_pgf_library(name: String) -> CompletionItem {
+pub fn create_pgf_library(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Module),
@@ -112,7 +113,7 @@ pub fn create_pgf_library(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_tikz_library(name: String) -> CompletionItem {
+pub fn create_tikz_library(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Color),
@@ -121,7 +122,7 @@ pub fn create_tikz_library(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_color(name: String) -> CompletionItem {
+pub fn create_color(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Color),
@@ -130,7 +131,7 @@ pub fn create_color(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_color_model(name: String) -> CompletionItem {
+pub fn create_color_model(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Color),
@@ -139,7 +140,7 @@ pub fn create_color_model(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_package(name: String) -> CompletionItem {
+pub fn create_package(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Class),
@@ -148,7 +149,7 @@ pub fn create_package(name: String) -> CompletionItem {
     }
 }
 
-pub fn create_class(name: String) -> CompletionItem {
+pub fn create_class(name: Cow<'static, str>) -> CompletionItem {
     CompletionItem {
         label: name,
         kind: Some(CompletionItemKind::Class),

@@ -1,9 +1,9 @@
 use crate::feature::FeatureRequest;
-use crate::range;
 use crate::syntax::latex::{LatexCommandAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::workspace::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub struct LatexCommandRenameProvider;
@@ -23,7 +23,7 @@ impl LatexCommandRenameProvider {
                     .map(|command| {
                         TextEdit::new(
                             command.name.range(),
-                            format!("\\{}", request.params.new_name),
+                            Cow::from(format!("\\{}", request.params.new_name)),
                         )
                     })
                     .collect();
@@ -40,7 +40,7 @@ impl LatexCommandRenameProvider {
             analyzer
                 .commands
                 .iter()
-                .find(|command| range::contains(command.name.range(), request.params.position))
+                .find(|command| command.name.range().contains(request.params.position))
                 .map(|command| command.name.text())
         } else {
             None
@@ -53,9 +53,8 @@ mod tests {
     use super::*;
     use crate::completion::latex::data::types::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
-    use crate::range;
     use crate::test_feature;
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test() {
@@ -75,11 +74,17 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.tex"),
-            vec![TextEdit::new(range::create(1, 0, 1, 4), "\\qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(1, 0, 1, 4),
+                Cow::from("\\qux"),
+            )],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(range::create(0, 0, 0, 4), "\\qux".to_owned())],
+            vec![TextEdit::new(
+                Range::new_simple(0, 0, 0, 4),
+                Cow::from("\\qux"),
+            )],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

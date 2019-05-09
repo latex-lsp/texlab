@@ -1,5 +1,4 @@
 use crate::completion::latex::data::types::{LatexComponent, LatexComponentDatabase};
-use crate::workspace::SyntaxTree;
 use futures::channel::{mpsc, oneshot};
 use futures::executor::ThreadPool;
 use futures::lock::Mutex;

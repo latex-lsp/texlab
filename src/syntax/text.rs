@@ -144,7 +144,6 @@ fn is_command_char(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range;
 
     #[test]
     fn test_peek() {
@@ -169,7 +168,10 @@ mod tests {
         stream.next();
         stream.next();
         let span = stream.end_span();
-        assert_eq!(Span::new(range::create(0, 1, 0, 3), "bc".to_owned()), span);
+        assert_eq!(
+            Span::new(Range::new_simple(0, 1, 0, 3), "bc".to_owned()),
+            span
+        );
         assert_eq!(Position::new(0, 1), span.start());
         assert_eq!(Position::new(0, 3), span.end());
     }
@@ -183,7 +185,7 @@ mod tests {
         stream.next();
         let span = stream.end_span();
         assert_eq!(
-            Span::new(range::create(0, 1, 0, 3), "😃😄".to_owned()),
+            Span::new(Range::new_simple(0, 1, 0, 3), "😃😄".to_owned()),
             span
         );
     }
@@ -220,7 +222,7 @@ mod tests {
         let mut stream = CharStream::new("\\foo@bar");
         let span = stream.command();
         assert_eq!(
-            Span::new(range::create(0, 0, 0, 8), "\\foo@bar".to_owned()),
+            Span::new(Range::new_simple(0, 0, 0, 8), "\\foo@bar".to_owned()),
             span
         );
     }
@@ -230,7 +232,7 @@ mod tests {
         let mut stream = CharStream::new("\\foo*");
         let span = stream.command();
         assert_eq!(
-            Span::new(range::create(0, 0, 0, 5), "\\foo*".to_owned()),
+            Span::new(Range::new_simple(0, 0, 0, 5), "\\foo*".to_owned()),
             span
         );
     }
@@ -239,6 +241,9 @@ mod tests {
     fn test_command_escape() {
         let mut stream = CharStream::new("\\**");
         let span = stream.command();
-        assert_eq!(Span::new(range::create(0, 0, 0, 2), "\\*".to_owned()), span);
+        assert_eq!(
+            Span::new(Range::new_simple(0, 0, 0, 2), "\\*".to_owned()),
+            span
+        );
     }
 }
