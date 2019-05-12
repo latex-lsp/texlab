@@ -1,4 +1,6 @@
-use lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Uri};
+use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
+use crate::syntax::bibtex::{BibtexEntry, BibtexToken};
+use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
@@ -36,11 +38,7 @@ pub enum CompletionItemData {
     Class,
     EntryKind,
     FieldName,
-    Citation {
-        #[serde(with = "url_serde")]
-        uri: Uri,
-        key: String,
-    },
+    Citation,
     CommandSymbol,
     ArgumentSymbol,
 }
@@ -162,11 +160,18 @@ pub fn create_class(name: Cow<'static, str>) -> CompletionItem {
     }
 }
 
-pub fn create_citation(uri: Uri, key: String) -> CompletionItem {
+pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
+    let mut formatter = BibtexFormatter::new(BibtexFormattingOptions::new(2, true, 35));
+    formatter.format_entry(entry);
+    let markdown = format!("```bibtex\n{}\n```", formatter.output);
     CompletionItem {
-        label: Cow::from(key.clone()),
+        label: Cow::from(key.to_owned()),
         kind: Some(CompletionItemKind::Field),
-        data: Some(CompletionItemData::Citation { uri, key }.into()),
+        data: Some(CompletionItemData::Citation.into()),
+        documentation: Some(Documentation::MarkupContent(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: Cow::from(markdown),
+        })),
         ..CompletionItem::default()
     }
 }

@@ -21,10 +21,7 @@ impl LatexCitationCompletionProvider {
                         for declaration in &tree.root.children {
                             if let BibtexDeclaration::Entry(entry) = declaration {
                                 if let Some(key) = &entry.key {
-                                    items.push(factory::create_citation(
-                                        document.uri.clone(),
-                                        key.text().to_owned(),
-                                    ));
+                                    items.push(factory::create_citation(entry, key.text()));
                                 }
                             }
                         }

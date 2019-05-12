@@ -33,7 +33,7 @@ impl Default for BibtexFormattingOptions {
 pub struct BibtexFormatter {
     pub options: BibtexFormattingOptions,
     indent: String,
-    output: String,
+    pub output: String,
 }
 
 impl BibtexFormatter {
@@ -61,39 +61,45 @@ impl BibtexFormatter {
                 let text = comment.token.text();
                 self.output.push_str(text);
             }
-            BibtexDeclaration::Preamble(preamble) => {
-                self.format_token(&preamble.kind);
-                self.output.push('{');
-                if let Some(ref content) = preamble.content {
-                    self.format_content(content, self.output.chars().count());
-                    self.output.push('}');
-                }
+            BibtexDeclaration::Preamble(preamble) => self.format_preamble(preamble),
+            BibtexDeclaration::String(string) => self.format_string(string),
+            BibtexDeclaration::Entry(entry) => self.format_entry(entry),
+        }
+    }
+
+    pub fn format_preamble(&mut self, preamble: &BibtexPreamble) {
+        self.format_token(&preamble.kind);
+        self.output.push('{');
+        if let Some(ref content) = preamble.content {
+            self.format_content(content, self.output.chars().count());
+            self.output.push('}');
+        }
+    }
+
+    pub fn format_string(&mut self, string: &BibtexString) {
+        self.format_token(&string.kind);
+        self.output.push('{');
+        if let Some(ref name) = string.name {
+            self.output.push_str(name.text());
+            self.output.push_str(" = ");
+            if let Some(ref value) = string.value {
+                self.format_content(value, self.output.chars().count());
+                self.output.push('}');
             }
-            BibtexDeclaration::String(string) => {
-                self.format_token(&string.kind);
-                self.output.push('{');
-                if let Some(ref name) = string.name {
-                    self.output.push_str(name.text());
-                    self.output.push_str(" = ");
-                    if let Some(ref value) = string.value {
-                        self.format_content(value, self.output.chars().count());
-                        self.output.push('}');
-                    }
-                }
+        }
+    }
+
+    pub fn format_entry(&mut self, entry: &BibtexEntry) {
+        self.format_token(&entry.kind);
+        self.output.push('{');
+        if let Some(ref key) = entry.key {
+            self.output.push_str(key.text());
+            self.output.push(',');
+            self.output.push('\n');
+            for field in &entry.fields {
+                self.format_field(field);
             }
-            BibtexDeclaration::Entry(entry) => {
-                self.format_token(&entry.kind);
-                self.output.push('{');
-                if let Some(ref key) = entry.key {
-                    self.output.push_str(key.text());
-                    self.output.push(',');
-                    self.output.push('\n');
-                    for field in &entry.fields {
-                        self.format_field(field);
-                    }
-                    self.output.push('}');
-                }
-            }
+            self.output.push('}');
         }
     }
 

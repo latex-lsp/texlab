@@ -252,6 +252,10 @@ impl BibtexEntry {
             right,
         }
     }
+
+    pub fn is_comment(&self) -> bool {
+        self.kind.text().to_lowercase() == "@comment"
+    }
 }
 
 impl SyntaxNode for BibtexEntry {
