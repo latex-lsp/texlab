@@ -38,65 +38,65 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
     }
 
     fn preamble(&mut self) -> BibtexPreamble {
-        let kind = self.tokens.next().unwrap();
+        let ty = self.tokens.next().unwrap();
 
         let left = self.expect2(BibtexTokenKind::BeginBrace, BibtexTokenKind::BeginParen);
         if left.is_none() {
-            return BibtexPreamble::new(kind, None, None, None);
+            return BibtexPreamble::new(ty, None, None, None);
         }
 
         if !self.can_match_content() {
-            return BibtexPreamble::new(kind, left, None, None);
+            return BibtexPreamble::new(ty, left, None, None);
         }
         let content = self.content();
 
         let right = self.expect2(BibtexTokenKind::EndBrace, BibtexTokenKind::EndParen);
-        BibtexPreamble::new(kind, left, Some(content), right)
+        BibtexPreamble::new(ty, left, Some(content), right)
     }
 
     fn string(&mut self) -> BibtexString {
-        let kind = self.tokens.next().unwrap();
+        let ty = self.tokens.next().unwrap();
 
         let left = self.expect2(BibtexTokenKind::BeginBrace, BibtexTokenKind::BeginParen);
         if left.is_none() {
-            return BibtexString::new(kind, None, None, None, None, None);
+            return BibtexString::new(ty, None, None, None, None, None);
         }
 
         let name = self.expect1(BibtexTokenKind::Word);
         if name.is_none() {
-            return BibtexString::new(kind, left, None, None, None, None);
+            return BibtexString::new(ty, left, None, None, None, None);
         }
 
         let assign = self.expect1(BibtexTokenKind::Assign);
         if assign.is_none() {
-            return BibtexString::new(kind, left, name, None, None, None);
+            return BibtexString::new(ty, left, name, None, None, None);
         }
 
         if !self.can_match_content() {
-            return BibtexString::new(kind, left, name, assign, None, None);
+            return BibtexString::new(ty, left, name, assign, None, None);
         }
         let value = self.content();
 
         let right = self.expect2(BibtexTokenKind::EndBrace, BibtexTokenKind::EndParen);
-        BibtexString::new(kind, left, name, assign, Some(value), right)
+        BibtexString::new(ty, left, name, assign, Some(value), right)
     }
 
     fn entry(&mut self) -> BibtexEntry {
-        let kind = self.tokens.next().unwrap();
+        let ty = self.tokens.next().unwrap();
 
         let left = self.expect2(BibtexTokenKind::BeginBrace, BibtexTokenKind::BeginParen);
         if left.is_none() {
-            return BibtexEntry::new(kind, None, None, None, Vec::new(), None);
+            return BibtexEntry::new(ty, None, None, None, Vec::new(), None);
         }
 
         let name = self.expect1(BibtexTokenKind::Word);
         if name.is_none() {
-            return BibtexEntry::new(kind, left, None, None, Vec::new(), None);
+            return BibtexEntry::new(ty, left, None, None, Vec::new(), None);
         }
 
         let comma = self.expect1(BibtexTokenKind::Comma);
         if comma.is_none() {
-            return BibtexEntry::new(kind, left, name, None, Vec::new(), None);
+            return BibtexEntry::new(ty, left, name, None, Vec::new(), None);
         }
 
         let mut fields = Vec::new();
@@ -105,7 +105,7 @@ impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
         }
 
         let right = self.expect2(BibtexTokenKind::EndBrace, BibtexTokenKind::EndParen);
-        BibtexEntry::new(kind, left, name, comma, fields, right)
+        BibtexEntry::new(ty, left, name, comma, fields, right)
     }
 
     fn field(&mut self) -> BibtexField {

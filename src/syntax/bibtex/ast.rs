@@ -118,7 +118,7 @@ impl SyntaxNode for BibtexComment {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexPreamble {
     pub range: Range,
-    pub kind: BibtexToken,
+    pub ty: BibtexToken,
     pub left: Option<BibtexToken>,
     pub content: Option<BibtexContent>,
     pub right: Option<BibtexToken>,
@@ -126,7 +126,7 @@ pub struct BibtexPreamble {
 
 impl BibtexPreamble {
     pub fn new(
-        kind: BibtexToken,
+        ty: BibtexToken,
         left: Option<BibtexToken>,
         content: Option<BibtexContent>,
         right: Option<BibtexToken>,
@@ -138,11 +138,11 @@ impl BibtexPreamble {
         } else if let Some(ref left) = left {
             left.end()
         } else {
-            kind.end()
+            ty.end()
         };
         BibtexPreamble {
-            range: Range::new(kind.start(), end),
-            kind,
+            range: Range::new(ty.start(), end),
+            ty,
             left,
             content,
             right,
@@ -159,7 +159,7 @@ impl SyntaxNode for BibtexPreamble {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexString {
     pub range: Range,
-    pub kind: BibtexToken,
+    pub ty: BibtexToken,
     pub left: Option<BibtexToken>,
     pub name: Option<BibtexToken>,
     pub assign: Option<BibtexToken>,
@@ -169,7 +169,7 @@ pub struct BibtexString {
 
 impl BibtexString {
     pub fn new(
-        kind: BibtexToken,
+        ty: BibtexToken,
         left: Option<BibtexToken>,
         name: Option<BibtexToken>,
         assign: Option<BibtexToken>,
@@ -187,12 +187,12 @@ impl BibtexString {
         } else if let Some(ref left) = left {
             left.end()
         } else {
-            kind.end()
+            ty.end()
         };
 
         BibtexString {
-            range: Range::new(kind.start(), end),
-            kind,
+            range: Range::new(ty.start(), end),
+            ty,
             left,
             name,
             assign,
@@ -211,7 +211,7 @@ impl SyntaxNode for BibtexString {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexEntry {
     pub range: Range,
-    pub kind: BibtexToken,
+    pub ty: BibtexToken,
     pub left: Option<BibtexToken>,
     pub key: Option<BibtexToken>,
     pub comma: Option<BibtexToken>,
@@ -221,7 +221,7 @@ pub struct BibtexEntry {
 
 impl BibtexEntry {
     pub fn new(
-        kind: BibtexToken,
+        ty: BibtexToken,
         left: Option<BibtexToken>,
         key: Option<BibtexToken>,
         comma: Option<BibtexToken>,
@@ -239,12 +239,12 @@ impl BibtexEntry {
         } else if let Some(ref left) = left {
             left.end()
         } else {
-            kind.end()
+            ty.end()
         };
 
         BibtexEntry {
-            range: Range::new(kind.start(), end),
-            kind,
+            range: Range::new(ty.start(), end),
+            ty,
             left,
             key,
             comma,
@@ -254,7 +254,7 @@ impl BibtexEntry {
     }
 
     pub fn is_comment(&self) -> bool {
-        self.kind.text().to_lowercase() == "@comment"
+        self.ty.text().to_lowercase() == "@comment"
     }
 }
 

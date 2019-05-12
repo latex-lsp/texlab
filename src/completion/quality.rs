@@ -51,9 +51,9 @@ impl OrderByQualityCompletionProvider {
                 finder.visit_root(&tree.root);
                 match finder.results.pop()? {
                     BibtexNode::Root(_) => Some(""),
-                    BibtexNode::Preamble(preamble) => get_type_query(&preamble.kind, position),
-                    BibtexNode::String(string) => get_type_query(&string.kind, position),
-                    BibtexNode::Entry(entry) => get_type_query(&entry.kind, position),
+                    BibtexNode::Preamble(preamble) => get_type_query(&preamble.ty, position),
+                    BibtexNode::String(string) => get_type_query(&string.ty, position),
+                    BibtexNode::Entry(entry) => get_type_query(&entry.ty, position),
                     BibtexNode::Comment(comment) => Some(comment.token.text()),
                     BibtexNode::Field(field) => {
                         if field.name.range().contains(position) {

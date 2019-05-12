@@ -68,7 +68,7 @@ impl BibtexFormatter {
     }
 
     pub fn format_preamble(&mut self, preamble: &BibtexPreamble) {
-        self.format_token(&preamble.kind);
+        self.format_token(&preamble.ty);
         self.output.push('{');
         if let Some(ref content) = preamble.content {
             self.format_content(content, self.output.chars().count());
@@ -77,7 +77,7 @@ impl BibtexFormatter {
     }
 
     pub fn format_string(&mut self, string: &BibtexString) {
-        self.format_token(&string.kind);
+        self.format_token(&string.ty);
         self.output.push('{');
         if let Some(ref name) = string.name {
             self.output.push_str(name.text());
@@ -90,7 +90,7 @@ impl BibtexFormatter {
     }
 
     pub fn format_entry(&mut self, entry: &BibtexEntry) {
-        self.format_token(&entry.kind);
+        self.format_token(&entry.ty);
         self.output.push('{');
         if let Some(ref key) = entry.key {
             self.output.push_str(key.text());

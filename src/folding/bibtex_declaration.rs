@@ -18,9 +18,9 @@ impl BibtexDeclarationFoldingProvider {
     fn fold(declaration: &BibtexDeclaration) -> Option<FoldingRange> {
         let kind = match declaration {
             BibtexDeclaration::Comment(_) => None,
-            BibtexDeclaration::Preamble(preamble) => Some(&preamble.kind),
-            BibtexDeclaration::String(string) => Some(&string.kind),
-            BibtexDeclaration::Entry(entry) => Some(&entry.kind),
+            BibtexDeclaration::Preamble(preamble) => Some(&preamble.ty),
+            BibtexDeclaration::String(string) => Some(&string.ty),
+            BibtexDeclaration::Entry(entry) => Some(&entry.ty),
         }?;
 
         let right = match declaration {
