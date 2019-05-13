@@ -1,4 +1,5 @@
 use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
+use crate::metadata::bibtex_field::BibtexField;
 use crate::syntax::bibtex::{BibtexEntry, BibtexToken};
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
@@ -171,6 +172,19 @@ pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
         documentation: Some(Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
             value: Cow::from(markdown),
+        })),
+        ..CompletionItem::default()
+    }
+}
+
+pub fn create_field_name(field: &BibtexField) -> CompletionItem {
+    CompletionItem {
+        label: Cow::from(field.name),
+        kind: Some(CompletionItemKind::Field),
+        data: Some(CompletionItemData::FieldName.into()),
+        documentation: Some(Documentation::MarkupContent(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: Cow::from(field.documentation),
         })),
         ..CompletionItem::default()
     }
