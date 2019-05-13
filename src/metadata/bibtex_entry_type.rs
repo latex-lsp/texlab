@@ -4,13 +4,13 @@ pub struct BibtexEntryType {
 }
 
 pub fn get_documentation(name: &str) -> Option<&'static str> {
-    BIBTEX_TYPES
+    BIBTEX_ENTRY_TYPES
         .iter()
         .find(|ty| ty.name.to_lowercase() == name.to_lowercase())
         .and_then(|ty| ty.documentation)
 }
 
-static BIBTEX_TYPES: &'static [BibtexEntryType] = &[
+pub static BIBTEX_ENTRY_TYPES: &'static [BibtexEntryType] = &[
     BibtexEntryType {
         name: "preamble",
         documentation: None

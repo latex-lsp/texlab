@@ -1,4 +1,5 @@
 use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
+use crate::metadata::bibtex_entry_type::BibtexEntryType;
 use crate::metadata::bibtex_field::BibtexField;
 use crate::syntax::bibtex::{BibtexEntry, BibtexToken};
 use lsp_types::*;
@@ -37,7 +38,7 @@ pub enum CompletionItemData {
     ColorModel,
     Package,
     Class,
-    EntryKind,
+    EntryType,
     FieldName,
     Citation,
     CommandSymbol,
@@ -173,6 +174,21 @@ pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
             kind: MarkupKind::Markdown,
             value: Cow::from(markdown),
         })),
+        ..CompletionItem::default()
+    }
+}
+
+pub fn create_entry_type(ty: &BibtexEntryType) -> CompletionItem {
+    CompletionItem {
+        label: Cow::from(ty.name),
+        kind: Some(CompletionItemKind::Interface),
+        data: Some(CompletionItemData::EntryType.into()),
+        documentation: ty.documentation.map(|documentation| {
+            Documentation::MarkupContent(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: Cow::from(documentation),
+            })
+        }),
         ..CompletionItem::default()
     }
 }

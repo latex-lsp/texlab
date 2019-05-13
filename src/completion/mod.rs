@@ -3,6 +3,7 @@ mod factory;
 pub mod latex;
 mod quality;
 
+use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
 use self::bibtex::field_name::BibtexFieldNameCompletionProvider;
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
@@ -33,6 +34,7 @@ impl CompletionProvider {
             async move |_| {
                 concat_feature!(
                     &request,
+                    BibtexEntryTypeCompletionProvider,
                     BibtexFieldNameCompletionProvider,
                     LatexKernelEnvironmentCompletionProvider,
                     LatexPgfLibraryCompletionProvider,
