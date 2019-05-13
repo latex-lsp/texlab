@@ -1,5 +1,6 @@
 use crate::syntax::latex::{LatexIncludeAnalyzer, LatexVisitor};
-use crate::workspace::{Document, SyntaxTree};
+use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

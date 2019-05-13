@@ -1,7 +1,8 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::{Document, SyntaxTree};
+use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use lsp_types::{Location, TextDocumentPositionParams};
 
 pub struct LatexLabelDefinitionProvider;

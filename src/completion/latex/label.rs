@@ -2,7 +2,7 @@ use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 

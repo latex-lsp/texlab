@@ -2,7 +2,7 @@ use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexSyntaxTree};
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexSyntaxTree, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;

@@ -3,7 +3,7 @@ use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexEntry};
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexToken, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
 use std::borrow::Cow;
 

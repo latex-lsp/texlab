@@ -2,7 +2,7 @@ use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
 
 pub struct BibtexEntryReferenceProvider;

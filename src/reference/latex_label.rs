@@ -1,6 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::{LatexLabelAnalyzer, LatexLabelKind, LatexVisitor};
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
 
 pub struct LatexLabelReferenceProvider;

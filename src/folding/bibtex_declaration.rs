@@ -1,7 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
 pub struct BibtexDeclarationFoldingProvider;

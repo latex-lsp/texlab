@@ -3,7 +3,7 @@ use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::CITATION_COMMANDS;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 
 pub struct LatexCitationCompletionProvider;

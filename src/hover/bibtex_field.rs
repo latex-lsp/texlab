@@ -1,7 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::metadata::bibtex_field;
 use crate::syntax::bibtex::*;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::*;
 use std::borrow::Cow;
 

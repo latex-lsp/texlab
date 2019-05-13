@@ -1,7 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
 use std::borrow::Cow;
 use std::collections::HashMap;

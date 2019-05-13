@@ -2,7 +2,8 @@ use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::*;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::{Document, SyntaxTree};
+use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 
 pub struct OrderByQualityCompletionProvider;

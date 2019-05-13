@@ -4,7 +4,7 @@ use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::{LatexCommandAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;

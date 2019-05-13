@@ -1,7 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::SyntaxTree;
+use crate::syntax::SyntaxTree;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, TextDocumentPositionParams};
 
 pub struct LatexLabelHighlightProvider;

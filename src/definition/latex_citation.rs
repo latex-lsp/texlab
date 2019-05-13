@@ -2,7 +2,8 @@ use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
-use crate::workspace::{Document, SyntaxTree};
+use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use lsp_types::{Location, TextDocumentPositionParams};
 
 pub struct LatexCitationDefinitionProvider;
