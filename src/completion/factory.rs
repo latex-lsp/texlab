@@ -1,6 +1,6 @@
+use crate::data::bibtex_entry_type::BibtexEntryType;
+use crate::data::bibtex_field::BibtexField;
 use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
-use crate::metadata::bibtex_entry_type::BibtexEntryType;
-use crate::metadata::bibtex_field::BibtexField;
 use crate::syntax::bibtex::{BibtexEntry, BibtexToken};
 use lsp_types::*;
 use serde::{Deserialize, Serialize};

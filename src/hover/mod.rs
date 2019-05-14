@@ -1,10 +1,12 @@
 mod bibtex_entry_type;
 mod bibtex_field;
 mod latex_citation;
+mod latex_component;
 
 use self::bibtex_entry_type::BibtexEntryTypeHoverProvider;
 use self::bibtex_field::BibtexFieldHoverProvider;
 use self::latex_citation::LatexCitationHoverProvider;
+use self::latex_component::LatexComponentHoverProvider;
 use crate::choice_feature;
 use crate::feature::FeatureRequest;
 use lsp_types::{Hover, TextDocumentPositionParams};
@@ -17,7 +19,8 @@ impl HoverProvider {
             &request,
             BibtexEntryTypeHoverProvider,
             BibtexFieldHoverProvider,
-            LatexCitationHoverProvider
+            LatexCitationHoverProvider,
+            LatexComponentHoverProvider
         )
     }
 }

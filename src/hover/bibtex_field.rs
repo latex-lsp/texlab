@@ -1,5 +1,5 @@
+use crate::data::bibtex_field;
 use crate::feature::FeatureRequest;
-use crate::metadata::bibtex_field;
 use crate::syntax::bibtex::*;
 use crate::syntax::SyntaxTree;
 use lsp_types::*;

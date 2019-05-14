@@ -1,5 +1,5 @@
+use crate::data::bibtex_entry_type;
 use crate::feature::FeatureRequest;
-use crate::metadata::bibtex_entry_type;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;

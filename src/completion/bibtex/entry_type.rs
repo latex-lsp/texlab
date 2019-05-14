@@ -1,6 +1,6 @@
 use crate::completion::factory;
+use crate::data::bibtex_entry_type::BIBTEX_ENTRY_TYPES;
 use crate::feature::FeatureRequest;
-use crate::metadata::bibtex_entry_type::BIBTEX_ENTRY_TYPES;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;

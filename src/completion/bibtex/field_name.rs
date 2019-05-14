@@ -1,6 +1,6 @@
 use crate::completion::factory;
+use crate::data::bibtex_field::BIBTEX_FIELDS;
 use crate::feature::FeatureRequest;
-use crate::metadata::bibtex_field::BIBTEX_FIELDS;
 use crate::syntax::bibtex::{BibtexFinder, BibtexNode, BibtexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
