@@ -191,6 +191,16 @@ pub fn create_command_symbol(
     }
 }
 
+pub fn create_argument_symbol(name: &'static str, image: &str) -> CompletionItem {
+    CompletionItem {
+        label: Cow::from(name),
+        kind: Some(CompletionItemKind::Field),
+        data: Some(CompletionItemData::ArgumentSymbol.into()),
+        documentation: Some(Documentation::MarkupContent(create_image(name, image))),
+        ..CompletionItem::default()
+    }
+}
+
 fn create_image(name: &str, image: &str) -> MarkupContent {
     return MarkupContent {
         kind: MarkupKind::Markdown,
@@ -200,43 +210,6 @@ fn create_image(name: &str, image: &str) -> MarkupContent {
         )),
     };
 }
-
-/*
-export function createCommandSymbol(
-  name: string,
-  component: string | undefined,
-  image: string,
-): CompletionItem {
-  const detail = getDetail(component);
-  return {
-    label: name,
-    detail,
-    kind: LspCompletionItemKind.Function,
-    data: { kind: CompletionItemKind.CommandSymbol },
-    documentation: createImage(name, image),
-  };
-}
-
-export function createArgumentSymbol(
-  name: string,
-  image: string,
-): CompletionItem {
-  return {
-    label: name,
-    kind: LspCompletionItemKind.Field,
-    data: { kind: CompletionItemKind.ArgumentSymbol },
-    documentation: createImage(name, image),
-  };
-}
-
-function createImage(name: string, image: string): MarkupContent {
-  return {
-    kind: MarkupKind.Markdown,
-    value: `![${name}](data:image/png;base64,${image}|width=48,height=48)`,
-  };
-}
-
-*/
 
 pub fn create_entry_type(ty: &'static BibtexEntryType) -> CompletionItem {
     CompletionItem {

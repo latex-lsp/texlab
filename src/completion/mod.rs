@@ -6,6 +6,7 @@ mod quality;
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
 use self::bibtex::field_name::BibtexFieldNameCompletionProvider;
 use self::bibtex::kernel_command::BibtexKernelCommandCompletionProvider;
+use self::latex::argument_symbol::LatexArgumentSymbolCompletionProvider;
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
@@ -40,6 +41,7 @@ impl CompletionProvider {
                     BibtexFieldNameCompletionProvider,
                     BibtexKernelCommandCompletionProvider,
                     LatexKernelEnvironmentCompletionProvider,
+                    LatexArgumentSymbolCompletionProvider,
                     LatexPgfLibraryCompletionProvider,
                     LatexTikzLibraryCompletionProvider,
                     LatexColorCompletionProvider,
