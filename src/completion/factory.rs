@@ -1,7 +1,7 @@
 use crate::data::bibtex_entry_type::BibtexEntryType;
 use crate::data::bibtex_field::BibtexField;
 use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
-use crate::syntax::bibtex::{BibtexEntry, BibtexToken};
+use crate::syntax::bibtex::BibtexEntry;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -178,12 +178,12 @@ pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
     }
 }
 
-pub fn create_entry_type(ty: &BibtexEntryType) -> CompletionItem {
+pub fn create_entry_type(ty: &'static BibtexEntryType) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(ty.name),
+        label: Cow::from(&ty.name),
         kind: Some(CompletionItemKind::Interface),
         data: Some(CompletionItemData::EntryType.into()),
-        documentation: ty.documentation.map(|documentation| {
+        documentation: ty.documentation.as_ref().map(|documentation| {
             Documentation::MarkupContent(MarkupContent {
                 kind: MarkupKind::Markdown,
                 value: Cow::from(documentation),
@@ -193,14 +193,14 @@ pub fn create_entry_type(ty: &BibtexEntryType) -> CompletionItem {
     }
 }
 
-pub fn create_field_name(field: &BibtexField) -> CompletionItem {
+pub fn create_field_name(field: &'static BibtexField) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(field.name),
+        label: Cow::from(&field.name),
         kind: Some(CompletionItemKind::Field),
         data: Some(CompletionItemData::FieldName.into()),
         documentation: Some(Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(field.documentation),
+            value: Cow::from(&field.documentation),
         })),
         ..CompletionItem::default()
     }

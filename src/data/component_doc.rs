@@ -1,6 +1,5 @@
-use futures::{stream, Future, Stream};
 use lsp_types::{MarkupContent, MarkupKind, Uri};
-use reqwest::{Client, Response};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
