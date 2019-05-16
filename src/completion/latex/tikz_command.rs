@@ -10,7 +10,7 @@ pub struct LatexTikzCommandCompletionProvider;
 impl LatexTikzCommandCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
         await!(LatexCombinators::command(request, async move |_| {
-            let id = LatexComponentId::User(vec!["tikz.sty".to_owned()]);
+            let id = LatexComponentId::User(vec![Cow::from("tikz.sty")]);
             if request
                 .component_database
                 .related_components(&request.related_documents)

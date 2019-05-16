@@ -3,6 +3,7 @@ pub mod citation;
 pub mod color;
 pub mod color_model;
 mod combinators;
+pub mod command_symbol;
 pub mod data;
 pub mod include;
 pub mod kernel_command;

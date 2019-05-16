@@ -11,7 +11,7 @@ use std::path::Path;
 pub enum LatexComponentId {
     Kernel,
     Unknown,
-    User(Vec<String>),
+    User(Vec<Cow<'static, str>>),
 }
 
 impl LatexComponentId {
@@ -177,6 +177,66 @@ pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
         ..CompletionItem::default()
     }
 }
+
+pub fn create_command_symbol(
+    name: &'static str,
+    component: &LatexComponentId,
+    image: &str,
+) -> CompletionItem {
+    CompletionItem {
+        kind: Some(CompletionItemKind::Function),
+        data: Some(CompletionItemData::CommandSymbol.into()),
+        documentation: Some(Documentation::MarkupContent(create_image(name, image))),
+        ..CompletionItem::new_simple(Cow::from(name), component.detail())
+    }
+}
+
+fn create_image(name: &str, image: &str) -> MarkupContent {
+    return MarkupContent {
+        kind: MarkupKind::Markdown,
+        value: Cow::from(format!(
+            "![{}](data:image/png;base64,{}|width=48,height=48)",
+            name, image
+        )),
+    };
+}
+
+/*
+export function createCommandSymbol(
+  name: string,
+  component: string | undefined,
+  image: string,
+): CompletionItem {
+  const detail = getDetail(component);
+  return {
+    label: name,
+    detail,
+    kind: LspCompletionItemKind.Function,
+    data: { kind: CompletionItemKind.CommandSymbol },
+    documentation: createImage(name, image),
+  };
+}
+
+export function createArgumentSymbol(
+  name: string,
+  image: string,
+): CompletionItem {
+  return {
+    label: name,
+    kind: LspCompletionItemKind.Field,
+    data: { kind: CompletionItemKind.ArgumentSymbol },
+    documentation: createImage(name, image),
+  };
+}
+
+function createImage(name: string, image: string): MarkupContent {
+  return {
+    kind: MarkupKind.Markdown,
+    value: `![${name}](data:image/png;base64,${image}|width=48,height=48)`,
+  };
+}
+
+*/
 
 pub fn create_entry_type(ty: &'static BibtexEntryType) -> CompletionItem {
     CompletionItem {
