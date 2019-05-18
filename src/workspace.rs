@@ -74,7 +74,6 @@ impl Workspace {
         let mut path = uri.to_file_path().ok()?;
         path.pop();
         path.push(include.path().text());
-        path = PathBuf::from(path.to_string_lossy().replace("\\", "/"));
         path = path.clean();
         let path1 = path.to_string_lossy().into_owned();
 
