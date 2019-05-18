@@ -2,22 +2,21 @@ use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
 use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::sync::Arc;
 
 pub struct LatexCombinators;
 
 impl LatexCombinators {
-    pub async fn command<'a, E, F>(
-        request: &'a FeatureRequest<CompletionParams>,
+    pub async fn command<E, F>(
+        request: &FeatureRequest<CompletionParams>,
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(&'a LatexCommand) -> F,
+        E: Fn(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut finder = LatexCommandFinder::new(request.params.position);
-            finder.visit_root(&tree.root);
-            if let Some(command) = finder.result {
+            if let Some(command) = tree.find_command(request.params.position) {
                 return await!(execute(command));
             }
         }
@@ -31,15 +30,15 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(&'a LatexCommand) -> F,
+        E: Fn(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
-        let find_command = |nodes: &[LatexNode<'a>], node_index: usize| {
-            if let LatexNode::Group(group) = nodes[node_index] {
-                if let LatexNode::Command(command) = nodes[node_index + 1] {
+        let find_command = |nodes: &[LatexNode], node_index: usize| {
+            if let LatexNode::Group(group) = &nodes[node_index] {
+                if let LatexNode::Command(command) = nodes[node_index + 1].clone() {
                     if command_names.contains(&command.name.text())
                         && command.args.len() > argument_index
-                        && command.args[argument_index] == *group
+                        && &command.args[argument_index] == group
                     {
                         return Some(command);
                     }
@@ -48,7 +47,7 @@ impl LatexCombinators {
             None
         };
 
-        let find_non_empty_command = |nodes: &[LatexNode<'a>]| {
+        let find_non_empty_command = |nodes: &[LatexNode]| {
             if nodes.len() >= 3 {
                 if let LatexNode::Text(_) = nodes[0] {
                     return find_command(nodes, 1);
@@ -57,7 +56,7 @@ impl LatexCombinators {
             None
         };
 
-        let find_empty_command = |nodes: &[LatexNode<'a>]| {
+        let find_empty_command = |nodes: &[LatexNode]| {
             if nodes.len() >= 2 {
                 find_command(nodes, 0)
             } else {
@@ -66,9 +65,7 @@ impl LatexCombinators {
         };
 
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut finder = LatexFinder::new(request.params.position);
-            finder.visit_root(&tree.root);
-            let mut nodes = finder.results;
+            let mut nodes = tree.find(request.params.position);
             nodes.reverse();
 
             let command = find_non_empty_command(&nodes).or_else(|| find_empty_command(&nodes));
@@ -78,7 +75,7 @@ impl LatexCombinators {
                     .range
                     .contains_exclusive(request.params.position)
                 {
-                    return await!(execute(command));
+                    return await!(execute(Arc::clone(&command)));
                 }
             }
         }
@@ -90,7 +87,7 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(&LatexCommand) -> F,
+        E: Fn(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         await!(Self::argument(&request, &ENVIRONMENT_COMMANDS, 0, execute))

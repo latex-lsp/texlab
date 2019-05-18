@@ -1,48 +1,29 @@
 use crate::syntax::latex::ast::*;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexCitation<'a> {
-    pub command: &'a LatexCommand,
-    pub key: &'a LatexToken,
+pub struct LatexCitation {
+    pub command: Arc<LatexCommand>,
 }
 
-impl<'a> LatexCitation<'a> {
-    pub fn new(command: &'a LatexCommand, key: &'a LatexToken) -> Self {
-        LatexCitation { command, key }
-    }
-}
-
-pub struct LatexCitationAnalyzer<'a> {
-    pub citations: Vec<LatexCitation<'a>>,
-}
-
-impl<'a> LatexCitationAnalyzer<'a> {
-    pub fn new() -> Self {
-        LatexCitationAnalyzer {
-            citations: Vec::new(),
-        }
-    }
-}
-
-impl<'a> LatexVisitor<'a> for LatexCitationAnalyzer<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
-        LatexWalker::walk_root(self, root);
+impl LatexCitation {
+    pub fn new(command: Arc<LatexCommand>) -> LatexCitation {
+        LatexCitation { command }
     }
 
-    fn visit_group(&mut self, group: &'a LatexGroup) {
-        LatexWalker::walk_group(self, group);
+    pub fn key(&self) -> &LatexToken {
+        self.command.extract_word(0).unwrap()
     }
 
-    fn visit_command(&mut self, command: &'a LatexCommand) {
-        if CITATION_COMMANDS.contains(&command.name.text()) {
-            if let Some(key) = command.extract_word(0) {
-                self.citations.push(LatexCitation::new(command, key));
+    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut citations = Vec::new();
+        for command in commands {
+            if CITATION_COMMANDS.contains(&command.name.text()) && command.has_word(0) {
+                citations.push(LatexCitation::new(Arc::clone(&command)));
             }
         }
-        LatexWalker::walk_command(self, command);
+        citations
     }
-
-    fn visit_text(&mut self, text: &'a LatexText) {}
 }
 
 pub const CITATION_COMMANDS: &'static [&'static str] = &[
@@ -106,17 +87,14 @@ pub const CITATION_COMMANDS: &'static [&'static str] = &[
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::syntax::latex::LatexSyntaxTree;
 
     fn verify(text: &str, expected: Vec<&str>) {
         let tree = LatexSyntaxTree::from(text);
-        let mut analyzer = LatexCitationAnalyzer::new();
-        analyzer.visit_root(&tree.root);
-        let actual: Vec<&str> = analyzer
+        let actual: Vec<&str> = tree
             .citations
             .iter()
-            .map(|citation| citation.key.text())
+            .map(|citation| citation.key().text())
             .collect();
         assert_eq!(expected, actual);
     }

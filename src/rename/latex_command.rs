@@ -14,9 +14,7 @@ impl LatexCommandRenameProvider {
         let mut changes = HashMap::new();
         for document in &request.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                let mut analyzer = LatexCommandAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                let edits: Vec<TextEdit> = analyzer
+                let edits: Vec<TextEdit> = tree
                     .commands
                     .iter()
                     .filter(|command| command.name.text() == name)
@@ -35,10 +33,7 @@ impl LatexCommandRenameProvider {
 
     fn find_command(request: &FeatureRequest<RenameParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexCommandAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .commands
+            tree.commands
                 .iter()
                 .find(|command| command.name.range().contains(request.params.position))
                 .map(|command| command.name.text())

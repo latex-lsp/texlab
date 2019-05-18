@@ -2,7 +2,6 @@ use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexCommandAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use itertools::Itertools;
@@ -19,9 +18,7 @@ impl LatexUserCommandCompletionProvider {
                 let mut items = Vec::new();
                 for document in &request.related_documents {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        let mut analyzer = LatexCommandAnalyzer::new();
-                        analyzer.visit_root(&tree.root);
-                        analyzer
+                        tree
                             .commands
                             .iter()
                             .filter(|command| command.range() != current_command.range())

@@ -1,20 +1,22 @@
 use crate::syntax::latex::ast::*;
 use crate::syntax::text::SyntaxNode;
 use lsp_types::Position;
+use std::sync::Arc;
 
-pub enum LatexNode<'a> {
-    Root(&'a LatexRoot),
-    Group(&'a LatexGroup),
-    Command(&'a LatexCommand),
-    Text(&'a LatexText),
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum LatexNode {
+    Root(Arc<LatexRoot>),
+    Group(Arc<LatexGroup>),
+    Command(Arc<LatexCommand>),
+    Text(Arc<LatexText>),
 }
 
-pub struct LatexFinder<'a> {
+pub struct LatexFinder {
     pub position: Position,
-    pub results: Vec<LatexNode<'a>>,
+    pub results: Vec<LatexNode>,
 }
 
-impl<'a> LatexFinder<'a> {
+impl LatexFinder {
     pub fn new(position: Position) -> Self {
         LatexFinder {
             position,
@@ -23,74 +25,31 @@ impl<'a> LatexFinder<'a> {
     }
 }
 
-impl<'a> LatexVisitor<'a> for LatexFinder<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
+impl LatexVisitor for LatexFinder {
+    fn visit_root(&mut self, root: Arc<LatexRoot>) {
         if root.range().contains(self.position) {
-            self.results.push(LatexNode::Root(root));
+            self.results.push(LatexNode::Root(Arc::clone(&root)));
             LatexWalker::walk_root(self, root);
         }
     }
 
-    fn visit_group(&mut self, group: &'a LatexGroup) {
+    fn visit_group(&mut self, group: Arc<LatexGroup>) {
         if group.range.contains(self.position) {
-            self.results.push(LatexNode::Group(group));
+            self.results.push(LatexNode::Group(Arc::clone(&group)));
             LatexWalker::walk_group(self, group);
         }
     }
 
-    fn visit_command(&mut self, command: &'a LatexCommand) {
+    fn visit_command(&mut self, command: Arc<LatexCommand>) {
         if command.range.contains(self.position) {
-            self.results.push(LatexNode::Command(command));
+            self.results.push(LatexNode::Command(Arc::clone(&command)));
             LatexWalker::walk_command(self, command);
         }
     }
 
-    fn visit_text(&mut self, text: &'a LatexText) {
+    fn visit_text(&mut self, text: Arc<LatexText>) {
         if text.range.contains(self.position) {
             self.results.push(LatexNode::Text(text));
         }
     }
-}
-
-pub struct LatexCommandFinder<'a> {
-    position: Position,
-    pub result: Option<&'a LatexCommand>,
-}
-
-impl<'a> LatexCommandFinder<'a> {
-    pub fn new(position: Position) -> Self {
-        LatexCommandFinder {
-            position,
-            result: None,
-        }
-    }
-}
-
-impl<'a> LatexVisitor<'a> for LatexCommandFinder<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
-        if root.range().contains(self.position) {
-            LatexWalker::walk_root(self, root);
-        }
-    }
-
-    fn visit_group(&mut self, group: &'a LatexGroup) {
-        if group.range.contains(self.position) {
-            LatexWalker::walk_group(self, group);
-        }
-    }
-
-    fn visit_command(&mut self, command: &'a LatexCommand) {
-        if command.name.range().contains(self.position)
-            && command.name.start().character != self.position.character
-        {
-            self.result = Some(command);
-            return;
-        }
-
-        if command.range.contains(self.position) {
-            LatexWalker::walk_command(self, command);
-        }
-    }
-
-    fn visit_text(&mut self, text: &'a LatexText) {}
 }

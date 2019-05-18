@@ -1,7 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexEntry};
-use crate::syntax::latex::{LatexCitationAnalyzer, LatexToken, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
@@ -47,15 +46,11 @@ impl LatexCitationHoverProvider {
 
     fn get_key(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
         match &request.document.tree {
-            SyntaxTree::Latex(tree) => {
-                let mut analyzer = LatexCitationAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                analyzer
-                    .citations
-                    .iter()
-                    .find(|citation| citation.command.range.contains(request.params.position))
-                    .map(|citation| citation.key.text())
-            }
+            SyntaxTree::Latex(tree) => tree
+                .citations
+                .iter()
+                .find(|citation| citation.command.range.contains(request.params.position))
+                .map(|citation| citation.key().text()),
             SyntaxTree::Bibtex(tree) => {
                 for declaration in &tree.root.children {
                     if let BibtexDeclaration::Entry(entry) = &declaration {

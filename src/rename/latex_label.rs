@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexLabelAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
@@ -14,15 +13,13 @@ impl LatexLabelRenameProvider {
         let mut changes = HashMap::new();
         for document in &request.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                let mut analyzer = LatexLabelAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                let edits = analyzer
+                let edits = tree
                     .labels
                     .iter()
-                    .filter(|label| label.name.text() == name)
+                    .filter(|label| label.name().text() == name)
                     .map(|label| {
                         TextEdit::new(
-                            label.name.range(),
+                            label.name().range(),
                             Cow::from(request.params.new_name.clone()),
                         )
                     })
@@ -35,13 +32,10 @@ impl LatexLabelRenameProvider {
 
     fn find_label(request: &FeatureRequest<RenameParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexLabelAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .labels
+            tree.labels
                 .iter()
-                .find(|label| label.name.range().contains(request.params.position))
-                .map(|label| label.name.text())
+                .find(|label| label.name().range().contains(request.params.position))
+                .map(|label| label.name().text())
         } else {
             None
         }

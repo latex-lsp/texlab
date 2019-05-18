@@ -1,72 +1,44 @@
 use crate::syntax::latex::ast::*;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexEquation<'a> {
-    pub left: &'a LatexCommand,
-    pub right: &'a LatexCommand,
+pub struct LatexEquation {
+    pub left: Arc<LatexCommand>,
+    pub right: Arc<LatexCommand>,
 }
 
-impl<'a> LatexEquation<'a> {
-    pub fn new(left: &'a LatexCommand, right: &'a LatexCommand) -> Self {
+impl LatexEquation {
+    pub fn new(left: Arc<LatexCommand>, right: Arc<LatexCommand>) -> Self {
         LatexEquation { left, right }
     }
-}
 
-pub struct LatexEquationAnalyzer<'a> {
-    pub equations: Vec<LatexEquation<'a>>,
-    left: Option<&'a LatexCommand>,
-}
-
-impl<'a> LatexEquationAnalyzer<'a> {
-    pub fn new() -> Self {
-        LatexEquationAnalyzer {
-            equations: Vec::new(),
-            left: None,
+    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut equations = Vec::new();
+        let mut left = None;
+        for command in commands {
+            if command.name.text() == EQUATION_COMMANDS[0] {
+                left = Some(command);
+            } else if let Some(begin) = left {
+                equations.push(LatexEquation::new(Arc::clone(&begin), Arc::clone(&command)));
+                left = None;
+            }
         }
+        equations
     }
-}
-
-impl<'a> LatexVisitor<'a> for LatexEquationAnalyzer<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
-        LatexWalker::walk_root(self, root);
-    }
-
-    fn visit_group(&mut self, group: &'a LatexGroup) {
-        LatexWalker::walk_group(self, group);
-    }
-
-    fn visit_command(&mut self, command: &'a LatexCommand) {
-        if command.name.text() == EQUATION_COMMANDS[0] {
-            self.left = Some(command);
-        } else if let Some(left) = self.left {
-            self.equations.push(LatexEquation::new(left, command));
-            self.left = None;
-        }
-        LatexWalker::walk_command(self, command);
-    }
-
-    fn visit_text(&mut self, text: &'a LatexText) {}
 }
 
 pub const EQUATION_COMMANDS: &'static [&'static str] = &["\\[", "\\]"];
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::syntax::latex::LatexSyntaxTree;
     use crate::syntax::text::SyntaxNode;
     use lsp_types::Range;
 
-    fn analyze(tree: &LatexSyntaxTree) -> Vec<LatexEquation> {
-        let mut analyzer = LatexEquationAnalyzer::new();
-        analyzer.visit_root(&tree.root);
-        analyzer.equations
-    }
-
     #[test]
     fn test_matched() {
         let tree = LatexSyntaxTree::from("\\[ foo \\]");
-        let equations = analyze(&tree);
+        let equations = tree.equations;
         assert_eq!(1, equations.len());
         assert_eq!(Range::new_simple(0, 0, 0, 2), equations[0].left.range());
         assert_eq!(Range::new_simple(0, 7, 0, 9), equations[0].right.range());
@@ -75,6 +47,6 @@ mod tests {
     #[test]
     fn test_unmatched() {
         let tree = LatexSyntaxTree::from("\\] \\[");
-        assert_eq!(analyze(&tree), Vec::new());
+        assert_eq!(tree.equations, Vec::new());
     }
 }

@@ -1,5 +1,5 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexLabelAnalyzer, LatexLabelKind, LatexVisitor};
+use crate::syntax::latex::LatexLabelKind;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
 
@@ -11,13 +11,10 @@ impl LatexLabelReferenceProvider {
         if let Some(definition) = Self::find_definition(request) {
             for document in &request.related_documents {
                 if let SyntaxTree::Latex(tree) = &document.tree {
-                    let mut analyzer = LatexLabelAnalyzer::new();
-                    analyzer.visit_root(&tree.root);
-                    analyzer
-                        .labels
+                    tree.labels
                         .iter()
-                        .filter(|label| label.kind == LatexLabelKind::Reference)
-                        .filter(|label| label.name.text() == definition)
+                        .filter(|label| label.kind() == LatexLabelKind::Reference)
+                        .filter(|label| label.name().text() == definition)
                         .map(|label| Location::new(document.uri.clone(), label.command.range))
                         .for_each(|location| references.push(location))
                 }
@@ -28,16 +25,13 @@ impl LatexLabelReferenceProvider {
 
     fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexLabelAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .labels
+            tree.labels
                 .iter()
                 .find(|label| {
-                    label.kind == LatexLabelKind::Definition
+                    label.kind() == LatexLabelKind::Definition
                         && label.command.range.contains(request.params.position)
                 })
-                .map(|label| label.name.text())
+                .map(|label| label.name().text())
         } else {
             None
         }

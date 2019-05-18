@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
@@ -10,9 +9,7 @@ impl LatexEnvironmentFoldingProvider {
     pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexEnvironmentAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            for environment in &analyzer.environments {
+            for environment in &tree.environments {
                 let start = environment.left.command.end();
                 let end = environment.right.command.start();
                 foldings.push(FoldingRange {

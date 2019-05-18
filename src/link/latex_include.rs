@@ -9,10 +9,8 @@ pub struct LatexIncludeLinkProvider;
 impl LatexIncludeLinkProvider {
     pub async fn execute(request: &FeatureRequest<DocumentLinkParams>) -> Vec<DocumentLink> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexIncludeAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            return analyzer
-                .included_files
+            return tree
+                .includes
                 .iter()
                 .flat_map(|include| Self::resolve(&request, &include))
                 .collect();
@@ -26,9 +24,9 @@ impl LatexIncludeLinkProvider {
     ) -> Option<DocumentLink> {
         request
             .workspace
-            .resolve_document(&request.document.uri, include.path.text())
+            .resolve_document(&request.document.uri, include.path().text())
             .map(|target| DocumentLink {
-                range: include.path.range(),
+                range: include.path().range(),
                 target: target.uri.clone(),
             })
     }

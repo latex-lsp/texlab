@@ -1,4 +1,3 @@
-use crate::syntax::latex::{LatexIncludeAnalyzer, LatexVisitor};
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
 use itertools::Itertools;
@@ -29,10 +28,7 @@ impl LatexComponentDatabase {
         let mut start_components = Vec::new();
         for document in documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                let mut analyzer = LatexIncludeAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                analyzer
-                    .included_components
+                tree.components
                     .iter()
                     .flat_map(|file| self.find(&file))
                     .for_each(|component| start_components.push(component))

@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexSectionAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
@@ -10,9 +9,7 @@ impl LatexSectionFoldingProvider {
     pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexSectionAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            let sections = analyzer.sections;
+            let sections = &tree.sections;
             for i in 0..sections.len() {
                 let current = &sections[i];
                 let mut next = None;
@@ -24,14 +21,16 @@ impl LatexSectionFoldingProvider {
                 }
 
                 if let Some(next) = next {
-                    let folding = FoldingRange {
-                        start_line: current.command.end().line,
-                        start_character: Some(current.command.end().character),
-                        end_line: next.command.start().line - 1,
-                        end_character: Some(0),
-                        kind: Some(FoldingRangeKind::Region),
-                    };
-                    foldings.push(folding);
+                    if next.command.start().line > 0 {
+                        let folding = FoldingRange {
+                            start_line: current.command.end().line,
+                            start_character: Some(current.command.end().character),
+                            end_line: next.command.start().line - 1,
+                            end_character: Some(0),
+                            kind: Some(FoldingRangeKind::Region),
+                        };
+                        foldings.push(folding);
+                    }
                 }
             }
         }

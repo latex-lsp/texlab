@@ -1,6 +1,5 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
-use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
@@ -37,13 +36,11 @@ impl LatexCitationDefinitionProvider {
 
     fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexCitationAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .citations
+            tree.citations
                 .iter()
-                .find(|citation| citation.key.range().contains(request.params.position))
-                .map(|citation| citation.key.text())
+                .map(|citation| citation.key())
+                .find(|key| key.range().contains(request.params.position))
+                .map(|key| key.text())
         } else {
             None
         }

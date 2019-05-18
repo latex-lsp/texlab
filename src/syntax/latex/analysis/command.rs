@@ -1,10 +1,11 @@
 use crate::syntax::latex::ast::*;
+use std::sync::Arc;
 
-pub struct LatexCommandAnalyzer<'a> {
-    pub commands: Vec<&'a LatexCommand>,
+pub struct LatexCommandAnalyzer {
+    pub commands: Vec<Arc<LatexCommand>>,
 }
 
-impl<'a> LatexCommandAnalyzer<'a> {
+impl LatexCommandAnalyzer {
     pub fn new() -> Self {
         LatexCommandAnalyzer {
             commands: Vec::new(),
@@ -12,34 +13,31 @@ impl<'a> LatexCommandAnalyzer<'a> {
     }
 }
 
-impl<'a> LatexVisitor<'a> for LatexCommandAnalyzer<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
+impl LatexVisitor for LatexCommandAnalyzer {
+    fn visit_root(&mut self, root: Arc<LatexRoot>) {
         LatexWalker::walk_root(self, root);
     }
 
-    fn visit_group(&mut self, group: &'a LatexGroup) {
+    fn visit_group(&mut self, group: Arc<LatexGroup>) {
         LatexWalker::walk_group(self, group);
     }
 
-    fn visit_command(&mut self, command: &'a LatexCommand) {
-        self.commands.push(command);
+    fn visit_command(&mut self, command: Arc<LatexCommand>) {
+        self.commands.push(Arc::clone(&command));
         LatexWalker::walk_command(self, command);
     }
 
-    fn visit_text(&mut self, text: &'a LatexText) {}
+    fn visit_text(&mut self, _text: Arc<LatexText>) {}
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::syntax::latex::LatexSyntaxTree;
 
     #[test]
     fn test() {
         let tree = LatexSyntaxTree::from("\\a[\\b]{\\c}{d}");
-        let mut analyzer = LatexCommandAnalyzer::new();
-        analyzer.visit_root(&tree.root);
-        let commands: Vec<&str> = analyzer
+        let commands: Vec<&str> = tree
             .commands
             .iter()
             .map(|command| command.name.text())

@@ -1,5 +1,6 @@
 use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexTokenKind {
@@ -60,17 +61,17 @@ impl SyntaxNode for LatexRoot {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexContent {
-    Group(Box<LatexGroup>),
-    Command(Box<LatexCommand>),
-    Text(Box<LatexText>),
+    Group(Arc<LatexGroup>),
+    Command(Arc<LatexCommand>),
+    Text(Arc<LatexText>),
 }
 
 impl LatexContent {
-    pub fn accept<'a>(&'a self, visitor: &mut LatexVisitor<'a>) {
+    pub fn accept(&self, visitor: &mut LatexVisitor) {
         match self {
-            LatexContent::Group(group) => visitor.visit_group(group),
-            LatexContent::Command(command) => visitor.visit_command(command),
-            LatexContent::Text(text) => visitor.visit_text(text),
+            LatexContent::Group(group) => visitor.visit_group(Arc::clone(&group)),
+            LatexContent::Command(command) => visitor.visit_command(Arc::clone(&command)),
+            LatexContent::Text(text) => visitor.visit_text(Arc::clone(&text)),
         }
     }
 }
@@ -136,12 +137,16 @@ impl SyntaxNode for LatexGroup {
 pub struct LatexCommand {
     pub range: Range,
     pub name: LatexToken,
-    pub options: Option<LatexGroup>,
-    pub args: Vec<LatexGroup>,
+    pub options: Option<Arc<LatexGroup>>,
+    pub args: Vec<Arc<LatexGroup>>,
 }
 
 impl LatexCommand {
-    pub fn new(name: LatexToken, options: Option<LatexGroup>, args: Vec<LatexGroup>) -> Self {
+    pub fn new(
+        name: LatexToken,
+        options: Option<Arc<LatexGroup>>,
+        args: Vec<Arc<LatexGroup>>,
+    ) -> Self {
         let end = if !args.is_empty() {
             args[args.len() - 1].end()
         } else if let Some(ref options) = options {
@@ -187,6 +192,10 @@ impl LatexCommand {
         }
         Some(words.join(" "))
     }
+
+    pub fn has_word(&self, index: usize) -> bool {
+        self.extract_word(index).is_some()
+    }
 }
 
 impl SyntaxNode for LatexCommand {
@@ -216,38 +225,38 @@ impl SyntaxNode for LatexText {
     }
 }
 
-pub trait LatexVisitor<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot);
+pub trait LatexVisitor {
+    fn visit_root(&mut self, root: Arc<LatexRoot>);
 
-    fn visit_group(&mut self, group: &'a LatexGroup);
+    fn visit_group(&mut self, group: Arc<LatexGroup>);
 
-    fn visit_command(&mut self, command: &'a LatexCommand);
+    fn visit_command(&mut self, command: Arc<LatexCommand>);
 
-    fn visit_text(&mut self, text: &'a LatexText);
+    fn visit_text(&mut self, text: Arc<LatexText>);
 }
 
 pub struct LatexWalker;
 
 impl LatexWalker {
-    pub fn walk_root<'a>(visitor: &mut LatexVisitor<'a>, root: &'a LatexRoot) {
+    pub fn walk_root(visitor: &mut LatexVisitor, root: Arc<LatexRoot>) {
         for child in &root.children {
             child.accept(visitor);
         }
     }
 
-    pub fn walk_group<'a>(visitor: &mut LatexVisitor<'a>, group: &'a LatexGroup) {
+    pub fn walk_group(visitor: &mut LatexVisitor, group: Arc<LatexGroup>) {
         for child in &group.children {
             child.accept(visitor);
         }
     }
 
-    pub fn walk_command<'a>(visitor: &mut LatexVisitor<'a>, command: &'a LatexCommand) {
+    pub fn walk_command(visitor: &mut LatexVisitor, command: Arc<LatexCommand>) {
         if let Some(ref options) = command.options {
-            visitor.visit_group(options);
+            visitor.visit_group(Arc::clone(&options));
         }
 
         for arg in &command.args {
-            visitor.visit_group(arg);
+            visitor.visit_group(Arc::clone(&arg));
         }
     }
 }

@@ -11,22 +11,19 @@ impl LatexLabelHighlightProvider {
         request: &FeatureRequest<TextDocumentPositionParams>,
     ) -> Vec<DocumentHighlight> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexLabelAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-
-            if let Some(name) = analyzer
+            if let Some(name) = tree
                 .labels
                 .iter()
-                .find(|label| label.name.range().contains(request.params.position))
-                .map(|label| label.name.text())
+                .find(|label| label.name().range().contains(request.params.position))
+                .map(|label| label.name().text())
             {
-                return analyzer
+                return tree
                     .labels
                     .iter()
-                    .filter(|label| label.name.text() == name)
+                    .filter(|label| label.name().text() == name)
                     .map(|label| DocumentHighlight {
-                        range: label.name.range(),
-                        kind: Some(match label.kind {
+                        range: label.name().range(),
+                        kind: Some(match label.kind() {
                             LatexLabelKind::Definition => DocumentHighlightKind::Write,
                             LatexLabelKind::Reference => DocumentHighlightKind::Read,
                         }),

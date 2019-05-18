@@ -21,14 +21,11 @@ impl LatexLabelDefinitionProvider {
 
     fn find_definition(document: &Document, reference: &str) -> Option<Location> {
         if let SyntaxTree::Latex(tree) = &document.tree {
-            let mut analyzer = LatexLabelAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .labels
+            tree.labels
                 .iter()
-                .filter(|label| label.kind == LatexLabelKind::Definition)
-                .find(|label| label.name.text() == reference)
-                .map(|label| Location::new(document.uri.clone(), label.name.range()))
+                .filter(|label| label.kind() == LatexLabelKind::Definition)
+                .find(|label| label.name().text() == reference)
+                .map(|label| Location::new(document.uri.clone(), label.name().range()))
         } else {
             None
         }
@@ -36,13 +33,10 @@ impl LatexLabelDefinitionProvider {
 
     fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexLabelAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            analyzer
-                .labels
+            tree.labels
                 .iter()
-                .find(|label| label.name.range().contains(request.params.position))
-                .map(|label| label.name.text())
+                .find(|label| label.name().range().contains(request.params.position))
+                .map(|label| label.name().text())
         } else {
             None
         }

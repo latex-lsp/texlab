@@ -18,13 +18,11 @@ impl LatexLabelCompletionProvider {
                 let mut items = Vec::new();
                 for document in &request.related_documents {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        let mut analyzer = LatexLabelAnalyzer::new();
-                        analyzer.visit_root(&tree.root);
-                        analyzer
+                        tree
                             .labels
                             .iter()
-                            .filter(|label| label.kind == LatexLabelKind::Definition)
-                            .map(|label| Cow::from(label.name.text().to_owned()))
+                            .filter(|label| label.kind() == LatexLabelKind::Definition)
+                            .map(|label| Cow::from(label.name().text().to_owned()))
                             .map(factory::create_label)
                             .for_each(|item| items.push(item))
                     }

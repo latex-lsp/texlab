@@ -1,6 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexSyntaxTree};
-use crate::syntax::latex::{LatexCitationAnalyzer, LatexSyntaxTree, LatexVisitor};
+use crate::syntax::latex::{LatexSyntaxTree, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::*;
@@ -21,15 +21,12 @@ impl BibtexEntryRenameProvider {
             let mut edits = Vec::new();
             match &document.tree {
                 SyntaxTree::Latex(tree) => {
-                    let mut analyzer = LatexCitationAnalyzer::new();
-                    analyzer.visit_root(&tree.root);
-                    analyzer
-                        .citations
+                    tree.citations
                         .iter()
-                        .filter(|citation| citation.key.text() == key_name)
+                        .filter(|citation| citation.key().text() == key_name)
                         .map(|citation| {
                             TextEdit::new(
-                                citation.key.range(),
+                                citation.key().range(),
                                 Cow::from(request.params.new_name.clone()),
                             )
                         })
@@ -56,11 +53,10 @@ impl BibtexEntryRenameProvider {
     }
 
     fn find_citation(tree: &LatexSyntaxTree, position: Position) -> Option<&str> {
-        let mut analyzer = LatexCitationAnalyzer::new();
-        analyzer.visit_root(&tree.root);
-        for citation in &analyzer.citations {
-            if citation.key.range().contains(position) {
-                return Some(&citation.key.text());
+        for citation in &tree.citations {
+            let key = citation.key();
+            if key.range().contains(position) {
+                return Some(key.text());
             }
         }
         None

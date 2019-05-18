@@ -1,6 +1,5 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
-use crate::syntax::latex::{LatexCitationAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Location, ReferenceParams};
@@ -13,12 +12,9 @@ impl BibtexEntryReferenceProvider {
         if let Some(key) = Self::find_definition(request) {
             for document in &request.related_documents {
                 if let SyntaxTree::Latex(tree) = &document.tree {
-                    let mut analyzer = LatexCitationAnalyzer::new();
-                    analyzer.visit_root(&tree.root);
-                    analyzer
-                        .citations
+                    tree.citations
                         .iter()
-                        .filter(|citation| citation.key.text() == key)
+                        .filter(|citation| citation.key().text() == key)
                         .map(|citation| Location::new(document.uri.clone(), citation.command.range))
                         .for_each(|location| references.push(location))
                 }

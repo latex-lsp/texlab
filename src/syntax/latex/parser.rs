@@ -1,5 +1,6 @@
 use crate::syntax::latex::ast::*;
 use std::iter::Peekable;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum LatexScope {
@@ -30,24 +31,20 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
                 LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
-                    let text = Box::new(self.text(scope));
-                    children.push(LatexContent::Text(text));
+                    children.push(LatexContent::Text(self.text(scope)));
                 }
                 LatexTokenKind::Command => {
-                    let command = Box::new(self.command());
-                    children.push(LatexContent::Command(command));
+                    children.push(LatexContent::Command(self.command()));
                 }
                 LatexTokenKind::Math => {
                     if scope == LatexScope::Math {
                         return children;
                     } else {
-                        let group = Box::new(self.group(LatexGroupKind::Math));
-                        children.push(LatexContent::Group(group));
+                        children.push(LatexContent::Group(self.group(LatexGroupKind::Math)));
                     }
                 }
                 LatexTokenKind::BeginGroup => {
-                    let group = Box::new(self.group(LatexGroupKind::Group));
-                    children.push(LatexContent::Group(group));
+                    children.push(LatexContent::Group(self.group(LatexGroupKind::Group)));
                 }
                 LatexTokenKind::EndGroup => {
                     if scope == LatexScope::Root {
@@ -60,8 +57,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                     if scope == LatexScope::Options {
                         return children;
                     } else {
-                        let text = Box::new(self.text(scope));
-                        children.push(LatexContent::Text(text));
+                        children.push(LatexContent::Text(self.text(scope)));
                     }
                 }
             }
@@ -69,7 +65,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         children
     }
 
-    fn command(&mut self) -> LatexCommand {
+    fn command(&mut self) -> Arc<LatexCommand> {
         let name = self.tokens.next().unwrap();
         let options = if self.next_of_kind(LatexTokenKind::BeginOptions) {
             Some(self.group(LatexGroupKind::Options))
@@ -82,10 +78,10 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             args.push(self.group(LatexGroupKind::Group));
         }
 
-        LatexCommand::new(name, options, args)
+        Arc::new(LatexCommand::new(name, options, args))
     }
 
-    fn group(&mut self, kind: LatexGroupKind) -> LatexGroup {
+    fn group(&mut self, kind: LatexGroupKind) -> Arc<LatexGroup> {
         let left = self.tokens.next().unwrap();
         let scope = match kind {
             LatexGroupKind::Group => LatexScope::Group,
@@ -105,10 +101,10 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             None
         };
 
-        LatexGroup::new(left, children, right, kind)
+        Arc::new(LatexGroup::new(left, children, right, kind))
     }
 
-    fn text(&mut self, scope: LatexScope) -> LatexText {
+    fn text(&mut self, scope: LatexScope) -> Arc<LatexText> {
         let mut words = Vec::new();
         while let Some(ref token) = self.tokens.peek() {
             let kind = token.kind;
@@ -119,7 +115,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                 break;
             }
         }
-        LatexText::new(words)
+        Arc::new(LatexText::new(words))
     }
 
     fn next_of_kind(&mut self, kind: LatexTokenKind) -> bool {

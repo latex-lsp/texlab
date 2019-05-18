@@ -69,10 +69,9 @@ impl Workspace {
         let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
-                let mut analyzer = LatexIncludeAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                for include in analyzer.included_files {
-                    if let Some(ref child) = self.resolve_document(&parent.uri, include.path.text())
+                for include in &tree.includes {
+                    if let Some(ref child) =
+                        self.resolve_document(&parent.uri, include.path().text())
                     {
                         edges.push((Arc::clone(&parent), Arc::clone(&child)));
                         edges.push((Arc::clone(&child), Arc::clone(&parent)));
@@ -106,17 +105,7 @@ impl Workspace {
     pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
         for document in self.related_documents(uri) {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                let mut analyzer = LatexEnvironmentAnalyzer::new();
-                analyzer.visit_root(&tree.root);
-                let is_standalone = analyzer.environments.iter().any(|environment| {
-                    environment
-                        .left
-                        .name
-                        .map(LatexToken::text)
-                        .unwrap_or_default()
-                        == "document"
-                });
-                if is_standalone {
+                if tree.is_standalone {
                     return Some(document);
                 }
             }

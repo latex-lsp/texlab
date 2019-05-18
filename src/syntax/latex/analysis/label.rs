@@ -1,4 +1,5 @@
 use crate::syntax::latex::ast::*;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexLabelKind {
@@ -7,55 +8,39 @@ pub enum LatexLabelKind {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexLabel<'a> {
-    pub command: &'a LatexCommand,
-    pub name: &'a LatexToken,
-    pub kind: LatexLabelKind,
+pub struct LatexLabel {
+    pub command: Arc<LatexCommand>,
 }
 
-impl<'a> LatexLabel<'a> {
-    pub fn new(command: &'a LatexCommand, name: &'a LatexToken, kind: LatexLabelKind) -> Self {
-        LatexLabel {
-            command,
-            name,
-            kind,
+impl LatexLabel {
+    pub fn new(command: Arc<LatexCommand>) -> Self {
+        LatexLabel { command }
+    }
+
+    pub fn name(&self) -> &LatexToken {
+        self.command.extract_word(0).unwrap()
+    }
+
+    pub fn kind(&self) -> LatexLabelKind {
+        if LABEL_DEFINITION_COMMANDS.contains(&self.command.name.text()) {
+            LatexLabelKind::Definition
+        } else {
+            LatexLabelKind::Reference
         }
     }
-}
 
-pub struct LatexLabelAnalyzer<'a> {
-    pub labels: Vec<LatexLabel<'a>>,
-}
-
-impl<'a> LatexLabelAnalyzer<'a> {
-    pub fn new() -> Self {
-        LatexLabelAnalyzer { labels: Vec::new() }
-    }
-}
-
-impl<'a> LatexVisitor<'a> for LatexLabelAnalyzer<'a> {
-    fn visit_root(&mut self, root: &'a LatexRoot) {
-        LatexWalker::walk_root(self, root);
-    }
-
-    fn visit_group(&mut self, group: &'a LatexGroup) {
-        LatexWalker::walk_group(self, group);
-    }
-
-    fn visit_command(&mut self, command: &'a LatexCommand) {
-        if let Some(name) = command.extract_word(0) {
-            if LABEL_DEFINITION_COMMANDS.contains(&command.name.text()) {
-                self.labels
-                    .push(LatexLabel::new(command, name, LatexLabelKind::Definition));
-            } else if LABEL_REFERENCE_COMMANDS.contains(&command.name.text()) {
-                self.labels
-                    .push(LatexLabel::new(command, name, LatexLabelKind::Reference));
+    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut labels = Vec::new();
+        for command in commands {
+            if command.has_word(0)
+                && (LABEL_DEFINITION_COMMANDS.contains(&command.name.text())
+                    || LABEL_REFERENCE_COMMANDS.contains(&command.name.text()))
+            {
+                labels.push(LatexLabel::new(Arc::clone(command)));
             }
         }
-        LatexWalker::walk_command(self, command);
+        labels
     }
-
-    fn visit_text(&mut self, text: &'a LatexText) {}
 }
 
 pub const LABEL_DEFINITION_COMMANDS: &'static [&'static str] = &["\\label"];
@@ -64,17 +49,14 @@ pub const LABEL_REFERENCE_COMMANDS: &'static [&'static str] = &["\\ref", "\\auto
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::syntax::latex::LatexSyntaxTree;
 
     fn verify(text: &str, expected: Vec<&str>) {
         let tree = LatexSyntaxTree::from(text);
-        let mut analyzer = LatexLabelAnalyzer::new();
-        analyzer.visit_root(&tree.root);
-        let actual: Vec<&str> = analyzer
+        let actual: Vec<&str> = tree
             .labels
             .iter()
-            .map(|label| label.name.text())
+            .map(|label| label.name().text())
             .collect();
         assert_eq!(expected, actual);
     }

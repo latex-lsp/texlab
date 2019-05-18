@@ -40,7 +40,7 @@ impl LatexIncludeCompletionProvider {
                     .into_iter()
                 {
                     if let Ok(entry) = entry {
-                        if entry.file_type().is_file() && is_included(command, &entry.path()) {
+                        if entry.file_type().is_file() && is_included(&command, &entry.path()) {
                             let mut path = entry.into_path();
                             if NO_EXTENSION_COMMANDS.contains(&command.name.text()) {
                                 remove_extension(&mut path);

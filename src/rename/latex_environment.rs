@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexEnvironmentAnalyzer, LatexVisitor};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
@@ -11,11 +10,9 @@ pub struct LatexEnvironmentRenameProvider;
 impl LatexEnvironmentRenameProvider {
     pub async fn execute(request: &FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let mut analyzer = LatexEnvironmentAnalyzer::new();
-            analyzer.visit_root(&tree.root);
-            for environment in &analyzer.environments {
-                if let Some(left_name) = environment.left.name {
-                    if let Some(right_name) = environment.right.name {
+            for environment in &tree.environments {
+                if let Some(left_name) = environment.left.name() {
+                    if let Some(right_name) = environment.right.name() {
                         if left_name.range().contains(request.params.position)
                             || right_name.range().contains(request.params.position)
                         {
