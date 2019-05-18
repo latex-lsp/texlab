@@ -4,17 +4,24 @@ use crate::completion::CompletionProvider;
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
+use crate::formatting::bibtex;
+use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
+use crate::syntax::bibtex::BibtexDeclaration;
+use crate::syntax::text::SyntaxNode;
+use crate::syntax::SyntaxTree;
 use crate::workspace::WorkspaceManager;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
+use serde::de::DeserializeOwned;
+use std::borrow::Cow;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -75,7 +82,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             workspace_symbol_provider: None,
             code_action_provider: None,
             code_lens_provider: None,
-            document_formatting_provider: None,
+            document_formatting_provider: Some(true),
             document_range_formatting_provider: None,
             document_on_type_formatting_provider: None,
             rename_provider: Some(RenameProviderCapability::Simple(true)),
@@ -191,7 +198,28 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
     pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let mut edits = Vec::new();
+        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+            let params = BibtexFormattingParams {
+                tab_size: request.params.options.tab_size as usize,
+                insert_spaces: request.params.options.insert_spaces,
+                options: await!(self.configuration::<BibtexFormattingOptions>("bibtex.formatting")),
+            };
+
+            for declaration in &tree.root.children {
+                let should_format = match declaration {
+                    BibtexDeclaration::Comment(_) => false,
+                    BibtexDeclaration::Preamble(_) | BibtexDeclaration::String(_) => true,
+                    BibtexDeclaration::Entry(entry) => !entry.is_comment(),
+                };
+                if should_format {
+                    let text = bibtex::format_declaration(&declaration, &params);
+                    edits.push(TextEdit::new(declaration.range(), Cow::from(text)));
+                }
+            }
+        }
+        Ok(edits)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
@@ -206,6 +234,35 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         let request = request!(self, params)?;
         let foldings = await!(FoldingProvider::execute(&request));
         Ok(foldings)
+    }
+
+    async fn configuration<T>(&self, section: &'static str) -> T
+    where
+        T: DeserializeOwned + Default,
+    {
+        let params = ConfigurationParams {
+            items: vec![ConfigurationItem {
+                section: Some(Cow::from(section)),
+                scope_uri: None,
+            }],
+        };
+
+        match await!(self.client.configuration(params)) {
+            Ok(json) => match serde_json::from_value::<Vec<T>>(json) {
+                Ok(config) => config.into_iter().next().unwrap(),
+                Err(_) => {
+                    warn!("Invalid configuration: {}", section);
+                    T::default()
+                }
+            },
+            Err(why) => {
+                error!(
+                    "Retrieving configuration for {} failed: {}",
+                    section, why.message
+                );
+                T::default()
+            }
+        }
     }
 }
 
