@@ -1,6 +1,7 @@
 use crate::data::bibtex_entry_type::BibtexEntryType;
 use crate::data::bibtex_field::BibtexField;
-use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
+use crate::formatting::bibtex;
+use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
 use crate::syntax::bibtex::BibtexEntry;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
@@ -163,9 +164,13 @@ pub fn create_class(name: Cow<'static, str>) -> CompletionItem {
 }
 
 pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
-    let mut formatter = BibtexFormatter::new(BibtexFormattingOptions::new(2, true, 35));
-    formatter.format_entry(entry);
-    let markdown = format!("```bibtex\n{}\n```", formatter.output);
+    let params = BibtexFormattingParams {
+        tab_size: 2,
+        insert_spaces: true,
+        options: BibtexFormattingOptions { line_length: 35 },
+    };
+    let markdown = format!("```bibtex\n{}\n```", bibtex::format_entry(&entry, &params));
+
     CompletionItem {
         label: Cow::from(key.to_owned()),
         kind: Some(CompletionItemKind::Field),

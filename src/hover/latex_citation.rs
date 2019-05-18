@@ -1,5 +1,6 @@
 use crate::feature::FeatureRequest;
-use crate::formatting::{BibtexFormatter, BibtexFormattingOptions};
+use crate::formatting::bibtex;
+use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
 use crate::syntax::bibtex::{BibtexDeclaration, BibtexEntry};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
@@ -14,12 +15,16 @@ impl LatexCitationHoverProvider {
         if entry.is_comment() {
             None
         } else {
-            let mut formatter = BibtexFormatter::new(BibtexFormattingOptions::new(4, true, 80));
-            formatter.format_entry(entry);
+            let params = BibtexFormattingParams {
+                tab_size: 4,
+                insert_spaces: true,
+                options: BibtexFormattingOptions { line_length: 80 },
+            };
+            let code = bibtex::format_entry(&entry, &params);
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: Cow::from(format!("```bibtex\n{}\n```", formatter.output)),
+                    value: Cow::from(format!("```bibtex\n{}\n```", code)),
                 }),
                 range: None,
             })

@@ -1,46 +1,58 @@
 use crate::syntax::bibtex::*;
 use crate::syntax::text::SyntaxNode;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BibtexFormattingOptions {
-    tab_size: usize,
-    insert_spaces: bool,
-    line_length: i32,
-}
-
-impl BibtexFormattingOptions {
-    pub fn new(tab_size: usize, insert_spaces: bool, line_length: i32) -> Self {
-        let line_length = if line_length <= 0 {
-            std::i32::MAX
-        } else {
-            line_length
-        };
-
-        BibtexFormattingOptions {
-            tab_size,
-            insert_spaces,
-            line_length,
-        }
-    }
+    pub line_length: i32,
 }
 
 impl Default for BibtexFormattingOptions {
     fn default() -> Self {
-        BibtexFormattingOptions::new(4, true, 120)
+        BibtexFormattingOptions { line_length: 120 }
     }
 }
 
-pub struct BibtexFormatter {
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BibtexFormattingParams {
+    pub tab_size: usize,
+    pub insert_spaces: bool,
     pub options: BibtexFormattingOptions,
-    indent: String,
-    pub output: String,
 }
 
-impl BibtexFormatter {
-    pub fn new(options: BibtexFormattingOptions) -> Self {
-        let indent = if options.insert_spaces {
+impl BibtexFormattingParams {
+    pub fn line_length(&self) -> i32 {
+        if self.options.line_length <= 0 {
+            std::i32::MAX
+        } else {
+            self.options.line_length
+        }
+    }
+}
+
+impl Default for BibtexFormattingParams {
+    fn default() -> Self {
+        BibtexFormattingParams {
+            tab_size: 4,
+            insert_spaces: true,
+            options: BibtexFormattingOptions::default(),
+        }
+    }
+}
+
+struct BibtexFormatter<'a> {
+    params: &'a BibtexFormattingParams,
+    indent: String,
+    output: String,
+}
+
+impl<'a> BibtexFormatter<'a> {
+    fn new(params: &'a BibtexFormattingParams) -> Self {
+        let indent = if params.insert_spaces {
             let mut buffer = String::new();
-            for _ in 0..options.tab_size {
+            for _ in 0..params.tab_size {
                 buffer.push(' ');
             }
             buffer
@@ -49,25 +61,17 @@ impl BibtexFormatter {
         };
 
         BibtexFormatter {
-            options,
+            params: params,
             indent,
             output: String::new(),
         }
     }
 
-    pub fn format_declaration(&mut self, declaration: &BibtexDeclaration) {
-        match declaration {
-            BibtexDeclaration::Comment(comment) => {
-                let text = comment.token.text();
-                self.output.push_str(text);
-            }
-            BibtexDeclaration::Preamble(preamble) => self.format_preamble(preamble),
-            BibtexDeclaration::String(string) => self.format_string(string),
-            BibtexDeclaration::Entry(entry) => self.format_entry(entry),
-        }
+    fn format_comment(&mut self, comment: &BibtexComment) {
+        self.output.push_str(comment.token.text());
     }
 
-    pub fn format_preamble(&mut self, preamble: &BibtexPreamble) {
+    fn format_preamble(&mut self, preamble: &BibtexPreamble) {
         self.format_token(&preamble.ty);
         self.output.push('{');
         if let Some(ref content) = preamble.content {
@@ -76,7 +80,7 @@ impl BibtexFormatter {
         }
     }
 
-    pub fn format_string(&mut self, string: &BibtexString) {
+    fn format_string(&mut self, string: &BibtexString) {
         self.format_token(&string.ty);
         self.output.push('{');
         if let Some(ref name) = string.name {
@@ -89,7 +93,7 @@ impl BibtexFormatter {
         }
     }
 
-    pub fn format_entry(&mut self, entry: &BibtexEntry) {
+    fn format_entry(&mut self, entry: &BibtexEntry) {
         self.format_token(&entry.ty);
         self.output.push('{');
         if let Some(ref key) = entry.key {
@@ -108,7 +112,7 @@ impl BibtexFormatter {
         self.format_token(&field.name);
         self.output.push_str(" = ");
         let count = field.name.text().chars().count();
-        let align = self.options.tab_size as usize + count + 3;
+        let align = self.params.tab_size as usize + count + 3;
         if let Some(ref content) = field.content {
             self.format_content(content, align);
             self.output.push(',');
@@ -128,13 +132,13 @@ impl BibtexFormatter {
             let current = tokens[i];
             let current_length = current.text().chars().count();
 
-            let insert_space = should_insert_space(previous, current);
+            let insert_space = Self::should_insert_space(previous, current);
             let space_length = if insert_space { 1 } else { 0 };
 
-            if length + current_length + space_length > self.options.line_length as usize {
+            if length + current_length + space_length > self.params.line_length() as usize {
                 self.output.push('\n');
                 self.output.push_str(self.indent.as_ref());
-                for j in 0..=align - self.options.tab_size {
+                for j in 0..=align - self.params.tab_size {
                     self.output.push(' ');
                 }
                 length = align;
@@ -150,11 +154,11 @@ impl BibtexFormatter {
     fn format_token(&mut self, token: &BibtexToken) {
         self.output.push_str(token.text().to_lowercase().as_ref());
     }
-}
 
-fn should_insert_space(previous: &BibtexToken, current: &BibtexToken) -> bool {
-    previous.start().line != current.start().line
-        || previous.end().character < current.start().character
+    fn should_insert_space(previous: &BibtexToken, current: &BibtexToken) -> bool {
+        previous.start().line != current.start().line
+            || previous.end().character < current.start().character
+    }
 }
 
 struct BibtexContentAnalyzer<'a> {
@@ -168,17 +172,17 @@ impl<'a> BibtexContentAnalyzer<'a> {
 }
 
 impl<'a> BibtexVisitor<'a> for BibtexContentAnalyzer<'a> {
-    fn visit_root(&mut self, root: &'a BibtexRoot) {}
+    fn visit_root(&mut self, _root: &'a BibtexRoot) {}
 
-    fn visit_comment(&mut self, comment: &'a BibtexComment) {}
+    fn visit_comment(&mut self, _comment: &'a BibtexComment) {}
 
-    fn visit_preamble(&mut self, preamble: &'a BibtexPreamble) {}
+    fn visit_preamble(&mut self, _preamble: &'a BibtexPreamble) {}
 
-    fn visit_string(&mut self, string: &'a BibtexString) {}
+    fn visit_string(&mut self, _string: &'a BibtexString) {}
 
-    fn visit_entry(&mut self, entry: &'a BibtexEntry) {}
+    fn visit_entry(&mut self, _entry: &'a BibtexEntry) {}
 
-    fn visit_field(&mut self, field: &'a BibtexField) {}
+    fn visit_field(&mut self, _field: &'a BibtexField) {}
 
     fn visit_word(&mut self, word: &'a BibtexWord) {
         self.tokens.push(&word.token);
@@ -213,6 +217,42 @@ impl<'a> BibtexVisitor<'a> for BibtexContentAnalyzer<'a> {
     }
 }
 
+pub fn format_declaration(
+    declaration: &BibtexDeclaration,
+    params: &BibtexFormattingParams,
+) -> String {
+    match declaration {
+        BibtexDeclaration::Comment(comment) => format_comment(comment, params),
+        BibtexDeclaration::Preamble(preamble) => format_preamble(preamble, params),
+        BibtexDeclaration::String(string) => format_string(string, params),
+        BibtexDeclaration::Entry(entry) => format_entry(entry, params),
+    }
+}
+
+pub fn format_comment(comment: &BibtexComment, params: &BibtexFormattingParams) -> String {
+    let mut formatter = BibtexFormatter::new(params);
+    formatter.format_comment(&comment);
+    formatter.output
+}
+
+pub fn format_preamble(preamble: &BibtexPreamble, params: &BibtexFormattingParams) -> String {
+    let mut formatter = BibtexFormatter::new(params);
+    formatter.format_preamble(&preamble);
+    formatter.output
+}
+
+pub fn format_string(string: &BibtexString, params: &BibtexFormattingParams) -> String {
+    let mut formatter = BibtexFormatter::new(params);
+    formatter.format_string(&string);
+    formatter.output
+}
+
+pub fn format_entry(entry: &BibtexEntry, params: &BibtexFormattingParams) -> String {
+    let mut formatter = BibtexFormatter::new(params);
+    formatter.format_entry(&entry);
+    formatter.output
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,10 +261,15 @@ mod tests {
 
     fn verify(source: &str, expected: &str, line_length: i32) {
         let tree = BibtexSyntaxTree::from(source);
-        let options = BibtexFormattingOptions::new(4, true, line_length);
-        let mut formatter = BibtexFormatter::new(options);
-        formatter.format_declaration(&tree.root.children[0]);
-        assert_eq!(expected, formatter.output);
+        let params = BibtexFormattingParams {
+            tab_size: 4,
+            insert_spaces: true,
+            options: BibtexFormattingOptions { line_length },
+        };
+        assert_eq!(
+            expected,
+            format_declaration(&tree.root.children[0], &params)
+        );
     }
 
     #[test]
