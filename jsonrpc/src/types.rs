@@ -3,6 +3,8 @@ use serde_repr::*;
 
 pub const PROTOCOL_VERSION: &str = "2.0";
 
+pub type Id = i32;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize_repr, Serialize_repr)]
 #[repr(i32)]
 pub enum ErrorCode {
@@ -30,7 +32,18 @@ pub struct Request {
     pub jsonrpc: String,
     pub method: String,
     pub params: serde_json::Value,
-    pub id: i32,
+    pub id: Id,
+}
+
+impl Request {
+    pub fn new(method: String, params: serde_json::Value, id: Id) -> Self {
+        Request {
+            jsonrpc: PROTOCOL_VERSION.to_owned(),
+            method,
+            params,
+            id,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
@@ -43,11 +56,11 @@ pub struct Response {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<Error>,
 
-    pub id: Option<i32>,
+    pub id: Option<Id>,
 }
 
 impl Response {
-    pub fn result(result: serde_json::Value, id: i32) -> Self {
+    pub fn result(result: serde_json::Value, id: Id) -> Self {
         Response {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             result: Some(result),
@@ -56,7 +69,7 @@ impl Response {
         }
     }
 
-    pub fn error(error: Error, id: Option<i32>) -> Self {
+    pub fn error(error: Error, id: Option<Id>) -> Self {
         Response {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             result: None,
@@ -73,6 +86,16 @@ pub struct Notification {
     pub params: serde_json::Value,
 }
 
+impl Notification {
+    pub fn new(method: String, params: serde_json::Value) -> Self {
+        Notification {
+            jsonrpc: PROTOCOL_VERSION.to_owned(),
+            method,
+            params,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Message {
@@ -80,5 +103,3 @@ pub enum Message {
     Notification(Notification),
     Response(Response),
 }
-
-pub type Result<T> = std::result::Result<T, String>;

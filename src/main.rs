@@ -3,8 +3,11 @@
 use clap::*;
 use futures::compat::*;
 use futures::executor::*;
+use futures::lock::Mutex;
 use futures::prelude::*;
 use jsonrpc::MessageHandler;
+use std::sync::Arc;
+use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
 use tokio::codec::FramedRead;
@@ -42,11 +45,12 @@ fn main() {
 }
 
 async fn run(pool: ThreadPool) {
-    let server = LatexLspServer::new();
     let stdin = tokio_stdin_stdout::stdin(0);
     let stdout = tokio_stdin_stdout::stdout(0);
     let input = FramedRead::new(stdin, LspCodec).compat();
-    let output = FramedWrite::new(stdout, LspCodec).sink_compat();
-    let mut handler = MessageHandler::new(server, input, output, pool);
+    let output = Arc::new(Mutex::new(FramedWrite::new(stdout, LspCodec).sink_compat()));
+    let client = Arc::new(LatexLspClient::new(Arc::clone(&output)));
+    let server = LatexLspServer::new(Arc::clone(&client));
+    let mut handler = MessageHandler::new(server, client, input, output, pool);
     await!(handler.listen());
 }

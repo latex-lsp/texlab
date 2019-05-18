@@ -1,10 +1,14 @@
 #![feature(await_macro, async_await)]
 
-mod server;
+pub mod client;
+pub mod server;
 mod types;
 
-pub use self::server::*;
-pub use self::types::*;
+pub use self::{
+    client::{Client, ResponseHandler},
+    server::{handle_notification, handle_request, Server},
+    types::*,
+};
 
 use futures::executor::ThreadPool;
 use futures::lock::Mutex;
@@ -12,24 +16,33 @@ use futures::prelude::*;
 use futures::task::*;
 use std::sync::Arc;
 
-pub struct MessageHandler<S, I, O> {
+pub struct MessageHandler<S, H, I, O> {
     server: Arc<S>,
+    response_handler: Arc<H>,
     input: I,
     output: Arc<Mutex<O>>,
     pool: ThreadPool,
 }
 
-impl<S, I, O> MessageHandler<S, I, O>
+impl<S, H, I, O> MessageHandler<S, H, I, O>
 where
     S: Server + Send + Sync + 'static,
+    H: ResponseHandler + Send + Sync + 'static,
     I: Stream<Item = std::io::Result<String>> + Unpin,
     O: Sink<String> + Unpin + Send + 'static,
 {
-    pub fn new(server: S, input: I, output: O, pool: ThreadPool) -> Self {
+    pub fn new(
+        server: S,
+        response_handler: Arc<H>,
+        input: I,
+        output: Arc<Mutex<O>>,
+        pool: ThreadPool,
+    ) -> Self {
         MessageHandler {
             server: Arc::new(server),
+            response_handler,
             input,
-            output: Arc::new(Mutex::new(output)),
+            output,
             pool,
         }
     }
@@ -58,7 +71,9 @@ where
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
                 }
-                Ok(Message::Response(response)) => unimplemented!("{:?}", response),
+                Ok(Message::Response(response)) => {
+                    await!(self.response_handler.handle(response));
+                }
                 Err(why) => {
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();

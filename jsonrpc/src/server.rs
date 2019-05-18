@@ -5,6 +5,8 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::json;
 
+pub type Result<T> = std::result::Result<T, String>;
+
 pub trait Server {
     fn handle_request(&self, request: Request) -> BoxFuture<'_, Response>;
 

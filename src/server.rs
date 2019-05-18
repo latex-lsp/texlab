@@ -1,3 +1,4 @@
+use crate::client::LspClient;
 use crate::completion::latex::data::types::LatexComponentDatabase;
 use crate::completion::CompletionProvider;
 use crate::definition::DefinitionProvider;
@@ -10,26 +11,28 @@ use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
 use crate::workspace::WorkspaceManager;
-use jsonrpc::Result;
+use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-pub struct LatexLspServer {
+pub struct LatexLspServer<C> {
+    client: Arc<C>,
     workspace_manager: WorkspaceManager,
 }
 
 #[jsonrpc_server]
-impl LatexLspServer {
-    pub fn new() -> Self {
+impl<C: LspClient + Send + Sync> LatexLspServer<C> {
+    pub fn new(client: Arc<C>) -> Self {
         LatexLspServer {
+            client,
             workspace_manager: WorkspaceManager::new(),
         }
     }
 
-    #[jsonrpc_method("initialize")]
+    #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         if let Some(Ok(path)) = params.root_uri.map(|x| x.to_file_path()) {
             for entry in WalkDir::new(path)
@@ -88,26 +91,26 @@ impl LatexLspServer {
         Ok(InitializeResult { capabilities })
     }
 
-    #[jsonrpc_method("initialized")]
+    #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, params: InitializedParams) {}
 
-    #[jsonrpc_method("shutdown")]
+    #[jsonrpc_method("shutdown", kind = "request")]
     pub async fn shutdown(&self, params: ()) -> Result<()> {
         Ok(())
     }
 
-    #[jsonrpc_method("exit")]
+    #[jsonrpc_method("exit", kind = "notification")]
     pub fn exit(&self, params: ()) {}
 
-    #[jsonrpc_method("workspace/didChangeWatchedFiles")]
+    #[jsonrpc_method("workspace/didChangeWatchedFiles", kind = "notification")]
     pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
 
-    #[jsonrpc_method("textDocument/didOpen")]
+    #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.workspace_manager.add(params.text_document);
     }
 
-    #[jsonrpc_method("textDocument/didChange")]
+    #[jsonrpc_method("textDocument/didChange", kind = "notification")]
     pub fn did_change(&self, params: DidChangeTextDocumentParams) {
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
@@ -115,13 +118,13 @@ impl LatexLspServer {
         }
     }
 
-    #[jsonrpc_method("textDocument/didSave")]
+    #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {}
 
-    #[jsonrpc_method("textDocument/didClose")]
+    #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub fn did_close(&self, params: DidCloseTextDocumentParams) {}
 
-    #[jsonrpc_method("textDocument/completion")]
+    #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
         let items = await!(CompletionProvider::execute(&request));
@@ -135,33 +138,33 @@ impl LatexLspServer {
         })
     }
 
-    #[jsonrpc_method("completionItem/resolve")]
+    #[jsonrpc_method("completionItem/resolve", kind = "request")]
     pub async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem> {
         Ok(item)
     }
 
-    #[jsonrpc_method("textDocument/hover")]
+    #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
         let request = request!(self, params)?;
         let hover = await!(HoverProvider::execute(&request));
         Ok(hover)
     }
 
-    #[jsonrpc_method("textDocument/definition")]
+    #[jsonrpc_method("textDocument/definition", kind = "request")]
     pub async fn definition(&self, params: TextDocumentPositionParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
         let results = await!(DefinitionProvider::execute(&request));
         Ok(results)
     }
 
-    #[jsonrpc_method("textDocument/references")]
+    #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
         let results = await!(ReferenceProvider::execute(&request));
         Ok(results)
     }
 
-    #[jsonrpc_method("textDocument/documentHighlight")]
+    #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
     pub async fn document_highlight(
         &self,
         params: TextDocumentPositionParams,
@@ -171,7 +174,7 @@ impl LatexLspServer {
         Ok(results)
     }
 
-    #[jsonrpc_method("textDocument/documentSymbol")]
+    #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(
         &self,
         params: DocumentSymbolParams,
@@ -179,26 +182,26 @@ impl LatexLspServer {
         Ok(Vec::new())
     }
 
-    #[jsonrpc_method("textDocument/documentLink")]
+    #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
         let request = request!(self, params)?;
         let links = await!(LinkProvider::execute(&request));
         Ok(links)
     }
 
-    #[jsonrpc_method("textDocument/formatting")]
+    #[jsonrpc_method("textDocument/formatting", kind = "request")]
     pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
         Ok(Vec::new())
     }
 
-    #[jsonrpc_method("textDocument/rename")]
+    #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
         let request = request!(self, params)?;
         let edit = await!(RenameProvider::execute(&request));
         Ok(edit)
     }
 
-    #[jsonrpc_method("textDocument/foldingRange")]
+    #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
         let request = request!(self, params)?;
         let foldings = await!(FoldingProvider::execute(&request));
