@@ -30,8 +30,6 @@ impl Document {
     }
 }
 
-const DOCUMENT_EXTENSIONS: &'static [&'static str] = &[".tex", ".sty", ".cls", ".bib"];
-
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Workspace {
     pub documents: Vec<Arc<Document>>,
@@ -51,18 +49,44 @@ impl Workspace {
             .map(|document| Arc::clone(&document))
     }
 
-    pub fn resolve_document(&self, uri: &Uri, relative_path: &str) -> Option<Arc<Document>> {
-        let targets = resolve_link_targets(uri, relative_path)?;
-        for target in targets {
-            if let Ok(target_uri) = Uri::from_file_path(target) {
-                if let Some(document) = self.find(&target_uri) {
-                    if document.is_file() {
-                        return Some(document);
-                    }
-                }
+    pub fn find_path(&self, path: &str) -> Option<Arc<Document>> {
+        self.documents
+            .iter()
+            .find(|document| document.is_file() && document.uri.path() == path)
+            .map(|document| Arc::clone(&document))
+    }
+
+    pub fn resolve_document(&self, uri: &Uri, include: &LatexInclude) -> Option<Arc<Document>> {
+        let targets = Self::resolve_link_targets(uri, include)?;
+        for target in &targets {
+            if let Some(document) = self.find_path(target) {
+                return Some(document);
             }
         }
         None
+    }
+
+    fn resolve_link_targets(uri: &Uri, include: &LatexInclude) -> Option<[String; 2]> {
+        if uri.scheme() != "file" {
+            return None;
+        }
+
+        let mut path = uri.to_file_path().ok()?;
+        path.pop();
+        path.push(include.path().text());
+        path = PathBuf::from(path.to_string_lossy().replace("\\", "/"));
+        path = path.clean();
+        let path1 = path.to_string_lossy().into_owned();
+
+        let extension = match include.kind {
+            LatexIncludeKind::Package => ".sty",
+            LatexIncludeKind::Class => ".cls",
+            LatexIncludeKind::TexFile => ".tex",
+            LatexIncludeKind::BibFile => ".bib",
+        };
+        let path2 = format!("{}{}", path1, extension);
+
+        Some([path1, path2])
     }
 
     pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
@@ -70,9 +94,7 @@ impl Workspace {
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 for include in &tree.includes {
-                    if let Some(ref child) =
-                        self.resolve_document(&parent.uri, include.path().text())
-                    {
+                    if let Some(ref child) = self.resolve_document(&parent.uri, include) {
                         edges.push((Arc::clone(&parent), Arc::clone(&child)));
                         edges.push((Arc::clone(&child), Arc::clone(&parent)));
                     }
@@ -112,26 +134,6 @@ impl Workspace {
         }
         None
     }
-}
-
-fn resolve_link_targets(uri: &Uri, relative_path: &str) -> Option<Vec<String>> {
-    let mut targets = Vec::new();
-    if uri.scheme() != "file" {
-        return None;
-    }
-
-    let mut path = uri.to_file_path().ok()?;
-    path.pop();
-    path.push(relative_path);
-    path = PathBuf::from(path.to_string_lossy().replace("\\", "/"));
-    path = path.clean();
-    let path = path.to_string_lossy().into_owned();
-    for extension in DOCUMENT_EXTENSIONS {
-        targets.push(format!("{}{}", path, extension));
-    }
-    targets.push(path);
-    targets.reverse();
-    Some(targets)
 }
 
 pub struct WorkspaceManager {

@@ -24,7 +24,7 @@ impl LatexIncludeLinkProvider {
     ) -> Option<DocumentLink> {
         request
             .workspace
-            .resolve_document(&request.document.uri, include.path().text())
+            .resolve_document(&request.document.uri, include)
             .map(|target| DocumentLink {
                 range: include.path().range(),
                 target: target.uri.clone(),
