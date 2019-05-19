@@ -1,5 +1,6 @@
 use crate::feature::FeatureRequest;
 use crate::syntax::bibtex::BibtexDeclaration;
+use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
@@ -38,9 +39,9 @@ impl LatexCitationDefinitionProvider {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             tree.citations
                 .iter()
-                .map(|citation| citation.key())
+                .map(LatexCitation::key)
                 .find(|key| key.range().contains(request.params.position))
-                .map(|key| key.text())
+                .map(LatexToken::text)
         } else {
             None
         }
