@@ -18,8 +18,7 @@ impl LatexUserCommandCompletionProvider {
                 let mut items = Vec::new();
                 for document in &request.related_documents {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        tree
-                            .commands
+                        tree.commands
                             .iter()
                             .filter(|command| command.range() != current_command.range())
                             .map(|command| &command.name.text()[1..])
@@ -42,7 +41,7 @@ impl LatexUserCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;

@@ -1,6 +1,6 @@
 mod bibtex;
 mod factory;
-pub mod latex;
+mod latex;
 mod quality;
 
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;

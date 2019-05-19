@@ -51,7 +51,7 @@ const MODEL_NAMES: &'static [&'static str] = &["gray", "rgb", "RGB", "HTML", "cm
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;

@@ -7,7 +7,7 @@ pub struct BibtexField {
     pub documentation: String,
 }
 
-const JSON: &'static str = include_str!("bibtex_field.json");
+static JSON: &'static str = include_str!("bibtex_field.json");
 
 lazy_static! {
     pub static ref BIBTEX_FIELDS: Vec<BibtexField> = serde_json::from_str(JSON).unwrap();

@@ -1,4 +1,4 @@
-use crate::completion::latex::data::types::LatexComponentDatabase;
+use crate::data::completion::LatexComponentDatabase;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};

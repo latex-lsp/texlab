@@ -1,6 +1,6 @@
 use crate::client::LspClient;
-use crate::completion::latex::data::types::LatexComponentDatabase;
 use crate::completion::CompletionProvider;
+use crate::data::completion::LatexComponentDatabase;
 use crate::definition::DefinitionProvider;
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;

@@ -18,8 +18,7 @@ impl LatexLabelCompletionProvider {
                 let mut items = Vec::new();
                 for document in &request.related_documents {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        tree
-                            .labels
+                        tree.labels
                             .iter()
                             .filter(|label| label.kind() == LatexLabelKind::Definition)
                             .map(|label| Cow::from(label.name().text().to_owned()))
@@ -36,7 +35,7 @@ impl LatexLabelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::completion::latex::data::types::LatexComponentDatabase;
+    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;

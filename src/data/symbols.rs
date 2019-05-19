@@ -28,7 +28,7 @@ pub struct LatexArgumentSymbol {
     pub image: String,
 }
 
-const JSON: &'static str = include_str!("symbols.json");
+static JSON: &'static str = include_str!("symbols.json");
 
 lazy_static! {
     pub static ref DATABASE: LatexSymbolDatabase = serde_json::from_str(JSON).unwrap();

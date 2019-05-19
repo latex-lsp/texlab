@@ -1,4 +1,4 @@
-use crate::data::component_doc::ComponentDocumentation;
+use crate::data::component::ComponentDocumentation;
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::{LatexIncludeKind, LatexVisitor};
 use crate::syntax::SyntaxTree;

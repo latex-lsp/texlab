@@ -7,7 +7,7 @@ pub struct BibtexEntryType {
     pub documentation: Option<String>,
 }
 
-const JSON: &'static str = include_str!("bibtex_entry_type.json");
+static JSON: &'static str = include_str!("bibtex_entry_type.json");
 
 lazy_static! {
     pub static ref BIBTEX_ENTRY_TYPES: Vec<BibtexEntryType> = serde_json::from_str(JSON).unwrap();
