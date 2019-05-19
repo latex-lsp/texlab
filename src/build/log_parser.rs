@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Uri};
 use path_clean::PathClean;
 use regex::{Match, Regex};
@@ -64,159 +65,128 @@ const WARNING_PATTERN: &'static str = "(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?
 const BAD_BOX_PATTERN: &'static str =
     "(?P<msg>(Ov|Und)erfull \\\\[hv]box[^\r\n]*lines? (?P<line>\\d+)[^\r\n]*)";
 
-struct BuildErrorParser {
-    package_message_regex: Regex,
-    file_regex: Regex,
-    tex_error_regex: Regex,
-    warning_regex: Regex,
-    bad_box_regex: Regex,
+lazy_static! {
+    static ref PACKAGE_MESSAGE_REGEX: Regex = Regex::new(PACKAGE_MESSAGE_PATTERN).unwrap();
+    static ref FILE_REGEX: Regex = Regex::new(FILE_PATTERN).unwrap();
+    static ref TEX_ERROR_REGEX: Regex = Regex::new(TEX_ERROR_PATTERN).unwrap();
+    static ref WARNING_REGEX: Regex = Regex::new(WARNING_PATTERN).unwrap();
+    static ref BAD_BOX_REGEX: Regex = Regex::new(BAD_BOX_PATTERN).unwrap();
 }
 
-impl BuildErrorParser {
-    pub fn new() -> Self {
-        BuildErrorParser {
-            package_message_regex: Regex::new(PACKAGE_MESSAGE_PATTERN).unwrap(),
-            file_regex: Regex::new(FILE_PATTERN).unwrap(),
-            tex_error_regex: Regex::new(TEX_ERROR_PATTERN).unwrap(),
-            warning_regex: Regex::new(WARNING_PATTERN).unwrap(),
-            bad_box_regex: Regex::new(BAD_BOX_PATTERN).unwrap(),
+pub fn parse_build_log(uri: Uri, log: &str) -> Vec<BuildError> {
+    let log = prepare_log(log);
+    let mut ranges: Vec<FileRange> = FILE_REGEX
+        .find_iter(&log)
+        .map(|result| create_file_range(uri.clone(), &log, result))
+        .collect();
+    ranges.sort();
+
+    let tex_errors = extract_matches(&log, &uri, &ranges, &TEX_ERROR_REGEX, BuildErrorKind::Error);
+    let warnings = extract_matches(&log, &uri, &ranges, &WARNING_REGEX, BuildErrorKind::Warning);
+    let bad_boxes = extract_matches(&log, &uri, &ranges, &BAD_BOX_REGEX, BuildErrorKind::Warning);
+
+    vec![tex_errors, warnings, bad_boxes].concat()
+}
+
+fn extract_matches(
+    log: &str,
+    parent_uri: &Uri,
+    ranges: &[FileRange],
+    regex: &Regex,
+    kind: BuildErrorKind,
+) -> Vec<BuildError> {
+    let mut errors = Vec::new();
+    for result in regex.find_iter(&log) {
+        let captures = regex.captures(&log[result.start()..result.end()]).unwrap();
+        let message = captures
+            .name("msg")
+            .or_else(|| captures.name("msg1"))
+            .or_else(|| captures.name("msg2"))
+            .unwrap()
+            .as_str()
+            .lines()
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+
+        if let Some(range) = ranges.iter().find(|range| range.contains(result.start())) {
+            let line = captures
+                .name("line")
+                .map(|result| u64::from_str_radix(result.as_str(), 10).unwrap() - 1);
+
+            let uri = range.uri.as_ref().unwrap_or(parent_uri);
+            errors.push(BuildError::new(uri.clone(), kind, message, line));
         }
     }
+    errors
+}
 
-    pub fn parse(&self, uri: Uri, log: &str) -> Vec<BuildError> {
-        let log = self.prepare_log(log);
-        let mut ranges: Vec<FileRange> = self
-            .file_regex
-            .find_iter(&log)
-            .map(|result| self.create_file_range(uri.clone(), &log, result))
-            .collect();
-        ranges.sort();
-
-        let tex_errors = BuildErrorParser::extract_matches(
-            &log,
-            &uri,
-            &ranges,
-            &self.tex_error_regex,
-            BuildErrorKind::Error,
-        );
-        let warnings = BuildErrorParser::extract_matches(
-            &log,
-            &uri,
-            &ranges,
-            &self.warning_regex,
-            BuildErrorKind::Warning,
-        );
-        let bad_boxes = BuildErrorParser::extract_matches(
-            &log,
-            &uri,
-            &ranges,
-            &self.bad_box_regex,
-            BuildErrorKind::Warning,
-        );
-
-        vec![tex_errors, warnings, bad_boxes].concat()
-    }
-
-    fn extract_matches(
-        log: &str,
-        parent_uri: &Uri,
-        ranges: &[FileRange],
-        regex: &Regex,
-        kind: BuildErrorKind,
-    ) -> Vec<BuildError> {
-        let mut errors = Vec::new();
-        for result in regex.find_iter(&log) {
-            let captures = regex.captures(&log[result.start()..result.end()]).unwrap();
-            let message = captures
-                .name("msg")
-                .or_else(|| captures.name("msg1"))
-                .or_else(|| captures.name("msg2"))
-                .unwrap()
-                .as_str()
-                .lines()
-                .next()
-                .unwrap_or_default()
-                .to_owned();
-
-            if let Some(range) = ranges.iter().find(|range| range.contains(result.start())) {
-                let line = captures
-                    .name("line")
-                    .map(|result| u64::from_str_radix(result.as_str(), 10).unwrap() - 1);
-
-                let uri = range.uri.as_ref().unwrap_or(parent_uri);
-                errors.push(BuildError::new(uri.clone(), kind, message, line));
+fn prepare_log(log: &str) -> String {
+    let mut old_lines = log.lines();
+    let mut new_lines: Vec<String> = Vec::new();
+    while let Some(line) = old_lines.next() {
+        if PACKAGE_MESSAGE_REGEX.is_match(&line) {
+            let captures = PACKAGE_MESSAGE_REGEX.captures(&line).unwrap();
+            if let Some(last_line) = new_lines.last_mut() {
+                last_line.push(' ');
+                last_line.push_str(captures.name("msg").unwrap().as_str());
             }
-        }
-        errors
-    }
-
-    fn prepare_log(&self, log: &str) -> String {
-        let mut old_lines = log.lines();
-        let mut new_lines: Vec<String> = Vec::new();
-        while let Some(line) = old_lines.next() {
-            if self.package_message_regex.is_match(&line) {
-                let captures = self.package_message_regex.captures(&line).unwrap();
-                if let Some(last_line) = new_lines.last_mut() {
-                    last_line.push(' ');
-                    last_line.push_str(captures.name("msg").unwrap().as_str());
-                }
-            } else if line.ends_with("...") {
-                let mut new_line = line[line.len() - 3..].to_owned();
-                if let Some(old_line) = old_lines.next() {
-                    new_line.push_str(&old_line);
-                }
-                new_lines.push(new_line);
-            } else if line.chars().count() == MAX_LINE_LENGTH {
-                let mut new_line = String::new();
-                new_line.push_str(line);
-                if let Some(old_line) = old_lines.next() {
-                    new_line.push_str(old_line);
-                }
-                new_lines.push(new_line);
-            } else {
-                new_lines.push(line.to_owned());
+        } else if line.ends_with("...") {
+            let mut new_line = line[line.len() - 3..].to_owned();
+            if let Some(old_line) = old_lines.next() {
+                new_line.push_str(&old_line);
             }
-        }
-        new_lines.join("\n")
-    }
-
-    fn create_file_range(&self, parent: Uri, log: &str, result: Match) -> FileRange {
-        let mut balance = 1;
-        let mut end = result.start() + 1;
-        let mut chars = (&log[result.start() + 1..]).chars();
-        for c in chars {
-            if balance <= 0 {
-                break;
+            new_lines.push(new_line);
+        } else if line.chars().count() == MAX_LINE_LENGTH {
+            let mut new_line = String::new();
+            new_line.push_str(line);
+            if let Some(old_line) = old_lines.next() {
+                new_line.push_str(old_line);
             }
-
-            if c == '(' {
-                balance += 1;
-            } else if c == ')' {
-                balance -= 1;
-            }
-            end += c.len_utf8();
-        }
-
-        let captures = self.file_regex.captures(result.as_str()).unwrap();
-        let mut base_path = PathBuf::from(parent.path());
-        base_path.pop();
-        let mut full_path = base_path.clone();
-        full_path.push(captures.name("file").unwrap().as_str());
-        let uri = if full_path.starts_with(base_path) {
-            let mut full_path = PathBuf::from(full_path.to_string_lossy().replace("\\", "/"))
-                .clean()
-                .to_string_lossy()
-                .into_owned();
-            if cfg!(windows) && full_path.starts_with("/") {
-                full_path.remove(0);
-            }
-            Uri::from_file_path(full_path).ok()
+            new_lines.push(new_line);
         } else {
-            None
-        };
-
-        FileRange::new(uri, result.start(), end)
+            new_lines.push(line.to_owned());
+        }
     }
+    new_lines.join("\n")
+}
+
+fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
+    let mut balance = 1;
+    let mut end = result.start() + 1;
+    let mut chars = (&log[result.start() + 1..]).chars();
+    for c in chars {
+        if balance <= 0 {
+            break;
+        }
+
+        if c == '(' {
+            balance += 1;
+        } else if c == ')' {
+            balance -= 1;
+        }
+        end += c.len_utf8();
+    }
+
+    let captures = FILE_REGEX.captures(result.as_str()).unwrap();
+    let mut base_path = PathBuf::from(parent.path());
+    base_path.pop();
+    let mut full_path = base_path.clone();
+    full_path.push(captures.name("file").unwrap().as_str());
+    let uri = if full_path.starts_with(base_path) {
+        let mut full_path = PathBuf::from(full_path.to_string_lossy().replace("\\", "/"))
+            .clean()
+            .to_string_lossy()
+            .into_owned();
+        if cfg!(windows) && full_path.starts_with("/") {
+            full_path.remove(0);
+        }
+        Uri::from_file_path(full_path).ok()
+    } else {
+        None
+    };
+
+    FileRange::new(uri, result.start(), end)
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -270,8 +240,7 @@ mod tests {
             .join(name);
 
         let log = fs::read_to_string(log_path).unwrap();
-        let parser = BuildErrorParser::new();
-        let actual = parser.parse(create_uri("parent.tex"), &log);
+        let actual = parse_build_log(create_uri("parent.tex"), &log);
         assert_eq!(expected, actual);
     }
 
