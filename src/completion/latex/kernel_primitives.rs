@@ -1,4 +1,4 @@
-pub const KERNEL_COMMANDS: &'static [&'static str] = &[
+pub static KERNEL_COMMANDS: &'static [&'static str] = &[
     "!",
     "'",
     "#",
@@ -1929,7 +1929,7 @@ pub const KERNEL_COMMANDS: &'static [&'static str] = &[
     "~",
 ];
 
-pub const KERNEL_ENVIRONMENTS: &'static [&'static str] = &[
+pub static KERNEL_ENVIRONMENTS: &'static [&'static str] = &[
     "abstract",
     "array",
     "center",

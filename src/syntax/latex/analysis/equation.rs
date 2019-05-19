@@ -27,7 +27,7 @@ impl LatexEquation {
     }
 }
 
-pub const EQUATION_COMMANDS: &'static [&'static str] = &["\\[", "\\]"];
+pub static EQUATION_COMMANDS: &'static [&'static str] = &["\\[", "\\]"];
 
 #[cfg(test)]
 mod tests {

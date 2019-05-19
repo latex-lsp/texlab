@@ -26,7 +26,7 @@ impl LatexCitation {
     }
 }
 
-pub const CITATION_COMMANDS: &'static [&'static str] = &[
+pub static CITATION_COMMANDS: &'static [&'static str] = &[
     "\\cite",
     "\\cite*",
     "\\Cite",

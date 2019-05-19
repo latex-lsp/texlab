@@ -43,9 +43,9 @@ impl LatexLabel {
     }
 }
 
-pub const LABEL_DEFINITION_COMMANDS: &'static [&'static str] = &["\\label"];
+pub static LABEL_DEFINITION_COMMANDS: &'static [&'static str] = &["\\label"];
 
-pub const LABEL_REFERENCE_COMMANDS: &'static [&'static str] = &["\\ref", "\\autoref", "\\eqref"];
+pub static LABEL_REFERENCE_COMMANDS: &'static [&'static str] = &["\\ref", "\\autoref", "\\eqref"];
 
 #[cfg(test)]
 mod tests {

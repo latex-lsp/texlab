@@ -38,7 +38,7 @@ impl LatexSection {
     }
 }
 
-pub const SECTION_COMMANDS: &'static [&'static str] = &[
+pub static SECTION_COMMANDS: &'static [&'static str] = &[
     "\\chapter",
     "\\chapter*",
     "\\section",
