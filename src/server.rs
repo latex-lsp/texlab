@@ -48,6 +48,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         if let Some(Ok(path)) = params.root_uri.map(|x| x.to_file_path()) {
             for entry in WalkDir::new(path)
+                .min_depth(1)
+                .max_depth(4)
                 .into_iter()
                 .filter_map(|e| e.ok())
                 .filter(|x| x.file_type().is_file())
