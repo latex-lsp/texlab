@@ -73,7 +73,7 @@ lazy_static! {
     static ref BAD_BOX_REGEX: Regex = Regex::new(BAD_BOX_PATTERN).unwrap();
 }
 
-pub fn parse_build_log(uri: Uri, log: &str) -> Vec<BuildError> {
+pub fn parse_build_log(uri: &Uri, log: &str) -> Vec<BuildError> {
     let log = prepare_log(log);
     let mut ranges: Vec<FileRange> = FILE_REGEX
         .find_iter(&log)
@@ -240,7 +240,7 @@ mod tests {
             .join(name);
 
         let log = fs::read_to_string(log_path).unwrap();
-        let actual = parse_build_log(create_uri("parent.tex"), &log);
+        let actual = parse_build_log(&create_uri("parent.tex"), &log);
         assert_eq!(expected, actual);
     }
 
