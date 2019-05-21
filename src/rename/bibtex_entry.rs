@@ -33,15 +33,13 @@ impl BibtexEntryRenameProvider {
                         .for_each(|edit| edits.push(edit));
                 }
                 SyntaxTree::Bibtex(tree) => {
-                    for declaration in &tree.root.children {
-                        if let BibtexDeclaration::Entry(entry) = declaration {
-                            if let Some(key) = &entry.key {
-                                if key.text() == key_name {
-                                    edits.push(TextEdit::new(
-                                        key.range(),
-                                        Cow::from(request.params.new_name.clone()),
-                                    ));
-                                }
+                    for entry in tree.entries() {
+                        if let Some(key) = &entry.key {
+                            if key.text() == key_name {
+                                edits.push(TextEdit::new(
+                                    key.range(),
+                                    Cow::from(request.params.new_name.clone()),
+                                ));
                             }
                         }
                     }
@@ -63,12 +61,10 @@ impl BibtexEntryRenameProvider {
     }
 
     fn find_entry(tree: &BibtexSyntaxTree, position: Position) -> Option<&str> {
-        for declaration in &tree.root.children {
-            if let BibtexDeclaration::Entry(entry) = declaration {
-                if let Some(key) = &entry.key {
-                    if key.range().contains(position) {
-                        return Some(&key.text());
-                    }
+        for entry in tree.entries() {
+            if let Some(key) = &entry.key {
+                if key.range().contains(position) {
+                    return Some(&key.text());
                 }
             }
         }

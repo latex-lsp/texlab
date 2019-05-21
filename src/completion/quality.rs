@@ -50,9 +50,7 @@ impl OrderByQualityCompletionProvider {
                         Some(Cow::from(""))
                     }
                 }
-                let mut finder = BibtexFinder::new(position);
-                finder.visit_root(&tree.root);
-                match finder.results.pop()? {
+                match tree.find(position).pop()? {
                     BibtexNode::Root(_) => Some(Cow::from("")),
                     BibtexNode::Preamble(preamble) => get_type_query(&preamble.ty, position),
                     BibtexNode::String(string) => get_type_query(&string.ty, position),

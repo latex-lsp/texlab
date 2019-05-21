@@ -25,12 +25,10 @@ impl BibtexEntryReferenceProvider {
 
     fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
-            for declaration in &tree.root.children {
-                if let BibtexDeclaration::Entry(entry) = declaration {
-                    if let Some(key) = &entry.key {
-                        if key.range().contains(request.params.position) {
-                            return Some(key.text());
-                        }
+            for entry in tree.entries() {
+                if let Some(key) = &entry.key {
+                    if key.range().contains(request.params.position) {
+                        return Some(key.text());
                     }
                 }
             }

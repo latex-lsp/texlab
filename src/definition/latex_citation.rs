@@ -22,12 +22,10 @@ impl LatexCitationDefinitionProvider {
 
     fn find_definition(document: &Document, reference: &str) -> Option<Location> {
         if let SyntaxTree::Bibtex(tree) = &document.tree {
-            for declaration in &tree.root.children {
-                if let BibtexDeclaration::Entry(entry) = declaration {
-                    if let Some(key) = &entry.key {
-                        if key.text() == reference {
-                            return Some(Location::new(document.uri.clone(), key.range()));
-                        }
+            for entry in tree.entries() {
+                if let Some(key) = &entry.key {
+                    if key.text() == reference {
+                        return Some(Location::new(document.uri.clone(), key.range()));
                     }
                 }
             }

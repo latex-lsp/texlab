@@ -35,12 +35,10 @@ impl LatexCitationHoverProvider {
         let key = Self::get_key(request)?;
         for document in &request.related_documents {
             if let SyntaxTree::Bibtex(tree) = &document.tree {
-                for declaration in &tree.root.children {
-                    if let BibtexDeclaration::Entry(entry) = &declaration {
-                        if let Some(current_key) = &entry.key {
-                            if current_key.text() == key {
-                                return Some(entry);
-                            }
+                for entry in tree.entries() {
+                    if let Some(current_key) = &entry.key {
+                        if current_key.text() == key {
+                            return Some(entry);
                         }
                     }
                 }
@@ -57,12 +55,10 @@ impl LatexCitationHoverProvider {
                 .find(|citation| citation.command.range.contains(request.params.position))
                 .map(|citation| citation.key().text()),
             SyntaxTree::Bibtex(tree) => {
-                for declaration in &tree.root.children {
-                    if let BibtexDeclaration::Entry(entry) = &declaration {
-                        if let Some(key) = &entry.key {
-                            if key.range().contains(request.params.position) {
-                                return Some(key.text());
-                            }
+                for entry in tree.entries() {
+                    if let Some(key) = &entry.key {
+                        if key.range().contains(request.params.position) {
+                            return Some(key.text());
                         }
                     }
                 }

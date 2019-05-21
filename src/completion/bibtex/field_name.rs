@@ -11,9 +11,7 @@ pub struct BibtexFieldNameCompletionProvider;
 impl BibtexFieldNameCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
-            let mut finder = BibtexFinder::new(request.params.position);
-            finder.visit_root(&tree.root);
-            match finder.results.last() {
+            match tree.find(request.params.position).last() {
                 Some(BibtexNode::Field(field)) => {
                     if field.name.range().contains(request.params.position) {
                         return Self::generate_items();

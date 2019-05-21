@@ -10,9 +10,7 @@ pub struct BibtexFieldHoverProvider;
 impl BibtexFieldHoverProvider {
     pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
-            let mut finder = BibtexFinder::new(request.params.position);
-            finder.visit_root(&tree.root);
-            for node in finder.results {
+            for node in tree.find(request.params.position) {
                 if let BibtexNode::Field(field) = node {
                     let documentation = bibtex_field::get_documentation(field.name.text())?;
                     return Some(Hover {

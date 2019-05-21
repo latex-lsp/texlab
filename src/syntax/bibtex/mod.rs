@@ -8,10 +8,29 @@ use crate::syntax::bibtex::parser::BibtexParser;
 
 pub use crate::syntax::bibtex::ast::*;
 pub use crate::syntax::bibtex::finder::*;
+use lsp_types::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexSyntaxTree {
     pub root: BibtexRoot,
+}
+
+impl BibtexSyntaxTree {
+    pub fn entries(&self) -> Vec<&BibtexEntry> {
+        let mut entries: Vec<&BibtexEntry> = Vec::new();
+        for declaration in &self.root.children {
+            if let BibtexDeclaration::Entry(entry) = declaration {
+                entries.push(&entry);
+            }
+        }
+        entries
+    }
+
+    pub fn find(&self, position: Position) -> Vec<BibtexNode> {
+        let mut finder = BibtexFinder::new(position);
+        finder.visit_root(&self.root);
+        finder.results
+    }
 }
 
 impl From<BibtexRoot> for BibtexSyntaxTree {

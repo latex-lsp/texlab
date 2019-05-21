@@ -18,11 +18,9 @@ impl LatexCitationCompletionProvider {
                 let mut items = Vec::new();
                 for document in &request.related_documents {
                     if let SyntaxTree::Bibtex(tree) = &document.tree {
-                        for declaration in &tree.root.children {
-                            if let BibtexDeclaration::Entry(entry) = declaration {
-                                if let Some(key) = &entry.key {
-                                    items.push(factory::create_citation(entry, key.text()));
-                                }
+                        for entry in &tree.entries() {
+                            if let Some(key) = &entry.key {
+                                items.push(factory::create_citation(entry, key.text()));
                             }
                         }
                     }

@@ -6,7 +6,7 @@ mod types;
 
 pub use self::{
     client::{Client, ResponseHandler},
-    server::{handle_notification, handle_request, Server, EventHandler},
+    server::{handle_notification, handle_request, EventHandler, Server},
     types::*,
 };
 
@@ -74,7 +74,7 @@ where
 
                     let server = Arc::clone(&self.server);
                     self.pool.spawn(async move {
-                       await!(server.handle_events());
+                        await!(server.handle_events());
                     });
                 }
                 Ok(Message::Response(response)) => {

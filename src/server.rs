@@ -2,6 +2,7 @@ use crate::client::LspClient;
 use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
 use crate::definition::DefinitionProvider;
+use crate::event::{Event, EventManager};
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex;
@@ -16,6 +17,8 @@ use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::WorkspaceManager;
+use futures::future::BoxFuture;
+use futures::prelude::*;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
@@ -24,9 +27,6 @@ use serde::de::DeserializeOwned;
 use std::borrow::Cow;
 use std::sync::Arc;
 use walkdir::WalkDir;
-use futures::future::BoxFuture;
-use futures::prelude::*;
-use crate::event::{Event, EventManager};
 
 pub struct LatexLspServer<C> {
     client: Arc<C>,
@@ -280,7 +280,8 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                 match event {
                     Event::WorkspaceChanged => {
                         let workspace = self.workspace_manager.get();
-                        workspace.unresolved_includes()
+                        workspace
+                            .unresolved_includes()
                             .iter()
                             .for_each(|path| self.workspace_manager.load(&path));
                     }

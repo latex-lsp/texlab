@@ -13,9 +13,7 @@ pub struct BibtexKernelCommandCompletionProvider;
 impl BibtexKernelCommandCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
-            let mut finder = BibtexFinder::new(request.params.position);
-            finder.visit_root(&tree.root);
-            if let Some(BibtexNode::Command(command)) = finder.results.last() {
+            if let Some(BibtexNode::Command(command)) = tree.find(request.params.position).last() {
                 if command.token.range().contains(request.params.position)
                     && command.token.start().character != request.params.position.character
                 {

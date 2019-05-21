@@ -11,19 +11,17 @@ pub struct BibtexEntryTypeHoverProvider;
 impl BibtexEntryTypeHoverProvider {
     pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
-            for declaration in &tree.root.children {
-                if let BibtexDeclaration::Entry(entry) = &declaration {
-                    if entry.ty.range().contains(request.params.position) {
-                        let ty = &entry.ty.text()[1..];
-                        if let Some(documentation) = bibtex_entry_type::get_documentation(ty) {
-                            return Some(Hover {
-                                contents: HoverContents::Markup(MarkupContent {
-                                    kind: MarkupKind::Markdown,
-                                    value: Cow::from(documentation),
-                                }),
-                                range: None,
-                            });
-                        }
+            for entry in tree.entries() {
+                if entry.ty.range().contains(request.params.position) {
+                    let ty = &entry.ty.text()[1..];
+                    if let Some(documentation) = bibtex_entry_type::get_documentation(ty) {
+                        return Some(Hover {
+                            contents: HoverContents::Markup(MarkupContent {
+                                kind: MarkupKind::Markdown,
+                                value: Cow::from(documentation),
+                            }),
+                            range: None,
+                        });
                     }
                 }
             }
