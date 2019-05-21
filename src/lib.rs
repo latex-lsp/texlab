@@ -7,6 +7,7 @@ pub mod codec;
 pub mod completion;
 pub mod data;
 pub mod definition;
+pub mod event;
 pub mod feature;
 pub mod folding;
 pub mod formatting;

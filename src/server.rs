@@ -24,10 +24,14 @@ use serde::de::DeserializeOwned;
 use std::borrow::Cow;
 use std::sync::Arc;
 use walkdir::WalkDir;
+use futures::future::BoxFuture;
+use futures::prelude::*;
+use crate::event::{Event, EventManager};
 
 pub struct LatexLspServer<C> {
     client: Arc<C>,
     workspace_manager: WorkspaceManager,
+    event_manager: EventManager,
 }
 
 #[jsonrpc_server]
@@ -36,6 +40,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         LatexLspServer {
             client,
             workspace_manager: WorkspaceManager::new(),
+            event_manager: EventManager::default(),
         }
     }
 
@@ -50,12 +55,6 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
                 self.workspace_manager.load(&entry.path());
             }
         }
-
-        let workspace = self.workspace_manager.get();
-        workspace
-            .documents
-            .iter()
-            .for_each(|x| info!("{}", x.uri.as_str()));
 
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
@@ -99,15 +98,17 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("initialized", kind = "notification")]
-    pub fn initialized(&self, params: InitializedParams) {}
+    pub fn initialized(&self, _params: InitializedParams) {
+        self.event_manager.push(Event::WorkspaceChanged);
+    }
 
     #[jsonrpc_method("shutdown", kind = "request")]
-    pub async fn shutdown(&self, params: ()) -> Result<()> {
+    pub async fn shutdown(&self, _params: ()) -> Result<()> {
         Ok(())
     }
 
     #[jsonrpc_method("exit", kind = "notification")]
-    pub fn exit(&self, params: ()) {}
+    pub fn exit(&self, _params: ()) {}
 
     #[jsonrpc_method("workspace/didChangeWatchedFiles", kind = "notification")]
     pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
@@ -115,6 +116,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.workspace_manager.add(params.text_document);
+        self.event_manager.push(Event::WorkspaceChanged);
     }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
@@ -123,13 +125,16 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             let uri = params.text_document.uri.clone();
             self.workspace_manager.update(uri, change.text);
         }
+        self.event_manager.push(Event::WorkspaceChanged);
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub fn did_save(&self, params: DidSaveTextDocumentParams) {}
+    pub fn did_save(&self, _params: DidSaveTextDocumentParams) {
+        self.event_manager.push(Event::WorkspaceChanged);
+    }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
-    pub fn did_close(&self, params: DidCloseTextDocumentParams) {}
+    pub fn did_close(&self, _params: DidCloseTextDocumentParams) {}
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
@@ -263,6 +268,21 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
                 T::default()
             }
         }
+    }
+}
+
+impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
+    fn handle_events(&self) -> BoxFuture<'_, ()> {
+        let handler = async move {
+            for event in self.event_manager.take() {
+                match event {
+                    Event::WorkspaceChanged => {
+                        log::info!("TODO: Workspace Changed");
+                    }
+                }
+            }
+        };
+        handler.boxed()
     }
 }
 

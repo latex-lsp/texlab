@@ -6,7 +6,7 @@ mod types;
 
 pub use self::{
     client::{Client, ResponseHandler},
-    server::{handle_notification, handle_request, Server},
+    server::{handle_notification, handle_request, Server, EventHandler},
     types::*,
 };
 
@@ -26,7 +26,7 @@ pub struct MessageHandler<S, H, I, O> {
 
 impl<S, H, I, O> MessageHandler<S, H, I, O>
 where
-    S: Server + Send + Sync + 'static,
+    S: Server + EventHandler + Send + Sync + 'static,
     H: ResponseHandler + Send + Sync + 'static,
     I: Stream<Item = std::io::Result<String>> + Unpin,
     O: Sink<String> + Unpin + Send + 'static,
@@ -64,12 +64,18 @@ where
                         let json = serde_json::to_string(&response).unwrap();
                         let mut output = await!(output.lock());
                         await!(output.send(json));
+                        await!(server.handle_events());
                     };
 
                     self.pool.spawn(handler).unwrap();
                 }
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
+
+                    let server = Arc::clone(&self.server);
+                    self.pool.spawn(async move {
+                       await!(server.handle_events());
+                    });
                 }
                 Ok(Message::Response(response)) => {
                     await!(self.response_handler.handle(response));

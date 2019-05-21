@@ -13,6 +13,10 @@ pub trait Server {
     fn handle_notification(&self, notification: Notification);
 }
 
+pub trait EventHandler {
+    fn handle_events(&self) -> BoxFuture<'_, ()>;
+}
+
 const DESERIALIZE_OBJECT_ERROR: &str = "Could not deserialize parameter object";
 
 pub async fn handle_request<'a, H, F, I, O>(request: Request, handler: H) -> Response
