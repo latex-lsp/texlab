@@ -21,5 +21,5 @@ pub fn get_documentation(name: &str) -> Option<&'static str> {
             }
         }
     }
-    return None;
+    None
 }

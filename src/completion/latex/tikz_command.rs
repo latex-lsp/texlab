@@ -28,7 +28,7 @@ impl LatexTikzCommandCompletionProvider {
     }
 }
 
-const COMMANDS: &'static [&'static str] = &[
+const COMMANDS: &[&str] = &[
     "afterdecoration",
     "anchor",
     "anchorborder",

@@ -22,7 +22,7 @@ impl LatexColorCompletionProvider {
     }
 }
 
-const COLOR_COMMANDS: &'static [&'static str] = &[
+const COLOR_COMMANDS: &[&str] = &[
     "\\color",
     "\\colorbox",
     "\\textcolor",
@@ -31,7 +31,7 @@ const COLOR_COMMANDS: &'static [&'static str] = &[
     "\\definespotcolor",
 ];
 
-const COLOR_NAMES: &'static [&'static str] = &[
+const COLOR_NAMES: &[&str] = &[
     "black",
     "blue",
     "brown",

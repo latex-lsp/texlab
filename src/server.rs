@@ -53,9 +53,9 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
                 .into_iter()
                 .filter_map(std::result::Result::ok)
                 .filter(|x| x.file_type().is_file())
-                {
-                    self.workspace_manager.load(&entry.path());
-                }
+            {
+                self.workspace_manager.load(&entry.path());
+            }
         }
 
         let capabilities = ServerCapabilities {
@@ -191,7 +191,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(
         &self,
-        params: DocumentSymbolParams,
+        _params: DocumentSymbolParams,
     ) -> Result<Vec<DocumentSymbol>> {
         Ok(Vec::new())
     }

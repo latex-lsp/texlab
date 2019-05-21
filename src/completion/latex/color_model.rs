@@ -44,9 +44,9 @@ impl LatexColorModelCompletionProvider {
     }
 }
 
-const COMMAND_NAMES: &'static [&'static str] = &["\\definecolor", "\\definecolorset"];
+const COMMAND_NAMES: &[&str] = &["\\definecolor", "\\definecolorset"];
 
-const MODEL_NAMES: &'static [&'static str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
+const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
 #[cfg(test)]
 mod tests {

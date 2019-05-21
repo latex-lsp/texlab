@@ -138,7 +138,7 @@ impl<'a> BibtexFormatter<'a> {
             if length + current_length + space_length > self.params.line_length() as usize {
                 self.output.push('\n');
                 self.output.push_str(self.indent.as_ref());
-                for j in 0..=align - self.params.tab_size {
+                for _ in 0..=align - self.params.tab_size {
                     self.output.push(' ');
                 }
                 length = align;

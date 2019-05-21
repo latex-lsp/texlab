@@ -22,9 +22,9 @@ impl LatexTikzLibraryCompletionProvider {
     }
 }
 
-const COMMANDS: &'static [&'static str] = &["\\usetikzlibrary"];
+const COMMANDS: &[&str] = &["\\usetikzlibrary"];
 
-const LIBRARIES: &'static [&'static str] = &[
+const LIBRARIES: &[&str] = &[
     "3d",
     "angles",
     "arrows",

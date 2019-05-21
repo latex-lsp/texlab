@@ -22,9 +22,9 @@ impl LatexPgfLibraryCompletionProvider {
     }
 }
 
-const COMMANDS: &'static [&'static str] = &["\\usepgflibrary"];
+const COMMANDS: &[&str] = &["\\usepgflibrary"];
 
-const LIBRARIES: &'static [&'static str] = &[
+const LIBRARIES: &[&str] = &[
     "arrows",
     "arrows.meta",
     "arrows.spaced",

@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use walkdir::WalkDir;
 
-const NO_EXTENSION_COMMANDS: &'static [&'static str] = &["\\include", "\\includesvg"];
+const NO_EXTENSION_COMMANDS: &[&str] = &["\\include", "\\includesvg"];
 
-const COMMAND_NAMES: &'static [&'static str] = &[
+const COMMAND_NAMES: &[&str] = &[
     "\\include",
     "\\input",
     "\\bibliography",
@@ -66,7 +66,7 @@ fn current_directory(
     path.pop();
     if let Some(include) = command.extract_word(0) {
         path.push(include.text());
-        if !include.text().ends_with("/") {
+        if !include.text().ends_with('/') {
             path.pop();
         }
     }

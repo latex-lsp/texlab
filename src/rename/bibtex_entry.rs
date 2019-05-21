@@ -1,6 +1,6 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::bibtex::{BibtexDeclaration, BibtexSyntaxTree};
-use crate::syntax::latex::{LatexSyntaxTree, LatexVisitor};
+use crate::syntax::bibtex::BibtexSyntaxTree;
+use crate::syntax::latex::LatexSyntaxTree;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::*;

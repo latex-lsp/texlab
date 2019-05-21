@@ -1,7 +1,7 @@
 use crate::feature::FeatureRequest;
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
-use crate::syntax::bibtex::{BibtexDeclaration, BibtexEntry};
+use crate::syntax::bibtex::BibtexEntry;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};

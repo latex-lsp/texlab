@@ -207,13 +207,13 @@ pub fn create_argument_symbol(name: &'static str, image: &str) -> CompletionItem
 }
 
 fn create_image(name: &str, image: &str) -> MarkupContent {
-    return MarkupContent {
+    MarkupContent {
         kind: MarkupKind::Markdown,
         value: Cow::from(format!(
             "![{}](data:image/png;base64,{}|width=48,height=48)",
             name, image
         )),
-    };
+    }
 }
 
 pub fn create_entry_type(ty: &'static BibtexEntryType) -> CompletionItem {

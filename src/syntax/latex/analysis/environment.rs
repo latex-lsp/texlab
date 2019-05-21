@@ -61,7 +61,7 @@ impl LatexEnvironment {
     }
 }
 
-pub static ENVIRONMENT_COMMANDS: &'static [&'static str] = &["\\begin", "\\end"];
+pub static ENVIRONMENT_COMMANDS: &[&str] = &["\\begin", "\\end"];
 
 #[cfg(test)]
 mod tests {

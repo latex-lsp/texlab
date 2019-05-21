@@ -53,16 +53,16 @@ impl Into<Diagnostic> for BuildError {
 
 const MAX_LINE_LENGTH: usize = 79;
 
-const PACKAGE_MESSAGE_PATTERN: &'static str = "^\\([a-zA-Z_\\-]+\\)\\s*(?P<msg>.*)$";
+const PACKAGE_MESSAGE_PATTERN: &str = "^\\([a-zA-Z_\\-]+\\)\\s*(?P<msg>.*)$";
 
-const FILE_PATTERN: &'static str = "\\((?P<file>[^\r\n()]+\\.(tex|sty|cls))";
+const FILE_PATTERN: &str = "\\((?P<file>[^\r\n()]+\\.(tex|sty|cls))";
 
-const TEX_ERROR_PATTERN: &'static str =
+const TEX_ERROR_PATTERN: &str =
     "(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)|(?P<msg2>[^\r\n]*))";
 
-const WARNING_PATTERN: &'static str = "(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?P<msg>[^\r\n]*)";
+const WARNING_PATTERN: &str = "(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?P<msg>[^\r\n]*)";
 
-const BAD_BOX_PATTERN: &'static str =
+const BAD_BOX_PATTERN: &str =
     "(?P<msg>(Ov|Und)erfull \\\\[hv]box[^\r\n]*lines? (?P<line>\\d+)[^\r\n]*)";
 
 lazy_static! {
@@ -154,7 +154,7 @@ fn prepare_log(log: &str) -> String {
 fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
     let mut balance = 1;
     let mut end = result.start() + 1;
-    let mut chars = (&log[result.start() + 1..]).chars();
+    let chars = (&log[result.start() + 1..]).chars();
     for c in chars {
         if balance <= 0 {
             break;
@@ -178,7 +178,7 @@ fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
             .clean()
             .to_string_lossy()
             .into_owned();
-        if cfg!(windows) && full_path.starts_with("/") {
+        if cfg!(windows) && full_path.starts_with('/') {
             full_path.remove(0);
         }
         Uri::from_file_path(full_path).ok()
