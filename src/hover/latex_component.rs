@@ -1,6 +1,6 @@
 use crate::data::component::ComponentDocumentation;
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::{LatexIncludeKind, LatexVisitor};
+use crate::syntax::latex::LatexIncludeKind;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
 

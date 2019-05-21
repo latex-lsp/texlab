@@ -1,5 +1,4 @@
 use crate::feature::FeatureRequest;
-use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;

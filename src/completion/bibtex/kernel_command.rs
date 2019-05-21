@@ -2,7 +2,7 @@ use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::FeatureRequest;
-use crate::syntax::bibtex::{BibtexFinder, BibtexNode, BibtexVisitor};
+use crate::syntax::bibtex::BibtexNode;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
