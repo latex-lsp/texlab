@@ -133,6 +133,29 @@ impl Workspace {
         }
         None
     }
+
+    pub fn unresolved_includes(&self) -> Vec<PathBuf> {
+        let mut includes = Vec::new();
+        for document in &self.documents {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                for include in &tree.includes {
+                    if self.resolve_document(&document.uri, include).is_some() {
+                        continue;
+                    }
+
+                    if let Some(targets) = Self::resolve_link_targets(&document.uri, &include) {
+                        for target in &targets {
+                            let path = PathBuf::from(target);
+                            if path.exists() {
+                                includes.push(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        includes
+    }
 }
 
 pub struct WorkspaceManager {

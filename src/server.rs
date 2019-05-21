@@ -277,7 +277,10 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
             for event in self.event_manager.take() {
                 match event {
                     Event::WorkspaceChanged => {
-                        log::info!("TODO: Workspace Changed");
+                        let workspace = self.workspace_manager.get();
+                        workspace.unresolved_includes()
+                            .iter()
+                            .for_each(|path| self.workspace_manager.load(&path));
                     }
                 }
             }
