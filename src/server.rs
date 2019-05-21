@@ -51,11 +51,11 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
                 .min_depth(1)
                 .max_depth(4)
                 .into_iter()
-                .filter_map(|e| e.ok())
+                .filter_map(std::result::Result::ok)
                 .filter(|x| x.file_type().is_file())
-            {
-                self.workspace_manager.load(&entry.path());
-            }
+                {
+                    self.workspace_manager.load(&entry.path());
+                }
         }
 
         let capabilities = ServerCapabilities {
