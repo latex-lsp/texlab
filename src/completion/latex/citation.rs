@@ -33,7 +33,6 @@ impl LatexCitationCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -50,8 +49,7 @@ mod tests {
                 ],
                 main_file: "foo.tex",
                 position: Position::new(1, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len(), 1);
@@ -70,8 +68,7 @@ mod tests {
                 ],
                 main_file: "foo.tex",
                 position: Position::new(1, 7),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());

@@ -45,7 +45,6 @@ impl BibtexFieldNameCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -58,8 +57,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,\nbar}"),],
                 main_file: "foo.bib",
                 position: Position::new(1, 1),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len() > 0, true);
@@ -76,8 +74,7 @@ mod tests {
                 ),],
                 main_file: "foo.bib",
                 position: Position::new(0, 27),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len() > 0, true);
@@ -91,8 +88,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, \n}"),],
                 main_file: "foo.bib",
                 position: Position::new(1, 0),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len() > 0, true);
@@ -106,8 +102,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,\nbar = {baz}}"),],
                 main_file: "foo.bib",
                 position: Position::new(1, 7),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len() == 0, true);
@@ -121,8 +116,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}"),],
                 main_file: "foo.bib",
                 position: Position::new(0, 3),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.len() == 0, true);

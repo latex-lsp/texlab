@@ -51,7 +51,6 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -64,8 +63,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 19),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, LatexColorModelCompletionProvider::generate_items());
@@ -79,8 +77,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 18),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
@@ -94,8 +91,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolorset{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 16),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, LatexColorModelCompletionProvider::generate_items());

@@ -70,7 +70,6 @@ const LIBRARIES: &[&str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -83,8 +82,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\usepgflibrary{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.iter().any(|item| item.label == "arrows"), true);

@@ -35,7 +35,6 @@ impl LatexArgumentSymbolCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -48,8 +47,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\mathbb{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 8),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(true, items.len() > 0);
@@ -63,8 +61,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\mathbb{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 9),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(true, items.len() == 0);

@@ -45,7 +45,6 @@ impl LatexCommandRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::{Position, Range};
@@ -62,7 +61,7 @@ mod tests {
                 main_file: "foo.tex",
                 position: Position::new(1, 2),
                 new_name: "qux",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         let mut changes = HashMap::new();
@@ -92,7 +91,7 @@ mod tests {
                 main_file: "foo.bib",
                 position: Position::new(0, 14),
                 new_name: "qux",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(edit, None);

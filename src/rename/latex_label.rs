@@ -45,7 +45,6 @@ impl LatexLabelRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::{Position, Range};
@@ -63,7 +62,7 @@ mod tests {
                 main_file: "foo.tex",
                 position: Position::new(0, 7),
                 new_name: "bar",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         let mut changes = HashMap::new();
@@ -93,7 +92,7 @@ mod tests {
                 main_file: "foo.tex",
                 position: Position::new(0, 5),
                 new_name: "baz",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(edit, None);
@@ -108,7 +107,7 @@ mod tests {
                 main_file: "foo.bib",
                 position: Position::new(0, 0),
                 new_name: "baz",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(edit, None);

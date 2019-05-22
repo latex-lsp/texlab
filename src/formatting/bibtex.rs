@@ -61,7 +61,7 @@ impl<'a> BibtexFormatter<'a> {
         };
 
         BibtexFormatter {
-            params: params,
+            params,
             indent,
             output: String::new(),
         }

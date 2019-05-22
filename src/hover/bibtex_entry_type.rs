@@ -32,7 +32,6 @@ impl BibtexEntryTypeHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -45,8 +44,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 3),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(
@@ -69,8 +67,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@foo{bar,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 3),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(hover, None);
@@ -84,8 +81,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 11),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(hover, None);
@@ -99,8 +95,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\foo")],
                 main_file: "foo.tex",
                 position: Position::new(0, 3),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(hover, None);

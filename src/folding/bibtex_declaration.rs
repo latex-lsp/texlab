@@ -43,10 +43,8 @@ impl BibtexDeclarationFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
-    use lsp_types::Position;
 
     #[test]
     fn test_preamble() {
@@ -55,9 +53,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "\n@preamble{\"foo\"}")],
                 main_file: "foo.bib",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(
@@ -79,9 +75,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@string{foo = \"bar\"}")],
                 main_file: "foo.bib",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(
@@ -103,9 +97,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz\n}")],
                 main_file: "foo.bib",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(
@@ -127,9 +119,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "foo")],
                 main_file: "foo.bib",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(foldings, Vec::new());
@@ -142,9 +132,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,")],
                 main_file: "foo.bib",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(foldings, Vec::new());
@@ -157,9 +145,7 @@ mod tests {
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", ""),],
                 main_file: "foo.tex",
-                position: Position::default(),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(foldings, Vec::new());

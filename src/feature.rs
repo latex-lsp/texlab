@@ -62,12 +62,14 @@ macro_rules! choice_feature {
 }
 
 #[cfg(test)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct FeatureSpecFile {
     name: &'static str,
     text: &'static str,
 }
 
 #[cfg(test)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct FeatureSpec {
     pub files: Vec<FeatureSpecFile>,
     pub main_file: &'static str,

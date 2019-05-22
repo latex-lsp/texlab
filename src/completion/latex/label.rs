@@ -35,7 +35,6 @@ impl LatexLabelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -55,8 +54,7 @@ mod tests {
                 ],
                 main_file: "foo.tex",
                 position: Position::new(1, 5),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         let labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
@@ -74,8 +72,7 @@ mod tests {
                 ],
                 main_file: "foo.tex",
                 position: Position::new(1, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());

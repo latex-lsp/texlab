@@ -24,7 +24,6 @@ impl LatexKernelEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -37,8 +36,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 7),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.iter().any(|item| item.label == "document"), true);
@@ -52,8 +50,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\end{foo}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.iter().any(|item| item.label == "document"), true);
@@ -67,8 +64,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
@@ -82,8 +78,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\end{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
@@ -97,8 +92,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 6),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
@@ -112,8 +106,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}{bar}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 14),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());

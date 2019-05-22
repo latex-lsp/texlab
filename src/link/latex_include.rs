@@ -35,7 +35,6 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::{Position, Range};
@@ -51,8 +50,7 @@ mod tests {
                 ],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(
@@ -72,8 +70,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "")],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(links, Vec::new());
@@ -87,8 +84,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.bib", "")],
                 main_file: "foo.bib",
                 position: Position::new(0, 15),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(links, Vec::new());

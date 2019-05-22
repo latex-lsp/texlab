@@ -22,7 +22,6 @@ impl LatexKernelCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::completion::LatexComponentDatabase;
     use crate::feature::FeatureSpec;
     use crate::test_feature;
     use lsp_types::Position;
@@ -35,8 +34,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\use")],
                 main_file: "foo.tex",
                 position: Position::new(0, 4),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items.iter().any(|item| item.label == "usepackage"), true);
@@ -50,8 +48,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\use")],
                 main_file: "foo.tex",
                 position: Position::new(0, 0),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
@@ -65,8 +62,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "{%\\use}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 4),
-                new_name: "",
-                component_database: LatexComponentDatabase::default(),
+                ..FeatureSpec::default()
             }
         );
         assert_eq!(items, Vec::new());
