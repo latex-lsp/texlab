@@ -225,7 +225,6 @@ impl PartialOrd for FileRange {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
 
     fn create_uri(name: &str) -> Uri {
         let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
@@ -234,12 +233,10 @@ mod tests {
 
     fn verify(name: &str, expected: Vec<BuildError>) {
         let log_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("test")
-            .join("data")
             .join("logs")
             .join(name);
 
-        let log = fs::read_to_string(log_path).unwrap();
+        let log = std::fs::read_to_string(log_path).unwrap();
         let actual = parse_build_log(&create_uri("parent.tex"), &log);
         assert_eq!(expected, actual);
     }
