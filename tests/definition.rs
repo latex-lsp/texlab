@@ -6,7 +6,7 @@ use crate::common::Scenario;
 use futures::executor::block_on;
 use lsp_types::*;
 
-async fn run(
+pub async fn run(
     scenario: &'static str,
     file: &'static str,
     position: Position,

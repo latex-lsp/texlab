@@ -7,21 +7,56 @@ use futures::prelude::*;
 use jsonrpc::client::FutureResult;
 use jsonrpc::server::EventHandler;
 use lsp_types::*;
+use std::borrow::Cow;
 use std::fs::remove_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
 use texlab::client::LspClient;
+use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::server::LatexLspServer;
+
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct LspClientMockOptions {
+    pub bibtex_formatting: Option<BibtexFormattingOptions>,
+}
 
 #[derive(Debug, Default)]
 pub struct LspClientMock {
     pub messages: Mutex<Vec<ShowMessageParams>>,
+    pub options: Mutex<LspClientMockOptions>,
+}
+
+impl LspClientMock {
+    pub async fn set_bibtex_formatting(&self, bibtex_formatting: BibtexFormattingOptions) {
+        let mut options = await!(self.options.lock());
+        options.bibtex_formatting = Some(bibtex_formatting);
+    }
 }
 
 impl LspClient for LspClientMock {
-    fn configuration(&self, _params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
-        let handler = async move { Ok(serde_json::Value::Null) };
+    fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
+        let handler = async move {
+            let options = await!(self.options.lock());
+            match params.items[0].section {
+                Some(Cow::Borrowed("bibtex.formatting")) => {
+                    let error = jsonrpc::Error {
+                        code: jsonrpc::ErrorCode::InternalError,
+                        message: "Internal error".to_owned(),
+                        data: serde_json::Value::Null,
+                    };
+
+                    options
+                        .bibtex_formatting
+                        .as_ref()
+                        .map(|options| serde_json::to_value(vec![options]).unwrap())
+                        .ok_or(error)
+                }
+                _ => {
+                    unreachable!();
+                }
+            }
+        };
         handler.boxed()
     }
 
@@ -80,10 +115,14 @@ impl Scenario {
         Uri::from_file_path(path).unwrap()
     }
 
-    pub async fn open(&self, name: &'static str) {
+    pub async fn read(&self, name: &'static str) -> String {
         let mut path = self.directory.path().to_owned();
         path.push(name);
-        let text = std::fs::read_to_string(path).unwrap();
+        std::fs::read_to_string(path).unwrap()
+    }
+
+    pub async fn open(&self, name: &'static str) {
+        let text = await!(self.read(name));
         let language_id = if name.ends_with(".tex") {
             "latex"
         } else {

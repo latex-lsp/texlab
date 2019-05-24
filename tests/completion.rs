@@ -7,7 +7,7 @@ use futures::executor::block_on;
 use itertools::Itertools;
 use lsp_types::*;
 
-async fn run(scenario: &'static str, file: &'static str, position: Position) -> Vec<String> {
+pub async fn run(scenario: &'static str, file: &'static str, position: Position) -> Vec<String> {
     let scenario = format!("completion/{}", scenario);
     let scenario = await!(Scenario::new(&scenario));
     await!(scenario.open(file));
@@ -37,7 +37,7 @@ fn test_kernel_command() {
 #[test]
 fn test_kernel_command_bibtex() {
     block_on(async move {
-       let items = await!(run("kernel", "foo.bib", Position::new(1, 17)));
+        let items = await!(run("kernel", "foo.bib", Position::new(1, 17)));
         assert_eq!(items.iter().any(|item| item == "LaTeX"), true);
     });
 }
@@ -159,7 +159,7 @@ fn test_pgf_library() {
 #[test]
 fn test_tikz_library() {
     block_on(async move {
-       let items = await!(run("tikz_library", "foo.tex", Position::new(0, 19)));
+        let items = await!(run("tikz_library", "foo.tex", Position::new(0, 19)));
         assert_eq!(items.iter().any(|item| item == "arrows"), true);
     });
 }
@@ -167,7 +167,7 @@ fn test_tikz_library() {
 #[test]
 fn test_entry_type() {
     block_on(async move {
-       let items = await!(run("entry_type", "foo.bib", Position::new(0, 1)));
+        let items = await!(run("entry_type", "foo.bib", Position::new(0, 1)));
         assert_eq!(items.iter().any(|item| item == "article"), true);
     });
 }
@@ -199,7 +199,7 @@ fn test_entry_type_comment() {
 #[test]
 fn test_field_name() {
     block_on(async move {
-       let items = await!(run("field_name", "foo.bib", Position::new(1, 7)));
+        let items = await!(run("field_name", "foo.bib", Position::new(1, 7)));
         assert_eq!(items.iter().any(|item| item == "author"), true);
     });
 }
