@@ -6,16 +6,24 @@ use crate::common::Scenario;
 use futures::executor::block_on;
 use lsp_types::*;
 
+async fn run(
+    scenario: &'static str,
+    file: &'static str,
+    position: Position,
+) -> (Scenario, Vec<Location>) {
+    let scenario = format!("definition/{}", scenario);
+    let scenario = await!(Scenario::new(&scenario));
+    let identifier = TextDocumentIdentifier::new(scenario.uri(file));
+    let params = TextDocumentPositionParams::new(identifier, position);
+    await!(scenario.open(file));
+    let definitions = await!(scenario.server.definition(params)).unwrap();
+    (scenario, definitions)
+}
+
 #[test]
 fn test_citation() {
     block_on(async move {
-        let scenario = await!(Scenario::new("definition_citation"));
-        let params = TextDocumentPositionParams::new(
-            TextDocumentIdentifier::new(scenario.uri("foo.tex")),
-            Position::new(5, 8),
-        );
-        await!(scenario.open("foo.tex", "latex"));
-        let definitions = await!(scenario.server.definition(params)).unwrap();
+        let (scenario, definitions) = await!(run("citation", "foo.tex", Position::new(5, 8)));
         assert_eq!(
             definitions,
             vec![Location::new(
@@ -29,13 +37,7 @@ fn test_citation() {
 #[test]
 fn test_label() {
     block_on(async move {
-        let scenario = await!(Scenario::new("definition_label"));
-        let params = TextDocumentPositionParams::new(
-            TextDocumentIdentifier::new(scenario.uri("foo.tex")),
-            Position::new(8, 8),
-        );
-        await!(scenario.open("foo.tex", "latex"));
-        let definitions = await!(scenario.server.definition(params)).unwrap();
+        let (scenario, definitions) = await!(run("label", "foo.tex", Position::new(8, 8)));
         assert_eq!(
             definitions,
             vec![Location::new(

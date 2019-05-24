@@ -24,7 +24,7 @@ impl LatexPgfLibraryCompletionProvider {
 
 const COMMANDS: &[&str] = &["\\usepgflibrary"];
 
-const LIBRARIES: &[&str] = &[
+static LIBRARIES: &[&str] = &[
     "arrows",
     "arrows.meta",
     "arrows.spaced",

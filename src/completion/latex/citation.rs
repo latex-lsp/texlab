@@ -18,8 +18,10 @@ impl LatexCitationCompletionProvider {
                 for document in &request.related_documents {
                     if let SyntaxTree::Bibtex(tree) = &document.tree {
                         for entry in &tree.entries() {
-                            if let Some(key) = &entry.key {
-                                items.push(factory::create_citation(entry, key.text()));
+                            if !entry.is_comment() {
+                                if let Some(key) = &entry.key {
+                                    items.push(factory::create_citation(entry, key.text()));
+                                }
                             }
                         }
                     }

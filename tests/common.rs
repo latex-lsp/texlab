@@ -7,12 +7,12 @@ use futures::prelude::*;
 use jsonrpc::client::FutureResult;
 use jsonrpc::server::EventHandler;
 use lsp_types::*;
+use std::fs::remove_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
 use texlab::client::LspClient;
 use texlab::server::LatexLspServer;
-use std::fs::remove_dir;
 
 #[derive(Debug, Default)]
 pub struct LspClientMock {
@@ -80,15 +80,22 @@ impl Scenario {
         Uri::from_file_path(path).unwrap()
     }
 
-    pub async fn open(&self, name: &'static str, language_id: &'static str) {
+    pub async fn open(&self, name: &'static str) {
         let mut path = self.directory.path().to_owned();
         path.push(name);
+        let text = std::fs::read_to_string(path).unwrap();
+        let language_id = if name.ends_with(".tex") {
+            "latex"
+        } else {
+            "bibtex"
+        };
+
         self.server.did_open(DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
                 uri: self.uri(name),
                 version: 0,
                 language_id: language_id.to_owned(),
-                text: std::fs::read_to_string(path).unwrap(),
+                text,
             },
         })
     }

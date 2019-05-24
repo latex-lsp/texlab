@@ -24,7 +24,7 @@ impl LatexTikzLibraryCompletionProvider {
 
 const COMMANDS: &[&str] = &["\\usetikzlibrary"];
 
-const LIBRARIES: &[&str] = &[
+static LIBRARIES: &[&str] = &[
     "3d",
     "angles",
     "arrows",
