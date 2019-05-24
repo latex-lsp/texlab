@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
+    Initialized,
     WorkspaceChanged,
 }
 

@@ -13,17 +13,21 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
+use crate::resolver;
+use crate::resolver::TexResolver;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::WorkspaceManager;
 use futures::future::BoxFuture;
+use futures::lock::Mutex;
 use futures::prelude::*;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
 use serde::de::DeserializeOwned;
+use serde_json::error::ErrorCode::Message;
 use std::borrow::Cow;
 use std::sync::Arc;
 use walkdir::WalkDir;
@@ -32,6 +36,7 @@ pub struct LatexLspServer<C> {
     client: Arc<C>,
     workspace_manager: WorkspaceManager,
     event_manager: EventManager,
+    resolver: Mutex<TexResolver>,
 }
 
 #[jsonrpc_server]
@@ -41,6 +46,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             client,
             workspace_manager: WorkspaceManager::new(),
             event_manager: EventManager::default(),
+            resolver: Mutex::new(TexResolver::new()),
         }
     }
 
@@ -101,6 +107,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
+        self.event_manager.push(Event::Initialized);
         self.event_manager.push(Event::WorkspaceChanged);
     }
 
@@ -278,6 +285,35 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
         let handler = async move {
             for event in self.event_manager.take() {
                 match event {
+                    Event::Initialized => match TexResolver::load() {
+                        Ok(res) => {
+                            let mut resolver = await!(self.resolver.lock());
+                            *resolver = res;
+                        }
+                        Err(why) => {
+                            let message = match why {
+                                resolver::Error::KpsewhichNotFound => {
+                                    "An error occurred while executing `kpsewhich`.\
+                                     Please make sure that your distribution is in your PATH \
+                                     environment variable and provides the `kpsewhich` tool."
+                                }
+                                resolver::Error::UnsupportedTexDistribution => {
+                                    "Your TeX distribution is not supported."
+                                }
+                                resolver::Error::CorruptFileDatabase => {
+                                    "The file database of your TeX distribution seems \
+                                     to be corrupt. Please rebuild it and try again."
+                                }
+                            };
+
+                            let params = ShowMessageParams {
+                                message: Cow::from(message),
+                                typ: MessageType::Error,
+                            };
+
+                            self.client.show_message(params);
+                        }
+                    },
                     Event::WorkspaceChanged => {
                         let workspace = self.workspace_manager.get();
                         workspace
