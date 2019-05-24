@@ -1,6 +1,7 @@
 use crate::data::component::ComponentDocumentation;
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::LatexIncludeKind;
+use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
 
@@ -16,7 +17,7 @@ impl LatexComponentHoverProvider {
                     include.kind == LatexIncludeKind::Package
                         || include.kind == LatexIncludeKind::Class
                 })
-                .find(|include| include.command.range.contains(request.params.position))
+                .find(|include| include.path().range().contains(request.params.position))
                 .map(|include| include.path().text())
                 .map(|name| ComponentDocumentation::lookup(name))?)?;
 
