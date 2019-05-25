@@ -75,8 +75,10 @@ where
             let mut queue = await!(self.queue.lock());
             let sender = queue.remove(&id).expect("Unexpected response received");
 
-            let error = response.error.clone();
-            let result = response.result.ok_or_else(|| error.unwrap());
+            let result = match response.error {
+                Some(why) => Err(why),
+                None => Ok(response.result.unwrap_or(serde_json::Value::Null))
+            };
             sender.send(result).unwrap();
         };
 
