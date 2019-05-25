@@ -35,7 +35,7 @@ impl SyntaxNode for LatexToken {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexRoot {
     pub children: Vec<LatexContent>,
 }

@@ -1,3 +1,5 @@
+use crate::syntax::latex::ast::LatexRoot;
+
 mod analysis;
 mod ast;
 mod lexer;
@@ -15,24 +17,55 @@ pub use crate::syntax::latex::ast::*;
 use crate::syntax::latex::lexer::LatexLexer;
 use crate::syntax::latex::parser::LatexParser;
 use crate::syntax::text::SyntaxNode;
-use lsp_types::Position;
+use lsp_types::{Position, Uri};
 use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexSyntaxTree {
     pub root: Arc<LatexRoot>,
     pub commands: Vec<Arc<LatexCommand>>,
     pub includes: Vec<LatexInclude>,
     pub components: Vec<String>,
     pub environments: Vec<LatexEnvironment>,
+    pub is_standalone: bool,
     pub labels: Vec<LatexLabel>,
     pub sections: Vec<LatexSection>,
     pub citations: Vec<LatexCitation>,
     pub equations: Vec<LatexEquation>,
-    pub is_standalone: bool,
 }
 
 impl LatexSyntaxTree {
+    pub fn new(uri: &Uri, text: &str) -> Self {
+        let lexer = LatexLexer::new(text);
+        let mut parser = LatexParser::new(lexer);
+        let root = Arc::new(parser.root());
+        let commands = LatexCommandAnalyzer::find(Arc::clone(&root));
+        let includes = LatexInclude::parse_all(uri, &commands);
+        let components = includes.iter().flat_map(|include| include.name()).collect();
+        let environments = LatexEnvironment::parse_all(&commands);
+        let is_standalone = environments
+            .iter()
+            .any(|env| env.left.name().map(LatexToken::text) == Some("document"));
+
+        let labels = LatexLabel::parse_all(&commands);
+        let sections = LatexSection::parse_all(&commands);
+        let citations = LatexCitation::parse_all(&commands);
+        let equations = LatexEquation::parse_all(&commands);
+
+        LatexSyntaxTree {
+            root,
+            commands,
+            includes,
+            components,
+            environments,
+            is_standalone,
+            labels,
+            sections,
+            citations,
+            equations,
+        }
+    }
+
     pub fn find(&self, position: Position) -> Vec<LatexNode> {
         let mut finder = LatexFinder::new(position);
         finder.visit_root(Arc::clone(&self.root));
@@ -50,44 +83,5 @@ impl LatexSyntaxTree {
             }
         }
         None
-    }
-}
-
-impl From<LatexRoot> for LatexSyntaxTree {
-    fn from(root: LatexRoot) -> Self {
-        let root = Arc::new(root);
-        let mut analyzer = LatexCommandAnalyzer::new();
-        analyzer.visit_root(Arc::clone(&root));
-        let commands = analyzer.commands;
-        let (includes, components) = LatexInclude::parse(&commands);
-        let environments = LatexEnvironment::parse(&commands);
-        let labels = LatexLabel::parse(&commands);
-        let sections = LatexSection::parse(&commands);
-        let citations = LatexCitation::parse(&commands);
-        let equations = LatexEquation::parse(&commands);
-        let is_standalone = environments
-            .iter()
-            .any(|env| env.left.name().map(LatexToken::text) == Some("document"));
-        LatexSyntaxTree {
-            root,
-            commands,
-            includes,
-            components,
-            environments,
-            labels,
-            sections,
-            citations,
-            equations,
-            is_standalone,
-        }
-    }
-}
-
-impl From<&str> for LatexSyntaxTree {
-    fn from(text: &str) -> Self {
-        let lexer = LatexLexer::new(text);
-        let mut parser = LatexParser::new(lexer);
-        let root = parser.root();
-        LatexSyntaxTree::from(root)
     }
 }

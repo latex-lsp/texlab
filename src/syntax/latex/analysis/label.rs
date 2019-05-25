@@ -29,7 +29,7 @@ impl LatexLabel {
         }
     }
 
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut labels = Vec::new();
         for command in commands {
             if command.has_word(0)
@@ -46,36 +46,3 @@ impl LatexLabel {
 pub static LABEL_DEFINITION_COMMANDS: &[&str] = &["\\label"];
 
 pub static LABEL_REFERENCE_COMMANDS: &[&str] = &["\\ref", "\\autoref", "\\eqref"];
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    fn verify(text: &str, expected: Vec<&str>) {
-        let tree = LatexSyntaxTree::from(text);
-        let actual: Vec<&str> = tree
-            .labels
-            .iter()
-            .map(|label| label.name().text())
-            .collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_valid() {
-        verify("\\label{foo}", vec!["foo"]);
-        verify("\\ref{bar}", vec!["bar"]);
-    }
-
-    #[test]
-    fn test_invalid() {
-        verify("\\label", vec![]);
-        verify("\\label{}", vec![]);
-    }
-
-    #[test]
-    fn test_unrelated() {
-        verify("\\foo", vec![]);
-        verify("\\foo{bar}", vec![]);
-    }
-}

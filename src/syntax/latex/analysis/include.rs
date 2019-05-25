@@ -1,102 +1,95 @@
 use crate::syntax::latex::ast::*;
+use lsp_types::Uri;
+use path_clean::PathClean;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexIncludeKind {
-    Package,
-    Class,
     TexFile,
     BibFile,
+    Package,
+    Class,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexInclude {
     pub command: Arc<LatexCommand>,
-    pub kind: LatexIncludeKind,
+    target: Option<Uri>,
 }
 
 impl LatexInclude {
-    pub fn path(&self) -> &LatexToken {
-        self.command.extract_word(0).unwrap()
+    fn parse(uri: &Uri, command: Arc<LatexCommand>) -> Option<Self> {
+        let mut include = LatexInclude {
+            command,
+            target: None,
+        };
+
+        let mut path = uri.to_file_path().ok()?;
+        path.pop();
+        path.push(include.path().text());
+        path = path.clean();
+        let has_extension = path.extension().is_some();
+        let mut path = path.to_str()?.to_owned();
+        if !has_extension {
+            path = format!("{}{}", path, include.extension());
+        }
+        include.target = Some(Uri::from_file_path(path).ok()?);
+        Some(include)
     }
 
-    pub fn new(command: Arc<LatexCommand>, kind: LatexIncludeKind) -> Self {
-        LatexInclude { command, kind }
-    }
-
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> (Vec<Self>, Vec<String>) {
+    pub fn parse_all(uri: &Uri, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut includes = Vec::new();
-        let mut components = Vec::new();
         for command in commands {
-            let kind = match command.name.text() {
-                "\\include" | "\\input" => Some(LatexIncludeKind::TexFile),
-                "\\bibliography" | "\\addbibresource" => Some(LatexIncludeKind::BibFile),
-                "\\usepackage" => Some(LatexIncludeKind::Package),
-                "\\documentclass" => Some(LatexIncludeKind::Class),
-                _ => None,
-            };
-
-            if let Some(kind) = kind {
-                if command.has_word(0) {
-                    let include = LatexInclude::new(Arc::clone(&command), kind);
-                    match include.kind {
-                        LatexIncludeKind::Package => {
-                            components.push(format!("{}.sty", include.path().text()));
-                        }
-                        LatexIncludeKind::Class => {
-                            components.push(format!("{}.cls", include.path().text()));
-                        }
-                        LatexIncludeKind::TexFile | LatexIncludeKind::BibFile => {}
-                    }
+            if INCLUDE_COMMANDS.contains(&command.name.text()) && command.has_word(0) {
+                if let Some(include) = LatexInclude::parse(uri, Arc::clone(&command)) {
                     includes.push(include);
                 }
             }
         }
-        (includes, components)
+        includes
+    }
+
+    pub fn target(&self) -> &Uri {
+        self.target.as_ref().unwrap()
+    }
+
+    pub fn path(&self) -> &LatexToken {
+        self.command.extract_word(0).unwrap()
+    }
+
+    pub fn kind(&self) -> LatexIncludeKind {
+        match self.command.name.text() {
+            "\\include" | "\\input" => LatexIncludeKind::TexFile,
+            "\\bibliography" | "\\addbibresource" => LatexIncludeKind::BibFile,
+            "\\usepackage" => LatexIncludeKind::Package,
+            "\\documentclass" => LatexIncludeKind::Class,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn name(&self) -> Option<String> {
+        match self.kind() {
+            LatexIncludeKind::TexFile | LatexIncludeKind::BibFile => None,
+            LatexIncludeKind::Package => Some(format!("{}.sty", self.path().text())),
+            LatexIncludeKind::Class => Some(format!("{}.cls", self.path().text())),
+        }
+    }
+
+    pub fn extension(&self) -> &'static str {
+        match self.kind() {
+            LatexIncludeKind::TexFile => ".tex",
+            LatexIncludeKind::BibFile => ".bib",
+            LatexIncludeKind::Package => ".sty",
+            LatexIncludeKind::Class => ".cls",
+        }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    fn verify(text: &str, includes: Vec<&str>, components: Vec<&str>) {
-        let tree = LatexSyntaxTree::from(text);
-        let actual_includes: Vec<&str> = tree
-            .includes
-            .iter()
-            .map(|include| include.path().text())
-            .collect();
-        assert_eq!(includes, actual_includes);
-        assert_eq!(components, tree.components);
-    }
-
-    #[test]
-    fn test_valid() {
-        verify("\\include{foo}", vec!["foo"], vec![]);
-        verify("\\bibliography{foo}", vec!["foo"], vec![]);
-        verify(
-            "\\usepackage{amsmath}",
-            vec!["amsmath"],
-            vec!["amsmath.sty"],
-        );
-        verify(
-            "\\documentclass{article}",
-            vec!["article"],
-            vec!["article.cls"],
-        );
-    }
-
-    #[test]
-    fn test_invalid() {
-        verify("\\include", vec![], vec![]);
-        verify("\\include{}", vec![], vec![]);
-        verify("\\include{foo bar}", vec![], vec![]);
-    }
-
-    #[test]
-    fn test_unrelated() {
-        verify("\\foo", vec![], vec![]);
-        verify("\\foo{bar}", vec![], vec![]);
-    }
-}
+pub static INCLUDE_COMMANDS: &[&str] = &[
+    "\\include",
+    "\\input",
+    "\\bibliography",
+    "\\addbibresource",
+    "\\usepackage",
+    "\\documentclass",
+];

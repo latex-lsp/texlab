@@ -2,7 +2,6 @@ use crate::syntax::latex::*;
 use crate::syntax::{Language, SyntaxTree};
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};
-use path_clean::PathClean;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -21,7 +20,7 @@ impl Document {
     }
 
     pub fn parse(uri: Uri, text: String, language: Language) -> Self {
-        let tree = SyntaxTree::parse(&text, language);
+        let tree = SyntaxTree::parse(&uri, &text, language);
         Document::new(uri, text, tree)
     }
 
@@ -49,51 +48,12 @@ impl Workspace {
             .map(|document| Arc::clone(&document))
     }
 
-    pub fn find_path(&self, path: &str) -> Option<Arc<Document>> {
-        self.documents
-            .iter()
-            .find(|document| document.is_file() && document.uri.path() == path)
-            .map(|document| Arc::clone(&document))
-    }
-
-    pub fn resolve_document(&self, uri: &Uri, include: &LatexInclude) -> Option<Arc<Document>> {
-        let targets = Self::resolve_link_targets(uri, include)?;
-        for target in &targets {
-            if let Some(document) = self.find_path(target) {
-                return Some(document);
-            }
-        }
-        None
-    }
-
-    fn resolve_link_targets(uri: &Uri, include: &LatexInclude) -> Option<[String; 2]> {
-        if uri.scheme() != "file" {
-            return None;
-        }
-
-        let mut path = uri.to_file_path().ok()?;
-        path.pop();
-        path.push(include.path().text());
-        path = path.clean();
-        let path1 = path.to_string_lossy().into_owned();
-
-        let extension = match include.kind {
-            LatexIncludeKind::Package => ".sty",
-            LatexIncludeKind::Class => ".cls",
-            LatexIncludeKind::TexFile => ".tex",
-            LatexIncludeKind::BibFile => ".bib",
-        };
-        let path2 = format!("{}{}", path1, extension);
-
-        Some([path1, path2])
-    }
-
     pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
         let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 for include in &tree.includes {
-                    if let Some(ref child) = self.resolve_document(&parent.uri, include) {
+                    if let Some(ref child) = self.find(include.target()) {
                         edges.push((Arc::clone(&parent), Arc::clone(&child)));
                         edges.push((Arc::clone(&child), Arc::clone(&parent)));
                     }
@@ -139,17 +99,16 @@ impl Workspace {
         for document in &self.documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 for include in &tree.includes {
-                    if self.resolve_document(&document.uri, include).is_some() {
+                    if self.find(include.target()).is_some()
+                        || include.kind() == LatexIncludeKind::Package
+                        || include.kind() == LatexIncludeKind::Class
+                    {
                         continue;
                     }
 
-                    if let Some(targets) = Self::resolve_link_targets(&document.uri, &include) {
-                        for target in &targets {
-                            let path = PathBuf::from(target);
-                            if path.exists() {
-                                includes.push(path);
-                            }
-                        }
+                    let path = PathBuf::from(include.target().to_file_path().unwrap());
+                    if path.exists() {
+                        includes.push(path);
                     }
                 }
             }

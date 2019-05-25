@@ -4,6 +4,7 @@ pub mod text;
 
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::LatexSyntaxTree;
+use lsp_types::Uri;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Language {
@@ -36,9 +37,9 @@ pub enum SyntaxTree {
 }
 
 impl SyntaxTree {
-    pub fn parse(text: &str, language: Language) -> Self {
+    pub fn parse(uri: &Uri, text: &str, language: Language) -> Self {
         match language {
-            Language::Latex => SyntaxTree::Latex(LatexSyntaxTree::from(text)),
+            Language::Latex => SyntaxTree::Latex(LatexSyntaxTree::new(uri, text)),
             Language::Bibtex => SyntaxTree::Bibtex(BibtexSyntaxTree::from(text)),
         }
     }

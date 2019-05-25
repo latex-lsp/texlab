@@ -12,7 +12,7 @@ impl LatexEquation {
         LatexEquation { left, right }
     }
 
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut equations = Vec::new();
         let mut left = None;
         for command in commands {
@@ -28,25 +28,3 @@ impl LatexEquation {
 }
 
 pub static EQUATION_COMMANDS: &[&str] = &["\\[", "\\]"];
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-    use crate::syntax::text::SyntaxNode;
-    use lsp_types::Range;
-
-    #[test]
-    fn test_matched() {
-        let tree = LatexSyntaxTree::from("\\[ foo \\]");
-        let equations = tree.equations;
-        assert_eq!(1, equations.len());
-        assert_eq!(Range::new_simple(0, 0, 0, 2), equations[0].left.range());
-        assert_eq!(Range::new_simple(0, 7, 0, 9), equations[0].right.range());
-    }
-
-    #[test]
-    fn test_unmatched() {
-        let tree = LatexSyntaxTree::from("\\] \\[");
-        assert_eq!(tree.equations, Vec::new());
-    }
-}

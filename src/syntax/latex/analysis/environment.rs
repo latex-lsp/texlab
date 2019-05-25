@@ -45,7 +45,7 @@ impl LatexEnvironment {
         }
     }
 
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut stack = Vec::new();
         let mut environments = Vec::new();
         for command in commands {
@@ -62,34 +62,3 @@ impl LatexEnvironment {
 }
 
 pub static ENVIRONMENT_COMMANDS: &[&str] = &["\\begin", "\\end"];
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    #[test]
-    fn test_nested() {
-        let tree = LatexSyntaxTree::from("\\begin{foo}\\begin{bar}\\end{baz}\\end{qux}");
-        let environments = tree.environments;
-        assert_eq!(2, environments.len());
-        assert_eq!("bar", environments[0].left.name().unwrap().text());
-        assert_eq!("baz", environments[0].right.name().unwrap().text());
-        assert_eq!("foo", environments[1].left.name().unwrap().text());
-        assert_eq!("qux", environments[1].right.name().unwrap().text());
-    }
-
-    #[test]
-    fn test_empty_name() {
-        let tree = LatexSyntaxTree::from("\\begin{}\\end{}");
-        let environments = tree.environments;
-        assert_eq!(1, environments.len());
-        assert_eq!(None, environments[0].left.name());
-        assert_eq!(None, environments[0].right.name());
-    }
-
-    #[test]
-    fn test_ummatched() {
-        let tree = LatexSyntaxTree::from("\\end{foo} \\begin{bar}");
-        assert_eq!(tree.environments, Vec::new());
-    }
-}

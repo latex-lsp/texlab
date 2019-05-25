@@ -14,8 +14,8 @@ impl LatexComponentHoverProvider {
                 .includes
                 .iter()
                 .filter(|include| {
-                    include.kind == LatexIncludeKind::Package
-                        || include.kind == LatexIncludeKind::Class
+                    include.kind() == LatexIncludeKind::Package
+                        || include.kind() == LatexIncludeKind::Class
                 })
                 .find(|include| include.path().range().contains(request.params.position))
                 .map(|include| include.path().text())

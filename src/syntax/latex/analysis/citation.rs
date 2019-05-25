@@ -15,7 +15,7 @@ impl LatexCitation {
         self.command.extract_word(0).unwrap()
     }
 
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut citations = Vec::new();
         for command in commands {
             if CITATION_COMMANDS.contains(&command.name.text()) && command.has_word(0) {
@@ -84,36 +84,3 @@ pub static CITATION_COMMANDS: &[&str] = &[
     "\\Pnotecite",
     "\\fnotecite",
 ];
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    fn verify(text: &str, expected: Vec<&str>) {
-        let tree = LatexSyntaxTree::from(text);
-        let actual: Vec<&str> = tree
-            .citations
-            .iter()
-            .map(|citation| citation.key().text())
-            .collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_valid() {
-        verify("\\cite{foo}", vec!["foo"]);
-        verify("\\Cite{bar}", vec!["bar"]);
-    }
-
-    #[test]
-    fn test_invalid() {
-        verify("\\cite", vec![]);
-        verify("\\cite{}", vec![]);
-    }
-
-    #[test]
-    fn test_unrelated() {
-        verify("\\foo", vec![]);
-        verify("\\foo{bar}", vec![]);
-    }
-}

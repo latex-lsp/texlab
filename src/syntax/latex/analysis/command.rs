@@ -1,15 +1,16 @@
 use crate::syntax::latex::ast::*;
 use std::sync::Arc;
 
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexCommandAnalyzer {
     pub commands: Vec<Arc<LatexCommand>>,
 }
 
 impl LatexCommandAnalyzer {
-    pub fn new() -> Self {
-        LatexCommandAnalyzer {
-            commands: Vec::new(),
-        }
+    pub fn find(root: Arc<LatexRoot>) -> Vec<Arc<LatexCommand>> {
+        let mut analyzer = LatexCommandAnalyzer::default();
+        analyzer.visit_root(root);
+        analyzer.commands
     }
 }
 
@@ -28,20 +29,4 @@ impl LatexVisitor for LatexCommandAnalyzer {
     }
 
     fn visit_text(&mut self, _text: Arc<LatexText>) {}
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    #[test]
-    fn test() {
-        let tree = LatexSyntaxTree::from("\\a[\\b]{\\c}{d}");
-        let commands: Vec<&str> = tree
-            .commands
-            .iter()
-            .map(|command| command.name.text())
-            .collect();
-        assert_eq!(vec!["\\a", "\\b", "\\c"], commands);
-    }
 }

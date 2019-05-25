@@ -17,7 +17,7 @@ impl LatexSection {
         }
     }
 
-    pub fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut sections = Vec::new();
         for command in commands {
             if SECTION_COMMANDS.contains(&command.name.text()) {
@@ -52,36 +52,3 @@ pub static SECTION_COMMANDS: &[&str] = &[
     "\\subparagraph",
     "\\subparagraph*",
 ];
-
-#[cfg(test)]
-mod tests {
-    use crate::syntax::latex::LatexSyntaxTree;
-
-    fn verify(text: &str, expected: Vec<&str>) {
-        let tree = LatexSyntaxTree::from(text);
-        let actual: Vec<&str> = tree
-            .sections
-            .iter()
-            .map(|section| section.text.as_ref())
-            .collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_valid() {
-        verify("\\section{foo bar}", vec!["foo bar"]);
-        verify("\\chapter{bar}", vec!["bar"]);
-    }
-
-    #[test]
-    fn test_invalid() {
-        verify("\\section", vec![]);
-        verify("\\section{}", vec![]);
-    }
-
-    #[test]
-    fn test_unrelated() {
-        verify("\\foo", vec![]);
-        verify("\\foo{bar}", vec![]);
-    }
-}
