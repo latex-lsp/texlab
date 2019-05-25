@@ -361,7 +361,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                         for document in &workspace.documents {
                             await!(self.client.publish_diagnostics(PublishDiagnosticsParams {
                                 uri: document.uri.clone(),
-                                diagnostics: diagnostics_manager.get(&document.uri),
+                                diagnostics: diagnostics_manager.get(&document),
                             }));
                         }
                     }
