@@ -2,6 +2,7 @@ use crate::client::LspClient;
 use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
 use crate::definition::DefinitionProvider;
+use crate::diagnostics::DiagnosticsManager;
 use crate::event::{Event, EventManager};
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
@@ -28,6 +29,7 @@ use log::*;
 use lsp_types::*;
 use serde::de::DeserializeOwned;
 use std::borrow::Cow;
+use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -35,6 +37,7 @@ pub struct LatexLspServer<C> {
     client: Arc<C>,
     workspace_manager: WorkspaceManager,
     event_manager: EventManager,
+    diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<TexResolver>,
 }
 
@@ -45,6 +48,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             client,
             workspace_manager: WorkspaceManager::default(),
             event_manager: EventManager::default(),
+            diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(TexResolver::new()),
         }
     }
@@ -119,7 +123,24 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     pub fn exit(&self, _params: ()) {}
 
     #[jsonrpc_method("workspace/didChangeWatchedFiles", kind = "notification")]
-    pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {}
+    pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
+        let workspace = self.workspace_manager.get();
+        for change in params.changes {
+            if change.uri.scheme() != "file" {
+                continue;
+            }
+
+            let log_path = change.uri.to_file_path().unwrap();
+            let name = log_path.file_name().unwrap().to_string_lossy().into_owned();
+            let tex_path = PathBuf::from(format!("{}log", &name[0..name.len() - 3]));
+            let tex_uri = Uri::from_file_path(tex_path).unwrap();
+            if workspace.find(&tex_uri).is_some() {
+                self.event_manager
+                    .push(Event::LogChanged { tex_uri, log_path });
+            }
+        }
+        self.event_manager.push(Event::WorkspaceChanged);
+    }
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
@@ -284,41 +305,71 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
         let handler = async move {
             for event in self.event_manager.take() {
                 match event {
-                    Event::Initialized => match TexResolver::load() {
-                        Ok(res) => {
-                            let mut resolver = await!(self.resolver.lock());
-                            *resolver = res;
-                        }
-                        Err(why) => {
-                            let message = match why {
-                                resolver::Error::KpsewhichNotFound => {
-                                    "An error occurred while executing `kpsewhich`.\
-                                     Please make sure that your distribution is in your PATH \
-                                     environment variable and provides the `kpsewhich` tool."
-                                }
-                                resolver::Error::UnsupportedTexDistribution => {
-                                    "Your TeX distribution is not supported."
-                                }
-                                resolver::Error::CorruptFileDatabase => {
-                                    "The file database of your TeX distribution seems \
-                                     to be corrupt. Please rebuild it and try again."
-                                }
-                            };
+                    Event::Initialized => {
+                        let options = DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![FileSystemWatcher {
+                                kind: Some(WatchKind::Create | WatchKind::Change),
+                                glob_pattern: Cow::from("**/*.log"),
+                            }],
+                        };
+                        await!(self.client.register_capability(RegistrationParams {
+                            registrations: vec![Registration {
+                                id: Cow::from("build-log-watcher"),
+                                method: Cow::from("workspace/didChangeWatchedFiles"),
+                                register_options: Some(serde_json::to_value(options).unwrap()),
+                            }]
+                        }));
 
-                            let params = ShowMessageParams {
-                                message: Cow::from(message),
-                                typ: MessageType::Error,
-                            };
+                        match TexResolver::load() {
+                            Ok(res) => {
+                                let mut resolver = await!(self.resolver.lock());
+                                *resolver = res;
+                            }
+                            Err(why) => {
+                                let message = match why {
+                                    resolver::Error::KpsewhichNotFound => {
+                                        "An error occurred while executing `kpsewhich`.\
+                                         Please make sure that your distribution is in your PATH \
+                                         environment variable and provides the `kpsewhich` tool."
+                                    }
+                                    resolver::Error::UnsupportedTexDistribution => {
+                                        "Your TeX distribution is not supported."
+                                    }
+                                    resolver::Error::CorruptFileDatabase => {
+                                        "The file database of your TeX distribution seems \
+                                         to be corrupt. Please rebuild it and try again."
+                                    }
+                                };
 
-                            self.client.show_message(params);
-                        }
-                    },
+                                let params = ShowMessageParams {
+                                    message: Cow::from(message),
+                                    typ: MessageType::Error,
+                                };
+
+                                self.client.show_message(params);
+                            }
+                        };
+                    }
                     Event::WorkspaceChanged => {
                         let workspace = self.workspace_manager.get();
                         workspace
                             .unresolved_includes()
                             .iter()
                             .for_each(|path| self.workspace_manager.load(&path));
+
+                        let diagnostics_manager = await!(self.diagnostics_manager.lock());
+                        for document in &workspace.documents {
+                            self.client.publish_diagnostics(PublishDiagnosticsParams {
+                                uri: document.uri.clone(),
+                                diagnostics: diagnostics_manager.get(&document.uri),
+                            });
+                        }
+                    }
+                    Event::LogChanged { tex_uri, log_path } => {
+                        if let Ok(log) = std::fs::read_to_string(&log_path) {
+                            let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
+                            diagnostics_manager.build.update(&tex_uri, &log);
+                        }
                     }
                 }
             }

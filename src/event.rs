@@ -1,9 +1,12 @@
+use lsp_types::Uri;
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
     Initialized,
     WorkspaceChanged,
+    LogChanged { tex_uri: Uri, log_path: PathBuf },
 }
 
 #[derive(Debug, Default)]

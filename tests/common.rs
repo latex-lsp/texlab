@@ -67,6 +67,16 @@ impl LspClient for LspClientMock {
         };
         handler.boxed()
     }
+
+    fn register_capability(&self, _params: RegistrationParams) -> FutureResult<'_, ()> {
+        let handler = async move { Ok(()) };
+        handler.boxed()
+    }
+
+    fn publish_diagnostics(&self, _params: PublishDiagnosticsParams) -> BoxFuture<'_, ()> {
+        let handler = async move {};
+        handler.boxed()
+    }
 }
 
 pub struct Scenario {
