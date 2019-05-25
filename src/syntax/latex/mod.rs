@@ -41,7 +41,7 @@ impl LatexSyntaxTree {
         let root = Arc::new(parser.root());
         let commands = LatexCommandAnalyzer::find(Arc::clone(&root));
         let includes = LatexInclude::parse_all(uri, &commands);
-        let components = includes.iter().flat_map(|include| include.name()).collect();
+        let components = includes.iter().flat_map(LatexInclude::name).collect();
         let environments = LatexEnvironment::parse_all(&commands);
         let is_standalone = environments
             .iter()

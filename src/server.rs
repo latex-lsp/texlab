@@ -27,7 +27,6 @@ use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
 use serde::de::DeserializeOwned;
-use serde_json::error::ErrorCode::Message;
 use std::borrow::Cow;
 use std::sync::Arc;
 use walkdir::WalkDir;
@@ -44,7 +43,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     pub fn new(client: Arc<C>) -> Self {
         LatexLspServer {
             client,
-            workspace_manager: WorkspaceManager::new(),
+            workspace_manager: WorkspaceManager::default(),
             event_manager: EventManager::default(),
             resolver: Mutex::new(TexResolver::new()),
         }

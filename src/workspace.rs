@@ -106,9 +106,10 @@ impl Workspace {
                         continue;
                     }
 
-                    let path = PathBuf::from(include.target().to_file_path().unwrap());
-                    if path.exists() {
-                        includes.push(path);
+                    if let Ok(path) = include.target().to_file_path() {
+                        if path.exists() {
+                            includes.push(path);
+                        }
                     }
                 }
             }
@@ -117,17 +118,12 @@ impl Workspace {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct WorkspaceManager {
     workspace: Mutex<Arc<Workspace>>,
 }
 
 impl WorkspaceManager {
-    pub fn new() -> Self {
-        WorkspaceManager {
-            workspace: Mutex::new(Arc::new(Workspace::default())),
-        }
-    }
-
     pub fn get(&self) -> Arc<Workspace> {
         let workspace = self.workspace.lock().unwrap();
         Arc::clone(&workspace)
