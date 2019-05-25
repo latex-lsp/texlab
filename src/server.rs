@@ -131,8 +131,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             }
 
             let log_path = change.uri.to_file_path().unwrap();
-            let name = log_path.file_name().unwrap().to_string_lossy().into_owned();
-            let tex_path = PathBuf::from(format!("{}log", &name[0..name.len() - 3]));
+            let name = log_path.to_string_lossy().into_owned();
+            let tex_path = PathBuf::from(format!("{}tex", &name[0..name.len() - 3]));
             let tex_uri = Uri::from_file_path(tex_path).unwrap();
             if workspace.find(&tex_uri).is_some() {
                 self.event_manager
@@ -318,7 +318,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                                 method: Cow::from("workspace/didChangeWatchedFiles"),
                                 register_options: Some(serde_json::to_value(options).unwrap()),
                             }]
-                        }));
+                        })).unwrap();
 
                         match TexResolver::load() {
                             Ok(res) => {
@@ -359,10 +359,10 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
 
                         let diagnostics_manager = await!(self.diagnostics_manager.lock());
                         for document in &workspace.documents {
-                            self.client.publish_diagnostics(PublishDiagnosticsParams {
+                            await!(self.client.publish_diagnostics(PublishDiagnosticsParams {
                                 uri: document.uri.clone(),
                                 diagnostics: diagnostics_manager.get(&document.uri),
-                            });
+                            }));
                         }
                     }
                     Event::LogChanged { tex_uri, log_path } => {
