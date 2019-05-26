@@ -346,7 +346,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                                     typ: MessageType::Error,
                                 };
 
-                                self.client.show_message(params);
+                                await!(self.client.show_message(params));
                             }
                         };
                     }
