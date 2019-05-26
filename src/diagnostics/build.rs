@@ -1,9 +1,7 @@
 use crate::build::log_parser::parse_build_log;
-use crate::feature::FeatureRequest;
 use crate::workspace::Document;
 use lsp_types::{Diagnostic, Uri};
 use std::collections::HashMap;
-use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct BuildDiagnosticsProvider {

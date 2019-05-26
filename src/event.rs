@@ -7,6 +7,7 @@ pub enum Event {
     Initialized,
     WorkspaceChanged,
     LogChanged { tex_uri: Uri, log_path: PathBuf },
+    Saved(Uri),
 }
 
 #[derive(Debug, Default)]

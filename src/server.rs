@@ -2,7 +2,7 @@ use crate::client::LspClient;
 use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
 use crate::definition::DefinitionProvider;
-use crate::diagnostics::DiagnosticsManager;
+use crate::diagnostics::{DiagnosticsManager, LatexLinterConfig};
 use crate::event::{Event, EventManager};
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
@@ -74,7 +74,9 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
                     change: Some(TextDocumentSyncKind::Full),
                     will_save: None,
                     will_save_wait_until: None,
-                    save: None,
+                    save: Some(SaveOptions {
+                        include_text: Some(false),
+                    }),
                 },
             )),
             hover_provider: Some(true),
@@ -158,7 +160,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub fn did_save(&self, _params: DidSaveTextDocumentParams) {
+    pub fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.event_manager.push(Event::Saved(params.text_document.uri));
         self.event_manager.push(Event::WorkspaceChanged);
     }
 
@@ -363,6 +366,13 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                                 uri: document.uri.clone(),
                                 diagnostics: diagnostics_manager.get(&document),
                             }));
+                        }
+                    }
+                    Event::Saved(uri) => {
+                        let config: LatexLinterConfig = await!(self.configuration("latex.lint"));
+                        if config.on_save {
+                            let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
+                            diagnostics_manager.latex.update(&uri);
                         }
                     }
                     Event::LogChanged { tex_uri, log_path } => {
