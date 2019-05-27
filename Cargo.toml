@@ -12,6 +12,7 @@ members = ["./jsonrpc", "./jsonrpc_derive"]
 
 [dependencies]
 bytes = "0.4.12"
+byteorder = "1"
 clap = "2.33"
 copy_dir = "0.1.2"
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
