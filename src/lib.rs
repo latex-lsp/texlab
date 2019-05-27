@@ -1,7 +1,6 @@
 #![feature(await_macro, async_await)]
 #![recursion_limit = "128"]
 
-pub mod build;
 pub mod client;
 pub mod codec;
 pub mod completion;
