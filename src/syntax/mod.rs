@@ -23,8 +23,8 @@ impl Language {
 
     pub fn by_language_id(language_id: &str) -> Option<Self> {
         match language_id {
-            "latex" => Some(Language::Latex),
-            "bibtex" => Some(Language::Bibtex),
+            "latex" | "tex" => Some(Language::Latex),
+            "bibtex" | "bib" => Some(Language::Bibtex),
             _ => None,
         }
     }
