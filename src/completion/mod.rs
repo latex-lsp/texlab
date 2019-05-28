@@ -12,6 +12,7 @@ use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
 use self::latex::command_symbol::LatexCommandSymbolCompletionProvider;
+use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
 use self::latex::kernel_command::LatexKernelCommandCompletionProvider;
 use self::latex::kernel_environment::LatexKernelEnvironmentCompletionProvider;
@@ -51,6 +52,8 @@ impl CompletionProvider {
                     LatexIncludeCompletionProvider,
                     LatexBeginCommandCompletionProvider,
                     LatexCommandSymbolCompletionProvider,
+                    LatexClassImportProvider,
+                    LatexPackageImportProvider,
                     LatexTikzCommandCompletionProvider,
                     LatexKernelCommandCompletionProvider,
                     LatexUserCommandCompletionProvider

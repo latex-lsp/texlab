@@ -21,18 +21,12 @@ pub enum TexDistributionKind {
     Miktex,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct TexResolver {
     pub files_by_name: HashMap<OsString, PathBuf>,
 }
 
 impl TexResolver {
-    pub fn new() -> Self {
-        Self {
-            files_by_name: HashMap::new(),
-        }
-    }
-
     pub fn load() -> Result<Self> {
         let directories = Self::find_root_directories()?;
         let kind = Self::detect_distribution(&directories)?;

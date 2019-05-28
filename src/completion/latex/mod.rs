@@ -5,6 +5,7 @@ pub mod color;
 pub mod color_model;
 mod combinators;
 pub mod command_symbol;
+pub mod import;
 pub mod include;
 pub mod kernel_command;
 pub mod kernel_environment;

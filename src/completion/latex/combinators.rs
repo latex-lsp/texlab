@@ -12,7 +12,7 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(Arc<LatexCommand>) -> F,
+        E: FnOnce(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
@@ -30,7 +30,7 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(Arc<LatexCommand>) -> F,
+        E: FnOnce(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         let find_command = |nodes: &[LatexNode], node_index: usize| {
@@ -87,7 +87,7 @@ impl LatexCombinators {
         execute: E,
     ) -> Vec<CompletionItem>
     where
-        E: Fn(Arc<LatexCommand>) -> F,
+        E: FnOnce(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         await!(Self::argument(&request, &ENVIRONMENT_COMMANDS, 0, execute))

@@ -38,7 +38,7 @@ pub struct LatexLspServer<C> {
     workspace_manager: WorkspaceManager,
     event_manager: EventManager,
     diagnostics_manager: Mutex<DiagnosticsManager>,
-    resolver: Mutex<TexResolver>,
+    resolver: Mutex<Arc<TexResolver>>,
 }
 
 #[jsonrpc_server]
@@ -49,7 +49,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             workspace_manager: WorkspaceManager::default(),
             event_manager: EventManager::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
-            resolver: Mutex::new(TexResolver::new()),
+            resolver: Mutex::new(Arc::new(TexResolver::default())),
         }
     }
 
@@ -326,7 +326,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                         match TexResolver::load() {
                             Ok(res) => {
                                 let mut resolver = await!(self.resolver.lock());
-                                *resolver = res;
+                                *resolver = Arc::new(res);
                             }
                             Err(why) => {
                                 let message = match why {
@@ -392,11 +392,14 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
 macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
+        let resolver = await!($server.resolver.lock());
+
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest::new(
                 $params,
                 workspace,
                 document,
+                Arc::clone(&resolver),
                 Arc::new(LatexComponentDatabase::default()),
             ))
         } else {

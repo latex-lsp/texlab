@@ -1,4 +1,5 @@
 use crate::data::completion::LatexComponentDatabase;
+use crate::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
@@ -14,6 +15,7 @@ pub struct FeatureRequest<T> {
     pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
+    pub resolver: Arc<TexResolver>,
     pub component_database: Arc<LatexComponentDatabase>,
 }
 
@@ -22,6 +24,7 @@ impl<T> FeatureRequest<T> {
         params: T,
         workspace: Arc<Workspace>,
         document: Arc<Document>,
+        resolver: Arc<TexResolver>,
         component_database: Arc<LatexComponentDatabase>,
     ) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
@@ -30,6 +33,7 @@ impl<T> FeatureRequest<T> {
             workspace,
             document,
             related_documents,
+            resolver,
             component_database,
         }
     }
@@ -75,6 +79,7 @@ pub struct FeatureSpec {
     pub main_file: &'static str,
     pub position: Position,
     pub new_name: &'static str,
+    pub resolver: TexResolver,
     pub component_database: LatexComponentDatabase,
 }
 
@@ -115,6 +120,7 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -133,6 +139,7 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -149,6 +156,7 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -165,6 +173,7 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -185,6 +194,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -203,6 +213,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             params,
             workspace,
             document,
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
