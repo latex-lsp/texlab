@@ -1,12 +1,10 @@
 #![feature(await_macro, async_await)]
 
-mod common;
-
-use crate::common::Scenario;
 use futures::executor::block_on;
 use lsp_types::*;
 use std::collections::HashMap;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
+use texlab::scenario::Scenario;
 
 pub async fn run(
     scenario: &'static str,

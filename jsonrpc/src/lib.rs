@@ -25,11 +25,11 @@ pub struct MessageHandler<S, C, I, O> {
 }
 
 impl<S, C, I, O> MessageHandler<S, C, I, O>
-where
-    S: RequestHandler + ActionHandler + Send + Sync + 'static,
-    C: ResponseHandler + Send + Sync + 'static,
-    I: Input,
-    O: Output + 'static,
+    where
+        S: RequestHandler + ActionHandler + Send + Sync + 'static,
+        C: ResponseHandler + Send + Sync + 'static,
+        I: Input,
+        O: Output + 'static,
 {
     pub async fn listen(&mut self) {
         while let Some(json) = await!(self.input.next()) {

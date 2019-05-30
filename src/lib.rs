@@ -17,6 +17,7 @@ pub mod link;
 pub mod reference;
 pub mod rename;
 pub mod resolver;
+pub mod scenario;
 pub mod server;
 pub mod syntax;
 pub mod workspace;

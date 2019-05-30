@@ -1,68 +1,12 @@
-#![feature(await_macro, async_await)]
-
+use crate::client::LspClientMock;
+use crate::server::LatexLspServer;
 use copy_dir::copy_dir;
-use futures::future::BoxFuture;
-use futures::lock::Mutex;
-use futures::prelude::*;
-use jsonrpc::client::FutureResult;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::fs::remove_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
-use texlab::client::LspClient;
-use texlab::formatting::bibtex::BibtexFormattingOptions;
-use texlab::server::LatexLspServer;
-
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
-pub struct LspClientMockOptions {
-    pub bibtex_formatting: Option<BibtexFormattingOptions>,
-}
-
-#[derive(Debug, Default)]
-pub struct LspClientMock {
-    pub messages: Mutex<Vec<ShowMessageParams>>,
-    pub options: Mutex<LspClientMockOptions>,
-}
-
-impl LspClient for LspClientMock {
-    fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
-        let handler = async move {
-            let options = await!(self.options.lock());
-            match params.items[0].section {
-                Some(Cow::Borrowed("bibtex.formatting")) => options
-                    .bibtex_formatting
-                    .as_ref()
-                    .map(|options| serde_json::to_value(vec![options]).unwrap())
-                    .ok_or(jsonrpc::Error::internal_error("Internal error".to_owned())),
-                _ => {
-                    unreachable!();
-                }
-            }
-        };
-        handler.boxed()
-    }
-
-    fn show_message(&self, params: ShowMessageParams) -> BoxFuture<'_, ()> {
-        let handler = async move {
-            let mut messages = await!(self.messages.lock());
-            messages.push(params);
-        };
-        handler.boxed()
-    }
-
-    fn register_capability(&self, _params: RegistrationParams) -> FutureResult<'_, ()> {
-        let handler = async move { Ok(()) };
-        handler.boxed()
-    }
-
-    fn publish_diagnostics(&self, _params: PublishDiagnosticsParams) -> BoxFuture<'_, ()> {
-        let handler = async move {};
-        handler.boxed()
-    }
-}
 
 pub struct Scenario {
     pub server: LatexLspServer<LspClientMock>,
@@ -97,7 +41,7 @@ impl Scenario {
         server.initialized(InitializedParams {});
         await!(server.execute_actions());
 
-        Scenario {
+        Self {
             server,
             client,
             directory,

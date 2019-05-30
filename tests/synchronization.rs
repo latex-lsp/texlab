@@ -1,11 +1,9 @@
 #![feature(await_macro, async_await)]
 
-mod common;
-
-use crate::common::Scenario;
 use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
+use texlab::scenario::Scenario;
 
 async fn run_completion(
     scenario: &Scenario,

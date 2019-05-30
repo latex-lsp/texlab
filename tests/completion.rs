@@ -1,11 +1,9 @@
 #![feature(await_macro, async_await)]
 
-mod common;
-
-use crate::common::Scenario;
 use futures::executor::block_on;
 use itertools::Itertools;
 use lsp_types::*;
+use texlab::scenario::Scenario;
 
 pub async fn run(scenario: &'static str, file: &'static str, position: Position) -> Vec<String> {
     let scenario = format!("completion/{}", scenario);

@@ -39,5 +39,12 @@ url = "1.7.2"
 url_serde = "0.2.0"
 walkdir = "2"
 
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "completion"
+harness = false
+
 [profile.release]
 lto = true

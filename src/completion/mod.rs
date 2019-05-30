@@ -50,10 +50,10 @@ impl CompletionProvider {
                     LatexLabelCompletionProvider,
                     LatexCitationCompletionProvider,
                     LatexIncludeCompletionProvider,
-                    LatexBeginCommandCompletionProvider,
-                    LatexCommandSymbolCompletionProvider,
                     LatexClassImportProvider,
                     LatexPackageImportProvider,
+                    LatexBeginCommandCompletionProvider,
+                    LatexCommandSymbolCompletionProvider,
                     LatexTikzCommandCompletionProvider,
                     LatexKernelCommandCompletionProvider,
                     LatexUserCommandCompletionProvider
