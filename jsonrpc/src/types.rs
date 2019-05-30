@@ -27,6 +27,40 @@ pub struct Error {
     pub data: serde_json::Value,
 }
 
+impl Error {
+    pub fn parse_error() -> Self {
+        Self {
+            code: ErrorCode::ParseError,
+            message: "Could not parse the input".to_owned(),
+            data: serde_json::Value::Null,
+        }
+    }
+
+    pub fn method_not_found_error() -> Self {
+        Self {
+            code: ErrorCode::MethodNotFound,
+            message: "Method not found".to_owned(),
+            data: serde_json::Value::Null,
+        }
+    }
+
+    pub fn deserialize_error() -> Self {
+        Self {
+            code: ErrorCode::InvalidParams,
+            message: "Could not deserialize parameter object".to_owned(),
+            data: serde_json::Value::Null,
+        }
+    }
+
+    pub fn internal_error(message: String) -> Self {
+        Self {
+            code: ErrorCode::InternalError,
+            message,
+            data: serde_json::Value::Null,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Request {
     pub jsonrpc: String,

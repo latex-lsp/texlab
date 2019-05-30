@@ -76,17 +76,13 @@ pub fn jsonrpc_server(
             fn handle_request(&self, request: jsonrpc::Request)
                 -> futures::future::BoxFuture<'_, jsonrpc::Response> {
                 use futures::prelude::*;
+                use jsonrpc::*;
+
                 let handler = async move {
                     match request.method.as_str() {
                         #(#requests),*,
                         _ => {
-                            let error = jsonrpc::Error {
-                                code: jsonrpc::ErrorCode::MethodNotFound,
-                                message: "Method not found".to_owned(),
-                                data: serde_json::Value::Null,
-                            };
-
-                            jsonrpc::Response::error(error, Some(request.id))
+                            Response::error(Error::method_not_found_error(), Some(request.id))
                         }
                     }
                 };
@@ -212,15 +208,12 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
             MethodKind::Request => quote!(
                 #sig {
                     use futures::prelude::*;
+                    use jsonrpc::*;
 
                     let client = std::sync::Arc::clone(&self.client);
                     let task = async move {
                         let result = await!(client.send_request(#name.to_owned(), #param))?;
-                        serde_json::from_value(result).map_err(|_| jsonrpc::Error {
-                            code: jsonrpc::ErrorCode::InvalidParams,
-                            message: "Could not deserialize parameter object".to_owned(),
-                            data: serde_json::Value::Null,
-                        })
+                        serde_json::from_value(result).map_err(|_| Error::deserialize_error())
                     };
 
                     task.boxed()

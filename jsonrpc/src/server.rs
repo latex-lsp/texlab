@@ -17,8 +17,6 @@ pub trait EventHandler {
     fn handle_events(&self) -> BoxFuture<'_, ()>;
 }
 
-const DESERIALIZE_OBJECT_ERROR: &str = "Could not deserialize parameter object";
-
 pub async fn handle_request<'a, H, F, I, O>(request: Request, handler: H) -> Response
 where
     H: Fn(I) -> F + Send + Sync + 'a,
@@ -27,18 +25,8 @@ where
     O: Serialize,
 {
     let handle = async move |json| -> std::result::Result<O, Error> {
-        let params: I = serde_json::from_value(json).map_err(|_| Error {
-            code: ErrorCode::InvalidParams,
-            message: String::from(DESERIALIZE_OBJECT_ERROR),
-            data: serde_json::Value::Null,
-        })?;
-
-        let result = await!(handler(params)).map_err(|message| Error {
-            code: ErrorCode::InternalError,
-            message,
-            data: serde_json::Value::Null,
-        })?;
-
+        let params: I = serde_json::from_value(json).map_err(|_| Error::deserialize_error())?;
+        let result = await!(handler(params)).map_err(Error::internal_error)?;
         Ok(result)
     };
 
@@ -55,7 +43,7 @@ where
 {
     match serde_json::from_value(notification.params) {
         Ok(params) => handler(params),
-        Err(_) => panic!(DESERIALIZE_OBJECT_ERROR),
+        Err(_) => panic!(Error::deserialize_error().message),
     }
 }
 
@@ -115,11 +103,7 @@ mod tests {
         let expected = Response {
             jsonrpc: request.jsonrpc.clone(),
             result: None,
-            error: Some(Error {
-                code: ErrorCode::InvalidParams,
-                message: DESERIALIZE_OBJECT_ERROR.to_owned(),
-                data: serde_json::Value::Null,
-            }),
+            error: Some(Error::deserialize_error()),
             id: Some(request.id),
         };
 

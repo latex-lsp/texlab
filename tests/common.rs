@@ -39,19 +39,11 @@ impl LspClient for LspClientMock {
         let handler = async move {
             let options = await!(self.options.lock());
             match params.items[0].section {
-                Some(Cow::Borrowed("bibtex.formatting")) => {
-                    let error = jsonrpc::Error {
-                        code: jsonrpc::ErrorCode::InternalError,
-                        message: "Internal error".to_owned(),
-                        data: serde_json::Value::Null,
-                    };
-
-                    options
-                        .bibtex_formatting
-                        .as_ref()
-                        .map(|options| serde_json::to_value(vec![options]).unwrap())
-                        .ok_or(error)
-                }
+                Some(Cow::Borrowed("bibtex.formatting")) => options
+                    .bibtex_formatting
+                    .as_ref()
+                    .map(|options| serde_json::to_value(vec![options]).unwrap())
+                    .ok_or(jsonrpc::Error::internal_error("Internal error".to_owned())),
                 _ => {
                     unreachable!();
                 }

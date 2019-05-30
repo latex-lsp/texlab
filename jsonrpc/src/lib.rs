@@ -33,11 +33,7 @@ where
 {
     pub async fn listen(&mut self) {
         while let Some(json) = await!(self.input.next()) {
-            let message = serde_json::from_str(&json.expect("")).map_err(|_| Error {
-                code: ErrorCode::ParseError,
-                message: "Could not parse the input".to_owned(),
-                data: serde_json::Value::Null,
-            });
+            let message = serde_json::from_str(&json.expect("")).map_err(|_| Error::parse_error());
 
             match message {
                 Ok(Message::Request(request)) => {
