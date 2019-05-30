@@ -161,7 +161,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.event_manager.push(Event::Saved(params.text_document.uri));
+        self.event_manager
+            .push(Event::Saved(params.text_document.uri));
         self.event_manager.push(Event::WorkspaceChanged);
     }
 
@@ -321,7 +322,8 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                                 method: Cow::from("workspace/didChangeWatchedFiles"),
                                 register_options: Some(serde_json::to_value(options).unwrap()),
                             }]
-                        })).unwrap();
+                        }))
+                        .unwrap();
 
                         match TexResolver::load() {
                             Ok(res) => {

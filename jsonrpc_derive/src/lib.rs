@@ -72,7 +72,7 @@ pub fn jsonrpc_server(
     let tokens = quote! {
         #impl_
 
-        impl #generics jsonrpc::Server for #self_ty {
+        impl #generics jsonrpc::RequestHandler for #self_ty {
             fn handle_request(&self, request: jsonrpc::Request)
                 -> futures::future::BoxFuture<'_, jsonrpc::Response> {
                 use futures::prelude::*;

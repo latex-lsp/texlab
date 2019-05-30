@@ -50,7 +50,14 @@ async fn run(pool: ThreadPool) {
     let input = FramedRead::new(stdin, LspCodec).compat();
     let output = Arc::new(Mutex::new(FramedWrite::new(stdout, LspCodec).sink_compat()));
     let client = Arc::new(LatexLspClient::new(Arc::clone(&output)));
-    let server = LatexLspServer::new(Arc::clone(&client));
-    let mut handler = MessageHandler::new(server, client, input, output, pool);
+    let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
+    let mut handler = MessageHandler {
+        server,
+        client,
+        input,
+        output,
+        pool,
+    };
+
     await!(handler.listen());
 }

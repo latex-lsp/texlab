@@ -6,7 +6,7 @@ mod types;
 
 pub use self::{
     client::{Client, ResponseHandler},
-    server::{handle_notification, handle_request, EventHandler, Server},
+    server::{handle_notification, handle_request, EventHandler, RequestHandler},
     types::*,
 };
 
@@ -16,37 +16,21 @@ use futures::prelude::*;
 use futures::task::*;
 use std::sync::Arc;
 
-pub struct MessageHandler<S, H, I, O> {
-    server: Arc<S>,
-    response_handler: Arc<H>,
-    input: I,
-    output: Arc<Mutex<O>>,
-    pool: ThreadPool,
+pub struct MessageHandler<S, C, I, O> {
+    pub server: Arc<S>,
+    pub client: Arc<C>,
+    pub input: I,
+    pub output: Arc<Mutex<O>>,
+    pub pool: ThreadPool,
 }
 
-impl<S, H, I, O> MessageHandler<S, H, I, O>
+impl<S, C, I, O> MessageHandler<S, C, I, O>
 where
-    S: Server + EventHandler + Send + Sync + 'static,
-    H: ResponseHandler + Send + Sync + 'static,
+    S: RequestHandler + EventHandler + Send + Sync + 'static,
+    C: ResponseHandler + Send + Sync + 'static,
     I: Stream<Item = std::io::Result<String>> + Unpin,
     O: Sink<String> + Unpin + Send + 'static,
 {
-    pub fn new(
-        server: S,
-        response_handler: Arc<H>,
-        input: I,
-        output: Arc<Mutex<O>>,
-        pool: ThreadPool,
-    ) -> Self {
-        MessageHandler {
-            server: Arc::new(server),
-            response_handler,
-            input,
-            output,
-            pool,
-        }
-    }
-
     pub async fn listen(&mut self) {
         while let Some(json) = await!(self.input.next()) {
             let message = serde_json::from_str(&json.expect("")).map_err(|_| Error {
@@ -73,12 +57,14 @@ where
                     self.server.handle_notification(notification);
 
                     let server = Arc::clone(&self.server);
-                    self.pool.spawn(async move {
+                    let handler = async move {
                         await!(server.handle_events());
-                    });
+                    };
+
+                    self.pool.spawn(handler).unwrap();
                 }
                 Ok(Message::Response(response)) => {
-                    await!(self.response_handler.handle(response));
+                    await!(self.client.handle(response));
                 }
                 Err(why) => {
                     let response = Response::error(why, None);

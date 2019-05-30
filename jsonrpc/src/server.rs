@@ -7,7 +7,7 @@ use serde_json::json;
 
 pub type Result<T> = std::result::Result<T, String>;
 
-pub trait Server {
+pub trait RequestHandler {
     fn handle_request(&self, request: Request) -> BoxFuture<'_, Response>;
 
     fn handle_notification(&self, notification: Notification);
