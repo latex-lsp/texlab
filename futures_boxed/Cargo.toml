@@ -1,5 +1,5 @@
 [package]
-name = "jsonrpc-derive"
+name = "futures-boxed"
 version = "0.1.0"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>",
@@ -10,6 +10,5 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-futures-boxed = { path = "../futures_boxed" }
 syn = { version = "0.15", features = ["full"] }
 quote = "0.6"

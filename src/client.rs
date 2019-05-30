@@ -2,7 +2,8 @@ use crate::formatting::bibtex::BibtexFormattingOptions;
 use futures::future::BoxFuture;
 use futures::lock::Mutex;
 use futures::prelude::*;
-use jsonrpc::client::FutureResult;
+use futures_boxed::boxed;
+use jsonrpc::client::{FutureResult, Result};
 use jsonrpc_derive::{jsonrpc_client, jsonrpc_method};
 use lsp_types::*;
 use std::borrow::Cow;
@@ -34,38 +35,32 @@ pub struct LspClientMock {
 }
 
 impl LspClient for LspClientMock {
-    fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
-        let handler = async move {
-            let options = self.options.lock().await;
-            match params.items[0].section {
-                Some(Cow::Borrowed("bibtex.formatting")) => options
-                    .bibtex_formatting
-                    .as_ref()
-                    .map(|options| serde_json::to_value(vec![options]).unwrap())
-                    .ok_or(jsonrpc::Error::internal_error("Internal error".to_owned())),
-                _ => {
-                    unreachable!();
-                }
+    #[boxed]
+    async fn configuration(&self, params: ConfigurationParams) -> Result<serde_json::Value> {
+        let options = self.options.lock().await;
+        match params.items[0].section {
+            Some(Cow::Borrowed("bibtex.formatting")) => options
+                .bibtex_formatting
+                .as_ref()
+                .map(|options| serde_json::to_value(vec![options]).unwrap())
+                .ok_or(jsonrpc::Error::internal_error("Internal error".to_owned())),
+            _ => {
+                unreachable!();
             }
-        };
-        handler.boxed()
+        }
     }
 
-    fn show_message(&self, params: ShowMessageParams) -> BoxFuture<'_, ()> {
-        let handler = async move {
-            let mut messages = self.messages.lock().await;
-            messages.push(params);
-        };
-        handler.boxed()
+    #[boxed]
+    async fn show_message(&self, params: ShowMessageParams) {
+        let mut messages = self.messages.lock().await;
+        messages.push(params);
     }
 
-    fn register_capability(&self, _params: RegistrationParams) -> FutureResult<'_, ()> {
-        let handler = async move { Ok(()) };
-        handler.boxed()
+    #[boxed]
+    async fn register_capability(&self, _params: RegistrationParams) -> Result<()> {
+        Ok(())
     }
 
-    fn publish_diagnostics(&self, _params: PublishDiagnosticsParams) -> BoxFuture<'_, ()> {
-        let handler = async move {};
-        handler.boxed()
-    }
+    #[boxed]
+    async fn publish_diagnostics(&self, _params: PublishDiagnosticsParams) {}
 }

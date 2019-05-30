@@ -3,6 +3,7 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use futures::lock::Mutex;
 use futures::prelude::*;
+use futures_boxed::boxed;
 use serde::Serialize;
 use serde_json::json;
 use std::collections::HashMap;
@@ -14,7 +15,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub type FutureResult<'a, T> = BoxFuture<'a, Result<T>>;
 
 pub trait ResponseHandler {
-    fn handle(&self, response: Response) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn handle(&self, response: Response);
 }
 
 pub struct Client<O> {
@@ -69,19 +71,17 @@ impl<O> ResponseHandler for Client<O>
 where
     O: Output,
 {
-    fn handle(&self, response: Response) -> BoxFuture<'_, ()> {
-        let task = async move {
-            let id = response.id.expect("Expected response with id");
-            let mut queue = self.queue.lock().await;
-            let sender = queue.remove(&id).expect("Unexpected response received");
+    #[boxed]
+    async fn handle(&self, response: Response) {
+        let id = response.id.expect("Expected response with id");
+        let mut queue = self.queue.lock().await;
+        let sender = queue.remove(&id).expect("Unexpected response received");
 
-            let result = match response.error {
-                Some(why) => Err(why),
-                None => Ok(response.result.unwrap_or(serde_json::Value::Null)),
-            };
-            sender.send(result).unwrap();
+        let result = match response.error {
+            Some(why) => Err(why),
+            None => Ok(response.result.unwrap_or(serde_json::Value::Null)),
         };
 
-        task.boxed()
+        sender.send(result).unwrap();
     }
 }

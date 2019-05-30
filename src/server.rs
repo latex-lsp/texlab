@@ -20,9 +20,9 @@ use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::WorkspaceManager;
-use futures::future::BoxFuture;
 use futures::lock::Mutex;
 use futures::prelude::*;
+use futures_boxed::boxed;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
@@ -312,102 +312,100 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 }
 
 impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
-    fn execute_actions(&self) -> BoxFuture<'_, ()> {
-        let handler = async move {
-            for action in self.action_manager.take() {
-                match action {
-                    Action::RegisterCapabilities => {
-                        let options = DidChangeWatchedFilesRegistrationOptions {
-                            watchers: vec![FileSystemWatcher {
-                                kind: Some(WatchKind::Create | WatchKind::Change),
-                                glob_pattern: Cow::from("**/*.log"),
+    #[boxed]
+    async fn execute_actions(&self) {
+        for action in self.action_manager.take() {
+            match action {
+                Action::RegisterCapabilities => {
+                    let options = DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![FileSystemWatcher {
+                            kind: Some(WatchKind::Create | WatchKind::Change),
+                            glob_pattern: Cow::from("**/*.log"),
+                        }],
+                    };
+
+                    if let Err(why) = self
+                        .client
+                        .register_capability(RegistrationParams {
+                            registrations: vec![Registration {
+                                id: Cow::from("build-log-watcher"),
+                                method: Cow::from("workspace/didChangeWatchedFiles"),
+                                register_options: Some(serde_json::to_value(options).unwrap()),
                             }],
-                        };
+                        })
+                        .await
+                    {
+                        warn!(
+                            "Client does not support dynamic capability registration: {}",
+                            why.message
+                        );
+                    }
+                }
+                Action::LoadResolver => {
+                    match TexResolver::load() {
+                        Ok(res) => {
+                            let mut resolver = self.resolver.lock().await;
+                            *resolver = Arc::new(res);
+                        }
+                        Err(why) => {
+                            let message = match why {
+                                resolver::Error::KpsewhichNotFound => {
+                                    "An error occurred while executing `kpsewhich`.\
+                                     Please make sure that your distribution is in your PATH \
+                                     environment variable and provides the `kpsewhich` tool."
+                                }
+                                resolver::Error::UnsupportedTexDistribution => {
+                                    "Your TeX distribution is not supported."
+                                }
+                                resolver::Error::CorruptFileDatabase => {
+                                    "The file database of your TeX distribution seems \
+                                     to be corrupt. Please rebuild it and try again."
+                                }
+                            };
 
-                        if let Err(why) = self
-                            .client
-                            .register_capability(RegistrationParams {
-                                registrations: vec![Registration {
-                                    id: Cow::from("build-log-watcher"),
-                                    method: Cow::from("workspace/didChangeWatchedFiles"),
-                                    register_options: Some(serde_json::to_value(options).unwrap()),
-                                }],
+                            let params = ShowMessageParams {
+                                message: Cow::from(message),
+                                typ: MessageType::Error,
+                            };
+
+                            self.client.show_message(params).await;
+                        }
+                    };
+                }
+                Action::ResolveIncludes => {
+                    let workspace = self.workspace_manager.get();
+                    workspace
+                        .unresolved_includes()
+                        .iter()
+                        .for_each(|path| self.workspace_manager.load(&path));
+                }
+                Action::PublishDiagnostics => {
+                    let workspace = self.workspace_manager.get();
+                    let diagnostics_manager = self.diagnostics_manager.lock().await;
+                    for document in &workspace.documents {
+                        self.client
+                            .publish_diagnostics(PublishDiagnosticsParams {
+                                uri: document.uri.clone(),
+                                diagnostics: diagnostics_manager.get(&document),
                             })
-                            .await
-                        {
-                            warn!(
-                                "Client does not support dynamic capability registration: {}",
-                                why.message
-                            );
-                        }
+                            .await;
                     }
-                    Action::LoadResolver => {
-                        match TexResolver::load() {
-                            Ok(res) => {
-                                let mut resolver = self.resolver.lock().await;
-                                *resolver = Arc::new(res);
-                            }
-                            Err(why) => {
-                                let message = match why {
-                                    resolver::Error::KpsewhichNotFound => {
-                                        "An error occurred while executing `kpsewhich`.\
-                                         Please make sure that your distribution is in your PATH \
-                                         environment variable and provides the `kpsewhich` tool."
-                                    }
-                                    resolver::Error::UnsupportedTexDistribution => {
-                                        "Your TeX distribution is not supported."
-                                    }
-                                    resolver::Error::CorruptFileDatabase => {
-                                        "The file database of your TeX distribution seems \
-                                         to be corrupt. Please rebuild it and try again."
-                                    }
-                                };
-
-                                let params = ShowMessageParams {
-                                    message: Cow::from(message),
-                                    typ: MessageType::Error,
-                                };
-
-                                self.client.show_message(params).await;
-                            }
-                        };
+                }
+                Action::RunLinter(uri) => {
+                    let config: LatexLinterConfig = self.configuration("latex.lint").await;
+                    if config.on_save {
+                        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+                        diagnostics_manager.latex.update(&uri);
                     }
-                    Action::ResolveIncludes => {
-                        let workspace = self.workspace_manager.get();
-                        workspace
-                            .unresolved_includes()
-                            .iter()
-                            .for_each(|path| self.workspace_manager.load(&path));
-                    }
-                    Action::PublishDiagnostics => {
-                        let workspace = self.workspace_manager.get();
-                        let diagnostics_manager = self.diagnostics_manager.lock().await;
-                        for document in &workspace.documents {
-                            self.client
-                                .publish_diagnostics(PublishDiagnosticsParams {
-                                    uri: document.uri.clone(),
-                                    diagnostics: diagnostics_manager.get(&document),
-                                })
-                                .await;
-                        }
-                    }
-                    Action::RunLinter(uri) => {
-                        let config: LatexLinterConfig = self.configuration("latex.lint").await;
-                        if config.on_save {
-                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                            diagnostics_manager.latex.update(&uri);
-                        }
-                    }
-                    Action::ParseLog { tex_uri, log_path } => {
-                        if let Ok(log) = fs::read_to_string(&log_path) {
-                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                            diagnostics_manager.build.update(&tex_uri, &log);
-                        }
+                }
+                Action::ParseLog { tex_uri, log_path } => {
+                    if let Ok(log) = fs::read_to_string(&log_path) {
+                        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+                        diagnostics_manager.build.update(&tex_uri, &log);
                     }
                 }
             }
-        };
-        handler.boxed()
+        }
     }
 }
 

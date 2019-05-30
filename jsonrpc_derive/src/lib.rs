@@ -73,21 +73,17 @@ pub fn jsonrpc_server(
         #impl_
 
         impl #generics jsonrpc::RequestHandler for #self_ty {
-            fn handle_request(&self, request: jsonrpc::Request)
-                -> futures::future::BoxFuture<'_, jsonrpc::Response> {
+            #[boxed]
+            async fn handle_request(&self, request: jsonrpc::Request) -> jsonrpc::Response {
                 use futures::prelude::*;
                 use jsonrpc::*;
 
-                let handler = async move {
-                    match request.method.as_str() {
-                        #(#requests),*,
-                        _ => {
-                            Response::error(Error::method_not_found_error(), Some(request.id))
-                        }
+                match request.method.as_str() {
+                    #(#requests),*,
+                    _ => {
+                        Response::error(Error::method_not_found_error(), Some(request.id))
                     }
-                };
-
-                handler.boxed()
+                }
             }
 
             fn handle_notification(&self, notification: jsonrpc::Notification) {

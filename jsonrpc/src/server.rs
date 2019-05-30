@@ -1,6 +1,6 @@
 use crate::types::*;
-use futures::future::BoxFuture;
 use futures::prelude::*;
+use futures_boxed::boxed;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::json;
@@ -8,13 +8,15 @@ use serde_json::json;
 pub type Result<T> = std::result::Result<T, String>;
 
 pub trait RequestHandler {
-    fn handle_request(&self, request: Request) -> BoxFuture<'_, Response>;
+    #[boxed]
+    async fn handle_request(&self, request: Request) -> Response;
 
     fn handle_notification(&self, notification: Notification);
 }
 
 pub trait ActionHandler {
-    fn execute_actions(&self) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn execute_actions(&self);
 }
 
 pub async fn handle_request<'a, H, F, I, O>(request: Request, handler: H) -> Response
