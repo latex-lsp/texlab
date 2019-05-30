@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use lsp_types::*;
@@ -10,18 +10,18 @@ pub async fn run(
     position: Position,
 ) -> (Scenario, Vec<Location>) {
     let scenario = format!("definition/{}", scenario);
-    let scenario = await!(Scenario::new(&scenario));
+    let scenario = Scenario::new(&scenario).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file));
     let params = TextDocumentPositionParams::new(identifier, position);
-    await!(scenario.open(file));
-    let definitions = await!(scenario.server.definition(params)).unwrap();
+    scenario.open(file).await;
+    let definitions = scenario.server.definition(params).await.unwrap();
     (scenario, definitions)
 }
 
 #[test]
 fn test_citation() {
     block_on(async move {
-        let (scenario, definitions) = await!(run("citation", "foo.tex", Position::new(5, 8)));
+        let (scenario, definitions) = run("citation", "foo.tex", Position::new(5, 8)).await;
         assert_eq!(
             definitions,
             vec![Location::new(
@@ -35,7 +35,7 @@ fn test_citation() {
 #[test]
 fn test_label() {
     block_on(async move {
-        let (scenario, definitions) = await!(run("label", "foo.tex", Position::new(8, 8)));
+        let (scenario, definitions) = run("label", "foo.tex", Position::new(8, 8)).await;
         assert_eq!(
             definitions,
             vec![Location::new(

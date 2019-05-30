@@ -19,7 +19,7 @@ impl OrderByQualityCompletionProvider {
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
         let query = Self::get_query(&request.document, request.params.position);
-        let mut items = await!(execute(&request));
+        let mut items = execute(&request).await;
         items.sort_by_key(|item| -Self::get_quality(&query, &item.label));
         items
     }

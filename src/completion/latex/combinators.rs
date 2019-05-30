@@ -17,7 +17,7 @@ impl LatexCombinators {
     {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             if let Some(command) = tree.find_command(request.params.position) {
-                return await!(execute(command));
+                return execute(command).await;
             }
         }
         Vec::new()
@@ -75,7 +75,7 @@ impl LatexCombinators {
                     .range
                     .contains_exclusive(request.params.position)
                 {
-                    return await!(execute(Arc::clone(&command)));
+                    return execute(Arc::clone(&command)).await;
                 }
             }
         }
@@ -90,6 +90,6 @@ impl LatexCombinators {
         E: FnOnce(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<CompletionItem>>,
     {
-        await!(Self::argument(&request, &ENVIRONMENT_COMMANDS, 0, execute))
+        Self::argument(&request, &ENVIRONMENT_COMMANDS, 0, execute).await
     }
 }

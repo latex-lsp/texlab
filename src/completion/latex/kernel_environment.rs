@@ -10,14 +10,15 @@ pub struct LatexKernelEnvironmentCompletionProvider;
 
 impl LatexKernelEnvironmentCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::environment(&request, async move |_| {
+        LatexCombinators::environment(&request, async move |_| {
             KERNEL_ENVIRONMENTS
                 .iter()
                 .map(|name| {
                     factory::create_environment(Cow::from(*name), &LatexComponentId::Kernel)
                 })
                 .collect()
-        }))
+        })
+        .await
     }
 }
 

@@ -26,11 +26,11 @@ where
 {
     let handle = async move |json| -> std::result::Result<O, Error> {
         let params: I = serde_json::from_value(json).map_err(|_| Error::deserialize_error())?;
-        let result = await!(handler(params)).map_err(Error::internal_error)?;
+        let result = handler(params).await.map_err(Error::internal_error)?;
         Ok(result)
     };
 
-    match await!(handle(request.params)) {
+    match handle(request.params).await {
         Ok(result) => Response::result(json!(result), request.id),
         Err(error) => Response::error(error, Some(request.id)),
     }

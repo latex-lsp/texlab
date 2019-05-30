@@ -12,29 +12,27 @@ pub struct LatexUserCommandCompletionProvider;
 
 impl LatexUserCommandCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::command(
-            request,
-            async move |current_command| {
-                let mut items = Vec::new();
-                for document in &request.related_documents {
-                    if let SyntaxTree::Latex(tree) = &document.tree {
-                        tree.commands
-                            .iter()
-                            .filter(|command| command.range() != current_command.range())
-                            .map(|command| &command.name.text()[1..])
-                            .unique()
-                            .map(|name| {
-                                factory::create_command(
-                                    Cow::from(name.to_owned()),
-                                    &LatexComponentId::Unknown,
-                                )
-                            })
-                            .for_each(|item| items.push(item));
-                    }
+        LatexCombinators::command(request, async move |current_command| {
+            let mut items = Vec::new();
+            for document in &request.related_documents {
+                if let SyntaxTree::Latex(tree) = &document.tree {
+                    tree.commands
+                        .iter()
+                        .filter(|command| command.range() != current_command.range())
+                        .map(|command| &command.name.text()[1..])
+                        .unique()
+                        .map(|name| {
+                            factory::create_command(
+                                Cow::from(name.to_owned()),
+                                &LatexComponentId::Unknown,
+                            )
+                        })
+                        .for_each(|item| items.push(item));
                 }
-                items
             }
-        ))
+            items
+        })
+        .await
     }
 }
 

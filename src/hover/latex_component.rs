@@ -10,7 +10,7 @@ pub struct LatexComponentHoverProvider;
 impl LatexComponentHoverProvider {
     pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
-            let documentation = await!(tree
+            let documentation = tree
                 .includes
                 .iter()
                 .filter(|include| {
@@ -19,7 +19,8 @@ impl LatexComponentHoverProvider {
                 })
                 .find(|include| include.path().range().contains(request.params.position))
                 .map(|include| include.path().text())
-                .map(|name| ComponentDocumentation::lookup(name))?)?;
+                .map(|name| ComponentDocumentation::lookup(name))?
+                .await?;
 
             Some(Hover {
                 contents: HoverContents::Markup(documentation.content),

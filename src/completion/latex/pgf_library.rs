@@ -8,17 +8,13 @@ pub struct LatexPgfLibraryCompletionProvider;
 
 impl LatexPgfLibraryCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            request,
-            &COMMANDS,
-            0,
-            async move |_| {
-                LIBRARIES
-                    .iter()
-                    .map(|name| factory::create_pgf_library(Cow::from(*name)))
-                    .collect()
-            }
-        ))
+        LatexCombinators::argument(request, &COMMANDS, 0, async move |_| {
+            LIBRARIES
+                .iter()
+                .map(|name| factory::create_pgf_library(Cow::from(*name)))
+                .collect()
+        })
+        .await
     }
 }
 

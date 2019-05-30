@@ -9,26 +9,22 @@ pub struct LatexCitationCompletionProvider;
 
 impl LatexCitationCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            request,
-            CITATION_COMMANDS,
-            0,
-            async move |_| {
-                let mut items = Vec::new();
-                for document in &request.related_documents {
-                    if let SyntaxTree::Bibtex(tree) = &document.tree {
-                        for entry in &tree.entries() {
-                            if !entry.is_comment() {
-                                if let Some(key) = &entry.key {
-                                    items.push(factory::create_citation(entry, key.text()));
-                                }
+        LatexCombinators::argument(request, CITATION_COMMANDS, 0, async move |_| {
+            let mut items = Vec::new();
+            for document in &request.related_documents {
+                if let SyntaxTree::Bibtex(tree) = &document.tree {
+                    for entry in &tree.entries() {
+                        if !entry.is_comment() {
+                            if let Some(key) = &entry.key {
+                                items.push(factory::create_citation(entry, key.text()));
                             }
                         }
                     }
                 }
-                items
             }
-        ))
+            items
+        })
+        .await
     }
 }
 

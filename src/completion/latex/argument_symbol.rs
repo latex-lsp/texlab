@@ -12,21 +12,24 @@ impl LatexArgumentSymbolCompletionProvider {
         for group in &DATABASE.arguments {
             let command = format!("\\{}", group.command);
             let command_names = &[command.as_ref()];
-            items.append(&mut await!(LatexCombinators::argument(
-                &request,
-                command_names,
-                group.index,
-                async move |_| {
-                    let mut items = Vec::new();
-                    for symbol in &group.arguments {
-                        items.push(factory::create_argument_symbol(
-                            &symbol.argument,
-                            &symbol.image,
-                        ));
-                    }
-                    items
-                }
-            )));
+            items.append(
+                &mut LatexCombinators::argument(
+                    &request,
+                    command_names,
+                    group.index,
+                    async move |_| {
+                        let mut items = Vec::new();
+                        for symbol in &group.arguments {
+                            items.push(factory::create_argument_symbol(
+                                &symbol.argument,
+                                &symbol.image,
+                            ));
+                        }
+                        items
+                    },
+                )
+                .await,
+            );
         }
         items
     }

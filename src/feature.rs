@@ -44,7 +44,7 @@ macro_rules! concat_feature {
     ($request:expr, $($provider:tt), *) => {{
         let mut items = Vec::new();
         $(
-            items.append(&mut await!($provider::execute($request)));
+            items.append(&mut $provider::execute($request).await);
         )*
         items
     }};
@@ -53,10 +53,10 @@ macro_rules! concat_feature {
 #[macro_export]
 macro_rules! choice_feature {
     ($request:expr, $provider:tt) => {
-        await!($provider::execute($request))
+        $provider::execute($request).await
     };
     ($request:expr, $provider:tt, $($providers:tt),+) => {{
-        let value = await!($provider::execute($request));
+        let value = $provider::execute($request).await;
         if value.is_some() {
             value
         } else {

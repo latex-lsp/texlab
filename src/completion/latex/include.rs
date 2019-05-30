@@ -22,39 +22,35 @@ pub struct LatexIncludeCompletionProvider;
 
 impl LatexIncludeCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            request,
-            COMMAND_NAMES,
-            0,
-            async move |command| {
-                if request.document.uri.scheme() != "file" {
-                    return Vec::new();
-                }
+        LatexCombinators::argument(request, COMMAND_NAMES, 0, async move |command| {
+            if request.document.uri.scheme() != "file" {
+                return Vec::new();
+            }
 
-                let mut items = Vec::new();
-                let directory = current_directory(&request, &command);
-                for entry in WalkDir::new(directory)
-                    .min_depth(1)
-                    .max_depth(1)
-                    .follow_links(false)
-                    .into_iter()
-                {
-                    if let Ok(entry) = entry {
-                        if entry.file_type().is_file() && is_included(&command, &entry.path()) {
-                            let mut path = entry.into_path();
-                            if NO_EXTENSION_COMMANDS.contains(&command.name.text()) {
-                                remove_extension(&mut path);
-                            }
-                            items.push(factory::create_file(&path));
-                        } else if entry.file_type().is_dir() {
-                            let path = entry.into_path();
-                            items.push(factory::create_folder(&path));
+            let mut items = Vec::new();
+            let directory = current_directory(&request, &command);
+            for entry in WalkDir::new(directory)
+                .min_depth(1)
+                .max_depth(1)
+                .follow_links(false)
+                .into_iter()
+            {
+                if let Ok(entry) = entry {
+                    if entry.file_type().is_file() && is_included(&command, &entry.path()) {
+                        let mut path = entry.into_path();
+                        if NO_EXTENSION_COMMANDS.contains(&command.name.text()) {
+                            remove_extension(&mut path);
                         }
+                        items.push(factory::create_file(&path));
+                    } else if entry.file_type().is_dir() {
+                        let path = entry.into_path();
+                        items.push(factory::create_folder(&path));
                     }
                 }
-                items
             }
-        ))
+            items
+        })
+        .await
     }
 }
 

@@ -10,7 +10,7 @@ pub struct LatexCommandSymbolCompletionProvider;
 
 impl LatexCommandSymbolCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::command(&request, async move |_| {
+        LatexCombinators::command(&request, async move |_| {
             let mut items = Vec::new();
             let components = request
                 .component_database
@@ -38,6 +38,7 @@ impl LatexCommandSymbolCompletionProvider {
                 }
             }
             items
-        }))
+        })
+        .await
     }
 }

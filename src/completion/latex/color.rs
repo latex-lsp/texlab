@@ -8,17 +8,13 @@ pub struct LatexColorCompletionProvider;
 
 impl LatexColorCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            request,
-            &COLOR_COMMANDS,
-            0,
-            async move |_| {
-                COLOR_NAMES
-                    .iter()
-                    .map(|name| factory::create_color(Cow::from(*name)))
-                    .collect()
-            }
-        ))
+        LatexCombinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
+            COLOR_NAMES
+                .iter()
+                .map(|name| factory::create_color(Cow::from(*name)))
+                .collect()
+        })
+        .await
     }
 }
 

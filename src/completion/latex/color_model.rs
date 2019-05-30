@@ -9,31 +9,27 @@ pub struct LatexColorModelCompletionProvider;
 impl LatexColorModelCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
         let mut items = Vec::new();
-        items.append(&mut await!(Self::execute_define_color(&request)));
-        items.append(&mut await!(Self::execute_define_color_set(&request)));
+        items.append(&mut Self::execute_define_color(&request).await);
+        items.append(&mut Self::execute_define_color_set(&request).await);
         items
     }
 
     async fn execute_define_color(
         request: &FeatureRequest<CompletionParams>,
     ) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            &request,
-            &COMMAND_NAMES[0..1],
-            1,
-            async move |_| { Self::generate_items() }
-        ))
+        LatexCombinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
+            Self::generate_items()
+        })
+        .await
     }
 
     async fn execute_define_color_set(
         request: &FeatureRequest<CompletionParams>,
     ) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            &request,
-            &COMMAND_NAMES[1..2],
-            0,
-            async move |_| { Self::generate_items() }
-        ))
+        LatexCombinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
+            Self::generate_items()
+        })
+        .await
     }
 
     fn generate_items() -> Vec<CompletionItem> {

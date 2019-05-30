@@ -45,23 +45,23 @@ where
 
         let (sender, receiver) = oneshot::channel();
         {
-            let mut queue = await!(self.queue.lock());
+            let mut queue = self.queue.lock().await;
             queue.insert(request.id, sender);
         }
 
-        await!(self.send(Message::Request(request)));
-        await!(receiver).unwrap()
+        self.send(Message::Request(request)).await;
+        receiver.await.unwrap()
     }
 
     pub async fn send_notification<T: Serialize>(&self, method: String, params: T) {
         let notification = Notification::new(method, json!(params));
-        await!(self.send(Message::Notification(notification)));
+        self.send(Message::Notification(notification)).await;
     }
 
     async fn send(&self, message: Message) {
         let json = serde_json::to_string(&message).unwrap();
-        let mut output = await!(self.output.lock());
-        await!(output.send(json)).unwrap();
+        let mut output = self.output.lock().await;
+        output.send(json).await.unwrap();
     }
 }
 
@@ -72,7 +72,7 @@ where
     fn handle(&self, response: Response) -> BoxFuture<'_, ()> {
         let task = async move {
             let id = response.id.expect("Expected response with id");
-            let mut queue = await!(self.queue.lock());
+            let mut queue = self.queue.lock().await;
             let sender = queue.remove(&id).expect("Unexpected response received");
 
             let result = match response.error {

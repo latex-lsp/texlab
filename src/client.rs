@@ -36,7 +36,7 @@ pub struct LspClientMock {
 impl LspClient for LspClientMock {
     fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
         let handler = async move {
-            let options = await!(self.options.lock());
+            let options = self.options.lock().await;
             match params.items[0].section {
                 Some(Cow::Borrowed("bibtex.formatting")) => options
                     .bibtex_formatting
@@ -53,7 +53,7 @@ impl LspClient for LspClientMock {
 
     fn show_message(&self, params: ShowMessageParams) -> BoxFuture<'_, ()> {
         let handler = async move {
-            let mut messages = await!(self.messages.lock());
+            let mut messages = self.messages.lock().await;
             messages.push(params);
         };
         handler.boxed()

@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await, trait_alias)]
+#![feature(async_await, trait_alias)]
 
 pub mod client;
 pub mod server;
@@ -25,14 +25,14 @@ pub struct MessageHandler<S, C, I, O> {
 }
 
 impl<S, C, I, O> MessageHandler<S, C, I, O>
-    where
-        S: RequestHandler + ActionHandler + Send + Sync + 'static,
-        C: ResponseHandler + Send + Sync + 'static,
-        I: Input,
-        O: Output + 'static,
+where
+    S: RequestHandler + ActionHandler + Send + Sync + 'static,
+    C: ResponseHandler + Send + Sync + 'static,
+    I: Input,
+    O: Output + 'static,
 {
     pub async fn listen(&mut self) {
-        while let Some(json) = await!(self.input.next()) {
+        while let Some(json) = self.input.next().await {
             let message = serde_json::from_str(&json.expect("")).map_err(|_| Error {
                 code: ErrorCode::ParseError,
                 message: "Could not parse the input".to_owned(),
@@ -44,11 +44,11 @@ impl<S, C, I, O> MessageHandler<S, C, I, O>
                     let server = Arc::clone(&self.server);
                     let output = Arc::clone(&self.output);
                     let handler = async move {
-                        let response = await!(server.handle_request(request));
+                        let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
-                        let mut output = await!(output.lock());
-                        await!(output.send(json)).unwrap();
-                        await!(server.execute_actions());
+                        let mut output = output.lock().await;
+                        output.send(json).await.unwrap();
+                        server.execute_actions().await;
                     };
 
                     self.pool.spawn(handler).unwrap();
@@ -58,19 +58,19 @@ impl<S, C, I, O> MessageHandler<S, C, I, O>
 
                     let server = Arc::clone(&self.server);
                     let handler = async move {
-                        await!(server.execute_actions());
+                        server.execute_actions().await;
                     };
 
                     self.pool.spawn(handler).unwrap();
                 }
                 Ok(Message::Response(response)) => {
-                    await!(self.client.handle(response));
+                    self.client.handle(response).await;
                 }
                 Err(why) => {
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
-                    let mut output = await!(self.output.lock());
-                    await!(output.send(json)).unwrap();
+                    let mut output = self.output.lock().await;
+                    output.send(json).await.unwrap();
                 }
             }
         }

@@ -11,12 +11,7 @@ impl LatexClassImportProvider {
     const COMMANDS: &'static [&'static str] = &["\\documentclass"];
 
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(import(
-            request,
-            Self::COMMANDS,
-            "cls",
-            factory::create_class
-        ))
+        import(request, Self::COMMANDS, "cls", factory::create_class).await
     }
 }
 
@@ -26,12 +21,7 @@ impl LatexPackageImportProvider {
     const COMMANDS: &'static [&'static str] = &["\\usepackage"];
 
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(import(
-            request,
-            Self::COMMANDS,
-            "sty",
-            factory::create_package
-        ))
+        import(request, Self::COMMANDS, "sty", factory::create_package).await
     }
 }
 
@@ -53,12 +43,7 @@ where
         .map(|name| factory(Cow::from(name.to_owned())))
         .collect();
 
-    await!(LatexCombinators::argument(
-        request,
-        &commands,
-        0,
-        async move |_| { items }
-    ))
+    LatexCombinators::argument(request, &commands, 0, async move |_| items).await
 }
 
 #[cfg(test)]

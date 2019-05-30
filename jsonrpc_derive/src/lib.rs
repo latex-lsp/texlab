@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 #![recursion_limit = "128"]
 
 extern crate proc_macro;
@@ -171,10 +171,10 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
                 requests.push(quote!(
                     #name => {
                         let handler = async move |param: #param_ty| #return_ty {
-                           await!(self.#ident(param))
+                           self.#ident(param).await
                         };
 
-                        await!(jsonrpc::handle_request(request, handler))
+                        jsonrpc::handle_request(request, handler).await
                     }
                 ));
             }
@@ -212,7 +212,7 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
 
                     let client = std::sync::Arc::clone(&self.client);
                     let task = async move {
-                        let result = await!(client.send_request(#name.to_owned(), #param))?;
+                        let result = client.send_request(#name.to_owned(), #param).await?;
                         serde_json::from_value(result).map_err(|_| Error::deserialize_error())
                     };
 
@@ -225,7 +225,7 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
 
                     let client = std::sync::Arc::clone(&self.client);
                     let task = async move {
-                        await!(self.client.send_notification(#name.to_owned(), #param));
+                        self.client.send_notification(#name.to_owned(), #param).await;
                     };
 
                     task.boxed()

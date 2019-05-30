@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use lsp_types::*;
@@ -12,9 +12,9 @@ pub async fn run(
     options: Option<BibtexFormattingOptions>,
 ) -> (Scenario, Vec<TextEdit>) {
     let scenario = format!("formatting/{}", scenario);
-    let scenario = await!(Scenario::new(&scenario));
-    await!(scenario.open(file));
-    await!(scenario.client.options.lock()).bibtex_formatting = options;
+    let scenario = Scenario::new(&scenario).await;
+    scenario.open(file).await;
+    scenario.client.options.lock().await.bibtex_formatting = options;
 
     let params = DocumentFormattingParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),
@@ -24,16 +24,16 @@ pub async fn run(
             properties: HashMap::new(),
         },
     };
-    let edits = await!(scenario.server.formatting(params)).unwrap();
+    let edits = scenario.server.formatting(params).await.unwrap();
     (scenario, edits)
 }
 
 #[test]
 fn test_bibtex_entry_default() {
     block_on(async move {
-        let (scenario, edits) = await!(run("bibtex/default", "foo.bib", None));
+        let (scenario, edits) = run("bibtex/default", "foo.bib", None).await;
         assert_eq!(edits.len(), 1);
-        assert_eq!(edits[0].new_text, await!(scenario.read("bar.bib")));
+        assert_eq!(edits[0].new_text, scenario.read("bar.bib").await);
         assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 52));
     });
 }
@@ -41,13 +41,14 @@ fn test_bibtex_entry_default() {
 #[test]
 fn test_bibtex_entry_infinite_line_length() {
     block_on(async move {
-        let (scenario, edits) = await!(run(
+        let (scenario, edits) = run(
             "bibtex/infinite_line_length",
             "foo.bib",
-            Some(BibtexFormattingOptions { line_length: 0 })
-        ));
+            Some(BibtexFormattingOptions { line_length: 0 }),
+        )
+        .await;
         assert_eq!(edits.len(), 1);
-        assert_eq!(edits[0].new_text, await!(scenario.read("bar.bib")));
+        assert_eq!(edits[0].new_text, scenario.read("bar.bib").await);
         assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 149));
     });
 }
@@ -55,7 +56,7 @@ fn test_bibtex_entry_infinite_line_length() {
 #[test]
 fn test_latex() {
     block_on(async move {
-        let (_, edits) = await!(run("latex", "foo.tex", None));
+        let (_, edits) = run("latex", "foo.tex", None).await;
         assert_eq!(edits, Vec::new());
     })
 }

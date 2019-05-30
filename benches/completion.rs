@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use criterion::{criterion_group, criterion_main, Criterion};
 use futures::executor::block_on;

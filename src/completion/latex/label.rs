@@ -10,25 +10,21 @@ pub struct LatexLabelCompletionProvider;
 
 impl LatexLabelCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::argument(
-            request,
-            &LABEL_REFERENCE_COMMANDS,
-            0,
-            async move |_| {
-                let mut items = Vec::new();
-                for document in &request.related_documents {
-                    if let SyntaxTree::Latex(tree) = &document.tree {
-                        tree.labels
-                            .iter()
-                            .filter(|label| label.kind() == LatexLabelKind::Definition)
-                            .map(|label| Cow::from(label.name().text().to_owned()))
-                            .map(factory::create_label)
-                            .for_each(|item| items.push(item))
-                    }
+        LatexCombinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
+            let mut items = Vec::new();
+            for document in &request.related_documents {
+                if let SyntaxTree::Latex(tree) = &document.tree {
+                    tree.labels
+                        .iter()
+                        .filter(|label| label.kind() == LatexLabelKind::Definition)
+                        .map(|label| Cow::from(label.name().text().to_owned()))
+                        .map(factory::create_label)
+                        .for_each(|item| items.push(item))
                 }
-                items
             }
-        ))
+            items
+        })
+        .await
     }
 }
 

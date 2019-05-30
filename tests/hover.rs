@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use lsp_types::*;
@@ -13,11 +13,14 @@ pub async fn run(
     position: Position,
 ) -> Option<HoverContents> {
     let scenario = format!("hover/{}", scenario);
-    let scenario = await!(Scenario::new(&scenario));
-    await!(scenario.open(file));
+    let scenario = Scenario::new(&scenario).await;
+    scenario.open(file).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file));
     let params = TextDocumentPositionParams::new(identifier, position);
-    await!(scenario.server.hover(params))
+    scenario
+        .server
+        .hover(params)
+        .await
         .unwrap()
         .map(|hover| hover.contents)
 }
@@ -25,7 +28,9 @@ pub async fn run(
 #[test]
 fn test_entry_type_known() {
     block_on(async move {
-        let contents = await!(run("bibtex/entry_type", "foo.bib", Position::new(0, 5))).unwrap();
+        let contents = run("bibtex/entry_type", "foo.bib", Position::new(0, 5))
+            .await
+            .unwrap();
         assert_eq!(
             contents,
             HoverContents::Markup(MarkupContent {
@@ -39,7 +44,7 @@ fn test_entry_type_known() {
 #[test]
 fn test_entry_type_unknown() {
     block_on(async move {
-        let contents = await!(run("bibtex/entry_type", "foo.bib", Position::new(2, 2)));
+        let contents = run("bibtex/entry_type", "foo.bib", Position::new(2, 2)).await;
         assert_eq!(contents, None);
     });
 }
@@ -47,7 +52,9 @@ fn test_entry_type_unknown() {
 #[test]
 fn test_field_known() {
     block_on(async move {
-        let contents = await!(run("bibtex/field", "foo.bib", Position::new(1, 4))).unwrap();
+        let contents = run("bibtex/field", "foo.bib", Position::new(1, 4))
+            .await
+            .unwrap();
         assert_eq!(
             contents,
             HoverContents::Markup(MarkupContent {
@@ -61,7 +68,7 @@ fn test_field_known() {
 #[test]
 fn test_field_unknown() {
     block_on(async move {
-        let contents = await!(run("bibtex/field", "foo.bib", Position::new(2, 5)));
+        let contents = run("bibtex/field", "foo.bib", Position::new(2, 5)).await;
         assert_eq!(contents, None);
     });
 }
@@ -69,7 +76,7 @@ fn test_field_unknown() {
 #[test]
 fn test_citation_bibtex() {
     block_on(async move {
-        let contents = await!(run("latex/citation", "foo.bib", Position::new(0, 10)));
+        let contents = run("latex/citation", "foo.bib", Position::new(0, 10)).await;
         assert_eq!(contents.is_some(), true);
     });
 }
@@ -77,7 +84,7 @@ fn test_citation_bibtex() {
 #[test]
 fn test_citation_latex() {
     block_on(async move {
-        let contents = await!(run("latex/citation", "foo.tex", Position::new(2, 8)));
+        let contents = run("latex/citation", "foo.tex", Position::new(2, 8)).await;
         assert_eq!(contents.is_some(), true);
     });
 }
@@ -85,7 +92,7 @@ fn test_citation_latex() {
 #[test]
 fn test_component_class() {
     block_on(async move {
-        let contents = await!(run("latex/component", "foo.tex", Position::new(0, 19)));
+        let contents = run("latex/component", "foo.tex", Position::new(0, 19)).await;
         assert_eq!(contents.is_some(), true);
     });
 }
@@ -93,7 +100,7 @@ fn test_component_class() {
 #[test]
 fn test_component_package() {
     block_on(async move {
-        let contents = await!(run("latex/component", "foo.tex", Position::new(2, 16)));
+        let contents = run("latex/component", "foo.tex", Position::new(2, 16)).await;
         assert_eq!(contents.is_some(), true);
     });
 }
@@ -101,7 +108,7 @@ fn test_component_package() {
 #[test]
 fn test_component_package_unknown() {
     block_on(async move {
-        let contents = await!(run("latex/component", "foo.tex", Position::new(3, 14)));
+        let contents = run("latex/component", "foo.tex", Position::new(3, 14)).await;
         assert_eq!(contents, None);
     });
 }

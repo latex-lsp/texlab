@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use clap::*;
 use futures::compat::*;
@@ -59,5 +59,5 @@ async fn run(pool: ThreadPool) {
         pool,
     };
 
-    await!(handler.listen());
+    handler.listen().await;
 }

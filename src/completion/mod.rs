@@ -33,33 +33,31 @@ pub struct CompletionProvider;
 
 impl CompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        let items = await!(OrderByQualityCompletionProvider::execute(
-            request,
-            async move |_| {
-                concat_feature!(
-                    &request,
-                    BibtexEntryTypeCompletionProvider,
-                    BibtexFieldNameCompletionProvider,
-                    BibtexKernelCommandCompletionProvider,
-                    LatexKernelEnvironmentCompletionProvider,
-                    LatexArgumentSymbolCompletionProvider,
-                    LatexPgfLibraryCompletionProvider,
-                    LatexTikzLibraryCompletionProvider,
-                    LatexColorCompletionProvider,
-                    LatexColorModelCompletionProvider,
-                    LatexLabelCompletionProvider,
-                    LatexCitationCompletionProvider,
-                    LatexIncludeCompletionProvider,
-                    LatexClassImportProvider,
-                    LatexPackageImportProvider,
-                    LatexBeginCommandCompletionProvider,
-                    LatexCommandSymbolCompletionProvider,
-                    LatexTikzCommandCompletionProvider,
-                    LatexKernelCommandCompletionProvider,
-                    LatexUserCommandCompletionProvider
-                )
-            }
-        ));
+        let items = OrderByQualityCompletionProvider::execute(request, async move |_| {
+            concat_feature!(
+                &request,
+                BibtexEntryTypeCompletionProvider,
+                BibtexFieldNameCompletionProvider,
+                BibtexKernelCommandCompletionProvider,
+                LatexKernelEnvironmentCompletionProvider,
+                LatexArgumentSymbolCompletionProvider,
+                LatexPgfLibraryCompletionProvider,
+                LatexTikzLibraryCompletionProvider,
+                LatexColorCompletionProvider,
+                LatexColorModelCompletionProvider,
+                LatexLabelCompletionProvider,
+                LatexCitationCompletionProvider,
+                LatexIncludeCompletionProvider,
+                LatexClassImportProvider,
+                LatexPackageImportProvider,
+                LatexBeginCommandCompletionProvider,
+                LatexCommandSymbolCompletionProvider,
+                LatexTikzCommandCompletionProvider,
+                LatexKernelCommandCompletionProvider,
+                LatexUserCommandCompletionProvider
+            )
+        })
+        .await;
 
         items
             .into_iter()

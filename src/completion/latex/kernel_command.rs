@@ -10,12 +10,13 @@ pub struct LatexKernelCommandCompletionProvider;
 
 impl LatexKernelCommandCompletionProvider {
     pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        await!(LatexCombinators::command(&request, async move |_| {
+        LatexCombinators::command(&request, async move |_| {
             KERNEL_COMMANDS
                 .iter()
                 .map(|name| factory::create_command(Cow::from(*name), &LatexComponentId::Kernel))
                 .collect()
-        }))
+        })
+        .await
     }
 }
 

@@ -36,10 +36,10 @@ impl Scenario {
             trace: None,
             workspace_folders: None,
         };
-        await!(server.initialize(init_params)).unwrap();
-        await!(server.execute_actions());
+        server.initialize(init_params).await.unwrap();
+        server.execute_actions().await;
         server.initialized(InitializedParams {});
-        await!(server.execute_actions());
+        server.execute_actions().await;
 
         Self {
             server,
@@ -61,7 +61,7 @@ impl Scenario {
     }
 
     pub async fn open(&self, name: &'static str) {
-        let text = await!(self.read(name));
+        let text = self.read(name).await;
         let language_id = if name.ends_with(".tex") {
             "latex"
         } else {

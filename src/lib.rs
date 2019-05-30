@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 #![recursion_limit = "128"]
 
 pub mod action;

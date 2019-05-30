@@ -177,7 +177,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
-        let items = await!(CompletionProvider::execute(&request));
+        let items = CompletionProvider::execute(&request).await;
         let all_includes = items.iter().all(|item| {
             item.kind == Some(CompletionItemKind::Folder)
                 || item.kind == Some(CompletionItemKind::File)
@@ -196,21 +196,21 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
         let request = request!(self, params)?;
-        let hover = await!(HoverProvider::execute(&request));
+        let hover = HoverProvider::execute(&request).await;
         Ok(hover)
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]
     pub async fn definition(&self, params: TextDocumentPositionParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
-        let results = await!(DefinitionProvider::execute(&request));
+        let results = DefinitionProvider::execute(&request).await;
         Ok(results)
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
-        let results = await!(ReferenceProvider::execute(&request));
+        let results = ReferenceProvider::execute(&request).await;
         Ok(results)
     }
 
@@ -220,7 +220,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
         let request = request!(self, params)?;
-        let results = await!(HighlightProvider::execute(&request));
+        let results = HighlightProvider::execute(&request).await;
         Ok(results)
     }
 
@@ -235,7 +235,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
         let request = request!(self, params)?;
-        let links = await!(LinkProvider::execute(&request));
+        let links = LinkProvider::execute(&request).await;
         Ok(links)
     }
 
@@ -247,7 +247,9 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             let params = BibtexFormattingParams {
                 tab_size: request.params.options.tab_size as usize,
                 insert_spaces: request.params.options.insert_spaces,
-                options: await!(self.configuration::<BibtexFormattingOptions>("bibtex.formatting")),
+                options: self
+                    .configuration::<BibtexFormattingOptions>("bibtex.formatting")
+                    .await,
             };
 
             for declaration in &tree.root.children {
@@ -268,14 +270,14 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
         let request = request!(self, params)?;
-        let edit = await!(RenameProvider::execute(&request));
+        let edit = RenameProvider::execute(&request).await;
         Ok(edit)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
         let request = request!(self, params)?;
-        let foldings = await!(FoldingProvider::execute(&request));
+        let foldings = FoldingProvider::execute(&request).await;
         Ok(foldings)
     }
 
@@ -290,7 +292,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             }],
         };
 
-        match await!(self.client.configuration(params)) {
+        match self.client.configuration(params).await {
             Ok(json) => match serde_json::from_value::<Vec<T>>(json) {
                 Ok(config) => config.into_iter().next().unwrap(),
                 Err(_) => {
@@ -322,14 +324,16 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                             }],
                         };
 
-                        if let Err(why) =
-                            await!(self.client.register_capability(RegistrationParams {
+                        if let Err(why) = self
+                            .client
+                            .register_capability(RegistrationParams {
                                 registrations: vec![Registration {
                                     id: Cow::from("build-log-watcher"),
                                     method: Cow::from("workspace/didChangeWatchedFiles"),
                                     register_options: Some(serde_json::to_value(options).unwrap()),
-                                }]
-                            }))
+                                }],
+                            })
+                            .await
                         {
                             warn!(
                                 "Client does not support dynamic capability registration: {}",
@@ -340,7 +344,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                     Action::LoadResolver => {
                         match TexResolver::load() {
                             Ok(res) => {
-                                let mut resolver = await!(self.resolver.lock());
+                                let mut resolver = self.resolver.lock().await;
                                 *resolver = Arc::new(res);
                             }
                             Err(why) => {
@@ -364,7 +368,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                                     typ: MessageType::Error,
                                 };
 
-                                await!(self.client.show_message(params));
+                                self.client.show_message(params).await;
                             }
                         };
                     }
@@ -377,24 +381,26 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                     }
                     Action::PublishDiagnostics => {
                         let workspace = self.workspace_manager.get();
-                        let diagnostics_manager = await!(self.diagnostics_manager.lock());
+                        let diagnostics_manager = self.diagnostics_manager.lock().await;
                         for document in &workspace.documents {
-                            await!(self.client.publish_diagnostics(PublishDiagnosticsParams {
-                                uri: document.uri.clone(),
-                                diagnostics: diagnostics_manager.get(&document),
-                            }));
+                            self.client
+                                .publish_diagnostics(PublishDiagnosticsParams {
+                                    uri: document.uri.clone(),
+                                    diagnostics: diagnostics_manager.get(&document),
+                                })
+                                .await;
                         }
                     }
                     Action::RunLinter(uri) => {
-                        let config: LatexLinterConfig = await!(self.configuration("latex.lint"));
+                        let config: LatexLinterConfig = self.configuration("latex.lint").await;
                         if config.on_save {
-                            let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
+                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
                             diagnostics_manager.latex.update(&uri);
                         }
                     }
                     Action::ParseLog { tex_uri, log_path } => {
                         if let Ok(log) = fs::read_to_string(&log_path) {
-                            let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
+                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
                             diagnostics_manager.build.update(&tex_uri, &log);
                         }
                     }
@@ -409,7 +415,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
 macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
-        let resolver = await!($server.resolver.lock());
+        let resolver = $server.resolver.lock().await;
 
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest::new(

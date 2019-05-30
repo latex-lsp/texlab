@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(async_await)]
 
 use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
@@ -15,16 +15,19 @@ async fn run_completion(
         position,
         context: None,
     };
-    await!(scenario.server.completion(params)).unwrap().items
+    scenario.server.completion(params).await.unwrap().items
 }
 
 #[test]
 fn test_did_change() {
     block_on(async move {
-        let scenario = await!(Scenario::new("synchronization/did_change"));
-        await!(scenario.open("foo.tex"));
+        let scenario = Scenario::new("synchronization/did_change").await;
+        scenario.open("foo.tex").await;
         assert_eq!(
-            await!(run_completion(&scenario, "foo.tex", Position::new(0, 1))).len() > 0,
+            run_completion(&scenario, "foo.tex", Position::new(0, 1))
+                .await
+                .len()
+                > 0,
             false
         );
 
@@ -37,9 +40,12 @@ fn test_did_change() {
             }],
         };
         scenario.server.did_change(params);
-        await!(scenario.server.execute_actions());
+        scenario.server.execute_actions().await;
         assert_eq!(
-            await!(run_completion(&scenario, "foo.tex", Position::new(0, 1))).len() > 0,
+            run_completion(&scenario, "foo.tex", Position::new(0, 1))
+                .await
+                .len()
+                > 0,
             true
         );
     });
@@ -48,8 +54,8 @@ fn test_did_change() {
 #[test]
 fn test_indexing() {
     block_on(async move {
-        let scenario = await!(Scenario::new("synchronization/did_change"));
-        await!(scenario.open("foo.tex"));
+        let scenario = Scenario::new("synchronization/did_change").await;
+        scenario.open("foo.tex").await;
 
         let mut path = scenario.directory.path().to_owned();
         path.push("bar.tex");
@@ -64,8 +70,8 @@ fn test_indexing() {
             }],
         };
         scenario.server.did_change(params);
-        await!(scenario.server.execute_actions());
-        let items = await!(run_completion(&scenario, "foo.tex", Position::new(0, 1)));
+        scenario.server.execute_actions().await;
+        let items = run_completion(&scenario, "foo.tex", Position::new(0, 1)).await;
         assert_eq!(items.iter().any(|item| item.label == "foo"), true);
     });
 }
