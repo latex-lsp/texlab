@@ -6,7 +6,7 @@ mod types;
 
 pub use self::{
     client::{Client, ResponseHandler},
-    server::{handle_notification, handle_request, EventHandler, RequestHandler},
+    server::{handle_notification, handle_request, ActionHandler, RequestHandler},
     types::*,
 };
 
@@ -25,15 +25,19 @@ pub struct MessageHandler<S, C, I, O> {
 }
 
 impl<S, C, I, O> MessageHandler<S, C, I, O>
-where
-    S: RequestHandler + EventHandler + Send + Sync + 'static,
-    C: ResponseHandler + Send + Sync + 'static,
-    I: Stream<Item = std::io::Result<String>> + Unpin,
-    O: Sink<String> + Unpin + Send + 'static,
+    where
+        S: RequestHandler + ActionHandler + Send + Sync + 'static,
+        C: ResponseHandler + Send + Sync + 'static,
+        I: Stream<Item = std::io::Result<String>> + Unpin,
+        O: Sink<String> + Unpin + Send + 'static,
 {
     pub async fn listen(&mut self) {
         while let Some(json) = await!(self.input.next()) {
-            let message = serde_json::from_str(&json.expect("")).map_err(|_| Error::parse_error());
+            let message = serde_json::from_str(&json.expect("")).map_err(|_| Error {
+                code: ErrorCode::ParseError,
+                message: "Could not parse the input".to_owned(),
+                data: serde_json::Value::Null,
+            });
 
             match message {
                 Ok(Message::Request(request)) => {
@@ -44,7 +48,7 @@ where
                         let json = serde_json::to_string(&response).unwrap();
                         let mut output = await!(output.lock());
                         await!(output.send(json));
-                        await!(server.handle_events());
+                        await!(server.execute_actions());
                     };
 
                     self.pool.spawn(handler).unwrap();
@@ -54,7 +58,7 @@ where
 
                     let server = Arc::clone(&self.server);
                     let handler = async move {
-                        await!(server.handle_events());
+                        await!(server.execute_actions());
                     };
 
                     self.pool.spawn(handler).unwrap();

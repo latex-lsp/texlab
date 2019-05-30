@@ -13,8 +13,8 @@ pub trait RequestHandler {
     fn handle_notification(&self, notification: Notification);
 }
 
-pub trait EventHandler {
-    fn handle_events(&self) -> BoxFuture<'_, ()>;
+pub trait ActionHandler {
+    fn execute_actions(&self) -> BoxFuture<'_, ()>;
 }
 
 pub async fn handle_request<'a, H, F, I, O>(request: Request, handler: H) -> Response

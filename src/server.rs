@@ -1,9 +1,9 @@
+use crate::action::{Action, ActionMananger};
 use crate::client::LspClient;
 use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLinterConfig};
-use crate::event::{Event, EventManager};
 use crate::feature::FeatureRequest;
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex;
@@ -32,11 +32,12 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
+use std::fs;
 
 pub struct LatexLspServer<C> {
     client: Arc<C>,
     workspace_manager: WorkspaceManager,
-    event_manager: EventManager,
+    action_manager: ActionMananger,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<Arc<TexResolver>>,
 }
@@ -47,7 +48,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         LatexLspServer {
             client,
             workspace_manager: WorkspaceManager::default(),
-            event_manager: EventManager::default(),
+            action_manager: ActionMananger::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(Arc::new(TexResolver::default())),
         }
@@ -112,8 +113,10 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
-        self.event_manager.push(Event::Initialized);
-        self.event_manager.push(Event::WorkspaceChanged);
+        self.action_manager.push(Action::RegisterCapabilities);
+        self.action_manager.push(Action::LoadResolver);
+        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -137,17 +140,17 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             let tex_path = PathBuf::from(format!("{}tex", &name[0..name.len() - 3]));
             let tex_uri = Uri::from_file_path(tex_path).unwrap();
             if workspace.find(&tex_uri).is_some() {
-                self.event_manager
-                    .push(Event::LogChanged { tex_uri, log_path });
+                self.action_manager.push(Action::ParseLog {tex_uri, log_path});
             }
         }
-        self.event_manager.push(Event::WorkspaceChanged);
+        self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.workspace_manager.add(params.text_document);
-        self.event_manager.push(Event::WorkspaceChanged);
+        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
@@ -156,14 +159,14 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             let uri = params.text_document.uri.clone();
             self.workspace_manager.update(uri, change.text);
         }
-        self.event_manager.push(Event::WorkspaceChanged);
+        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.event_manager
-            .push(Event::Saved(params.text_document.uri));
-        self.event_manager.push(Event::WorkspaceChanged);
+        self.action_manager.push(Action::RunLinter(params.text_document.uri));
+        self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
@@ -304,27 +307,35 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     }
 }
 
-impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
-    fn handle_events(&self) -> BoxFuture<'_, ()> {
+impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
+    fn execute_actions(&self) -> BoxFuture<'_, ()> {
         let handler = async move {
-            for event in self.event_manager.take() {
-                match event {
-                    Event::Initialized => {
+            for action in self.action_manager.take() {
+                match action {
+                    Action::RegisterCapabilities => {
                         let options = DidChangeWatchedFilesRegistrationOptions {
                             watchers: vec![FileSystemWatcher {
                                 kind: Some(WatchKind::Create | WatchKind::Change),
                                 glob_pattern: Cow::from("**/*.log"),
                             }],
                         };
-                        await!(self.client.register_capability(RegistrationParams {
-                            registrations: vec![Registration {
-                                id: Cow::from("build-log-watcher"),
-                                method: Cow::from("workspace/didChangeWatchedFiles"),
-                                register_options: Some(serde_json::to_value(options).unwrap()),
-                            }]
-                        }))
-                        .unwrap();
 
+                        if let Err(why) =
+                            await!(self.client.register_capability(RegistrationParams {
+                                registrations: vec![Registration {
+                                    id: Cow::from("build-log-watcher"),
+                                    method: Cow::from("workspace/didChangeWatchedFiles"),
+                                    register_options: Some(serde_json::to_value(options).unwrap()),
+                                }]
+                            }))
+                        {
+                            warn!(
+                                "Client does not support dynamic capability registration: {}",
+                                why.message
+                            );
+                        }
+                    }
+                    Action::LoadResolver => {
                         match TexResolver::load() {
                             Ok(res) => {
                                 let mut resolver = await!(self.resolver.lock());
@@ -355,13 +366,15 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                             }
                         };
                     }
-                    Event::WorkspaceChanged => {
+                    Action::ResolveIncludes => {
                         let workspace = self.workspace_manager.get();
                         workspace
                             .unresolved_includes()
                             .iter()
                             .for_each(|path| self.workspace_manager.load(&path));
-
+                    }
+                    Action::PublishDiagnostics => {
+                        let workspace = self.workspace_manager.get();
                         let diagnostics_manager = await!(self.diagnostics_manager.lock());
                         for document in &workspace.documents {
                             await!(self.client.publish_diagnostics(PublishDiagnosticsParams {
@@ -370,15 +383,15 @@ impl<C: LspClient + Send + Sync> jsonrpc::EventHandler for LatexLspServer<C> {
                             }));
                         }
                     }
-                    Event::Saved(uri) => {
+                    Action::RunLinter(uri) => {
                         let config: LatexLinterConfig = await!(self.configuration("latex.lint"));
                         if config.on_save {
                             let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
                             diagnostics_manager.latex.update(&uri);
                         }
                     }
-                    Event::LogChanged { tex_uri, log_path } => {
-                        if let Ok(log) = std::fs::read_to_string(&log_path) {
+                    Action::ParseLog { tex_uri, log_path } => {
+                        if let Ok(log) = fs::read_to_string(&log_path) {
                             let mut diagnostics_manager = await!(self.diagnostics_manager.lock());
                             diagnostics_manager.build.update(&tex_uri, &log);
                         }

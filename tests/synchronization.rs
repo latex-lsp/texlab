@@ -4,7 +4,7 @@ mod common;
 
 use crate::common::Scenario;
 use futures::executor::block_on;
-use jsonrpc::server::EventHandler;
+use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 
 async fn run_completion(
@@ -39,7 +39,7 @@ fn test_did_change() {
             }],
         };
         scenario.server.did_change(params);
-        await!(scenario.server.handle_events());
+        await!(scenario.server.execute_actions());
         assert_eq!(
             await!(run_completion(&scenario, "foo.tex", Position::new(0, 1))).len() > 0,
             true
@@ -66,7 +66,7 @@ fn test_indexing() {
             }],
         };
         scenario.server.did_change(params);
-        await!(scenario.server.handle_events());
+        await!(scenario.server.execute_actions());
         let items = await!(run_completion(&scenario, "foo.tex", Position::new(0, 1)));
         assert_eq!(items.iter().any(|item| item.label == "foo"), true);
     });

@@ -5,7 +5,7 @@ use futures::future::BoxFuture;
 use futures::lock::Mutex;
 use futures::prelude::*;
 use jsonrpc::client::FutureResult;
-use jsonrpc::server::EventHandler;
+use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use std::borrow::Cow;
 use std::fs::remove_dir;
@@ -100,9 +100,9 @@ impl Scenario {
             workspace_folders: None,
         };
         await!(server.initialize(init_params)).unwrap();
-        await!(server.handle_events());
+        await!(server.execute_actions());
         server.initialized(InitializedParams {});
-        await!(server.handle_events());
+        await!(server.execute_actions());
 
         Scenario {
             server,
