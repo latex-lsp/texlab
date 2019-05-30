@@ -27,13 +27,6 @@ pub struct LspClientMock {
     pub options: Mutex<LspClientMockOptions>,
 }
 
-impl LspClientMock {
-    pub async fn set_bibtex_formatting(&self, bibtex_formatting: BibtexFormattingOptions) {
-        let mut options = await!(self.options.lock());
-        options.bibtex_formatting = Some(bibtex_formatting);
-    }
-}
-
 impl LspClient for LspClientMock {
     fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value> {
         let handler = async move {

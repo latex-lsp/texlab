@@ -16,9 +16,8 @@ pub async fn run(
     let scenario = format!("formatting/{}", scenario);
     let scenario = await!(Scenario::new(&scenario));
     await!(scenario.open(file));
-    if let Some(options) = options {
-        await!(scenario.client.set_bibtex_formatting(options));
-    }
+    await!(scenario.client.options.lock()).bibtex_formatting = options;
+
     let params = DocumentFormattingParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),
         options: FormattingOptions {
