@@ -25,7 +25,7 @@ pub struct Client<O> {
 
 impl<O> Client<O>
 where
-    O: Sink<String> + Unpin + Send,
+    O: Output,
 {
     pub fn new(output: Arc<Mutex<O>>) -> Self {
         Client {
@@ -61,13 +61,13 @@ where
     async fn send(&self, message: Message) {
         let json = serde_json::to_string(&message).unwrap();
         let mut output = await!(self.output.lock());
-        await!(output.send(json));
+        await!(output.send(json)).unwrap();
     }
 }
 
 impl<O> ResponseHandler for Client<O>
 where
-    O: Sink<String> + Unpin + Send,
+    O: Output,
 {
     fn handle(&self, response: Response) -> BoxFuture<'_, ()> {
         let task = async move {

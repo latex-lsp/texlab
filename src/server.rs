@@ -29,10 +29,10 @@ use log::*;
 use lsp_types::*;
 use serde::de::DeserializeOwned;
 use std::borrow::Cow;
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
-use std::fs;
 
 pub struct LatexLspServer<C> {
     client: Arc<C>,
@@ -140,7 +140,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             let tex_path = PathBuf::from(format!("{}tex", &name[0..name.len() - 3]));
             let tex_uri = Uri::from_file_path(tex_path).unwrap();
             if workspace.find(&tex_uri).is_some() {
-                self.action_manager.push(Action::ParseLog {tex_uri, log_path});
+                self.action_manager
+                    .push(Action::ParseLog { tex_uri, log_path });
             }
         }
         self.action_manager.push(Action::PublishDiagnostics);
@@ -165,7 +166,8 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.action_manager.push(Action::RunLinter(params.text_document.uri));
+        self.action_manager
+            .push(Action::RunLinter(params.text_document.uri));
         self.action_manager.push(Action::PublishDiagnostics);
     }
 

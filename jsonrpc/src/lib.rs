@@ -1,4 +1,4 @@
-#![feature(await_macro, async_await)]
+#![feature(await_macro, async_await, trait_alias)]
 
 pub mod client;
 pub mod server;
@@ -25,11 +25,11 @@ pub struct MessageHandler<S, C, I, O> {
 }
 
 impl<S, C, I, O> MessageHandler<S, C, I, O>
-    where
-        S: RequestHandler + ActionHandler + Send + Sync + 'static,
-        C: ResponseHandler + Send + Sync + 'static,
-        I: Stream<Item = std::io::Result<String>> + Unpin,
-        O: Sink<String> + Unpin + Send + 'static,
+where
+    S: RequestHandler + ActionHandler + Send + Sync + 'static,
+    C: ResponseHandler + Send + Sync + 'static,
+    I: Input,
+    O: Output + 'static,
 {
     pub async fn listen(&mut self) {
         while let Some(json) = await!(self.input.next()) {
@@ -47,7 +47,7 @@ impl<S, C, I, O> MessageHandler<S, C, I, O>
                         let response = await!(server.handle_request(request));
                         let json = serde_json::to_string(&response).unwrap();
                         let mut output = await!(output.lock());
-                        await!(output.send(json));
+                        await!(output.send(json)).unwrap();
                         await!(server.execute_actions());
                     };
 
@@ -70,7 +70,7 @@ impl<S, C, I, O> MessageHandler<S, C, I, O>
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
                     let mut output = await!(self.output.lock());
-                    await!(output.send(json));
+                    await!(output.send(json)).unwrap();
                 }
             }
         }

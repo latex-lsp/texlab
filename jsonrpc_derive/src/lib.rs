@@ -122,7 +122,7 @@ pub fn jsonrpc_client(
 
         impl<O> #struct_ident<O>
         where
-            O: futures::Sink<String> + Unpin + Send,
+            O: jsonrpc::Output,
         {
             pub fn new(output: std::sync::Arc<futures::lock::Mutex<O>>) -> Self {
                 Self {
@@ -133,14 +133,14 @@ pub fn jsonrpc_client(
 
         impl<O> #trait_ident for #struct_ident<O>
         where
-            O: futures::Sink<String> + Unpin + Send,
+            O: jsonrpc::Output,
         {
             #(#stubs)*
         }
 
         impl<O> jsonrpc::ResponseHandler for #struct_ident<O>
         where
-            O: futures::Sink<String> + Unpin + Send,
+            O: jsonrpc::Output,
         {
             fn handle(&self, response: jsonrpc::Response) -> futures::future::BoxFuture<'_, ()> {
                 self.client.handle(response)

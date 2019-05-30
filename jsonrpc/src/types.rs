@@ -1,5 +1,11 @@
+use futures::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
+use std::io;
+
+pub trait Input = Stream<Item = io::Result<String>> + Unpin;
+
+pub trait Output = Sink<String, SinkError = io::Error> + Unpin + Send;
 
 pub const PROTOCOL_VERSION: &str = "2.0";
 

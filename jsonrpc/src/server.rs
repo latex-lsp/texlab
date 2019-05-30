@@ -41,10 +41,9 @@ where
     H: Fn(I) -> () + Send + Sync + 'a,
     I: DeserializeOwned + Send,
 {
-    match serde_json::from_value(notification.params) {
-        Ok(params) => handler(params),
-        Err(_) => panic!(Error::deserialize_error().message),
-    }
+    let params =
+        serde_json::from_value(notification.params).expect(&Error::deserialize_error().message);
+    handler(params);
 }
 
 #[cfg(test)]
