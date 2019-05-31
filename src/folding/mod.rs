@@ -2,22 +2,39 @@ mod bibtex_declaration;
 mod latex_environment;
 mod latex_section;
 
-use crate::concat_feature;
-use crate::feature::FeatureRequest;
-use crate::folding::bibtex_declaration::BibtexDeclarationFoldingProvider;
-use crate::folding::latex_environment::LatexEnvironmentFoldingProvider;
-use crate::folding::latex_section::LatexSectionFoldingProvider;
+use self::bibtex_declaration::BibtexDeclarationFoldingProvider;
+use self::latex_environment::LatexEnvironmentFoldingProvider;
+use self::latex_section::LatexSectionFoldingProvider;
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeParams};
 
-pub struct FoldingProvider;
+pub struct FoldingProvider {
+    provider: ConcatProvider<FoldingRangeParams, FoldingRange>,
+}
 
 impl FoldingProvider {
-    pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
-        concat_feature!(
-            &request,
-            BibtexDeclarationFoldingProvider,
-            LatexEnvironmentFoldingProvider,
-            LatexSectionFoldingProvider
-        )
+    pub fn new() -> Self {
+        FoldingProvider {
+            provider: ConcatProvider::new(vec![
+                Box::new(BibtexDeclarationFoldingProvider),
+                Box::new(LatexEnvironmentFoldingProvider),
+                Box::new(LatexSectionFoldingProvider),
+            ]),
+        }
+    }
+}
+
+impl FeatureProvider for FoldingProvider {
+    type Params = FoldingRangeParams;
+    type Output = Vec<FoldingRange>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<FoldingRangeParams>,
+    ) -> Vec<FoldingRange> {
+        self.provider.execute(request).await
     }
 }

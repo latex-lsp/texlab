@@ -1,14 +1,24 @@
 use crate::data::bibtex_entry_type;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::*;
 use std::borrow::Cow;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexEntryTypeHoverProvider;
 
-impl BibtexEntryTypeHoverProvider {
-    pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
+impl FeatureProvider for BibtexEntryTypeHoverProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Hover>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Hover> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             for entry in tree.entries() {
                 if entry.ty.range().contains(request.params.position) {
@@ -32,20 +42,19 @@ impl BibtexEntryTypeHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test_known_entry_type() {
-        let hover = test_feature!(
+        let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 3),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             hover,
@@ -61,42 +70,42 @@ mod tests {
 
     #[test]
     fn test_unknown_entry_type() {
-        let hover = test_feature!(
+        let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@foo{bar,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 3),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(hover, None);
     }
 
     #[test]
     fn test_entry_key() {
-        let hover = test_feature!(
+        let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}")],
                 main_file: "foo.bib",
                 position: Position::new(0, 11),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(hover, None);
     }
 
     #[test]
     fn test_latex() {
-        let hover = test_feature!(
+        let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\foo")],
                 main_file: "foo.tex",
                 position: Position::new(0, 3),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(hover, None);
     }

@@ -3,6 +3,8 @@ use crate::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
+use futures::prelude::*;
+use futures_boxed::boxed;
 #[cfg(test)]
 use lsp_types::*;
 #[cfg(test)]
@@ -10,8 +12,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct FeatureRequest<T> {
-    pub params: T,
+pub struct FeatureRequest<P> {
+    pub params: P,
     pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
@@ -19,16 +21,16 @@ pub struct FeatureRequest<T> {
     pub component_database: Arc<LatexComponentDatabase>,
 }
 
-impl<T> FeatureRequest<T> {
+impl<P> FeatureRequest<P> {
     pub fn new(
-        params: T,
+        params: P,
         workspace: Arc<Workspace>,
         document: Arc<Document>,
         resolver: Arc<TexResolver>,
         component_database: Arc<LatexComponentDatabase>,
     ) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
-        FeatureRequest {
+        Self {
             params,
             workspace,
             document,
@@ -39,34 +41,80 @@ impl<T> FeatureRequest<T> {
     }
 }
 
-#[macro_export]
-macro_rules! concat_feature {
-    ($request:expr, $($provider:tt), *) => {{
-        let mut items = Vec::new();
-        $(
-            items.append(&mut $provider::execute($request).await);
-        )*
-        items
-    }};
+pub trait FeatureProvider {
+    type Params;
+    type Output;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output;
 }
 
-#[macro_export]
-macro_rules! choice_feature {
-    ($request:expr, $provider:tt) => {
-        $provider::execute($request).await
-    };
-    ($request:expr, $provider:tt, $($providers:tt),+) => {{
-        let value = $provider::execute($request).await;
-        if value.is_some() {
-            value
-        } else {
-            choice_feature!($request, $($providers),+)
+type ListProvider<P, O> = Box<FeatureProvider<Params = P, Output = Vec<O>> + Send + Sync>;
+
+#[derive(Default)]
+pub struct ConcatProvider<P, O> {
+    providers: Vec<ListProvider<P, O>>,
+}
+
+impl<P, O> ConcatProvider<P, O> {
+    pub fn new(providers: Vec<ListProvider<P, O>>) -> Self {
+        Self { providers }
+    }
+}
+
+impl<P, O> FeatureProvider for ConcatProvider<P, O>
+where
+    P: Send + Sync,
+    O: Send + Sync,
+{
+    type Params = P;
+    type Output = Vec<O>;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<P>) -> Vec<O> {
+        let mut items = Vec::new();
+        for provider in &self.providers {
+            items.append(&mut provider.execute(request).await);
         }
-    }};
+        items
+    }
+}
+
+type OptionProvider<P, O> = Box<FeatureProvider<Params = P, Output = Option<O>> + Send + Sync>;
+
+#[derive(Default)]
+pub struct ChoiceProvider<P, O> {
+    providers: Vec<OptionProvider<P, O>>,
+}
+
+impl<P, O> ChoiceProvider<P, O> {
+    pub fn new(providers: Vec<OptionProvider<P, O>>) -> Self {
+        Self { providers }
+    }
+}
+
+impl<P, O> FeatureProvider for ChoiceProvider<P, O>
+where
+    P: Send + Sync,
+    O: Send + Sync,
+{
+    type Params = P;
+    type Output = Option<O>;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<P>) -> Option<O> {
+        for provider in &self.providers {
+            let item = provider.execute(request).await;
+            if item.is_some() {
+                return item;
+            }
+        }
+        None
+    }
 }
 
 #[cfg(test)]
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeatureSpecFile {
     name: &'static str,
     text: &'static str,
@@ -220,9 +268,10 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
 }
 
 #[cfg(test)]
-#[macro_export]
-macro_rules! test_feature {
-    ($provider:tt, $spec: expr) => {{
-        futures::executor::block_on($provider::execute(&$spec.into()))
-    }};
+pub fn test_feature<F, P, O, S>(provider: F, spec: S) -> O
+where
+    F: FeatureProvider<Params = P, Output = O>,
+    S: Into<FeatureRequest<P>>,
+{
+    futures::executor::block_on(provider.execute(&spec.into()))
 }

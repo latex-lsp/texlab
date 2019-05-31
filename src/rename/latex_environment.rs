@@ -1,14 +1,24 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexEnvironmentRenameProvider;
 
-impl LatexEnvironmentRenameProvider {
-    pub async fn execute(request: &FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
+impl FeatureProvider for LatexEnvironmentRenameProvider {
+    type Params = RenameParams;
+    type Output = Option<WorkspaceEdit>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<RenameParams>,
+    ) -> Option<WorkspaceEdit> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             for environment in &tree.environments {
                 if let Some(left_name) = environment.left.name() {
@@ -41,13 +51,12 @@ impl LatexEnvironmentRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]
     fn test_environment() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexEnvironmentRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{bar}")],
@@ -55,7 +64,7 @@ mod tests {
                 position: Position::new(0, 8),
                 new_name: "baz",
                 ..FeatureSpec::default()
-            }
+            },
         );
         let mut changes = HashMap::new();
         changes.insert(
@@ -70,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_command() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexEnvironmentRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{bar}")],
@@ -78,14 +87,14 @@ mod tests {
                 position: Position::new(0, 5),
                 new_name: "baz",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(edit, None);
     }
 
     #[test]
     fn test_bibtex() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexEnvironmentRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "")],
@@ -93,7 +102,7 @@ mod tests {
                 position: Position::new(0, 0),
                 new_name: "baz",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(edit, None);
     }

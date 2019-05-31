@@ -1,16 +1,26 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
 use crate::syntax::bibtex::BibtexEntry;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
 use std::borrow::Cow;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;
 
-impl LatexCitationHoverProvider {
-    pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
+impl FeatureProvider for LatexCitationHoverProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Hover>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Hover> {
         let entry = Self::get_entry(request)?;
         if entry.is_comment() {
             None
@@ -30,7 +40,9 @@ impl LatexCitationHoverProvider {
             })
         }
     }
+}
 
+impl LatexCitationHoverProvider {
     fn get_entry(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&BibtexEntry> {
         let key = Self::get_key(request)?;
         for document in &request.related_documents {

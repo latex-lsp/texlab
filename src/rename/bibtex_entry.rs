@@ -1,16 +1,26 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::LatexSyntaxTree;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexEntryRenameProvider;
 
-impl BibtexEntryRenameProvider {
-    pub async fn execute(request: &FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
+impl FeatureProvider for BibtexEntryRenameProvider {
+    type Params = RenameParams;
+    type Output = Option<WorkspaceEdit>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<RenameParams>,
+    ) -> Option<WorkspaceEdit> {
         let key_name = match &request.document.tree {
             SyntaxTree::Latex(tree) => Self::find_citation(&tree, request.params.position),
             SyntaxTree::Bibtex(tree) => Self::find_entry(&tree, request.params.position),
@@ -49,7 +59,9 @@ impl BibtexEntryRenameProvider {
         }
         Some(WorkspaceEdit::new(changes))
     }
+}
 
+impl BibtexEntryRenameProvider {
     fn find_citation(tree: &LatexSyntaxTree, position: Position) -> Option<&str> {
         for citation in &tree.citations {
             let key = citation.key();
@@ -75,13 +87,12 @@ impl BibtexEntryRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test_entry() {
-        let edit = test_feature!(
+        let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {
                 files: vec![
@@ -92,7 +103,7 @@ mod tests {
                 position: Position::new(0, 9),
                 new_name: "qux",
                 ..FeatureSpec::default()
-            }
+            },
         );
         let mut changes = HashMap::new();
         changes.insert(
@@ -114,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_citation() {
-        let edit = test_feature!(
+        let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {
                 files: vec![
@@ -125,7 +136,7 @@ mod tests {
                 position: Position::new(1, 6),
                 new_name: "qux",
                 ..FeatureSpec::default()
-            }
+            },
         );
         let mut changes = HashMap::new();
         changes.insert(
@@ -147,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_field_name() {
-        let edit = test_feature!(
+        let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
@@ -155,7 +166,7 @@ mod tests {
                 position: Position::new(0, 14),
                 new_name: "qux",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(edit, None);
     }

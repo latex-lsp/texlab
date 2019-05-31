@@ -1,27 +1,49 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::ffi::OsStr;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexClassImportProvider;
 
 impl LatexClassImportProvider {
     const COMMANDS: &'static [&'static str] = &["\\documentclass"];
+}
 
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
+impl FeatureProvider for LatexClassImportProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
         import(request, Self::COMMANDS, "cls", factory::create_class).await
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexPackageImportProvider;
 
 impl LatexPackageImportProvider {
     const COMMANDS: &'static [&'static str] = &["\\usepackage"];
+}
 
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        import(request, Self::COMMANDS, "sty", factory::create_package).await
+impl FeatureProvider for LatexPackageImportProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
+        import(request, Self::COMMANDS, "sty", factory::create_class).await
     }
 }
 
@@ -49,9 +71,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
+    use crate::feature::{test_feature, FeatureSpec};
     use crate::resolver::TexResolver;
-    use crate::test_feature;
     use lsp_types::Position;
     use std::collections::HashMap;
     use std::ffi::OsString;
@@ -66,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_class() {
-        let items = test_feature!(
+        let items = test_feature(
             LatexClassImportProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\documentclass{}")],
@@ -74,7 +95,7 @@ mod tests {
                 position: Position::new(0, 15),
                 resolver: create_resolver(),
                 ..FeatureSpec::default()
-            }
+            },
         );
 
         assert_eq!(items.len(), 1);
@@ -83,7 +104,7 @@ mod tests {
 
     #[test]
     fn test_package() {
-        let items = test_feature!(
+        let items = test_feature(
             LatexPackageImportProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\usepackage{}")],
@@ -91,7 +112,7 @@ mod tests {
                 position: Position::new(0, 12),
                 resolver: create_resolver(),
                 ..FeatureSpec::default()
-            }
+            },
         );
 
         assert_eq!(items.len(), 1);

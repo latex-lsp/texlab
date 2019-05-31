@@ -1,20 +1,32 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexDeclarationFoldingProvider;
 
-impl BibtexDeclarationFoldingProvider {
-    pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
+impl FeatureProvider for BibtexDeclarationFoldingProvider {
+    type Params = FoldingRangeParams;
+    type Output = Vec<FoldingRange>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<FoldingRangeParams>,
+    ) -> Vec<FoldingRange> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             tree.root.children.iter().flat_map(Self::fold).collect()
         } else {
             Vec::new()
         }
     }
+}
 
+impl BibtexDeclarationFoldingProvider {
     fn fold(declaration: &BibtexDeclaration) -> Option<FoldingRange> {
         let ty = match declaration {
             BibtexDeclaration::Comment(_) => None,
@@ -43,18 +55,17 @@ impl BibtexDeclarationFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
 
     #[test]
     fn test_preamble() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "\n@preamble{\"foo\"}")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             foldings,
@@ -70,13 +81,13 @@ mod tests {
 
     #[test]
     fn test_string() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@string{foo = \"bar\"}")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             foldings,
@@ -92,13 +103,13 @@ mod tests {
 
     #[test]
     fn test_entry() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz\n}")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             foldings,
@@ -114,39 +125,39 @@ mod tests {
 
     #[test]
     fn test_comment() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "foo")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(foldings, Vec::new());
     }
 
     #[test]
     fn test_entry_invalid() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(foldings, Vec::new());
     }
 
     #[test]
     fn test_latex() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
-                files: vec![FeatureSpec::file("foo.tex", ""),],
+                files: vec![FeatureSpec::file("foo.tex", "")],
                 main_file: "foo.tex",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(foldings, Vec::new());
     }

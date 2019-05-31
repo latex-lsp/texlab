@@ -1,13 +1,23 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexColorCompletionProvider;
 
-impl LatexColorCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
+impl FeatureProvider for LatexColorCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
         LatexCombinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
             COLOR_NAMES
                 .iter()
@@ -120,34 +130,33 @@ const COLOR_NAMES: &[&str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test_inside_color() {
-        let items = test_feature!(
+        let items = test_feature(
             LatexColorCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 7),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(true, items.iter().any(|item| item.label == "black"));
     }
 
     #[test]
     fn test_outside_color() {
-        let items = test_feature!(
+        let items = test_feature(
             LatexColorCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 8),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(items, Vec::new());
     }

@@ -1,26 +1,42 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 
-pub struct LatexTikzLibraryCompletionProvider;
+pub struct LatexTikzLibraryCompletionProvider {
+    items: Vec<CompletionItem>,
+}
 
 impl LatexTikzLibraryCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        LatexCombinators::argument(request, &COMMANDS, 0, async move |_| {
-            LIBRARIES
-                .iter()
-                .map(|name| factory::create_tikz_library(Cow::from(*name)))
-                .collect()
-        })
-        .await
+    pub fn new() -> Self {
+        let items = LIBRARIES
+            .iter()
+            .map(|name| Cow::from(*name))
+            .map(factory::create_tikz_library)
+            .collect();
+        Self { items }
+    }
+}
+
+impl FeatureProvider for LatexTikzLibraryCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
+        LatexCombinators::argument(request, &COMMANDS, 0, async move |_| self.items.clone()).await
     }
 }
 
 const COMMANDS: &[&str] = &["\\usetikzlibrary"];
 
-static LIBRARIES: &[&str] = &[
+const LIBRARIES: &[&str] = &[
     "3d",
     "angles",
     "arrows",
@@ -96,20 +112,19 @@ static LIBRARIES: &[&str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test() {
-        let items = test_feature!(
-            LatexTikzLibraryCompletionProvider,
+        let items = test_feature(
+            LatexTikzLibraryCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\usetikzlibrary{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 16),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(items.iter().any(|item| item.label == "arrows"), true);
     }

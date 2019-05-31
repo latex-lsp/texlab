@@ -1,14 +1,24 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationDefinitionProvider;
 
-impl LatexCitationDefinitionProvider {
-    pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Vec<Location> {
+impl FeatureProvider for LatexCitationDefinitionProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Vec<Location>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Vec<Location> {
         if let Some(reference) = Self::find_reference(&request) {
             for document in &request.related_documents {
                 if let Some(definition) = Self::find_definition(&document, &reference) {
@@ -18,7 +28,9 @@ impl LatexCitationDefinitionProvider {
         }
         Vec::new()
     }
+}
 
+impl LatexCitationDefinitionProvider {
     fn find_definition(document: &Document, reference: &str) -> Option<Location> {
         if let SyntaxTree::Bibtex(tree) = &document.tree {
             for entry in tree.entries() {
@@ -48,13 +60,12 @@ impl LatexCitationDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]
     fn test_has_definition() {
-        let locations = test_feature!(
+        let locations = test_feature(
             LatexCitationDefinitionProvider,
             FeatureSpec {
                 files: vec![
@@ -65,7 +76,7 @@ mod tests {
                 main_file: "foo.tex",
                 position: Position::new(1, 6),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             locations,
@@ -78,28 +89,28 @@ mod tests {
 
     #[test]
     fn test_no_definition_latex() {
-        let locations = test_feature!(
+        let locations = test_feature(
             LatexCitationDefinitionProvider,
             FeatureSpec {
-                files: vec![FeatureSpec::file("foo.tex", ""),],
+                files: vec![FeatureSpec::file("foo.tex", "")],
                 main_file: "foo.tex",
                 position: Position::new(0, 0),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(locations, Vec::new());
     }
 
     #[test]
     fn test_no_definition_bibtex() {
-        let locations = test_feature!(
+        let locations = test_feature(
             LatexCitationDefinitionProvider,
             FeatureSpec {
-                files: vec![FeatureSpec::file("foo.bib", ""),],
+                files: vec![FeatureSpec::file("foo.bib", "")],
                 main_file: "foo.bib",
                 position: Position::new(0, 0),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(locations, Vec::new());
     }

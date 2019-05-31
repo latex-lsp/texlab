@@ -1,20 +1,36 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 
-pub struct LatexPgfLibraryCompletionProvider;
+pub struct LatexPgfLibraryCompletionProvider {
+    items: Vec<CompletionItem>,
+}
 
 impl LatexPgfLibraryCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        LatexCombinators::argument(request, &COMMANDS, 0, async move |_| {
-            LIBRARIES
-                .iter()
-                .map(|name| factory::create_pgf_library(Cow::from(*name)))
-                .collect()
-        })
-        .await
+    pub fn new() -> Self {
+        let items = LIBRARIES
+            .iter()
+            .map(|name| Cow::from(*name))
+            .map(factory::create_pgf_library)
+            .collect();
+        Self { items }
+    }
+}
+
+impl FeatureProvider for LatexPgfLibraryCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
+        LatexCombinators::argument(request, &COMMANDS, 0, async move |_| self.items.clone()).await
     }
 }
 
@@ -66,20 +82,19 @@ static LIBRARIES: &[&str] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test() {
-        let items = test_feature!(
-            LatexPgfLibraryCompletionProvider,
+        let items = test_feature(
+            LatexPgfLibraryCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\usepgflibrary{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(items.iter().any(|item| item.label == "arrows"), true);
     }

@@ -1,7 +1,9 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexCommand;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -9,7 +11,7 @@ use walkdir::WalkDir;
 
 const NO_EXTENSION_COMMANDS: &[&str] = &["\\include", "\\includesvg"];
 
-const COMMAND_NAMES: &[&str] = &[
+const ALL_COMMANDS: &[&str] = &[
     "\\include",
     "\\input",
     "\\bibliography",
@@ -18,12 +20,20 @@ const COMMAND_NAMES: &[&str] = &[
     "\\includesvg",
 ];
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexIncludeCompletionProvider;
 
-impl LatexIncludeCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        LatexCombinators::argument(request, COMMAND_NAMES, 0, async move |command| {
-            if request.document.uri.scheme() != "file" {
+impl FeatureProvider for LatexIncludeCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
+        LatexCombinators::argument(request, ALL_COMMANDS, 0, async move |command| {
+            if !request.document.is_file() {
                 return Vec::new();
             }
 

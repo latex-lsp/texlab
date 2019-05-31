@@ -1,14 +1,32 @@
 mod latex_include;
 
-use crate::concat_feature;
-use crate::feature::FeatureRequest;
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use crate::link::latex_include::LatexIncludeLinkProvider;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{DocumentLink, DocumentLinkParams};
 
-pub struct LinkProvider;
+pub struct LinkProvider {
+    provider: ConcatProvider<DocumentLinkParams, DocumentLink>,
+}
 
 impl LinkProvider {
-    pub async fn execute(request: &FeatureRequest<DocumentLinkParams>) -> Vec<DocumentLink> {
-        concat_feature!(&request, LatexIncludeLinkProvider)
+    pub fn new() -> Self {
+        Self {
+            provider: ConcatProvider::new(vec![Box::new(LatexIncludeLinkProvider)]),
+        }
+    }
+}
+
+impl FeatureProvider for LinkProvider {
+    type Params = DocumentLinkParams;
+    type Output = Vec<DocumentLink>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<DocumentLinkParams>,
+    ) -> Vec<DocumentLink> {
+        self.provider.execute(request).await
     }
 }

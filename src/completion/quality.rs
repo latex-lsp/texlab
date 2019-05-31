@@ -1,29 +1,44 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::*;
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 use std::borrow::Cow;
 
-pub struct OrderByQualityCompletionProvider;
+pub struct OrderByQualityCompletionProvider<F> {
+    pub provider: F,
+}
 
-impl OrderByQualityCompletionProvider {
-    pub async fn execute<'a, E, F>(
+impl<F> OrderByQualityCompletionProvider<F> {
+    pub fn new(provider: F) -> Self {
+        Self { provider }
+    }
+}
+
+impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
+where
+    F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
+{
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
         request: &'a FeatureRequest<CompletionParams>,
-        execute: E,
-    ) -> Vec<CompletionItem>
-    where
-        E: Fn(&'a FeatureRequest<CompletionParams>) -> F,
-        F: std::future::Future<Output = Vec<CompletionItem>>,
-    {
+    ) -> Vec<CompletionItem> {
         let query = Self::get_query(&request.document, request.params.position);
-        let mut items = execute(&request).await;
+        let mut items = self.provider.execute(&request).await;
         items.sort_by_key(|item| -Self::get_quality(&query, &item.label));
         items
     }
+}
 
+impl<F> OrderByQualityCompletionProvider<F> {
     fn get_query(document: &Document, position: Position) -> Option<Cow<str>> {
         match &document.tree {
             SyntaxTree::Latex(tree) => {

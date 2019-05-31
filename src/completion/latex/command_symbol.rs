@@ -2,14 +2,24 @@ use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::data::symbols::DATABASE;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCommandSymbolCompletionProvider;
 
-impl LatexCommandSymbolCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
+impl FeatureProvider for LatexCommandSymbolCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
         LatexCombinators::command(&request, async move |_| {
             let mut items = Vec::new();
             let components = request

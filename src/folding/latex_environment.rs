@@ -1,12 +1,22 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexEnvironmentFoldingProvider;
 
-impl LatexEnvironmentFoldingProvider {
-    pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
+impl FeatureProvider for LatexEnvironmentFoldingProvider {
+    type Params = FoldingRangeParams;
+    type Output = Vec<FoldingRange>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<FoldingRangeParams>,
+    ) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             for environment in &tree.environments {
@@ -28,18 +38,17 @@ impl LatexEnvironmentFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
 
     #[test]
     fn test_multiline() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             LatexEnvironmentFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}\n\\end{foo}")],
                 main_file: "foo.tex",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             foldings,
@@ -55,13 +64,13 @@ mod tests {
 
     #[test]
     fn test_bibtex() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             LatexEnvironmentFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(foldings, Vec::new());
     }

@@ -1,42 +1,60 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 
-pub struct LatexColorModelCompletionProvider;
+#[derive(Debug, PartialEq, Clone)]
+pub struct LatexColorModelCompletionProvider {
+    items: Vec<CompletionItem>,
+}
 
 impl LatexColorModelCompletionProvider {
-    pub async fn execute(request: &FeatureRequest<CompletionParams>) -> Vec<CompletionItem> {
-        let mut items = Vec::new();
-        items.append(&mut Self::execute_define_color(&request).await);
-        items.append(&mut Self::execute_define_color_set(&request).await);
-        items
+    pub fn new() -> Self {
+        let items = MODEL_NAMES
+            .iter()
+            .map(|name| Cow::from(*name))
+            .map(factory::create_color_model)
+            .collect();
+        Self { items }
     }
 
-    async fn execute_define_color(
-        request: &FeatureRequest<CompletionParams>,
+    async fn execute_define_color<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
     ) -> Vec<CompletionItem> {
         LatexCombinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
-            Self::generate_items()
+            self.items.clone()
         })
         .await
     }
 
-    async fn execute_define_color_set(
-        request: &FeatureRequest<CompletionParams>,
+    async fn execute_define_color_set<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
     ) -> Vec<CompletionItem> {
         LatexCombinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
-            Self::generate_items()
+            self.items.clone()
         })
         .await
     }
+}
 
-    fn generate_items() -> Vec<CompletionItem> {
-        MODEL_NAMES
-            .iter()
-            .map(|name| factory::create_color_model(Cow::from(*name)))
-            .collect()
+impl FeatureProvider for LatexColorModelCompletionProvider {
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<CompletionParams>,
+    ) -> Vec<CompletionItem> {
+        let mut items = Vec::new();
+        items.append(&mut self.execute_define_color(&request).await);
+        items.append(&mut self.execute_define_color_set(&request).await);
+        items
     }
 }
 
@@ -47,49 +65,48 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]
     fn test_inside_define_color() {
-        let items = test_feature!(
-            LatexColorModelCompletionProvider,
+        let items = test_feature(
+            LatexColorModelCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 19),
                 ..FeatureSpec::default()
-            }
+            },
         );
-        assert_eq!(items, LatexColorModelCompletionProvider::generate_items());
+        assert_eq!(items.len() > 0, true);
     }
 
     #[test]
     fn test_outside_define_color() {
-        let items = test_feature!(
-            LatexColorModelCompletionProvider,
+        let items = test_feature(
+            LatexColorModelCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 18),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(items, Vec::new());
     }
 
     #[test]
     fn tet_inside_define_color_set() {
-        let items = test_feature!(
-            LatexColorModelCompletionProvider,
+        let items = test_feature(
+            LatexColorModelCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolorset{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 16),
                 ..FeatureSpec::default()
-            }
+            },
         );
-        assert_eq!(items, LatexColorModelCompletionProvider::generate_items());
+        assert_eq!(items.len() > 0, true);
     }
 }

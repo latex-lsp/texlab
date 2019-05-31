@@ -1,12 +1,22 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSectionFoldingProvider;
 
-impl LatexSectionFoldingProvider {
-    pub async fn execute(request: &FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
+impl FeatureProvider for LatexSectionFoldingProvider {
+    type Params = FoldingRangeParams;
+    type Output = Vec<FoldingRange>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<FoldingRangeParams>,
+    ) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             let sections = &tree.sections;
@@ -41,12 +51,11 @@ impl LatexSectionFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
 
     #[test]
     fn test_nesting() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             LatexSectionFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\section{Foo}\nfoo\n\\subsection{Bar}\nbar\n\\section{Baz}\nbaz\n\\section{Qux}")],
@@ -84,13 +93,13 @@ mod tests {
 
     #[test]
     fn test_bibtex() {
-        let foldings = test_feature!(
+        let foldings = test_feature(
             LatexSectionFoldingProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
                 main_file: "foo.bib",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(foldings, Vec::new());
     }

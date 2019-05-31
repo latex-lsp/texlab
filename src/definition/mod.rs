@@ -1,20 +1,37 @@
 mod latex_citation;
 mod latex_label;
 
-use crate::concat_feature;
-use crate::definition::latex_citation::LatexCitationDefinitionProvider;
-use crate::definition::latex_label::LatexLabelDefinitionProvider;
-use crate::feature::FeatureRequest;
+use self::latex_citation::LatexCitationDefinitionProvider;
+use self::latex_label::LatexLabelDefinitionProvider;
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
 
-pub struct DefinitionProvider;
+pub struct DefinitionProvider {
+    provider: ConcatProvider<TextDocumentPositionParams, Location>,
+}
 
 impl DefinitionProvider {
-    pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Vec<Location> {
-        concat_feature!(
-            &request,
-            LatexCitationDefinitionProvider,
-            LatexLabelDefinitionProvider
-        )
+    pub fn new() -> Self {
+        Self {
+            provider: ConcatProvider::new(vec![
+                Box::new(LatexCitationDefinitionProvider),
+                Box::new(LatexLabelDefinitionProvider),
+            ]),
+        }
+    }
+}
+
+impl FeatureProvider for DefinitionProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Vec<Location>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Vec<Location> {
+        self.provider.execute(request).await
     }
 }

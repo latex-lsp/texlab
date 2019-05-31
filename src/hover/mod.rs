@@ -7,20 +7,37 @@ use self::bibtex_entry_type::BibtexEntryTypeHoverProvider;
 use self::bibtex_field::BibtexFieldHoverProvider;
 use self::latex_citation::LatexCitationHoverProvider;
 use self::latex_component::LatexComponentHoverProvider;
-use crate::choice_feature;
-use crate::feature::FeatureRequest;
+use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Hover, TextDocumentPositionParams};
 
-pub struct HoverProvider;
+pub struct HoverProvider {
+    provider: ChoiceProvider<TextDocumentPositionParams, Hover>,
+}
 
 impl HoverProvider {
-    pub async fn execute(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<Hover> {
-        choice_feature!(
-            &request,
-            BibtexEntryTypeHoverProvider,
-            BibtexFieldHoverProvider,
-            LatexCitationHoverProvider,
-            LatexComponentHoverProvider
-        )
+    pub fn new() -> Self {
+        Self {
+            provider: ChoiceProvider::new(vec![
+                Box::new(BibtexEntryTypeHoverProvider),
+                Box::new(BibtexFieldHoverProvider),
+                Box::new(LatexCitationHoverProvider),
+                Box::new(LatexComponentHoverProvider),
+            ]),
+        }
+    }
+}
+
+impl FeatureProvider for HoverProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Hover>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Hover> {
+        self.provider.execute(request).await
     }
 }

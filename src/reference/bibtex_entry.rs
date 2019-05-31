@@ -1,12 +1,19 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexEntryReferenceProvider;
 
-impl BibtexEntryReferenceProvider {
-    pub async fn execute(request: &FeatureRequest<ReferenceParams>) -> Vec<Location> {
+impl FeatureProvider for BibtexEntryReferenceProvider {
+    type Params = ReferenceParams;
+    type Output = Vec<Location>;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
         let mut references = Vec::new();
         if let Some(key) = Self::find_definition(request) {
             for document in &request.related_documents {
@@ -21,7 +28,9 @@ impl BibtexEntryReferenceProvider {
         }
         references
     }
+}
 
+impl BibtexEntryReferenceProvider {
     fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             for entry in tree.entries() {
@@ -39,24 +48,23 @@ impl BibtexEntryReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]
     fn test() {
-        let references = test_feature!(
+        let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
                 files: vec![
                     FeatureSpec::file("foo.bib", "@article{foo, bar = {baz}}"),
                     FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
-                    FeatureSpec::file("baz.tex", "\\cite{foo}")
+                    FeatureSpec::file("baz.tex", "\\cite{foo}"),
                 ],
                 main_file: "foo.bib",
                 position: Position::new(0, 9),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(
             references,
@@ -69,14 +77,14 @@ mod tests {
 
     #[test]
     fn test_latex() {
-        let references = test_feature!(
+        let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
-                files: vec![FeatureSpec::file("foo.tex", ""),],
+                files: vec![FeatureSpec::file("foo.tex", "")],
                 main_file: "foo.tex",
                 position: Position::new(0, 0),
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(references, Vec::new());
     }

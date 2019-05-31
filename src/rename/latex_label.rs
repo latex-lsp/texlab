@@ -1,14 +1,24 @@
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
 use std::borrow::Cow;
 use std::collections::HashMap;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelRenameProvider;
 
-impl LatexLabelRenameProvider {
-    pub async fn execute(request: &FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
+impl FeatureProvider for LatexLabelRenameProvider {
+    type Params = RenameParams;
+    type Output = Option<WorkspaceEdit>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<RenameParams>,
+    ) -> Option<WorkspaceEdit> {
         let name = Self::find_label(&request)?;
         let mut changes = HashMap::new();
         for document in &request.related_documents {
@@ -29,7 +39,9 @@ impl LatexLabelRenameProvider {
         }
         Some(WorkspaceEdit::new(changes))
     }
+}
 
+impl LatexLabelRenameProvider {
     fn find_label(request: &FeatureRequest<RenameParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             tree.labels
@@ -45,13 +57,12 @@ impl LatexLabelRenameProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureSpec;
-    use crate::test_feature;
+    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]
     fn test_label() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {
                 files: vec![
@@ -63,7 +74,7 @@ mod tests {
                 position: Position::new(0, 7),
                 new_name: "bar",
                 ..FeatureSpec::default()
-            }
+            },
         );
         let mut changes = HashMap::new();
         changes.insert(
@@ -85,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_command_args() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
@@ -93,14 +104,14 @@ mod tests {
                 position: Position::new(0, 5),
                 new_name: "baz",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(edit, None);
     }
 
     #[test]
     fn test_bibtex() {
-        let edit = test_feature!(
+        let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "")],
@@ -108,7 +119,7 @@ mod tests {
                 position: Position::new(0, 0),
                 new_name: "baz",
                 ..FeatureSpec::default()
-            }
+            },
         );
         assert_eq!(edit, None);
     }

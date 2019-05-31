@@ -6,7 +6,7 @@ use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLinterConfig};
-use crate::feature::FeatureRequest;
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
@@ -42,6 +42,14 @@ pub struct LatexLspServer<C> {
     action_manager: ActionMananger,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<Arc<TexResolver>>,
+    completion_provider: CompletionProvider,
+    definition_provider: DefinitionProvider,
+    folding_provider: FoldingProvider,
+    highlight_provider: HighlightProvider,
+    hover_provider: HoverProvider,
+    link_provider: LinkProvider,
+    reference_provider: ReferenceProvider,
+    rename_provider: RenameProvider,
 }
 
 #[jsonrpc_server]
@@ -53,6 +61,14 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             action_manager: ActionMananger::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(Arc::new(TexResolver::default())),
+            completion_provider: CompletionProvider::new(),
+            definition_provider: DefinitionProvider::new(),
+            folding_provider: FoldingProvider::new(),
+            highlight_provider: HighlightProvider::new(),
+            hover_provider: HoverProvider::new(),
+            link_provider: LinkProvider::new(),
+            reference_provider: ReferenceProvider::new(),
+            rename_provider: RenameProvider::new(),
         }
     }
 
@@ -179,7 +195,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
-        let items = CompletionProvider::execute(&request).await;
+        let items = self.completion_provider.execute(&request).await;
         let all_includes = items.iter().all(|item| {
             item.kind == Some(CompletionItemKind::Folder)
                 || item.kind == Some(CompletionItemKind::File)
@@ -207,21 +223,21 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
         let request = request!(self, params)?;
-        let hover = HoverProvider::execute(&request).await;
+        let hover = self.hover_provider.execute(&request).await;
         Ok(hover)
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]
     pub async fn definition(&self, params: TextDocumentPositionParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
-        let results = DefinitionProvider::execute(&request).await;
+        let results = self.definition_provider.execute(&request).await;
         Ok(results)
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
         let request = request!(self, params)?;
-        let results = ReferenceProvider::execute(&request).await;
+        let results = self.reference_provider.execute(&request).await;
         Ok(results)
     }
 
@@ -231,7 +247,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
         let request = request!(self, params)?;
-        let results = HighlightProvider::execute(&request).await;
+        let results = self.highlight_provider.execute(&request).await;
         Ok(results)
     }
 
@@ -246,7 +262,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
         let request = request!(self, params)?;
-        let links = LinkProvider::execute(&request).await;
+        let links = self.link_provider.execute(&request).await;
         Ok(links)
     }
 
@@ -281,14 +297,14 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
         let request = request!(self, params)?;
-        let edit = RenameProvider::execute(&request).await;
+        let edit = self.rename_provider.execute(&request).await;
         Ok(edit)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
         let request = request!(self, params)?;
-        let foldings = FoldingProvider::execute(&request).await;
+        let foldings = self.folding_provider.execute(&request).await;
         Ok(foldings)
     }
 

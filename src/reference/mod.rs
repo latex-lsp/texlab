@@ -1,20 +1,34 @@
 mod bibtex_entry;
 mod latex_label;
 
-use crate::concat_feature;
-use crate::feature::FeatureRequest;
-use crate::reference::bibtex_entry::BibtexEntryReferenceProvider;
-use crate::reference::latex_label::LatexLabelReferenceProvider;
+use self::bibtex_entry::BibtexEntryReferenceProvider;
+use self::latex_label::LatexLabelReferenceProvider;
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
+use futures::prelude::*;
+use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
 
-pub struct ReferenceProvider;
+pub struct ReferenceProvider {
+    provider: ConcatProvider<ReferenceParams, Location>,
+}
 
 impl ReferenceProvider {
-    pub async fn execute(request: &FeatureRequest<ReferenceParams>) -> Vec<Location> {
-        concat_feature!(
-            &request,
-            BibtexEntryReferenceProvider,
-            LatexLabelReferenceProvider
-        )
+    pub fn new() -> Self {
+        ReferenceProvider {
+            provider: ConcatProvider::new(vec![
+                Box::new(BibtexEntryReferenceProvider),
+                Box::new(LatexLabelReferenceProvider),
+            ]),
+        }
+    }
+}
+
+impl FeatureProvider for ReferenceProvider {
+    type Params = ReferenceParams;
+    type Output = Vec<Location>;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
+        self.provider.execute(request).await
     }
 }
