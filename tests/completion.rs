@@ -150,6 +150,22 @@ fn test_include_graphics_svg() {
 }
 
 #[test]
+fn test_import_class() {
+    block_on(async move {
+        let items = run("import", "foo.tex", Position::new(0, 18)).await;
+        assert_eq!(items.iter().any(|item| item == "article"), true);
+    });
+}
+
+#[test]
+fn test_import_package() {
+    block_on(async move {
+        let items = run("import", "foo.tex", Position::new(1, 15)).await;
+        assert_eq!(items.iter().any(|item| item == "amsmath"), true);
+    });
+}
+
+#[test]
 fn test_pgf_library() {
     block_on(async move {
         let items = run("pgf_library", "foo.tex", Position::new(0, 18)).await;
