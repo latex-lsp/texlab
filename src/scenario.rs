@@ -75,6 +75,7 @@ impl Scenario {
                 language_id: language_id.to_owned(),
                 text,
             },
-        })
+        });
+        self.server.execute_actions().await;
     }
 }

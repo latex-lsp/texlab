@@ -5,7 +5,7 @@ use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
-use crate::diagnostics::{DiagnosticsManager, LatexLinterConfig};
+use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex;
@@ -419,7 +419,7 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                     }
                 }
                 Action::RunLinter(uri) => {
-                    let config: LatexLinterConfig = self.configuration("latex.lint").await;
+                    let config: LatexLintOptions = self.configuration("latex.lint").await;
                     if config.on_save {
                         let mut diagnostics_manager = self.diagnostics_manager.lock().await;
                         diagnostics_manager.latex.update(&uri);

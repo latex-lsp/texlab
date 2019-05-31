@@ -11,7 +11,7 @@ use std::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct LatexLinterConfig {
+pub struct LatexLintOptions {
     pub on_save: bool,
 }
 
