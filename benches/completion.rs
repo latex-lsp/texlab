@@ -73,13 +73,6 @@ fn criterion_benchmark(criterion: &mut Criterion) {
     });
 
     let scenario = initialize("foo.bib");
-    criterion.bench_function("BibTeX type", move |b| {
-        b.iter(|| {
-            run(&scenario, "foo.bib", Position::new(0, 1), true);
-        });
-    });
-
-    let scenario = initialize("foo.bib");
     criterion.bench_function("BibTeX field", move |b| {
         b.iter(|| {
             run(&scenario, "foo.bib", Position::new(3, 5), true);
