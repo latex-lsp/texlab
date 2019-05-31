@@ -1,7 +1,9 @@
 use crate::action::{Action, ActionMananger};
 use crate::client::LspClient;
+use crate::completion::factory::CompletionItemData;
 use crate::completion::CompletionProvider;
 use crate::data::completion::LatexComponentDatabase;
+use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLinterConfig};
 use crate::feature::FeatureRequest;
@@ -189,7 +191,16 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("completionItem/resolve", kind = "request")]
-    pub async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem> {
+    pub async fn completion_resolve(&self, mut item: CompletionItem) -> Result<CompletionItem> {
+        let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
+        match data {
+            CompletionItemData::Package | CompletionItemData::Class => {
+                item.documentation = ComponentDocumentation::lookup(&item.label)
+                    .await
+                    .map(|documentation| Documentation::MarkupContent(documentation.content));
+            }
+            _ => {}
+        };
         Ok(item)
     }
 

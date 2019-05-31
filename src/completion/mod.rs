@@ -1,5 +1,5 @@
 mod bibtex;
-mod factory;
+pub mod factory;
 mod latex;
 mod quality;
 
