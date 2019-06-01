@@ -11,6 +11,7 @@ pub enum Action {
     PublishDiagnostics,
     RunLinter(Uri),
     ParseLog { tex_uri: Uri, log_path: PathBuf },
+    Build(Uri),
 }
 
 #[derive(Debug, Default)]

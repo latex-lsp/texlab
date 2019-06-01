@@ -3,8 +3,8 @@
 use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
+use texlab::diagnostics::{BibtexErrorCode, LatexLintOptions};
 use texlab::scenario::Scenario;
-use texlab::diagnostics::{LatexLintOptions, BibtexErrorCode};
 
 #[test]
 fn test_lint_latex() {
@@ -52,7 +52,10 @@ fn test_lint_bibtex() {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
         let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.bib")).unwrap();
         assert_eq!(diagnostics.len(), 1);
-        assert_eq!(diagnostics[0].message, BibtexErrorCode::MissingBeginBrace.message());
+        assert_eq!(
+            diagnostics[0].message,
+            BibtexErrorCode::MissingBeginBrace.message()
+        );
         assert_eq!(diagnostics[0].range.start.line, 0);
     });
 }
@@ -61,14 +64,14 @@ fn test_lint_bibtex() {
 fn test_build() {
     block_on(async move {
         let scenario = Scenario::new("diagnostics/build").await;
-        scenario.server.did_change_watched_files(DidChangeWatchedFilesParams {
-            changes: vec![
-                FileEvent {
+        scenario
+            .server
+            .did_change_watched_files(DidChangeWatchedFilesParams {
+                changes: vec![FileEvent {
                     uri: scenario.uri("foo.log"),
-                    typ: FileChangeType::Changed
-                }
-            ]
-        });
+                    typ: FileChangeType::Changed,
+                }],
+            });
         scenario.server.execute_actions().await;
 
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;

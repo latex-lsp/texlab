@@ -1,4 +1,5 @@
 use crate::action::{Action, ActionMananger};
+use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::factory::CompletionItemData;
 use crate::completion::CompletionProvider;
@@ -124,6 +125,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             execute_command_provider: None,
             workspace: None,
+            selection_range_provider: None,
         };
 
         Ok(InitializeResult { capabilities })
@@ -185,8 +187,10 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {
         self.action_manager
-            .push(Action::RunLinter(params.text_document.uri));
+            .push(Action::RunLinter(params.text_document.uri.clone()));
         self.action_manager.push(Action::PublishDiagnostics);
+        self.action_manager
+            .push(Action::Build(params.text_document.uri));
     }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
@@ -306,6 +310,15 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
         let request = request!(self, params)?;
         let foldings = self.folding_provider.execute(&request).await;
         Ok(foldings)
+    }
+
+    #[jsonrpc_method("textDocument/build", kind = "request")]
+    pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
+        let request = request!(self, params)?;
+        let options = self.configuration::<BuildOptions>("latex.build").await;
+        let provider = BuildProvider::new(Arc::clone(&self.client), options);
+        let result = provider.execute(&request).await;
+        Ok(result)
     }
 
     async fn configuration<T>(&self, section: &'static str) -> T
@@ -429,6 +442,13 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                     if let Ok(log) = fs::read_to_string(&log_path) {
                         let mut diagnostics_manager = self.diagnostics_manager.lock().await;
                         diagnostics_manager.build.update(&tex_uri, &log);
+                    }
+                }
+                Action::Build(uri) => {
+                    let config: BuildOptions = self.configuration("latex.build").await;
+                    if config.on_save {
+                        let text_document = TextDocumentIdentifier::new(uri);
+                        self.build(BuildParams { text_document }).await.unwrap();
                     }
                 }
             }

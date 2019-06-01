@@ -24,6 +24,12 @@ pub trait LspClient {
 
     #[jsonrpc_method("textDocument/publishDiagnostics", kind = "notification")]
     fn publish_diagnostics(&self, params: PublishDiagnosticsParams) -> BoxFuture<'_, ()>;
+
+    #[jsonrpc_method("window/progress", kind = "notification")]
+    fn progress(&self, params: ProgressParams) -> BoxFuture<'_, ()>;
+
+    #[jsonrpc_method("window/logMessage", kind = "notification")]
+    fn log_message(&self, params: LogMessageParams) -> BoxFuture<'_, ()>;
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
@@ -78,4 +84,10 @@ impl LspClient for LspClientMock {
         let mut diagnostics_by_uri = self.diagnostics_by_uri.lock().await;
         diagnostics_by_uri.insert(params.uri, params.diagnostics);
     }
+
+    #[boxed]
+    async fn progress(&self, _params: ProgressParams) {}
+
+    #[boxed]
+    async fn log_message(&self, _params: LogMessageParams) {}
 }
