@@ -1,6 +1,7 @@
 use crate::syntax::latex::ast::*;
 use lsp_types::Uri;
 use path_clean::PathClean;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -27,6 +28,7 @@ impl LatexInclude {
         let mut path = uri.to_file_path().ok()?;
         path.pop();
         path.push(include.path().text());
+        path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
         path = path.clean();
         let has_extension = path.extension().is_some();
         let mut path = path.to_str()?.to_owned();

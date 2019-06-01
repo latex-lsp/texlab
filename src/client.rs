@@ -1,3 +1,4 @@
+use crate::build::BuildOptions;
 use crate::diagnostics::LatexLintOptions;
 use crate::formatting::bibtex::BibtexFormattingOptions;
 use futures::lock::Mutex;
@@ -40,6 +41,7 @@ pub trait LspClient {
 pub struct LspClientMockOptions {
     pub bibtex_formatting: Option<BibtexFormattingOptions>,
     pub latex_lint: Option<LatexLintOptions>,
+    pub latex_build: Option<BuildOptions>,
 }
 
 #[derive(Debug, Default)]
@@ -66,6 +68,7 @@ impl LspClient for LspClientMock {
         match params.items[0].section {
             Some(Cow::Borrowed("bibtex.formatting")) => serialize(&options.bibtex_formatting),
             Some(Cow::Borrowed("latex.lint")) => serialize(&options.latex_lint),
+            Some(Cow::Borrowed("latex.build")) => serialize(&options.latex_build),
             _ => {
                 unreachable!();
             }
