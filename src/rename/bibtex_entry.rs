@@ -3,7 +3,6 @@ use crate::syntax::bibtex::BibtexSyntaxTree;
 use crate::syntax::latex::LatexSyntaxTree;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::borrow::Cow;

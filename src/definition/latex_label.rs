@@ -3,7 +3,6 @@ use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
 

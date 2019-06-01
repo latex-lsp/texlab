@@ -4,7 +4,6 @@ use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams}
 use crate::syntax::bibtex::BibtexEntry;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
 use std::borrow::Cow;

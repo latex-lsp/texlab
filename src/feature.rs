@@ -3,7 +3,6 @@ use crate::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
-use futures::prelude::*;
 use futures_boxed::boxed;
 #[cfg(test)]
 use lsp_types::*;

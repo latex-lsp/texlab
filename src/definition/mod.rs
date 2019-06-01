@@ -4,7 +4,6 @@ mod latex_label;
 use self::latex_citation::LatexCitationDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
 

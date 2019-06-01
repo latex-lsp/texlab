@@ -24,7 +24,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::WorkspaceManager;
 use futures::lock::Mutex;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};

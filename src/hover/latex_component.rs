@@ -3,7 +3,6 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexIncludeKind;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
 

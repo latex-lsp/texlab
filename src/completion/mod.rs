@@ -23,7 +23,6 @@ use self::latex::tikz_library::LatexTikzLibraryCompletionProvider;
 use self::latex::user_command::LatexUserCommandCompletionProvider;
 use self::quality::OrderByQualityCompletionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};

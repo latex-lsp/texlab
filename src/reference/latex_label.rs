@@ -1,7 +1,6 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexLabelKind;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
 

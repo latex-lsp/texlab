@@ -1,6 +1,5 @@
 use crate::types::*;
 use futures::channel::oneshot;
-use futures::future::BoxFuture;
 use futures::lock::Mutex;
 use futures::prelude::*;
 use futures_boxed::boxed;
@@ -11,8 +10,6 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-pub type FutureResult<'a, T> = BoxFuture<'a, Result<T>>;
 
 pub trait ResponseHandler {
     #[boxed]

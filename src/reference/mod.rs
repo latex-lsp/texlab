@@ -4,7 +4,6 @@ mod latex_label;
 use self::bibtex_entry::BibtexEntryReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
 

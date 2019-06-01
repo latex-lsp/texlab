@@ -8,7 +8,6 @@ use self::latex_command::LatexCommandRenameProvider;
 use self::latex_environment::LatexEnvironmentRenameProvider;
 use self::latex_label::LatexLabelRenameProvider;
 use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{RenameParams, WorkspaceEdit};
 

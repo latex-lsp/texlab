@@ -1,10 +1,8 @@
 use crate::diagnostics::LatexLintOptions;
 use crate::formatting::bibtex::BibtexFormattingOptions;
-use futures::future::BoxFuture;
 use futures::lock::Mutex;
-use futures::prelude::*;
 use futures_boxed::boxed;
-use jsonrpc::client::{FutureResult, Result};
+use jsonrpc::client::Result;
 use jsonrpc_derive::{jsonrpc_client, jsonrpc_method};
 use lsp_types::*;
 use serde::Serialize;
@@ -14,22 +12,28 @@ use std::collections::HashMap;
 #[jsonrpc_client(LatexLspClient)]
 pub trait LspClient {
     #[jsonrpc_method("workspace/configuration", kind = "request")]
-    fn configuration(&self, params: ConfigurationParams) -> FutureResult<'_, serde_json::Value>;
+    #[boxed]
+    async fn configuration(&self, params: ConfigurationParams) -> Result<serde_json::Value>;
 
     #[jsonrpc_method("window/showMessage", kind = "notification")]
-    fn show_message(&self, params: ShowMessageParams) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn show_message(&self, params: ShowMessageParams);
 
     #[jsonrpc_method("client/registerCapability", kind = "request")]
-    fn register_capability(&self, params: RegistrationParams) -> FutureResult<'_, ()>;
+    #[boxed]
+    async fn register_capability(&self, params: RegistrationParams) -> Result<()>;
 
     #[jsonrpc_method("textDocument/publishDiagnostics", kind = "notification")]
-    fn publish_diagnostics(&self, params: PublishDiagnosticsParams) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn publish_diagnostics(&self, params: PublishDiagnosticsParams);
 
     #[jsonrpc_method("window/progress", kind = "notification")]
-    fn progress(&self, params: ProgressParams) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn progress(&self, params: ProgressParams) -> ();
 
     #[jsonrpc_method("window/logMessage", kind = "notification")]
-    fn log_message(&self, params: LogMessageParams) -> BoxFuture<'_, ()>;
+    #[boxed]
+    async fn log_message(&self, params: LogMessageParams) -> ();
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

@@ -3,7 +3,9 @@
 
 extern crate proc_macro;
 
+use proc_macro::TokenStream;
 use quote::quote;
+use std::str::FromStr;
 use syn::export::TokenStream2;
 use syn::*;
 
@@ -52,18 +54,12 @@ impl MethodMeta {
 }
 
 #[proc_macro_attribute]
-pub fn jsonrpc_method(
-    _attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn jsonrpc_method(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
 #[proc_macro_attribute]
-pub fn jsonrpc_server(
-    _attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let impl_: ItemImpl = parse_macro_input!(item);
     let generics = &impl_.generics;
     let self_ty = &impl_.self_ty;
@@ -75,7 +71,6 @@ pub fn jsonrpc_server(
         impl #generics jsonrpc::RequestHandler for #self_ty {
             #[boxed]
             async fn handle_request(&self, request: jsonrpc::Request) -> jsonrpc::Response {
-                use futures::prelude::*;
                 use jsonrpc::*;
 
                 match request.method.as_str() {
@@ -99,10 +94,8 @@ pub fn jsonrpc_server(
 }
 
 #[proc_macro_attribute]
-pub fn jsonrpc_client(
-    attr: proc_macro::TokenStream,
-    item: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let item = TokenStream::from_str(&item.to_string().replace("async ", "")).unwrap();
     let trait_: ItemTrait = parse_macro_input!(item);
     let trait_ident = &trait_.ident;
     let stubs = generate_client_stubs(&trait_.items);
@@ -113,7 +106,7 @@ pub fn jsonrpc_client(
         #trait_
 
         pub struct #struct_ident<O> {
-            client: std::sync::Arc<jsonrpc::Client<O>>
+            client: jsonrpc::Client<O>
         }
 
         impl<O> #struct_ident<O>
@@ -122,7 +115,7 @@ pub fn jsonrpc_client(
         {
             pub fn new(output: std::sync::Arc<futures::lock::Mutex<O>>) -> Self {
                 Self {
-                    client: std::sync::Arc::new(jsonrpc::Client::new(output)),
+                    client: jsonrpc::Client::new(output),
                 }
             }
         }
@@ -138,8 +131,9 @@ pub fn jsonrpc_client(
         where
             O: jsonrpc::Output,
         {
-            fn handle(&self, response: jsonrpc::Response) -> futures::future::BoxFuture<'_, ()> {
-                self.client.handle(response)
+            #[boxed]
+            async fn handle(&self, response: jsonrpc::Response) -> () {
+                self.client.handle(response).await
             }
         }
     };
@@ -195,36 +189,24 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
     let mut stubs = Vec::new();
     for item in items {
         let method = unwrap!(item, TraitItem::Method(x) => x);
+        let attrs = &method.attrs;
         let sig = &method.sig;
         let param = unwrap!(&sig.decl.inputs[1], FnArg::Captured(x) => &x.pat);
-        let meta = MethodMeta::parse(method.attrs.first().unwrap());
+        let meta = MethodMeta::parse(attrs.first().unwrap());
         let name = &meta.name;
 
         let stub = match meta.kind {
             MethodKind::Request => quote!(
+                #[boxed]
                 #sig {
-                    use futures::prelude::*;
-                    use jsonrpc::*;
-
-                    let client = std::sync::Arc::clone(&self.client);
-                    let task = async move {
-                        let result = client.send_request(#name.to_owned(), #param).await?;
-                        serde_json::from_value(result).map_err(|_| Error::deserialize_error())
-                    };
-
-                    task.boxed()
+                    let result = self.client.send_request(#name.to_owned(), #param).await?;
+                    serde_json::from_value(result).map_err(|_| jsonrpc::Error::deserialize_error())
                 }
             ),
             MethodKind::Notification => quote!(
+                #[boxed]
                 #sig {
-                    use futures::prelude::*;
-
-                    let client = std::sync::Arc::clone(&self.client);
-                    let task = async move {
-                        self.client.send_notification(#name.to_owned(), #param).await;
-                    };
-
-                    task.boxed()
+                    self.client.send_notification(#name.to_owned(), #param).await
                 }
             ),
         };

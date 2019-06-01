@@ -8,7 +8,6 @@ use self::bibtex_field::BibtexFieldHoverProvider;
 use self::latex_citation::LatexCitationHoverProvider;
 use self::latex_component::LatexComponentHoverProvider;
 use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{Hover, TextDocumentPositionParams};
 

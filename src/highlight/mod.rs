@@ -2,7 +2,6 @@ mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{DocumentHighlight, TextDocumentPositionParams};
 

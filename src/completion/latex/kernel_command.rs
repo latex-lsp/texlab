@@ -3,7 +3,6 @@ use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
 use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;

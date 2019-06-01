@@ -6,7 +6,6 @@ use self::bibtex_declaration::BibtexDeclarationFoldingProvider;
 use self::latex_environment::LatexEnvironmentFoldingProvider;
 use self::latex_section::LatexSectionFoldingProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeParams};
 

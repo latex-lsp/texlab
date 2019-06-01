@@ -2,7 +2,6 @@ use crate::data::bibtex_entry_type;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::borrow::Cow;

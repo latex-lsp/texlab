@@ -3,7 +3,7 @@
 
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+use proc_macro::{TokenStream, TokenTree};
 use quote::quote;
 use quote::ToTokens;
 use std::iter::FromIterator;
@@ -15,7 +15,11 @@ pub fn boxed(_attr: TokenStream, item: TokenStream) -> TokenStream {
     match parse::<ItemFn>(item.clone()) {
         Ok(fn_) => boxed_fn(fn_),
         Err(_) => {
-            let item: TokenStream = TokenStream::from_iter(item.into_iter().skip(1));
+            let item = TokenStream::from_iter(item.into_iter().filter(|x| match x {
+                TokenTree::Ident(x) if x.to_string() == "async" => false,
+                _ => true,
+            }));
+
             let method: TraitItemMethod = parse(item).unwrap();
             boxed_trait_method(method)
         }
@@ -30,6 +34,7 @@ fn boxed_fn(fn_: ItemFn) -> TokenStream {
     let tokens = quote! {
         #(#attrs)*
         #vis #decl {
+            use futures::future::FutureExt;
             let task = async move #block;
             task.boxed()
         }

@@ -2,7 +2,6 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use futures::prelude::*;
 use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
