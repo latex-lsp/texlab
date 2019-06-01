@@ -146,6 +146,9 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     #[jsonrpc_method("exit", kind = "notification")]
     pub fn exit(&self, _params: ()) {}
 
+    #[jsonrpc_method("$/cancelRequest", kind = "notification")]
+    pub fn cancel_request(&self, _params: CancelParams) {}
+
     #[jsonrpc_method("workspace/didChangeWatchedFiles", kind = "notification")]
     pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         let workspace = self.workspace_manager.get();
