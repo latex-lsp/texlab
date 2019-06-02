@@ -61,7 +61,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(true, items.len() > 0);
+        assert!(!items.is_empty());
     }
 
     #[test]
@@ -75,6 +75,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(true, items.len() == 0);
+        assert!(items.is_empty());
     }
 }

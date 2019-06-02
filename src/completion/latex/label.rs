@@ -78,6 +78,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 }

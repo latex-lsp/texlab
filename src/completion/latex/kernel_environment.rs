@@ -52,7 +52,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items.iter().any(|item| item.label == "document"), true);
+        assert!(items.iter().any(|item| item.label == "document"));
     }
 
     #[test]
@@ -66,7 +66,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items.iter().any(|item| item.label == "document"), true);
+        assert!(items.iter().any(|item| item.label == "document"));
     }
 
     #[test]
@@ -80,7 +80,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 
     #[test]
@@ -94,7 +94,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 
     #[test]
@@ -108,7 +108,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 
     #[test]
@@ -122,6 +122,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 }

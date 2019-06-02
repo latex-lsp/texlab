@@ -85,7 +85,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(highlights, Vec::new());
+        assert!(highlights.is_empty());
     }
 
     #[test]
@@ -99,6 +99,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(highlights, Vec::new());
+        assert!(highlights.is_empty());
     }
 }

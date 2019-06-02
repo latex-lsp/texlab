@@ -40,7 +40,7 @@ fn test_lint_latex_disabled() {
         scenario.server.execute_actions().await;
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
         let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
-        assert_eq!(diagnostics.len(), 0);
+        assert!(diagnostics.is_empty());
     });
 }
 

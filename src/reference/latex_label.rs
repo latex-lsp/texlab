@@ -87,6 +87,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(references, Vec::new());
+        assert!(references.is_empty());
     }
 }

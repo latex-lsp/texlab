@@ -143,7 +143,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(true, items.iter().any(|item| item.label == "black"));
+        assert!(items.iter().any(|item| item.label == "black"));
     }
 
     #[test]
@@ -157,6 +157,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 }

@@ -52,7 +52,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items.iter().any(|item| item.label == "usepackage"), true);
+        assert!(items.iter().any(|item| item.label == "usepackage"));
     }
 
     #[test]
@@ -66,7 +66,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 
     #[test]
@@ -80,6 +80,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 }

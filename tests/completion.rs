@@ -31,7 +31,7 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
 fn test_kernel_command() {
     block_on(async move {
         let items = run("kernel", "foo.tex", Position::new(2, 5)).await;
-        assert_eq!(items.iter().any(|item| item == "usepackage"), true);
+        assert!(items.iter().any(|item| item == "usepackage"));
     });
 }
 
@@ -39,7 +39,7 @@ fn test_kernel_command() {
 fn test_kernel_command_bibtex() {
     block_on(async move {
         let items = run("kernel", "foo.bib", Position::new(1, 17)).await;
-        assert_eq!(items.iter().any(|item| item == "LaTeX"), true);
+        assert!(items.iter().any(|item| item == "LaTeX"));
     });
 }
 
@@ -47,7 +47,7 @@ fn test_kernel_command_bibtex() {
 fn test_kernel_environment() {
     block_on(async move {
         let items = run("kernel", "foo.tex", Position::new(4, 10)).await;
-        assert_eq!(items.iter().any(|item| item == "document"), true);
+        assert!(items.iter().any(|item| item == "document"));
     });
 }
 
@@ -55,8 +55,8 @@ fn test_kernel_environment() {
 fn test_user_command() {
     block_on(async move {
         let items = run("user", "foo.tex", Position::new(2, 3)).await;
-        assert_eq!(items.iter().all(|item| item != "fo"), true);
-        assert_eq!(items.iter().any(|item| item == "foo"), true);
+        assert!(items.iter().all(|item| item != "fo"));
+        assert!(items.iter().any(|item| item == "foo"));
     });
 }
 

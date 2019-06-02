@@ -83,7 +83,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(links, Vec::new());
+        assert!(links.is_empty());
     }
 
     #[test]
@@ -97,6 +97,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(links, Vec::new());
+        assert!(links.is_empty());
     }
 }

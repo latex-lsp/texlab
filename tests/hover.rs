@@ -85,7 +85,7 @@ fn test_citation_bibtex() {
 fn test_citation_latex() {
     block_on(async move {
         let contents = run("latex/citation", "foo.tex", Position::new(2, 8)).await;
-        assert_eq!(contents.is_some(), true);
+        assert!(contents.is_some());
     });
 }
 
@@ -93,7 +93,7 @@ fn test_citation_latex() {
 fn test_component_class() {
     block_on(async move {
         let contents = run("latex/component", "foo.tex", Position::new(0, 19)).await;
-        assert_eq!(contents.is_some(), true);
+        assert!(contents.is_some());
     });
 }
 
@@ -101,7 +101,7 @@ fn test_component_class() {
 fn test_component_package() {
     block_on(async move {
         let contents = run("latex/component", "foo.tex", Position::new(2, 16)).await;
-        assert_eq!(contents.is_some(), true);
+        assert!(contents.is_some());
     });
 }
 

@@ -41,13 +41,9 @@ fn test_did_change() {
         };
         scenario.server.did_change(params);
         scenario.server.execute_actions().await;
-        assert_eq!(
-            run_completion(&scenario, "foo.tex", Position::new(0, 1))
-                .await
-                .len()
-                > 0,
-            true
-        );
+        assert!(!run_completion(&scenario, "foo.tex", Position::new(0, 1))
+            .await
+            .is_empty());
     });
 }
 
@@ -72,6 +68,6 @@ fn test_indexing() {
         scenario.server.did_change(params);
         scenario.server.execute_actions().await;
         let items = run_completion(&scenario, "foo.tex", Position::new(0, 1)).await;
-        assert_eq!(items.iter().any(|item| item.label == "foo"), true);
+        assert!(items.iter().any(|item| item.label == "foo"));
     });
 }

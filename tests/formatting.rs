@@ -57,6 +57,6 @@ fn test_bibtex_entry_infinite_line_length() {
 fn test_latex() {
     block_on(async move {
         let (_, edits) = run("latex", "foo.tex", None).await;
-        assert_eq!(edits, Vec::new());
+        assert!(edits.is_empty());
     })
 }

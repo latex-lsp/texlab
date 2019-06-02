@@ -71,6 +71,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(foldings, Vec::new());
+        assert!(foldings.is_empty());
     }
 }

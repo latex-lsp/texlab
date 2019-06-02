@@ -125,6 +125,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items.iter().any(|item| item.label == "arrows"), true);
+        assert!(items.iter().any(|item| item.label == "arrows"));
     }
 }

@@ -95,7 +95,7 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(locations, Vec::new());
+        assert!(locations.is_empty());
     }
 
     #[test]
@@ -109,6 +109,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(locations, Vec::new());
+        assert!(locations.is_empty());
     }
 }

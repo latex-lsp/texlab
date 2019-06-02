@@ -59,7 +59,7 @@ mod tests {
             },
         );
         assert_eq!(items.len(), 1);
-        assert_eq!("foo", items[0].label);
+        assert_eq!(items[0].label, "foo");
     }
 
     #[test]
@@ -77,6 +77,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert_eq!(items, Vec::new());
+        assert!(items.is_empty());
     }
 }
