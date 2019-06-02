@@ -1,5 +1,6 @@
 use crate::client::LspClient;
 use crate::feature::{FeatureProvider, FeatureRequest};
+use futures::executor::block_on;
 use futures_boxed::boxed;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,7 @@ use std::io::BufRead;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
+use std::thread;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -61,7 +63,7 @@ pub struct BuildProvider<C> {
 
 impl<C> BuildProvider<C>
 where
-    C: LspClient + Send + Sync,
+    C: LspClient + Send + Sync + 'static,
 {
     pub fn new(client: Arc<C>, options: BuildOptions) -> Self {
         Self { client, options }
@@ -76,32 +78,38 @@ where
         let mut process = Command::new(options.executable)
             .args(args)
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::piped())
             .current_dir(path.parent().unwrap())
             .spawn()?;
 
-        let stdout = process.stdout.as_mut().unwrap();
-        let mut reader = io::BufReader::new(stdout);
-        loop {
-            let mut line = String::new();
-            let count = reader.read_line(&mut line)?;
-            if count == 0 {
-                break;
-            }
-            let params = LogMessageParams {
-                typ: MessageType::Log,
-                message: Cow::from(line.trim().to_owned()),
-            };
-            self.client.log_message(params).await;
-        }
-
+        Self::read(Arc::clone(&self.client), process.stdout.take().unwrap());
+        Self::read(Arc::clone(&self.client), process.stderr.take().unwrap());
         Ok(process.wait()?.success())
+    }
+
+    fn read<R>(client: Arc<C>, output: R)
+    where
+        R: io::Read + Send + 'static,
+    {
+        thread::spawn(move || {
+            let client = Arc::clone(&client);
+            let reader = io::BufReader::new(output);
+            reader.lines().for_each(|line| {
+                if let Ok(line) = line {
+                    let params = LogMessageParams {
+                        typ: MessageType::Log,
+                        message: Cow::from(line),
+                    };
+                    block_on(client.log_message(params));
+                }
+            });
+        });
     }
 }
 
 impl<C> FeatureProvider for BuildProvider<C>
 where
-    C: LspClient + Send + Sync,
+    C: LspClient + Send + Sync + 'static,
 {
     type Params = BuildParams;
     type Output = BuildResult;

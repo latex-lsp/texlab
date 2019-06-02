@@ -1,12 +1,16 @@
 #![feature(async_await)]
 
 use futures::executor::block_on;
+use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use texlab::build::*;
 use texlab::scenario::Scenario;
-use jsonrpc::server::ActionHandler;
 
-async fn run(executable: &'static str, on_save: bool, name: &'static str) -> (Scenario, BuildResult) {
+async fn run(
+    executable: &'static str,
+    on_save: bool,
+    name: &'static str,
+) -> (Scenario, BuildResult) {
     let scenario = Scenario::new("build").await;
     scenario.open(name).await;
     let mut build_options = BuildOptions::default();
@@ -18,7 +22,7 @@ async fn run(executable: &'static str, on_save: bool, name: &'static str) -> (Sc
         options.latex_build = Some(build_options);
     }
     let text_document = TextDocumentIdentifier::new(scenario.uri(name));
-    let params = BuildParams { text_document};
+    let params = BuildParams { text_document };
     let result = scenario.server.build(params).await.unwrap();
     scenario.server.execute_actions().await;
     (scenario, result)
@@ -63,7 +67,9 @@ fn test_on_save() {
             options.latex_build = Some(build_options);
         }
         let text_document = TextDocumentIdentifier::new(scenario.uri("foo.tex"));
-        scenario.server.did_save(DidSaveTextDocumentParams { text_document });
+        scenario
+            .server
+            .did_save(DidSaveTextDocumentParams { text_document });
         scenario.server.execute_actions().await;
         let path = scenario.directory.path().join("foo.pdf");
         assert!(path.exists());

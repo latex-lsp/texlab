@@ -53,7 +53,7 @@ pub struct LatexLspServer<C> {
 }
 
 #[jsonrpc_server]
-impl<C: LspClient + Send + Sync> LatexLspServer<C> {
+impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn new(client: Arc<C>) -> Self {
         LatexLspServer {
             client,
@@ -353,7 +353,7 @@ impl<C: LspClient + Send + Sync> LatexLspServer<C> {
     }
 }
 
-impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
+impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspServer<C> {
     #[boxed]
     async fn execute_actions(&self) {
         for action in self.action_manager.take() {
