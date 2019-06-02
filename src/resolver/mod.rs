@@ -1,13 +1,15 @@
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::Arc;
 
 mod miktex;
 mod texlive;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Error {
     KpsewhichNotFound,
     UnsupportedTexDistribution,
@@ -16,9 +18,14 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TexDistributionKind {
     Texlive,
     Miktex,
+}
+
+lazy_static! {
+    pub static ref TEX_RESOLVER: Result<Arc<TexResolver>> = TexResolver::load().map(Arc::new);
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
@@ -27,7 +34,7 @@ pub struct TexResolver {
 }
 
 impl TexResolver {
-    pub fn load() -> Result<Self> {
+    fn load() -> Result<Self> {
         let directories = Self::find_root_directories()?;
         let kind = Self::detect_distribution(&directories)?;
         let files_by_name = Self::read_database(&directories, kind)?;

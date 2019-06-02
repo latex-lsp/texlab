@@ -18,7 +18,7 @@ use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
 use crate::resolver;
-use crate::resolver::TexResolver;
+use crate::resolver::{TexResolver, TEX_RESOLVER};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
@@ -384,10 +384,10 @@ impl<C: LspClient + Send + Sync> jsonrpc::ActionHandler for LatexLspServer<C> {
                     }
                 }
                 Action::LoadResolver => {
-                    match TexResolver::load() {
+                    match &*TEX_RESOLVER {
                         Ok(res) => {
                             let mut resolver = self.resolver.lock().await;
-                            *resolver = Arc::new(res);
+                            *resolver = Arc::clone(&res);
                         }
                         Err(why) => {
                             let message = match why {
