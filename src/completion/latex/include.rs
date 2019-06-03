@@ -67,7 +67,9 @@ fn current_directory(
     request: &FeatureRequest<CompletionParams>,
     command: &LatexCommand,
 ) -> PathBuf {
-    let mut path = PathBuf::from_str(request.document.uri.path()).unwrap();
+    let mut path = request.document.uri.to_file_path().unwrap();
+    path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
+
     path.pop();
     if let Some(include) = command.extract_word(0) {
         path.push(include.text());
