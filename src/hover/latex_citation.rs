@@ -1,3 +1,4 @@
+use crate::data::citation::Citation;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
@@ -5,7 +6,7 @@ use crate::syntax::bibtex::BibtexEntry;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, TextDocumentPositionParams};
+use lsp_types::*;
 use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -24,17 +25,11 @@ impl FeatureProvider for LatexCitationHoverProvider {
         if entry.is_comment() {
             None
         } else {
-            let params = BibtexFormattingParams {
-                tab_size: 4,
-                insert_spaces: true,
-                options: BibtexFormattingOptions { line_length: 80 },
-            };
-            let code = bibtex::format_entry(&entry, &params);
+            let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
+            let citation = Citation::new(&entry_code);
+            let markdown = citation.render().ok()?;
             Some(Hover {
-                contents: HoverContents::Markup(MarkupContent {
-                    kind: MarkupKind::Markdown,
-                    value: Cow::from(format!("```bibtex\n{}\n```", code)),
-                }),
+                contents: HoverContents::Markup(markdown),
                 range: None,
             })
         }

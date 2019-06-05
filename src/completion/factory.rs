@@ -41,7 +41,7 @@ pub enum CompletionItemData {
     Class,
     EntryType,
     FieldName,
-    Citation,
+    Citation { entry_code: String },
     CommandSymbol,
     ArgumentSymbol,
 }
@@ -164,21 +164,12 @@ pub fn create_class(name: Cow<'static, str>) -> CompletionItem {
 }
 
 pub fn create_citation(entry: &BibtexEntry, key: &str) -> CompletionItem {
-    let params = BibtexFormattingParams {
-        tab_size: 2,
-        insert_spaces: true,
-        options: BibtexFormattingOptions { line_length: 35 },
-    };
-    let markdown = format!("```bibtex\n{}\n```", bibtex::format_entry(&entry, &params));
-
+    let params = BibtexFormattingParams::default();
+    let entry_code = bibtex::format_entry(&entry, &params);
     CompletionItem {
         label: Cow::from(key.to_owned()),
         kind: Some(CompletionItemKind::Field),
-        data: Some(CompletionItemData::Citation.into()),
-        documentation: Some(Documentation::MarkupContent(MarkupContent {
-            kind: MarkupKind::Markdown,
-            value: Cow::from(markdown),
-        })),
+        data: Some(CompletionItemData::Citation { entry_code }.into()),
         ..CompletionItem::default()
     }
 }
