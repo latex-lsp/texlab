@@ -26,6 +26,7 @@ use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::hash::{Hash, Hasher};
 
 pub const COMPLETION_LIMIT: usize = 50;
 
@@ -74,8 +75,27 @@ impl FeatureProvider for CompletionProvider {
             .execute(request)
             .await
             .into_iter()
-            .unique_by(|item| item.label.clone())
+            .map(LabeledCompletionItem)
+            .unique()
+            .map(|item| item.0)
             .take(COMPLETION_LIMIT)
             .collect()
+    }
+}
+
+#[derive(Debug, Clone)]
+struct LabeledCompletionItem(CompletionItem);
+
+impl PartialEq for LabeledCompletionItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.label == other.0.label
+    }
+}
+
+impl Eq for LabeledCompletionItem {}
+
+impl Hash for LabeledCompletionItem {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.label.hash(state);
     }
 }
