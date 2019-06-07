@@ -5,9 +5,10 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct LatexTikzCommandCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl LatexTikzCommandCompletionProvider {
@@ -17,6 +18,7 @@ impl LatexTikzCommandCompletionProvider {
             .iter()
             .map(|name| Cow::from(*name))
             .map(|name| factory::create_command(name, &id))
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -24,13 +26,10 @@ impl LatexTikzCommandCompletionProvider {
 
 impl FeatureProvider for LatexTikzCommandCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::command(request, async move |_| {
             if request
                 .component_database

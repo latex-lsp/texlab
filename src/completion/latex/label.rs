@@ -6,18 +6,16 @@ use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct LatexLabelCompletionProvider;
 
 impl FeatureProvider for LatexLabelCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
             let mut items = Vec::new();
             for document in &request.related_documents {
@@ -27,6 +25,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         .filter(|label| label.kind() == LatexLabelKind::Definition)
                         .map(|label| Cow::from(label.name().text().to_owned()))
                         .map(factory::create_label)
+                        .map(Arc::new)
                         .for_each(|item| items.push(item))
                 }
             }

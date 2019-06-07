@@ -6,10 +6,11 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BibtexFieldNameCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl BibtexFieldNameCompletionProvider {
@@ -17,6 +18,7 @@ impl BibtexFieldNameCompletionProvider {
         let items = BIBTEX_FIELDS
             .iter()
             .map(|field| factory::create_field_name(field))
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -24,13 +26,10 @@ impl BibtexFieldNameCompletionProvider {
 
 impl FeatureProvider for BibtexFieldNameCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             match tree.find(request.params.position).last() {
                 Some(BibtexNode::Field(field)) => {

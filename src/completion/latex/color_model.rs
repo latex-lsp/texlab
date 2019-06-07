@@ -4,10 +4,11 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LatexColorModelCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl LatexColorModelCompletionProvider {
@@ -16,6 +17,7 @@ impl LatexColorModelCompletionProvider {
             .iter()
             .map(|name| Cow::from(*name))
             .map(factory::create_color_model)
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -23,7 +25,7 @@ impl LatexColorModelCompletionProvider {
     async fn execute_define_color<'a>(
         &'a self,
         request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    ) -> Vec<Arc<CompletionItem>> {
         LatexCombinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
             self.items.clone()
         })
@@ -33,7 +35,7 @@ impl LatexColorModelCompletionProvider {
     async fn execute_define_color_set<'a>(
         &'a self,
         request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    ) -> Vec<Arc<CompletionItem>> {
         LatexCombinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
             self.items.clone()
         })
@@ -43,13 +45,10 @@ impl LatexColorModelCompletionProvider {
 
 impl FeatureProvider for LatexColorModelCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut items = Vec::new();
         items.append(&mut self.execute_define_color(&request).await);
         items.append(&mut self.execute_define_color_set(&request).await);

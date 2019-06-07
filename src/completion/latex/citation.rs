@@ -5,19 +5,17 @@ use crate::syntax::latex::CITATION_COMMANDS;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationCompletionProvider;
 
 impl FeatureProvider for LatexCitationCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, CITATION_COMMANDS, 0, async move |_| {
             let mut items = Vec::new();
             for document in &request.related_documents {
@@ -25,7 +23,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
                     for entry in &tree.entries() {
                         if !entry.is_comment() {
                             if let Some(key) = &entry.key {
-                                items.push(factory::create_citation(entry, key.text()));
+                                items.push(Arc::new(factory::create_citation(entry, key.text())));
                             }
                         }
                     }

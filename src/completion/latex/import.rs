@@ -5,6 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::ffi::OsStr;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexClassImportProvider;
@@ -15,13 +16,10 @@ impl LatexClassImportProvider {
 
 impl FeatureProvider for LatexClassImportProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         import(request, Self::COMMANDS, "cls", factory::create_class).await
     }
 }
@@ -35,13 +33,10 @@ impl LatexPackageImportProvider {
 
 impl FeatureProvider for LatexPackageImportProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         import(request, Self::COMMANDS, "sty", factory::create_class).await
     }
 }
@@ -51,7 +46,7 @@ pub async fn import<'a, F>(
     commands: &'a [&str],
     extension: &'a str,
     factory: F,
-) -> Vec<CompletionItem>
+) -> Vec<Arc<CompletionItem>>
 where
     F: Fn(Cow<'static, str>) -> CompletionItem,
 {
@@ -63,6 +58,7 @@ where
             .filter(|file| file.extension().and_then(OsStr::to_str) == Some(extension))
             .flat_map(|file| file.file_stem().unwrap().to_str())
             .map(|name| factory(Cow::from(name.to_owned())))
+            .map(Arc::new)
             .collect()
     })
     .await

@@ -8,10 +8,11 @@ use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BibtexKernelCommandCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl BibtexKernelCommandCompletionProvider {
@@ -20,6 +21,7 @@ impl BibtexKernelCommandCompletionProvider {
             .iter()
             .map(|command| Cow::from(*command))
             .map(|command| factory::create_command(command, &LatexComponentId::Kernel))
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -27,13 +29,10 @@ impl BibtexKernelCommandCompletionProvider {
 
 impl FeatureProvider for BibtexKernelCommandCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             if let Some(BibtexNode::Command(command)) = tree.find(request.params.position).last() {
                 if command.token.range().contains(request.params.position)

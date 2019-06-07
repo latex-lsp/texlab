@@ -27,11 +27,13 @@ use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 pub const COMPLETION_LIMIT: usize = 50;
 
 pub struct CompletionProvider {
-    provider: OrderByQualityCompletionProvider<ConcatProvider<CompletionParams, CompletionItem>>,
+    provider:
+        OrderByQualityCompletionProvider<ConcatProvider<CompletionParams, Arc<CompletionItem>>>,
 }
 
 impl CompletionProvider {
@@ -64,13 +66,10 @@ impl CompletionProvider {
 
 impl FeatureProvider for CompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider
             .execute(request)
             .await
@@ -84,7 +83,7 @@ impl FeatureProvider for CompletionProvider {
 }
 
 #[derive(Debug, Clone)]
-struct LabeledCompletionItem(CompletionItem);
+struct LabeledCompletionItem(Arc<CompletionItem>);
 
 impl PartialEq for LabeledCompletionItem {
     fn eq(&self, other: &Self) -> bool {

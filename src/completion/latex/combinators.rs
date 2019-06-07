@@ -10,10 +10,10 @@ impl LatexCombinators {
     pub async fn command<E, F>(
         request: &FeatureRequest<CompletionParams>,
         execute: E,
-    ) -> Vec<CompletionItem>
+    ) -> Vec<Arc<CompletionItem>>
     where
         E: FnOnce(Arc<LatexCommand>) -> F,
-        F: std::future::Future<Output = Vec<CompletionItem>>,
+        F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
     {
         if let SyntaxTree::Latex(tree) = &request.document.tree {
             if let Some(command) = tree.find_command(request.params.position) {
@@ -28,10 +28,10 @@ impl LatexCombinators {
         command_names: &'a [&'a str],
         argument_index: usize,
         execute: E,
-    ) -> Vec<CompletionItem>
+    ) -> Vec<Arc<CompletionItem>>
     where
         E: FnOnce(Arc<LatexCommand>) -> F,
-        F: std::future::Future<Output = Vec<CompletionItem>>,
+        F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
     {
         let find_command = |nodes: &[LatexNode], node_index: usize| {
             if let LatexNode::Group(group) = &nodes[node_index] {
@@ -85,10 +85,10 @@ impl LatexCombinators {
     pub async fn environment<E, F>(
         request: &FeatureRequest<CompletionParams>,
         execute: E,
-    ) -> Vec<CompletionItem>
+    ) -> Vec<Arc<CompletionItem>>
     where
         E: FnOnce(Arc<LatexCommand>) -> F,
-        F: std::future::Future<Output = Vec<CompletionItem>>,
+        F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
     {
         Self::argument(&request, &ENVIRONMENT_COMMANDS, 0, execute).await
     }

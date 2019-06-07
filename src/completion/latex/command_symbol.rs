@@ -6,19 +6,17 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCommandSymbolCompletionProvider;
 
 impl FeatureProvider for LatexCommandSymbolCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::command(&request, async move |_| {
             let mut items = Vec::new();
             let components = request
@@ -30,19 +28,19 @@ impl FeatureProvider for LatexCommandSymbolCompletionProvider {
                     Some(component) => {
                         if components.iter().any(|c| c.files.contains(&component)) {
                             let component = LatexComponentId::User(vec![Cow::from(component)]);
-                            items.push(factory::create_command_symbol(
+                            items.push(Arc::new(factory::create_command_symbol(
                                 &symbol.command,
                                 &component,
                                 &symbol.image,
-                            ));
+                            )));
                         }
                     }
                     None => {
-                        items.push(factory::create_command_symbol(
+                        items.push(Arc::new(factory::create_command_symbol(
                             &symbol.command,
                             &LatexComponentId::Kernel,
                             &symbol.image,
-                        ));
+                        )));
                     }
                 }
             }

@@ -4,19 +4,17 @@ use crate::data::symbols::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexArgumentSymbolCompletionProvider;
 
 impl FeatureProvider for LatexArgumentSymbolCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut items = Vec::new();
         for group in &DATABASE.arguments {
             let command = format!("\\{}", group.command);
@@ -29,10 +27,10 @@ impl FeatureProvider for LatexArgumentSymbolCompletionProvider {
                     async move |_| {
                         let mut items = Vec::new();
                         for symbol in &group.arguments {
-                            items.push(factory::create_argument_symbol(
+                            items.push(Arc::new(factory::create_argument_symbol(
                                 &symbol.argument,
                                 &symbol.image,
-                            ));
+                            )));
                         }
                         items
                     },

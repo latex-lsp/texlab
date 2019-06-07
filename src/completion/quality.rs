@@ -7,6 +7,7 @@ use crate::workspace::Document;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct OrderByQualityCompletionProvider<F> {
     pub provider: F,
@@ -20,16 +21,13 @@ impl<F> OrderByQualityCompletionProvider<F> {
 
 impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
 where
-    F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
+    F: FeatureProvider<Params = CompletionParams, Output = Vec<Arc<CompletionItem>>> + Send + Sync,
 {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let query = Self::get_query(&request.document, request.params.position);
         let mut items = self.provider.execute(&request).await;
         items.sort_by_key(|item| -Self::get_quality(&query, &item.label));

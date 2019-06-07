@@ -8,18 +8,16 @@ use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct LatexUserCommandCompletionProvider;
 
 impl FeatureProvider for LatexUserCommandCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::command(request, async move |current_command| {
             let mut items = Vec::new();
             for document in &request.related_documents {
@@ -31,6 +29,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                         .unique()
                         .map(|name| Cow::from(name.to_owned()))
                         .map(|name| factory::create_command(name, &LatexComponentId::Unknown))
+                        .map(Arc::new)
                         .for_each(|item| items.push(item));
                 }
             }

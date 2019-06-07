@@ -4,23 +4,22 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexColorCompletionProvider;
 
 impl FeatureProvider for LatexColorCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
             COLOR_NAMES
                 .iter()
                 .map(|name| factory::create_color(Cow::from(*name)))
+                .map(Arc::new)
                 .collect()
         })
         .await

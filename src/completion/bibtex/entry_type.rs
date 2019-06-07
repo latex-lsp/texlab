@@ -6,10 +6,11 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BibtexEntryTypeCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl BibtexEntryTypeCompletionProvider {
@@ -17,6 +18,7 @@ impl BibtexEntryTypeCompletionProvider {
         let items = BIBTEX_ENTRY_TYPES
             .iter()
             .map(factory::create_entry_type)
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -24,13 +26,10 @@ impl BibtexEntryTypeCompletionProvider {
 
 impl FeatureProvider for BibtexEntryTypeCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Bibtex(tree) = &request.document.tree {
             for declaration in &tree.root.children {
                 match declaration {

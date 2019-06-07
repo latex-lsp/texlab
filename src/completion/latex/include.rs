@@ -6,6 +6,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::sync::Arc;
 use walkdir::WalkDir;
 
 const NO_EXTENSION_COMMANDS: &[&str] = &["\\include", "\\includesvg"];
@@ -24,13 +25,10 @@ pub struct LatexIncludeCompletionProvider;
 
 impl FeatureProvider for LatexIncludeCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, ALL_COMMANDS, 0, async move |command| {
             if !request.document.is_file() {
                 return Vec::new();
@@ -50,10 +48,10 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                         if NO_EXTENSION_COMMANDS.contains(&command.name.text()) {
                             remove_extension(&mut path);
                         }
-                        items.push(factory::create_file(&path));
+                        items.push(Arc::new(factory::create_file(&path)));
                     } else if entry.file_type().is_dir() {
                         let path = entry.into_path();
-                        items.push(factory::create_folder(&path));
+                        items.push(Arc::new(factory::create_folder(&path)));
                     }
                 }
             }

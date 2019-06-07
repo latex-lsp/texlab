@@ -6,9 +6,10 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
+use std::sync::Arc;
 
 pub struct LatexKernelEnvironmentCompletionProvider {
-    items: Vec<CompletionItem>,
+    items: Vec<Arc<CompletionItem>>,
 }
 
 impl LatexKernelEnvironmentCompletionProvider {
@@ -17,6 +18,7 @@ impl LatexKernelEnvironmentCompletionProvider {
             .iter()
             .map(|name| Cow::from(*name))
             .map(|name| factory::create_environment(name, &LatexComponentId::Kernel))
+            .map(Arc::new)
             .collect();
         Self { items }
     }
@@ -24,13 +26,10 @@ impl LatexKernelEnvironmentCompletionProvider {
 
 impl FeatureProvider for LatexKernelEnvironmentCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<CompletionItem> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::environment(&request, async move |_| self.items.clone()).await
     }
 }
