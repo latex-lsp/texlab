@@ -55,16 +55,17 @@ pub async fn import<'a, F>(
 where
     F: Fn(Cow<'static, str>) -> CompletionItem,
 {
-    let items = request
-        .resolver
-        .files_by_name
-        .values()
-        .filter(|file| file.extension().and_then(OsStr::to_str) == Some(extension))
-        .flat_map(|file| file.file_stem().unwrap().to_str())
-        .map(|name| factory(Cow::from(name.to_owned())))
-        .collect();
-
-    LatexCombinators::argument(request, &commands, 0, async move |_| items).await
+    LatexCombinators::argument(request, &commands, 0, async move |_| {
+        request
+            .resolver
+            .files_by_name
+            .values()
+            .filter(|file| file.extension().and_then(OsStr::to_str) == Some(extension))
+            .flat_map(|file| file.file_stem().unwrap().to_str())
+            .map(|name| factory(Cow::from(name.to_owned())))
+            .collect()
+    })
+    .await
 }
 
 #[cfg(test)]
