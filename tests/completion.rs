@@ -22,7 +22,7 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
         .unwrap()
         .items
         .into_iter()
-        .map(|item| item.label.into_owned())
+        .map(|item| (*item.label).to_owned())
         .sorted()
         .collect()
 }
@@ -80,7 +80,7 @@ fn test_citation() {
 fn test_symbol_command_kernel() {
     block_on(async move {
         let items = run("symbol", "foo.tex", Position::new(0, 1)).await;
-        assert_eq!(items.iter().any(|item| item == "varepsilon"), true);
+        assert!(items.iter().any(|item| item == "varepsilon"));
     });
 }
 
@@ -97,7 +97,7 @@ fn test_symbol_argument() {
 fn test_color() {
     block_on(async move {
         let items = run("color", "foo.tex", Position::new(0, 10)).await;
-        assert_eq!(items.iter().any(|item| item == "black"), true);
+        assert!(items.iter().any(|item| item == "black"));
     });
 }
 
@@ -105,7 +105,7 @@ fn test_color() {
 fn test_color_model() {
     block_on(async move {
         let items = run("color", "foo.tex", Position::new(1, 18)).await;
-        assert_eq!(items.iter().any(|item| item == "rgb"), true);
+        assert!(items.iter().any(|item| item == "rgb"));
     });
 }
 
@@ -153,7 +153,7 @@ fn test_include_graphics_svg() {
 fn test_import_class() {
     block_on(async move {
         let items = run("import", "foo.tex", Position::new(0, 18)).await;
-        assert_eq!(items.iter().any(|item| item == "article"), true);
+        assert!(items.iter().any(|item| item == "article"));
     });
 }
 
@@ -161,7 +161,7 @@ fn test_import_class() {
 fn test_import_package() {
     block_on(async move {
         let items = run("import", "foo.tex", Position::new(1, 15)).await;
-        assert_eq!(items.iter().any(|item| item == "amsmath"), true);
+        assert!(items.iter().any(|item| item == "amsmath"));
     });
 }
 
@@ -169,7 +169,7 @@ fn test_import_package() {
 fn test_pgf_library() {
     block_on(async move {
         let items = run("pgf_library", "foo.tex", Position::new(0, 18)).await;
-        assert_eq!(items.iter().any(|item| item == "arrows"), true);
+        assert!(items.iter().any(|item| item == "arrows"));
     });
 }
 
@@ -177,7 +177,7 @@ fn test_pgf_library() {
 fn test_tikz_library() {
     block_on(async move {
         let items = run("tikz_library", "foo.tex", Position::new(0, 19)).await;
-        assert_eq!(items.iter().any(|item| item == "arrows"), true);
+        assert!(items.iter().any(|item| item == "arrows"));
     });
 }
 
@@ -185,7 +185,7 @@ fn test_tikz_library() {
 fn test_entry_type() {
     block_on(async move {
         let items = run("entry_type", "foo.bib", Position::new(0, 1)).await;
-        assert_eq!(items.iter().any(|item| item == "article"), true);
+        assert!(items.iter().any(|item| item == "article"));
     });
 }
 
@@ -193,7 +193,7 @@ fn test_entry_type() {
 fn test_entry_type_preamble() {
     block_on(async move {
         let items = run("entry_type", "foo.bib", Position::new(1, 3)).await;
-        assert_eq!(items.iter().any(|item| item == "preamble"), true);
+        assert!(items.iter().any(|item| item == "preamble"));
     });
 }
 
@@ -201,7 +201,7 @@ fn test_entry_type_preamble() {
 fn test_entry_type_string() {
     block_on(async move {
         let items = run("entry_type", "foo.bib", Position::new(2, 3)).await;
-        assert_eq!(items.iter().any(|item| item == "string"), true);
+        assert!(items.iter().any(|item| item == "string"));
     });
 }
 
@@ -209,7 +209,7 @@ fn test_entry_type_string() {
 fn test_entry_type_comment() {
     block_on(async move {
         let items = run("entry_type", "foo.bib", Position::new(3, 3)).await;
-        assert_eq!(items.iter().any(|item| item == "comment"), true);
+        assert!(items.iter().any(|item| item == "comment"));
     });
 }
 
@@ -217,6 +217,6 @@ fn test_entry_type_comment() {
 fn test_field_name() {
     block_on(async move {
         let items = run("field_name", "foo.bib", Position::new(1, 7)).await;
-        assert_eq!(items.iter().any(|item| item == "author"), true);
+        assert!(items.iter().any(|item| item == "author"));
     });
 }

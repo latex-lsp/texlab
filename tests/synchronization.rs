@@ -4,12 +4,13 @@ use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use texlab::scenario::Scenario;
+use std::sync::Arc;
 
 async fn run_completion(
     scenario: &Scenario,
     file: &'static str,
     position: Position,
-) -> Vec<CompletionItem> {
+) -> Vec<Arc<CompletionItem>> {
     let params = CompletionParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),
         position,
