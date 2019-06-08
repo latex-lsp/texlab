@@ -6,7 +6,7 @@ use std::sync::Mutex;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
     RegisterCapabilities,
-    LoadResolver,
+    LoadDistribution,
     ResolveIncludes,
     PublishDiagnostics,
     RunLinter(Uri),
