@@ -25,8 +25,6 @@ impl<'a> Citation<'a> {
     }
 
     pub fn render(&self) -> Result<MarkupContent, CitationError> {
-        let now = std::time::Instant::now();
-
         let directory = tempdir().map_err(|_| CitationError::WriteFailed)?;
         let entry_path = directory.path().join("entry.bib");
         fs::write(entry_path, self.entry_code).map_err(|_| CitationError::WriteFailed)?;
@@ -54,8 +52,6 @@ impl<'a> Citation<'a> {
             let html =
                 String::from_utf8(output.stdout).map_err(|_| CitationError::InvalidOutput)?;
             let markdown = html2md::parse_html(&html);
-
-            log::info!("CITATION = {} ms", now.elapsed().as_millis());
 
             Ok(MarkupContent {
                 kind: MarkupKind::Markdown,

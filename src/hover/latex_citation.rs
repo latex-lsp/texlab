@@ -1,13 +1,12 @@
 use crate::data::citation::Citation;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
-use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
+use crate::formatting::bibtex::BibtexFormattingParams;
 use crate::syntax::bibtex::BibtexEntry;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;
