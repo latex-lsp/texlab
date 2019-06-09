@@ -1,7 +1,6 @@
 use super::{Error, Result};
 use byteorder::{LittleEndian, ReadBytesExt};
-use lazy_static::lazy_static;
-use regex::Regex;
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::io::Cursor;
@@ -14,10 +13,6 @@ const FNDB_TABLE_POINTER_OFFSET: usize = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: usize = 6 * FNDB_WORD_SIZE;
 const FNDB_ENTRY_SIZE: usize = 4 * FNDB_WORD_SIZE;
 
-lazy_static! {
-    static ref FNDB_REGEX: Regex = Regex::new(r#".*\.fndb-\d+"#).unwrap();
-}
-
 pub fn read_database(directory: &Path, root_directories: &[PathBuf]) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
     if !database_directory.exists() {
@@ -28,7 +23,7 @@ pub fn read_database(directory: &Path, root_directories: &[PathBuf]) -> Result<V
     let files = fs::read_dir(database_directory)
         .expect("Could not traverse database directory")
         .filter_map(|x| x.ok())
-        .filter(|x| FNDB_REGEX.is_match(x.file_name().to_str().unwrap()));
+        .filter(|x| x.path().extension().and_then(OsStr::to_str) == Some("fndb-5"));
 
     for file in files {
         let bytes = fs::read(file.path()).expect("Could not read fndb file");

@@ -7,13 +7,13 @@ use futures::lock::Mutex;
 use futures::prelude::*;
 use jsonrpc::MessageHandler;
 use std::sync::Arc;
+use stderrlog::{ColorChoice, Timestamp};
 use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
 use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
-use stderrlog::{Timestamp, ColorChoice};
 
 fn main() {
     let matches = app_from_crate!()
