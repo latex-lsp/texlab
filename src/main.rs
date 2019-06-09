@@ -13,6 +13,7 @@ use texlab::server::LatexLspServer;
 use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
+use stderrlog::{Timestamp, ColorChoice};
 
 fn main() {
     let matches = app_from_crate!()
@@ -35,7 +36,8 @@ fn main() {
         .module(module_path!())
         .verbosity(matches.occurrences_of("verbosity") as usize)
         .quiet(matches.is_present("quiet"))
-        .timestamp(stderrlog::Timestamp::Off)
+        .timestamp(Timestamp::Off)
+        .color(ColorChoice::Never)
         .init()
         .unwrap();
 
