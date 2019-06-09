@@ -1,3 +1,4 @@
+use crate::syntax::bibtex::BibtexSyntaxTree;
 use lsp_types::*;
 use std::borrow::Cow;
 use std::fs;
@@ -7,7 +8,7 @@ use tempfile::tempdir;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum CitationError {
-    WriteFailed,
+    InitializationFailed,
     InvalidEntry,
     NodeNotInstalled,
     ScriptFaulty,
@@ -25,9 +26,14 @@ impl<'a> Citation<'a> {
     }
 
     pub fn render(&self) -> Result<MarkupContent, CitationError> {
-        let directory = tempdir().map_err(|_| CitationError::WriteFailed)?;
+        let entry = BibtexSyntaxTree::from(self.entry_code);
+        if entry.entries().iter().any(|entry| entry.fields.len() == 0) {
+            return Err(CitationError::InvalidEntry);
+        }
+
+        let directory = tempdir().map_err(|_| CitationError::InitializationFailed)?;
         let entry_path = directory.path().join("entry.bib");
-        fs::write(entry_path, self.entry_code).map_err(|_| CitationError::WriteFailed)?;
+        fs::write(entry_path, self.entry_code).map_err(|_| CitationError::InitializationFailed)?;
 
         let mut process = Command::new("node")
             .stdin(Stdio::piped())
@@ -78,6 +84,12 @@ mod tests {
     #[test]
     fn test_invalid() {
         let citation = Citation::new("@article{}");
+        assert_eq!(citation.render(), Err(CitationError::InvalidEntry));
+    }
+
+    #[test]
+    fn test_empty() {
+        let citation = Citation::new("@article{foo,}");
         assert_eq!(citation.render(), Err(CitationError::InvalidEntry));
     }
 }

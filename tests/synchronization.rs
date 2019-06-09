@@ -3,8 +3,8 @@
 use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
-use texlab::scenario::Scenario;
 use std::sync::Arc;
+use texlab::scenario::Scenario;
 
 async fn run_completion(
     scenario: &Scenario,
