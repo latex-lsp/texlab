@@ -12,6 +12,7 @@ members = ["./jsonrpc", "./jsonrpc_derive"]
 
 [dependencies]
 bytes = "0.4.12"
+byteorder = "1"
 clap = "2.33"
 copy_dir = "0.1.2"
 futures-boxed = { path = "futures_boxed" }

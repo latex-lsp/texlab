@@ -1,5 +1,5 @@
 use crate::data::completion::LatexComponentDatabase;
-use crate::distribution::TexDistribution;
+use crate::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
@@ -16,7 +16,7 @@ pub struct FeatureRequest<P> {
     pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
-    pub distribution: Arc<TexDistribution>,
+    pub resolver: Arc<TexResolver>,
     pub component_database: Arc<LatexComponentDatabase>,
 }
 
@@ -25,7 +25,7 @@ impl<P> FeatureRequest<P> {
         params: P,
         workspace: Arc<Workspace>,
         document: Arc<Document>,
-        distribution: Arc<TexDistribution>,
+        resolver: Arc<TexResolver>,
         component_database: Arc<LatexComponentDatabase>,
     ) -> Self {
         let related_documents = workspace.related_documents(&document.uri);
@@ -34,7 +34,7 @@ impl<P> FeatureRequest<P> {
             workspace,
             document,
             related_documents,
-            distribution,
+            resolver,
             component_database,
         }
     }
@@ -126,7 +126,7 @@ pub struct FeatureSpec {
     pub main_file: &'static str,
     pub position: Position,
     pub new_name: &'static str,
-    pub distribution: TexDistribution,
+    pub resolver: TexResolver,
     pub component_database: LatexComponentDatabase,
 }
 
@@ -167,7 +167,7 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -186,7 +186,7 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -203,7 +203,7 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -220,7 +220,7 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -241,7 +241,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }
@@ -260,7 +260,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             params,
             workspace,
             document,
-            Arc::new(self.distribution),
+            Arc::new(self.resolver),
             Arc::new(self.component_database),
         )
     }

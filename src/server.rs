@@ -8,8 +8,6 @@ use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
-use crate::distribution;
-use crate::distribution::TexDistribution;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex;
@@ -20,6 +18,8 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
+use crate::resolver;
+use crate::resolver::{TexResolver, TEX_RESOLVER};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
@@ -42,7 +42,7 @@ pub struct LatexLspServer<C> {
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
     diagnostics_manager: Mutex<DiagnosticsManager>,
-    distribution: Mutex<Arc<TexDistribution>>,
+    resolver: Mutex<Arc<TexResolver>>,
     completion_provider: CompletionProvider,
     definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
@@ -61,7 +61,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
-            distribution: Mutex::new(Arc::new(TexDistribution::default())),
+            resolver: Mutex::new(Arc::new(TexResolver::default())),
             completion_provider: CompletionProvider::new(),
             definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
@@ -134,7 +134,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
-        self.action_manager.push(Action::LoadDistribution);
+        self.action_manager.push(Action::LoadResolver);
         self.action_manager.push(Action::ResolveIncludes);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -390,25 +390,25 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         );
                     }
                 }
-                Action::LoadDistribution => {
-                    match TexDistribution::load() {
+                Action::LoadResolver => {
+                    match &*TEX_RESOLVER {
                         Ok(res) => {
-                            let mut distribution = self.distribution.lock().await;
-                            *distribution = Arc::new(res);
+                            let mut resolver = self.resolver.lock().await;
+                            *resolver = Arc::clone(&res);
                         }
                         Err(why) => {
                             let message = match why {
-                                distribution::Error::KpsewhichNotFound => {
+                                resolver::Error::KpsewhichNotFound => {
                                     "An error occurred while executing `kpsewhich`.\
                                      Please make sure that your distribution is in your PATH \
                                      environment variable and provides the `kpsewhich` tool."
                                 }
-                                distribution::Error::UnsupportedTexDistribution => {
+                                resolver::Error::UnsupportedTexDistribution => {
                                     "Your TeX distribution is not supported."
                                 }
-                                distribution::Error::CorruptPackageDatabase => {
-                                    "The package database of your TeX distribution seems \
-                                     to be corrupt. Please reinstall your distribution."
+                                resolver::Error::CorruptFileDatabase => {
+                                    "The file database of your TeX distribution seems \
+                                     to be corrupt. Please rebuild it and try again."
                                 }
                             };
 
@@ -469,14 +469,14 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
 macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
-        let distribution = $server.distribution.lock().await;
+        let resolver = $server.resolver.lock().await;
 
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest::new(
                 $params,
                 workspace,
                 document,
-                Arc::clone(&distribution),
+                Arc::clone(&resolver),
                 Arc::new(LatexComponentDatabase::default()),
             ))
         } else {

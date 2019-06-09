@@ -52,13 +52,13 @@ where
 {
     LatexCombinators::argument(request, &commands, 0, async move |_| {
         request
-            .distribution
-            .packages
-            .iter()
-            .flat_map(|package| &package.run_files)
+            .resolver
+            .files_by_name
+            .values()
             .filter(|file| file.extension().and_then(OsStr::to_str) == Some(extension))
-            .map(|file| file.file_stem().unwrap().to_str().unwrap())
-            .map(|name| Arc::new(factory(Cow::from(name.to_owned()))))
+            .flat_map(|file| file.file_stem().unwrap().to_str())
+            .map(|name| factory(Cow::from(name.to_owned())))
+            .map(Arc::new)
             .collect()
     })
     .await
@@ -67,27 +67,18 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::distribution::{PackageManifest, TexDistribution};
     use crate::feature::{test_feature, FeatureSpec};
+    use crate::resolver::TexResolver;
     use lsp_types::Position;
+    use std::collections::HashMap;
+    use std::ffi::OsString;
     use std::path::PathBuf;
 
-    fn create_distribution() -> TexDistribution {
-        let packages = vec![
-            PackageManifest {
-                run_files: vec![PathBuf::from("./foo.sty")],
-                ..PackageManifest::default()
-            },
-            PackageManifest {
-                run_files: vec![PathBuf::from("./bar.cls")],
-                ..PackageManifest::default()
-            },
-        ];
-
-        TexDistribution {
-            packages,
-            ..TexDistribution::default()
-        }
+    fn create_resolver() -> TexResolver {
+        let mut files_by_name = HashMap::new();
+        files_by_name.insert(OsString::from("foo.sty"), PathBuf::from("./foo.sty"));
+        files_by_name.insert(OsString::from("bar.cls"), PathBuf::from("./bar.cls"));
+        TexResolver { files_by_name }
     }
 
     #[test]
@@ -98,7 +89,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\documentclass{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
-                distribution: create_distribution(),
+                resolver: create_resolver(),
                 ..FeatureSpec::default()
             },
         );
@@ -115,7 +106,7 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\usepackage{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 12),
-                distribution: create_distribution(),
+                resolver: create_resolver(),
                 ..FeatureSpec::default()
             },
         );
