@@ -144,34 +144,3 @@ mod parser {
         }
     }
 }
-
-//named!(content_type<&[u8], ()>,
-//    do_parse!(
-//        tag!("Content-Type: application/vscode-jsonrpc;charset=utf") >>
-//        opt!(tag!("-")) >>
-//        tag!("8") >>
-//        line_ending >>
-//        ()
-//    )
-//);
-//
-//named!(content_length<&[u8], usize>,
-//    do_parse!(
-//        tag!("Content-Length: ") >>
-//        length: map_res!(take_while!(is_digit), from_bytes) >>
-//        line_ending >>
-//        (length)
-//    )
-//);
-//
-//named!(
-//    parse_message<&[u8], String>,
-//    do_parse!(
-//        opt!(content_type) >>
-//        length: content_length >>
-//        opt!(content_type) >>
-//        line_ending >>
-//        content: map_res!(take!(length), str::from_utf8) >>
-//        (content.to_string())
-//    )
-//);
