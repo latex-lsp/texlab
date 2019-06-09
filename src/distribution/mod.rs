@@ -4,7 +4,6 @@ use std::process::Command;
 mod ini;
 mod miktex;
 mod texlive;
-mod tlpdb;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct PackageManifest {
