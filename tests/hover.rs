@@ -74,6 +74,22 @@ fn test_field_unknown() {
 }
 
 #[test]
+fn test_citation_latex() {
+    block_on(async move {
+        let contents = run("latex/citation", "foo.tex", Position::new(2, 7)).await;
+        assert_ne!(contents, None);
+    });
+}
+
+#[test]
+fn test_citation_bibtex() {
+    block_on(async move {
+        let contents = run("latex/citation", "foo.bib", Position::new(0, 11)).await;
+        assert_ne!(contents, None);
+    });
+}
+
+#[test]
 fn test_component_class() {
     block_on(async move {
         let contents = run("latex/component", "foo.tex", Position::new(0, 19)).await;

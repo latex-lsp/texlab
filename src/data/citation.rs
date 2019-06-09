@@ -52,10 +52,9 @@ impl<'a> Citation<'a> {
             let html =
                 String::from_utf8(output.stdout).map_err(|_| CitationError::InvalidOutput)?;
             let markdown = html2md::parse_html(&html);
-
             Ok(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: Cow::from(markdown),
+                value: Cow::from(markdown.trim().to_owned()),
             })
         } else {
             Err(CitationError::InvalidEntry)
@@ -64,3 +63,21 @@ impl<'a> Citation<'a> {
 }
 
 const SCRIPT: &str = include_str!("../../citeproc/dist/citeproc.js");
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid() {
+        let citation =
+            Citation::new("@article{foo, author = {Foo Bar}, title = {Baz Qux}, year = 1337}");
+        assert_eq!(citation.render().unwrap().value, "Bar, F. (1337). Baz Qux.");
+    }
+
+    #[test]
+    fn test_invalid() {
+        let citation = Citation::new("@article{}");
+        assert_eq!(citation.render(), Err(CitationError::InvalidEntry));
+    }
+}
