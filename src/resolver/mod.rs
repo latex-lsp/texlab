@@ -1,7 +1,8 @@
+use crate::syntax::Language;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::env;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -35,9 +36,34 @@ pub struct TexResolver {
 
 impl TexResolver {
     fn load() -> Result<Self> {
-        let directories = Self::find_root_directories()?;
-        let kind = Self::detect_distribution(&directories)?;
-        let files_by_name = Self::read_database(&directories, kind)?;
+        let root_directories = Self::find_root_directories()?;
+        let kind = Self::detect_distribution(&root_directories)?;
+        let reader = match kind {
+            TexDistributionKind::Texlive => texlive::read_database,
+            TexDistributionKind::Miktex => miktex::read_database,
+        };
+
+        let mut files_by_name = HashMap::new();
+        for directory in &root_directories {
+            let database = reader(directory)?
+                .into_iter()
+                .filter(|path| {
+                    path.extension()
+                        .and_then(OsStr::to_str)
+                        .and_then(Language::by_extension)
+                        .is_some()
+                })
+                .filter_map(|path| {
+                    root_directories
+                        .iter()
+                        .rev()
+                        .find_map(move |dir| dir.join(&path).canonicalize().ok())
+                })
+                .map(|path| (path.file_name().unwrap().to_owned(), path));
+
+            files_by_name.extend(database);
+        }
+
         Ok(Self { files_by_name })
     }
 
@@ -58,7 +84,7 @@ impl TexResolver {
         Ok(String::from_utf8(output.stdout)
             .expect("Could not decode output from kpsewhich")
             .lines()
-            .nth(0)
+            .next()
             .expect("Invalid output from kpsewhich")
             .to_owned())
     }
@@ -73,25 +99,5 @@ impl TexResolver {
         }
 
         Err(Error::UnsupportedTexDistribution)
-    }
-
-    fn read_database(
-        root_directories: &[PathBuf],
-        kind: TexDistributionKind,
-    ) -> Result<HashMap<OsString, PathBuf>> {
-        let mut files_by_name = HashMap::new();
-        for directory in root_directories {
-            let database = match kind {
-                TexDistributionKind::Texlive => texlive::read_database(&directory),
-                TexDistributionKind::Miktex => miktex::read_database(&directory, root_directories),
-            }?;
-
-            for file in database {
-                let name = file.file_name().unwrap().to_owned();
-                files_by_name.insert(name, file);
-            }
-        }
-
-        Ok(files_by_name)
     }
 }

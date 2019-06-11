@@ -13,7 +13,7 @@ const FNDB_TABLE_POINTER_OFFSET: usize = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: usize = 6 * FNDB_WORD_SIZE;
 const FNDB_ENTRY_SIZE: usize = 4 * FNDB_WORD_SIZE;
 
-pub fn read_database(directory: &Path, root_directories: &[PathBuf]) -> Result<Vec<PathBuf>> {
+pub fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
     if !database_directory.exists() {
         return Ok(Vec::new());
@@ -27,15 +27,13 @@ pub fn read_database(directory: &Path, root_directories: &[PathBuf]) -> Result<V
 
     for file in files {
         let bytes = fs::read(file.path()).expect("Could not read fndb file");
-        database.extend(
-            parse_database(root_directories, &bytes).map_err(|_| Error::CorruptFileDatabase)?,
-        );
+        database.extend(parse_database(&bytes).map_err(|_| Error::CorruptFileDatabase)?);
     }
 
     Ok(database)
 }
 
-fn parse_database(root_directories: &[PathBuf], bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
+fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
     let mut reader = Cursor::new(bytes);
     if reader.read_u32::<LittleEndian>()? != FNDB_SIGNATURE {
         return Err(io::Error::from(io::ErrorKind::InvalidData));
@@ -56,12 +54,8 @@ fn parse_database(root_directories: &[PathBuf], bytes: &[u8]) -> io::Result<Vec<
         let file_name = read_string(bytes, file_name_offset)?;
         let directory = read_string(bytes, directory_offset)?;
 
-        for root_directory in root_directories {
-            let file = root_directory.join(directory).join(file_name);
-            if file.is_file() {
-                files.push(file.canonicalize().unwrap());
-            }
-        }
+        let file = PathBuf::from(directory).join(file_name);
+        files.push(file);
     }
 
     Ok(files)
