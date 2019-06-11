@@ -1,5 +1,6 @@
+use futures::compat::*;
 use lsp_types::{MarkupContent, MarkupKind, Uri};
-use reqwest::Client;
+use reqwest::r#async::Client;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -13,12 +14,11 @@ impl ComponentDocumentation {
     pub async fn lookup(name: &str) -> Option<ComponentDocumentation> {
         let uri: Uri = format!("http://ctan.org/json/2.0/pkg/{}", name)
             .parse()
-            .unwrap();
+            .ok()?;
 
         let client = Client::new();
-        let mut response = client.get(uri).send().ok()?;
-        let component: Component = response.json().ok()?;
-
+        let mut response = client.get(uri).send().compat().await.ok()?;
+        let component: Component = response.json().compat().await.ok()?;
         if component.errors.is_some() {
             return None;
         }
