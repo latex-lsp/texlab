@@ -15,7 +15,7 @@ pub enum Language {
 impl Language {
     pub fn by_extension(extension: &str) -> Option<Self> {
         match extension.to_lowercase().as_ref() {
-            "tex" | "sty" | "cls" => Some(Language::Latex),
+            "tex" | "sty" | "cls" | "lco" => Some(Language::Latex),
             "bib" => Some(Language::Bibtex),
             _ => None,
         }
