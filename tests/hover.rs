@@ -1,6 +1,5 @@
 #![feature(async_await)]
 
-use futures::executor::block_on;
 use lsp_types::*;
 use std::borrow::Cow;
 use texlab::data::bibtex_entry_type;
@@ -25,90 +24,72 @@ pub async fn run(
         .map(|hover| hover.contents)
 }
 
-#[test]
-fn test_entry_type_known() {
-    block_on(async move {
-        let contents = run("bibtex/entry_type", "foo.bib", Position::new(0, 5))
-            .await
-            .unwrap();
-        assert_eq!(
-            contents,
-            HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: Cow::from(bibtex_entry_type::get_documentation("article").unwrap())
-            })
-        );
-    });
+#[runtime::test]
+async fn test_entry_type_known() {
+    let contents = run("bibtex/entry_type", "foo.bib", Position::new(0, 5))
+        .await
+        .unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: Cow::from(bibtex_entry_type::get_documentation("article").unwrap())
+        })
+    );
 }
 
-#[test]
-fn test_entry_type_unknown() {
-    block_on(async move {
-        let contents = run("bibtex/entry_type", "foo.bib", Position::new(2, 2)).await;
-        assert_eq!(contents, None);
-    });
+#[runtime::test]
+async fn test_entry_type_unknown() {
+    let contents = run("bibtex/entry_type", "foo.bib", Position::new(2, 2)).await;
+    assert_eq!(contents, None);
 }
 
-#[test]
-fn test_field_known() {
-    block_on(async move {
-        let contents = run("bibtex/field", "foo.bib", Position::new(1, 4))
-            .await
-            .unwrap();
-        assert_eq!(
-            contents,
-            HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: Cow::from(bibtex_field::get_documentation("author").unwrap())
-            })
-        )
-    });
+#[runtime::test]
+async fn test_field_known() {
+    let contents = run("bibtex/field", "foo.bib", Position::new(1, 4))
+        .await
+        .unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: Cow::from(bibtex_field::get_documentation("author").unwrap())
+        })
+    )
 }
 
-#[test]
-fn test_field_unknown() {
-    block_on(async move {
-        let contents = run("bibtex/field", "foo.bib", Position::new(2, 5)).await;
-        assert_eq!(contents, None);
-    });
+#[runtime::test]
+async fn test_field_unknown() {
+    let contents = run("bibtex/field", "foo.bib", Position::new(2, 5)).await;
+    assert_eq!(contents, None);
 }
 
-#[test]
-fn test_citation_latex() {
-    block_on(async move {
-        let contents = run("latex/citation", "foo.tex", Position::new(2, 7)).await;
-        assert_ne!(contents, None);
-    });
+#[runtime::test]
+async fn test_citation_latex() {
+    let contents = run("latex/citation", "foo.tex", Position::new(2, 7)).await;
+    assert_ne!(contents, None);
 }
 
-#[test]
-fn test_citation_bibtex() {
-    block_on(async move {
-        let contents = run("latex/citation", "foo.bib", Position::new(0, 11)).await;
-        assert_ne!(contents, None);
-    });
+#[runtime::test]
+async fn test_citation_bibtex() {
+    let contents = run("latex/citation", "foo.bib", Position::new(0, 11)).await;
+    assert_ne!(contents, None);
 }
 
-#[test]
-fn test_component_class() {
-    block_on(async move {
-        let contents = run("latex/component", "foo.tex", Position::new(0, 19)).await;
-        assert!(contents.is_some());
-    });
+#[runtime::test]
+async fn test_component_class() {
+    let contents = run("latex/component", "foo.tex", Position::new(0, 19)).await;
+    assert!(contents.is_some());
 }
 
-#[test]
-fn test_component_package() {
-    block_on(async move {
-        let contents = run("latex/component", "foo.tex", Position::new(2, 16)).await;
-        assert!(contents.is_some());
-    });
+#[runtime::test]
+async fn test_component_package() {
+    let contents = run("latex/component", "foo.tex", Position::new(2, 16)).await;
+    assert!(contents.is_some());
 }
 
-#[test]
-fn test_component_package_unknown() {
-    block_on(async move {
-        let contents = run("latex/component", "foo.tex", Position::new(3, 14)).await;
-        assert_eq!(contents, None);
-    });
+#[runtime::test]
+async fn test_component_package_unknown() {
+    let contents = run("latex/component", "foo.tex", Position::new(3, 14)).await;
+    assert_eq!(contents, None);
 }

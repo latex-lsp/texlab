@@ -1,6 +1,5 @@
 #![feature(async_await)]
 
-use futures::executor::block_on;
 use lsp_types::*;
 use texlab::scenario::Scenario;
 
@@ -18,30 +17,26 @@ pub async fn run(
     (scenario, definitions)
 }
 
-#[test]
-fn test_citation() {
-    block_on(async move {
-        let (scenario, definitions) = run("citation", "foo.tex", Position::new(5, 8)).await;
-        assert_eq!(
-            definitions,
-            vec![Location::new(
-                scenario.uri("foo.bib"),
-                Range::new_simple(2, 9, 2, 12)
-            )]
-        );
-    });
+#[runtime::test]
+async fn test_citation() {
+    let (scenario, definitions) = run("citation", "foo.tex", Position::new(5, 8)).await;
+    assert_eq!(
+        definitions,
+        vec![Location::new(
+            scenario.uri("foo.bib"),
+            Range::new_simple(2, 9, 2, 12)
+        )]
+    );
 }
 
-#[test]
-fn test_label() {
-    block_on(async move {
-        let (scenario, definitions) = run("label", "foo.tex", Position::new(8, 8)).await;
-        assert_eq!(
-            definitions,
-            vec![Location::new(
-                scenario.uri("bar.tex"),
-                Range::new_simple(0, 7, 0, 10)
-            )]
-        );
-    });
+#[runtime::test]
+async fn test_label() {
+    let (scenario, definitions) = run("label", "foo.tex", Position::new(8, 8)).await;
+    assert_eq!(
+        definitions,
+        vec![Location::new(
+            scenario.uri("bar.tex"),
+            Range::new_simple(0, 7, 0, 10)
+        )]
+    );
 }
