@@ -5,7 +5,6 @@ use crate::syntax::latex::LatexCommand;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 use walkdir::WalkDir;
 

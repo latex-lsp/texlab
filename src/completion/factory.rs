@@ -1,7 +1,7 @@
 use crate::data::bibtex_entry_type::BibtexEntryType;
 use crate::data::bibtex_field::BibtexField;
 use crate::formatting::bibtex;
-use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
+use crate::formatting::bibtex::BibtexFormattingParams;
 use crate::syntax::bibtex::BibtexEntry;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
