@@ -13,7 +13,7 @@ use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
 
-#[runtime::main]
+#[runtime::main(runtime_tokio::Tokio)]
 async fn main() {
     let matches = app_from_crate!()
         .author("")

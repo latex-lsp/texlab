@@ -3,7 +3,7 @@ use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::factory::CompletionItemData;
 use crate::completion::CompletionProvider;
-use crate::data::citation::Citation;
+use crate::data::citation::render_citation;
 use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
@@ -232,8 +232,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .map(|documentation| Documentation::MarkupContent(documentation.content));
             }
             CompletionItemData::Citation { entry_code } => {
-                let citation = Citation::new(&entry_code);
-                if let Ok(markdown) = citation.render() {
+                if let Ok(markdown) = render_citation(&entry_code).await {
                     item.documentation = Some(Documentation::MarkupContent(markdown));
                 }
             }

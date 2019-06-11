@@ -19,7 +19,7 @@ async fn run_completion(
     scenario.server.completion(params).await.unwrap().items
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_did_change() {
     let scenario = Scenario::new("synchronization/did_change").await;
     scenario.open("foo.tex").await;
@@ -46,7 +46,7 @@ async fn test_did_change() {
         .is_empty());
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_indexing() {
     let scenario = Scenario::new("synchronization/did_change").await;
     scenario.open("foo.tex").await;

@@ -27,7 +27,7 @@ pub async fn run(
     (scenario, edits)
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_bibtex_entry_default() {
     let (scenario, edits) = run("bibtex/default", "foo.bib", None).await;
     assert_eq!(edits.len(), 1);
@@ -35,7 +35,7 @@ async fn test_bibtex_entry_default() {
     assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 52));
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_bibtex_entry_infinite_line_length() {
     let (scenario, edits) = run(
         "bibtex/infinite_line_length",
@@ -48,7 +48,7 @@ async fn test_bibtex_entry_infinite_line_length() {
     assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 149));
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_latex() {
     let (_, edits) = run("latex", "foo.tex", None).await;
     assert!(edits.is_empty());

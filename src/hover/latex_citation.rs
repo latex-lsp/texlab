@@ -1,4 +1,4 @@
-use crate::data::citation::Citation;
+use crate::data::citation::render_citation;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
@@ -25,8 +25,7 @@ impl FeatureProvider for LatexCitationHoverProvider {
             None
         } else {
             let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
-            let citation = Citation::new(&entry_code);
-            let markdown = citation.render().ok()?;
+            let markdown = render_citation(&entry_code).await.ok()?;
             Some(Hover {
                 contents: HoverContents::Markup(markdown),
                 range: None,

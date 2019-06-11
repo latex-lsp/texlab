@@ -27,7 +27,7 @@ async fn run(
     (scenario, result)
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_success() {
     let (scenario, result) = run("latexmk", false, "bar.tex").await;
     assert_eq!(result.status, BuildStatus::Success);
@@ -35,19 +35,19 @@ async fn test_success() {
     assert!(path.exists());
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_error() {
     let (_, result) = run("latexmk", false, "baz.tex").await;
     assert_eq!(result.status, BuildStatus::Error);
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_failure() {
     let (_, result) = run("foobarbaz", false, "foo.tex").await;
     assert_eq!(result.status, BuildStatus::Failure);
 }
 
-#[runtime::test]
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_on_save() {
     let scenario = Scenario::new("build").await;
     scenario.open("foo.tex").await;
