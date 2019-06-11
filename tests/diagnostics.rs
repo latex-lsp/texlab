@@ -23,7 +23,7 @@ fn test_lint_latex() {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
         let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
         assert_eq!(diagnostics.len(), 1);
-        assert_eq!(diagnostics[0].message, "Command terminated with space.");
+        assert_eq!(diagnostics[0].message, "Wrong length of dash may have been used.");
         assert_eq!(diagnostics[0].range.start.line, 4);
     });
 }
