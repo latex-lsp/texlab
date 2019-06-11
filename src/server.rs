@@ -22,7 +22,7 @@ use crate::resolver;
 use crate::resolver::{TexResolver, TEX_RESOLVER};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use crate::syntax::{Language, SyntaxTree};
 use crate::workspace::WorkspaceManager;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
@@ -32,6 +32,7 @@ use log::*;
 use lsp_types::*;
 use serde::de::DeserializeOwned;
 use std::borrow::Cow;
+use std::ffi::OsStr;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -81,7 +82,15 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 .max_depth(4)
                 .into_iter()
                 .filter_map(std::result::Result::ok)
-                .filter(|x| x.file_type().is_file())
+                .filter(|entry| entry.file_type().is_file())
+                .filter(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .and_then(OsStr::to_str)
+                        .and_then(Language::by_extension)
+                        .is_some()
+                })
             {
                 self.workspace_manager.load(&entry.path());
             }
