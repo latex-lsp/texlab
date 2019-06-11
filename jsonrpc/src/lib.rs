@@ -10,10 +10,8 @@ pub use self::{
     types::*,
 };
 
-use futures::executor::ThreadPool;
 use futures::lock::Mutex;
 use futures::prelude::*;
-use futures::task::*;
 use std::sync::Arc;
 
 pub struct MessageHandler<S, C, I, O> {
@@ -21,7 +19,6 @@ pub struct MessageHandler<S, C, I, O> {
     pub client: Arc<C>,
     pub input: I,
     pub output: Arc<Mutex<O>>,
-    pub pool: ThreadPool,
 }
 
 impl<S, C, I, O> MessageHandler<S, C, I, O>
@@ -43,25 +40,20 @@ where
                 Ok(Message::Request(request)) => {
                     let server = Arc::clone(&self.server);
                     let output = Arc::clone(&self.output);
-                    let handler = async move {
+                    runtime::spawn(async move {
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
                         let mut output = output.lock().await;
                         output.send(json).await.unwrap();
                         server.execute_actions().await;
-                    };
-
-                    self.pool.spawn(handler).unwrap();
+                    });
                 }
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
-
                     let server = Arc::clone(&self.server);
-                    let handler = async move {
+                    runtime::spawn(async move {
                         server.execute_actions().await;
-                    };
-
-                    self.pool.spawn(handler).unwrap();
+                    });
                 }
                 Ok(Message::Response(response)) => {
                     self.client.handle(response).await;

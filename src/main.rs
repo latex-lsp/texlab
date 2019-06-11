@@ -2,9 +2,7 @@
 
 use clap::*;
 use futures::compat::*;
-use futures::executor::*;
 use futures::lock::Mutex;
-use futures::prelude::*;
 use jsonrpc::MessageHandler;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
@@ -15,7 +13,8 @@ use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
 
-fn main() {
+#[runtime::main]
+async fn main() {
     let matches = app_from_crate!()
         .author("")
         .arg(
@@ -41,12 +40,6 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut pool = ThreadPool::new().expect("Failed to create the thread pool");
-    let task = run(pool.clone());
-    pool.run(task.unit_error()).unwrap();
-}
-
-async fn run(pool: ThreadPool) {
     let stdin = tokio_stdin_stdout::stdin(0);
     let stdout = tokio_stdin_stdout::stdout(0);
     let input = FramedRead::new(stdin, LspCodec).compat();
@@ -58,7 +51,6 @@ async fn run(pool: ThreadPool) {
         client,
         input,
         output,
-        pool,
     };
 
     handler.listen().await;
