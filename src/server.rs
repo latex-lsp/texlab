@@ -10,16 +10,15 @@ use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
-use crate::formatting::bibtex;
-use crate::formatting::bibtex::{BibtexFormattingOptions, BibtexFormattingParams};
+use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
+use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult};
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::RenameProvider;
 use crate::request;
-use crate::resolver;
-use crate::resolver::{TexResolver, TEX_RESOLVER};
+use crate::resolver::{self, TexResolver, TEX_RESOLVER};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::{Language, SyntaxTree};
@@ -336,6 +335,27 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let provider = BuildProvider::new(Arc::clone(&self.client), options);
         let result = provider.execute(&request).await;
         Ok(result)
+    }
+
+    #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
+    pub async fn forward_search(
+        &self,
+        params: TextDocumentPositionParams,
+    ) -> Result<ForwardSearchResult> {
+        let request = request!(self, params)?;
+        let options = self
+            .configuration::<ForwardSearchOptions>("latex.forwardSearch")
+            .await;
+
+        let tex_file = request.document.uri.to_file_path().unwrap();
+        let parent = request
+            .workspace
+            .find_parent(&request.document.uri)
+            .unwrap_or(request.document);
+        let parent = parent.uri.to_file_path().unwrap();
+        forward_search::search(&tex_file, &parent, request.params.position.line, options)
+            .await
+            .ok_or_else(|| format!("Unable to execute forward search"))
     }
 
     async fn configuration<T>(&self, section: &'static str) -> T

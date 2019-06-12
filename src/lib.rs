@@ -12,6 +12,7 @@ pub mod diagnostics;
 pub mod feature;
 pub mod folding;
 pub mod formatting;
+pub mod forward_search;
 pub mod highlight;
 pub mod hover;
 pub mod link;
