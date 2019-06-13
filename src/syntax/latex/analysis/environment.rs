@@ -1,4 +1,6 @@
 use crate::syntax::latex::ast::*;
+use crate::syntax::text::SyntaxNode;
+use lsp_types::Range;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -20,6 +22,12 @@ impl LatexEnvironmentDelimiter {
 pub struct LatexEnvironment {
     pub left: LatexEnvironmentDelimiter,
     pub right: LatexEnvironmentDelimiter,
+}
+
+impl SyntaxNode for LatexEnvironment {
+    fn range(&self) -> Range {
+        Range::new(self.left.command.start(), self.right.command.end())
+    }
 }
 
 impl LatexEnvironment {

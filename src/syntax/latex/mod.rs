@@ -11,6 +11,7 @@ pub use crate::syntax::latex::analysis::environment::*;
 pub use crate::syntax::latex::analysis::equation::*;
 pub use crate::syntax::latex::analysis::finder::*;
 pub use crate::syntax::latex::analysis::include::*;
+use crate::syntax::latex::analysis::inline::LatexInlineAnalyzer;
 pub use crate::syntax::latex::analysis::label::*;
 pub use crate::syntax::latex::analysis::section::*;
 pub use crate::syntax::latex::ast::*;
@@ -32,6 +33,7 @@ pub struct LatexSyntaxTree {
     pub sections: Vec<LatexSection>,
     pub citations: Vec<LatexCitation>,
     pub equations: Vec<LatexEquation>,
+    pub inlines: Vec<Arc<LatexGroup>>,
 }
 
 impl LatexSyntaxTree {
@@ -51,6 +53,7 @@ impl LatexSyntaxTree {
         let sections = LatexSection::parse_all(&commands);
         let citations = LatexCitation::parse_all(&commands);
         let equations = LatexEquation::parse_all(&commands);
+        let inlines = LatexInlineAnalyzer::find(Arc::clone(&root));
 
         LatexSyntaxTree {
             root,
@@ -63,6 +66,7 @@ impl LatexSyntaxTree {
             sections,
             citations,
             equations,
+            inlines,
         }
     }
 

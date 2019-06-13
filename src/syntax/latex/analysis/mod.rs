@@ -4,5 +4,6 @@ pub mod environment;
 pub mod equation;
 pub mod finder;
 pub mod include;
+pub mod inline;
 pub mod label;
 pub mod section;
