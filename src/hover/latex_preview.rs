@@ -112,15 +112,7 @@ impl LatexPreviewHoverProvider {
         let mut code = String::new();
         code.push_str("\\documentclass{article}\n");
         code.push_str("\\thispagestyle{empty}\n");
-        for include in &tree.includes {
-            if include.kind() == LatexIncludeKind::Package {
-                code.push_str(&Self::extract_text(
-                    &request.document.text,
-                    include.command.range,
-                ));
-                code.push('\n');
-            }
-        }
+        Self::generate_includes(request, &mut code);
         // TODO: Include command definitions
         // TODO: Include math operators
         code.push_str("\\begin{document}\n");
@@ -128,6 +120,21 @@ impl LatexPreviewHoverProvider {
         code.push('\n');
         code.push_str("\\end{document}\n");
         code
+    }
+
+    fn generate_includes(request: &FeatureRequest<TextDocumentPositionParams>, code: &mut String) {
+        for document in &request.related_documents {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                let text = &request.document.text;
+                tree.includes
+                    .iter()
+                    .filter(|include| include.kind() == LatexIncludeKind::Package)
+                    .for_each(|include| {
+                        code.push_str(&Self::extract_text(&text, include.command.range));
+                        code.push('\n');
+                    });
+            }
+        }
     }
 
     async fn compile(code: &str) -> Result<TempDir, RenderError> {
