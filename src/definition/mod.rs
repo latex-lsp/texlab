@@ -1,7 +1,9 @@
 mod latex_citation;
+mod latex_command;
 mod latex_label;
 
 use self::latex_citation::LatexCitationDefinitionProvider;
+use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -16,6 +18,7 @@ impl DefinitionProvider {
         Self {
             provider: ConcatProvider::new(vec![
                 Box::new(LatexCitationDefinitionProvider),
+                Box::new(LatexCommandDefinitionProvider),
                 Box::new(LatexLabelDefinitionProvider),
             ]),
         }
