@@ -22,6 +22,7 @@ const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "alignat",
     "aligned",
     "alignedat",
+    "algorithmic",
     "array",
     "Bmatrix",
     "bmatrix",
@@ -111,7 +112,7 @@ impl LatexPreviewHoverProvider {
         code.push_str("\\documentclass{article}\n");
         code.push_str("\\thispagestyle{empty}\n");
         Self::generate_includes(request, &mut code);
-        // TODO: Include command definitions
+        Self::generate_command_definitions(request, &mut code);
         Self::generate_math_operators(request, &mut code);
         code.push_str("\\begin{document}\n");
         code.push_str(&Self::extract_text(&request.document.text, range));
@@ -143,6 +144,23 @@ impl LatexPreviewHoverProvider {
         }
     }
 
+    fn generate_command_definitions(
+        request: &FeatureRequest<TextDocumentPositionParams>,
+        code: &mut String,
+    ) {
+        for document in &request.related_documents {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                tree.command_definitions
+                    .iter()
+                    .map(|def| Self::extract_text(&document.text, def.range()))
+                    .for_each(|def| {
+                        code.push_str(&def);
+                        code.push('\n');
+                    });
+            }
+        }
+    }
+
     fn generate_math_operators(
         request: &FeatureRequest<TextDocumentPositionParams>,
         code: &mut String,
@@ -155,7 +173,7 @@ impl LatexPreviewHoverProvider {
                     .for_each(|op| {
                         code.push_str(&op);
                         code.push('\n');
-                    })
+                    });
             }
         }
     }
@@ -173,7 +191,7 @@ impl LatexPreviewHoverProvider {
             .args(&["--interaction=nonstopmode", "preview.tex"])
             .current_dir(&directory)
             .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::null())
             .spawn()
             .map_err(|_| RenderError::LatexNotInstalled)?;
 
@@ -201,7 +219,7 @@ impl LatexPreviewHoverProvider {
             .args(&["-D", "175", "-T", "tight", "preview.dvi"])
             .current_dir(directory.path())
             .stdout(Stdio::null())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::null())
             .spawn_async()
             .map_err(|_| RenderError::DviPngNotInstalled)?;
 

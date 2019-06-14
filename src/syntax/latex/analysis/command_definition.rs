@@ -1,10 +1,18 @@
 use crate::syntax::latex::{LatexCommand, LatexContent};
+use crate::syntax::text::SyntaxNode;
+use lsp_types::Range;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCommandDefinition {
     pub command: Arc<LatexCommand>,
     pub name: Arc<LatexCommand>,
+}
+
+impl SyntaxNode for LatexCommandDefinition {
+    fn range(&self) -> Range {
+        self.command.range()
+    }
 }
 
 impl LatexCommandDefinition {
