@@ -42,6 +42,8 @@ const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "vmatrix",
 ];
 
+const IGNORED_PACKAGES: &[&str] = &["biblatex", "pgf", "tikz"];
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 enum MathElement<'a> {
     Environment(&'a LatexEnvironment),
@@ -88,13 +90,11 @@ impl LatexPreviewHoverProvider {
         tree: &'a LatexSyntaxTree,
         range: Range,
     ) -> Result<Hover, RenderError> {
-        let now = std::time::Instant::now();
         let code = Self::generate_code(request, tree, range);
         let directory = Self::compile(&code).await?;
         let image = Self::dvipng(&directory).await?;
         let base64 = Self::encode_image(image);
         let markdown = format!("![preview](data:image/png;base64,{})", base64);
-        log::info!("Preview Time = {} ms", now.elapsed().as_millis());
         Ok(Hover {
             range: Some(range),
             contents: HoverContents::Markup(MarkupContent {
@@ -129,6 +129,7 @@ impl LatexPreviewHoverProvider {
                 tree.includes
                     .iter()
                     .filter(|include| include.kind() == LatexIncludeKind::Package)
+                    .filter(|include| !IGNORED_PACKAGES.contains(&include.path().text()))
                     .for_each(|include| {
                         code.push_str(&Self::extract_text(&text, include.command.range));
                         code.push('\n');
