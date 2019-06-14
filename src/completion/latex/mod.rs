@@ -9,7 +9,6 @@ pub mod import;
 pub mod include;
 pub mod kernel_command;
 pub mod kernel_environment;
-pub mod kernel_primitives;
 pub mod label;
 pub mod pgf_library;
 pub mod tikz_command;

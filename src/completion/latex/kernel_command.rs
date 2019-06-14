@@ -1,7 +1,7 @@
 use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::LatexCombinators;
-use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
+use crate::data::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};

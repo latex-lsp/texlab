@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
-use crate::completion::latex::kernel_primitives::KERNEL_COMMANDS;
+use crate::data::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexNode;
 use crate::syntax::text::SyntaxNode;
