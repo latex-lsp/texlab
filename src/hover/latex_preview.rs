@@ -5,8 +5,7 @@ use crate::syntax::SyntaxTree;
 use futures::compat::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
-use image::DynamicImage;
-use image::GenericImageView;
+use image::{DynamicImage, GenericImage, GenericImageView};
 use lsp_types::*;
 use std::borrow::Cow;
 use std::ffi::OsString;
@@ -94,6 +93,7 @@ impl LatexPreviewHoverProvider {
         let code = Self::generate_code(request, range);
         let directory = Self::compile(&code).await?;
         let image = Self::dvipng(&directory).await?;
+        let image = Self::add_margin(image);
         let base64 = Self::encode_image(image);
         let markdown = format!("![preview](data:image/png;base64,{})", base64);
         directory.close().map_err(|_| RenderError::IO)?;
@@ -213,6 +213,26 @@ impl LatexPreviewHoverProvider {
         let png_file = directory.path().join("preview1.png");
         let png = image::open(png_file).map_err(|_| RenderError::CannotDecodeImage)?;
         Ok(png)
+    }
+
+    fn add_margin(image: DynamicImage) -> DynamicImage {
+        let margin = 5;
+        let width = image.width() + 2 * margin;
+        let height = image.height() + 2 * margin;
+        let mut result = DynamicImage::new_rgb8(width, height);
+        for x in 0..result.width() {
+            for y in 0..result.height() {
+                result.put_pixel(x, y, image::Rgba([0xFF, 0xFF, 0xFF, 0xFF]))
+            }
+        }
+
+        for x in 0..image.width() {
+            for y in 0..image.height() {
+                let pixel = image.get_pixel(x, y);
+                result.put_pixel(x + margin, y + margin, pixel);
+            }
+        }
+        result
     }
 
     fn encode_image(image: DynamicImage) -> String {
