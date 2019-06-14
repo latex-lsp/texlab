@@ -85,12 +85,11 @@ impl LatexPreviewHoverProvider {
         PREVIEW_ENVIRONMENTS.contains(&canonical_name.as_ref())
     }
 
-    async fn render<'a>(
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-        tree: &'a LatexSyntaxTree,
+    async fn render(
+        request: &FeatureRequest<TextDocumentPositionParams>,
         range: Range,
     ) -> Result<Hover, RenderError> {
-        let code = Self::generate_code(request, tree, range);
+        let code = Self::generate_code(request, range);
         let directory = Self::compile(&code).await?;
         let image = Self::dvipng(&directory).await?;
         let base64 = Self::encode_image(image);
@@ -104,17 +103,13 @@ impl LatexPreviewHoverProvider {
         })
     }
 
-    fn generate_code(
-        request: &FeatureRequest<TextDocumentPositionParams>,
-        tree: &LatexSyntaxTree,
-        range: Range,
-    ) -> String {
+    fn generate_code(request: &FeatureRequest<TextDocumentPositionParams>, range: Range) -> String {
         let mut code = String::new();
         code.push_str("\\documentclass{article}\n");
         code.push_str("\\thispagestyle{empty}\n");
         Self::generate_includes(request, &mut code);
         // TODO: Include command definitions
-        // TODO: Include math operators
+        Self::generate_math_operators(request, &mut code);
         code.push_str("\\begin{document}\n");
         code.push_str(&Self::extract_text(&request.document.text, range));
         code.push('\n');
@@ -134,6 +129,23 @@ impl LatexPreviewHoverProvider {
                         code.push_str(&Self::extract_text(&text, include.command.range));
                         code.push('\n');
                     });
+            }
+        }
+    }
+
+    fn generate_math_operators(
+        request: &FeatureRequest<TextDocumentPositionParams>,
+        code: &mut String,
+    ) {
+        for document in &request.related_documents {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                tree.math_operators
+                    .iter()
+                    .map(|op| Self::extract_text(&document.text, op.range()))
+                    .for_each(|op| {
+                        code.push_str(&op);
+                        code.push('\n');
+                    })
             }
         }
     }
@@ -238,7 +250,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
                 .find(|elem| elem.range().contains(request.params.position))
                 .map(MathElement::range)?;
 
-            return Some(Self::render(request, tree, range).await.ok()?);
+            return Some(Self::render(request, range).await.ok()?);
         }
         None
     }

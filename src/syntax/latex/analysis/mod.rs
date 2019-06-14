@@ -6,4 +6,5 @@ pub mod finder;
 pub mod include;
 pub mod inline;
 pub mod label;
+pub mod math_operator;
 pub mod section;
