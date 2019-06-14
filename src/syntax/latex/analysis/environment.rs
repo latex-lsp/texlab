@@ -9,12 +9,12 @@ pub struct LatexEnvironmentDelimiter {
 }
 
 impl LatexEnvironmentDelimiter {
-    pub fn name(&self) -> Option<&LatexToken> {
-        self.command.extract_word(0)
+    pub fn new(command: Arc<LatexCommand>) -> Self {
+        Self { command }
     }
 
-    pub fn new(command: Arc<LatexCommand>) -> Self {
-        LatexEnvironmentDelimiter { command }
+    pub fn name(&self) -> Option<&LatexToken> {
+        self.command.extract_word(0)
     }
 }
 
@@ -32,7 +32,7 @@ impl SyntaxNode for LatexEnvironment {
 
 impl LatexEnvironment {
     pub fn new(left: LatexEnvironmentDelimiter, right: LatexEnvironmentDelimiter) -> Self {
-        LatexEnvironment { left, right }
+        Self { left, right }
     }
 
     fn parse_delimiter(command: Arc<LatexCommand>) -> Option<LatexEnvironmentDelimiter> {

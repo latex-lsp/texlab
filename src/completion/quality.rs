@@ -52,6 +52,7 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     LatexNode::Text(text) => {
                         text.words.last().map(|w| Cow::from(w.text().to_owned()))
                     }
+                    LatexNode::Math(math) => Some(Cow::from(math.token.text().to_owned())),
                 }
             }
             SyntaxTree::Bibtex(tree) => {

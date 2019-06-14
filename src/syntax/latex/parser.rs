@@ -7,7 +7,6 @@ enum LatexScope {
     Root,
     Group,
     Options,
-    Math,
 }
 
 pub struct LatexParser<I: Iterator<Item = LatexToken>> {
@@ -37,11 +36,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                     children.push(LatexContent::Command(self.command()));
                 }
                 LatexTokenKind::Math => {
-                    if scope == LatexScope::Math {
-                        return children;
-                    } else {
-                        children.push(LatexContent::Group(self.group(LatexGroupKind::Math)));
-                    }
+                    children.push(LatexContent::Math(self.math()));
                 }
                 LatexTokenKind::BeginGroup => {
                     children.push(LatexContent::Group(self.group(LatexGroupKind::Group)));
@@ -86,13 +81,11 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         let scope = match kind {
             LatexGroupKind::Group => LatexScope::Group,
             LatexGroupKind::Options => LatexScope::Options,
-            LatexGroupKind::Math => LatexScope::Math,
         };
         let children = self.content(scope);
         let right_kind = match kind {
             LatexGroupKind::Group => LatexTokenKind::EndGroup,
             LatexGroupKind::Options => LatexTokenKind::EndOptions,
-            LatexGroupKind::Math => LatexTokenKind::Math,
         };
 
         let right = if self.next_of_kind(right_kind) {
@@ -116,6 +109,11 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             }
         }
         Arc::new(LatexText::new(words))
+    }
+
+    fn math(&mut self) -> Arc<LatexMath> {
+        let token = self.tokens.next().unwrap();
+        Arc::new(LatexMath::new(token))
     }
 
     fn next_of_kind(&mut self, kind: LatexTokenKind) -> bool {

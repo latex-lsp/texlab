@@ -10,7 +10,7 @@ pub struct LatexSection {
 
 impl LatexSection {
     pub fn new(command: Arc<LatexCommand>, text: String, level: usize) -> Self {
-        LatexSection {
+        Self {
             command,
             text,
             level,

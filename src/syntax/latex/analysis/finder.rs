@@ -9,8 +9,10 @@ pub enum LatexNode {
     Group(Arc<LatexGroup>),
     Command(Arc<LatexCommand>),
     Text(Arc<LatexText>),
+    Math(Arc<LatexMath>),
 }
 
+#[derive(Debug)]
 pub struct LatexFinder {
     pub position: Position,
     pub results: Vec<LatexNode>,
@@ -18,7 +20,7 @@ pub struct LatexFinder {
 
 impl LatexFinder {
     pub fn new(position: Position) -> Self {
-        LatexFinder {
+        Self {
             position,
             results: Vec::new(),
         }
@@ -49,7 +51,15 @@ impl LatexVisitor for LatexFinder {
 
     fn visit_text(&mut self, text: Arc<LatexText>) {
         if text.range.contains(self.position) {
-            self.results.push(LatexNode::Text(text));
+            self.results.push(LatexNode::Text(Arc::clone(&text)));
+            LatexWalker::walk_text(self, text);
+        }
+    }
+
+    fn visit_math(&mut self, math: Arc<LatexMath>) {
+        if math.range().contains(self.position) {
+            self.results.push(LatexNode::Math(Arc::clone(&math)));
+            LatexWalker::walk_math(self, math);
         }
     }
 }

@@ -8,7 +8,7 @@ pub struct LatexCitation {
 
 impl LatexCitation {
     pub fn new(command: Arc<LatexCommand>) -> LatexCitation {
-        LatexCitation { command }
+        Self { command }
     }
 
     pub fn key(&self) -> &LatexToken {

@@ -48,7 +48,7 @@ const IGNORED_PACKAGES: &[&str] = &["biblatex", "pgf", "tikz"];
 enum MathElement<'a> {
     Environment(&'a LatexEnvironment),
     Equation(&'a LatexEquation),
-    Inline(&'a LatexGroup),
+    Inline(&'a LatexInline),
 }
 
 impl<'a> SyntaxNode for MathElement<'a> {
@@ -279,7 +279,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
             tree.inlines
                 .iter()
-                .map(|inline| MathElement::Inline(&inline))
+                .map(MathElement::Inline)
                 .for_each(|inline| elements.push(inline));
 
             let range = elements

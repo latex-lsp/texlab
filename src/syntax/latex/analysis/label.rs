@@ -14,7 +14,7 @@ pub struct LatexLabel {
 
 impl LatexLabel {
     pub fn new(command: Arc<LatexCommand>) -> Self {
-        LatexLabel { command }
+        Self { command }
     }
 
     pub fn name(&self) -> &LatexToken {

@@ -5,19 +5,19 @@ mod ast;
 mod lexer;
 mod parser;
 
-pub use crate::syntax::latex::analysis::citation::*;
-pub use crate::syntax::latex::analysis::command::*;
-pub use crate::syntax::latex::analysis::environment::*;
-pub use crate::syntax::latex::analysis::equation::*;
-pub use crate::syntax::latex::analysis::finder::*;
-pub use crate::syntax::latex::analysis::include::*;
-use crate::syntax::latex::analysis::inline::LatexInlineAnalyzer;
-pub use crate::syntax::latex::analysis::label::*;
-use crate::syntax::latex::analysis::math_operator::LatexMathOperator;
-pub use crate::syntax::latex::analysis::section::*;
-pub use crate::syntax::latex::ast::*;
-use crate::syntax::latex::lexer::LatexLexer;
-use crate::syntax::latex::parser::LatexParser;
+pub use self::analysis::citation::*;
+pub use self::analysis::command::*;
+pub use self::analysis::environment::*;
+pub use self::analysis::equation::*;
+pub use self::analysis::finder::*;
+pub use self::analysis::include::*;
+pub use self::analysis::inline::{LatexInline, LatexInlineAnalyzer};
+pub use self::analysis::label::*;
+pub use self::analysis::math_operator::LatexMathOperator;
+pub use self::analysis::section::*;
+pub use self::ast::*;
+use self::lexer::LatexLexer;
+use self::parser::LatexParser;
 use crate::syntax::text::SyntaxNode;
 use lsp_types::{Position, Uri};
 use std::sync::Arc;
@@ -34,7 +34,7 @@ pub struct LatexSyntaxTree {
     pub sections: Vec<LatexSection>,
     pub citations: Vec<LatexCitation>,
     pub equations: Vec<LatexEquation>,
-    pub inlines: Vec<Arc<LatexGroup>>,
+    pub inlines: Vec<LatexInline>,
     pub math_operators: Vec<LatexMathOperator>,
 }
 
@@ -55,10 +55,10 @@ impl LatexSyntaxTree {
         let sections = LatexSection::parse_all(&commands);
         let citations = LatexCitation::parse_all(&commands);
         let equations = LatexEquation::parse_all(&commands);
-        let inlines = LatexInlineAnalyzer::find(Arc::clone(&root));
+        let inlines = LatexInlineAnalyzer::parse_all(Arc::clone(&root));
         let math_operators = LatexMathOperator::parse_all(&commands);
 
-        LatexSyntaxTree {
+        Self {
             root,
             commands,
             includes,

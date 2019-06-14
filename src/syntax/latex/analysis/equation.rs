@@ -17,16 +17,17 @@ impl SyntaxNode for LatexEquation {
 
 impl LatexEquation {
     pub fn new(left: Arc<LatexCommand>, right: Arc<LatexCommand>) -> Self {
-        LatexEquation { left, right }
+        Self { left, right }
     }
 
     pub fn parse_all(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut equations = Vec::new();
         let mut left = None;
         for command in commands {
-            if command.name.text() == EQUATION_COMMANDS[0] {
+            let name = command.name.text();
+            if name == "\\[" || name == "\\(" {
                 left = Some(command);
-            } else if command.name.text() == EQUATION_COMMANDS[1] {
+            } else if name == "\\]" || name == "\\)" {
                 if let Some(begin) = left {
                     equations.push(LatexEquation::new(Arc::clone(&begin), Arc::clone(&command)));
                     left = None;
@@ -36,5 +37,3 @@ impl LatexEquation {
         equations
     }
 }
-
-pub static EQUATION_COMMANDS: &[&str] = &["\\[", "\\]"];

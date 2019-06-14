@@ -28,5 +28,11 @@ impl LatexVisitor for LatexCommandAnalyzer {
         LatexWalker::walk_command(self, command);
     }
 
-    fn visit_text(&mut self, _text: Arc<LatexText>) {}
+    fn visit_text(&mut self, text: Arc<LatexText>) {
+        LatexWalker::walk_text(self, text);
+    }
+
+    fn visit_math(&mut self, math: Arc<LatexMath>) {
+        LatexWalker::walk_math(self, math);
+    }
 }

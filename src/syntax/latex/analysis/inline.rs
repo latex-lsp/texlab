@@ -1,13 +1,34 @@
 use crate::syntax::latex::ast::*;
+use crate::syntax::text::SyntaxNode;
+use lsp_types::Range;
 use std::sync::Arc;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexInline {
+    pub left: Arc<LatexMath>,
+    pub right: Arc<LatexMath>,
+}
+
+impl SyntaxNode for LatexInline {
+    fn range(&self) -> Range {
+        Range::new(self.left.start(), self.right.end())
+    }
+}
+
+impl LatexInline {
+    pub fn new(left: Arc<LatexMath>, right: Arc<LatexMath>) -> Self {
+        Self { left, right }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexInlineAnalyzer {
-    inlines: Vec<Arc<LatexGroup>>,
+    inlines: Vec<LatexInline>,
+    left: Option<Arc<LatexMath>>,
 }
 
 impl LatexInlineAnalyzer {
-    pub fn find(root: Arc<LatexRoot>) -> Vec<Arc<LatexGroup>> {
+    pub fn parse_all(root: Arc<LatexRoot>) -> Vec<LatexInline> {
         let mut analyzer = Self::default();
         analyzer.visit_root(root);
         analyzer.inlines
@@ -20,9 +41,6 @@ impl LatexVisitor for LatexInlineAnalyzer {
     }
 
     fn visit_group(&mut self, group: Arc<LatexGroup>) {
-        if group.kind == LatexGroupKind::Math {
-            self.inlines.push(Arc::clone(&group));
-        }
         LatexWalker::walk_group(self, group);
     }
 
@@ -30,5 +48,18 @@ impl LatexVisitor for LatexInlineAnalyzer {
         LatexWalker::walk_command(self, command);
     }
 
-    fn visit_text(&mut self, _text: Arc<LatexText>) {}
+    fn visit_text(&mut self, text: Arc<LatexText>) {
+        LatexWalker::walk_text(self, text);
+    }
+
+    fn visit_math(&mut self, math: Arc<LatexMath>) {
+        if let Some(left) = &self.left {
+            let inline = LatexInline::new(Arc::clone(&left), Arc::clone(&math));
+            self.inlines.push(inline);
+            self.left = None;
+        } else {
+            self.left = Some(Arc::clone(&math));
+        }
+        LatexWalker::walk_math(self, math);
+    }
 }

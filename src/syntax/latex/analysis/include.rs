@@ -20,7 +20,7 @@ pub struct LatexInclude {
 
 impl LatexInclude {
     fn parse(uri: &Uri, command: Arc<LatexCommand>) -> Option<Self> {
-        let mut include = LatexInclude {
+        let mut include = Self {
             command,
             target: None,
         };
