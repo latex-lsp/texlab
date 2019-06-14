@@ -66,6 +66,7 @@ enum RenderError {
     IO,
     LatexNotInstalled,
     LatexFaulty,
+    CompilationError,
     Timeout,
     DviPngNotInstalled,
     DviPngFaulty,
@@ -94,6 +95,7 @@ impl LatexPreviewHoverProvider {
         let image = Self::dvipng(&directory).await?;
         let base64 = Self::encode_image(image);
         let markdown = format!("![preview](data:image/png;base64,{})", base64);
+        directory.close().map_err(|_| RenderError::IO)?;
         Ok(Hover {
             range: Some(range),
             contents: HoverContents::Markup(MarkupContent {
@@ -163,7 +165,7 @@ impl LatexPreviewHoverProvider {
             .args(&["--interaction=nonstopmode", "preview.tex"])
             .current_dir(&directory)
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stderr(Stdio::inherit())
             .spawn()
             .map_err(|_| RenderError::LatexNotInstalled)?;
 
@@ -171,7 +173,14 @@ impl LatexPreviewHoverProvider {
             .wait_timeout(Duration::from_secs(10))
             .map_err(|_| RenderError::LatexFaulty)?
         {
-            Some(_) => Ok(directory),
+            Some(_) => {
+                let dvi_file = directory.path().join("preview.dvi");
+                if dvi_file.exists() {
+                    Ok(directory)
+                } else {
+                    Err(RenderError::CompilationError)
+                }
+            }
             None => {
                 process.kill().map_err(|_| RenderError::Timeout)?;
                 Err(RenderError::Timeout)
@@ -184,7 +193,7 @@ impl LatexPreviewHoverProvider {
             .args(&["-D", "200", "-T", "tight", "preview.dvi"])
             .current_dir(directory.path())
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stderr(Stdio::inherit())
             .spawn_async()
             .map_err(|_| RenderError::DviPngNotInstalled)?;
 
