@@ -1,5 +1,6 @@
 pub mod citation;
 pub mod command;
+pub mod command_definition;
 pub mod environment;
 pub mod equation;
 pub mod finder;

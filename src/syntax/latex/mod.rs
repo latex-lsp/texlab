@@ -7,13 +7,14 @@ mod parser;
 
 pub use self::analysis::citation::*;
 pub use self::analysis::command::*;
+pub use self::analysis::command_definition::*;
 pub use self::analysis::environment::*;
 pub use self::analysis::equation::*;
 pub use self::analysis::finder::*;
 pub use self::analysis::include::*;
-pub use self::analysis::inline::{LatexInline, LatexInlineAnalyzer};
+pub use self::analysis::inline::*;
 pub use self::analysis::label::*;
-pub use self::analysis::math_operator::LatexMathOperator;
+pub use self::analysis::math_operator::*;
 pub use self::analysis::section::*;
 pub use self::ast::*;
 use self::lexer::LatexLexer;
@@ -36,6 +37,7 @@ pub struct LatexSyntaxTree {
     pub equations: Vec<LatexEquation>,
     pub inlines: Vec<LatexInline>,
     pub math_operators: Vec<LatexMathOperator>,
+    pub command_definitions: Vec<LatexCommandDefinition>,
 }
 
 impl LatexSyntaxTree {
@@ -57,6 +59,7 @@ impl LatexSyntaxTree {
         let equations = LatexEquation::parse_all(&commands);
         let inlines = LatexInlineAnalyzer::parse_all(Arc::clone(&root));
         let math_operators = LatexMathOperator::parse_all(&commands);
+        let command_definitions = LatexCommandDefinition::parse_all(&commands);
 
         Self {
             root,
@@ -71,6 +74,7 @@ impl LatexSyntaxTree {
             equations,
             inlines,
             math_operators,
+            command_definitions,
         }
     }
 

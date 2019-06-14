@@ -1,4 +1,5 @@
 use crate::syntax::text::{Span, SyntaxNode};
+use itertools::Itertools;
 use lsp_types::Range;
 use std::sync::Arc;
 
@@ -139,20 +140,26 @@ impl SyntaxNode for LatexGroup {
 pub struct LatexCommand {
     pub range: Range,
     pub name: LatexToken,
-    pub options: Option<Arc<LatexGroup>>,
+    pub options: Vec<Arc<LatexGroup>>,
     pub args: Vec<Arc<LatexGroup>>,
+    pub groups: Vec<Arc<LatexGroup>>,
 }
 
 impl LatexCommand {
     pub fn new(
         name: LatexToken,
-        options: Option<Arc<LatexGroup>>,
+        options: Vec<Arc<LatexGroup>>,
         args: Vec<Arc<LatexGroup>>,
     ) -> Self {
-        let end = if !args.is_empty() {
-            args[args.len() - 1].end()
-        } else if let Some(ref options) = options {
-            options.end()
+        let groups: Vec<Arc<LatexGroup>> = args
+            .iter()
+            .chain(options.iter())
+            .sorted_by_key(|group| group.range.start)
+            .map(Arc::clone)
+            .collect();
+
+        let end = if let Some(group) = groups.last() {
+            group.end()
         } else {
             name.end()
         };
@@ -162,6 +169,7 @@ impl LatexCommand {
             name,
             options,
             args,
+            groups,
         }
     }
 
@@ -272,11 +280,7 @@ impl LatexWalker {
     }
 
     pub fn walk_command(visitor: &mut LatexVisitor, command: Arc<LatexCommand>) {
-        if let Some(ref options) = command.options {
-            visitor.visit_group(Arc::clone(&options));
-        }
-
-        for arg in &command.args {
+        for arg in &command.groups {
             visitor.visit_group(Arc::clone(&arg));
         }
     }

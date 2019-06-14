@@ -62,17 +62,22 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
 
     fn command(&mut self) -> Arc<LatexCommand> {
         let name = self.tokens.next().unwrap();
-        let options = if self.next_of_kind(LatexTokenKind::BeginOptions) {
-            Some(self.group(LatexGroupKind::Options))
-        } else {
-            None
-        };
 
+        let mut options = Vec::new();
         let mut args = Vec::new();
-        while self.next_of_kind(LatexTokenKind::BeginGroup) {
-            args.push(self.group(LatexGroupKind::Group));
+        while let Some(token) = self.tokens.peek() {
+            match token.kind {
+                LatexTokenKind::BeginGroup => {
+                    args.push(self.group(LatexGroupKind::Group));
+                }
+                LatexTokenKind::BeginOptions => {
+                    options.push(self.group(LatexGroupKind::Options));
+                }
+                _ => {
+                    break;
+                }
+            }
         }
-
         Arc::new(LatexCommand::new(name, options, args))
     }
 
