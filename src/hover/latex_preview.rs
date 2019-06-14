@@ -9,6 +9,7 @@ use image::DynamicImage;
 use image::GenericImageView;
 use lsp_types::*;
 use std::borrow::Cow;
+use std::ffi::OsString;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
 use std::time::Duration;
@@ -127,6 +128,13 @@ impl LatexPreviewHoverProvider {
                     .iter()
                     .filter(|include| include.kind() == LatexIncludeKind::Package)
                     .filter(|include| !IGNORED_PACKAGES.contains(&include.path().text()))
+                    .filter(|include| {
+                        let name = format!("{}.sty", include.path().text());
+                        request
+                            .resolver
+                            .files_by_name
+                            .contains_key(&OsString::from(name))
+                    })
                     .for_each(|include| {
                         code.push_str(&Self::extract_text(&text, include.command.range));
                         code.push('\n');
