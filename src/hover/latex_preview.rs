@@ -198,7 +198,7 @@ impl LatexPreviewHoverProvider {
 
     async fn dvipng(directory: &TempDir) -> Result<DynamicImage, RenderError> {
         let process = Command::new("dvipng")
-            .args(&["-D", "200", "-T", "tight", "preview.dvi"])
+            .args(&["-D", "175", "-T", "tight", "preview.dvi"])
             .current_dir(directory.path())
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
