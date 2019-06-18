@@ -1,4 +1,5 @@
 use crate::data::completion::LatexComponentDatabase;
+use crate::data::language::LatexLanguageOptions;
 use crate::tex::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
@@ -34,6 +35,7 @@ pub struct FeatureRequest<P> {
     pub view: DocumentView,
     pub resolver: Arc<TexResolver>,
     pub component_database: Arc<LatexComponentDatabase>,
+    pub latex_language_options: LatexLanguageOptions,
 }
 
 impl<P> FeatureRequest<P> {
@@ -138,6 +140,7 @@ pub struct FeatureSpec {
     pub new_name: &'static str,
     pub resolver: TexResolver,
     pub component_database: LatexComponentDatabase,
+    pub latex_language_options: LatexLanguageOptions,
 }
 
 #[cfg(test)]
@@ -177,6 +180,7 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
@@ -194,6 +198,7 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
@@ -209,6 +214,7 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
@@ -224,6 +230,7 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
@@ -243,6 +250,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
@@ -260,6 +268,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             view: self.view(),
             resolver: Arc::new(self.resolver),
             component_database: Arc::new(self.component_database),
+            latex_language_options: self.latex_language_options,
         }
     }
 }
