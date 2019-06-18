@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -50,7 +50,7 @@ pub async fn import<'a, F>(
 where
     F: Fn(Cow<'static, str>) -> CompletionItem,
 {
-    LatexCombinators::argument(request, &commands, 0, async move |_| {
+    combinators::argument(request, &commands, 0, async move |_| {
         request
             .resolver
             .files_by_name

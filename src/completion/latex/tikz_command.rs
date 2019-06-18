@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -30,7 +30,7 @@ impl FeatureProvider for LatexTikzCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        LatexCombinators::command(request, async move |_| {
+        combinators::command(request, async move |_| {
             if request
                 .component_database
                 .related_components(request.related_documents())

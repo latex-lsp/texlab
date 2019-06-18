@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::data::kernel_primitives::KERNEL_COMMANDS;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -30,7 +30,7 @@ impl FeatureProvider for LatexKernelCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        LatexCombinators::command(&request, async move |_| self.items.clone()).await
+        combinators::command(&request, async move |_| self.items.clone()).await
     }
 }
 

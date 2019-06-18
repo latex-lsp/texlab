@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -15,7 +15,7 @@ impl FeatureProvider for LatexColorCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        LatexCombinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
+        combinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
             COLOR_NAMES
                 .iter()
                 .map(|name| factory::create_color(Cow::from(*name)))

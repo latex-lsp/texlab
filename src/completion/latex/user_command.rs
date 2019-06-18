@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::factory::LatexComponentId;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
@@ -18,7 +18,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        LatexCombinators::command(request, async move |current_command| {
+        combinators::command(request, async move |current_command| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {

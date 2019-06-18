@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::data::symbols::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -20,21 +20,16 @@ impl FeatureProvider for LatexArgumentSymbolCompletionProvider {
             let command = format!("\\{}", group.command);
             let command_names = &[command.as_ref()];
             items.append(
-                &mut LatexCombinators::argument(
-                    &request,
-                    command_names,
-                    group.index,
-                    async move |_| {
-                        let mut items = Vec::new();
-                        for symbol in &group.arguments {
-                            items.push(Arc::new(factory::create_argument_symbol(
-                                &symbol.argument,
-                                &symbol.image,
-                            )));
-                        }
-                        items
-                    },
-                )
+                &mut combinators::argument(&request, command_names, group.index, async move |_| {
+                    let mut items = Vec::new();
+                    for symbol in &group.arguments {
+                        items.push(Arc::new(factory::create_argument_symbol(
+                            &symbol.argument,
+                            &symbol.image,
+                        )));
+                    }
+                    items
+                })
                 .await,
             );
         }

@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -26,7 +26,7 @@ impl LatexColorModelCompletionProvider {
         &'a self,
         request: &'a FeatureRequest<CompletionParams>,
     ) -> Vec<Arc<CompletionItem>> {
-        LatexCombinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
+        combinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
             self.items.clone()
         })
         .await
@@ -36,7 +36,7 @@ impl LatexColorModelCompletionProvider {
         &'a self,
         request: &'a FeatureRequest<CompletionParams>,
     ) -> Vec<Arc<CompletionItem>> {
-        LatexCombinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
+        combinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
             self.items.clone()
         })
         .await

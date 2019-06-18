@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::LatexCombinators;
+use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
 use crate::syntax::SyntaxTree;
@@ -16,7 +16,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        LatexCombinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
+        combinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
