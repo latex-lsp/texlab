@@ -68,7 +68,7 @@ where
 mod tests {
     use super::*;
     use crate::feature::{test_feature, FeatureSpec};
-    use crate::resolver::TexResolver;
+    use crate::tex::resolver::TexResolver;
     use lsp_types::Position;
     use std::collections::HashMap;
     use std::ffi::OsString;

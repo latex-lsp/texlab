@@ -1,5 +1,5 @@
 use crate::data::completion::LatexComponentDatabase;
-use crate::resolver::TexResolver;
+use crate::tex::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};

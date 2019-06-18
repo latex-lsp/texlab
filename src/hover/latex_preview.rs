@@ -2,6 +2,7 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
 use crate::syntax::text::{CharStream, SyntaxNode};
 use crate::syntax::SyntaxTree;
+use crate::tex;
 use futures::compat::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
@@ -9,12 +10,11 @@ use image::{DynamicImage, GenericImage, GenericImageView};
 use lsp_types::*;
 use std::borrow::Cow;
 use std::ffi::OsString;
+use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
-use std::time::Duration;
-use tempfile::{tempdir, TempDir};
+use tempfile::TempDir;
 use tokio_process::CommandExt;
-use wait_timeout::ChildExt;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "align",
@@ -62,16 +62,18 @@ impl<'a> SyntaxNode for MathElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug)]
 enum RenderError {
-    IO,
-    LatexNotInstalled,
-    LatexFaulty,
-    CompilationError,
-    Timeout,
+    IO(io::Error),
     DviPngNotInstalled,
     DviPngFaulty,
     CannotDecodeImage,
+}
+
+impl From<io::Error> for RenderError {
+    fn from(error: io::Error) -> Self {
+        RenderError::IO(error)
+    }
 }
 
 pub struct LatexPreviewHoverProvider;
@@ -92,12 +94,18 @@ impl LatexPreviewHoverProvider {
         range: Range,
     ) -> Result<Hover, RenderError> {
         let code = Self::generate_code(request, range);
-        let directory = Self::compile(&code).await?;
+        let directory = tex::compile("preview.tex", &code, tex::Format::Latex)
+            .await?
+            .directory;
+        if !directory.path().join("preview.dvi").exists() {
+            return Err(RenderError::IO(io::ErrorKind::NotFound.into()));
+        }
+
         let image = Self::dvipng(&directory).await?;
         let image = Self::add_margin(image);
         let base64 = Self::encode_image(image);
         let markdown = format!("![preview](data:image/png;base64,{})", base64);
-        directory.close().map_err(|_| RenderError::IO)?;
+        directory.close()?;
         Ok(Hover {
             range: Some(range),
             contents: HoverContents::Markup(MarkupContent {
@@ -174,42 +182,6 @@ impl LatexPreviewHoverProvider {
                         code.push_str(&op);
                         code.push('\n');
                     });
-            }
-        }
-    }
-
-    async fn compile(code: &str) -> Result<TempDir, RenderError> {
-        let directory = tempdir().map_err(|_| RenderError::IO)?;
-
-        let tex_file = directory.path().join("preview.tex");
-        tokio::fs::write(tex_file, code)
-            .compat()
-            .await
-            .map_err(|_| RenderError::IO)?;
-
-        let mut process = Command::new("latex")
-            .args(&["--interaction=nonstopmode", "preview.tex"])
-            .current_dir(&directory)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .map_err(|_| RenderError::LatexNotInstalled)?;
-
-        match process
-            .wait_timeout(Duration::from_secs(10))
-            .map_err(|_| RenderError::LatexFaulty)?
-        {
-            Some(_) => {
-                let dvi_file = directory.path().join("preview.dvi");
-                if dvi_file.exists() {
-                    Ok(directory)
-                } else {
-                    Err(RenderError::CompilationError)
-                }
-            }
-            None => {
-                process.kill().map_err(|_| RenderError::Timeout)?;
-                Err(RenderError::Timeout)
             }
         }
     }
