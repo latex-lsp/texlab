@@ -1,4 +1,5 @@
 use crate::build::BuildOptions;
+use crate::data::language::LatexLanguageOptions;
 use crate::diagnostics::LatexLintOptions;
 use crate::formatting::bibtex::BibtexFormattingOptions;
 use futures::lock::Mutex;
@@ -42,6 +43,7 @@ pub struct LspClientMockOptions {
     pub bibtex_formatting: Option<BibtexFormattingOptions>,
     pub latex_lint: Option<LatexLintOptions>,
     pub latex_build: Option<BuildOptions>,
+    pub latex_language: Option<LatexLanguageOptions>,
 }
 
 #[derive(Debug, Default)]
@@ -69,9 +71,8 @@ impl LspClient for LspClientMock {
             Some(Cow::Borrowed("bibtex.formatting")) => serialize(&options.bibtex_formatting),
             Some(Cow::Borrowed("latex.lint")) => serialize(&options.latex_lint),
             Some(Cow::Borrowed("latex.build")) => serialize(&options.latex_build),
-            _ => {
-                unreachable!();
-            }
+            Some(Cow::Borrowed("latex.language")) => serialize(&options.latex_language),
+            _ => panic!("Invalid language configuration!"),
         }
     }
 
