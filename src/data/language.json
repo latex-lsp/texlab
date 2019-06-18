@@ -1,0 +1,398 @@
+{
+  "additionalEnvironmentCommands": [
+    {
+      "name": "\\begin",
+      "index": 0
+    },
+    {
+      "name": "\\end",
+      "index": 0
+    }
+  ],
+  "additionalCitationCommands": [
+    {
+      "name": "\\cite",
+      "index": 0
+    },
+    {
+      "name": "\\cite*",
+      "index": 0
+    },
+    {
+      "name": "\\Cite",
+      "index": 0
+    },
+    {
+      "name": "\\nocite",
+      "index": 0
+    },
+    {
+      "name": "\\citet",
+      "index": 0
+    },
+    {
+      "name": "\\citep",
+      "index": 0
+    },
+    {
+      "name": "\\citet*",
+      "index": 0
+    },
+    {
+      "name": "\\citep*",
+      "index": 0
+    },
+    {
+      "name": "\\citeauthor",
+      "index": 0
+    },
+    {
+      "name": "\\citeauthor*",
+      "index": 0
+    },
+    {
+      "name": "\\Citeauthor",
+      "index": 0
+    },
+    {
+      "name": "\\Citeauthor*",
+      "index": 0
+    },
+    {
+      "name": "\\citetitle",
+      "index": 0
+    },
+    {
+      "name": "\\citetitle*",
+      "index": 0
+    },
+    {
+      "name": "\\citeyear",
+      "index": 0
+    },
+    {
+      "name": "\\citeyear*",
+      "index": 0
+    },
+    {
+      "name": "\\citedate",
+      "index": 0
+    },
+    {
+      "name": "\\citedate*",
+      "index": 0
+    },
+    {
+      "name": "\\citeurl",
+      "index": 0
+    },
+    {
+      "name": "\\fullcite",
+      "index": 0
+    },
+    {
+      "name": "\\citeyearpar",
+      "index": 0
+    },
+    {
+      "name": "\\citealt",
+      "index": 0
+    },
+    {
+      "name": "\\citealp",
+      "index": 0
+    },
+    {
+      "name": "\\citetext",
+      "index": 0
+    },
+    {
+      "name": "\\parencite",
+      "index": 0
+    },
+    {
+      "name": "\\parencite*",
+      "index": 0
+    },
+    {
+      "name": "\\Parencite",
+      "index": 0
+    },
+    {
+      "name": "\\footcite",
+      "index": 0
+    },
+    {
+      "name": "\\footfullcite",
+      "index": 0
+    },
+    {
+      "name": "\\footcitetext",
+      "index": 0
+    },
+    {
+      "name": "\\textcite",
+      "index": 0
+    },
+    {
+      "name": "\\Textcite",
+      "index": 0
+    },
+    {
+      "name": "\\smartcite",
+      "index": 0
+    },
+    {
+      "name": "\\Smartcite",
+      "index": 0
+    },
+    {
+      "name": "\\supercite",
+      "index": 0
+    },
+    {
+      "name": "\\autocite",
+      "index": 0
+    },
+    {
+      "name": "\\Autocite",
+      "index": 0
+    },
+    {
+      "name": "\\autocite*",
+      "index": 0
+    },
+    {
+      "name": "\\Autocite*",
+      "index": 0
+    },
+    {
+      "name": "\\volcite",
+      "index": 0
+    },
+    {
+      "name": "\\Volcite",
+      "index": 0
+    },
+    {
+      "name": "\\pvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\Pvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\fvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\ftvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\svolcite",
+      "index": 0
+    },
+    {
+      "name": "\\Svolcite",
+      "index": 0
+    },
+    {
+      "name": "\\tvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\Tvolcite",
+      "index": 0
+    },
+    {
+      "name": "\\avolcite",
+      "index": 0
+    },
+    {
+      "name": "\\Avolcite",
+      "index": 0
+    },
+    {
+      "name": "\\notecite",
+      "index": 0
+    },
+    {
+      "name": "\\notecite",
+      "index": 0
+    },
+    {
+      "name": "\\pnotecite",
+      "index": 0
+    },
+    {
+      "name": "\\Pnotecite",
+      "index": 0
+    },
+    {
+      "name": "\\fnotecite",
+      "index": 0
+    }
+  ],
+  "additionalLabelCommands": [
+    {
+      "name": "\\label",
+      "index": 0,
+      "kind": "definition"
+    },
+    {
+      "name": "\\ref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\autoref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\eqref",
+      "index": 0,
+      "kind": "reference"
+    }
+  ],
+  "additionalSectionCommands": [
+    {
+      "name": "\\chapter",
+      "index": 0,
+      "level": 0
+    },
+    {
+      "name": "\\chapter*",
+      "index": 0,
+      "level": 0
+    },
+    {
+      "name": "\\section",
+      "index": 0,
+      "level": 1
+    },
+    {
+      "name": "\\section*",
+      "index": 0,
+      "level": 1
+    },
+    {
+      "name": "\\subsection",
+      "index": 0,
+      "level": 2
+    },
+    {
+      "name": "\\subsection*",
+      "index": 0,
+      "level": 2
+    },
+    {
+      "name": "\\subsubsection",
+      "index": 0,
+      "level": 3
+    },
+    {
+      "name": "\\subsubsection*",
+      "index": 0,
+      "level": 3
+    },
+    {
+      "name": "\\paragraph",
+      "index": 0,
+      "level": 4
+    },
+    {
+      "name": "\\paragraph*",
+      "index": 0,
+      "level": 4
+    },
+    {
+      "name": "\\subparagraph",
+      "index": 0,
+      "level": 5
+    },
+    {
+      "name": "\\subparagraph*",
+      "index": 0,
+      "level": 5
+    }
+  ],
+  "additionalIncludeCommands": [
+    {
+      "name": "\\include",
+      "index": 0,
+      "kind": "latex",
+      "includeExtension": false
+    },
+    {
+      "name": "\\input",
+      "index": 0,
+      "kind": "latex",
+      "includeExtension": true
+    },
+    {
+      "name": "\\bibliography",
+      "index": 0,
+      "kind": "bibliography",
+      "includeExtension": false
+    },
+    {
+      "name": "\\addbibresource",
+      "index": 0,
+      "kind": "bibliography",
+      "includeExtension": true
+    },
+    {
+      "name": "\\includegraphics",
+      "index": 0,
+      "kind": "image",
+      "includeExtension": true
+    },
+    {
+      "name": "\\includesvg",
+      "index": 0,
+      "kind": "svg",
+      "includeExtension": false
+    },
+    {
+      "name": "\\verbatiminput",
+      "index": 0,
+      "kind": "everything",
+      "includeExtension": true
+    }
+  ],
+  "additionalCommandDefinitionCommands": [
+    {
+      "name": "\\newcommand",
+      "definitionIndex": 0,
+      "argumentCountIndex": 0,
+      "implementationIndex": 1
+    },
+    {
+      "name": "\\renewcommand",
+      "definitionIndex": 0,
+      "argumentCountIndex": 0,
+      "implementationIndex": 1
+    },
+    {
+      "name": "\\DeclareRobustCommand",
+      "definitionIndex": 0,
+      "argumentCountIndex": 0,
+      "implementationIndex": 1
+    }
+  ],
+  "additionalMathOperatorCommands": [
+    {
+      "name": "\\DeclareMathOperator",
+      "definitionIndex": 0,
+      "implementationIndex": 1
+    },
+    {
+      "name": "\\DeclareMathOperator*",
+      "definitionIndex": 0,
+      "implementationIndex": 1
+    }
+  ]
+}
