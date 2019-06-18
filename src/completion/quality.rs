@@ -28,7 +28,7 @@ where
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let query = Self::get_query(&request.document, request.params.position);
+        let query = Self::get_query(request.document(), request.params.position);
         let mut items = self.provider.execute(&request).await;
         items.sort_by_key(|item| -Self::get_quality(&query, &item.label));
         items

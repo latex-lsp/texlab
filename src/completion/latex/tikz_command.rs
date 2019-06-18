@@ -33,7 +33,7 @@ impl FeatureProvider for LatexTikzCommandCompletionProvider {
         LatexCombinators::command(request, async move |_| {
             if request
                 .component_database
-                .related_components(&request.related_documents)
+                .related_components(request.related_documents())
                 .iter()
                 .any(|component| component.files.iter().any(|file| file == "tikz.sty"))
             {

@@ -20,7 +20,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
     ) -> Option<WorkspaceEdit> {
         let name = Self::find_command(&request)?;
         let mut changes = HashMap::new();
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let edits: Vec<TextEdit> = tree
                     .commands
@@ -42,7 +42,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
 
 impl LatexCommandRenameProvider {
     fn find_command(request: &FeatureRequest<RenameParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.commands
                 .iter()
                 .find(|command| command.name.range().contains(request.params.position))

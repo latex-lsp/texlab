@@ -11,32 +11,42 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct FeatureRequest<P> {
-    pub params: P,
+pub struct DocumentView {
     pub workspace: Arc<Workspace>,
     pub document: Arc<Document>,
     pub related_documents: Vec<Arc<Document>>,
+}
+
+impl DocumentView {
+    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
+        let related_documents = workspace.related_documents(&document.uri);
+        Self {
+            workspace,
+            document,
+            related_documents,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FeatureRequest<P> {
+    pub params: P,
+    pub view: DocumentView,
     pub resolver: Arc<TexResolver>,
     pub component_database: Arc<LatexComponentDatabase>,
 }
 
 impl<P> FeatureRequest<P> {
-    pub fn new(
-        params: P,
-        workspace: Arc<Workspace>,
-        document: Arc<Document>,
-        resolver: Arc<TexResolver>,
-        component_database: Arc<LatexComponentDatabase>,
-    ) -> Self {
-        let related_documents = workspace.related_documents(&document.uri);
-        Self {
-            params,
-            workspace,
-            document,
-            related_documents,
-            resolver,
-            component_database,
-        }
+    pub fn workspace(&self) -> &Workspace {
+        &self.view.workspace
+    }
+
+    pub fn document(&self) -> &Document {
+        &self.view.document
+    }
+
+    pub fn related_documents(&self) -> &[Arc<Document>] {
+        &self.view.related_documents
     }
 }
 
@@ -146,7 +156,7 @@ impl FeatureSpec {
         TextDocumentIdentifier::new(uri)
     }
 
-    fn workspace(&self) -> (Arc<Workspace>, Arc<Document>) {
+    fn view(&self) -> DocumentView {
         let mut builder = WorkspaceBuilder::new();
         for file in &self.files {
             builder.document(file.name, file.text);
@@ -154,7 +164,7 @@ impl FeatureSpec {
         let workspace = builder.workspace;
         let main_uri = Self::uri(self.main_file);
         let main_document = workspace.find(&main_uri).unwrap();
-        (Arc::new(workspace), main_document)
+        DocumentView::new(Arc::new(workspace), main_document)
     }
 }
 
@@ -162,14 +172,12 @@ impl FeatureSpec {
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.identifier(), self.position);
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 
@@ -181,14 +189,12 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             position: self.position,
             context: None,
         };
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 
@@ -198,14 +204,12 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
         let params = FoldingRangeParams {
             text_document: self.identifier(),
         };
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 
@@ -215,14 +219,12 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
         let params = DocumentLinkParams {
             text_document: self.identifier(),
         };
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 
@@ -236,14 +238,12 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
                 include_declaration: false,
             },
         };
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 
@@ -255,14 +255,12 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             position: self.position,
             new_name: self.new_name.to_owned(),
         };
-        let (workspace, document) = self.workspace();
-        FeatureRequest::new(
+        FeatureRequest {
             params,
-            workspace,
-            document,
-            Arc::new(self.resolver),
-            Arc::new(self.component_database),
-        )
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: Arc::new(self.component_database),
+        }
     }
 }
 

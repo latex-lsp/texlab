@@ -15,7 +15,7 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
         let mut references = Vec::new();
         if let Some(key) = Self::find_definition(request) {
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.citations
                         .iter()
@@ -31,7 +31,7 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
 
 impl BibtexEntryReferenceProvider {
     fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for entry in tree.entries() {
                 if let Some(key) = &entry.key {
                     if key.range().contains(request.params.position) {

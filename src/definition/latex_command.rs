@@ -14,9 +14,9 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut definitions = Vec::new();
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             if let Some(LatexNode::Command(command)) = tree.find(request.params.position).last() {
-                for document in &request.related_documents {
+                for document in request.related_documents() {
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         tree.command_definitions
                             .iter()

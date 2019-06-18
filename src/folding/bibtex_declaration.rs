@@ -17,7 +17,7 @@ impl FeatureProvider for BibtexDeclarationFoldingProvider {
         &'a self,
         request: &'a FeatureRequest<FoldingRangeParams>,
     ) -> Vec<FoldingRange> {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             tree.root.children.iter().flat_map(Self::fold).collect()
         } else {
             Vec::new()

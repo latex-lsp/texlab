@@ -15,7 +15,7 @@ impl LatexCombinators {
         E: FnOnce(Arc<LatexCommand>) -> F,
         F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
     {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             if let Some(command) = tree.find_command(request.params.position) {
                 return execute(command).await;
             }
@@ -64,7 +64,7 @@ impl LatexCombinators {
             }
         };
 
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut nodes = tree.find(request.params.position);
             nodes.reverse();
 

@@ -18,7 +18,7 @@ impl FeatureProvider for BibtexFieldHoverProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Option<Hover> {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for node in tree.find(request.params.position) {
                 if let BibtexNode::Field(field) = node {
                     let documentation = bibtex_field::get_documentation(field.name.text())?;

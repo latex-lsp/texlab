@@ -19,7 +19,7 @@ impl FeatureProvider for LatexCitationDefinitionProvider {
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Vec<Location> {
         if let Some(reference) = Self::find_reference(&request) {
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let Some(definition) = Self::find_definition(&document, &reference) {
                     return vec![definition];
                 }
@@ -44,7 +44,7 @@ impl LatexCitationDefinitionProvider {
     }
 
     fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.citations
                 .iter()
                 .map(LatexCitation::key)

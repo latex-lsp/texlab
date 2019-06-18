@@ -29,7 +29,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, ALL_COMMANDS, 0, async move |command| {
-            if !request.document.is_file() {
+            if !request.document().is_file() {
                 return Vec::new();
             }
 
@@ -64,7 +64,7 @@ fn current_directory(
     request: &FeatureRequest<CompletionParams>,
     command: &LatexCommand,
 ) -> PathBuf {
-    let mut path = request.document.uri.to_file_path().unwrap();
+    let mut path = request.document().uri.to_file_path().unwrap();
     path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
 
     path.pop();

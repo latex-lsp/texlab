@@ -37,7 +37,7 @@ impl FeatureProvider for LatexCitationHoverProvider {
 impl LatexCitationHoverProvider {
     fn get_entry(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&BibtexEntry> {
         let key = Self::get_key(request)?;
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Bibtex(tree) = &document.tree {
                 for entry in tree.entries() {
                     if let Some(current_key) = &entry.key {
@@ -52,7 +52,7 @@ impl LatexCitationHoverProvider {
     }
 
     fn get_key(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
-        match &request.document.tree {
+        match &request.document().tree {
             SyntaxTree::Latex(tree) => tree
                 .citations
                 .iter()

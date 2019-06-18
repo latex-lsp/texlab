@@ -20,7 +20,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::command(request, async move |current_command| {
             let mut items = Vec::new();
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.commands
                         .iter()

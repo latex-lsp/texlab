@@ -18,7 +18,7 @@ impl FeatureProvider for LatexComponentHoverProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Option<Hover> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             let documentation = tree
                 .includes
                 .iter()

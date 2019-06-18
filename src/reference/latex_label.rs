@@ -15,7 +15,7 @@ impl FeatureProvider for LatexLabelReferenceProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
         let mut references = Vec::new();
         if let Some(definition) = Self::find_definition(request) {
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()
@@ -32,7 +32,7 @@ impl FeatureProvider for LatexLabelReferenceProvider {
 
 impl LatexLabelReferenceProvider {
     fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
                 .find(|label| {

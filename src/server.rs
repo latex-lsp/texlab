@@ -8,7 +8,7 @@ use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
-use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::feature::{DocumentView, FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
 use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult};
@@ -290,7 +290,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
         let request = request!(self, params)?;
         let mut edits = Vec::new();
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             let params = BibtexFormattingParams {
                 tab_size: request.params.options.tab_size as usize,
                 insert_spaces: request.params.options.insert_spaces,
@@ -347,11 +347,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .configuration::<ForwardSearchOptions>("latex.forwardSearch")
             .await;
 
-        let tex_file = request.document.uri.to_file_path().unwrap();
+        let tex_file = request.document().uri.to_file_path().unwrap();
         let parent = request
-            .workspace
-            .find_parent(&request.document.uri)
-            .unwrap_or(request.document);
+            .workspace()
+            .find_parent(&request.document().uri)
+            .unwrap_or(request.view.document);
         let parent = parent.uri.to_file_path().unwrap();
         forward_search::search(&tex_file, &parent, request.params.position.line, options)
             .await
@@ -500,13 +500,12 @@ macro_rules! request {
         let resolver = $server.resolver.lock().await;
 
         if let Some(document) = workspace.find(&$params.text_document.uri) {
-            Ok(FeatureRequest::new(
-                $params,
-                workspace,
-                document,
-                Arc::clone(&resolver),
-                Arc::new(LatexComponentDatabase::default()),
-            ))
+            Ok(FeatureRequest {
+                params: $params,
+                view: DocumentView::new(workspace, document),
+                resolver: Arc::clone(&resolver),
+                component_database: Arc::new(LatexComponentDatabase::default()),
+            })
         } else {
             let msg = format!("Unknown document: {}", $params.text_document.uri);
             Err(msg)

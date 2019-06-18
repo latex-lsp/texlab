@@ -18,7 +18,7 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             for environment in &tree.environments {
                 if let Some(left_name) = environment.left.name() {
                     if let Some(right_name) = environment.right.name() {
@@ -36,7 +36,7 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
                                 ),
                             ];
                             let mut changes = HashMap::new();
-                            changes.insert(request.document.uri.clone(), edits);
+                            changes.insert(request.document().uri.clone(), edits);
                             return Some(WorkspaceEdit::new(changes));
                         }
                     }

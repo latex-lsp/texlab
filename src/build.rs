@@ -117,8 +117,8 @@ where
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<BuildParams>) -> BuildResult {
         let document = request
-            .workspace
-            .find_parent(&request.document.uri)
+            .workspace()
+            .find_parent(&request.document().uri)
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
 

@@ -20,13 +20,13 @@ impl FeatureProvider for BibtexEntryRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let key_name = match &request.document.tree {
+        let key_name = match &request.document().tree {
             SyntaxTree::Latex(tree) => Self::find_citation(&tree, request.params.position),
             SyntaxTree::Bibtex(tree) => Self::find_entry(&tree, request.params.position),
         }?;
 
         let mut changes = HashMap::new();
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             let mut edits = Vec::new();
             match &document.tree {
                 SyntaxTree::Latex(tree) => {

@@ -18,7 +18,7 @@ impl FeatureProvider for BibtexEntryTypeHoverProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Option<Hover> {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for entry in tree.entries() {
                 if entry.ty.range().contains(request.params.position) {
                     let ty = &entry.ty.text()[1..];

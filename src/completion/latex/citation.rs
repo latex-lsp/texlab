@@ -18,7 +18,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, CITATION_COMMANDS, 0, async move |_| {
             let mut items = Vec::new();
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let SyntaxTree::Bibtex(tree) = &document.tree {
                     for entry in &tree.entries() {
                         if !entry.is_comment() {

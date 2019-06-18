@@ -20,7 +20,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
     ) -> Option<WorkspaceEdit> {
         let name = Self::find_label(&request)?;
         let mut changes = HashMap::new();
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let edits = tree
                     .labels
@@ -42,7 +42,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
 
 impl LatexLabelRenameProvider {
     fn find_label(request: &FeatureRequest<RenameParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
                 .find(|label| label.name().range().contains(request.params.position))

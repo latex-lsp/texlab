@@ -17,7 +17,7 @@ impl FeatureProvider for LatexEnvironmentFoldingProvider {
         request: &'a FeatureRequest<FoldingRangeParams>,
     ) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             for environment in &tree.environments {
                 let start = environment.left.command.end();
                 let end = environment.right.command.start();

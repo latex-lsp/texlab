@@ -17,7 +17,7 @@ impl FeatureProvider for LatexIncludeLinkProvider {
         &'a self,
         request: &'a FeatureRequest<DocumentLinkParams>,
     ) -> Vec<DocumentLink> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             return tree
                 .includes
                 .iter()
@@ -34,7 +34,7 @@ impl LatexIncludeLinkProvider {
         include: &LatexInclude,
     ) -> Option<DocumentLink> {
         request
-            .workspace
+            .workspace()
             .find(include.target())
             .map(|target| DocumentLink {
                 range: include.path().range(),

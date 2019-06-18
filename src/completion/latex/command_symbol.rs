@@ -21,7 +21,7 @@ impl FeatureProvider for LatexCommandSymbolCompletionProvider {
             let mut items = Vec::new();
             let components = request
                 .component_database
-                .related_components(&request.related_documents);
+                .related_components(request.related_documents());
 
             for symbol in &DATABASE.commands {
                 match &symbol.component {

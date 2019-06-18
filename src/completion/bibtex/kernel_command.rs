@@ -33,7 +33,7 @@ impl FeatureProvider for BibtexKernelCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             if let Some(BibtexNode::Command(command)) = tree.find(request.params.position).last() {
                 if command.token.range().contains(request.params.position)
                     && command.token.start().character != request.params.position.character

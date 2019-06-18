@@ -123,16 +123,16 @@ impl LatexPreviewHoverProvider {
         Self::generate_command_definitions(request, &mut code);
         Self::generate_math_operators(request, &mut code);
         code.push_str("\\begin{document}\n");
-        code.push_str(&Self::extract_text(&request.document.text, range));
+        code.push_str(&Self::extract_text(&request.document().text, range));
         code.push('\n');
         code.push_str("\\end{document}\n");
         code
     }
 
     fn generate_includes(request: &FeatureRequest<TextDocumentPositionParams>, code: &mut String) {
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                let text = &request.document.text;
+                let text = &request.document().text;
                 tree.includes
                     .iter()
                     .filter(|include| include.kind() == LatexIncludeKind::Package)
@@ -156,7 +156,7 @@ impl LatexPreviewHoverProvider {
         request: &FeatureRequest<TextDocumentPositionParams>,
         code: &mut String,
     ) {
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 tree.command_definitions
                     .iter()
@@ -173,7 +173,7 @@ impl LatexPreviewHoverProvider {
         request: &FeatureRequest<TextDocumentPositionParams>,
         code: &mut String,
     ) {
-        for document in &request.related_documents {
+        for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 tree.math_operators
                     .iter()
@@ -254,7 +254,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut elements = Vec::new();
             tree.environments
                 .iter()

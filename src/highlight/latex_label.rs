@@ -17,7 +17,7 @@ impl FeatureProvider for LatexLabelHighlightProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Vec<DocumentHighlight> {
-        if let SyntaxTree::Latex(tree) = &request.document.tree {
+        if let SyntaxTree::Latex(tree) = &request.document().tree {
             if let Some(name) = tree
                 .labels
                 .iter()

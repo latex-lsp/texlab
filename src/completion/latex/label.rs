@@ -18,7 +18,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         LatexCombinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
             let mut items = Vec::new();
-            for document in &request.related_documents {
+            for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()

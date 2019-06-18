@@ -30,7 +30,7 @@ impl FeatureProvider for BibtexFieldNameCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             match tree.find(request.params.position).last() {
                 Some(BibtexNode::Field(field)) => {
                     if field.name.range().contains(request.params.position) {

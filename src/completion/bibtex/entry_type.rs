@@ -30,7 +30,7 @@ impl FeatureProvider for BibtexEntryTypeCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        if let SyntaxTree::Bibtex(tree) = &request.document.tree {
+        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for declaration in &tree.root.children {
                 match declaration {
                     BibtexDeclaration::Preamble(preamble) => {
