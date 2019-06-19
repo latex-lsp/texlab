@@ -1,5 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexCommand;
 use futures_boxed::boxed;
@@ -7,17 +8,6 @@ use lsp_types::{CompletionItem, CompletionParams};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use walkdir::WalkDir;
-
-const NO_EXTENSION_COMMANDS: &[&str] = &["\\include", "\\includesvg"];
-
-const ALL_COMMANDS: &[&str] = &[
-    "\\include",
-    "\\input",
-    "\\bibliography",
-    "\\addbibresource",
-    "\\includegraphics",
-    "\\includesvg",
-];
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexIncludeCompletionProvider;
@@ -28,7 +18,19 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = ALL_COMMANDS.iter().map(|cmd| ArgumentLocation::new(cmd, 0));
+        let locations = request
+            .latex_language_options
+            .include_commands()
+            .filter(|cmd| match cmd.kind {
+                LatexIncludeKind::Package | LatexIncludeKind::Class => false,
+                LatexIncludeKind::Latex
+                | LatexIncludeKind::Bibliography
+                | LatexIncludeKind::Image
+                | LatexIncludeKind::Svg
+                | LatexIncludeKind::Everything => true,
+            })
+            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+
         combinators::argument(request, locations, async move |command| {
             if !request.document().is_file() {
                 return Vec::new();
@@ -43,9 +45,17 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                 .into_iter()
             {
                 if let Ok(entry) = entry {
-                    if entry.file_type().is_file() && is_included(&command, &entry.path()) {
+                    if entry.file_type().is_file() && is_included(request, &command, &entry.path())
+                    {
                         let mut path = entry.into_path();
-                        if NO_EXTENSION_COMMANDS.contains(&command.name.text()) {
+                        let include_extension = request
+                            .latex_language_options
+                            .include_commands()
+                            .find(|cmd| command.name.text() == cmd.name)
+                            .unwrap()
+                            .include_extension;
+
+                        if !include_extension {
                             remove_extension(&mut path);
                         }
                         items.push(Arc::new(factory::create_file(&path)));
@@ -78,21 +88,25 @@ fn current_directory(
     path
 }
 
-fn is_included(command: &LatexCommand, file: &Path) -> bool {
-    let allowed_extensions = allowed_extensions(command);
-    file.extension()
-        .map(|extension| extension.to_string_lossy().to_lowercase())
-        .map(|extension| allowed_extensions.contains(&extension.as_str()))
-        .unwrap_or(false)
-}
-
-fn allowed_extensions(command: &LatexCommand) -> Vec<&'static str> {
-    match command.name.text() {
-        "\\include" | "\\input" => vec!["tex"],
-        "\\bibliography" | "\\addbibresource" => vec!["bib"],
-        "\\includegraphics" => vec!["pdf", "png", "jpg", "jpeg", "bmp"],
-        "\\includesvg" => vec!["svg"],
-        _ => vec![],
+fn is_included(
+    request: &FeatureRequest<CompletionParams>,
+    command: &LatexCommand,
+    file: &Path,
+) -> bool {
+    if let Some(allowed_extensions) = request
+        .latex_language_options
+        .include_commands()
+        .find(|cmd| command.name.text() == cmd.name)
+        .unwrap()
+        .kind
+        .extensions()
+    {
+        file.extension()
+            .map(|extension| extension.to_string_lossy().to_lowercase())
+            .map(|extension| allowed_extensions.contains(&extension.as_str()))
+            .unwrap_or(false)
+    } else {
+        true
     }
 }
 

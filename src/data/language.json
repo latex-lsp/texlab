@@ -348,7 +348,7 @@
       "name": "\\bibliography",
       "index": 0,
       "kind": "bibliography",
-      "includeExtension": false
+      "includeExtension": true
     },
     {
       "name": "\\addbibresource",
