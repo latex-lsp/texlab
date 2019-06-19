@@ -252,7 +252,112 @@
       "kind": "reference"
     },
     {
+      "name": "\\pageref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
       "name": "\\eqref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\cref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Cref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\crefrange",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\crefrange",
+      "index": 1,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Crefrange",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Crefrange",
+      "index": 1,
+      "kind": "reference"
+    },
+    {
+      "name": "\\cref*",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Cref*",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\crefrange*",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\crefrange*",
+      "index": 1,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Crefrange*",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\Crefrange*",
+      "index": 1,
+      "kind": "reference"
+    },
+    {
+      "name": "\\namecref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\nameCref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\lcnamecref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\namecrefs",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\nameCrefs",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\lcnamecrefs",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\labelcref",
+      "index": 0,
+      "kind": "reference"
+    },
+    {
+      "name": "\\labelcpageref",
       "index": 0,
       "kind": "reference"
     }
