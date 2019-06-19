@@ -97,6 +97,7 @@ pub struct LatexLanguageOptions {
     pub additional_citation_commands: Vec<LatexCitationCommand>,
     pub additional_label_commands: Vec<LatexLabelCommand>,
     pub additional_section_commands: Vec<LatexSectionCommand>,
+    pub additional_include_commands: Vec<LatexIncludeCommand>,
     pub additional_command_definition_commands: Vec<LatexCommandDefinitionCommand>,
     pub additional_math_operator_commands: Vec<LatexMathOperatorCommand>,
 }
@@ -128,6 +129,13 @@ impl LatexLanguageOptions {
             .additional_section_commands
             .iter()
             .chain(self.additional_section_commands.iter())
+    }
+
+    pub fn include_commands(&self) -> impl Iterator<Item = &LatexIncludeCommand> {
+        DEFAULT_OPTIONS
+            .additional_include_commands
+            .iter()
+            .chain(self.additional_include_commands.iter())
     }
 
     pub fn command_definition_commands(

@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -21,26 +21,6 @@ impl LatexColorModelCompletionProvider {
             .collect();
         Self { items }
     }
-
-    async fn execute_define_color<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<Arc<CompletionItem>> {
-        combinators::argument(&request, &COMMAND_NAMES[0..1], 1, async move |_| {
-            self.items.clone()
-        })
-        .await
-    }
-
-    async fn execute_define_color_set<'a>(
-        &'a self,
-        request: &'a FeatureRequest<CompletionParams>,
-    ) -> Vec<Arc<CompletionItem>> {
-        combinators::argument(&request, &COMMAND_NAMES[1..2], 0, async move |_| {
-            self.items.clone()
-        })
-        .await
-    }
 }
 
 impl FeatureProvider for LatexColorModelCompletionProvider {
@@ -49,14 +29,25 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let mut items = Vec::new();
-        items.append(&mut self.execute_define_color(&request).await);
-        items.append(&mut self.execute_define_color_set(&request).await);
-        items
+        combinators::argument(
+            &request,
+            LOCATIONS.iter().map(|location| *location),
+            async move |_| self.items.clone(),
+        )
+        .await
     }
 }
 
-const COMMAND_NAMES: &[&str] = &["\\definecolor", "\\definecolorset"];
+const LOCATIONS: &[ArgumentLocation] = &[
+    ArgumentLocation {
+        name: "\\definecolor",
+        index: 1,
+    },
+    ArgumentLocation {
+        name: "\\definecolorset",
+        index: 0,
+    },
+];
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 

@@ -20,55 +20,70 @@ where
     Vec::new()
 }
 
-pub async fn argument<'a, E, F>(
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct ArgumentLocation<'a> {
+    pub name: &'a str,
+    pub index: usize,
+}
+
+impl<'a> ArgumentLocation<'a> {
+    pub fn new(name: &'a str, index: usize) -> Self {
+        Self { name, index }
+    }
+}
+
+pub async fn argument<'a, I, E, F>(
     request: &'a FeatureRequest<CompletionParams>,
-    command_names: &'a [&'a str],
-    argument_index: usize,
+    mut locations: I,
     execute: E,
 ) -> Vec<Arc<CompletionItem>>
 where
+    I: Iterator<Item = ArgumentLocation<'a>>,
     E: FnOnce(Arc<LatexCommand>) -> F,
     F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
 {
-    let find_command = |nodes: &[LatexNode], node_index: usize| {
+    let mut find_command = |nodes: &[LatexNode], node_index: usize| {
         if let LatexNode::Group(group) = &nodes[node_index] {
             if let LatexNode::Command(command) = nodes[node_index + 1].clone() {
-                if command_names.contains(&command.name.text())
-                    && command.args.len() > argument_index
-                    && &command.args[argument_index] == group
-                {
-                    return Some(command);
+                for location in locations.by_ref() {
+                    if command.name.text() == location.name
+                        && command.args.len() > location.index
+                        && &command.args[location.index] == group
+                    {
+                        return Some((command, location.index));
+                    }
                 }
             }
         }
         None
     };
 
-    let find_non_empty_command = |nodes: &[LatexNode]| {
-        if nodes.len() >= 3 {
-            if let LatexNode::Text(_) = nodes[0] {
-                return find_command(nodes, 1);
-            }
-        }
-        None
-    };
-
-    let find_empty_command = |nodes: &[LatexNode]| {
-        if nodes.len() >= 2 {
-            find_command(nodes, 0)
-        } else {
-            None
-        }
-    };
-
     if let SyntaxTree::Latex(tree) = &request.document().tree {
         let mut nodes = tree.find(request.params.position);
         nodes.reverse();
 
-        let command = find_non_empty_command(&nodes).or_else(|| find_empty_command(&nodes));
+        let result1 = {
+            if nodes.len() >= 3 {
+                if let LatexNode::Text(_) = nodes[0] {
+                    find_command(&nodes, 1)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
 
-        if let Some(command) = command {
-            if command.args[argument_index]
+        let result2 = {
+            if nodes.len() >= 2 {
+                find_command(&nodes, 0)
+            } else {
+                None
+            }
+        };
+
+        if let Some((command, index)) = result1.or(result2) {
+            if command.args[index]
                 .range
                 .contains_exclusive(request.params.position)
             {
@@ -87,5 +102,9 @@ where
     E: FnOnce(Arc<LatexCommand>) -> F,
     F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
 {
-    argument(&request, &ENVIRONMENT_COMMANDS, 0, execute).await
+    let locations = request
+        .latex_language_options
+        .environment_commands()
+        .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+    argument(request, locations, execute).await
 }

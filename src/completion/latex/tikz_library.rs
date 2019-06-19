@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -28,7 +28,8 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(request, &COMMANDS, 0, async move |_| self.items.clone()).await
+        let locations = COMMANDS.iter().map(|cmd| ArgumentLocation::new(cmd, 0));
+        combinators::argument(request, locations, async move |_| self.items.clone()).await
     }
 }
 

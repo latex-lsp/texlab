@@ -1,5 +1,4 @@
-use crate::completion::factory;
-use crate::completion::factory::LatexComponentId;
+use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
 use crate::data::symbols::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};

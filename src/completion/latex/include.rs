@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexCommand;
 use futures_boxed::boxed;
@@ -28,7 +28,8 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(request, ALL_COMMANDS, 0, async move |command| {
+        let locations = ALL_COMMANDS.iter().map(|cmd| ArgumentLocation::new(cmd, 0));
+        combinators::argument(request, locations, async move |command| {
             if !request.document().is_file() {
                 return Vec::new();
             }

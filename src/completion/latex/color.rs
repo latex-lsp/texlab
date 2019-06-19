@@ -1,13 +1,27 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexColorCompletionProvider;
+#[derive(Debug, PartialEq, Clone)]
+pub struct LatexColorCompletionProvider {
+    items: Vec<Arc<CompletionItem>>,
+}
+
+impl LatexColorCompletionProvider {
+    pub fn new() -> Self {
+        let items = COLOR_NAMES
+            .iter()
+            .map(|name| factory::create_color(Cow::from(*name)))
+            .map(Arc::new)
+            .collect();
+
+        Self { items }
+    }
+}
 
 impl FeatureProvider for LatexColorCompletionProvider {
     type Params = CompletionParams;
@@ -15,14 +29,11 @@ impl FeatureProvider for LatexColorCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(request, &COLOR_COMMANDS, 0, async move |_| {
-            COLOR_NAMES
-                .iter()
-                .map(|name| factory::create_color(Cow::from(*name)))
-                .map(Arc::new)
-                .collect()
-        })
-        .await
+        let locations = COLOR_COMMANDS
+            .iter()
+            .map(|cmd| ArgumentLocation::new(cmd, 0));
+
+        combinators::argument(request, locations, async move |_| self.items.clone()).await
     }
 }
 
@@ -134,7 +145,7 @@ mod tests {
     #[test]
     fn test_inside_color() {
         let items = test_feature(
-            LatexColorCompletionProvider,
+            LatexColorCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",
@@ -148,7 +159,7 @@ mod tests {
     #[test]
     fn test_outside_color() {
         let items = test_feature(
-            LatexColorCompletionProvider,
+            LatexColorCompletionProvider::new(),
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",

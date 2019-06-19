@@ -1,5 +1,6 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -10,26 +11,18 @@ use std::sync::Arc;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexClassImportProvider;
 
-impl LatexClassImportProvider {
-    const COMMANDS: &'static [&'static str] = &["\\documentclass"];
-}
-
 impl FeatureProvider for LatexClassImportProvider {
     type Params = CompletionParams;
     type Output = Vec<Arc<CompletionItem>>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        import(request, Self::COMMANDS, "cls", factory::create_class).await
+        import(request, LatexIncludeKind::Class, factory::create_class).await
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexPackageImportProvider;
-
-impl LatexPackageImportProvider {
-    const COMMANDS: &'static [&'static str] = &["\\usepackage"];
-}
 
 impl FeatureProvider for LatexPackageImportProvider {
     type Params = CompletionParams;
@@ -37,20 +30,31 @@ impl FeatureProvider for LatexPackageImportProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        import(request, Self::COMMANDS, "sty", factory::create_class).await
+        import(request, LatexIncludeKind::Package, factory::create_class).await
     }
 }
 
-pub async fn import<'a, F>(
-    request: &'a FeatureRequest<CompletionParams>,
-    commands: &'a [&str],
-    extension: &'a str,
+async fn import<F>(
+    request: &FeatureRequest<CompletionParams>,
+    kind: LatexIncludeKind,
     factory: F,
 ) -> Vec<Arc<CompletionItem>>
 where
     F: Fn(Cow<'static, str>) -> CompletionItem,
 {
-    combinators::argument(request, &commands, 0, async move |_| {
+    let extension = if kind == LatexIncludeKind::Package {
+        "sty"
+    } else {
+        "cls"
+    };
+
+    let locations = request
+        .latex_language_options
+        .include_commands()
+        .filter(|cmd| cmd.kind == kind)
+        .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+
+    combinators::argument(request, locations, async move |_| {
         request
             .resolver
             .files_by_name

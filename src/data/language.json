@@ -321,6 +321,18 @@
   ],
   "additionalIncludeCommands": [
     {
+      "name": "\\documentclass",
+      "index": 0,
+      "kind": "class",
+      "includeExtension": false
+    },
+    {
+      "name": "\\usepackage",
+      "index": 0,
+      "kind": "package",
+      "includeExtension": false
+    },
+    {
       "name": "\\include",
       "index": 0,
       "kind": "latex",

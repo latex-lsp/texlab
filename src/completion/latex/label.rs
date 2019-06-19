@@ -1,7 +1,8 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::ArgumentLocation;
+use crate::data::language::LatexLabelKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::*;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -16,13 +17,21 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(request, &LABEL_REFERENCE_COMMANDS, 0, async move |_| {
+        let locations = request
+            .latex_language_options
+            .label_commands()
+            .filter(|cmd| cmd.kind == LatexLabelKind::Reference)
+            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+
+        combinators::argument(request, locations, async move |_| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()
-                        .filter(|label| label.kind() == LatexLabelKind::Definition)
+                        .filter(|label| {
+                            label.kind() == crate::syntax::latex::LatexLabelKind::Definition
+                        })
                         .map(|label| Cow::from(label.name().text().to_owned()))
                         .map(factory::create_label)
                         .map(Arc::new)

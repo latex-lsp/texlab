@@ -1,7 +1,6 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
+use crate::completion::latex::combinators::{self, ArgumentLocation};
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::CITATION_COMMANDS;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -16,7 +15,12 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(request, CITATION_COMMANDS, 0, async move |_| {
+        let locations = request
+            .latex_language_options
+            .citation_commands()
+            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+
+        combinators::argument(request, locations, async move |_| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Bibtex(tree) = &document.tree {
