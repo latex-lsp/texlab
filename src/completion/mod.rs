@@ -47,7 +47,7 @@ impl CompletionProvider {
                 Box::new(LatexArgumentSymbolCompletionProvider),
                 Box::new(LatexPgfLibraryCompletionProvider::new()),
                 Box::new(LatexTikzLibraryCompletionProvider::new()),
-                Box::new(LatexColorCompletionProvider::new()),
+                Box::new(LatexColorCompletionProvider),
                 Box::new(LatexColorModelCompletionProvider::new()),
                 Box::new(LatexLabelCompletionProvider),
                 Box::new(LatexCitationCompletionProvider),

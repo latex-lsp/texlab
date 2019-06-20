@@ -7,21 +7,7 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct LatexColorCompletionProvider {
-    items: Vec<Arc<CompletionItem>>,
-}
-
-impl LatexColorCompletionProvider {
-    pub fn new() -> Self {
-        let items = KERNEL_COLORS
-            .iter()
-            .map(|name| factory::create_color(Cow::from(*name)))
-            .map(Arc::new)
-            .collect();
-
-        Self { items }
-    }
-}
+pub struct LatexColorCompletionProvider;
 
 impl FeatureProvider for LatexColorCompletionProvider {
     type Params = CompletionParams;
@@ -34,99 +20,14 @@ impl FeatureProvider for LatexColorCompletionProvider {
             .color_commands()
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, locations, async move |_| self.items.clone()).await
+        combinators::argument(request, locations, async move |_| {
+            request.latex_language_options.colors()
+                .map(|name| factory::create_color(Cow::from(name.to_owned())))
+                .map(Arc::new)
+                .collect()
+        }).await
     }
 }
-
-const KERNEL_COLORS: &[&str] = &[
-    "black",
-    "blue",
-    "brown",
-    "cyan",
-    "darkgray",
-    "gray",
-    "green",
-    "lightgray",
-    "lime",
-    "magenta",
-    "olive",
-    "orange",
-    "pink",
-    "purple",
-    "red",
-    "teal",
-    "violet",
-    "white",
-    "yellow",
-    "Apricot",
-    "Bittersweet",
-    "Blue",
-    "BlueViolet",
-    "Brown",
-    "CadetBlue",
-    "Cerulean",
-    "Cyan",
-    "DarkOrchid",
-    "ForestGreen",
-    "Goldenrod",
-    "Green",
-    "JungleGreen",
-    "LimeGreen",
-    "Mahogany",
-    "Melon",
-    "Mulberry",
-    "OliveGreen",
-    "OrangeRed",
-    "Peach",
-    "PineGreen",
-    "ProcessBlue",
-    "RawSienna",
-    "RedOrange",
-    "Rhodamine",
-    "RoyalPurple",
-    "Salmon",
-    "Sepia",
-    "SpringGreen",
-    "TealBlue",
-    "Turquoise",
-    "VioletRed",
-    "WildStrawberry",
-    "YellowGreen",
-    "Aquamarine",
-    "Black",
-    "BlueGreen",
-    "BrickRed",
-    "BurntOrange",
-    "CarnationPink",
-    "CornflowerBlue",
-    "Dandelion",
-    "Emerald",
-    "Fuchsia",
-    "Gray",
-    "GreenYellow",
-    "Lavender",
-    "Magenta",
-    "Maroon",
-    "MidnightBlue",
-    "NavyBlue",
-    "Orange",
-    "Orchid",
-    "Periwinkle",
-    "Plum",
-    "Purple",
-    "Red",
-    "RedViolet",
-    "RoyalBlue",
-    "RubineRed",
-    "SeaGreen",
-    "SkyBlue",
-    "Tan",
-    "Thistle",
-    "Violet",
-    "White",
-    "Yellow",
-    "YellowOrange",
-];
 
 #[cfg(test)]
 mod tests {
@@ -137,7 +38,7 @@ mod tests {
     #[test]
     fn test_inside_color() {
         let items = test_feature(
-            LatexColorCompletionProvider::new(),
+            LatexColorCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",
@@ -151,7 +52,7 @@ mod tests {
     #[test]
     fn test_outside_color() {
         let items = test_feature(
-            LatexColorCompletionProvider::new(),
+            LatexColorCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\color{}")],
                 main_file: "foo.tex",
