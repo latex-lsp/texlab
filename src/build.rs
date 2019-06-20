@@ -19,25 +19,34 @@ pub struct BuildParams {
     pub text_document: TextDocumentIdentifier,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildOptions {
-    pub executable: String,
-    pub args: Vec<String>,
-    pub on_save: bool,
+    pub executable: Option<String>,
+    pub args: Option<Vec<String>>,
+    pub on_save: Option<bool>,
 }
 
-impl Default for BuildOptions {
-    fn default() -> Self {
-        Self {
-            executable: "latexmk".to_owned(),
-            args: vec![
+impl BuildOptions {
+    pub fn executable(&self) -> String {
+        self.executable
+            .as_ref()
+            .map(Clone::clone)
+            .unwrap_or_else(|| "latexmk".to_owned())
+    }
+
+    pub fn args(&self) -> Vec<String> {
+        self.args.as_ref().map(Clone::clone).unwrap_or_else(|| {
+            vec![
                 "-pdf".to_owned(),
                 "-interaction=nonstopmode".to_owned(),
                 "-synctex=1".to_owned(),
-            ],
-            on_save: false,
-        }
+            ]
+        })
+    }
+
+    pub fn on_save(&self) -> bool {
+        self.on_save.unwrap_or(true)
     }
 }
 
@@ -70,12 +79,11 @@ where
     }
 
     async fn build<'a>(&'a self, path: &'a Path) -> io::Result<bool> {
-        let mut options = self.options.clone();
         let mut args = Vec::new();
-        args.append(&mut options.args);
+        args.append(&mut self.options.args());
         args.push(path.to_string_lossy().into_owned());
 
-        let mut process = Command::new(options.executable)
+        let mut process = Command::new(self.options.executable())
             .args(args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

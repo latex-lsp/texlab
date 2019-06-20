@@ -484,7 +484,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                 }
                 Action::Build(uri) => {
                     let config: BuildOptions = self.configuration("latex.build").await;
-                    if config.on_save {
+                    if config.on_save() {
                         let text_document = TextDocumentIdentifier::new(uri);
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
