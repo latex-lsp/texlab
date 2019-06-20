@@ -2,16 +2,10 @@ use crate::syntax::bibtex::*;
 use crate::syntax::text::SyntaxNode;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BibtexFormattingOptions {
-    pub line_length: i32,
-}
-
-impl Default for BibtexFormattingOptions {
-    fn default() -> Self {
-        BibtexFormattingOptions { line_length: 120 }
-    }
+    pub line_length: Option<i32>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -24,10 +18,11 @@ pub struct BibtexFormattingParams {
 
 impl BibtexFormattingParams {
     pub fn line_length(&self) -> i32 {
-        if self.options.line_length <= 0 {
+        let line_length = self.options.line_length.unwrap_or(120);
+        if line_length <= 0 {
             std::i32::MAX
         } else {
-            self.options.line_length
+            line_length
         }
     }
 }
@@ -264,7 +259,9 @@ mod tests {
         let params = BibtexFormattingParams {
             tab_size: 4,
             insert_spaces: true,
-            options: BibtexFormattingOptions { line_length },
+            options: BibtexFormattingOptions {
+                line_length: Some(line_length),
+            },
         };
         assert_eq!(
             expected,
