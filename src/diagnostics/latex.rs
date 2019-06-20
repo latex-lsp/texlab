@@ -12,7 +12,13 @@ use std::process::Command;
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexLintOptions {
-    pub on_save: bool,
+    pub on_save: Option<bool>,
+}
+
+impl LatexLintOptions {
+    pub fn on_save(&self) -> bool {
+        self.on_save.unwrap_or(false)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

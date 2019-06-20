@@ -471,7 +471,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                 }
                 Action::RunLinter(uri) => {
                     let config: LatexLintOptions = self.configuration("latex.lint").await;
-                    if config.on_save {
+                    if config.on_save() {
                         let mut diagnostics_manager = self.diagnostics_manager.lock().await;
                         diagnostics_manager.latex.update(&uri);
                     }

@@ -1,6 +1,5 @@
 #![feature(async_await)]
 
-use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use std::sync::Arc;
