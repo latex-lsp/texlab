@@ -13,7 +13,7 @@ pub struct LatexColorCompletionProvider {
 
 impl LatexColorCompletionProvider {
     pub fn new() -> Self {
-        let items = COLOR_NAMES
+        let items = KERNEL_COLORS
             .iter()
             .map(|name| factory::create_color(Cow::from(*name)))
             .map(Arc::new)
@@ -29,24 +29,16 @@ impl FeatureProvider for LatexColorCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = COLOR_COMMANDS
-            .iter()
-            .map(|cmd| ArgumentLocation::new(cmd, 0));
+        let locations = request
+            .latex_language_options
+            .color_commands()
+            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 
         combinators::argument(request, locations, async move |_| self.items.clone()).await
     }
 }
 
-const COLOR_COMMANDS: &[&str] = &[
-    "\\color",
-    "\\colorbox",
-    "\\textcolor",
-    "\\pagecolor",
-    "\\colorlet",
-    "\\definespotcolor",
-];
-
-const COLOR_NAMES: &[&str] = &[
+const KERNEL_COLORS: &[&str] = &[
     "black",
     "blue",
     "brown",

@@ -511,5 +511,23 @@
       "definitionIndex": 0,
       "implementationIndex": 1
     }
+  ],
+  "additionalColorCommands": [
+    {
+      "name": "\\color",
+      "index": 0
+    },
+    {
+      "name": "\\colorbox",
+      "index": 0
+    },
+    {
+      "name": "\\textcolor",
+      "index": 0
+    },
+    {
+      "name": "\\pagecolor",
+      "index": 0
+    }
   ]
 }

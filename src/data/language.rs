@@ -90,6 +90,13 @@ pub struct LatexMathOperatorCommand {
     pub implementation_index: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatexColorCommand {
+    pub name: String,
+    pub index: usize,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexLanguageOptions {
@@ -100,6 +107,7 @@ pub struct LatexLanguageOptions {
     pub additional_include_commands: Vec<LatexIncludeCommand>,
     pub additional_command_definition_commands: Vec<LatexCommandDefinitionCommand>,
     pub additional_math_operator_commands: Vec<LatexMathOperatorCommand>,
+    pub additional_color_commands: Vec<LatexColorCommand>,
 }
 
 impl LatexLanguageOptions {
@@ -152,6 +160,13 @@ impl LatexLanguageOptions {
             .additional_math_operator_commands
             .iter()
             .chain(self.additional_math_operator_commands.iter())
+    }
+
+    pub fn color_commands(&self) -> impl Iterator<Item = &LatexColorCommand> {
+        DEFAULT_OPTIONS
+            .additional_color_commands
+            .iter()
+            .chain(self.additional_color_commands.iter())
     }
 }
 
