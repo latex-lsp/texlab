@@ -107,89 +107,93 @@ pub struct LatexColorModelCommand {
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexLanguageOptions {
-    pub additional_environment_commands: Vec<LatexEnvironmentCommand>,
-    pub additional_citation_commands: Vec<LatexCitationCommand>,
-    pub additional_label_commands: Vec<LatexLabelCommand>,
-    pub additional_section_commands: Vec<LatexSectionCommand>,
-    pub additional_include_commands: Vec<LatexIncludeCommand>,
-    pub additional_command_definition_commands: Vec<LatexCommandDefinitionCommand>,
-    pub additional_math_operator_commands: Vec<LatexMathOperatorCommand>,
-    pub additional_colors: Vec<String>,
-    pub additional_color_commands: Vec<LatexColorCommand>,
-    pub additional_color_model_commands: Vec<LatexColorModelCommand>,
+    pub additional_environment_commands: Option<Vec<LatexEnvironmentCommand>>,
+    pub additional_citation_commands: Option<Vec<LatexCitationCommand>>,
+    pub additional_label_commands: Option<Vec<LatexLabelCommand>>,
+    pub additional_section_commands: Option<Vec<LatexSectionCommand>>,
+    pub additional_include_commands: Option<Vec<LatexIncludeCommand>>,
+    pub additional_command_definition_commands: Option<Vec<LatexCommandDefinitionCommand>>,
+    pub additional_math_operator_commands: Option<Vec<LatexMathOperatorCommand>>,
+    pub additional_colors: Option<Vec<String>>,
+    pub additional_color_commands: Option<Vec<LatexColorCommand>>,
+    pub additional_color_model_commands: Option<Vec<LatexColorModelCommand>>,
 }
 
 impl LatexLanguageOptions {
     pub fn environment_commands(&self) -> impl Iterator<Item = &LatexEnvironmentCommand> {
-        DEFAULT_OPTIONS
-            .additional_environment_commands
-            .iter()
-            .chain(self.additional_environment_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_environment_commands,
+            &self.additional_environment_commands,
+        )
     }
 
     pub fn citation_commands(&self) -> impl Iterator<Item = &LatexCitationCommand> {
-        DEFAULT_OPTIONS
-            .additional_citation_commands
-            .iter()
-            .chain(self.additional_citation_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_citation_commands,
+            &self.additional_citation_commands,
+        )
     }
 
     pub fn label_commands(&self) -> impl Iterator<Item = &LatexLabelCommand> {
-        DEFAULT_OPTIONS
-            .additional_label_commands
-            .iter()
-            .chain(self.additional_label_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_label_commands,
+            &self.additional_label_commands,
+        )
     }
 
     pub fn section_commands(&self) -> impl Iterator<Item = &LatexSectionCommand> {
-        DEFAULT_OPTIONS
-            .additional_section_commands
-            .iter()
-            .chain(self.additional_section_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_section_commands,
+            &self.additional_section_commands,
+        )
     }
 
     pub fn include_commands(&self) -> impl Iterator<Item = &LatexIncludeCommand> {
-        DEFAULT_OPTIONS
-            .additional_include_commands
-            .iter()
-            .chain(self.additional_include_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_include_commands,
+            &self.additional_include_commands,
+        )
     }
 
     pub fn command_definition_commands(
         &self,
     ) -> impl Iterator<Item = &LatexCommandDefinitionCommand> {
-        DEFAULT_OPTIONS
-            .additional_command_definition_commands
-            .iter()
-            .chain(self.additional_command_definition_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_command_definition_commands,
+            &self.additional_command_definition_commands,
+        )
     }
 
     pub fn math_operator_commands(&self) -> impl Iterator<Item = &LatexMathOperatorCommand> {
-        DEFAULT_OPTIONS
-            .additional_math_operator_commands
-            .iter()
-            .chain(self.additional_math_operator_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_math_operator_commands,
+            &self.additional_math_operator_commands,
+        )
     }
 
     pub fn colors(&self) -> impl Iterator<Item = &String> {
-        DEFAULT_OPTIONS
-            .additional_colors
-            .iter()
-            .chain(self.additional_colors.iter())
+        Self::merge(&DEFAULT_OPTIONS.additional_colors, &self.additional_colors)
     }
 
     pub fn color_commands(&self) -> impl Iterator<Item = &LatexColorCommand> {
-        DEFAULT_OPTIONS
-            .additional_color_commands
-            .iter()
-            .chain(self.additional_color_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_color_commands,
+            &self.additional_color_commands,
+        )
     }
 
     pub fn color_model_commands(&self) -> impl Iterator<Item = &LatexColorModelCommand> {
-        DEFAULT_OPTIONS
-            .additional_color_model_commands
-            .iter()
-            .chain(self.additional_color_model_commands.iter())
+        Self::merge(
+            &DEFAULT_OPTIONS.additional_color_model_commands,
+            &self.additional_color_model_commands,
+        )
+    }
+
+    fn merge<'a, T>(
+        left: &'a Option<Vec<T>>,
+        right: &'a Option<Vec<T>>,
+    ) -> impl Iterator<Item = &'a T> {
+        left.iter().chain(right.iter()).flat_map(|item| item.iter())
     }
 }
 

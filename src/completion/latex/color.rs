@@ -21,11 +21,14 @@ impl FeatureProvider for LatexColorCompletionProvider {
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 
         combinators::argument(request, locations, async move |_| {
-            request.latex_language_options.colors()
+            request
+                .latex_language_options
+                .colors()
                 .map(|name| factory::create_color(Cow::from(name.to_owned())))
                 .map(Arc::new)
                 .collect()
-        }).await
+        })
+        .await
     }
 }
 
