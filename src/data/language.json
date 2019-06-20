@@ -529,5 +529,15 @@
       "name": "\\pagecolor",
       "index": 0
     }
+  ],
+  "additionalColorModelCommands": [
+    {
+      "name": "\\definecolor",
+      "index": 1
+    },
+    {
+      "name": "\\definecolorset",
+      "index": 0
+    }
   ]
 }

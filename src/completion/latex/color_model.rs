@@ -29,25 +29,14 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::argument(
-            &request,
-            LOCATIONS.iter().map(|location| *location),
-            async move |_| self.items.clone(),
-        )
-        .await
+        let locations = request
+            .latex_language_options
+            .color_model_commands()
+            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+
+        combinators::argument(&request, locations, async move |_| self.items.clone()).await
     }
 }
-
-const LOCATIONS: &[ArgumentLocation] = &[
-    ArgumentLocation {
-        name: "\\definecolor",
-        index: 1,
-    },
-    ArgumentLocation {
-        name: "\\definecolorset",
-        index: 0,
-    },
-];
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
