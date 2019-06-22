@@ -9,6 +9,7 @@ pub enum LatexNode {
     Group(Arc<LatexGroup>),
     Command(Arc<LatexCommand>),
     Text(Arc<LatexText>),
+    Comma(Arc<LatexComma>),
     Math(Arc<LatexMath>),
 }
 
@@ -53,6 +54,13 @@ impl LatexVisitor for LatexFinder {
         if text.range.contains(self.position) {
             self.results.push(LatexNode::Text(Arc::clone(&text)));
             LatexWalker::walk_text(self, text);
+        }
+    }
+
+    fn visit_comma(&mut self, comma: Arc<LatexComma>) {
+        if comma.range().contains(self.position) {
+            self.results.push(LatexNode::Comma(Arc::clone(&comma)));
+            LatexWalker::walk_comma(self, comma);
         }
     }
 

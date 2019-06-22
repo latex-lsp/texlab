@@ -8,6 +8,7 @@ pub enum LatexTokenKind {
     Word,
     Command,
     Math,
+    Comma,
     BeginGroup,
     EndGroup,
     BeginOptions,
@@ -65,6 +66,7 @@ pub enum LatexContent {
     Group(Arc<LatexGroup>),
     Command(Arc<LatexCommand>),
     Text(Arc<LatexText>),
+    Comma(Arc<LatexComma>),
     Math(Arc<LatexMath>),
 }
 
@@ -74,6 +76,7 @@ impl LatexContent {
             LatexContent::Group(group) => visitor.visit_group(Arc::clone(&group)),
             LatexContent::Command(command) => visitor.visit_command(Arc::clone(&command)),
             LatexContent::Text(text) => visitor.visit_text(Arc::clone(&text)),
+            LatexContent::Comma(comma) => visitor.visit_comma(Arc::clone(&comma)),
             LatexContent::Math(math) => visitor.visit_math(Arc::clone(&math)),
         }
     }
@@ -85,6 +88,7 @@ impl SyntaxNode for LatexContent {
             LatexContent::Group(group) => group.range(),
             LatexContent::Command(command) => command.range(),
             LatexContent::Text(text) => text.range(),
+            LatexContent::Comma(comma) => comma.range(),
             LatexContent::Math(math) => math.range(),
         }
     }
@@ -236,6 +240,23 @@ impl SyntaxNode for LatexText {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexComma {
+    pub token: LatexToken,
+}
+
+impl LatexComma {
+    pub fn new(token: LatexToken) -> Self {
+        Self { token }
+    }
+}
+
+impl SyntaxNode for LatexComma {
+    fn range(&self) -> Range {
+        self.token.range()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexMath {
     pub token: LatexToken,
 }
@@ -260,6 +281,8 @@ pub trait LatexVisitor {
     fn visit_command(&mut self, command: Arc<LatexCommand>);
 
     fn visit_text(&mut self, text: Arc<LatexText>);
+
+    fn visit_comma(&mut self, comma: Arc<LatexComma>);
 
     fn visit_math(&mut self, math: Arc<LatexMath>);
 }
@@ -286,6 +309,8 @@ impl LatexWalker {
     }
 
     pub fn walk_text(_visitor: &mut LatexVisitor, _text: Arc<LatexText>) {}
+
+    pub fn walk_comma(_visitor: &mut LatexVisitor, _comma: Arc<LatexComma>) {}
 
     pub fn walk_math(_visitor: &mut LatexVisitor, _math: Arc<LatexMath>) {}
 }

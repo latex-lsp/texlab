@@ -35,6 +35,10 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
                 LatexTokenKind::Command => {
                     children.push(LatexContent::Command(self.command()));
                 }
+                LatexTokenKind::Comma => {
+                    let node = LatexComma::new(self.tokens.next().unwrap());
+                    children.push(LatexContent::Comma(Arc::new(node)));
+                }
                 LatexTokenKind::Math => {
                     children.push(LatexContent::Math(self.math()));
                 }

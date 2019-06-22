@@ -70,6 +70,9 @@ impl<'a> Iterator for LatexLexer<'a> {
                 Some('$') => {
                     return Some(self.math());
                 }
+                Some(',') => {
+                    return Some(self.single_char(LatexTokenKind::Comma));
+                }
                 Some('\\') => {
                     return Some(self.command());
                 }

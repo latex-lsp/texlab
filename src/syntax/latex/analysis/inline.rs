@@ -52,6 +52,10 @@ impl LatexVisitor for LatexInlineAnalyzer {
         LatexWalker::walk_text(self, text);
     }
 
+    fn visit_comma(&mut self, comma: Arc<LatexComma>) {
+        LatexWalker::walk_comma(self, comma);
+    }
+
     fn visit_math(&mut self, math: Arc<LatexMath>) {
         if let Some(left) = &self.left {
             let inline = LatexInline::new(Arc::clone(&left), Arc::clone(&math));
