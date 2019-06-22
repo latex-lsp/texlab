@@ -1,6 +1,6 @@
 use crate::data::component::ComponentDocumentation;
+use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexIncludeKind;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
@@ -23,8 +23,8 @@ impl FeatureProvider for LatexComponentHoverProvider {
                 .includes
                 .iter()
                 .filter(|include| {
-                    include.kind() == LatexIncludeKind::Package
-                        || include.kind() == LatexIncludeKind::Class
+                    include.kind == LatexIncludeKind::Package
+                        || include.kind == LatexIncludeKind::Class
                 })
                 .find(|include| include.path().range().contains(request.params.position))
                 .map(|include| include.path().text())

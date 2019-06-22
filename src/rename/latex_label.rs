@@ -1,4 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::syntax::latex::LatexLabel;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
@@ -25,12 +26,10 @@ impl FeatureProvider for LatexLabelRenameProvider {
                 let edits = tree
                     .labels
                     .iter()
-                    .filter(|label| label.name().text() == name)
+                    .flat_map(LatexLabel::names)
+                    .filter(|label| label.text() == name)
                     .map(|label| {
-                        TextEdit::new(
-                            label.name().range(),
-                            Cow::from(request.params.new_name.clone()),
-                        )
+                        TextEdit::new(label.range(), Cow::from(request.params.new_name.clone()))
                     })
                     .collect();
                 changes.insert(document.uri.clone(), edits);
@@ -45,8 +44,9 @@ impl LatexLabelRenameProvider {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
-                .find(|label| label.name().range().contains(request.params.position))
-                .map(|label| label.name().text())
+                .flat_map(LatexLabel::names)
+                .find(|label| label.range().contains(request.params.position))
+                .map(|label| label.text())
         } else {
             None
         }

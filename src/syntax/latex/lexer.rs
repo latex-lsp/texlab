@@ -100,6 +100,7 @@ fn is_word_char(c: char) -> bool {
         && c != ']'
         && c != '\\'
         && c != '$'
+        && c != ','
 }
 
 #[cfg(test)]

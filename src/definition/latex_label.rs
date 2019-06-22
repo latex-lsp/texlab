@@ -1,3 +1,4 @@
+use crate::data::language::LatexLabelKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
@@ -34,9 +35,10 @@ impl LatexLabelDefinitionProvider {
         if let SyntaxTree::Latex(tree) = &document.tree {
             tree.labels
                 .iter()
-                .filter(|label| label.kind() == LatexLabelKind::Definition)
-                .find(|label| label.name().text() == reference)
-                .map(|label| Location::new(document.uri.clone(), label.name().range()))
+                .filter(|label| label.kind == LatexLabelKind::Definition)
+                .flat_map(LatexLabel::names)
+                .find(|label| label.text() == reference)
+                .map(|label| Location::new(document.uri.clone(), label.range()))
         } else {
             None
         }
@@ -46,8 +48,9 @@ impl LatexLabelDefinitionProvider {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
-                .find(|label| label.name().range().contains(request.params.position))
-                .map(|label| label.name().text())
+                .flat_map(LatexLabel::names)
+                .find(|label| label.range().contains(request.params.position))
+                .map(LatexToken::text)
         } else {
             None
         }

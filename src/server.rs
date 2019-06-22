@@ -110,7 +110,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             hover_provider: Some(true),
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
-                trigger_characters: Some(vec!['\\', '{', '}', '@', '/']),
+                trigger_characters: Some(vec!['\\', '{', '}', '@', '/', ' ']),
             }),
             signature_help_provider: None,
             definition_provider: Some(true),

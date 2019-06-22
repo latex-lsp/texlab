@@ -47,7 +47,7 @@ impl LatexCitationDefinitionProvider {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.citations
                 .iter()
-                .map(LatexCitation::key)
+                .flat_map(LatexCitation::keys)
                 .find(|key| key.range().contains(request.params.position))
                 .map(LatexToken::text)
         } else {

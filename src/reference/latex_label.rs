@@ -1,5 +1,7 @@
+use crate::data::language::LatexLabelKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexLabelKind;
+use crate::syntax::latex::{LatexLabel, LatexToken};
+use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
@@ -19,9 +21,10 @@ impl FeatureProvider for LatexLabelReferenceProvider {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()
-                        .filter(|label| label.kind() == LatexLabelKind::Reference)
-                        .filter(|label| label.name().text() == definition)
-                        .map(|label| Location::new(document.uri.clone(), label.command.range))
+                        .filter(|label| label.kind == LatexLabelKind::Reference)
+                        .flat_map(LatexLabel::names)
+                        .filter(|label| label.text() == definition)
+                        .map(|label| Location::new(document.uri.clone(), label.range()))
                         .for_each(|location| references.push(location))
                 }
             }
@@ -35,11 +38,10 @@ impl LatexLabelReferenceProvider {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
-                .find(|label| {
-                    label.kind() == LatexLabelKind::Definition
-                        && label.command.range.contains(request.params.position)
-                })
-                .map(|label| label.name().text())
+                .filter(|label| label.kind == LatexLabelKind::Definition)
+                .flat_map(LatexLabel::names)
+                .find(|label| label.range().contains(request.params.position))
+                .map(LatexToken::text)
         } else {
             None
         }
@@ -71,7 +73,7 @@ mod tests {
             references,
             vec![Location::new(
                 FeatureSpec::uri("bar.tex"),
-                Range::new_simple(1, 0, 1, 9)
+                Range::new_simple(1, 5, 1, 8)
             )]
         );
     }

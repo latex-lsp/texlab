@@ -39,7 +39,7 @@ pub enum SyntaxTree {
 impl SyntaxTree {
     pub fn parse(uri: &Uri, text: &str, language: Language) -> Self {
         match language {
-            Language::Latex => SyntaxTree::Latex(LatexSyntaxTree::new(uri, text)),
+            Language::Latex => SyntaxTree::Latex(LatexSyntaxTree::parse(uri, text)),
             Language::Bibtex => SyntaxTree::Bibtex(BibtexSyntaxTree::from(text)),
         }
     }

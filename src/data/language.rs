@@ -15,7 +15,7 @@ pub struct LatexCitationCommand {
     pub index: usize,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum LatexLabelKind {
     Definition,

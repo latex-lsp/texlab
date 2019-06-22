@@ -198,17 +198,36 @@ impl LatexCommand {
         }
     }
 
-    pub fn extract_content(&self, index: usize) -> Option<String> {
-        let mut words = Vec::new();
-        let text = self.extract_text(index)?;
-        for word in &text.words {
-            words.push(word.text().to_owned());
-        }
-        Some(words.join(" "))
-    }
-
     pub fn has_word(&self, index: usize) -> bool {
         self.extract_word(index).is_some()
+    }
+
+    pub fn extract_comma_separated_words(&self, index: usize) -> Vec<&LatexToken> {
+        let mut words = Vec::new();
+        for child in &self.args[index].children {
+            if let LatexContent::Text(text) = child {
+                for word in &text.words {
+                    words.push(word);
+                }
+            }
+        }
+        words
+    }
+
+    pub fn has_comma_separated_words(&self, index: usize) -> bool {
+        if self.args.len() <= index {
+            return false;
+        }
+
+        for node in &self.args[index].children {
+            match node {
+                LatexContent::Text(_) | LatexContent::Comma(_) => (),
+                LatexContent::Command(_) | LatexContent::Group(_) | LatexContent::Math(_) => {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }
 

@@ -20,7 +20,7 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         tree.command_definitions
                             .iter()
-                            .filter(|def| def.name.name.text() == command.name.text())
+                            .filter(|def| def.definition.name.text() == command.name.text())
                             .map(|def| Location::new(document.uri.clone(), def.range()))
                             .for_each(|def| definitions.push(def));
                     }

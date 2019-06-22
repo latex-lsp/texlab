@@ -1,6 +1,6 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexSyntaxTree;
-use crate::syntax::latex::LatexSyntaxTree;
+use crate::syntax::latex::{LatexCitation, LatexSyntaxTree};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
@@ -32,10 +32,11 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                 SyntaxTree::Latex(tree) => {
                     tree.citations
                         .iter()
-                        .filter(|citation| citation.key().text() == key_name)
+                        .flat_map(LatexCitation::keys)
+                        .filter(|citation| citation.text() == key_name)
                         .map(|citation| {
                             TextEdit::new(
-                                citation.key().range(),
+                                citation.range(),
                                 Cow::from(request.params.new_name.clone()),
                             )
                         })
@@ -63,9 +64,11 @@ impl FeatureProvider for BibtexEntryRenameProvider {
 impl BibtexEntryRenameProvider {
     fn find_citation(tree: &LatexSyntaxTree, position: Position) -> Option<&str> {
         for citation in &tree.citations {
-            let key = citation.key();
-            if key.range().contains(position) {
-                return Some(key.text());
+            let keys = citation.keys();
+            for key in keys {
+                if key.range().contains(position) {
+                    return Some(key.text());
+                }
             }
         }
         None

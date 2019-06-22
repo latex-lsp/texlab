@@ -8,6 +8,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
+use crate::syntax::latex::LatexLabel;
 
 pub struct LatexLabelCompletionProvider;
 
@@ -29,10 +30,9 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()
-                        .filter(|label| {
-                            label.kind() == crate::syntax::latex::LatexLabelKind::Definition
-                        })
-                        .map(|label| Cow::from(label.name().text().to_owned()))
+                        .filter(|label| label.kind == LatexLabelKind::Definition)
+                        .flat_map(LatexLabel::names)
+                        .map(|label| Cow::from(label.text().to_owned()))
                         .map(factory::create_label)
                         .map(Arc::new)
                         .for_each(|item| items.push(item))

@@ -33,13 +33,20 @@ impl LatexIncludeLinkProvider {
         request: &FeatureRequest<DocumentLinkParams>,
         include: &LatexInclude,
     ) -> Option<DocumentLink> {
-        request
-            .workspace()
-            .find(include.target())
-            .map(|target| DocumentLink {
-                range: include.path().range(),
-                target: target.uri.clone(),
-            })
+        for target in &include.targets {
+            let link = request
+                .workspace()
+                .find(target)
+                .map(|document| DocumentLink {
+                    range: include.path().range(),
+                    target: document.uri.clone(),
+                });
+
+            if link.is_some() {
+                return link;
+            }
+        }
+        None
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
 use crate::syntax::text::{CharStream, SyntaxNode};
@@ -135,7 +136,7 @@ impl LatexPreviewHoverProvider {
                 let text = &request.document().text;
                 tree.includes
                     .iter()
-                    .filter(|include| include.kind() == LatexIncludeKind::Package)
+                    .filter(|include| include.kind == LatexIncludeKind::Package)
                     .filter(|include| !IGNORED_PACKAGES.contains(&include.path().text()))
                     .filter(|include| {
                         let name = format!("{}.sty", include.path().text());

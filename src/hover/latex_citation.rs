@@ -3,9 +3,11 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
 use crate::syntax::bibtex::BibtexEntry;
+use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
+use itertools::Itertools;
 use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -56,8 +58,9 @@ impl LatexCitationHoverProvider {
             SyntaxTree::Latex(tree) => tree
                 .citations
                 .iter()
-                .find(|citation| citation.command.range.contains(request.params.position))
-                .map(|citation| citation.key().text()),
+                .flat_map(LatexCitation::keys)
+                .find(|citation| citation.range().contains(request.params.position))
+                .map(LatexToken::text),
             SyntaxTree::Bibtex(tree) => {
                 for entry in tree.entries() {
                     if let Some(key) = &entry.key {

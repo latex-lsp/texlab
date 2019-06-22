@@ -1,3 +1,4 @@
+use crate::data::language::LatexLabelKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
 use crate::syntax::text::SyntaxNode;
@@ -17,28 +18,32 @@ impl FeatureProvider for LatexLabelHighlightProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Vec<DocumentHighlight> {
+        let mut highlights = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             if let Some(name) = tree
                 .labels
                 .iter()
-                .find(|label| label.name().range().contains(request.params.position))
-                .map(|label| label.name().text())
+                .flat_map(LatexLabel::names)
+                .find(|label| label.range().contains(request.params.position))
+                .map(|label| label.text())
             {
-                return tree
-                    .labels
-                    .iter()
-                    .filter(|label| label.name().text() == name)
-                    .map(|label| DocumentHighlight {
-                        range: label.name().range(),
-                        kind: Some(match label.kind() {
-                            LatexLabelKind::Definition => DocumentHighlightKind::Write,
-                            LatexLabelKind::Reference => DocumentHighlightKind::Read,
-                        }),
-                    })
-                    .collect();
+                for label_group in &tree.labels {
+                    for label in label_group.names() {
+                        if label.text() == name {
+                            let highlight = DocumentHighlight {
+                                range: label.range(),
+                                kind: Some(match label_group.kind {
+                                    LatexLabelKind::Definition => DocumentHighlightKind::Write,
+                                    LatexLabelKind::Reference => DocumentHighlightKind::Read,
+                                }),
+                            };
+                            highlights.push(highlight);
+                        }
+                    }
+                }
             }
         }
-        Vec::new()
+        highlights
     }
 }
 

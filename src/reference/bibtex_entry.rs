@@ -1,4 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::syntax::latex::LatexCitation;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
@@ -19,8 +20,9 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.citations
                         .iter()
-                        .filter(|citation| citation.key().text() == key)
-                        .map(|citation| Location::new(document.uri.clone(), citation.command.range))
+                        .flat_map(LatexCitation::keys)
+                        .filter(|citation| citation.text() == key)
+                        .map(|citation| Location::new(document.uri.clone(), citation.range()))
                         .for_each(|location| references.push(location))
                 }
             }
@@ -69,7 +71,7 @@ mod tests {
             references,
             vec![Location::new(
                 FeatureSpec::uri("bar.tex"),
-                Range::new_simple(1, 0, 1, 10)
+                Range::new_simple(1, 6, 1, 9)
             )]
         );
     }

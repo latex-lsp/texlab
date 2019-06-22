@@ -1,3 +1,4 @@
+use crate::data::language::LatexIncludeKind;
 use crate::syntax::latex::*;
 use crate::syntax::{Language, SyntaxTree};
 use log::*;
@@ -53,9 +54,11 @@ impl Workspace {
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 for include in &tree.includes {
-                    if let Some(ref child) = self.find(include.target()) {
-                        edges.push((Arc::clone(&parent), Arc::clone(&child)));
-                        edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                    for target in &include.targets {
+                        if let Some(ref child) = self.find(target) {
+                            edges.push((Arc::clone(&parent), Arc::clone(&child)));
+                            edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                        }
                     }
                 }
             }
@@ -99,14 +102,18 @@ impl Workspace {
         for document in &self.documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 for include in &tree.includes {
-                    if self.find(include.target()).is_some()
-                        || include.kind() == LatexIncludeKind::Package
-                        || include.kind() == LatexIncludeKind::Class
+                    if include.kind == LatexIncludeKind::Package
+                        || include.kind == LatexIncludeKind::Class
+                        || include
+                            .targets
+                            .iter()
+                            .any(|target| self.find(target).is_some())
                     {
                         continue;
                     }
 
-                    if let Ok(path) = include.target().to_file_path() {
+                    for target in &include.targets {
+                        let path = target.to_file_path().unwrap();
                         if path.exists() {
                             includes.push(path);
                         }
