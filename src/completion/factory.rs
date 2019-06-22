@@ -1,5 +1,5 @@
-use crate::data::bibtex_entry_type::BibtexEntryType;
 use crate::data::bibtex_field::BibtexField;
+use crate::data::language::BibtexEntryType;
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
 use crate::syntax::bibtex::BibtexEntry;

@@ -2,7 +2,7 @@
 
 use lsp_types::*;
 use std::borrow::Cow;
-use texlab::data::bibtex_entry_type;
+use texlab::data::language::LANGUAGE_OPTIONS;
 use texlab::data::bibtex_field;
 use texlab::scenario::Scenario;
 
@@ -33,7 +33,7 @@ async fn test_entry_type_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(bibtex_entry_type::get_documentation("article").unwrap())
+            value: Cow::from(LANGUAGE_OPTIONS.get_entry_type_doc("article").unwrap())
         })
     );
 }

@@ -104,6 +104,13 @@ pub struct LatexColorModelCommand {
     pub index: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BibtexEntryType {
+    pub name: String,
+    pub documentation: Option<String>,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LanguageOptions {
@@ -117,6 +124,20 @@ pub struct LanguageOptions {
     pub colors: Vec<String>,
     pub color_commands: Vec<LatexColorCommand>,
     pub color_model_commands: Vec<LatexColorModelCommand>,
+    pub entry_types: Vec<BibtexEntryType>,
+}
+
+impl LanguageOptions {
+    pub fn get_entry_type_doc(&self, name: &str) -> Option<&str> {
+        for ty in self.entry_types.iter() {
+            if ty.name.to_lowercase() == name.to_lowercase() {
+                if let Some(documentation) = &ty.documentation {
+                    return Some(&documentation);
+                }
+            }
+        }
+        None
+    }
 }
 
 const JSON: &str = include_str!("language.json");

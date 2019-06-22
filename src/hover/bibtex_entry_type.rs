@@ -1,4 +1,4 @@
-use crate::data::bibtex_entry_type;
+use crate::data::language::LANGUAGE_OPTIONS;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
@@ -22,7 +22,7 @@ impl FeatureProvider for BibtexEntryTypeHoverProvider {
             for entry in tree.entries() {
                 if entry.ty.range().contains(request.params.position) {
                     let ty = &entry.ty.text()[1..];
-                    if let Some(documentation) = bibtex_entry_type::get_documentation(ty) {
+                    if let Some(documentation) = LANGUAGE_OPTIONS.get_entry_type_doc(ty) {
                         return Some(Hover {
                             contents: HoverContents::Markup(MarkupContent {
                                 kind: MarkupKind::Markdown,
@@ -60,7 +60,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: Cow::from(bibtex_entry_type::get_documentation("article").unwrap()),
+                    value: Cow::from(LANGUAGE_OPTIONS.get_entry_type_doc("article").unwrap()),
                 }),
                 range: None,
             })
