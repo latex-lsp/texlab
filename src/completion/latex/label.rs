@@ -1,7 +1,7 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators;
 use crate::completion::latex::combinators::ArgumentLocation;
-use crate::data::language::LatexLabelKind;
+use crate::data::language::{LANGUAGE_OPTIONS, LatexLabelKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
@@ -17,9 +17,9 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = request
-            .latex_language_options
-            .label_commands()
+        let locations = LANGUAGE_OPTIONS
+            .label_commands
+            .iter()
             .filter(|cmd| cmd.kind == LatexLabelKind::Reference)
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 

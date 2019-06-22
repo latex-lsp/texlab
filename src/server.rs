@@ -6,7 +6,6 @@ use crate::completion::CompletionProvider;
 use crate::data::citation::render_citation;
 use crate::data::completion::LatexComponentDatabase;
 use crate::data::component::ComponentDocumentation;
-use crate::data::language::LatexLanguageOptions;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::feature::{DocumentView, FeatureProvider, FeatureRequest};
@@ -499,17 +498,12 @@ macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
         let resolver = $server.resolver.lock().await;
-        let latex_language_options = $server
-            .configuration::<LatexLanguageOptions>("latex.language")
-            .await;
-
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest {
                 params: $params,
                 view: DocumentView::new(workspace, document),
                 resolver: Arc::clone(&resolver),
                 component_database: Arc::new(LatexComponentDatabase::default()),
-                latex_language_options,
             })
         } else {
             let msg = format!("Unknown document: {}", $params.text_document.uri);

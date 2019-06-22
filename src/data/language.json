@@ -1,5 +1,5 @@
 {
-  "additionalEnvironmentCommands": [
+  "environmentCommands": [
     {
       "name": "\\begin",
       "index": 0
@@ -9,7 +9,7 @@
       "index": 0
     }
   ],
-  "additionalCitationCommands": [
+  "citationCommands": [
     {
       "name": "\\cite",
       "index": 0
@@ -235,7 +235,7 @@
       "index": 0
     }
   ],
-  "additionalLabelCommands": [
+  "labelCommands": [
     {
       "name": "\\label",
       "index": 0,
@@ -362,7 +362,7 @@
       "kind": "reference"
     }
   ],
-  "additionalSectionCommands": [
+  "sectionCommands": [
     {
       "name": "\\chapter",
       "index": 0,
@@ -424,7 +424,7 @@
       "level": 5
     }
   ],
-  "additionalIncludeCommands": [
+  "includeCommands": [
     {
       "name": "\\documentclass",
       "index": 0,
@@ -480,7 +480,7 @@
       "includeExtension": true
     }
   ],
-  "additionalCommandDefinitionCommands": [
+  "commandDefinitionCommands": [
     {
       "name": "\\newcommand",
       "definitionIndex": 0,
@@ -500,7 +500,7 @@
       "implementationIndex": 1
     }
   ],
-  "additionalMathOperatorCommands": [
+  "mathOperatorCommands": [
     {
       "name": "\\DeclareMathOperator",
       "definitionIndex": 0,
@@ -512,7 +512,7 @@
       "implementationIndex": 1
     }
   ],
-  "additionalColors": [
+  "colors": [
     "black",
     "blue",
     "brown",
@@ -601,7 +601,7 @@
     "Yellow",
     "YellowOrange"
   ],
-  "additionalColorCommands": [
+  "colorCommands": [
     {
       "name": "\\color",
       "index": 0
@@ -619,7 +619,7 @@
       "index": 0
     }
   ],
-  "additionalColorModelCommands": [
+  "colorModelCommands": [
     {
       "name": "\\definecolor",
       "index": 1

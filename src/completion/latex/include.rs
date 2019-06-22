@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentLocation};
-use crate::data::language::LatexIncludeKind;
+use crate::data::language::{LANGUAGE_OPTIONS, LatexIncludeKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::LatexCommand;
 use futures_boxed::boxed;
@@ -18,9 +18,9 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = request
-            .latex_language_options
-            .include_commands()
+        let locations = LANGUAGE_OPTIONS
+            .include_commands
+            .iter()
             .filter(|cmd| match cmd.kind {
                 LatexIncludeKind::Package | LatexIncludeKind::Class => false,
                 LatexIncludeKind::Latex
@@ -48,9 +48,9 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                     if entry.file_type().is_file() && is_included(request, &command, &entry.path())
                     {
                         let mut path = entry.into_path();
-                        let include_extension = request
-                            .latex_language_options
-                            .include_commands()
+                        let include_extension = LANGUAGE_OPTIONS
+                            .include_commands
+                            .iter()
                             .find(|cmd| command.name.text() == cmd.name)
                             .unwrap()
                             .include_extension;
@@ -93,9 +93,9 @@ fn is_included(
     command: &LatexCommand,
     file: &Path,
 ) -> bool {
-    if let Some(allowed_extensions) = request
-        .latex_language_options
-        .include_commands()
+    if let Some(allowed_extensions) = LANGUAGE_OPTIONS
+        .include_commands
+        .iter()
         .find(|cmd| command.name.text() == cmd.name)
         .unwrap()
         .kind

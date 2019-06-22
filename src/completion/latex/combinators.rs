@@ -3,6 +3,7 @@ use crate::syntax::latex::*;
 use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::sync::Arc;
+use crate::data::language::LANGUAGE_OPTIONS;
 
 pub async fn command<E, F>(
     request: &FeatureRequest<CompletionParams>,
@@ -102,9 +103,9 @@ where
     E: FnOnce(Arc<LatexCommand>) -> F,
     F: std::future::Future<Output = Vec<Arc<CompletionItem>>>,
 {
-    let locations = request
-        .latex_language_options
-        .environment_commands()
+    let locations = LANGUAGE_OPTIONS
+        .environment_commands
+        .iter()
         .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
     argument(request, locations, execute).await
 }

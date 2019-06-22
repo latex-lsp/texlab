@@ -5,6 +5,7 @@ use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::sync::Arc;
+use crate::data::language::LANGUAGE_OPTIONS;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationCompletionProvider;
@@ -15,9 +16,9 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = request
-            .latex_language_options
-            .citation_commands()
+        let locations = LANGUAGE_OPTIONS
+            .citation_commands
+            .iter()
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 
         combinators::argument(request, locations, async move |_| {
