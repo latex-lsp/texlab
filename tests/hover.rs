@@ -3,7 +3,6 @@
 use lsp_types::*;
 use std::borrow::Cow;
 use texlab::data::language::LANGUAGE_OPTIONS;
-use texlab::data::bibtex_field;
 use texlab::scenario::Scenario;
 
 pub async fn run(
@@ -53,7 +52,7 @@ async fn test_field_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(bibtex_field::get_documentation("author").unwrap())
+            value: Cow::from(LANGUAGE_OPTIONS.get_field_doc("author").unwrap())
         })
     )
 }

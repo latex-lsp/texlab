@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::data::bibtex_field::BIBTEX_FIELDS;
+use crate::data::language::LANGUAGE_OPTIONS;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexNode;
 use crate::syntax::text::SyntaxNode;
@@ -15,7 +15,8 @@ pub struct BibtexFieldNameCompletionProvider {
 
 impl BibtexFieldNameCompletionProvider {
     pub fn new() -> Self {
-        let items = BIBTEX_FIELDS
+        let items = LANGUAGE_OPTIONS
+            .fields
             .iter()
             .map(|field| factory::create_field_name(field))
             .map(Arc::new)

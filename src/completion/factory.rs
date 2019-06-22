@@ -1,5 +1,4 @@
-use crate::data::bibtex_field::BibtexField;
-use crate::data::language::BibtexEntryType;
+use crate::data::language::{BibtexEntryType, BibtexField};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
 use crate::syntax::bibtex::BibtexEntry;

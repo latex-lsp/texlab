@@ -111,6 +111,12 @@ pub struct BibtexEntryType {
     pub documentation: Option<String>,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct BibtexField {
+    pub name: String,
+    pub documentation: String,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LanguageOptions {
@@ -125,6 +131,7 @@ pub struct LanguageOptions {
     pub color_commands: Vec<LatexColorCommand>,
     pub color_model_commands: Vec<LatexColorModelCommand>,
     pub entry_types: Vec<BibtexEntryType>,
+    pub fields: Vec<BibtexField>,
 }
 
 impl LanguageOptions {
@@ -138,10 +145,18 @@ impl LanguageOptions {
         }
         None
     }
+
+    pub fn get_field_doc(&self, name: &str) -> Option<&str> {
+        self.fields
+            .iter()
+            .find(|field| field.name.to_lowercase() == name.to_lowercase())
+            .map(|field| field.documentation.as_ref())
+    }
 }
 
 const JSON: &str = include_str!("language.json");
 
 lazy_static! {
-    pub static ref LANGUAGE_OPTIONS: LanguageOptions = serde_json::from_str(JSON).unwrap();
+    pub static ref LANGUAGE_OPTIONS: LanguageOptions =
+        serde_json::from_str(JSON).expect("Failed to deserialize language.json");
 }
