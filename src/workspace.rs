@@ -102,12 +102,16 @@ impl Workspace {
         for document in &self.documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 for include in &tree.includes {
-                    if include.kind == LatexIncludeKind::Package
-                        || include.kind == LatexIncludeKind::Class
-                        || include
-                            .targets
-                            .iter()
-                            .any(|target| self.find(target).is_some())
+                    if include.kind != LatexIncludeKind::Latex
+                        && include.kind != LatexIncludeKind::Bibliography
+                    {
+                        continue;
+                    }
+
+                    if include
+                        .targets
+                        .iter()
+                        .any(|target| self.find(target).is_some())
                     {
                         continue;
                     }
