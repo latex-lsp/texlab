@@ -5,7 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
-use crate::data::language::LANGUAGE_OPTIONS;
+use crate::data::language::language_data;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LatexColorCompletionProvider;
@@ -16,13 +16,13 @@ impl FeatureProvider for LatexColorCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = LANGUAGE_OPTIONS
+        let locations = language_data()
             .color_commands
             .iter()
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
 
         combinators::argument(request, locations, async move |_| {
-            LANGUAGE_OPTIONS
+            language_data()
                 .colors
                 .iter()
                 .map(|name| factory::create_color(Cow::from(name.to_owned())))

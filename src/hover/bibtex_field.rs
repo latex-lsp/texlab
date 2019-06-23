@@ -1,4 +1,4 @@
-use crate::data::language::LANGUAGE_OPTIONS;
+use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::*;
 use crate::syntax::SyntaxTree;
@@ -21,7 +21,7 @@ impl FeatureProvider for BibtexFieldHoverProvider {
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for node in tree.find(request.params.position) {
                 if let BibtexNode::Field(field) = node {
-                    let documentation = LANGUAGE_OPTIONS.get_field_doc(field.name.text())?;
+                    let documentation = language_data().field_documentation(field.name.text())?;
                     return Some(Hover {
                         contents: HoverContents::Markup(MarkupContent {
                             kind: MarkupKind::Markdown,
@@ -58,7 +58,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: Cow::from(LANGUAGE_OPTIONS.get_field_doc("author").unwrap()),
+                    value: Cow::from(language_data().field_documentation("author").unwrap()),
                 }),
                 range: None,
             })

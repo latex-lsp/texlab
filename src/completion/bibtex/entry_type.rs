@@ -1,5 +1,5 @@
 use crate::completion::factory;
-use crate::data::language::LANGUAGE_OPTIONS;
+use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
@@ -15,7 +15,7 @@ pub struct BibtexEntryTypeCompletionProvider {
 
 impl BibtexEntryTypeCompletionProvider {
     pub fn new() -> Self {
-        let items = LANGUAGE_OPTIONS
+        let items = language_data()
             .entry_types
             .iter()
             .map(factory::create_entry_type)

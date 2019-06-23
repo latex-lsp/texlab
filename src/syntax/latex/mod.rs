@@ -145,7 +145,7 @@ impl LatexCitation {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut citations = Vec::new();
         for command in commands {
-            for LatexCitationCommand { name, index } in &LANGUAGE_OPTIONS.citation_commands {
+            for LatexCitationCommand { name, index } in &language_data().citation_commands {
                 if command.name.text() == name && command.has_comma_separated_words(*index) {
                     citations.push(Self {
                         command: Arc::clone(command),
@@ -179,7 +179,7 @@ impl LatexLabel {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut labels = Vec::new();
         for command in commands {
-            for LatexLabelCommand { name, index, kind } in &LANGUAGE_OPTIONS.label_commands {
+            for LatexLabelCommand { name, index, kind } in &language_data().label_commands {
                 if command.name.text() == name && command.has_comma_separated_words(*index) {
                     labels.push(Self {
                         command: Arc::clone(command),
@@ -210,7 +210,7 @@ impl LatexSection {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut sections = Vec::new();
         for command in commands {
-            for LatexSectionCommand { name, index, level } in &LANGUAGE_OPTIONS.section_commands {
+            for LatexSectionCommand { name, index, level } in &language_data().section_commands {
                 if command.name.text() == name && command.args.len() > *index {
                     sections.push(Self {
                         command: Arc::clone(command),
@@ -259,7 +259,7 @@ impl LatexInclude {
     fn parse(uri: &Uri, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut includes = Vec::new();
         for command in commands {
-            for description in &LANGUAGE_OPTIONS.include_commands {
+            for description in &language_data().include_commands {
                 if let Some(include) = Self::parse_single(uri, &command, &description) {
                     includes.push(include);
                 }
@@ -416,7 +416,7 @@ impl LatexMathOperator {
                 name,
                 definition_index,
                 implementation_index,
-            } in &LANGUAGE_OPTIONS.math_operator_commands
+            } in &language_data().math_operator_commands
             {
                 if command.name.text() == name
                     && command.args.len() > *definition_index
@@ -459,7 +459,7 @@ impl LatexCommandDefinition {
                 definition_index,
                 argument_count_index,
                 implementation_index,
-            } in &LANGUAGE_OPTIONS.command_definition_commands
+            } in &language_data().command_definition_commands
             {
                 if command.name.text() == name
                     && command.args.len() > *definition_index

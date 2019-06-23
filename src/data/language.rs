@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -119,7 +119,7 @@ pub struct BibtexField {
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LanguageOptions {
+pub struct LanguageData {
     pub environment_commands: Vec<LatexEnvironmentCommand>,
     pub citation_commands: Vec<LatexCitationCommand>,
     pub label_commands: Vec<LatexLabelCommand>,
@@ -136,8 +136,8 @@ pub struct LanguageOptions {
     pub tikz_libraries: Vec<String>,
 }
 
-impl LanguageOptions {
-    pub fn get_entry_type_doc(&self, name: &str) -> Option<&str> {
+impl LanguageData {
+    pub fn entry_type_documentation(&self, name: &str) -> Option<&str> {
         for ty in self.entry_types.iter() {
             if ty.name.to_lowercase() == name.to_lowercase() {
                 if let Some(documentation) = &ty.documentation {
@@ -148,7 +148,7 @@ impl LanguageOptions {
         None
     }
 
-    pub fn get_field_doc(&self, name: &str) -> Option<&str> {
+    pub fn field_documentation(&self, name: &str) -> Option<&str> {
         self.fields
             .iter()
             .find(|field| field.name.to_lowercase() == name.to_lowercase())
@@ -156,9 +156,10 @@ impl LanguageOptions {
     }
 }
 
-const JSON: &str = include_str!("language.json");
-
-lazy_static! {
-    pub static ref LANGUAGE_OPTIONS: LanguageOptions =
-        serde_json::from_str(JSON).expect("Failed to deserialize language.json");
+pub fn language_data() -> &'static LanguageData {
+    static INSTANCE: OnceCell<LanguageData> = OnceCell::new();
+    INSTANCE.get_or_init(|| {
+        const JSON: &str = include_str!("language.json");
+        serde_json::from_str(JSON).expect("Failed to deserialize language.json")
+    })
 }

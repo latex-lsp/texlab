@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentLocation};
-use crate::data::language::{LatexIncludeKind, LANGUAGE_OPTIONS};
+use crate::data::language::{LatexIncludeKind, language_data};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
@@ -48,7 +48,7 @@ where
         "cls"
     };
 
-    let locations = LANGUAGE_OPTIONS
+    let locations = language_data()
         .include_commands
         .iter()
         .filter(|cmd| cmd.kind == kind)

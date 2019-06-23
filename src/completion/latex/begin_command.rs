@@ -1,5 +1,4 @@
-use crate::completion::factory;
-use crate::completion::factory::LatexComponentId;
+use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;

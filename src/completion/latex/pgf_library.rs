@@ -5,7 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
-use crate::data::language::LANGUAGE_OPTIONS;
+use crate::data::language::language_data;
 
 pub struct LatexPgfLibraryCompletionProvider {
     items: Vec<Arc<CompletionItem>>,
@@ -13,7 +13,7 @@ pub struct LatexPgfLibraryCompletionProvider {
 
 impl LatexPgfLibraryCompletionProvider {
     pub fn new() -> Self {
-        let items = LANGUAGE_OPTIONS.pgf_libraries
+        let items = language_data().pgf_libraries
             .iter()
             .map(Cow::from)
             .map(factory::create_pgf_library)

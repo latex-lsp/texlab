@@ -2,7 +2,7 @@
 
 use lsp_types::*;
 use std::borrow::Cow;
-use texlab::data::language::LANGUAGE_OPTIONS;
+use texlab::data::language::language_data;
 use texlab::scenario::Scenario;
 
 pub async fn run(
@@ -32,7 +32,7 @@ async fn test_entry_type_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(LANGUAGE_OPTIONS.get_entry_type_doc("article").unwrap())
+            value: Cow::from(language_data().entry_type_documentation("article").unwrap())
         })
     );
 }
@@ -52,7 +52,7 @@ async fn test_field_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(LANGUAGE_OPTIONS.get_field_doc("author").unwrap())
+            value: Cow::from(language_data().field_documentation("author").unwrap())
         })
     )
 }
