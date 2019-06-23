@@ -11,7 +11,9 @@ async fn test_lint_latex() {
     scenario.open("foo.tex").await;
     {
         let mut options = scenario.client.options.lock().await;
-        options.latex_lint = Some(LatexLintOptions { on_save: Some(true) });
+        options.latex_lint = Some(LatexLintOptions {
+            on_save: Some(true),
+        });
     }
     let identifier = TextDocumentIdentifier::new(scenario.uri("foo.tex"));
     scenario.server.did_save(DidSaveTextDocumentParams {

@@ -40,7 +40,9 @@ async fn test_bibtex_entry_infinite_line_length() {
     let (scenario, edits) = run(
         "bibtex/infinite_line_length",
         "foo.bib",
-        Some(BibtexFormattingOptions { line_length: Some(0) }),
+        Some(BibtexFormattingOptions {
+            line_length: Some(0),
+        }),
     )
     .await;
     assert_eq!(edits.len(), 1);

@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentLocation};
-use crate::data::language::{LatexIncludeKind, language_data};
+use crate::data::language::{language_data, LatexIncludeKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};

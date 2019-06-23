@@ -16,10 +16,7 @@ async fn set_options<'a>(scenario: &'a Scenario, executable: &'a str, on_save: b
     options.latex_build = Some(build_options);
 }
 
-async fn run(
-    executable: &'static str,
-    name: &'static str,
-) -> (Scenario, BuildResult) {
+async fn run(executable: &'static str, name: &'static str) -> (Scenario, BuildResult) {
     let scenario = Scenario::new("build").await;
     scenario.open(name).await;
     set_options(&scenario, executable, false).await;

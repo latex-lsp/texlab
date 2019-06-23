@@ -1,9 +1,9 @@
+use crate::data::language::language_data;
 use crate::feature::FeatureRequest;
 use crate::syntax::latex::*;
 use crate::syntax::SyntaxTree;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::sync::Arc;
-use crate::data::language::language_data;
 
 pub async fn command<E, F>(
     request: &FeatureRequest<CompletionParams>,

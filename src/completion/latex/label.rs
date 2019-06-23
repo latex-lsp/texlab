@@ -1,14 +1,14 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators;
 use crate::completion::latex::combinators::ArgumentLocation;
-use crate::data::language::{LatexLabelKind, language_data};
+use crate::data::language::{language_data, LatexLabelKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::syntax::latex::LatexLabel;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
-use crate::syntax::latex::LatexLabel;
 
 pub struct LatexLabelCompletionProvider;
 

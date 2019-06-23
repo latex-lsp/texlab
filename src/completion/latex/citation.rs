@@ -1,11 +1,11 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::sync::Arc;
-use crate::data::language::language_data;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationCompletionProvider;
