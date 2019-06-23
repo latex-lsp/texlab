@@ -132,6 +132,8 @@ pub struct LanguageOptions {
     pub color_model_commands: Vec<LatexColorModelCommand>,
     pub entry_types: Vec<BibtexEntryType>,
     pub fields: Vec<BibtexField>,
+    pub pgf_libraries: Vec<String>,
+    pub tikz_libraries: Vec<String>,
 }
 
 impl LanguageOptions {

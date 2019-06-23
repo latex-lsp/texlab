@@ -5,6 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
+use crate::data::language::LANGUAGE_OPTIONS;
 
 pub struct LatexTikzLibraryCompletionProvider {
     items: Vec<Arc<CompletionItem>>,
@@ -12,9 +13,9 @@ pub struct LatexTikzLibraryCompletionProvider {
 
 impl LatexTikzLibraryCompletionProvider {
     pub fn new() -> Self {
-        let items = LIBRARIES
+        let items = LANGUAGE_OPTIONS.tikz_libraries
             .iter()
-            .map(|name| Cow::from(*name))
+            .map(Cow::from)
             .map(factory::create_tikz_library)
             .map(Arc::new)
             .collect();
@@ -34,79 +35,6 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
 }
 
 const COMMANDS: &[&str] = &["\\usetikzlibrary"];
-
-const LIBRARIES: &[&str] = &[
-    "3d",
-    "angles",
-    "arrows",
-    "automata",
-    "babel",
-    "backgrounds",
-    "bending",
-    "calc",
-    "calendar",
-    "chains",
-    "circuits",
-    "circuits.ee",
-    "circuits.ee.IEC",
-    "circuits.logic.CDH",
-    "circuits.logic",
-    "circuits.logic.IEC",
-    "circuits.logic.US",
-    "datavisualization.3d",
-    "datavisualization.barcharts",
-    "datavisualization",
-    "datavisualization.formats.functions",
-    "datavisualization.polar",
-    "datavisualization.sparklines",
-    "decorations",
-    "decorations.footprints",
-    "decorations.fractals",
-    "decorations.markings",
-    "decorations.pathmorphing",
-    "decorations.pathreplacing",
-    "decorations.shapes",
-    "decorations.text",
-    "er",
-    "fadings",
-    "fit",
-    "fixedpointarithmetic",
-    "folding",
-    "fpu",
-    "graphs",
-    "graphs.standard",
-    "intersections",
-    "lindenmayersystems",
-    "math",
-    "matrix",
-    "mindmap",
-    "patterns",
-    "patterns.meta",
-    "petri",
-    "plothandlers",
-    "plotmarks",
-    "positioning",
-    "quotes",
-    "scopes",
-    "shadings",
-    "shadows",
-    "shapes.arrows",
-    "shapes.callouts",
-    "shapes",
-    "shapes.gates.logic.IEC",
-    "shapes.gates.logic.US",
-    "shapes.geometric",
-    "shapes.misc",
-    "shapes.multipart",
-    "shapes.symbols",
-    "snakes",
-    "spy",
-    "svg.path",
-    "through",
-    "topaths",
-    "trees",
-    "turtle",
-];
 
 #[cfg(test)]
 mod tests {

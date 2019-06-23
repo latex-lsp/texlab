@@ -5,6 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::borrow::Cow;
 use std::sync::Arc;
+use crate::data::language::LANGUAGE_OPTIONS;
 
 pub struct LatexPgfLibraryCompletionProvider {
     items: Vec<Arc<CompletionItem>>,
@@ -12,9 +13,9 @@ pub struct LatexPgfLibraryCompletionProvider {
 
 impl LatexPgfLibraryCompletionProvider {
     pub fn new() -> Self {
-        let items = LIBRARIES
+        let items = LANGUAGE_OPTIONS.pgf_libraries
             .iter()
-            .map(|name| Cow::from(*name))
+            .map(Cow::from)
             .map(factory::create_pgf_library)
             .map(Arc::new)
             .collect();
@@ -34,49 +35,6 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
 }
 
 const COMMANDS: &[&str] = &["\\usepgflibrary"];
-
-static LIBRARIES: &[&str] = &[
-    "arrows",
-    "arrows.meta",
-    "arrows.spaced",
-    "curvilinear",
-    "datavisualization.barcharts",
-    "datavisualization.formats.functions",
-    "datavisualization.polar",
-    "decorations.footprints",
-    "decorations.fractals",
-    "decorations.markings",
-    "decorations.pathmorphing",
-    "decorations.pathreplacing",
-    "decorations.shapes",
-    "decorations.text",
-    "fadings",
-    "fixedpointarithmetic",
-    "fpu",
-    "intersections",
-    "lindenmayersystems",
-    "luamath",
-    "patterns",
-    "patterns.meta",
-    "plothandlers",
-    "plotmarks",
-    "profiler",
-    "shadings",
-    "shapes.arrows",
-    "shapes.callouts",
-    "shapes",
-    "shapes.gates.ee",
-    "shapes.gates.ee.IEC",
-    "shapes.gates.logic",
-    "shapes.gates.logic.IEC",
-    "shapes.gates.logic.US",
-    "shapes.geometric",
-    "shapes.misc",
-    "shapes.multipart",
-    "shapes.symbols",
-    "snakes",
-    "svg.path",
-];
 
 #[cfg(test)]
 mod tests {
