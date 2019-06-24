@@ -75,13 +75,11 @@ mod tests {
     use crate::tex::resolver::TexResolver;
     use lsp_types::Position;
     use std::collections::HashMap;
-    use std::ffi::OsString;
-    use std::path::PathBuf;
 
     fn create_resolver() -> TexResolver {
         let mut files_by_name = HashMap::new();
-        files_by_name.insert(OsString::from("foo.sty"), PathBuf::from("./foo.sty"));
-        files_by_name.insert(OsString::from("bar.cls"), PathBuf::from("./bar.cls"));
+        files_by_name.insert("foo.sty".into(), "./foo.sty".into());
+        files_by_name.insert("bar.cls".into(), "./bar.cls".into());
         TexResolver { files_by_name }
     }
 
