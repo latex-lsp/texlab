@@ -2,7 +2,7 @@ use crate::syntax::Language;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::env;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -31,7 +31,7 @@ lazy_static! {
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct TexResolver {
-    pub files_by_name: HashMap<OsString, PathBuf>,
+    pub files_by_name: HashMap<String, PathBuf>,
 }
 
 impl TexResolver {
@@ -59,7 +59,7 @@ impl TexResolver {
                         .rev()
                         .find_map(move |dir| dir.join(&path).canonicalize().ok())
                 })
-                .map(|path| (path.file_name().unwrap().to_owned(), path));
+                .map(|path| (path.file_name().unwrap().to_str().unwrap().to_owned(), path));
 
             files_by_name.extend(database);
         }

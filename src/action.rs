@@ -7,11 +7,13 @@ use std::sync::Mutex;
 pub enum Action {
     RegisterCapabilities,
     LoadResolver,
+    LoadComponentDatabase,
     ResolveIncludes,
     PublishDiagnostics,
     RunLinter(Uri),
     ParseLog { tex_uri: Uri, log_path: PathBuf },
     Build(Uri),
+    ScanComponents,
 }
 
 #[derive(Debug, Default)]

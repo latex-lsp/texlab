@@ -4,7 +4,7 @@ use crate::client::LspClient;
 use crate::completion::factory::CompletionItemData;
 use crate::completion::CompletionProvider;
 use crate::data::citation::render_citation;
-use crate::data::completion::LatexComponentDatabase;
+use crate::data::completion::{LatexComponentDatabase, LatexComponentDatabaseManager};
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
@@ -29,6 +29,7 @@ use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
+use once_cell::sync::OnceCell;
 use serde::de::DeserializeOwned;
 use std::borrow::Cow;
 use std::ffi::OsStr;
@@ -37,10 +38,31 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
+struct ServerConfig {
+    component_database_path: PathBuf,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        let directory = dirs::home_dir()
+            .expect("Could not find HOME directory")
+            .join(".texlab");
+        if !directory.exists() {
+            fs::create_dir(&directory).expect("Could not create server directory");
+        }
+
+        Self {
+            component_database_path: directory.join("components.json"),
+        }
+    }
+}
+
 pub struct LatexLspServer<C> {
+    config: ServerConfig,
     client: Arc<C>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
+    database_manager: OnceCell<Arc<LatexComponentDatabaseManager<C>>>,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<Arc<TexResolver>>,
     completion_provider: CompletionProvider,
@@ -57,9 +79,11 @@ pub struct LatexLspServer<C> {
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn new(client: Arc<C>) -> Self {
         LatexLspServer {
+            config: ServerConfig::default(),
             client,
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
+            database_manager: OnceCell::new(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(Arc::new(TexResolver::default())),
             completion_provider: CompletionProvider::new(),
@@ -143,6 +167,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::LoadResolver);
+        self.action_manager.push(Action::LoadComponentDatabase);
         self.action_manager.push(Action::ResolveIncludes);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -182,6 +207,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.workspace_manager.add(params.text_document);
         self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -192,6 +218,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             self.workspace_manager.update(uri, change.text);
         }
         self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -449,6 +476,21 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         }
                     };
                 }
+                Action::LoadComponentDatabase => {
+                    let resolver = self.resolver.lock().await;
+                    let manager = Arc::new(LatexComponentDatabaseManager::load_or_create(
+                        &self.config.component_database_path,
+                        Arc::clone(&resolver),
+                        Arc::clone(&self.client),
+                    ));
+
+                    {
+                        let manager = Arc::clone(&manager);
+                        runtime::spawn(async move { manager.listen().await });
+                    }
+
+                    self.database_manager.set(manager).ok().unwrap();
+                }
                 Action::ResolveIncludes => {
                     let workspace = self.workspace_manager.get();
                     workspace
@@ -488,6 +530,18 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
                 }
+                Action::ScanComponents => {
+                    let workspace = self.workspace_manager.get();
+                    if let Some(database) = self.database_manager.get() {
+                        for document in &workspace.documents {
+                            if let SyntaxTree::Latex(tree) = &document.tree {
+                                for component in &tree.components {
+                                    database.enqueue(component).await;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -498,12 +552,17 @@ macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
         let resolver = $server.resolver.lock().await;
+        let component_database = match $server.database_manager.get() {
+            Some(manager) => manager.get().await,
+            None => LatexComponentDatabase::default(),
+        };
+
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest {
                 params: $params,
                 view: DocumentView::new(workspace, document),
                 resolver: Arc::clone(&resolver),
-                component_database: Arc::new(LatexComponentDatabase::default()),
+                component_database,
             })
         } else {
             let msg = format!("Unknown document: {}", $params.text_document.uri);

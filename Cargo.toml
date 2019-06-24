@@ -16,6 +16,7 @@ bytes = "0.4.12"
 byteorder = "1"
 clap = "2.33"
 copy_dir = "0.1.2"
+dirs = "2.0"
 futures-boxed = { path = "futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 html2md = "0.2.9"
@@ -30,6 +31,7 @@ lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "eb34c6ebd1e
 nom = "5.0.0-beta2"
 once_cell = "0.2.1"
 path-clean = "0.1.0"
+petgraph = "0.4"
 regex = "1.1.6"
 reqwest = "0.9.16"
 runtime = "0.3.0-alpha.4"

@@ -1,5 +1,6 @@
 use futures::compat::*;
 use std::io;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use tempfile::{tempdir, TempDir};
@@ -10,6 +11,16 @@ pub enum Format {
     Latex,
     Lualatex,
     Xelatex,
+}
+
+impl From<&Path> for Format {
+    fn from(file: &Path) -> Self {
+        match file.to_string_lossy().as_ref() {
+            file if file.contains("lua") => Format::Lualatex,
+            file if file.contains("xe") => Format::Xelatex,
+            _ => Format::Latex,
+        }
+    }
 }
 
 #[derive(Debug)]

@@ -37,7 +37,7 @@ impl FeatureProvider for LatexTikzCommandCompletionProvider {
                 .component_database
                 .related_components(request.related_documents())
                 .iter()
-                .any(|component| component.files.iter().any(|file| file == "tikz.sty"))
+                .any(|component| component.file_names.iter().any(|file| file == "tikz.sty"))
             {
                 self.items.clone()
             } else {

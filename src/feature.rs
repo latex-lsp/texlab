@@ -33,7 +33,7 @@ pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
     pub resolver: Arc<TexResolver>,
-    pub component_database: Arc<LatexComponentDatabase>,
+    pub component_database: LatexComponentDatabase,
 }
 
 impl<P> FeatureRequest<P> {
@@ -176,7 +176,7 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }
@@ -193,7 +193,7 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }
@@ -208,7 +208,7 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }
@@ -223,7 +223,7 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }
@@ -242,7 +242,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }
@@ -259,7 +259,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: Arc::new(self.component_database),
+            component_database: self.component_database,
         }
     }
 }

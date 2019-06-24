@@ -25,7 +25,10 @@ impl FeatureProvider for LatexCommandSymbolCompletionProvider {
             for symbol in &DATABASE.commands {
                 match &symbol.component {
                     Some(component) => {
-                        if components.iter().any(|c| c.files.contains(&component)) {
+                        if components
+                            .iter()
+                            .any(|c| c.file_names.contains(&component.into()))
+                        {
                             let component = LatexComponentId::User(vec![Cow::from(component)]);
                             items.push(Arc::new(factory::create_command_symbol(
                                 &symbol.command,

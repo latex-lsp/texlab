@@ -140,10 +140,7 @@ impl LatexPreviewHoverProvider {
                     .filter(|include| !IGNORED_PACKAGES.contains(&include.path().text()))
                     .filter(|include| {
                         let name = format!("{}.sty", include.path().text());
-                        request
-                            .resolver
-                            .files_by_name
-                            .contains_key(&OsString::from(name))
+                        request.resolver.files_by_name.contains_key(&name)
                     })
                     .for_each(|include| {
                         code.push_str(&Self::extract_text(&text, include.command.range));
