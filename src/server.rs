@@ -23,6 +23,7 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::{Language, SyntaxTree};
 use crate::tex::resolver::{self, TexResolver, TEX_RESOLVER};
 use crate::workspace::WorkspaceManager;
+use futures::channel::oneshot;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;
@@ -30,16 +31,18 @@ use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
 use once_cell::sync::OnceCell;
+use runtime::task::JoinHandle;
 use serde::de::DeserializeOwned;
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::fs;
+use std::mem;
 use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-struct ServerConfig {
-    component_database_path: PathBuf,
+pub struct ServerConfig {
+    pub component_database_path: PathBuf,
 }
 
 impl Default for ServerConfig {
@@ -63,6 +66,7 @@ pub struct LatexLspServer<C> {
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
     database_manager: OnceCell<Arc<LatexComponentDatabaseManager<C>>>,
+    database_listener: Mutex<Option<JoinHandle<()>>>,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<Arc<TexResolver>>,
     completion_provider: CompletionProvider,
@@ -77,13 +81,14 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>) -> Self {
+    pub fn new(client: Arc<C>, config: ServerConfig) -> Self {
         LatexLspServer {
-            config: ServerConfig::default(),
+            config,
             client,
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
             database_manager: OnceCell::new(),
+            database_listener: Mutex::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(Arc::new(TexResolver::default())),
             completion_provider: CompletionProvider::new(),
@@ -168,6 +173,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::LoadResolver);
         self.action_manager.push(Action::LoadComponentDatabase);
+        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::ResolveIncludes);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -385,6 +391,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .ok_or_else(|| format!("Unable to execute forward search"))
     }
 
+    pub async fn stop_scanning(&self) {
+        self.database_manager.get().unwrap().close().await;
+        let mut listener = self.database_listener.lock().await;
+        mem::replace(&mut *listener, None).unwrap().await;
+    }
+
     async fn configuration<T>(&self, section: &'static str) -> T
     where
         T: DeserializeOwned + Default,
@@ -486,7 +498,9 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
 
                     {
                         let manager = Arc::clone(&manager);
-                        runtime::spawn(async move { manager.listen().await });
+                        let listener = runtime::spawn(async move { manager.listen().await });
+
+                        *self.database_listener.lock().await = Some(listener);
                     }
 
                     self.database_manager.set(manager).ok().unwrap();

@@ -8,7 +8,7 @@ use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
 use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
-use texlab::server::LatexLspServer;
+use texlab::server::{LatexLspServer, ServerConfig};
 use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
 use tokio_stdin_stdout;
@@ -45,7 +45,10 @@ async fn main() {
     let input = FramedRead::new(stdin, LspCodec).compat();
     let output = Arc::new(Mutex::new(FramedWrite::new(stdout, LspCodec).sink_compat()));
     let client = Arc::new(LatexLspClient::new(Arc::clone(&output)));
-    let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
+    let server = Arc::new(LatexLspServer::new(
+        Arc::clone(&client),
+        ServerConfig::default(),
+    ));
     let mut handler = MessageHandler {
         server,
         client,

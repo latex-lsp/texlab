@@ -57,6 +57,7 @@ impl LatexComponentDatabase {
     }
 }
 
+#[derive(Debug)]
 pub struct LatexComponentDatabaseManager<C> {
     database_path: PathBuf,
     components_by_name: Mutex<HashMap<String, Arc<LatexComponent>>>,
@@ -122,7 +123,7 @@ where
     }
 
     pub async fn enqueue<'a>(&'a self, file_name: &'a str) {
-        if !self.components_by_name.lock().await.contains_key(file_name) {
+        if { !self.components_by_name.lock().await.contains_key(file_name) } {
             if let Some(file) = self.resolver.files_by_name.get(file_name) {
                 let mut sender = self.sender.lock().await;
                 sender.send(file.to_owned()).await.unwrap();
@@ -131,8 +132,7 @@ where
     }
 
     pub async fn close(&self) {
-        let mut receiver = self.receiver.lock().await;
-        receiver.close();
+        self.sender.lock().await.disconnect();
     }
 
     pub async fn listen(&self) {
@@ -145,7 +145,7 @@ where
                 continue;
             }
 
-            self.analyze(file).await
+            self.analyze(file).await;
         }
     }
 

@@ -8,13 +8,15 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
     let scenario = format!("completion/{}", scenario);
     let scenario = Scenario::new(&scenario).await;
     scenario.open(file).await;
+    scenario.server.stop_scanning().await;
 
     let params = CompletionParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),
         position,
         context: None,
     };
-    scenario
+
+    let items = scenario
         .server
         .completion(params)
         .await
@@ -23,7 +25,10 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
         .into_iter()
         .map(|item| (*item.label).to_owned())
         .sorted()
-        .collect()
+        .collect();
+
+    scenario.directory.close().unwrap();
+    items
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
@@ -128,6 +133,30 @@ async fn test_import_class() {
 async fn test_import_package() {
     let items = run("import", "foo.tex", Position::new(1, 15)).await;
     assert!(items.iter().any(|item| item == "amsmath"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_package_command() {
+    let items = run("component", "foo.tex", Position::new(2, 3)).await;
+    assert!(items.iter().any(|item| item == "AmS"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_package_environment() {
+    let items = run("component", "foo.tex", Position::new(3, 11)).await;
+    assert!(items.iter().any(|item| item == "align"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_class_command() {
+    let items = run("component", "foo.tex", Position::new(4, 8)).await;
+    assert!(items.iter().any(|item| item == "thetable"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_class_environment() {
+    let items = run("component", "foo.tex", Position::new(5, 14)).await;
+    assert!(items.iter().any(|item| item == "theindex"));
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
