@@ -57,7 +57,7 @@ impl Scenario {
     pub async fn read(&self, name: &'static str) -> String {
         let mut path = self.directory.path().to_owned();
         path.push(name);
-        std::fs::read_to_string(path).unwrap()
+        std::fs::read_to_string(path).unwrap().replace('\r', "")
     }
 
     pub async fn open(&self, name: &'static str) {
