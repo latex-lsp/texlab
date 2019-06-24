@@ -59,10 +59,6 @@ fn lint(path: &Path) -> Option<Vec<Diagnostic>> {
         .output()
         .ok()?;
 
-    if !output.status.success() {
-        return None;
-    }
-
     let mut diagnostics = Vec::new();
     let stdout = String::from_utf8(output.stdout).ok()?;
     for line in stdout.lines() {
