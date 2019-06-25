@@ -1,10 +1,4 @@
-[![Build Status](https://dev.azure.com/latex-lsp/texlab/_apis/build/status/latex-lsp.texlab?branchName=master)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
-[![Coverage](https://img.shields.io/azure-devops/coverage/latex-lsp/texlab/8.svg?logo=azuredevops)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
-[![Maintainability](https://api.codeclimate.com/v1/badges/9ce99ec1116b43ee3fc4/maintainability)](https://codeclimate.com/github/latex-lsp/texlab/maintainability)
-
 # TexLab
-
-_Note: The server is currently being rewritten in Rust. You can follow the progress [here](https://github.com/latex-lsp/texlab/projects/1)._
 
 A cross-platform implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol)
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
@@ -14,19 +8,29 @@ Learn more about the project on our [website](https://texlab.netlify.com).
 
 ## Getting Started
 
-This project uses [Gradle](https://gradle.org/).
-To compile the server and run the tests execute the following command in the project directory:
+You will need to install the following dependencies to compile the server:
+
+- [Rust](https://rustup.rs/)
+- [Node.js](https://nodejs.org/)
+- [Yarn](https://yarnpkg.com/)
+
+Then run the following commands in the project folder:
 
 ```shell
-./gradlew build
+cd citeproc
+yarn
+yarn dist
+cd ..
+cargo build --release
 ```
 
-To use the local build with the [extension](https://github.com/latex-lsp/texlab-vscode), we recommend creating a symbolic link:
+To use the local build with the [Visual Studio Code extension](https://github.com/latex-lsp/texlab-vscode), you should create a symbolic link:
 
-```shell
-mkdir ../texlab-vscode/server
-ln -s ../../texlab/build/libs/texlab.jar ./../texlab-vscode/server/texlab.jar
-```
+| Platform    | Symlink                                                                            |
+| ----------- | ---------------------------------------------------------------------------------- |
+| Windows x64 | `texlab/target/debug/texlab.exe -> texlab-vscode/server/texlab-x86_64-windows.exe` |
+| Linux x64   | `texlab/target/debug/texlab -> texlab-vscode/server/texlab-x86_64-linux`           |
+| macOS x64   | `texlab/target/debug/texlab -> texlab-vscode/server/texlab-x86_64-darwin`          |
 
 ## Contributing
 
