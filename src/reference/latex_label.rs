@@ -16,12 +16,12 @@ impl FeatureProvider for LatexLabelReferenceProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
         let mut references = Vec::new();
-        if let Some(definition) = Self::find_definition(request) {
+        if let Some(definition) = Self::find_name(request) {
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     tree.labels
                         .iter()
-                        .filter(|label| label.kind == LatexLabelKind::Reference)
+                        .filter(|label| Self::is_included(request, label))
                         .flat_map(LatexLabel::names)
                         .filter(|label| label.text() == definition)
                         .map(|label| Location::new(document.uri.clone(), label.range()))
@@ -34,16 +34,22 @@ impl FeatureProvider for LatexLabelReferenceProvider {
 }
 
 impl LatexLabelReferenceProvider {
-    fn find_definition(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
+    fn find_name(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
-                .filter(|label| label.kind == LatexLabelKind::Definition)
                 .flat_map(LatexLabel::names)
                 .find(|label| label.range().contains(request.params.position))
                 .map(LatexToken::text)
         } else {
             None
+        }
+    }
+
+    fn is_included(request: &FeatureRequest<ReferenceParams>, label: &LatexLabel) -> bool {
+        match label.kind {
+            LatexLabelKind::Reference => true,
+            LatexLabelKind::Definition => request.params.context.include_declaration,
         }
     }
 }
@@ -55,7 +61,7 @@ mod tests {
     use lsp_types::{Position, Range};
 
     #[test]
-    fn test() {
+    fn test_definition() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {
@@ -65,6 +71,7 @@ mod tests {
                     FeatureSpec::file("baz.tex", "\\ref{foo}"),
                 ],
                 main_file: "foo.tex",
+                include_declaration: false,
                 position: Position::new(0, 8),
                 ..FeatureSpec::default()
             },
@@ -75,6 +82,81 @@ mod tests {
                 FeatureSpec::uri("bar.tex"),
                 Range::new_simple(1, 5, 1, 8)
             )]
+        );
+    }
+
+    #[test]
+    fn test_definition_include_declaration() {
+        let references = test_feature(
+            LatexLabelReferenceProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}"),
+                    FeatureSpec::file("bar.tex", "\\input{foo.tex}\n\\ref{foo}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
+                ],
+                main_file: "foo.tex",
+                include_declaration: true,
+                position: Position::new(0, 8),
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            references,
+            vec![
+                Location::new(FeatureSpec::uri("foo.tex"), Range::new_simple(0, 7, 0, 10)),
+                Location::new(FeatureSpec::uri("bar.tex"), Range::new_simple(1, 5, 1, 8)),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_reference() {
+        let references = test_feature(
+            LatexLabelReferenceProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}"),
+                    FeatureSpec::file("bar.tex", "\\input{foo.tex}\n\\ref{foo}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
+                ],
+                main_file: "bar.tex",
+                position: Position::new(1, 7),
+                include_declaration: false,
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            references,
+            vec![Location::new(
+                FeatureSpec::uri("bar.tex"),
+                Range::new_simple(1, 5, 1, 8)
+            ),]
+        );
+    }
+
+    #[test]
+    fn test_reference_include_declaration() {
+        let references = test_feature(
+            LatexLabelReferenceProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\label{foo}"),
+                    FeatureSpec::file("bar.tex", "\\input{foo.tex}\n\\ref{foo}"),
+                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
+                ],
+                main_file: "bar.tex",
+                position: Position::new(1, 7),
+                include_declaration: true,
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            references,
+            vec![
+                Location::new(FeatureSpec::uri("bar.tex"), Range::new_simple(1, 5, 1, 8)),
+                Location::new(FeatureSpec::uri("foo.tex"), Range::new_simple(0, 7, 0, 10)),
+            ]
         );
     }
 

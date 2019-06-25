@@ -136,6 +136,7 @@ pub struct FeatureSpec {
     pub main_file: &'static str,
     pub position: Position,
     pub new_name: &'static str,
+    pub include_declaration: bool,
     pub resolver: TexResolver,
     pub component_database: LatexComponentDatabase,
 }
@@ -235,7 +236,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             text_document: self.identifier(),
             position: self.position,
             context: ReferenceContext {
-                include_declaration: false,
+                include_declaration: self.include_declaration,
             },
         };
         FeatureRequest {
