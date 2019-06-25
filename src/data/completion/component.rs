@@ -23,11 +23,11 @@ static PRIMITIVE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r#"[a-zA-Z]+"#).un
 
 impl LatexComponent {
     pub async fn load(
-        component: Vec<Arc<LatexDependency>>,
+        component: &Vec<Arc<LatexDependency>>,
         loaded_refs: Vec<Arc<Self>>,
     ) -> Option<Self> {
         let dependency = &component[0];
-        let candidates = Self::find_likely_primitives(&dependency, loaded_refs).await;
+        let candidates = Self::find_likely_primitives(&dependency, loaded_refs).await?;
 
         let mut code = tex::build_test_code_header(&dependency.file)?;
         code += "\\makeatletter\n";
@@ -73,15 +73,10 @@ impl LatexComponent {
     async fn find_likely_primitives(
         dependency: &LatexDependency,
         loaded_refs: Vec<Arc<Self>>,
-    ) -> HashSet<String> {
+    ) -> Option<HashSet<String>> {
         let mut bytes = Vec::new();
         for include in dependency.includes.clone() {
-            bytes.extend_from_slice(
-                &tokio::fs::read(include)
-                    .compat()
-                    .unwrap_or_else(|_| panic!("Could not read include"))
-                    .await,
-            );
+            bytes.extend_from_slice(&tokio::fs::read(include).compat().await.ok()?);
         }
 
         let mut likely_primitives: HashSet<_> = PRIMITIVE_REGEX
@@ -103,6 +98,6 @@ impl LatexComponent {
             likely_primitives.remove(primitive);
         }
 
-        likely_primitives
+        Some(likely_primitives)
     }
 }

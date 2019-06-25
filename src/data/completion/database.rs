@@ -165,14 +165,10 @@ where
         };
         self.client.progress(progress_params.clone()).await;
 
-        let components =
-            if let Some(dependency) = LatexDependency::load(&file, &self.resolver).await {
-                dependency
-                    .into_components(&self.resolver, &self.components_by_name)
-                    .await
-            } else {
-                Vec::new()
-            };
+        let components = LatexDependency::load(&file, &self.resolver)
+            .await
+            .into_components(&self.resolver, &self.components_by_name)
+            .await;
 
         for component in components {
             let dependency = &component[0];
@@ -198,15 +194,31 @@ where
                 }
             }
 
-            if let Some(component) = LatexComponent::load(component, loaded_refs).await {
-                let component = Arc::new(component);
-                for file_name in &component.file_names {
-                    let component = Arc::clone(&component);
-                    self.components_by_name
-                        .lock()
-                        .await
-                        .insert(file_name.to_owned(), component);
+            let component = match LatexComponent::load(&component, loaded_refs).await {
+                Some(component) => component,
+                None => {
+                    let file_name = file.file_name().unwrap().to_str().unwrap().to_owned();
+                    log::warn!("Component `{}` could not be analyzed", &file_name);
+
+                    LatexComponent {
+                        file_names: vec![file_name],
+                        references: dependency
+                            .references()
+                            .map(|ref_| ref_.to_str().unwrap().to_owned())
+                            .collect(),
+                        commands: Vec::new(),
+                        environments: Vec::new(),
+                    }
                 }
+            };
+
+            let component = Arc::new(component);
+            for file_name in &component.file_names {
+                let component = Arc::clone(&component);
+                self.components_by_name
+                    .lock()
+                    .await
+                    .insert(file_name.to_owned(), component);
             }
         }
 

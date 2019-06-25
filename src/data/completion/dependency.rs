@@ -34,21 +34,16 @@ impl PartialEq for LatexDependency {
 }
 
 impl LatexDependency {
-    pub async fn load<'a>(file: &'a Path, resolver: &'a TexResolver) -> Option<Self> {
-        if !Self::is_dependency_file(file) {
-            return None;
-        }
+    pub async fn load<'a>(file: &'a Path, resolver: &'a TexResolver) -> Self {
+        let includes = match Self::find_includes(file, resolver).await {
+            Some(includes) => includes,
+            None => vec![file.to_owned()],
+        };
 
-        let mut code = build_test_code_header(file)?;
-        code += "\\listfiles\n";
-        code += "\\begin{document} \\end{document}";
-        let result = tex::compile("code.tex", &code, file.into()).await.ok()?;
-        let includes = Self::extract_includes(&result.log, file, resolver)?;
-
-        Some(LatexDependency {
+        LatexDependency {
             file: file.to_owned(),
             includes,
-        })
+        }
     }
 
     pub fn references(&self) -> impl Iterator<Item = &Path> {
@@ -72,9 +67,8 @@ impl LatexDependency {
                     .await
                     .contains_key(file.file_name().unwrap().to_str().unwrap())
             } {
-                if let Some(reference) = Self::load(file, resolver).await {
-                    missing_refs.push(reference);
-                }
+                let reference = Self::load(file, resolver).await;
+                missing_refs.push(reference);
             }
         }
 
@@ -111,11 +105,16 @@ impl LatexDependency {
         }
     }
 
-    fn extract_includes(log: &str, file: &Path, resolver: &TexResolver) -> Option<Vec<PathBuf>> {
-        let start_index = log.find("*File List*")?;
+    async fn find_includes<'a>(file: &'a Path, resolver: &'a TexResolver) -> Option<Vec<PathBuf>> {
+        let mut code = build_test_code_header(file)?;
+        code += "\\listfiles\n";
+        code += "\\begin{document} \\end{document}";
+        let result = tex::compile("code.tex", &code, file.into()).await.ok()?;
+
+        let start_index = result.log.find("*File List*")?;
         let extension = file.extension().unwrap();
         let includes: Vec<_> = FILE_REGEX
-            .find_iter(&log[start_index..])
+            .find_iter(&result.log[start_index..])
             .map(|x| x.as_str())
             .filter(|x| extension == "cls" || *x != "article.cls")
             .filter_map(|x| resolver.files_by_name.get(&x.to_owned()).cloned())
