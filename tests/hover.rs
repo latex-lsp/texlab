@@ -15,12 +15,14 @@ pub async fn run(
     scenario.open(file).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file));
     let params = TextDocumentPositionParams::new(identifier, position);
-    scenario
+    let contents = scenario
         .server
         .hover(params)
         .await
         .unwrap()
-        .map(|hover| hover.contents)
+        .map(|hover| hover.contents);
+    scenario.server.stop_scanning().await;
+    contents
 }
 
 #[runtime::test(runtime_tokio::Tokio)]

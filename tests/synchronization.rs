@@ -15,6 +15,7 @@ async fn run_completion(
         position,
         context: None,
     };
+    scenario.server.stop_scanning().await;
     scenario.server.completion(params).await.unwrap().items
 }
 

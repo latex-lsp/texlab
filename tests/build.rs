@@ -24,6 +24,7 @@ async fn run(executable: &'static str, name: &'static str) -> (Scenario, BuildRe
     let params = BuildParams { text_document };
     let result = scenario.server.build(params).await.unwrap();
     scenario.server.execute_actions().await;
+    scenario.server.stop_scanning().await;
     (scenario, result)
 }
 

@@ -394,7 +394,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn stop_scanning(&self) {
         self.database_manager.get().unwrap().close().await;
         let mut listener = self.database_listener.lock().await;
-        mem::replace(&mut *listener, None).unwrap().await;
+        if let Some(handle) = mem::replace(&mut *listener, None) {
+            handle.await;
+        }
     }
 
     async fn configuration<T>(&self, section: &'static str) -> T
