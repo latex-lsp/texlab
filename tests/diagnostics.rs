@@ -64,6 +64,7 @@ async fn test_lint_bibtex() {
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_build() {
     let scenario = Scenario::new("diagnostics/build").await;
+    scenario.open("foo.tex").await;
     scenario
         .server
         .did_change_watched_files(DidChangeWatchedFilesParams {

@@ -103,26 +103,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        if let Some(Ok(path)) = params.root_uri.map(|x| x.to_file_path()) {
-            for entry in WalkDir::new(path)
-                .min_depth(1)
-                .max_depth(4)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|entry| entry.file_type().is_file())
-                .filter(|entry| {
-                    entry
-                        .path()
-                        .extension()
-                        .and_then(OsStr::to_str)
-                        .and_then(Language::by_extension)
-                        .is_some()
-                })
-            {
-                self.workspace_manager.load(&entry.path());
-            }
-        }
-
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
@@ -173,7 +153,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.action_manager.push(Action::LoadResolver);
         self.action_manager.push(Action::LoadComponentDatabase);
         self.action_manager.push(Action::ScanComponents);
-        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -210,8 +190,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let uri = params.text_document.uri.clone();
         self.workspace_manager.add(params.text_document);
-        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::DetectRoot(uri));
+        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -222,7 +204,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             let uri = params.text_document.uri.clone();
             self.workspace_manager.update(uri, change.text);
         }
-        self.action_manager.push(Action::ResolveIncludes);
+        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -506,7 +488,40 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
 
                     self.database_manager.set(manager).ok().unwrap();
                 }
-                Action::ResolveIncludes => {
+                Action::DetectRoot(uri) => {
+                    if uri.scheme() == "file" {
+                        let mut path = uri.to_file_path().unwrap();
+                        while path.pop() {
+                            let workspace = self.workspace_manager.get();
+                            if workspace.find_parent(&uri).is_some() {
+                                break;
+                            }
+
+                            for entry in WalkDir::new(&path)
+                                .min_depth(1)
+                                .max_depth(1)
+                                .into_iter()
+                                .filter_map(std::result::Result::ok)
+                                .filter(|entry| entry.file_type().is_file())
+                                .filter(|entry| {
+                                    entry
+                                        .path()
+                                        .extension()
+                                        .and_then(OsStr::to_str)
+                                        .and_then(Language::by_extension)
+                                        .is_some()
+                                })
+                            {
+                                if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
+                                    if workspace.find(&parent_uri).is_none() {
+                                        self.workspace_manager.load(entry.path());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Action::DetectChildren => {
                     let workspace = self.workspace_manager.get();
                     workspace
                         .unresolved_includes()

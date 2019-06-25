@@ -68,3 +68,32 @@ async fn test_indexing() {
     let items = run_completion(&scenario, "foo.tex", Position::new(0, 1)).await;
     assert!(items.iter().any(|item| item.label == "foo"));
 }
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_find_root() {
+    let scenario = Scenario::new("synchronization/find_root").await;
+    scenario.open("test1.tex").await;
+
+    let params = RenameParams {
+        text_document: TextDocumentIdentifier::new(scenario.uri("test1.tex")),
+        position: Position::new(0, 28),
+        new_name: "foo".into(),
+    };
+    let changes = scenario
+        .server
+        .rename(params)
+        .await
+        .unwrap()
+        .unwrap()
+        .changes
+        .unwrap();
+
+    assert_eq!(
+        changes.get(&scenario.uri("test1.tex")).unwrap(),
+        &vec![TextEdit::new(Range::new_simple(0, 26, 0, 31), "foo".into())]
+    );
+    assert_eq!(
+        changes.get(&scenario.uri("test2.tex")).unwrap(),
+        &vec![TextEdit::new(Range::new_simple(2, 41, 2, 46), "foo".into())]
+    );
+}
