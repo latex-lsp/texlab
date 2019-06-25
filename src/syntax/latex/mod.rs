@@ -252,6 +252,7 @@ impl LatexInclude {
             | LatexIncludeKind::Bibliography
             | LatexIncludeKind::Image
             | LatexIncludeKind::Svg
+            | LatexIncludeKind::Pdf
             | LatexIncludeKind::Everything => None,
         }
     }

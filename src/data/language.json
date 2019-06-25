@@ -474,7 +474,19 @@
       "includeExtension": false
     },
     {
+      "name": "\\includepdf",
+      "index": 0,
+      "kind": "pdf",
+      "includeExtension": true
+    },
+    {
       "name": "\\verbatiminput",
+      "index": 0,
+      "kind": "everything",
+      "includeExtension": true
+    },
+    {
+      "name": "\\VerbatimInput",
       "index": 0,
       "kind": "everything",
       "includeExtension": true

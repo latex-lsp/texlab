@@ -27,6 +27,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                 | LatexIncludeKind::Bibliography
                 | LatexIncludeKind::Image
                 | LatexIncludeKind::Svg
+                | LatexIncludeKind::Pdf
                 | LatexIncludeKind::Everything => true,
             })
             .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));

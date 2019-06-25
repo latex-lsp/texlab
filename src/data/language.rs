@@ -47,18 +47,20 @@ pub enum LatexIncludeKind {
     Bibliography,
     Image,
     Svg,
+    Pdf,
     Everything,
 }
 
 impl LatexIncludeKind {
-    pub fn extensions(&self) -> Option<Vec<&'static str>> {
+    pub fn extensions(&self) -> Option<&'static [&'static str]> {
         match self {
-            LatexIncludeKind::Package => Some(vec!["sty"]),
-            LatexIncludeKind::Class => Some(vec!["cls"]),
-            LatexIncludeKind::Latex => Some(vec!["tex"]),
-            LatexIncludeKind::Bibliography => Some(vec!["bib"]),
-            LatexIncludeKind::Image => Some(vec!["pdf", "png", "jpg", "jpeg", "bmp"]),
-            LatexIncludeKind::Svg => Some(vec!["svg"]),
+            LatexIncludeKind::Package => Some(&["sty"]),
+            LatexIncludeKind::Class => Some(&["cls"]),
+            LatexIncludeKind::Latex => Some(&["tex"]),
+            LatexIncludeKind::Bibliography => Some(&["bib"]),
+            LatexIncludeKind::Image => Some(&["pdf", "png", "jpg", "jpeg", "bmp"]),
+            LatexIncludeKind::Svg => Some(&["svg"]),
+            LatexIncludeKind::Pdf => Some(&["pdf"]),
             LatexIncludeKind::Everything => None,
         }
     }
