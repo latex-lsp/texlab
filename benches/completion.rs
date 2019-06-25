@@ -1,6 +1,6 @@
 #![feature(async_await)]
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, Criterion};
 use futures::executor::block_on;
 use lsp_types::*;
 use texlab::scenario::Scenario;
@@ -8,6 +8,7 @@ use texlab::scenario::Scenario;
 fn initialize(name: &'static str) -> Scenario {
     let scenario = block_on(Scenario::new("completion/bench"));
     block_on(scenario.open(name));
+    block_on(scenario.server.stop_scanning());
     scenario
 }
 
@@ -88,4 +89,9 @@ fn criterion_benchmark(criterion: &mut Criterion) {
 }
 
 criterion_group!(benches, criterion_benchmark);
-criterion_main!(benches);
+
+#[runtime::main(runtime_tokio::Tokio)]
+async fn main() {
+    benches();
+}
+
