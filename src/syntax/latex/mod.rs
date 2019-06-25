@@ -404,6 +404,7 @@ impl LatexVisitor for LatexInlineAnalyzer {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexMathOperator {
     pub command: Arc<LatexCommand>,
+    pub definition: Arc<LatexCommand>,
     pub definition_index: usize,
     pub implementation_index: usize,
 }
@@ -422,11 +423,15 @@ impl LatexMathOperator {
                     && command.args.len() > *definition_index
                     && command.args.len() > *implementation_index
                 {
-                    operators.push(Self {
-                        command: Arc::clone(command),
-                        definition_index: *definition_index,
-                        implementation_index: *implementation_index,
-                    })
+                    let definition = command.args[0].children.iter().next();
+                    if let Some(LatexContent::Command(definition)) = definition {
+                        operators.push(Self {
+                            command: Arc::clone(command),
+                            definition: Arc::clone(definition),
+                            definition_index: *definition_index,
+                            implementation_index: *implementation_index,
+                        })
+                    }
                 }
             }
         }
@@ -465,11 +470,11 @@ impl LatexCommandDefinition {
                     && command.args.len() > *definition_index
                     && command.args.len() > *implementation_index
                 {
-                    let name = command.args[0].children.iter().next();
-                    if let Some(LatexContent::Command(name)) = name {
+                    let definition = command.args[0].children.iter().next();
+                    if let Some(LatexContent::Command(definition)) = definition {
                         definitions.push(Self {
                             command: Arc::clone(command),
-                            definition: Arc::clone(name),
+                            definition: Arc::clone(definition),
                             definition_index: *definition_index,
                             implementation: Arc::clone(&command.args[*implementation_index]),
                             implementation_index: *implementation_index,
