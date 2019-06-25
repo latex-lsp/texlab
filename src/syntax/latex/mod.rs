@@ -284,7 +284,7 @@ impl LatexInclude {
         path.push(relative_path.text());
         path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
         path = path.clean();
-        let mut path = path.to_str()?.to_owned();
+        let path = path.to_str()?.to_owned();
 
         let mut targets = Vec::new();
         targets.push(Uri::from_file_path(&path).ok()?);

@@ -7,7 +7,6 @@ use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use itertools::Itertools;
 use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

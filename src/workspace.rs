@@ -1,5 +1,4 @@
 use crate::data::language::LatexIncludeKind;
-use crate::syntax::latex::*;
 use crate::syntax::{Language, SyntaxTree};
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};

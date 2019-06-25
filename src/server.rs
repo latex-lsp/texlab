@@ -23,7 +23,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::{Language, SyntaxTree};
 use crate::tex::resolver::{self, TexResolver, TEX_RESOLVER};
 use crate::workspace::WorkspaceManager;
-use futures::channel::oneshot;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;

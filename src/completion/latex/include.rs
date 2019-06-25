@@ -46,8 +46,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                 .into_iter()
             {
                 if let Ok(entry) = entry {
-                    if entry.file_type().is_file() && is_included(request, &command, &entry.path())
-                    {
+                    if entry.file_type().is_file() && is_included(&command, &entry.path()) {
                         let mut path = entry.into_path();
                         let include_extension = language_data()
                             .include_commands
@@ -89,11 +88,7 @@ fn current_directory(
     path
 }
 
-fn is_included(
-    request: &FeatureRequest<CompletionParams>,
-    command: &LatexCommand,
-    file: &Path,
-) -> bool {
+fn is_included(command: &LatexCommand, file: &Path) -> bool {
     if let Some(allowed_extensions) = language_data()
         .include_commands
         .iter()

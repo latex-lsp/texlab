@@ -10,7 +10,6 @@ use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
 use lsp_types::*;
 use std::borrow::Cow;
-use std::ffi::OsString;
 use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};

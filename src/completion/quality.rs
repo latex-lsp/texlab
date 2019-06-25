@@ -52,7 +52,7 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     LatexNode::Text(text) => {
                         text.words.last().map(|w| Cow::from(w.text().to_owned()))
                     }
-                    LatexNode::Comma(comma) => Some(Cow::from(",")),
+                    LatexNode::Comma(_) => Some(Cow::from(",")),
                     LatexNode::Math(math) => Some(Cow::from(math.token.text().to_owned())),
                 }
             }

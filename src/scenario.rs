@@ -1,7 +1,6 @@
 use crate::client::LspClientMock;
 use crate::server::{LatexLspServer, ServerConfig};
 use copy_dir::copy_dir;
-use futures::executor::block_on;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use std::fs::remove_dir;
