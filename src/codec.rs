@@ -14,7 +14,7 @@ impl Decoder for LspCodec {
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         match parser::parse(src) {
             Ok((remaining, content)) => {
-                trace!("Received message:\n{}", content);
+                trace!("Received message:\n{}\n", content);
 
                 let offset = src.len() - remaining.len();
                 src.split_to(offset);
@@ -37,7 +37,7 @@ impl Encoder for LspCodec {
 
     fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let message = format!("Content-Length: {}\r\n\r\n{}", item.len(), item);
-        trace!("Sent message:\n{}", message);
+        trace!("Sent message:\n{}\n", message);
 
         dst.reserve(message.len());
         dst.put(message);
