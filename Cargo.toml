@@ -27,7 +27,7 @@ jsonrpc = { path = "jsonrpc" }
 jsonrpc-derive = { path = "jsonrpc_derive" }
 lazy_static = "1.3.0"
 log = "0.4.6"
-lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "eb34c6ebd1e327946e62a9bbc3835a850fd260b3", features = ["proposed"] }
+lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "887bd13dac93b36d69dbf321bac224f4898051b7", features = ["proposed"] }
 nom = "5.0.0-beta2"
 once_cell = "0.2.1"
 path-clean = "0.1.0"

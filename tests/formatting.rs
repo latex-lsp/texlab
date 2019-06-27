@@ -3,7 +3,7 @@
 use lsp_types::*;
 use std::collections::HashMap;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
     scenario: &'static str,
@@ -11,7 +11,7 @@ pub async fn run(
     options: Option<BibtexFormattingOptions>,
 ) -> (Scenario, Vec<TextEdit>) {
     let scenario = format!("formatting/{}", scenario);
-    let scenario = Scenario::new(&scenario).await;
+    let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     scenario.open(file).await;
     scenario.client.options.lock().await.bibtex_formatting = options;
 

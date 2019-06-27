@@ -3,11 +3,11 @@
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use texlab::diagnostics::{BibtexErrorCode, LatexLintOptions};
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_lint_latex() {
-    let scenario = Scenario::new("diagnostics/lint").await;
+    let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
     {
         let mut options = scenario.client.options.lock().await;
@@ -33,7 +33,7 @@ async fn test_lint_latex() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_lint_latex_disabled() {
-    let scenario = Scenario::new("diagnostics/lint").await;
+    let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
     let identifier = TextDocumentIdentifier::new(scenario.uri("foo.tex"));
     scenario.server.did_save(DidSaveTextDocumentParams {
@@ -48,7 +48,7 @@ async fn test_lint_latex_disabled() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_lint_bibtex() {
-    let scenario = Scenario::new("diagnostics/lint").await;
+    let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.bib").await;
     scenario.server.stop_scanning().await;
     let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
@@ -63,7 +63,7 @@ async fn test_lint_bibtex() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_build() {
-    let scenario = Scenario::new("diagnostics/build").await;
+    let scenario = Scenario::new("diagnostics/build", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
     scenario
         .server

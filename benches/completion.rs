@@ -94,4 +94,3 @@ criterion_group!(benches, criterion_benchmark);
 async fn main() {
     benches();
 }
-

@@ -3,7 +3,7 @@
 use lsp_types::*;
 use std::borrow::Cow;
 use texlab::data::language::language_data;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
     scenario: &'static str,
@@ -11,7 +11,7 @@ pub async fn run(
     position: Position,
 ) -> Option<HoverContents> {
     let scenario = format!("hover/{}", scenario);
-    let scenario = Scenario::new(&scenario).await;
+    let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     scenario.open(file).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file));
     let params = TextDocumentPositionParams::new(identifier, position);

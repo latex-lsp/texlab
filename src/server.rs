@@ -40,6 +40,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ServerConfig {
     pub component_database_path: PathBuf,
 }
@@ -62,6 +63,7 @@ impl Default for ServerConfig {
 pub struct LatexLspServer<C> {
     config: ServerConfig,
     client: Arc<C>,
+    client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
     database_manager: OnceCell<Arc<LatexComponentDatabaseManager<C>>>,
@@ -84,6 +86,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         LatexLspServer {
             config,
             client,
+            client_capabilities: OnceCell::new(),
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
             database_manager: OnceCell::new(),
@@ -103,6 +106,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        self.client_capabilities.set(Arc::new(params.capabilities)).unwrap();
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
@@ -384,6 +388,16 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     where
         T: DeserializeOwned + Default,
     {
+        if !self
+            .client_capabilities
+            .get()
+            .and_then(|cap| cap.workspace.as_ref())
+            .and_then(|cap| cap.configuration)
+            .unwrap_or(false)
+        {
+            return T::default();
+        }
+
         let params = ConfigurationParams {
             items: vec![ConfigurationItem {
                 section: Some(Cow::from(section)),

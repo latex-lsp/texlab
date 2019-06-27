@@ -3,7 +3,7 @@
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use texlab::build::*;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 async fn set_options<'a>(scenario: &'a Scenario, executable: &'a str, on_save: bool) {
     let mut build_options = BuildOptions::default();
@@ -17,7 +17,7 @@ async fn set_options<'a>(scenario: &'a Scenario, executable: &'a str, on_save: b
 }
 
 async fn run(executable: &'static str, name: &'static str) -> (Scenario, BuildResult) {
-    let scenario = Scenario::new("build").await;
+    let scenario = Scenario::new("build", &FULL_CAPABILITIES).await;
     scenario.open(name).await;
     set_options(&scenario, executable, false).await;
     let text_document = TextDocumentIdentifier::new(scenario.uri(name));
@@ -50,7 +50,7 @@ async fn test_failure() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_on_save() {
-    let scenario = Scenario::new("build").await;
+    let scenario = Scenario::new("build", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
     set_options(&scenario, "latexmk", true).await;
     let text_document = TextDocumentIdentifier::new(scenario.uri("foo.tex"));

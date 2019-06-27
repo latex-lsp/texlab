@@ -1,7 +1,7 @@
 #![feature(async_await)]
 
 use lsp_types::*;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
     scenario: &'static str,
@@ -9,7 +9,7 @@ pub async fn run(
     position: Position,
 ) -> (Scenario, Vec<Location>) {
     let scenario = format!("definition/{}", scenario);
-    let scenario = Scenario::new(&scenario).await;
+    let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file));
     let params = TextDocumentPositionParams::new(identifier, position);
     scenario.open(file).await;

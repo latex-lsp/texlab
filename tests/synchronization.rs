@@ -3,7 +3,7 @@
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use std::sync::Arc;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 async fn run_completion(
     scenario: &Scenario,
@@ -21,7 +21,7 @@ async fn run_completion(
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_did_change() {
-    let scenario = Scenario::new("synchronization/did_change").await;
+    let scenario = Scenario::new("synchronization/did_change", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
     assert_eq!(
         run_completion(&scenario, "foo.tex", Position::new(0, 1))
@@ -48,7 +48,7 @@ async fn test_did_change() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_indexing() {
-    let scenario = Scenario::new("synchronization/did_change").await;
+    let scenario = Scenario::new("synchronization/did_change", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
 
     let mut path = scenario.directory.path().to_owned();
@@ -71,7 +71,7 @@ async fn test_indexing() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_find_root() {
-    let scenario = Scenario::new("synchronization/find_root").await;
+    let scenario = Scenario::new("synchronization/find_root", &FULL_CAPABILITIES).await;
     scenario.open("test1.tex").await;
 
     let params = RenameParams {

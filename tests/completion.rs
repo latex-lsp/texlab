@@ -2,11 +2,11 @@
 
 use itertools::Itertools;
 use lsp_types::*;
-use texlab::scenario::Scenario;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(scenario: &'static str, file: &'static str, position: Position) -> Vec<String> {
     let scenario = format!("completion/{}", scenario);
-    let scenario = Scenario::new(&scenario).await;
+    let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     scenario.open(file).await;
     scenario.server.stop_scanning().await;
 
