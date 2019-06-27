@@ -14,16 +14,18 @@ jobs:
       artifactName: texlab-x86_64-linux
     pool:
       vmImage: "ubuntu-16.04"
+    container: kcov/kcov:latest
     steps:
       - script: |
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base latexmk chktex
         displayName: "Install TeX Live"
       - script: |
-          sudo apt-get install kcov
           cargo install cargo-kcov
-        displayName: "Install kcov"
+        displayName: "Install cargo-kcov"
       - script: |
+          yarn --cwd citeproc install
+          yarn --cwd citeproc dist
           cargo kcov -- --verify --include-pattern=src/ --exclude-pattern=.cargo
         displayName: "Run unit and integration tests with coverage report"
       - task: PublishCodeCoverageResults@1
@@ -54,6 +56,8 @@ jobs:
           .\miktexsetup.exe install
         displayName: "Install MiKTeX"
       - script: |
+          yarn --cwd citeproc install
+          yarn --cwd citeproc dist
           cargo test --all
         displayName: "Run unit and integration tests"
       - script: |
@@ -78,6 +82,8 @@ jobs:
           brew cask install basictex
         displayName: "Install BasicTeX"
       - script: |
+          yarn --cwd citeproc install
+          yarn --cwd citeproc dist
           cargo test --all
         displayName: "Run unit and integration tests"
       - bash: |
