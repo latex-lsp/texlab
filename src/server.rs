@@ -106,7 +106,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        self.client_capabilities.set(Arc::new(params.capabilities)).unwrap();
+        self.client_capabilities
+            .set(Arc::new(params.capabilities))
+            .unwrap();
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
@@ -430,28 +432,37 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
         for action in self.action_manager.take() {
             match action {
                 Action::RegisterCapabilities => {
-                    let options = DidChangeWatchedFilesRegistrationOptions {
-                        watchers: vec![FileSystemWatcher {
-                            kind: Some(WatchKind::Create | WatchKind::Change),
-                            glob_pattern: Cow::from("**/*.log"),
-                        }],
-                    };
-
-                    if let Err(why) = self
-                        .client
-                        .register_capability(RegistrationParams {
-                            registrations: vec![Registration {
-                                id: Cow::from("build-log-watcher"),
-                                method: Cow::from("workspace/didChangeWatchedFiles"),
-                                register_options: Some(serde_json::to_value(options).unwrap()),
-                            }],
-                        })
-                        .await
+                    if self
+                        .client_capabilities
+                        .get()
+                        .and_then(|cap| cap.workspace.as_ref())
+                        .and_then(|cap| cap.did_change_watched_files.as_ref())
+                        .and_then(|cap| cap.dynamic_registration)
+                        .unwrap_or(false)
                     {
-                        warn!(
-                            "Client does not support dynamic capability registration: {}",
-                            why.message
-                        );
+                        let options = DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![FileSystemWatcher {
+                                kind: Some(WatchKind::Create | WatchKind::Change),
+                                glob_pattern: Cow::from("**/*.log"),
+                            }],
+                        };
+
+                        if let Err(why) = self
+                            .client
+                            .register_capability(RegistrationParams {
+                                registrations: vec![Registration {
+                                    id: Cow::from("build-log-watcher"),
+                                    method: Cow::from("workspace/didChangeWatchedFiles"),
+                                    register_options: Some(serde_json::to_value(options).unwrap()),
+                                }],
+                            })
+                            .await
+                        {
+                            warn!(
+                                "Client does not support dynamic capability registration: {}",
+                                why.message
+                            );
+                        }
                     }
                 }
                 Action::LoadResolver => {
