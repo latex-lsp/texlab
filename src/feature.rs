@@ -4,7 +4,6 @@ use crate::tex::resolver::TexResolver;
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
 use futures_boxed::boxed;
-#[cfg(test)]
 use lsp_types::*;
 #[cfg(test)]
 use std::path::PathBuf;
@@ -28,12 +27,13 @@ impl DocumentView {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
     pub resolver: Arc<TexResolver>,
     pub component_database: LatexComponentDatabase,
+    pub client_capabilities: Arc<ClientCapabilities>,
 }
 
 impl<P> FeatureRequest<P> {
@@ -130,7 +130,7 @@ pub struct FeatureSpecFile {
 }
 
 #[cfg(test)]
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct FeatureSpec {
     pub files: Vec<FeatureSpecFile>,
     pub main_file: &'static str,
@@ -139,6 +139,7 @@ pub struct FeatureSpec {
     pub include_declaration: bool,
     pub resolver: TexResolver,
     pub component_database: LatexComponentDatabase,
+    pub client_capabilities: ClientCapabilities,
 }
 
 #[cfg(test)]
@@ -167,18 +168,23 @@ impl FeatureSpec {
         let main_document = workspace.find(&main_uri).unwrap();
         DocumentView::new(Arc::new(workspace), main_document)
     }
+
+    fn request<T>(self, params: T) -> FeatureRequest<T> {
+        FeatureRequest {
+            params,
+            view: self.view(),
+            resolver: Arc::new(self.resolver),
+            component_database: self.component_database,
+            client_capabilities: Arc::new(self.client_capabilities),
+        }
+    }
 }
 
 #[cfg(test)]
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.identifier(), self.position);
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 
@@ -190,12 +196,7 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
             position: self.position,
             context: None,
         };
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 
@@ -205,12 +206,7 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
         let params = FoldingRangeParams {
             text_document: self.identifier(),
         };
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 
@@ -220,12 +216,7 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
         let params = DocumentLinkParams {
             text_document: self.identifier(),
         };
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 
@@ -239,12 +230,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
                 include_declaration: self.include_declaration,
             },
         };
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 
@@ -256,12 +242,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
             position: self.position,
             new_name: self.new_name.to_owned(),
         };
-        FeatureRequest {
-            params,
-            view: self.view(),
-            resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
-        }
+        self.request(params)
     }
 }
 

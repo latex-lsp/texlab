@@ -611,6 +611,10 @@ macro_rules! request {
             Some(manager) => manager.get().await,
             None => LatexComponentDatabase::default(),
         };
+        let client_capabilities = $server
+            .client_capabilities
+            .get()
+            .expect("Failed to retrieve client capabilities");
 
         if let Some(document) = workspace.find(&$params.text_document.uri) {
             Ok(FeatureRequest {
@@ -618,6 +622,7 @@ macro_rules! request {
                 view: DocumentView::new(workspace, document),
                 resolver: Arc::clone(&resolver),
                 component_database,
+                client_capabilities: Arc::clone(&client_capabilities),
             })
         } else {
             let msg = format!("Unknown document: {}", $params.text_document.uri);
