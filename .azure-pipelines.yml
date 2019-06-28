@@ -22,9 +22,9 @@ jobs:
         displayName: "Install TeX Live"
       - script: |
           sudo apt-get install -y libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc
-          wget $(kcovSource) -O kcov.tar.gz
+          wget -O kcov.tar.gz $(kcovSource)
           tar xzf kcov.tar.gz
-          cd kcov
+          cd kcov-master
           mkdir build
           cd build
           cmake ..
@@ -32,7 +32,7 @@ jobs:
           make
           sudo make install
           cargo install cargo-kcov
-        displayName: "Install cargo-kcov"
+        displayName: "Install kcov"
       - script: |
           yarn --cwd citeproc install
           yarn --cwd citeproc dist
