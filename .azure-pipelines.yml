@@ -12,6 +12,7 @@ jobs:
     variables:
       target: x86_64-unknown-linux-gnu
       artifactName: texlab-x86_64-linux
+      kcovSource: https://github.com/SimonKagstrom/kcov/archive/v36.zip
     pool:
       vmImage: "ubuntu-16.04"
     steps:
@@ -20,6 +21,16 @@ jobs:
           sudo apt-get install -y texlive-latex-base latexmk chktex
         displayName: "Install TeX Live"
       - script: |
+          sudo apt-get install -y libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc
+          wget $(kcovSource) -O kcov.tar.gz
+          tar xzf kcov.tar.gz
+          cd kcov
+          mkdir build
+          cd build
+          cmake ..
+          cd ..
+          make
+          sudo make install
           cargo install cargo-kcov
         displayName: "Install cargo-kcov"
       - script: |
