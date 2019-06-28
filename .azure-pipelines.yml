@@ -14,7 +14,6 @@ jobs:
       artifactName: texlab-x86_64-linux
     pool:
       vmImage: "ubuntu-16.04"
-    container: kcov/kcov:latest
     steps:
       - script: |
           sudo apt-get update
@@ -37,7 +36,7 @@ jobs:
       - bash: |
           cargo build --release --target $(target)
           cp target/$(target)/texlab $(Build.ArtifactStagingDirectory)/$(artifactName)
-        condition: and(succeeded(), variables['isReleaseBuild'])
+        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
         displayName: "Build release artifact"
       - publish: $(Build.ArtifactStagingDirectory)
         artifact: Linux
@@ -63,7 +62,7 @@ jobs:
       - script: |
           cargo build --release --target $(target)
           copy target\$(target)\texlab.exe $(Build.ArtifactStagingDirectory)\$(artifactName)
-        condition: and(succeeded(), variables['isReleaseBuild'])
+        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
         displayName: "Build release artifact"
       - publish: $(Build.ArtifactStagingDirectory)
         artifact: Windows
@@ -92,7 +91,7 @@ jobs:
       - bash: |
           cargo build --release --target $(target)
           cp target/$(target)/texlab $(Build.ArtifactStagingDirectory)/$(artifactName)
-        condition: and(succeeded(), variables['isReleaseBuild'])
+        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
         displayName: "Build release artifact"
       - publish: $(Build.ArtifactStagingDirectory)
         artifact: macOS
@@ -103,7 +102,7 @@ jobs:
       - macOS
     condition: |
       and(
-        variables['isReleaseBuild'],
+        eq(variables['isReleaseBuild'], 'true'),
         succeeded('Linux'), 
         succeeded('Windows'), 
         succeeded('macOS'))
