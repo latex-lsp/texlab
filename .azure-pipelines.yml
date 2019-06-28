@@ -77,10 +77,12 @@ jobs:
       - bash: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain none
           echo "##vso[task.prependpath]$HOME/.cargo/bin"
-        displayName: "Install rustup"
-      - bash: |
           brew cask install basictex
-        displayName: "Install BasicTeX"
+          echo "##vso[task.prependpath]/Library/TeX/texbin"
+        displayName: "Install rustup and BasicTeX"
+      - bash: |
+          sudo tlmgr install latexmk chktex
+        displayName: "Install LaTeX dependencies"
       - script: |
           yarn --cwd citeproc install
           yarn --cwd citeproc dist
