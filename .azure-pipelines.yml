@@ -81,6 +81,7 @@ jobs:
           echo "##vso[task.prependpath]/Library/TeX/texbin"
         displayName: "Install rustup and BasicTeX"
       - bash: |
+          sudo tlmgr update --self
           sudo tlmgr install latexmk chktex
         displayName: "Install LaTeX dependencies"
       - script: |
