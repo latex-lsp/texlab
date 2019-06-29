@@ -234,9 +234,11 @@ where
         let database = self.get().await;
         let json = serde_json::to_string(&database.components).unwrap();
 
-        tokio::fs::write(self.database_path.to_owned(), json)
+        if let Err(why) = tokio::fs::write(self.database_path.to_owned(), json)
             .compat()
             .await
-            .expect("Could not save component database");
+        {
+            log::error!("Unable to save component database: {}", why);
+        }
     }
 }

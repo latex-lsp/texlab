@@ -72,6 +72,7 @@ async fn test_indexing() {
 async fn test_find_root() {
     let scenario = Scenario::new("synchronization/find_root", &FULL_CAPABILITIES).await;
     scenario.open("test1.tex").await;
+    scenario.server.stop_scanning().await;
 
     let params = RenameParams {
         text_document: TextDocumentIdentifier::new(scenario.uri("test1.tex")),
