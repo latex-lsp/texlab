@@ -12,7 +12,6 @@ jobs:
     variables:
       target: x86_64-unknown-linux-gnu
       artifactName: texlab-x86_64-linux
-      kcovSource: https://github.com/SimonKagstrom/kcov/archive/v36.tar.gz
     pool:
       vmImage: "ubuntu-16.04"
     steps:
@@ -21,28 +20,10 @@ jobs:
           sudo apt-get install -y texlive-latex-base latexmk chktex
         displayName: "Install TeX Live"
       - script: |
-          sudo apt-get install -y libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc
-          wget -O kcov.tar.gz $(kcovSource)
-          tar xzf kcov.tar.gz
-          cd kcov-36
-          mkdir build
-          cd build
-          cmake ..
-          make
-          sudo make install
-          cargo install cargo-kcov
-        displayName: "Install kcov"
-      - script: |
           yarn --cwd citeproc install
           yarn --cwd citeproc dist
-          cargo kcov -- --verify --include-pattern=src/ --exclude-pattern=.cargo
-        displayName: "Run unit and integration tests with coverage report"
-      - task: PublishCodeCoverageResults@1
-        inputs:
-          codeCoverageTool: cobertura
-          summaryFileLocation: "**/cobertura.xml"
-          reportDirectory: "**/target/cov"
-        displayName: "Publish coverage report"
+          cargo test --all
+        displayName: "Run unit and integration tests"
       - bash: |
           cargo build --release --target $(target)
           cp target/$(target)/texlab $(Build.ArtifactStagingDirectory)/$(artifactName)
