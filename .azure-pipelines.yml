@@ -9,9 +9,6 @@ variables:
   isReleaseBuild: $[contains(variables['Build.SourceBranch'], 'tags')]
 jobs:
   - job: Linux
-    variables:
-      target: x86_64-unknown-linux-gnu
-      artifactName: texlab-x86_64-linux
     pool:
       vmImage: "ubuntu-16.04"
     steps:
@@ -19,22 +16,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base latexmk chktex
         displayName: "Install TeX Live"
-      - script: |
-          yarn --cwd citeproc install
-          yarn --cwd citeproc dist
-          cargo test --all
-        displayName: "Run unit and integration tests"
-      - bash: |
-          cargo build --release --target $(target)
-          cp target/$(target)/texlab $(Build.ArtifactStagingDirectory)/$(artifactName)
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Build release artifact"
-      - publish: $(Build.ArtifactStagingDirectory)
-        artifact: Linux
+      - template: .build-steps.yml
+        parameters:
+          target: "x86_64-unknown-linux-gnu"
+          executableName: "texlab"
+          artifactName: "texlab-x86_64-linux"
   - job: Windows
     variables:
-      target: x86_64-pc-windows-msvc
-      artifactName: texlab-x86_64-windows.exe
       miktexSetup: https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-2.9.6942-x64.zip
     pool:
       vmImage: "vs2017-win2016"
@@ -45,22 +33,12 @@ jobs:
           .\miktexsetup.exe --package-set=basic download
           .\miktexsetup.exe install
         displayName: "Install MiKTeX"
-      - script: |
-          yarn --cwd citeproc install
-          yarn --cwd citeproc dist
-          cargo test --all
-        displayName: "Run unit and integration tests"
-      - script: |
-          cargo build --release --target $(target)
-          copy target\$(target)\texlab.exe $(Build.ArtifactStagingDirectory)\$(artifactName)
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Build release artifact"
-      - publish: $(Build.ArtifactStagingDirectory)
-        artifact: Windows
+      - template: .build-steps.yml
+        parameters:
+          target: "x86_64-pc-windows-msvc"
+          executableName: "texlab.exe"
+          artifactName: "texlab-x86_64-windows.exe"
   - job: macOS
-    variables:
-      target: x86_64-apple-darwin
-      artifactName: texlab-x86_64-darwin
     pool:
       vmImage: "macos-10.14"
     steps:
@@ -74,18 +52,11 @@ jobs:
           sudo tlmgr update --self
           sudo tlmgr install latexmk chktex
         displayName: "Install LaTeX dependencies"
-      - script: |
-          yarn --cwd citeproc install
-          yarn --cwd citeproc dist
-          cargo test --all
-        displayName: "Run unit and integration tests"
-      - bash: |
-          cargo build --release --target $(target)
-          cp target/$(target)/texlab $(Build.ArtifactStagingDirectory)/$(artifactName)
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Build release artifact"
-      - publish: $(Build.ArtifactStagingDirectory)
-        artifact: macOS
+      - template: .build-steps.yml
+        parameters:
+          target: "x86_64-apple-darwin"
+          executableName: "texlab"
+          artifactName: "texlab-x86_64-darwin"
   - job: Publish
     dependsOn:
       - Linux

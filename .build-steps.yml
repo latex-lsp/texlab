@@ -1,0 +1,21 @@
+parameters:
+  target: ""
+  executableName: ""
+  artifactName: ""
+
+steps:
+  - bash: |
+      cd citeproc
+      yarn
+      yarn dist
+      cd ..
+      cargo test --all
+    displayName: "Run tests"
+  - bash: |
+      cargo build --release --target ${{ target }}
+      cp target/${{ target }}/${{ executableName }} $(Build.ArtifactStagingDirectory)/${{ artifactName }}
+    condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
+    displayName: "Build release artifact"
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{ artifactName }}
+    condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
