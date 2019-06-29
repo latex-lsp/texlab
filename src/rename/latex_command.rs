@@ -1,12 +1,31 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::syntax::latex::LatexCommand;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct LatexCommandPrepareRenameProvider;
+
+impl FeatureProvider for LatexCommandPrepareRenameProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Range>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Range> {
+        let position = request.params.position;
+        find_command(&request.document().tree, position).map(|cmd| cmd.range())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCommandRenameProvider;
 
 impl FeatureProvider for LatexCommandRenameProvider {
@@ -18,17 +37,17 @@ impl FeatureProvider for LatexCommandRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let name = Self::find_command(&request)?;
+        let command = find_command(&request.document().tree, request.params.position)?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let edits: Vec<TextEdit> = tree
                     .commands
                     .iter()
-                    .filter(|command| command.name.text() == name)
-                    .map(|command| {
+                    .filter(|cmd| cmd.name.text() == command.name.text())
+                    .map(|cmd| {
                         TextEdit::new(
-                            command.name.range(),
+                            cmd.name.range(),
                             Cow::from(format!("\\{}", request.params.new_name)),
                         )
                     })
@@ -40,16 +59,11 @@ impl FeatureProvider for LatexCommandRenameProvider {
     }
 }
 
-impl LatexCommandRenameProvider {
-    fn find_command(request: &FeatureRequest<RenameParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document().tree {
-            tree.commands
-                .iter()
-                .find(|command| command.name.range().contains(request.params.position))
-                .map(|command| command.name.text())
-        } else {
-            None
-        }
+fn find_command(tree: &SyntaxTree, position: Position) -> Option<Arc<LatexCommand>> {
+    if let SyntaxTree::Latex(tree) = tree {
+        tree.find_command_by_name(position)
+    } else {
+        None
     }
 }
 

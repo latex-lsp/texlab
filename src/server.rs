@@ -15,7 +15,7 @@ use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
-use crate::rename::RenameProvider;
+use crate::rename::{RenameProvider, PrepareRenameProvider};
 use crate::request;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
@@ -76,6 +76,7 @@ pub struct LatexLspServer<C> {
     hover_provider: HoverProvider,
     link_provider: LinkProvider,
     reference_provider: ReferenceProvider,
+    prepare_rename_provider: PrepareRenameProvider,
     rename_provider: RenameProvider,
 }
 
@@ -99,6 +100,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             hover_provider: HoverProvider::new(),
             link_provider: LinkProvider::new(),
             reference_provider: ReferenceProvider::new(),
+            prepare_rename_provider: PrepareRenameProvider::new(),
             rename_provider: RenameProvider::new(),
         }
     }
@@ -138,7 +140,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             document_formatting_provider: Some(true),
             document_range_formatting_provider: None,
             document_on_type_formatting_provider: None,
-            rename_provider: Some(RenameProviderCapability::Simple(true)),
+            rename_provider: Some(RenameProviderCapability::Options(RenameOptions {
+                prepare_provider: Some(true)
+            })),
             document_link_provider: Some(DocumentLinkOptions {
                 resolve_provider: Some(false),
             }),
@@ -327,6 +331,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             }
         }
         Ok(edits)
+    }
+
+    #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
+    pub async fn prepare_rename(&self, params: TextDocumentPositionParams) -> Result<Option<Range>> {
+        let request = request!(self, params)?;
+        let range = self.prepare_rename_provider.execute(&request).await;
+        Ok(range)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]

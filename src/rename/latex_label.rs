@@ -1,13 +1,29 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexLabel;
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::latex::{LatexLabel, LatexSyntaxTree};
+use crate::syntax::text::{Span, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct LatexLabelPrepareRenameProvider;
+
+impl FeatureProvider for LatexLabelPrepareRenameProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Range>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Range> {
+        find_label(&request.document().tree, request.params.position).map(Span::range)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelRenameProvider;
 
 impl FeatureProvider for LatexLabelRenameProvider {
@@ -19,7 +35,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let name = Self::find_label(&request)?;
+        let name = find_label(&request.document().tree, request.params.position)?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
@@ -27,7 +43,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
                     .labels
                     .iter()
                     .flat_map(LatexLabel::names)
-                    .filter(|label| label.text() == name)
+                    .filter(|label| label.text() == name.text)
                     .map(|label| {
                         TextEdit::new(label.range(), Cow::from(request.params.new_name.clone()))
                     })
@@ -39,17 +55,15 @@ impl FeatureProvider for LatexLabelRenameProvider {
     }
 }
 
-impl LatexLabelRenameProvider {
-    fn find_label(request: &FeatureRequest<RenameParams>) -> Option<&str> {
-        if let SyntaxTree::Latex(tree) = &request.document().tree {
-            tree.labels
-                .iter()
-                .flat_map(LatexLabel::names)
-                .find(|label| label.range().contains(request.params.position))
-                .map(|label| label.text())
-        } else {
-            None
-        }
+fn find_label(tree: &SyntaxTree, position: Position) -> Option<&Span> {
+    if let SyntaxTree::Latex(tree) = tree {
+        tree.labels
+            .iter()
+            .flat_map(LatexLabel::names)
+            .find(|label| label.range().contains(position))
+            .map(|label| &label.span)
+    } else {
+        None
     }
 }
 

@@ -1,14 +1,29 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::bibtex::BibtexSyntaxTree;
-use crate::syntax::latex::{LatexCitation, LatexSyntaxTree};
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::latex::LatexCitation;
+use crate::syntax::text::{Span, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct BibtexEntryPrepareRenameProvider;
+
+impl FeatureProvider for BibtexEntryPrepareRenameProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Range>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Range> {
+        find_key(&request.document().tree, request.params.position).map(Span::range)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryRenameProvider;
 
 impl FeatureProvider for BibtexEntryRenameProvider {
@@ -20,11 +35,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let key_name = match &request.document().tree {
-            SyntaxTree::Latex(tree) => Self::find_citation(&tree, request.params.position),
-            SyntaxTree::Bibtex(tree) => Self::find_entry(&tree, request.params.position),
-        }?;
-
+        let key_name = find_key(&request.document().tree, request.params.position)?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             let mut edits = Vec::new();
@@ -33,7 +44,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                     tree.citations
                         .iter()
                         .flat_map(LatexCitation::keys)
-                        .filter(|citation| citation.text() == key_name)
+                        .filter(|citation| citation.text() == key_name.text)
                         .map(|citation| {
                             TextEdit::new(
                                 citation.range(),
@@ -45,7 +56,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                 SyntaxTree::Bibtex(tree) => {
                     for entry in tree.entries() {
                         if let Some(key) = &entry.key {
-                            if key.text() == key_name {
+                            if key.text() == key_name.text {
                                 edits.push(TextEdit::new(
                                     key.range(),
                                     Cow::from(request.params.new_name.clone()),
@@ -61,28 +72,29 @@ impl FeatureProvider for BibtexEntryRenameProvider {
     }
 }
 
-impl BibtexEntryRenameProvider {
-    fn find_citation(tree: &LatexSyntaxTree, position: Position) -> Option<&str> {
-        for citation in &tree.citations {
-            let keys = citation.keys();
-            for key in keys {
-                if key.range().contains(position) {
-                    return Some(key.text());
+fn find_key(tree: &SyntaxTree, position: Position) -> Option<&Span> {
+    match tree {
+        SyntaxTree::Latex(tree) => {
+            for citation in &tree.citations {
+                let keys = citation.keys();
+                for key in keys {
+                    if key.range().contains(position) {
+                        return Some(&key.span);
+                    }
                 }
             }
+            None
         }
-        None
-    }
-
-    fn find_entry(tree: &BibtexSyntaxTree, position: Position) -> Option<&str> {
-        for entry in tree.entries() {
-            if let Some(key) = &entry.key {
-                if key.range().contains(position) {
-                    return Some(&key.text());
+        SyntaxTree::Bibtex(tree) => {
+            for entry in tree.entries() {
+                if let Some(key) = &entry.key {
+                    if key.range().contains(position) {
+                        return Some(&key.span);
+                    }
                 }
             }
+            None
         }
-        None
     }
 }
 

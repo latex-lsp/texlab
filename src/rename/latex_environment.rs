@@ -1,12 +1,37 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::syntax::latex::LatexEnvironment;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{RenameParams, TextEdit, WorkspaceEdit};
+use lsp_types::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct LatexEnvironmentPrepareRenameProvider;
+
+impl FeatureProvider for LatexEnvironmentPrepareRenameProvider {
+    type Params = TextDocumentPositionParams;
+    type Output = Option<Range>;
+
+    #[boxed]
+    async fn execute<'a>(
+        &'a self,
+        request: &'a FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<Range> {
+        let position = request.params.position;
+        let environment = find_environment(&request.document().tree, position)?;
+        let left_range = environment.left.name().unwrap().range();
+        let right_range = environment.right.name().unwrap().range();
+        if left_range.contains(position) {
+            Some(left_range)
+        } else {
+            Some(right_range)
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexEnvironmentRenameProvider;
 
 impl FeatureProvider for LatexEnvironmentRenameProvider {
@@ -18,33 +43,37 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        if let SyntaxTree::Latex(tree) = &request.document().tree {
-            for environment in &tree.environments {
-                if let Some(left_name) = environment.left.name() {
-                    if let Some(right_name) = environment.right.name() {
-                        if left_name.range().contains(request.params.position)
-                            || right_name.range().contains(request.params.position)
-                        {
-                            let edits = vec![
-                                TextEdit::new(
-                                    left_name.range(),
-                                    Cow::from(request.params.new_name.clone()),
-                                ),
-                                TextEdit::new(
-                                    right_name.range(),
-                                    Cow::from(request.params.new_name.clone()),
-                                ),
-                            ];
-                            let mut changes = HashMap::new();
-                            changes.insert(request.document().uri.clone(), edits);
-                            return Some(WorkspaceEdit::new(changes));
-                        }
+        let environment = find_environment(&request.document().tree, request.params.position)?;
+        let edits = vec![
+            TextEdit::new(
+                environment.left.name().unwrap().range(),
+                Cow::from(request.params.new_name.clone()),
+            ),
+            TextEdit::new(
+                environment.right.name().unwrap().range(),
+                Cow::from(request.params.new_name.clone()),
+            ),
+        ];
+        let mut changes = HashMap::new();
+        changes.insert(request.document().uri.clone(), edits);
+        Some(WorkspaceEdit::new(changes))
+    }
+}
+
+fn find_environment(tree: &SyntaxTree, position: Position) -> Option<&LatexEnvironment> {
+    if let SyntaxTree::Latex(tree) = &tree {
+        for environment in &tree.environments {
+            if let Some(left_name) = environment.left.name() {
+                if let Some(right_name) = environment.right.name() {
+                    if left_name.range().contains(position) || right_name.range().contains(position)
+                    {
+                        return Some(environment);
                     }
                 }
             }
         }
-        None
     }
+    None
 }
 
 #[cfg(test)]
