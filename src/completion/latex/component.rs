@@ -4,41 +4,46 @@ use crate::completion::latex::combinators;
 use crate::data::completion::LatexComponent;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
-use itertools::Itertools;
-use lsp_types::{CompletionItem, CompletionParams};
+use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
 use std::borrow::Cow;
-use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexComponentCommandProvider;
 
 impl FeatureProvider for LatexComponentCommandProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, async move |_| {
-            component(request, |comp| &comp.commands, factory::create_command).await
+        combinators::command(request, async move |command| {
+            component(
+                request,
+                command.short_name_range(),
+                |comp| &comp.commands,
+                factory::command,
+            )
+            .await
         })
         .await
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexComponentEnvironmentProvider;
 
 impl FeatureProvider for LatexComponentEnvironmentProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |_| {
+        combinators::environment(request, async move |_, name_range| {
             component(
                 request,
+                name_range,
                 |comp| &comp.environments,
-                factory::create_environment,
+                factory::environment,
             )
             .await
         })
@@ -48,12 +53,18 @@ impl FeatureProvider for LatexComponentEnvironmentProvider {
 
 async fn component<S, F>(
     request: &FeatureRequest<CompletionParams>,
+    edit_range: Range,
     selector: S,
     factory: F,
-) -> Vec<Arc<CompletionItem>>
+) -> Vec<CompletionItem>
 where
     S: Fn(&LatexComponent) -> &Vec<String>,
-    F: Fn(Cow<'static, str>, &LatexComponentId) -> CompletionItem,
+    F: Fn(
+        &FeatureRequest<CompletionParams>,
+        Cow<'static, str>,
+        TextEdit,
+        &LatexComponentId,
+    ) -> CompletionItem,
 {
     let components = request
         .component_database
@@ -61,20 +72,14 @@ where
 
     let mut items = Vec::new();
     for component in components {
-        let file_names = component
-            .file_names
-            .clone()
-            .into_iter()
-            .map_into()
-            .collect();
-        let id = LatexComponentId::User(file_names);
-
+        let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
+        let id = LatexComponentId::Component(file_names);
         for primitive in selector(&component) {
-            let item = factory(primitive.clone().into(), &id);
-            items.push(Arc::new(item));
+            let text_edit = TextEdit::new(edit_range, Cow::from(primitive.clone()));
+            let item = factory(request, primitive.clone().into(), text_edit, &id);
+            items.push(item);
         }
     }
-
     items
 }
 
@@ -84,6 +89,7 @@ mod tests {
     use crate::data::completion::LatexComponentDatabase;
     use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
+    use std::sync::Arc;
 
     fn create_database() -> LatexComponentDatabase {
         let components = vec![Arc::new(LatexComponent {
@@ -112,6 +118,10 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(&items[0].label, "bar");
         assert_eq!(&items[0].detail.clone().unwrap(), "foo.sty");
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 18, 0, 20))
+        );
     }
 
     #[test]
@@ -133,5 +143,9 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(&items[0].label, "baz");
         assert_eq!(&items[0].detail.clone().unwrap(), "foo.sty");
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 24, 0, 26))
+        );
     }
 }

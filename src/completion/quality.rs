@@ -7,7 +7,6 @@ use crate::workspace::Document;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 use std::borrow::Cow;
-use std::sync::Arc;
 
 pub struct OrderByQualityCompletionProvider<F> {
     pub provider: F,
@@ -21,10 +20,10 @@ impl<F> OrderByQualityCompletionProvider<F> {
 
 impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
 where
-    F: FeatureProvider<Params = CompletionParams, Output = Vec<Arc<CompletionItem>>> + Send + Sync,
+    F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
 {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -40,7 +39,7 @@ impl<F> OrderByQualityCompletionProvider<F> {
         match &document.tree {
             SyntaxTree::Latex(tree) => {
                 let node = tree
-                    .find_command(position)
+                    .find_command_by_name(position)
                     .map(LatexNode::Command)
                     .or_else(|| tree.find(position).into_iter().last())?;
 
@@ -49,9 +48,11 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     LatexNode::Command(command) => {
                         Some(Cow::from(command.name.text()[1..].to_owned()))
                     }
-                    LatexNode::Text(text) => {
-                        text.words.last().map(|w| Cow::from(w.text().to_owned()))
-                    }
+                    LatexNode::Text(text) => text
+                        .words
+                        .iter()
+                        .find(|word| word.range().contains(position))
+                        .map(|word| Cow::from(word.text().to_owned())),
                     LatexNode::Comma(_) => Some(Cow::from(",")),
                     LatexNode::Math(math) => Some(Cow::from(math.token.text().to_owned())),
                 }

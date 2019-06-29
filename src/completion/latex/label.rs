@@ -1,41 +1,40 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators;
-use crate::completion::latex::combinators::ArgumentLocation;
+use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::language::{language_data, LatexLabelKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexLabel;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
-use std::borrow::Cow;
-use std::sync::Arc;
+use lsp_types::{CompletionItem, CompletionParams, TextEdit};
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;
 
 impl FeatureProvider for LatexLabelCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = language_data()
+        let parameters = language_data()
             .label_commands
             .iter()
             .filter(|cmd| cmd.kind == LatexLabelKind::Reference)
-            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+            .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, locations, async move |_| {
+        combinators::argument(request, parameters, async move |_, name_range| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
-                    tree.labels
-                        .iter()
-                        .filter(|label| label.kind == LatexLabelKind::Definition)
-                        .flat_map(LatexLabel::names)
-                        .map(|label| Cow::from(label.text().to_owned()))
-                        .map(factory::create_label)
-                        .map(Arc::new)
-                        .for_each(|item| items.push(item))
+                    for label in &tree.labels {
+                        if label.kind == LatexLabelKind::Definition {
+                            for name in label.names() {
+                                let text = name.text().to_owned();
+                                let text_edit = TextEdit::new(name_range, text.clone().into());
+                                let item = factory::label(request, text.into(), text_edit);
+                                items.push(item);
+                            }
+                        }
+                    }
                 }
             }
             items

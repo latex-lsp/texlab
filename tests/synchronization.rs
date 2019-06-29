@@ -2,14 +2,13 @@
 
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
-use std::sync::Arc;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 async fn run_completion(
     scenario: &Scenario,
     file: &'static str,
     position: Position,
-) -> Vec<Arc<CompletionItem>> {
+) -> Vec<CompletionItem> {
     let params = CompletionParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),
         position,

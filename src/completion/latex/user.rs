@@ -5,15 +5,14 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use itertools::Itertools;
-use lsp_types::{CompletionItem, CompletionParams};
-use std::borrow::Cow;
-use std::sync::Arc;
+use lsp_types::{CompletionItem, CompletionParams, TextEdit};
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexUserCommandCompletionProvider;
 
 impl FeatureProvider for LatexUserCommandCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -26,9 +25,18 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                         .filter(|command| command.range() != current_command.range())
                         .map(|command| &command.name.text()[1..])
                         .unique()
-                        .map(|name| Cow::from(name.to_owned()))
-                        .map(|name| factory::create_command(name, &LatexComponentId::Unknown))
-                        .map(Arc::new)
+                        .map(|command| {
+                            let text_edit = TextEdit::new(
+                                current_command.short_name_range(),
+                                command.to_owned().into(),
+                            );
+                            factory::command(
+                                request,
+                                command.to_owned().into(),
+                                text_edit,
+                                &LatexComponentId::User,
+                            )
+                        })
                         .for_each(|item| items.push(item));
                 }
             }

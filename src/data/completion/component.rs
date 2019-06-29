@@ -2,7 +2,6 @@ use crate::data::completion::dependency::LatexDependency;
 use crate::data::kernel_primitives::{KERNEL_COMMANDS, KERNEL_ENVIRONMENTS};
 use crate::tex;
 use futures::compat::*;
-use futures::prelude::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

@@ -2,6 +2,7 @@ use crate::syntax::bibtex::ast::*;
 use crate::syntax::text::SyntaxNode;
 use lsp_types::Position;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexNode<'a> {
     Root(&'a BibtexRoot),
     Preamble(&'a BibtexPreamble),
@@ -16,6 +17,7 @@ pub enum BibtexNode<'a> {
     Concat(&'a BibtexConcat),
 }
 
+#[derive(Debug)]
 pub struct BibtexFinder<'a> {
     pub position: Position,
     pub results: Vec<BibtexNode<'a>>,

@@ -1,41 +1,35 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
+use lsp_types::{CompletionItem, CompletionParams, TextEdit};
 use std::borrow::Cow;
-use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct LatexColorModelCompletionProvider {
-    items: Vec<Arc<CompletionItem>>,
-}
-
-impl LatexColorModelCompletionProvider {
-    pub fn new() -> Self {
-        let items = MODEL_NAMES
-            .iter()
-            .map(|name| Cow::from(*name))
-            .map(factory::create_color_model)
-            .map(Arc::new)
-            .collect();
-        Self { items }
-    }
-}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct LatexColorModelCompletionProvider;
 
 impl FeatureProvider for LatexColorModelCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = language_data()
+        let parameters = language_data()
             .color_model_commands
             .iter()
-            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+            .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(&request, locations, async move |_| self.items.clone()).await
+        combinators::argument(&request, parameters, async move |_, name_range| {
+            let mut items = Vec::new();
+            for name in MODEL_NAMES {
+                let text_edit = TextEdit::new(name_range, Cow::from(*name));
+                let item = factory::color_model(request, name, text_edit);
+                items.push(item);
+            }
+            items
+        })
+        .await
     }
 }
 
@@ -45,12 +39,12 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 mod tests {
     use super::*;
     use crate::feature::{test_feature, FeatureSpec};
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_inside_define_color() {
         let items = test_feature(
-            LatexColorModelCompletionProvider::new(),
+            LatexColorModelCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
@@ -59,12 +53,16 @@ mod tests {
             },
         );
         assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 19, 0, 19))
+        );
     }
 
     #[test]
     fn test_outside_define_color() {
         let items = test_feature(
-            LatexColorModelCompletionProvider::new(),
+            LatexColorModelCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolor{name}{}")],
                 main_file: "foo.tex",
@@ -78,7 +76,7 @@ mod tests {
     #[test]
     fn tet_inside_define_color_set() {
         let items = test_feature(
-            LatexColorModelCompletionProvider::new(),
+            LatexColorModelCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "\\definecolorset{}")],
                 main_file: "foo.tex",
@@ -87,5 +85,9 @@ mod tests {
             },
         );
         assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 16, 0, 16))
+        );
     }
 }

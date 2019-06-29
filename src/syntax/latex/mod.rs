@@ -555,7 +555,7 @@ impl LatexSyntaxTree {
         finder.results
     }
 
-    pub fn find_command(&self, position: Position) -> Option<Arc<LatexCommand>> {
+    pub fn find_command_by_name(&self, position: Position) -> Option<Arc<LatexCommand>> {
         for result in self.find(position) {
             if let LatexNode::Command(command) = result {
                 if command.name.range().contains(position)

@@ -177,6 +177,15 @@ impl LatexCommand {
         }
     }
 
+    pub fn short_name_range(&self) -> Range {
+        Range::new_simple(
+            self.name.start().line,
+            self.name.start().character + 1,
+            self.name.end().line,
+            self.name.end().character,
+        )
+    }
+
     pub fn extract_text(&self, index: usize) -> Option<&LatexText> {
         if self.args.len() > index && self.args[index].children.len() == 1 {
             if let LatexContent::Text(ref text) = self.args[index].children[0] {

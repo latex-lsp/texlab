@@ -1,33 +1,33 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
+use lsp_types::{CompletionItem, CompletionParams, TextEdit};
 use std::borrow::Cow;
-use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexColorCompletionProvider;
 
 impl FeatureProvider for LatexColorCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = language_data()
+        let parameters = language_data()
             .color_commands
             .iter()
-            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+            .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, locations, async move |_| {
-            language_data()
-                .colors
-                .iter()
-                .map(|name| factory::create_color(Cow::from(name.to_owned())))
-                .map(Arc::new)
-                .collect()
+        combinators::argument(request, parameters, async move |_, name_range| {
+            let mut items = Vec::new();
+            for name in &language_data().colors {
+                let text_edit = TextEdit::new(name_range, Cow::from(name));
+                let item = factory::color(request, name, text_edit);
+                items.push(item);
+            }
+            items
         })
         .await
     }
@@ -37,7 +37,7 @@ impl FeatureProvider for LatexColorCompletionProvider {
 mod tests {
     use super::*;
     use crate::feature::{test_feature, FeatureSpec};
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
     fn test_inside_color() {
@@ -50,7 +50,11 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert!(items.iter().any(|item| item.label == "black"));
+        assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 7, 0, 7))
+        );
     }
 
     #[test]

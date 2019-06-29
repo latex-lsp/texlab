@@ -1,8 +1,7 @@
 use crate::action::{Action, ActionMananger};
 use crate::build::*;
 use crate::client::LspClient;
-use crate::completion::factory::CompletionItemData;
-use crate::completion::CompletionProvider;
+use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::data::citation::render_citation;
 use crate::data::completion::{LatexComponentDatabase, LatexComponentDatabaseManager};
 use crate::data::component::ComponentDocumentation;
@@ -231,12 +230,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
         let items = self.completion_provider.execute(&request).await;
-        let all_includes = items.iter().all(|item| {
-            item.kind == Some(CompletionItemKind::Folder)
-                || item.kind == Some(CompletionItemKind::File)
-        });
         Ok(CompletionList {
-            is_incomplete: !all_includes,
+            is_incomplete: true,
             items,
         })
     }

@@ -1,52 +1,39 @@
 use crate::completion::factory;
 use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::bibtex::BibtexDeclaration;
+use crate::syntax::bibtex::{BibtexDeclaration, BibtexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
-use std::sync::Arc;
+use lsp_types::*;
+use std::borrow::Cow;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct BibtexEntryTypeCompletionProvider {
-    items: Vec<Arc<CompletionItem>>,
-}
-
-impl BibtexEntryTypeCompletionProvider {
-    pub fn new() -> Self {
-        let items = language_data()
-            .entry_types
-            .iter()
-            .map(factory::create_entry_type)
-            .map(Arc::new)
-            .collect();
-        Self { items }
-    }
-}
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct BibtexEntryTypeCompletionProvider;
 
 impl FeatureProvider for BibtexEntryTypeCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
+            let position = request.params.position;
             for declaration in &tree.root.children {
                 match declaration {
                     BibtexDeclaration::Preamble(preamble) => {
-                        if preamble.ty.range().contains(request.params.position) {
-                            return self.items.clone();
+                        if contains(&preamble.ty, position) {
+                            return make_items(request, preamble.ty.range());
                         }
                     }
                     BibtexDeclaration::String(string) => {
-                        if string.ty.range().contains(request.params.position) {
-                            return self.items.clone();
+                        if contains(&string.ty, position) {
+                            return make_items(request, string.ty.range());
                         }
                     }
                     BibtexDeclaration::Entry(entry) => {
-                        if entry.ty.range().contains(request.params.position) {
-                            return self.items.clone();
+                        if contains(&entry.ty, position) {
+                            return make_items(request, entry.ty.range());
                         }
                     }
                     BibtexDeclaration::Comment(_) => {}
@@ -57,6 +44,21 @@ impl FeatureProvider for BibtexEntryTypeCompletionProvider {
     }
 }
 
+fn contains(ty: &BibtexToken, position: Position) -> bool {
+    ty.range().contains(position) && ty.start().character != position.character
+}
+
+fn make_items(request: &FeatureRequest<CompletionParams>, mut range: Range) -> Vec<CompletionItem> {
+    range.start.character += 1;
+    let mut items = Vec::new();
+    for ty in &language_data().entry_types {
+        let text_edit = TextEdit::new(range, Cow::from(&ty.name));
+        let item = factory::entry_type(request, ty, text_edit);
+        items.push(item);
+    }
+    items
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -64,9 +66,23 @@ mod tests {
     use lsp_types::Position;
 
     #[test]
+    fn test_before_at_sign() {
+        let items = test_feature(
+            BibtexEntryTypeCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@")],
+                main_file: "foo.bib",
+                position: Position::new(0, 0),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(items.is_empty());
+    }
+
+    #[test]
     fn test_after_at_sign() {
         let items = test_feature(
-            BibtexEntryTypeCompletionProvider::new(),
+            BibtexEntryTypeCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@")],
                 main_file: "foo.bib",
@@ -75,12 +91,34 @@ mod tests {
             },
         );
         assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 1, 0, 1))
+        );
     }
 
     #[test]
-    fn test_inside_entry() {
+    fn test_inside_entry_type() {
         let items = test_feature(
-            BibtexEntryTypeCompletionProvider::new(),
+            BibtexEntryTypeCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.bib", "@foo")],
+                main_file: "foo.bib",
+                position: Position::new(0, 2),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 1, 0, 4))
+        );
+    }
+
+    #[test]
+    fn test_inside_entry_key() {
+        let items = test_feature(
+            BibtexEntryTypeCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "@article{foo,}")],
                 main_file: "foo.bib",
@@ -94,7 +132,7 @@ mod tests {
     #[test]
     fn test_inside_comments() {
         let items = test_feature(
-            BibtexEntryTypeCompletionProvider::new(),
+            BibtexEntryTypeCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "foo")],
                 main_file: "foo.bib",
@@ -108,7 +146,7 @@ mod tests {
     #[test]
     fn test_latex() {
         let items = test_feature(
-            BibtexEntryTypeCompletionProvider::new(),
+            BibtexEntryTypeCompletionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "@")],
                 main_file: "foo.tex",

@@ -1,56 +1,52 @@
 mod bibtex;
-pub mod factory;
+mod factory;
 mod latex;
 mod quality;
+mod util;
 
+use self::bibtex::command::BibtexCommandCompletionProvider;
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
 use self::bibtex::field_name::BibtexFieldNameCompletionProvider;
-use self::bibtex::kernel_command::BibtexKernelCommandCompletionProvider;
-use self::latex::argument_symbol::LatexArgumentSymbolCompletionProvider;
+pub use self::factory::CompletionItemData;
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
-use self::latex::command_symbol::LatexCommandSymbolCompletionProvider;
 use self::latex::component::{LatexComponentCommandProvider, LatexComponentEnvironmentProvider};
 use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
-use self::latex::kernel_command::LatexKernelCommandCompletionProvider;
-use self::latex::kernel_environment::LatexKernelEnvironmentCompletionProvider;
+use self::latex::kernel::*;
 use self::latex::label::LatexLabelCompletionProvider;
-use self::latex::pgf_library::LatexPgfLibraryCompletionProvider;
-use self::latex::tikz_command::LatexTikzCommandCompletionProvider;
-use self::latex::tikz_library::LatexTikzLibraryCompletionProvider;
-use self::latex::user_command::LatexUserCommandCompletionProvider;
+use self::latex::symbol::*;
+use self::latex::tikz::*;
+use self::latex::user::LatexUserCommandCompletionProvider;
 use self::quality::OrderByQualityCompletionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::{CompletionItem, CompletionParams};
 use std::hash::{Hash, Hasher};
-use std::sync::Arc;
 
 pub const COMPLETION_LIMIT: usize = 50;
 
 pub struct CompletionProvider {
-    provider:
-        OrderByQualityCompletionProvider<ConcatProvider<CompletionParams, Arc<CompletionItem>>>,
+    provider: OrderByQualityCompletionProvider<ConcatProvider<CompletionParams, CompletionItem>>,
 }
 
 impl CompletionProvider {
     pub fn new() -> Self {
         Self {
             provider: OrderByQualityCompletionProvider::new(ConcatProvider::new(vec![
-                Box::new(BibtexEntryTypeCompletionProvider::new()),
-                Box::new(BibtexFieldNameCompletionProvider::new()),
-                Box::new(BibtexKernelCommandCompletionProvider::new()),
-                Box::new(LatexKernelEnvironmentCompletionProvider::new()),
+                Box::new(BibtexEntryTypeCompletionProvider),
+                Box::new(BibtexFieldNameCompletionProvider),
+                Box::new(BibtexCommandCompletionProvider),
                 Box::new(LatexArgumentSymbolCompletionProvider),
-                Box::new(LatexPgfLibraryCompletionProvider::new()),
-                Box::new(LatexTikzLibraryCompletionProvider::new()),
+                Box::new(LatexPgfLibraryCompletionProvider),
+                Box::new(LatexTikzLibraryCompletionProvider),
                 Box::new(LatexColorCompletionProvider),
-                Box::new(LatexColorModelCompletionProvider::new()),
+                Box::new(LatexColorModelCompletionProvider),
                 Box::new(LatexComponentEnvironmentProvider),
+                Box::new(LatexKernelEnvironmentCompletionProvider),
                 Box::new(LatexLabelCompletionProvider),
                 Box::new(LatexCitationCompletionProvider),
                 Box::new(LatexIncludeCompletionProvider),
@@ -59,8 +55,8 @@ impl CompletionProvider {
                 Box::new(LatexBeginCommandCompletionProvider),
                 Box::new(LatexCommandSymbolCompletionProvider),
                 Box::new(LatexComponentCommandProvider),
-                Box::new(LatexTikzCommandCompletionProvider::new()),
-                Box::new(LatexKernelCommandCompletionProvider::new()),
+                Box::new(LatexTikzCommandCompletionProvider),
+                Box::new(LatexKernelCommandCompletionProvider),
                 Box::new(LatexUserCommandCompletionProvider),
             ])),
         }
@@ -69,7 +65,7 @@ impl CompletionProvider {
 
 impl FeatureProvider for CompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -86,7 +82,7 @@ impl FeatureProvider for CompletionProvider {
 }
 
 #[derive(Debug, Clone)]
-struct LabeledCompletionItem(Arc<CompletionItem>);
+struct LabeledCompletionItem(CompletionItem);
 
 impl PartialEq for LabeledCompletionItem {
     fn eq(&self, other: &Self) -> bool {

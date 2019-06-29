@@ -1,34 +1,37 @@
 use crate::completion::factory;
-use crate::completion::latex::combinators::{self, ArgumentLocation};
+use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
-use std::sync::Arc;
+use lsp_types::{CompletionItem, CompletionParams, TextEdit};
+use std::borrow::Cow;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCitationCompletionProvider;
 
 impl FeatureProvider for LatexCitationCompletionProvider {
     type Params = CompletionParams;
-    type Output = Vec<Arc<CompletionItem>>;
+    type Output = Vec<CompletionItem>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let locations = language_data()
+        let parameters = language_data()
             .citation_commands
             .iter()
-            .map(|cmd| ArgumentLocation::new(&cmd.name, cmd.index));
+            .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, locations, async move |_| {
+        combinators::argument(request, parameters, async move |_, key_range| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Bibtex(tree) = &document.tree {
                     for entry in &tree.entries() {
                         if !entry.is_comment() {
                             if let Some(key) = &entry.key {
-                                items.push(Arc::new(factory::create_citation(entry, key.text())));
+                                let key = key.text().to_owned();
+                                let text_edit = TextEdit::new(key_range, Cow::from(key.clone()));
+                                let item = factory::citation(request, entry, key, text_edit);
+                                items.push(item);
                             }
                         }
                     }
@@ -44,10 +47,10 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 mod tests {
     use super::*;
     use crate::feature::{test_feature, FeatureSpec};
-    use lsp_types::Position;
+    use lsp_types::{Position, Range};
 
     #[test]
-    fn test_inside_cite() {
+    fn test_empty() {
         let items = test_feature(
             LatexCitationCompletionProvider,
             FeatureSpec {
@@ -63,6 +66,56 @@ mod tests {
         );
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].label, "foo");
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(1, 6, 1, 6))
+        );
+    }
+
+    #[test]
+    fn test_single_key() {
+        let items = test_feature(
+            LatexCitationCompletionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\addbibresource{bar.bib}\n\\cite{foo}"),
+                    FeatureSpec::file("bar.bib", "@article{foo,}"),
+                    FeatureSpec::file("baz.bib", "@article{bar,}"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 6),
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].label, "foo");
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(1, 6, 1, 9))
+        );
+    }
+
+    #[test]
+    fn test_second_key() {
+        let items = test_feature(
+            LatexCitationCompletionProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file("foo.tex", "\\addbibresource{bar.bib}\n\\cite{foo,}"),
+                    FeatureSpec::file("bar.bib", "@article{foo,}"),
+                    FeatureSpec::file("baz.bib", "@article{bar,}"),
+                ],
+                main_file: "foo.tex",
+                position: Position::new(1, 10),
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].label, "foo");
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(1, 10, 1, 10))
+        );
     }
 
     #[test]
