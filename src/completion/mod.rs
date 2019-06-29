@@ -12,14 +12,14 @@ use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
-use self::latex::component::{LatexComponentCommandProvider, LatexComponentEnvironmentProvider};
+use self::latex::component::*;
 use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
 use self::latex::kernel::*;
 use self::latex::label::LatexLabelCompletionProvider;
 use self::latex::symbol::*;
 use self::latex::tikz::*;
-use self::latex::user::LatexUserCommandCompletionProvider;
+use self::latex::user::*;
 use self::quality::OrderByQualityCompletionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -58,6 +58,7 @@ impl CompletionProvider {
                 Box::new(LatexTikzCommandCompletionProvider),
                 Box::new(LatexKernelCommandCompletionProvider),
                 Box::new(LatexUserCommandCompletionProvider),
+                Box::new(LatexUserEnvironmentCompletionProvider),
             ])),
         }
     }

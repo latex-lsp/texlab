@@ -15,7 +15,7 @@ use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
-use crate::rename::{RenameProvider, PrepareRenameProvider};
+use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
@@ -141,7 +141,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             document_range_formatting_provider: None,
             document_on_type_formatting_provider: None,
             rename_provider: Some(RenameProviderCapability::Options(RenameOptions {
-                prepare_provider: Some(true)
+                prepare_provider: Some(true),
             })),
             document_link_provider: Some(DocumentLinkOptions {
                 resolve_provider: Some(false),
@@ -334,7 +334,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
-    pub async fn prepare_rename(&self, params: TextDocumentPositionParams) -> Result<Option<Range>> {
+    pub async fn prepare_rename(
+        &self,
+        params: TextDocumentPositionParams,
+    ) -> Result<Option<Range>> {
         let request = request!(self, params)?;
         let range = self.prepare_rename_provider.execute(&request).await;
         Ok(range)
