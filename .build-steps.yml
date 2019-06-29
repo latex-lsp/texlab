@@ -12,10 +12,10 @@ steps:
       cargo test --all
     displayName: "Run tests"
   - bash: |
-      cargo build --release --target ${{ target }}
-      cp target/${{ target }}/${{ executableName }} $(Build.ArtifactStagingDirectory)/${{ artifactName }}
+      cargo build --release --target ${{ parameters.target }}
+      cp target/${{ parameters.target }}/${{ parameters.executableName }} $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
     condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
     displayName: "Build release artifact"
   - publish: $(Build.ArtifactStagingDirectory)
-    artifact: ${{ artifactName }}
+    artifact: ${{ parameters.artifactName }}
     condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
