@@ -24,7 +24,7 @@ steps:
           cargo test --all
         displayName: "Run tests with coverage"
       - bash: |
-          zip -0 ccov.zip `find . \( -name "texlab*.gc*" \) -print`
+          zip -0 ccov.zip `find . \( -name "texlab*.gc*" -o -name "deps*build*.gc*" -o -name "completion*.gc*" -o -name "definition*.gc*" -o -name "diagnostics*.gc*" -o -name "formatting*.gc*" -o -name "hover*.gc*" -o -name "synchronization*.gc*" \) -print`;
           grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore-dir "{/*,target/*}" -o lcov.info
           bash <(curl -s https://codecov.io/bash) -f lcov.info;
         displayName: "Upload coverage report"
