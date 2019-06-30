@@ -32,6 +32,9 @@ jobs:
           .\miktexsetup.exe --verbose --portable="$(Build.SourcesDirectory)/miktex" install
           echo "##vso[task.prependpath]$(Build.SourcesDirectory)/miktex/texmfs/install/miktex/bin"
         displayName: "Install MiKTeX"
+      - powershell: |
+          mpm --install="latexmk"
+        displayName: "Install LaTeX dependencies"
       - template: .build-steps.yml
         parameters:
           target: "x86_64-pc-windows-msvc"
