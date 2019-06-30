@@ -2,16 +2,34 @@ parameters:
   target: ""
   executableName: ""
   artifactName: ""
+  coverage: false
 
 steps:
   - bash: |
       cd citeproc
       yarn
       yarn dist
-      cd ..
-      export RUST_BACKTRACE=1
-      cargo test --all
-    displayName: "Run tests"
+    displayName: "Bundle citeproc"
+  - ${{ if eq(parameters.coverage, 'false') }}:
+      - bash: |
+          export RUST_BACKTRACE=1
+          cargo test --all
+        displayName: "Run tests"
+  - ${{ if eq(parameters.coverage, 'true') }}:
+      - bash: |
+          cargo install grcov
+          export CARGO_INCREMENTAL=0
+          export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads"
+          export RUST_BACKTRACE=1
+          cargo test --all
+        displayName: "Run tests with coverage"
+      - bash: |
+          zip -0 ccov.zip `find . \( -name "texlab*.gc*" \) -print`
+          grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore-dir "{/*,target/*}" -o lcov.info
+          bash <(curl -s https://codecov.io/bash) -f lcov.info;
+        displayName: "Upload coverage report"
+        env:
+          CODECOV_TOKEN: $(codecovToken)
   - bash: |
       cargo build --release --target ${{ parameters.target }}
       cp target/${{ parameters.target }}/${{ parameters.executableName }} $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
