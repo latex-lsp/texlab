@@ -32,12 +32,7 @@ async fn run(executable: &'static str, name: &'static str) -> (Scenario, BuildRe
 async fn test_success() {
     let (scenario, result) = run("latexmk", "bar.tex").await;
     let log = scenario.client.log().await;
-    assert_eq!(
-        result.status,
-        BuildStatus::Success,
-        "{}",
-        log
-    );
+    assert_eq!(result.status, BuildStatus::Success, "{}", log);
     let path = scenario.directory.path().join("foo.pdf");
     assert!(path.exists(), "{}", log);
 }

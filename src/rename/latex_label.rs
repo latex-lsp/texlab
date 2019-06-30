@@ -1,5 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::{LatexLabel, LatexSyntaxTree};
+use crate::syntax::latex::LatexLabel;
 use crate::syntax::text::{Span, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
