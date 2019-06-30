@@ -1,6 +1,6 @@
 use crate::workspace::Document;
-use lazy_static::lazy_static;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Uri};
+use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use regex::{Match, Regex};
 use std::cmp::Ordering;
@@ -79,25 +79,22 @@ impl Into<Diagnostic> for BuildError {
 
 const MAX_LINE_LENGTH: usize = 79;
 
-const PACKAGE_MESSAGE_PATTERN: &str = "^\\([a-zA-Z_\\-]+\\)\\s*(?P<msg>.*)$";
+pub static PACKAGE_MESSAGE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new("^\\([a-zA-Z_\\-]+\\)\\s*(?P<msg>.*)$").unwrap());
 
-const FILE_PATTERN: &str = "\\((?P<file>[^\r\n()]+\\.(tex|sty|cls))";
+pub static FILE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new("\\((?P<file>[^\r\n()]+\\.(tex|sty|cls))").unwrap());
 
-const TEX_ERROR_PATTERN: &str =
-    "(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)|(?P<msg2>[^\r\n]*))";
+pub static TEX_ERROR_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new("(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)|(?P<msg2>[^\r\n]*))").unwrap()
+});
 
-const WARNING_PATTERN: &str = "(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?P<msg>[^\r\n]*)";
+pub static WARNING_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new("(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?P<msg>[^\r\n]*)").unwrap());
 
-const BAD_BOX_PATTERN: &str =
-    "(?P<msg>(Ov|Und)erfull \\\\[hv]box[^\r\n]*lines? (?P<line>\\d+)[^\r\n]*)";
-
-lazy_static! {
-    static ref PACKAGE_MESSAGE_REGEX: Regex = Regex::new(PACKAGE_MESSAGE_PATTERN).unwrap();
-    static ref FILE_REGEX: Regex = Regex::new(FILE_PATTERN).unwrap();
-    static ref TEX_ERROR_REGEX: Regex = Regex::new(TEX_ERROR_PATTERN).unwrap();
-    static ref WARNING_REGEX: Regex = Regex::new(WARNING_PATTERN).unwrap();
-    static ref BAD_BOX_REGEX: Regex = Regex::new(BAD_BOX_PATTERN).unwrap();
-}
+pub static BAD_BOX_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new("(?P<msg>(Ov|Und)erfull \\\\[hv]box[^\r\n]*lines? (?P<line>\\d+)[^\r\n]*)").unwrap()
+});
 
 fn parse_build_log(uri: &Uri, log: &str) -> Vec<BuildError> {
     let log = prepare_log(log);

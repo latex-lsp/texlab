@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -30,6 +30,4 @@ pub struct LatexArgumentSymbol {
 
 static JSON: &'static str = include_str!("symbols.json");
 
-lazy_static! {
-    pub static ref DATABASE: LatexSymbolDatabase = serde_json::from_str(JSON).unwrap();
-}
+pub static DATABASE: Lazy<LatexSymbolDatabase> = Lazy::new(|| serde_json::from_str(JSON).unwrap());

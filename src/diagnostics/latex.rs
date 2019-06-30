@@ -1,6 +1,6 @@
 use crate::workspace::Document;
-use lazy_static::lazy_static;
 use lsp_types::*;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -44,11 +44,8 @@ impl LatexDiagnosticsProvider {
     }
 }
 
-const LINE_PATTERN: &str = "(\\d+):(\\d+):(\\d+):(\\w+):(\\w)+:(.*)";
-
-lazy_static! {
-    static ref LINE_REGEX: Regex = Regex::new(LINE_PATTERN).unwrap();
-}
+pub static LINE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w)+:(.*)").unwrap());
 
 fn lint(path: &Path) -> Option<Vec<Diagnostic>> {
     let file = File::open(path).ok()?;

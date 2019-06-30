@@ -1,5 +1,5 @@
 use crate::syntax::Language;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsStr;
@@ -25,9 +25,8 @@ pub enum TexDistributionKind {
     Miktex,
 }
 
-lazy_static! {
-    pub static ref TEX_RESOLVER: Result<Arc<TexResolver>> = TexResolver::load().map(Arc::new);
-}
+pub static TEX_RESOLVER: Lazy<Result<Arc<TexResolver>>> =
+    Lazy::new(|| TexResolver::load().map(Arc::new));
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct TexResolver {

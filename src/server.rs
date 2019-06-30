@@ -31,7 +31,6 @@ use lsp_types::*;
 use once_cell::sync::OnceCell;
 use runtime::task::JoinHandle;
 use serde::de::DeserializeOwned;
-use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::fs;
 use std::mem;
