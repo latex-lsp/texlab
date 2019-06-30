@@ -81,7 +81,7 @@ where
     async fn build<'a>(&'a self, path: &'a Path) -> io::Result<bool> {
         let mut args = Vec::new();
         args.append(&mut self.options.args());
-        args.push(path.to_string_lossy().into_owned());
+        args.push(path.file_name().unwrap().to_string_lossy().into_owned());
 
         let mut process = Command::new(self.options.executable())
             .args(args)
