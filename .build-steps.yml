@@ -7,8 +7,8 @@ parameters:
 steps:
   - bash: |
       cd citeproc
-      yarn
-      yarn dist
+      npm ci
+      npm run dist
     displayName: "Bundle citeproc"
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |

@@ -15,19 +15,18 @@ You will need to install the following dependencies to compile the server:
 
 - [Rust](https://rustup.rs/)
 - [Node.js](https://nodejs.org/)
-- [Yarn](https://yarnpkg.com/)
 
 Then run the following commands in the project folder:
 
 ```shell
 cd citeproc
-yarn
-yarn dist
+npm install
+npm run dist
 cd ..
 cargo build --release
 ```
 
-To use the local build with the [Visual Studio Code extension](https://github.com/latex-lsp/texlab-vscode), you should create a symbolic link:
+To use a local debug build with the [Visual Studio Code extension](https://github.com/latex-lsp/texlab-vscode), you should create a symbolic link:
 
 | Platform    | Symlink                                                                            |
 | ----------- | ---------------------------------------------------------------------------------- |
