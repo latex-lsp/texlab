@@ -30,7 +30,7 @@ steps:
       - bash: |
           zip -0 ccov.zip `find . \( -name "texlab*.gc*" -o -name "deps*build*.gc*" -o -name "completion*.gc*" -o -name "definition*.gc*" -o -name "diagnostics*.gc*" -o -name "formatting*.gc*" -o -name "hover*.gc*" -o -name "synchronization*.gc*" \) -print`;
           grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore-dir "{/*,target/*}" -o lcov.info
-          pip install lcov_cobertura
+          sudo pip3 install lcov_cobertura
           lcov_cobertura lcov.info
           bash <(curl -s https://codecov.io/bash) -f coverage.xml;
         displayName: "Upload coverage report"
