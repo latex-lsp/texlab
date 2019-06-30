@@ -22,16 +22,15 @@ jobs:
           executableName: "texlab"
           artifactName: "texlab-x86_64-linux"
   - job: Windows
-    variables:
-      miktexSetup: https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-2.9.6942-x64.zip
     pool:
       vmImage: "vs2017-win2016"
     steps:
-      - powershell: |
-          Invoke-WebRequest -Uri $(miktexSetup) -OutFile miktexsetup.zip
-          Expand-Archive miktexsetup.zip -DestinationPath .
-          .\miktexsetup.exe --package-set=basic download
-          .\miktexsetup.exe install
+      - bash: |
+          wget https://miktex.org/download/win/miktexsetup-x64.zip
+          unzip miktexsetup-x64.zip
+          .\miktexsetup.exe --verbose --package-set=basic download
+          .\miktexsetup.exe --verbose --portable="$(Build.SourcesDirectory)/miktex" install
+          echo "##vso[task.prependpath]$(Build.SourcesDirectory)/miktex/texmfs/install/miktex/bin"
         displayName: "Install MiKTeX"
       - template: .build-steps.yml
         parameters:
