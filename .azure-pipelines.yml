@@ -47,9 +47,11 @@ jobs:
       - bash: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain none
           echo "##vso[task.prependpath]$HOME/.cargo/bin"
+        displayName: "Install rustup"
+      - bash: |
           brew cask install basictex
           echo "##vso[task.prependpath]/Library/TeX/texbin"
-        displayName: "Install rustup and BasicTeX"
+        displayName: "Install BasicTeX"
       - bash: |
           sudo tlmgr update --self
           sudo tlmgr install latexmk chktex
