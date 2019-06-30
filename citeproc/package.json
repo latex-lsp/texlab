@@ -16,9 +16,7 @@
     "@citation-js/core": "^0.4.0-rc.4",
     "@citation-js/plugin-bibtex": "^0.4.0-rc.4",
     "@citation-js/plugin-csl": "^0.4.0-rc.4",
-    "@types/jsdom": "^12.2.3",
     "@types/node": "^11.12.0",
-    "@types/turndown": "^5.0.0",
     "@types/webpack": "^4.4.26",
     "null-loader": "^0.1.1",
     "prettier": "^1.14.3",
@@ -26,7 +24,6 @@
     "ts-node": "^8.0.3",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
-    "turndown": "^5.0.3",
     "typescript": "^3.0.3",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0"

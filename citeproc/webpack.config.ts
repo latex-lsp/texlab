@@ -1,5 +1,5 @@
 import path from 'path';
-import { Configuration, ContextReplacementPlugin } from 'webpack';
+import { Configuration } from 'webpack';
 
 const config: Configuration = {
   target: 'node',
@@ -14,13 +14,6 @@ const config: Configuration = {
   resolve: {
     extensions: ['.ts', '.js', '.json'],
   },
-  plugins: [
-    // Do not resolve canvas API of jsdom (jsdom/lib/jsdom/utils.js 186:21-40)
-    new ContextReplacementPlugin(/jsdom[/\\]lib/, /^$/),
-
-    // Do not resolve streaming API of parse5 (parse5/lib/index.js 55:23-49)
-    new ContextReplacementPlugin(/parse5[/\\]lib/, /^$/),
-  ],
   module: {
     rules: [
       {
