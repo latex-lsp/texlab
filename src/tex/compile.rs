@@ -59,7 +59,7 @@ pub async fn compile<'a>(
         }
         None => {
             process.kill()?;
-            Err(io::Error::from(io::ErrorKind::TimedOut))
+            Err(io::ErrorKind::TimedOut.into())
         }
     }
 }

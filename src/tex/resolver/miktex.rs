@@ -36,7 +36,7 @@ pub fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
 fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
     let mut reader = Cursor::new(bytes);
     if reader.read_u32::<LittleEndian>()? != FNDB_SIGNATURE {
-        return Err(io::Error::from(io::ErrorKind::InvalidData));
+        return Err(io::ErrorKind::InvalidData.into());
     }
 
     reader.set_position(FNDB_TABLE_POINTER_OFFSET as u64);
@@ -70,5 +70,5 @@ fn read_string(bytes: &[u8], offset: usize) -> io::Result<&str> {
     }
 
     std::str::from_utf8(&bytes[offset..offset + length])
-        .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))
+        .map_err(|_| io::ErrorKind::InvalidData.into())
 }

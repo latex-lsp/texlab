@@ -4,7 +4,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -47,11 +46,11 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
         let edits = vec![
             TextEdit::new(
                 environment.left.name().unwrap().range(),
-                Cow::from(request.params.new_name.clone()),
+                request.params.new_name.clone().into(),
             ),
             TextEdit::new(
                 environment.right.name().unwrap().range(),
-                Cow::from(request.params.new_name.clone()),
+                request.params.new_name.clone().into(),
             ),
         ];
         let mut changes = HashMap::new();
@@ -98,8 +97,8 @@ mod tests {
         changes.insert(
             FeatureSpec::uri("foo.tex"),
             vec![
-                TextEdit::new(Range::new_simple(0, 7, 0, 10), Cow::from("baz")),
-                TextEdit::new(Range::new_simple(1, 5, 1, 8), Cow::from("baz")),
+                TextEdit::new(Range::new_simple(0, 7, 0, 10), "baz".into()),
+                TextEdit::new(Range::new_simple(1, 5, 1, 8), "baz".into()),
             ],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));

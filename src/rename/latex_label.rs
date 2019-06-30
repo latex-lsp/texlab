@@ -4,7 +4,6 @@ use crate::syntax::text::{Span, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -45,7 +44,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
                     .flat_map(LatexLabel::names)
                     .filter(|label| label.text() == name.text)
                     .map(|label| {
-                        TextEdit::new(label.range(), Cow::from(request.params.new_name.clone()))
+                        TextEdit::new(label.range(), request.params.new_name.clone().into())
                     })
                     .collect();
                 changes.insert(document.uri.clone(), edits);
@@ -92,17 +91,11 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(0, 7, 0, 10),
-                Cow::from("bar"),
-            )],
+            vec![TextEdit::new(Range::new_simple(0, 7, 0, 10), "bar".into())],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(0, 5, 0, 8),
-                Cow::from("bar"),
-            )],
+            vec![TextEdit::new(Range::new_simple(0, 5, 0, 8), "bar".into())],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

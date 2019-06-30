@@ -3,7 +3,6 @@ use lazy_static::lazy_static;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Uri};
 use path_clean::PathClean;
 use regex::{Match, Regex};
-use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -71,8 +70,8 @@ impl Into<Diagnostic> for BuildError {
             range,
             Some(severity),
             None,
-            Some(Cow::from("latex")),
-            Cow::from(self.message),
+            Some("latex".into()),
+            self.message.into(),
             None,
         )
     }

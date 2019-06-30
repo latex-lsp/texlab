@@ -4,7 +4,6 @@ use crate::syntax::text::{Span, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -46,10 +45,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                         .flat_map(LatexCitation::keys)
                         .filter(|citation| citation.text() == key_name.text)
                         .map(|citation| {
-                            TextEdit::new(
-                                citation.range(),
-                                Cow::from(request.params.new_name.clone()),
-                            )
+                            TextEdit::new(citation.range(), request.params.new_name.clone().into())
                         })
                         .for_each(|edit| edits.push(edit));
                 }
@@ -59,7 +55,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                             if key.text() == key_name.text {
                                 edits.push(TextEdit::new(
                                     key.range(),
-                                    Cow::from(request.params.new_name.clone()),
+                                    request.params.new_name.clone().into(),
                                 ));
                             }
                         }
@@ -122,17 +118,11 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.bib"),
-            vec![TextEdit::new(
-                Range::new_simple(0, 9, 0, 12),
-                Cow::from("qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(1, 6, 1, 9),
-                Cow::from("qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }
@@ -155,17 +145,11 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.bib"),
-            vec![TextEdit::new(
-                Range::new_simple(0, 9, 0, 12),
-                Cow::from("qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(1, 6, 1, 9),
-                Cow::from("qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

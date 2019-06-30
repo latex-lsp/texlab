@@ -4,7 +4,6 @@ use crate::syntax::bibtex::*;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFieldHoverProvider;
@@ -25,7 +24,7 @@ impl FeatureProvider for BibtexFieldHoverProvider {
                     return Some(Hover {
                         contents: HoverContents::Markup(MarkupContent {
                             kind: MarkupKind::Markdown,
-                            value: Cow::from(documentation),
+                            value: documentation.into(),
                         }),
                         range: None,
                     });
@@ -58,7 +57,10 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: Cow::from(language_data().field_documentation("author").unwrap()),
+                    value: language_data()
+                        .field_documentation("author")
+                        .unwrap()
+                        .into(),
                 }),
                 range: None,
             })

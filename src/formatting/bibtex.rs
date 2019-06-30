@@ -52,7 +52,7 @@ impl<'a> BibtexFormatter<'a> {
             }
             buffer
         } else {
-            String::from("\t")
+            "\t".into()
         };
 
         BibtexFormatter {

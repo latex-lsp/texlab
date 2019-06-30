@@ -24,7 +24,7 @@ impl Decoder for LspCodec {
                 if error.is_incomplete() {
                     Ok(None)
                 } else {
-                    Err(Error::from(ErrorKind::InvalidData))
+                    Err(ErrorKind::InvalidData.into())
                 }
             }
         }

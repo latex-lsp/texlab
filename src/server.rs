@@ -326,7 +326,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 };
                 if should_format {
                     let text = bibtex::format_declaration(&declaration, &params);
-                    edits.push(TextEdit::new(declaration.range(), Cow::from(text)));
+                    edits.push(TextEdit::new(declaration.range(), text.into()));
                 }
             }
         }
@@ -411,7 +411,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
         let params = ConfigurationParams {
             items: vec![ConfigurationItem {
-                section: Some(Cow::from(section)),
+                section: Some(section.into()),
                 scope_uri: None,
             }],
         };
@@ -452,7 +452,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         let options = DidChangeWatchedFilesRegistrationOptions {
                             watchers: vec![FileSystemWatcher {
                                 kind: Some(WatchKind::Create | WatchKind::Change),
-                                glob_pattern: Cow::from("**/*.log"),
+                                glob_pattern: "**/*.log".into(),
                             }],
                         };
 
@@ -460,8 +460,8 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                             .client
                             .register_capability(RegistrationParams {
                                 registrations: vec![Registration {
-                                    id: Cow::from("build-log-watcher"),
-                                    method: Cow::from("workspace/didChangeWatchedFiles"),
+                                    id: "build-log-watcher".into(),
+                                    method: "workspace/didChangeWatchedFiles".into(),
                                     register_options: Some(serde_json::to_value(options).unwrap()),
                                 }],
                             })
@@ -497,7 +497,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                             };
 
                             let params = ShowMessageParams {
-                                message: Cow::from(message),
+                                message: message.into(),
                                 typ: MessageType::Error,
                             };
 

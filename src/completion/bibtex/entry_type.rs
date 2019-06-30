@@ -6,7 +6,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryTypeCompletionProvider;
@@ -52,7 +51,7 @@ fn make_items(request: &FeatureRequest<CompletionParams>, mut range: Range) -> V
     range.start.character += 1;
     let mut items = Vec::new();
     for ty in &language_data().entry_types {
-        let text_edit = TextEdit::new(range, Cow::from(&ty.name));
+        let text_edit = TextEdit::new(range, (&ty.name).into());
         let item = factory::entry_type(request, ty, text_edit);
         items.push(item);
     }

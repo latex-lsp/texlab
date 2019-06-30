@@ -5,7 +5,6 @@ use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCitationCompletionProvider;
@@ -29,7 +28,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
                         if !entry.is_comment() {
                             if let Some(key) = &entry.key {
                                 let key = key.text().to_owned();
-                                let text_edit = TextEdit::new(key_range, Cow::from(key.clone()));
+                                let text_edit = TextEdit::new(key_range, key.clone().into());
                                 let item = factory::citation(request, entry, key, text_edit);
                                 items.push(item);
                             }

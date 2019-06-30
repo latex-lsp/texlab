@@ -75,7 +75,7 @@ where
         let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
         let id = LatexComponentId::Component(file_names);
         for primitive in selector(&component) {
-            let text_edit = TextEdit::new(edit_range, Cow::from(primitive.clone()));
+            let text_edit = TextEdit::new(edit_range, primitive.clone().into());
             let item = factory(request, primitive.clone().into(), text_edit, &id);
             items.push(item);
         }

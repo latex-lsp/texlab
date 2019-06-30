@@ -1,7 +1,6 @@
 use crate::syntax::bibtex::BibtexSyntaxTree;
 use futures::compat::*;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
 use tokio_process::CommandExt;
@@ -52,7 +51,7 @@ pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, Citation
         let markdown = html2md::parse_html(&html);
         Ok(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(markdown.trim().to_owned()),
+            value: markdown.trim().to_owned().into(),
         })
     } else {
         Err(CitationError::InvalidEntry)

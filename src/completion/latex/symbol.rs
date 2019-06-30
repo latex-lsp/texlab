@@ -4,7 +4,6 @@ use crate::data::symbols::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCommandSymbolCompletionProvider;
@@ -37,7 +36,7 @@ impl FeatureProvider for LatexCommandSymbolCompletionProvider {
                     None => LatexComponentId::Kernel,
                 };
 
-                let text_edit = TextEdit::new(edit_range, Cow::from(&symbol.command));
+                let text_edit = TextEdit::new(edit_range, (&symbol.command).into());
                 let item = factory::command_symbol(
                     request,
                     &symbol.command,
@@ -73,7 +72,7 @@ impl FeatureProvider for LatexArgumentSymbolCompletionProvider {
                     async move |_, range| {
                         let mut items = Vec::new();
                         for symbol in &group.arguments {
-                            let text_edit = TextEdit::new(range, Cow::from(&symbol.argument));
+                            let text_edit = TextEdit::new(range, (&symbol.argument).into());
                             let item = factory::argument_symbol(
                                 request,
                                 &symbol.argument,

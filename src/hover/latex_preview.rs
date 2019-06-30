@@ -9,7 +9,6 @@ use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
 use lsp_types::*;
-use std::borrow::Cow;
 use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
@@ -110,7 +109,7 @@ impl LatexPreviewHoverProvider {
             range: Some(range),
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: Cow::from(markdown),
+                value: markdown.into(),
             }),
         })
     }

@@ -6,7 +6,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexFieldNameCompletionProvider;
@@ -50,7 +49,7 @@ fn make_items(
 ) -> Vec<CompletionItem> {
     let mut items = Vec::new();
     for field in &language_data().fields {
-        let text_edit = TextEdit::new(edit_range, Cow::from(&field.name));
+        let text_edit = TextEdit::new(edit_range, (&field.name).into());
         let item = factory::field_name(request, field, text_edit);
         items.push(item);
     }

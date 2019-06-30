@@ -5,7 +5,6 @@ use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexPgfLibraryCompletionProvider;
@@ -23,7 +22,7 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
             async move |_, name_range| {
                 let mut items = Vec::new();
                 for name in &language_data().pgf_libraries {
-                    let text_edit = TextEdit::new(name_range, Cow::from(name));
+                    let text_edit = TextEdit::new(name_range, name.into());
                     let item = factory::pgf_library(request, name, text_edit);
                     items.push(item);
                 }
@@ -50,7 +49,7 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
             async move |_, name_range| {
                 let mut items = Vec::new();
                 for name in &language_data().tikz_libraries {
-                    let text_edit = TextEdit::new(name_range, Cow::from(name));
+                    let text_edit = TextEdit::new(name_range, name.into());
                     let item = factory::tikz_library(request, name, text_edit);
                     items.push(item);
                 }
@@ -80,8 +79,8 @@ impl FeatureProvider for LatexTikzCommandCompletionProvider {
                 .any(|component| component.file_names.iter().any(|file| file == "tikz.sty"))
             {
                 for name in &language_data().tikz_commands {
-                    let text_edit = TextEdit::new(command.short_name_range(), Cow::from(name));
-                    let item = factory::command(request, Cow::from(name), text_edit, &component);
+                    let text_edit = TextEdit::new(command.short_name_range(), name.into());
+                    let item = factory::command(request, name.into(), text_edit, &component);
                     items.push(item);
                 }
             }

@@ -4,7 +4,6 @@ use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexColorModelCompletionProvider;
@@ -23,7 +22,7 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
         combinators::argument(&request, parameters, async move |_, name_range| {
             let mut items = Vec::new();
             for name in MODEL_NAMES {
-                let text_edit = TextEdit::new(name_range, Cow::from(*name));
+                let text_edit = TextEdit::new(name_range, (*name).into());
                 let item = factory::color_model(request, name, text_edit);
                 items.push(item);
             }

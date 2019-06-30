@@ -3,7 +3,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexErrorCode {
@@ -160,9 +159,9 @@ impl BibtexError {
 impl Into<Diagnostic> for BibtexError {
     fn into(self) -> Diagnostic {
         Diagnostic {
-            source: Some(Cow::from("bibtex")),
+            source: Some("bibtex".into()),
             range: Range::new(self.position, self.position),
-            message: Cow::from(self.code.message()),
+            message: self.code.message().into(),
             severity: Some(DiagnosticSeverity::Error),
             code: None,
             related_information: None,
@@ -192,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_begin_brace() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article"));
+        let errors = BibtexError::analyze(&"@article".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -204,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_entry_key() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article{"));
+        let errors = BibtexError::analyze(&"@article{".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -216,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_entry_comma() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article{foo"));
+        let errors = BibtexError::analyze(&"@article{foo".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -228,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_entry_end_brace() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article{foo,"));
+        let errors = BibtexError::analyze(&"@article{foo,".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -240,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_field_equals() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article{foo, bar}"));
+        let errors = BibtexError::analyze(&"@article{foo, bar}".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -252,7 +251,7 @@ mod tests {
 
     #[test]
     fn test_field_content() {
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from("@article{foo,\nbar = }"));
+        let errors = BibtexError::analyze(&"@article{foo,\nbar = }".into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -265,7 +264,7 @@ mod tests {
     #[test]
     fn test_field_comma() {
         let text = "@article{foo,\nfoo = bar\nbaz = qux}";
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from(text));
+        let errors = BibtexError::analyze(&text.into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -278,7 +277,7 @@ mod tests {
     #[test]
     fn test_content_quote() {
         let text = "@article{foo, bar =\n\"}";
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from(text));
+        let errors = BibtexError::analyze(&text.into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -291,7 +290,7 @@ mod tests {
     #[test]
     fn test_content_brace() {
         let text = "@article{foo, bar =\n{";
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from(text));
+        let errors = BibtexError::analyze(&text.into());
         assert_eq!(
             errors,
             vec![
@@ -304,7 +303,7 @@ mod tests {
     #[test]
     fn test_content_concat() {
         let text = "@article{foo, bar = baz \n# }";
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from(text));
+        let errors = BibtexError::analyze(&text.into());
         assert_eq!(
             errors,
             vec![BibtexError::new(
@@ -317,7 +316,7 @@ mod tests {
     #[test]
     fn test_entry_valid() {
         let text = "@article{foo, bar = \"baz {qux}\" # quux}";
-        let errors = BibtexError::analyze(&BibtexSyntaxTree::from(text));
+        let errors = BibtexError::analyze(&text.into());
         assert_eq!(errors, Vec::new());
     }
 }

@@ -3,7 +3,6 @@ use lazy_static::lazy_static;
 use lsp_types::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
@@ -77,9 +76,9 @@ fn lint(path: &Path) -> Option<Vec<Diagnostic>> {
             };
 
             diagnostics.push(Diagnostic {
-                source: Some(Cow::from("chktex")),
+                source: Some("chktex".into()),
                 code: Some(NumberOrString::String(code.to_owned())),
-                message: Cow::from(message),
+                message: message.into(),
                 severity: Some(severity),
                 range,
                 related_information: None,

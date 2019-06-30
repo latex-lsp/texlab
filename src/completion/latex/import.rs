@@ -4,7 +4,6 @@ use crate::data::language::{language_data, LatexIncludeKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::borrow::Cow;
 use std::ffi::OsStr;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -64,7 +63,7 @@ where
                 factory(
                     request,
                     name.to_owned(),
-                    TextEdit::new(name_range, Cow::from(name.to_owned())),
+                    TextEdit::new(name_range, name.to_owned().into()),
                 )
             })
             .collect()

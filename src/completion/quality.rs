@@ -44,45 +44,43 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     .or_else(|| tree.find(position).into_iter().last())?;
 
                 match node {
-                    LatexNode::Root(_) | LatexNode::Group(_) => Some(Cow::from("")),
-                    LatexNode::Command(command) => {
-                        Some(Cow::from(command.name.text()[1..].to_owned()))
-                    }
+                    LatexNode::Root(_) | LatexNode::Group(_) => Some("".into()),
+                    LatexNode::Command(command) => Some(command.name.text()[1..].to_owned().into()),
                     LatexNode::Text(text) => text
                         .words
                         .iter()
                         .find(|word| word.range().contains(position))
-                        .map(|word| Cow::from(word.text().to_owned())),
-                    LatexNode::Comma(_) => Some(Cow::from(",")),
-                    LatexNode::Math(math) => Some(Cow::from(math.token.text().to_owned())),
+                        .map(|word| word.text().to_owned().into()),
+                    LatexNode::Comma(_) => Some(",".into()),
+                    LatexNode::Math(math) => Some(math.token.text().to_owned().into()),
                 }
             }
             SyntaxTree::Bibtex(tree) => {
                 fn get_type_query(ty: &BibtexToken, position: Position) -> Option<Cow<str>> {
                     if ty.range().contains(position) {
-                        Some(Cow::from(&ty.text()[1..]))
+                        Some((&ty.text()[1..]).into())
                     } else {
-                        Some(Cow::from(""))
+                        Some("".into())
                     }
                 }
                 match tree.find(position).pop()? {
-                    BibtexNode::Root(_) => Some(Cow::from("")),
+                    BibtexNode::Root(_) => Some("".into()),
                     BibtexNode::Preamble(preamble) => get_type_query(&preamble.ty, position),
                     BibtexNode::String(string) => get_type_query(&string.ty, position),
                     BibtexNode::Entry(entry) => get_type_query(&entry.ty, position),
-                    BibtexNode::Comment(comment) => Some(Cow::from(comment.token.text())),
+                    BibtexNode::Comment(comment) => Some(comment.token.text().into()),
                     BibtexNode::Field(field) => {
                         if field.name.range().contains(position) {
-                            Some(Cow::from(field.name.text()))
+                            Some(field.name.text().into())
                         } else {
-                            Some(Cow::from(""))
+                            Some("".into())
                         }
                     }
-                    BibtexNode::Word(word) => Some(Cow::from(word.token.text())),
-                    BibtexNode::Command(command) => Some(Cow::from(&command.token.text()[1..])),
+                    BibtexNode::Word(word) => Some(word.token.text().into()),
+                    BibtexNode::Command(command) => Some((&command.token.text()[1..]).into()),
                     BibtexNode::QuotedContent(_)
                     | BibtexNode::BracedContent(_)
-                    | BibtexNode::Concat(_) => Some(Cow::from("")),
+                    | BibtexNode::Concat(_) => Some("".into()),
                 }
             }
         }

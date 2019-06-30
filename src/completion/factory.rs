@@ -45,9 +45,9 @@ pub enum LatexComponentId<'a> {
 impl<'a> LatexComponentId<'a> {
     pub fn detail(&self) -> Cow<'static, str> {
         match self {
-            LatexComponentId::Kernel => Cow::from("built-in"),
-            LatexComponentId::User => Cow::from("unknown"),
-            LatexComponentId::Component(files) => Cow::from(files.join(", ")),
+            LatexComponentId::Kernel => "built-in".into(),
+            LatexComponentId::User => "unknown".into(),
+            LatexComponentId::Component(files) => files.join(", ").into(),
         }
     }
 }
@@ -75,9 +75,9 @@ pub fn command_snippet(
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Snippet)),
         data: Some(CompletionItemData::CommandSnippet.into()),
-        insert_text: Some(Cow::from(template)),
+        insert_text: Some(template.into()),
         insert_text_format: Some(InsertTextFormat::Snippet),
-        ..CompletionItem::new_simple(Cow::from(name), component.detail())
+        ..CompletionItem::new_simple(name.into(), component.detail())
     }
 }
 
@@ -153,7 +153,7 @@ pub fn pgf_library(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Module)),
         data: Some(CompletionItemData::PgfLibrary.into()),
         text_edit: Some(text_edit),
@@ -167,7 +167,7 @@ pub fn tikz_library(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Module)),
         data: Some(CompletionItemData::TikzLibrary.into()),
         text_edit: Some(text_edit),
@@ -181,7 +181,7 @@ pub fn color(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Color)),
         data: Some(CompletionItemData::Color.into()),
         text_edit: Some(text_edit),
@@ -195,7 +195,7 @@ pub fn color_model(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Color)),
         data: Some(CompletionItemData::ColorModel.into()),
         text_edit: Some(text_edit),
@@ -209,7 +209,7 @@ pub fn package(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Class)),
         data: Some(CompletionItemData::Package.into()),
         text_edit: Some(text_edit),
@@ -223,7 +223,7 @@ pub fn class(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Class)),
         data: Some(CompletionItemData::Class.into()),
         text_edit: Some(text_edit),
@@ -240,7 +240,7 @@ pub fn citation(
     let params = BibtexFormattingParams::default();
     let entry_code = bibtex::format_entry(&entry, &params);
     CompletionItem {
-        label: Cow::from(key),
+        label: key.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Citation { entry_code }.into()),
         text_edit: Some(text_edit),
@@ -254,14 +254,14 @@ pub fn entry_type(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(&ty.name),
+        label: (&ty.name).into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Interface)),
         data: Some(CompletionItemData::EntryType.into()),
         text_edit: Some(text_edit),
         documentation: ty.documentation.as_ref().map(|doc| {
             Documentation::MarkupContent(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: Cow::from(doc),
+                value: doc.into(),
             })
         }),
         ..CompletionItem::default()
@@ -274,13 +274,13 @@ pub fn field_name(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(&field.name),
+        label: (&field.name).into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::FieldName.into()),
         text_edit: Some(text_edit),
         documentation: Some(Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(&field.documentation),
+            value: (&field.documentation).into(),
         })),
         ..CompletionItem::default()
     }
@@ -298,7 +298,7 @@ pub fn command_symbol(
         data: Some(CompletionItemData::CommandSymbol.into()),
         text_edit: Some(text_edit),
         documentation: Some(image_documentation(name, image)),
-        ..CompletionItem::new_simple(Cow::from(name), component.detail())
+        ..CompletionItem::new_simple(name.into(), component.detail())
     }
 }
 
@@ -309,7 +309,7 @@ pub fn argument_symbol(
     image: &str,
 ) -> CompletionItem {
     CompletionItem {
-        label: Cow::from(name),
+        label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::ArgumentSymbol.into()),
         text_edit: Some(text_edit),
@@ -321,10 +321,11 @@ pub fn argument_symbol(
 fn image_documentation(name: &str, image: &str) -> Documentation {
     Documentation::MarkupContent(MarkupContent {
         kind: MarkupKind::Markdown,
-        value: Cow::from(format!(
+        value: format!(
             "![{}](data:image/png;base64,{}|width=48,height=48)",
             name, image
-        )),
+        )
+        .into(),
     })
 }
 

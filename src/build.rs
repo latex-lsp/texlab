@@ -5,7 +5,6 @@ use futures_boxed::boxed;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
-use std::borrow::Cow;
 use std::io;
 use std::io::BufRead;
 use std::path::Path;
@@ -106,7 +105,7 @@ where
                 if let Ok(line) = line {
                     let params = LogMessageParams {
                         typ: MessageType::Log,
-                        message: Cow::from(line),
+                        message: line.into(),
                     };
                     block_on(client.log_message(params));
                 }
@@ -132,9 +131,9 @@ where
 
         let title = path.file_name().unwrap().to_string_lossy().into_owned();
         let mut progress_params = ProgressParams {
-            id: Cow::from("build"),
-            title: Cow::from(title),
-            message: Some(Cow::from("Building...")),
+            id: "build".into(),
+            title: title.into(),
+            message: Some("Building...".into()),
             percentage: None,
             done: None,
         };

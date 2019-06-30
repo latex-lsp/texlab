@@ -4,7 +4,6 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -48,7 +47,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
                     .map(|cmd| {
                         TextEdit::new(
                             cmd.name.range(),
-                            Cow::from(format!("\\{}", request.params.new_name)),
+                            format!("\\{}", request.params.new_name).into(),
                         )
                     })
                     .collect();
@@ -91,17 +90,11 @@ mod tests {
         let mut changes = HashMap::new();
         changes.insert(
             FeatureSpec::uri("foo.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(1, 0, 1, 4),
-                Cow::from("\\qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(1, 0, 1, 4), "\\qux".into())],
         );
         changes.insert(
             FeatureSpec::uri("bar.tex"),
-            vec![TextEdit::new(
-                Range::new_simple(0, 0, 0, 4),
-                Cow::from("\\qux"),
-            )],
+            vec![TextEdit::new(Range::new_simple(0, 0, 0, 4), "\\qux".into())],
         );
         assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
     }

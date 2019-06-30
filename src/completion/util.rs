@@ -19,10 +19,10 @@ where
 {
     let mut items = Vec::new();
     for name in names {
-        let text_edit = TextEdit::new(edit_range, Cow::from(*name));
+        let text_edit = TextEdit::new(edit_range, (*name).into());
         let item = factory(
             request,
-            Cow::from(*name),
+            (*name).into(),
             text_edit,
             &LatexComponentId::Kernel,
         );

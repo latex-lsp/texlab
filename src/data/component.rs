@@ -2,7 +2,6 @@ use futures::compat::*;
 use lsp_types::{MarkupContent, MarkupKind, Uri};
 use reqwest::r#async::Client;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct ComponentDocumentation {
@@ -33,7 +32,7 @@ impl ComponentDocumentation {
                 caption: component.caption,
                 content: MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: Cow::from(html2md::parse_html(&description.text)),
+                    value: html2md::parse_html(&description.text).into(),
                 },
             })
         } else {

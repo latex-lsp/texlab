@@ -43,7 +43,6 @@ impl From<&str> for BibtexSyntaxTree {
     fn from(text: &str) -> Self {
         let lexer = BibtexLexer::new(text);
         let mut parser = BibtexParser::new(lexer);
-        let root = parser.root();
-        BibtexSyntaxTree::from(root)
+        parser.root().into()
     }
 }
