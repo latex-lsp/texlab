@@ -38,10 +38,12 @@ steps:
           grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore-dir "{/*,target/*}" -o lcov.info
           python -m pip install lcov_cobertura
           python -m lcov_cobertura lcov.info
-          bash <(curl -s https://codecov.io/bash) -f coverage.xml;
-        displayName: "Upload coverage report"
-        env:
-          CODECOV_TOKEN: $(codecovToken)
+        displayName: "Build coverage report"
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: cobertura
+          summaryFileLocation: "coverage.xml"
+        displayName: "Publish coverage report"
   - bash: |
       cargo build --release --target ${{ parameters.target }}
       cp target/${{ parameters.target }}/${{ parameters.executableName }} $(Build.ArtifactStagingDirectory)/${{ parameters.artifactName }}
