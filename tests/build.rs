@@ -31,9 +31,15 @@ async fn run(executable: &'static str, name: &'static str) -> (Scenario, BuildRe
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_success() {
     let (scenario, result) = run("latexmk", "bar.tex").await;
-    assert_eq!(result.status, BuildStatus::Success);
+    let log = scenario.client.log().await;
+    assert_eq!(
+        result.status,
+        BuildStatus::Success,
+        "{}",
+        log
+    );
     let path = scenario.directory.path().join("foo.pdf");
-    assert!(path.exists());
+    assert!(path.exists(), "{}", log);
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
@@ -59,5 +65,5 @@ async fn test_on_save() {
         .did_save(DidSaveTextDocumentParams { text_document });
     scenario.server.execute_actions().await;
     let path = scenario.directory.path().join("foo.pdf");
-    assert!(path.exists());
+    assert!(path.exists(), "{}", scenario.client.log().await);
 }

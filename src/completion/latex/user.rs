@@ -61,18 +61,18 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     for environment in &tree.environments {
-                        if environment.left.command == command || environment.right.command == command {
+                        if environment.left.command == command
+                            || environment.right.command == command
+                        {
                             continue;
                         }
 
-                        if let Some(item) =
-                            Self::make_item(request, &environment.left, name_range)
+                        if let Some(item) = Self::make_item(request, &environment.left, name_range)
                         {
                             items.push(item);
                         }
 
-                        if let Some(item) =
-                            Self::make_item(request, &environment.right, name_range)
+                        if let Some(item) = Self::make_item(request, &environment.right, name_range)
                         {
                             items.push(item);
                         }
@@ -91,13 +91,13 @@ impl LatexUserEnvironmentCompletionProvider {
         delimiter: &LatexEnvironmentDelimiter,
         name_range: Range,
     ) -> Option<CompletionItem> {
-            if let Some(name) = delimiter.name() {
-                let text = name.text().to_owned();
-                let text_edit = TextEdit::new(name_range, text.clone().into());
-                let item =
-                    factory::environment(request, text.into(), text_edit, &LatexComponentId::User);
-                return Some(item);
-            }
+        if let Some(name) = delimiter.name() {
+            let text = name.text().to_owned();
+            let text_edit = TextEdit::new(name_range, text.clone().into());
+            let item =
+                factory::environment(request, text.into(), text_edit, &LatexComponentId::User);
+            return Some(item);
+        }
         None
     }
 }

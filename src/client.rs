@@ -49,6 +49,19 @@ pub struct LspClientMock {
     pub messages: Mutex<Vec<ShowMessageParams>>,
     pub options: Mutex<LspClientMockOptions>,
     pub diagnostics_by_uri: Mutex<HashMap<Uri, Vec<Diagnostic>>>,
+    pub log_messages: Mutex<Vec<LogMessageParams>>,
+}
+
+impl LspClientMock {
+    pub async fn log(&self) -> String {
+        let messages = self.log_messages.lock().await;
+        let mut combined_message = String::new();
+        for params in messages.iter() {
+            combined_message.push_str(&params.message);
+            combined_message.push('\n');
+        }
+        combined_message
+    }
 }
 
 impl LspClient for LspClientMock {
@@ -94,5 +107,8 @@ impl LspClient for LspClientMock {
     async fn progress(&self, _params: ProgressParams) {}
 
     #[boxed]
-    async fn log_message(&self, _params: LogMessageParams) {}
+    async fn log_message(&self, params: LogMessageParams) {
+        let mut messages = self.log_messages.lock().await;
+        messages.push(params);
+    }
 }
