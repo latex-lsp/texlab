@@ -496,6 +496,41 @@ impl SyntaxNode for LatexCommandDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexTheoremDefinition {
+    pub command: Arc<LatexCommand>,
+    pub index: usize,
+}
+
+impl LatexTheoremDefinition {
+    pub fn name(&self) -> &LatexToken {
+        self.command.extract_word(self.index).unwrap()
+    }
+
+    fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut definitions = Vec::new();
+        for command in commands {
+            for LatexTheoremDefinitionCommand { name, index } in
+                &language_data().theorem_definition_commands
+            {
+                if command.name.text() == name && command.has_word(*index) {
+                    definitions.push(Self {
+                        command: Arc::clone(&command),
+                        index: *index,
+                    });
+                }
+            }
+        }
+        definitions
+    }
+}
+
+impl SyntaxNode for LatexTheoremDefinition {
+    fn range(&self) -> Range {
+        self.command.range()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSyntaxTree {
     pub root: Arc<LatexRoot>,
     pub commands: Vec<Arc<LatexCommand>>,
@@ -510,6 +545,7 @@ pub struct LatexSyntaxTree {
     pub inlines: Vec<LatexInline>,
     pub math_operators: Vec<LatexMathOperator>,
     pub command_definitions: Vec<LatexCommandDefinition>,
+    pub theorem_definitions: Vec<LatexTheoremDefinition>,
 }
 
 impl LatexSyntaxTree {
@@ -532,6 +568,7 @@ impl LatexSyntaxTree {
         let inlines = LatexInline::parse(Arc::clone(&root));
         let math_operators = LatexMathOperator::parse(&commands);
         let command_definitions = LatexCommandDefinition::parse(&commands);
+        let theorem_definitions = LatexTheoremDefinition::parse(&commands);
         Self {
             root,
             commands,
@@ -546,6 +583,7 @@ impl LatexSyntaxTree {
             inlines,
             math_operators,
             command_definitions,
+            theorem_definitions,
         }
     }
 

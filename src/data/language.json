@@ -524,6 +524,16 @@
       "implementationIndex": 1
     }
   ],
+  "theoremDefinitionCommands": [
+    {
+      "name": "\\newtheorem",
+      "index": 0
+    },
+    {
+      "name": "\\declaretheorem",
+      "index": 0
+    }
+  ],
   "colors": [
     "black",
     "blue",

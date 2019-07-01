@@ -94,6 +94,13 @@ pub struct LatexMathOperatorCommand {
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct LatexTheoremDefinitionCommand {
+    pub name: String,
+    pub index: usize,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LatexColorCommand {
     pub name: String,
     pub index: usize,
@@ -129,6 +136,7 @@ pub struct LanguageData {
     pub include_commands: Vec<LatexIncludeCommand>,
     pub command_definition_commands: Vec<LatexCommandDefinitionCommand>,
     pub math_operator_commands: Vec<LatexMathOperatorCommand>,
+    pub theorem_definition_commands: Vec<LatexTheoremDefinitionCommand>,
     pub colors: Vec<String>,
     pub color_commands: Vec<LatexColorCommand>,
     pub color_model_commands: Vec<LatexColorModelCommand>,
