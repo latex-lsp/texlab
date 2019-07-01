@@ -78,14 +78,32 @@ impl From<io::Error> for RenderError {
 pub struct LatexPreviewHoverProvider;
 
 impl LatexPreviewHoverProvider {
-    fn is_math_environment(environment: &LatexEnvironment) -> bool {
+    fn is_math_environment(
+        request: &FeatureRequest<TextDocumentPositionParams>,
+        environment: &LatexEnvironment,
+    ) -> bool {
         let canonical_name = environment
             .left
             .name()
             .map(LatexToken::text)
             .unwrap_or_default()
             .replace('*', "");
+
         PREVIEW_ENVIRONMENTS.contains(&canonical_name.as_ref())
+            || Self::theorem_environments(request).contains(&canonical_name.as_ref())
+    }
+
+    fn theorem_environments(request: &FeatureRequest<TextDocumentPositionParams>) -> Vec<&str> {
+        let mut names = Vec::new();
+        for document in request.related_documents() {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                tree.theorem_definitions
+                    .iter()
+                    .map(|thm| thm.name().text())
+                    .for_each(|thm| names.push(thm));
+            }
+        }
+        names
     }
 
     async fn render(
@@ -121,6 +139,7 @@ impl LatexPreviewHoverProvider {
         Self::generate_includes(request, &mut code);
         Self::generate_command_definitions(request, &mut code);
         Self::generate_math_operators(request, &mut code);
+        Self::generate_theorem_definitions(request, &mut code);
         code.push_str("\\begin{document}\n");
         code.push_str(&Self::extract_text(&request.document().text, range));
         code.push('\n');
@@ -178,6 +197,23 @@ impl LatexPreviewHoverProvider {
                         code.push_str(&op);
                         code.push('\n');
                     });
+            }
+        }
+    }
+
+    fn generate_theorem_definitions(
+        request: &FeatureRequest<TextDocumentPositionParams>,
+        code: &mut String,
+    ) {
+        for document in request.related_documents() {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                tree.theorem_definitions
+                    .iter()
+                    .map(|thm| Self::extract_text(&document.text, thm.range()))
+                    .for_each(|thm| {
+                        code.push_str(&thm);
+                        code.push('\n');
+                    })
             }
         }
     }
@@ -252,21 +288,21 @@ impl FeatureProvider for LatexPreviewHoverProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut elements = Vec::new();
-            tree.environments
+            tree.inlines
                 .iter()
-                .filter(|env| Self::is_math_environment(env))
-                .map(MathElement::Environment)
-                .for_each(|env| elements.push(env));
+                .map(MathElement::Inline)
+                .for_each(|inline| elements.push(inline));
 
             tree.equations
                 .iter()
                 .map(MathElement::Equation)
                 .for_each(|eq| elements.push(eq));
 
-            tree.inlines
+            tree.environments
                 .iter()
-                .map(MathElement::Inline)
-                .for_each(|inline| elements.push(inline));
+                .filter(|env| Self::is_math_environment(request, env))
+                .map(MathElement::Environment)
+                .for_each(|env| elements.push(env));
 
             let range = elements
                 .iter()
