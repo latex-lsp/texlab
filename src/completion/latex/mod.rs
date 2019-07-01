@@ -9,5 +9,6 @@ pub mod include;
 pub mod kernel;
 pub mod label;
 pub mod symbol;
+pub mod theorem;
 pub mod tikz;
 pub mod user;

@@ -18,6 +18,7 @@ use self::latex::include::LatexIncludeCompletionProvider;
 use self::latex::kernel::*;
 use self::latex::label::LatexLabelCompletionProvider;
 use self::latex::symbol::*;
+use self::latex::theorem::LatexTheoremEnvironmentCompletionProvider;
 use self::latex::tikz::*;
 use self::latex::user::*;
 use self::quality::OrderByQualityCompletionProvider;
@@ -45,6 +46,7 @@ impl CompletionProvider {
                 Box::new(LatexTikzLibraryCompletionProvider),
                 Box::new(LatexColorCompletionProvider),
                 Box::new(LatexColorModelCompletionProvider),
+                Box::new(LatexTheoremEnvironmentCompletionProvider),
                 Box::new(LatexComponentEnvironmentProvider),
                 Box::new(LatexKernelEnvironmentCompletionProvider),
                 Box::new(LatexLabelCompletionProvider),

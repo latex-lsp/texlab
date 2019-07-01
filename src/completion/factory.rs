@@ -46,7 +46,7 @@ impl<'a> LatexComponentId<'a> {
     pub fn detail(&self) -> Cow<'static, str> {
         match self {
             LatexComponentId::Kernel => "built-in".into(),
-            LatexComponentId::User => "unknown".into(),
+            LatexComponentId::User => "user-defined".into(),
             LatexComponentId::Component(files) => files.join(", ").into(),
         }
     }
