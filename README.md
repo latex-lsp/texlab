@@ -55,7 +55,12 @@ TexLab has an extensive test suite of unit and integration tests. You can run th
 cargo test --all
 ```
 
-in the project folder.
+in the project folder. This requires an installed [TeX distribution](https://www.latex-project.org/get/#tex-distributions)
+with the following packages:
+
+- [amsmath](https://www.ctan.org/pkg/amsmath)
+- [latexmk](https://www.ctan.org/pkg/latexmk)
+- [chktex](https://www.ctan.org/pkg/chktex)
 
 ## Contributing
 
