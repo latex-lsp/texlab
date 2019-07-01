@@ -20,7 +20,8 @@ jobs:
         parameters:
           target: "x86_64-unknown-linux-gnu"
           executableName: "texlab"
-          artifactName: "texlab-x86_64-linux"
+          archiveFile: "texlab-x86_64-linux.tar.gz"
+          archiveType: "tar"
           coverage: true
   - job: Windows
     pool:
@@ -40,7 +41,8 @@ jobs:
         parameters:
           target: "x86_64-pc-windows-msvc"
           executableName: "texlab.exe"
-          artifactName: "texlab-x86_64-windows.exe"
+          archiveFile: "texlab-x86_64-windows.zip"
+          archiveType: "zip"
   - job: macOS
     pool:
       vmImage: "macos-10.14"
@@ -61,7 +63,8 @@ jobs:
         parameters:
           target: "x86_64-apple-darwin"
           executableName: "texlab"
-          artifactName: "texlab-x86_64-darwin"
+          archiveFile: "texlab-x86_64-macos.tar.gz"
+          archiveType: "tar"
   - job: Publish
     dependsOn:
       - Linux

@@ -44,11 +44,10 @@ You can create a debug build by building the server without the `--release` flag
 The resulting build can be used with the [Visual Studio Code extension](https://github.com/latex-lsp/texlab-vscode)
 by creating a symbolic link:
 
-| Platform    | Symlink                                                                            |
-| ----------- | ---------------------------------------------------------------------------------- |
-| Windows x64 | `texlab/target/debug/texlab.exe -> texlab-vscode/server/texlab-x86_64-windows.exe` |
-| macOS x64   | `texlab/target/debug/texlab -> texlab-vscode/server/texlab-x86_64-darwin`          |
-| Linux x64   | `texlab/target/debug/texlab -> texlab-vscode/server/texlab-x86_64-linux`           |
+| Platform         | Symlink                                                             |
+| ---------------- | ------------------------------------------------------------------- |
+| Windows x64      | `texlab/target/debug/texlab.exe -> texlab-vscode/server/texlab.exe` |
+| Linux, macOS x64 | `texlab/target/debug/texlab -> texlab-vscode/server/texlab`         |
 
 TexLab has an extensive test suite of unit and integration tests. You can run them by executing
 
