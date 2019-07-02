@@ -1,6 +1,7 @@
 mod bibtex;
 mod factory;
 mod latex;
+mod preselect;
 mod quality;
 mod util;
 
@@ -21,6 +22,7 @@ use self::latex::symbol::*;
 use self::latex::theorem::LatexTheoremEnvironmentCompletionProvider;
 use self::latex::tikz::*;
 use self::latex::user::*;
+use self::preselect::PreselectCompletionProvider;
 use self::quality::OrderByQualityCompletionProvider;
 use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -30,38 +32,42 @@ use std::hash::{Hash, Hasher};
 
 pub const COMPLETION_LIMIT: usize = 50;
 
+type MergeProvider = ConcatProvider<CompletionParams, CompletionItem>;
+
 pub struct CompletionProvider {
-    provider: OrderByQualityCompletionProvider<ConcatProvider<CompletionParams, CompletionItem>>,
+    provider: OrderByQualityCompletionProvider<PreselectCompletionProvider<MergeProvider>>,
 }
 
 impl CompletionProvider {
     pub fn new() -> Self {
         Self {
-            provider: OrderByQualityCompletionProvider::new(ConcatProvider::new(vec![
-                Box::new(BibtexEntryTypeCompletionProvider),
-                Box::new(BibtexFieldNameCompletionProvider),
-                Box::new(BibtexCommandCompletionProvider),
-                Box::new(LatexArgumentSymbolCompletionProvider),
-                Box::new(LatexPgfLibraryCompletionProvider),
-                Box::new(LatexTikzLibraryCompletionProvider),
-                Box::new(LatexColorCompletionProvider),
-                Box::new(LatexColorModelCompletionProvider),
-                Box::new(LatexTheoremEnvironmentCompletionProvider),
-                Box::new(LatexComponentEnvironmentProvider),
-                Box::new(LatexKernelEnvironmentCompletionProvider),
-                Box::new(LatexLabelCompletionProvider),
-                Box::new(LatexCitationCompletionProvider),
-                Box::new(LatexIncludeCompletionProvider),
-                Box::new(LatexClassImportProvider),
-                Box::new(LatexPackageImportProvider),
-                Box::new(LatexBeginCommandCompletionProvider),
-                Box::new(LatexCommandSymbolCompletionProvider),
-                Box::new(LatexComponentCommandProvider),
-                Box::new(LatexTikzCommandCompletionProvider),
-                Box::new(LatexKernelCommandCompletionProvider),
-                Box::new(LatexUserCommandCompletionProvider),
-                Box::new(LatexUserEnvironmentCompletionProvider),
-            ])),
+            provider: OrderByQualityCompletionProvider::new(PreselectCompletionProvider::new(
+                ConcatProvider::new(vec![
+                    Box::new(BibtexEntryTypeCompletionProvider),
+                    Box::new(BibtexFieldNameCompletionProvider),
+                    Box::new(BibtexCommandCompletionProvider),
+                    Box::new(LatexArgumentSymbolCompletionProvider),
+                    Box::new(LatexPgfLibraryCompletionProvider),
+                    Box::new(LatexTikzLibraryCompletionProvider),
+                    Box::new(LatexColorCompletionProvider),
+                    Box::new(LatexColorModelCompletionProvider),
+                    Box::new(LatexTheoremEnvironmentCompletionProvider),
+                    Box::new(LatexComponentEnvironmentProvider),
+                    Box::new(LatexKernelEnvironmentCompletionProvider),
+                    Box::new(LatexLabelCompletionProvider),
+                    Box::new(LatexCitationCompletionProvider),
+                    Box::new(LatexIncludeCompletionProvider),
+                    Box::new(LatexClassImportProvider),
+                    Box::new(LatexPackageImportProvider),
+                    Box::new(LatexBeginCommandCompletionProvider),
+                    Box::new(LatexCommandSymbolCompletionProvider),
+                    Box::new(LatexComponentCommandProvider),
+                    Box::new(LatexTikzCommandCompletionProvider),
+                    Box::new(LatexKernelCommandCompletionProvider),
+                    Box::new(LatexUserCommandCompletionProvider),
+                    Box::new(LatexUserEnvironmentCompletionProvider),
+                ]),
+            )),
         }
     }
 }

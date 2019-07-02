@@ -29,7 +29,7 @@ where
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let query = Self::get_query(request.document(), request.params.position);
         let mut items = self.provider.execute(&request).await;
-        items.sort_by_key(|item| -Self::get_quality(&query, &item.label));
+        items.sort_by_key(|item| -Self::get_quality(&query, &item));
         items
     }
 }
@@ -86,7 +86,12 @@ impl<F> OrderByQualityCompletionProvider<F> {
         }
     }
 
-    fn get_quality(query: &Option<Cow<str>>, label: &str) -> i32 {
+    fn get_quality(query: &Option<Cow<str>>, item: &CompletionItem) -> i32 {
+        if item.preselect == Some(true) {
+            return 8;
+        }
+
+        let label = &item.label;
         if let Some(query) = query {
             if label == query {
                 return 7;

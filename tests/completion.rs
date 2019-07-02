@@ -1,6 +1,5 @@
 #![feature(async_await)]
 
-use itertools::Itertools;
 use lsp_types::*;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
@@ -24,7 +23,6 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
         .items
         .into_iter()
         .map(|item| (*item.label).to_owned())
-        .sorted()
         .collect();
 
     scenario.directory.close().unwrap();
@@ -58,13 +56,15 @@ async fn test_user_command() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_label() {
-    let items = run("label", "foo.tex", Position::new(5, 5)).await;
+    let mut items = run("label", "foo.tex", Position::new(5, 5)).await;
+    items.sort();
     assert_eq!(items, vec!["bar", "baz", "foo"]);
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_citation() {
-    let items = run("citation", "foo.tex", Position::new(3, 6)).await;
+    let mut items = run("citation", "foo.tex", Position::new(3, 6)).await;
+    items.sort();
     assert_eq!(items, vec!["bar", "baz", "foo"]);
 }
 
@@ -95,13 +95,15 @@ async fn test_color_model() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_include_top_level() {
-    let items = run("include", "foo.tex", Position::new(0, 9)).await;
+    let mut items = run("include", "foo.tex", Position::new(0, 9)).await;
+    items.sort();
     assert_eq!(items, vec!["bar", "foo", "qux"]);
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_include_directory() {
-    let items = run("include", "foo.tex", Position::new(1, 11)).await;
+    let mut items = run("include", "foo.tex", Position::new(1, 11)).await;
+    items.sort();
     assert_eq!(items, vec!["bar.tex", "baz.tex"]);
 }
 
@@ -113,7 +115,8 @@ async fn test_include_bibliography() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_include_graphics() {
-    let items = run("include", "bar/baz.tex", Position::new(1, 17)).await;
+    let mut items = run("include", "bar/baz.tex", Position::new(1, 17)).await;
+    items.sort();
     assert_eq!(items, vec!["image1.png", "image2.jpg"]);
 }
 
@@ -199,4 +202,10 @@ async fn test_entry_type_comment() {
 async fn test_field_name() {
     let items = run("field_name", "foo.bib", Position::new(1, 7)).await;
     assert!(items.iter().any(|item| item == "author"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
+async fn test_preselect() {
+    let items = run("preselect", "foo.tex", Position::new(2, 9)).await;
+    assert_eq!(items[0], "document");
 }
