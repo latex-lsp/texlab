@@ -22,12 +22,20 @@ pub enum LatexLabelKind {
     Reference,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum LatexLabelScope {
+    Default,
+    Math,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexLabelCommand {
     pub name: String,
     pub index: usize,
     pub kind: LatexLabelKind,
+    pub scope: LatexLabelScope,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -145,6 +153,7 @@ pub struct LanguageData {
     pub pgf_libraries: Vec<String>,
     pub tikz_libraries: Vec<String>,
     pub tikz_commands: Vec<String>,
+    pub math_environments: Vec<String>,
 }
 
 impl LanguageData {

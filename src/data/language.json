@@ -239,127 +239,152 @@
     {
       "name": "\\label",
       "index": 0,
-      "kind": "definition"
+      "kind": "definition",
+      "scope": "default"
     },
     {
       "name": "\\ref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\autoref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\pageref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\eqref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "math"
     },
     {
       "name": "\\cref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Cref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\crefrange",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\crefrange",
       "index": 1,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Crefrange",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Crefrange",
       "index": 1,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\cref*",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Cref*",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\crefrange*",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\crefrange*",
       "index": 1,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Crefrange*",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\Crefrange*",
       "index": 1,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\namecref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\nameCref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\lcnamecref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\namecrefs",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\nameCrefs",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\lcnamecrefs",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\labelcref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     },
     {
       "name": "\\labelcpageref",
       "index": 0,
-      "kind": "reference"
+      "kind": "reference",
+      "scope": "default"
     }
   ],
   "sectionCommands": [
@@ -2198,5 +2223,49 @@
     "value",
     "x",
     "y"
+  ],
+  "mathEnvironments": [
+    "align",
+    "align*",
+    "alignat",
+    "alignat*",
+    "aligned",
+    "aligned*",
+    "alignedat",
+    "alignedat*",
+    "array",
+    "array*",
+    "Bmatrix",
+    "Bmatrix*",
+    "bmatrix",
+    "bmatrix*",
+    "cases",
+    "cases*",
+    "CD",
+    "CD*",
+    "eqnarray",
+    "eqnarray*",
+    "equation",
+    "equation*",
+    "gather",
+    "gather*",
+    "gathered",
+    "gathered*",
+    "matrix",
+    "matrix*",
+    "multline",
+    "multline*",
+    "pmatrix",
+    "pmatrix*",
+    "smallmatrix",
+    "smallmatrix*",
+    "split",
+    "split*",
+    "subarray",
+    "subarray*",
+    "Vmatrix",
+    "Vmatrix*",
+    "vmatrix",
+    "vmatrix*"
   ]
 }

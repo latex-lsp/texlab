@@ -17,7 +17,6 @@ use tokio_process::CommandExt;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "align",
-    "align",
     "alignat",
     "aligned",
     "alignedat",
@@ -28,7 +27,6 @@ const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "cases",
     "CD",
     "eqnarray",
-    "equation",
     "equation",
     "gather",
     "gathered",

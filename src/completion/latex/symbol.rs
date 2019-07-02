@@ -72,8 +72,7 @@ impl FeatureProvider for LatexArgumentSymbolCompletionProvider {
                     async move |context| {
                         let mut items = Vec::new();
                         for symbol in &group.arguments {
-                            let text_edit =
-                                TextEdit::new(context.range, (&symbol.argument).into());
+                            let text_edit = TextEdit::new(context.range, (&symbol.argument).into());
                             let item = factory::argument_symbol(
                                 request,
                                 &symbol.argument,
