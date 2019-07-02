@@ -16,19 +16,15 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameter = Parameter::new("\\usepgflibrary", 0);
-        combinators::argument(
-            request,
-            std::iter::once(parameter),
-            async move |_, name_range| {
-                let mut items = Vec::new();
-                for name in &language_data().pgf_libraries {
-                    let text_edit = TextEdit::new(name_range, name.into());
-                    let item = factory::pgf_library(request, name, text_edit);
-                    items.push(item);
-                }
-                items
-            },
-        )
+        combinators::argument(request, std::iter::once(parameter), async move |context| {
+            let mut items = Vec::new();
+            for name in &language_data().pgf_libraries {
+                let text_edit = TextEdit::new(context.range, name.into());
+                let item = factory::pgf_library(request, name, text_edit);
+                items.push(item);
+            }
+            items
+        })
         .await
     }
 }
@@ -43,19 +39,15 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameter = Parameter::new("\\usetikzlibrary", 0);
-        combinators::argument(
-            request,
-            std::iter::once(parameter),
-            async move |_, name_range| {
-                let mut items = Vec::new();
-                for name in &language_data().tikz_libraries {
-                    let text_edit = TextEdit::new(name_range, name.into());
-                    let item = factory::tikz_library(request, name, text_edit);
-                    items.push(item);
-                }
-                items
-            },
-        )
+        combinators::argument(request, std::iter::once(parameter), async move |context| {
+            let mut items = Vec::new();
+            for name in &language_data().tikz_libraries {
+                let text_edit = TextEdit::new(context.range, name.into());
+                let item = factory::tikz_library(request, name, text_edit);
+                items.push(item);
+            }
+            items
+        })
         .await
     }
 }

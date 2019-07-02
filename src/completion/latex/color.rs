@@ -19,10 +19,10 @@ impl FeatureProvider for LatexColorCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, async move |_, name_range| {
+        combinators::argument(request, parameters, async move |context| {
             let mut items = Vec::new();
             for name in &language_data().colors {
-                let text_edit = TextEdit::new(name_range, name.into());
+                let text_edit = TextEdit::new(context.range, name.into());
                 let item = factory::color(request, name, text_edit);
                 items.push(item);
             }

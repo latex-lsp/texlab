@@ -35,6 +35,13 @@ where
     Vec::new()
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ArgumentContext<'a> {
+    pub parameter: Parameter<'a>,
+    pub command: Arc<LatexCommand>,
+    pub range: Range,
+}
+
 pub async fn argument<'a, I, E, F>(
     request: &'a FeatureRequest<CompletionParams>,
     mut parameters: I,
@@ -42,7 +49,7 @@ pub async fn argument<'a, I, E, F>(
 ) -> Vec<CompletionItem>
 where
     I: Iterator<Item = Parameter<'a>>,
-    E: FnOnce(Arc<LatexCommand>, Range) -> F,
+    E: FnOnce(ArgumentContext<'a>) -> F,
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let SyntaxTree::Latex(tree) = &request.document().tree {
@@ -69,8 +76,13 @@ where
                             }
                         }
                     }
-                    let range = range.unwrap_or_else(|| Range::new(position, position));
-                    return execute(Arc::clone(&command), range).await;
+                    let text_range = range.unwrap_or_else(|| Range::new(position, position));
+                    let context = ArgumentContext {
+                        parameter,
+                        command: Arc::clone(&command),
+                        range: text_range,
+                    };
+                    return execute(context).await;
                 }
             }
         }
@@ -113,12 +125,12 @@ where
     Vec::new()
 }
 
-pub async fn environment<E, F>(
-    request: &FeatureRequest<CompletionParams>,
+pub async fn environment<'a, E, F>(
+    request: &'a FeatureRequest<CompletionParams>,
     execute: E,
 ) -> Vec<CompletionItem>
 where
-    E: FnOnce(Arc<LatexCommand>, Range) -> F,
+    E: FnOnce(ArgumentContext<'a>) -> F,
     F: Future<Output = Vec<CompletionItem>>,
 {
     let parameters = language_data()

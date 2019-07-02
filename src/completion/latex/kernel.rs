@@ -36,11 +36,11 @@ impl FeatureProvider for LatexKernelEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |_, name_range| {
+        combinators::environment(request, async move |context| {
             make_kernel_items(
                 KERNEL_ENVIRONMENTS,
                 request,
-                name_range,
+                context.range,
                 factory::environment,
             )
         })

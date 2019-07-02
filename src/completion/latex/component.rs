@@ -38,10 +38,10 @@ impl FeatureProvider for LatexComponentEnvironmentProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |_, name_range| {
+        combinators::environment(request, async move |context| {
             component(
                 request,
-                name_range,
+                context.range,
                 |comp| &comp.environments,
                 factory::environment,
             )

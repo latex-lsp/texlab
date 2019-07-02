@@ -56,23 +56,25 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |command, name_range| {
+        combinators::environment(request, async move |context| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     for environment in &tree.environments {
-                        if environment.left.command == command
-                            || environment.right.command == command
+                        if environment.left.command == context.command
+                            || environment.right.command == context.command
                         {
                             continue;
                         }
 
-                        if let Some(item) = Self::make_item(request, &environment.left, name_range)
+                        if let Some(item) =
+                            Self::make_item(request, &environment.left, context.range)
                         {
                             items.push(item);
                         }
 
-                        if let Some(item) = Self::make_item(request, &environment.right, name_range)
+                        if let Some(item) =
+                            Self::make_item(request, &environment.right, context.range)
                         {
                             items.push(item);
                         }

@@ -52,7 +52,7 @@ where
         .filter(|cmd| cmd.kind == kind)
         .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-    combinators::argument(request, parameters, async move |_, name_range| {
+    combinators::argument(request, parameters, async move |context| {
         request
             .resolver
             .files_by_name
@@ -63,7 +63,7 @@ where
                 factory(
                     request,
                     name.to_owned(),
-                    TextEdit::new(name_range, name.to_owned().into()),
+                    TextEdit::new(context.range, name.to_owned().into()),
                 )
             })
             .collect()

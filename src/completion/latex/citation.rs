@@ -20,7 +20,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, async move |_, key_range| {
+        combinators::argument(request, parameters, async move |context| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Bibtex(tree) = &document.tree {
@@ -28,7 +28,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
                         if !entry.is_comment() {
                             if let Some(key) = &entry.key {
                                 let key = key.text().to_owned();
-                                let text_edit = TextEdit::new(key_range, key.clone().into());
+                                let text_edit = TextEdit::new(context.range, key.clone().into());
                                 let item = factory::citation(request, entry, key, text_edit);
                                 items.push(item);
                             }

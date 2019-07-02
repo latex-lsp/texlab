@@ -14,13 +14,13 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |_, name_range| {
+        combinators::environment(request, async move |context| {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     for theorem in &tree.theorem_definitions {
                         let name = theorem.name().text().to_owned();
-                        let text_edit = TextEdit::new(name_range, name.clone().into());
+                        let text_edit = TextEdit::new(context.range, name.clone().into());
                         let item = factory::environment(
                             request,
                             name.into(),
