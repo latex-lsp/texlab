@@ -28,9 +28,17 @@ pub trait LspClient {
     #[boxed]
     async fn publish_diagnostics(&self, params: PublishDiagnosticsParams);
 
-    #[jsonrpc_method("window/progress", kind = "notification")]
+    #[jsonrpc_method("window/progress/start", kind = "notification")]
     #[boxed]
-    async fn progress(&self, params: ProgressParams) -> ();
+    async fn progress_start(&self, params: ProgressStartParams) -> ();
+
+    #[jsonrpc_method("window/progress/report", kind = "notification")]
+    #[boxed]
+    async fn progress_report(&self, params: ProgressReportParams) -> ();
+
+    #[jsonrpc_method("window/progress/done", kind = "notification")]
+    #[boxed]
+    async fn progress_done(&self, params: ProgressDoneParams) -> ();
 
     #[jsonrpc_method("window/logMessage", kind = "notification")]
     #[boxed]
@@ -104,7 +112,13 @@ impl LspClient for LspClientMock {
     }
 
     #[boxed]
-    async fn progress(&self, _params: ProgressParams) {}
+    async fn progress_start(&self, _params: ProgressStartParams) {}
+
+    #[boxed]
+    async fn progress_report(&self, _params: ProgressReportParams) {}
+
+    #[boxed]
+    async fn progress_done(&self, _params: ProgressDoneParams) {}
 
     #[boxed]
     async fn log_message(&self, params: LogMessageParams) {

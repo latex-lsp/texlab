@@ -129,15 +129,16 @@ where
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
 
+        let progress_id = "build";
         let title = path.file_name().unwrap().to_string_lossy().into_owned();
-        let mut progress_params = ProgressParams {
-            id: "build".into(),
+        let params = ProgressStartParams {
+            id: progress_id.into(),
             title: title.into(),
-            message: Some("Building...".into()),
+            cancellable: Some(false),
+            message: Some("Building".into()),
             percentage: None,
-            done: None,
         };
-        self.client.progress(progress_params.clone()).await;
+        self.client.progress_start(params).await;
 
         let status = match self.build(&path).await {
             Ok(true) => BuildStatus::Success,
@@ -145,8 +146,10 @@ where
             Err(_) => BuildStatus::Failure,
         };
 
-        progress_params.done = Some(true);
-        self.client.progress(progress_params).await;
+        let params = ProgressDoneParams {
+            id: progress_id.into(),
+        };
+        self.client.progress_done(params).await;
         BuildResult { status }
     }
 }

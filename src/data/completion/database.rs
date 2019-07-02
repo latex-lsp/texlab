@@ -9,7 +9,7 @@ use futures::compat::*;
 use futures::lock::Mutex;
 use futures::prelude::*;
 use itertools::Itertools;
-use lsp_types::ProgressParams;
+use lsp_types::*;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -150,9 +150,11 @@ where
     }
 
     async fn analyze(&self, file: PathBuf) {
-        let progress_params = ProgressParams {
-            id: "index".into(),
-            title: "Indexing...".into(),
+        let progress_id = "index";
+        let params = ProgressStartParams {
+            id: progress_id.into(),
+            title: "Indexing".into(),
+            cancellable: Some(false),
             message: Some(
                 file.file_name()
                     .unwrap()
@@ -160,10 +162,9 @@ where
                     .into_owned()
                     .into(),
             ),
-            done: None,
             percentage: None,
         };
-        self.client.progress(progress_params.clone()).await;
+        self.client.progress_start(params).await;
 
         let components = LatexDependency::load(&file, &self.resolver)
             .await
@@ -172,7 +173,8 @@ where
 
         for component in components {
             let dependency = &component[0];
-            let progress_params = ProgressParams {
+            let params = ProgressReportParams {
+                id: progress_id.into(),
                 message: Some(
                     dependency
                         .file
@@ -182,9 +184,9 @@ where
                         .into_owned()
                         .into(),
                 ),
-                ..progress_params.clone()
+                percentage: None,
             };
-            self.client.progress(progress_params).await;
+            self.client.progress_report(params).await;
 
             let mut loaded_refs = Vec::new();
             for reference in dependency.references() {
@@ -222,11 +224,10 @@ where
             }
         }
 
-        let progress_params = ProgressParams {
-            done: Some(true),
-            ..progress_params
+        let params = ProgressDoneParams {
+            id: progress_id.into(),
         };
-        self.client.progress(progress_params).await;
+        self.client.progress_done(params).await;
         self.save_database().await;
     }
 
