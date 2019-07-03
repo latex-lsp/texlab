@@ -51,7 +51,7 @@ steps:
     displayName: "Build release artifact"
   - task: ArchiveFiles@2
     inputs:
-      rootFolderOrFile: "target/${{ parameters.target }}/${{ parameters.executableName }}"
+      rootFolderOrFile: "target/${{ parameters.target }}/release/${{ parameters.executableName }}"
       archiveType: ${{ parameters.archiveType }}
       tarCompression: "gz"
       archiveFile: "$(Build.ArtifactStagingDirectory)/${{ parameters.archiveFile }}"

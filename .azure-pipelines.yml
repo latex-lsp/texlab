@@ -78,9 +78,10 @@ jobs:
         succeeded('macOS'))
     steps:
       - download: current
+        patterns: "**/texlab*"
       - task: GitHubRelease@0
         inputs:
           gitHubConnection: latex-lsp
           repositoryName: latex-lsp/texlab
-          assets: $(Pipeline.Workspace)/**/texlab*
+          assets: "$(Pipeline.Workspace)/**/texlab*"
         displayName: "Create GitHub release"
