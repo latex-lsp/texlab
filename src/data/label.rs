@@ -12,25 +12,25 @@ pub struct LabelContext {
 }
 
 impl LabelContext {
-    pub fn find(outline: &Outline, document: &Document, label: &LatexLabel) -> LabelContext {
-        let section = Self::find_section(outline, document, label);
-        let caption = Self::find_caption(document, label);
+    pub fn find(outline: &Outline, document: &Document, position: Position) -> LabelContext {
+        let section = Self::find_section(outline, document, position);
+        let caption = Self::find_caption(document, position);
         Self { section, caption }
     }
 
-    fn find_section(outline: &Outline, document: &Document, label: &LatexLabel) -> Option<String> {
-        let section = outline.find(&document.uri, label.start())?;
+    fn find_section(outline: &Outline, document: &Document, position: Position) -> Option<String> {
+        let section = outline.find(&document.uri, position)?;
         let content = &section.command.args[section.index];
         Some(Self::extract(document, content)?)
     }
 
-    fn find_caption(document: &Document, label: &LatexLabel) -> Option<String> {
+    fn find_caption(document: &Document, position: Position) -> Option<String> {
         if let SyntaxTree::Latex(tree) = &document.tree {
             let environment = tree
                 .environments
                 .iter()
                 .filter(|env| env.left.name().map(LatexToken::text) != Some("document"))
-                .find(|env| env.range().contains(label.start()))?;
+                .find(|env| env.range().contains(position))?;
 
             let caption = tree
                 .captions
@@ -54,7 +54,7 @@ impl LabelContext {
         Some(CharStream::extract(&document.text, range))
     }
 
-    pub fn documentation(&self) -> Option<Documentation> {
+    pub fn documentation(&self) -> Option<MarkupContent> {
         let text = match (&self.section, &self.caption) {
             (Some(section), Some(caption)) => format!("*{}*  \n{}", section, caption),
             (Some(section), None) => format!("*{}*", section),
@@ -62,9 +62,9 @@ impl LabelContext {
             (None, None) => return None,
         };
 
-        Some(Documentation::MarkupContent(MarkupContent {
+        Some(MarkupContent {
             kind: MarkupKind::Markdown,
             value: text.into(),
-        }))
+        })
     }
 }

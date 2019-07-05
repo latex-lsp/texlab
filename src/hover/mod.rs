@@ -2,12 +2,14 @@ mod bibtex_entry_type;
 mod bibtex_field;
 mod latex_citation;
 mod latex_component;
+mod latex_label;
 mod latex_preview;
 
 use self::bibtex_entry_type::BibtexEntryTypeHoverProvider;
 use self::bibtex_field::BibtexFieldHoverProvider;
 use self::latex_citation::LatexCitationHoverProvider;
 use self::latex_component::LatexComponentHoverProvider;
+use self::latex_label::LatexLabelHoverProvider;
 use self::latex_preview::LatexPreviewHoverProvider;
 use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
@@ -25,6 +27,7 @@ impl HoverProvider {
                 Box::new(BibtexFieldHoverProvider),
                 Box::new(LatexCitationHoverProvider),
                 Box::new(LatexComponentHoverProvider),
+                Box::new(LatexLabelHoverProvider),
                 Box::new(LatexPreviewHoverProvider),
             ]),
         }

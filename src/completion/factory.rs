@@ -107,7 +107,7 @@ pub fn label(
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
-        documentation: context.documentation(),
+        documentation: context.documentation().map(Documentation::MarkupContent),
         ..CompletionItem::default()
     }
 }
