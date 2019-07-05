@@ -206,6 +206,6 @@ async fn test_field_name() {
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_preselect() {
-    let items = run("preselect", "foo.tex", Position::new(2, 9)).await;
-    assert_eq!(items[0], "document");
+    let items = run("preselect", "foo.tex", Position::new(4, 5)).await;
+    assert_eq!(items[0], "center");
 }

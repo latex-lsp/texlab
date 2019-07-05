@@ -125,7 +125,10 @@ impl LatexEnvironment {
             return None;
         }
 
-        if command.has_word(0) || command.args[0].children.is_empty() {
+        if command.has_word(0)
+            || command.args[0].children.is_empty()
+            || command.args[0].right.is_none()
+        {
             let delimiter = LatexEnvironmentDelimiter {
                 command: Arc::clone(&command),
             };

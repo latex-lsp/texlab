@@ -28,10 +28,14 @@ where
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             for environment in &tree.environments {
                 if let Some(name) = environment.left.name() {
-                    if environment.right.command.args[0]
+                    let right_args = &environment.right.command.args[0];
+                    let cond1 = right_args
                         .range()
-                        .contains_exclusive(request.params.position)
-                    {
+                        .contains_exclusive(request.params.position);
+                    let cond2 = right_args.right.is_none()
+                        && right_args.range().contains(request.params.position);
+
+                    if cond1 || cond2 {
                         for item in &mut items {
                             if item.label == name.text() {
                                 item.preselect = Some(true);
