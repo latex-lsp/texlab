@@ -1,14 +1,14 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
+use crate::data::label::LabelContext;
 use crate::data::language::*;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::outline::Outline;
 use crate::syntax::latex::{LatexLabel, LatexSyntaxTree};
-use crate::syntax::text::{CharStream, SyntaxNode};
+use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
-use crate::workspace::Document;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, Position, Range, TextEdit};
+use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;
@@ -37,16 +37,11 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         .filter(|label| label.kind == LatexLabelKind::Definition)
                         .filter(|label| Self::is_included(tree, label, source))
                     {
-                        let section = Self::find_section(&outline, &document, label.start());
+                        let label_ctx = LabelContext::find(&outline, &document, label);
                         for name in label.names() {
                             let text = name.text().to_owned();
                             let text_edit = TextEdit::new(context.range, text.clone().into());
-                            let item = factory::label(
-                                request,
-                                text.into(),
-                                text_edit,
-                                section.as_ref().map(AsRef::as_ref),
-                            );
+                            let item = factory::label(request, text.into(), text_edit, &label_ctx);
                             items.push(item);
                         }
                     }
@@ -85,19 +80,6 @@ impl LatexLabelCompletionProvider {
                 .filter(|env| env.left.is_math())
                 .any(|env| env.range().contains_exclusive(label.start())),
         }
-    }
-
-    fn find_section(outline: &Outline, document: &Document, position: Position) -> Option<String> {
-        let section = outline.find(&document.uri, position)?;
-        let content = &section.command.args[section.index];
-        let right = content.right.as_ref()?;
-        let range = Range::new_simple(
-            content.left.start().line,
-            content.left.start().character + 1,
-           right.end().line,
-            right.end().character - 1,
-        );
-        Some(CharStream::extract(&document.text, range))
     }
 }
 

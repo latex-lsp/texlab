@@ -1,3 +1,4 @@
+use crate::data::label::LabelContext;
 use crate::data::language::{BibtexEntryType, BibtexField};
 use crate::feature::FeatureRequest;
 use crate::formatting::bibtex;
@@ -99,21 +100,14 @@ pub fn label(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
     text_edit: TextEdit,
-    section: Option<&str>,
+    context: &LabelContext,
 ) -> CompletionItem {
-    let documentation = section.map(|sec| {
-        Documentation::MarkupContent(MarkupContent {
-            kind: MarkupKind::Markdown,
-            value: format!("*{}*", sec).into(),
-        })
-    });
-
     CompletionItem {
         label: name,
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
-        documentation,
+        documentation: context.documentation(),
         ..CompletionItem::default()
     }
 }

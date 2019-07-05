@@ -548,6 +548,33 @@ impl SyntaxNode for LatexTheoremDefinition {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexCaption {
+    pub command: Arc<LatexCommand>,
+    pub index: usize,
+}
+
+impl LatexCaption {
+    fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut captions = Vec::new();
+        for command in commands {
+            if command.name.text() == "\\caption" && command.args.len() > 0 {
+                captions.push(Self {
+                    command: Arc::clone(&command),
+                    index: 0,
+                });
+            }
+        }
+        captions
+    }
+}
+
+impl SyntaxNode for LatexCaption {
+    fn range(&self) -> Range {
+        self.command.range()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSyntaxTree {
     pub root: Arc<LatexRoot>,
     pub commands: Vec<Arc<LatexCommand>>,
@@ -563,6 +590,7 @@ pub struct LatexSyntaxTree {
     pub math_operators: Vec<LatexMathOperator>,
     pub command_definitions: Vec<LatexCommandDefinition>,
     pub theorem_definitions: Vec<LatexTheoremDefinition>,
+    pub captions: Vec<LatexCaption>,
 }
 
 impl LatexSyntaxTree {
@@ -586,6 +614,7 @@ impl LatexSyntaxTree {
         let math_operators = LatexMathOperator::parse(&commands);
         let command_definitions = LatexCommandDefinition::parse(&commands);
         let theorem_definitions = LatexTheoremDefinition::parse(&commands);
+        let captions = LatexCaption::parse(&commands);
         Self {
             root,
             commands,
@@ -601,6 +630,7 @@ impl LatexSyntaxTree {
             math_operators,
             command_definitions,
             theorem_definitions,
+            captions,
         }
     }
 
