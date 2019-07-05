@@ -190,13 +190,7 @@ impl LatexLabel {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut labels = Vec::new();
         for command in commands {
-            for LatexLabelCommand {
-                name,
-                index,
-                kind,
-                scope: _,
-            } in &language_data().label_commands
-            {
+            for LatexLabelCommand { name, index, kind } in &language_data().label_commands {
                 if command.name.text() == name && command.has_comma_separated_words(*index) {
                     labels.push(Self {
                         command: Arc::clone(command),

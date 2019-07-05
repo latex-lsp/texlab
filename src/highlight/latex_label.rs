@@ -34,7 +34,7 @@ impl FeatureProvider for LatexLabelHighlightProvider {
                                 range: label.range(),
                                 kind: Some(match label_group.kind {
                                     LatexLabelKind::Definition => DocumentHighlightKind::Write,
-                                    LatexLabelKind::Reference => DocumentHighlightKind::Read,
+                                    LatexLabelKind::Reference(_) => DocumentHighlightKind::Read,
                                 }),
                             };
                             highlights.push(highlight);

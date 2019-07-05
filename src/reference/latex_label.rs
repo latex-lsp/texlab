@@ -48,7 +48,7 @@ impl LatexLabelReferenceProvider {
 
     fn is_included(request: &FeatureRequest<ReferenceParams>, label: &LatexLabel) -> bool {
         match label.kind {
-            LatexLabelKind::Reference => true,
+            LatexLabelKind::Reference(_) => true,
             LatexLabelKind::Definition => request.params.context.include_declaration,
         }
     }

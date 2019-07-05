@@ -239,152 +239,127 @@
     {
       "name": "\\label",
       "index": 0,
-      "kind": "definition",
-      "scope": "default"
+      "kind": "definition"
     },
     {
       "name": "\\ref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\autoref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\pageref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\eqref",
       "index": 0,
-      "kind": "reference",
-      "scope": "math"
+      "kind": { "reference":  "math" }
     },
     {
       "name": "\\cref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Cref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\crefrange",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\crefrange",
       "index": 1,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Crefrange",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Crefrange",
       "index": 1,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\cref*",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Cref*",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\crefrange*",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\crefrange*",
       "index": 1,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Crefrange*",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\Crefrange*",
       "index": 1,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\namecref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\nameCref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\lcnamecref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\namecrefs",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\nameCrefs",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\lcnamecrefs",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\labelcref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     },
     {
       "name": "\\labelcpageref",
       "index": 0,
-      "kind": "reference",
-      "scope": "default"
+      "kind": { "reference":  "everything" }
     }
   ],
   "sectionCommands": [

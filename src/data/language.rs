@@ -17,16 +17,25 @@ pub struct LatexCitationCommand {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum LatexLabelKind {
-    Definition,
-    Reference,
+pub enum LatexLabelReferenceSource {
+    Everything,
+    Math,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub enum LatexLabelScope {
-    Default,
-    Math,
+pub enum LatexLabelKind {
+    Definition,
+    Reference(LatexLabelReferenceSource),
+}
+
+impl LatexLabelKind {
+    pub fn is_reference(&self) -> bool {
+        match self {
+            LatexLabelKind::Definition => false,
+            LatexLabelKind::Reference(_) => true,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -35,7 +44,6 @@ pub struct LatexLabelCommand {
     pub name: String,
     pub index: usize,
     pub kind: LatexLabelKind,
-    pub scope: LatexLabelScope,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]

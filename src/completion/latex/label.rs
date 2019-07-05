@@ -20,24 +20,25 @@ impl FeatureProvider for LatexLabelCompletionProvider {
         let parameters = language_data()
             .label_commands
             .iter()
-            .filter(|cmd| cmd.kind == LatexLabelKind::Reference)
+            .filter(|cmd| cmd.kind.is_reference())
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
         combinators::argument(request, parameters, async move |context| {
-            let scope = label_scope(&context);
+            let source = Self::source(&context);
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
-                    for label in &tree.labels {
-                        if label.kind == LatexLabelKind::Definition
-                            && is_included(tree, label, scope)
-                        {
-                            for name in label.names() {
-                                let text = name.text().to_owned();
-                                let text_edit = TextEdit::new(context.range, text.clone().into());
-                                let item = factory::label(request, text.into(), text_edit);
-                                items.push(item);
-                            }
+                    for label in tree
+                        .labels
+                        .iter()
+                        .filter(|label| label.kind == LatexLabelKind::Definition)
+                        .filter(|label| Self::is_included(tree, label, source))
+                    {
+                        for name in label.names() {
+                            let text = name.text().to_owned();
+                            let text_edit = TextEdit::new(context.range, text.clone().into());
+                            let item = factory::label(request, text.into(), text_edit);
+                            items.push(item);
                         }
                     }
                 }
@@ -48,23 +49,33 @@ impl FeatureProvider for LatexLabelCompletionProvider {
     }
 }
 
-fn label_scope(context: &ArgumentContext) -> LatexLabelScope {
-    language_data()
-        .label_commands
-        .iter()
-        .find(|cmd| cmd.name == context.parameter.name && cmd.index == context.parameter.index)
-        .map(|cmd| cmd.scope)
-        .unwrap()
-}
-
-fn is_included(tree: &LatexSyntaxTree, label: &LatexLabel, scope: LatexLabelScope) -> bool {
-    match scope {
-        LatexLabelScope::Default => true,
-        LatexLabelScope::Math => tree
-            .environments
+impl LatexLabelCompletionProvider {
+    fn source(context: &ArgumentContext) -> LatexLabelReferenceSource {
+        match language_data()
+            .label_commands
             .iter()
-            .filter(|env| env.left.is_math())
-            .any(|env| env.range().contains_exclusive(label.start())),
+            .find(|cmd| cmd.name == context.parameter.name && cmd.index == context.parameter.index)
+            .map(|cmd| cmd.kind)
+            .unwrap()
+        {
+            LatexLabelKind::Definition => unreachable!(),
+            LatexLabelKind::Reference(source) => source,
+        }
+    }
+
+    fn is_included(
+        tree: &LatexSyntaxTree,
+        label: &LatexLabel,
+        source: LatexLabelReferenceSource,
+    ) -> bool {
+        match source {
+            LatexLabelReferenceSource::Everything => true,
+            LatexLabelReferenceSource::Math => tree
+                .environments
+                .iter()
+                .filter(|env| env.left.is_math())
+                .any(|env| env.range().contains_exclusive(label.start())),
+        }
     }
 }
 
