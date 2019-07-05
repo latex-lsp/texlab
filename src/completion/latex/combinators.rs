@@ -61,7 +61,7 @@ where
                 }
 
                 if let Some(args) = command.args.get(parameter.index) {
-                    if !args.range().contains_exclusive(position) {
+                    if args.right.is_some() && !args.range().contains_exclusive(position) {
                         continue;
                     }
 
@@ -109,7 +109,7 @@ where
                 }
 
                 if let Some(args) = command.args.get(parameter.index) {
-                    if !args.range().contains_exclusive(position) {
+                    if args.right.is_some() && !args.range().contains_exclusive(position) {
                         continue;
                     }
 

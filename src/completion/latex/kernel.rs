@@ -191,4 +191,18 @@ mod tests {
         );
         assert!(items.is_empty());
     }
+
+    #[test]
+    fn test_environment_unterminated() {
+        let items = test_feature(
+            LatexKernelEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{ foo")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(!items.is_empty());
+    }
 }

@@ -1,5 +1,5 @@
 use crate::outline::Outline;
-use crate::syntax::latex::{LatexGroup, LatexLabel, LatexToken};
+use crate::syntax::latex::{LatexGroup, LatexToken};
 use crate::syntax::text::{CharStream, SyntaxNode};
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
