@@ -99,12 +99,21 @@ pub fn label(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
     text_edit: TextEdit,
+    section: Option<&str>,
 ) -> CompletionItem {
+    let documentation = section.map(|sec| {
+        Documentation::MarkupContent(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: format!("*{}*", sec).into(),
+        })
+    });
+
     CompletionItem {
         label: name,
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
+        documentation,
         ..CompletionItem::default()
     }
 }

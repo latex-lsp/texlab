@@ -2,11 +2,13 @@ use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
 use crate::data::language::*;
 use crate::feature::{FeatureProvider, FeatureRequest};
+use crate::outline::Outline;
 use crate::syntax::latex::{LatexLabel, LatexSyntaxTree};
-use crate::syntax::text::SyntaxNode;
+use crate::syntax::text::{CharStream, SyntaxNode};
 use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, TextEdit};
+use lsp_types::{CompletionItem, CompletionParams, Position, Range, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;
@@ -24,7 +26,8 @@ impl FeatureProvider for LatexLabelCompletionProvider {
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
         combinators::argument(request, parameters, async move |context| {
-            let source = Self::source(&context);
+            let outline = Outline::from(&request.view);
+            let source = Self::find_source(&context);
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
@@ -34,10 +37,16 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         .filter(|label| label.kind == LatexLabelKind::Definition)
                         .filter(|label| Self::is_included(tree, label, source))
                     {
+                        let section = Self::find_section(&outline, &document, label.start());
                         for name in label.names() {
                             let text = name.text().to_owned();
                             let text_edit = TextEdit::new(context.range, text.clone().into());
-                            let item = factory::label(request, text.into(), text_edit);
+                            let item = factory::label(
+                                request,
+                                text.into(),
+                                text_edit,
+                                section.as_ref().map(AsRef::as_ref),
+                            );
                             items.push(item);
                         }
                     }
@@ -50,7 +59,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 }
 
 impl LatexLabelCompletionProvider {
-    fn source(context: &ArgumentContext) -> LatexLabelReferenceSource {
+    fn find_source(context: &ArgumentContext) -> LatexLabelReferenceSource {
         match language_data()
             .label_commands
             .iter()
@@ -76,6 +85,19 @@ impl LatexLabelCompletionProvider {
                 .filter(|env| env.left.is_math())
                 .any(|env| env.range().contains_exclusive(label.start())),
         }
+    }
+
+    fn find_section(outline: &Outline, document: &Document, position: Position) -> Option<String> {
+        let section = outline.find(&document.uri, position)?;
+        let content = &section.command.args[section.index];
+        let right = content.right.as_ref()?;
+        let range = Range::new_simple(
+            content.left.start().line,
+            content.left.start().character + 1,
+           right.end().line,
+            right.end().character - 1,
+        );
+        Some(CharStream::extract(&document.text, range))
     }
 }
 

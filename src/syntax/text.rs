@@ -121,6 +121,14 @@ impl<'a> CharStream<'a> {
             self.current_position.character += 1;
         }
     }
+
+    pub fn extract(text: &'a str, range: Range) -> String {
+        let mut stream = Self::new(text);
+        stream.seek(range.start);
+        stream.start_span();
+        stream.seek(range.end);
+        stream.end_span().text
+    }
 }
 
 impl<'a> Iterator for CharStream<'a> {

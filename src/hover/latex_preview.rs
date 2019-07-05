@@ -139,7 +139,7 @@ impl LatexPreviewHoverProvider {
         Self::generate_math_operators(request, &mut code);
         Self::generate_theorem_definitions(request, &mut code);
         code.push_str("\\begin{document}\n");
-        code.push_str(&Self::extract_text(&request.document().text, range));
+        code.push_str(&CharStream::extract(&request.document().text, range));
         code.push('\n');
         code.push_str("\\end{document}\n");
         code
@@ -158,7 +158,7 @@ impl LatexPreviewHoverProvider {
                         request.resolver.files_by_name.contains_key(&name)
                     })
                     .for_each(|include| {
-                        code.push_str(&Self::extract_text(&text, include.command.range));
+                        code.push_str(&CharStream::extract(&text, include.command.range));
                         code.push('\n');
                     });
             }
@@ -173,7 +173,7 @@ impl LatexPreviewHoverProvider {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 tree.command_definitions
                     .iter()
-                    .map(|def| Self::extract_text(&document.text, def.range()))
+                    .map(|def| CharStream::extract(&document.text, def.range()))
                     .for_each(|def| {
                         code.push_str(&def);
                         code.push('\n');
@@ -190,7 +190,7 @@ impl LatexPreviewHoverProvider {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 tree.math_operators
                     .iter()
-                    .map(|op| Self::extract_text(&document.text, op.range()))
+                    .map(|op| CharStream::extract(&document.text, op.range()))
                     .for_each(|op| {
                         code.push_str(&op);
                         code.push('\n');
@@ -207,7 +207,7 @@ impl LatexPreviewHoverProvider {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 tree.theorem_definitions
                     .iter()
-                    .map(|thm| Self::extract_text(&document.text, thm.range()))
+                    .map(|thm| CharStream::extract(&document.text, thm.range()))
                     .for_each(|thm| {
                         code.push_str(&thm);
                         code.push('\n');
@@ -267,14 +267,6 @@ impl LatexPreviewHoverProvider {
             )
             .unwrap();
         base64::encode(&image_buf.into_inner())
-    }
-
-    fn extract_text(text: &str, range: Range) -> String {
-        let mut stream = CharStream::new(text);
-        stream.seek(range.start);
-        stream.start_span();
-        stream.seek(range.end);
-        stream.end_span().text
     }
 }
 

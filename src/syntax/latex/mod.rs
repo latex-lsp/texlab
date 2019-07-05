@@ -317,6 +317,12 @@ impl LatexInclude {
     }
 }
 
+impl SyntaxNode for LatexInclude {
+    fn range(&self) -> Range {
+        self.command.range()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexEquation {
     pub left: Arc<LatexCommand>,
