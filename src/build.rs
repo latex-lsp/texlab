@@ -5,8 +5,7 @@ use futures_boxed::boxed;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
-use std::io;
-use std::io::BufRead;
+use std::io::{self, BufRead};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
@@ -45,7 +44,7 @@ impl BuildOptions {
     }
 
     pub fn on_save(&self) -> bool {
-        self.on_save.unwrap_or(true)
+        self.on_save.unwrap_or(false)
     }
 }
 
