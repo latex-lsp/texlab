@@ -149,18 +149,29 @@ impl LatexPreviewHoverProvider {
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let text = &request.document().text;
-                tree.includes
-                    .iter()
-                    .filter(|include| include.kind == LatexIncludeKind::Package)
-                    .filter(|include| !IGNORED_PACKAGES.contains(&include.path().text()))
-                    .filter(|include| {
-                        let name = format!("{}.sty", include.path().text());
-                        request.resolver.files_by_name.contains_key(&name)
-                    })
-                    .for_each(|include| {
+                for include in &tree.includes {
+                    if include.kind == LatexIncludeKind::Package {
+                        if include
+                            .paths()
+                            .iter()
+                            .all(|path| IGNORED_PACKAGES.contains(&path.text()))
+                        {
+                            continue;
+                        }
+
+                        if include
+                            .paths()
+                            .iter()
+                            .map(|path| format!("{}.sty", path.text()))
+                            .any(|name| !request.resolver.files_by_name.contains_key(&name))
+                        {
+                            continue;
+                        }
+
                         code.push_str(&CharStream::extract(&text, include.command.range));
                         code.push('\n');
-                    });
+                    }
+                }
             }
         }
     }

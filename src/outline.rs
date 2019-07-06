@@ -84,9 +84,11 @@ impl<'a> OutlineSectionFinder<'a> {
                     }
                     OutlineItem::Include(item) => {
                         for document in &view.related_documents {
-                            if item.targets.contains(&document.uri) {
-                                self.analyze(view, document);
-                                break;
+                            for targets in &item.all_targets {
+                                if targets.contains(&document.uri) {
+                                    self.analyze(view, document);
+                                    break;
+                                }
                             }
                         }
                     }

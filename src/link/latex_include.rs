@@ -21,7 +21,7 @@ impl FeatureProvider for LatexIncludeLinkProvider {
             return tree
                 .includes
                 .iter()
-                .flat_map(|include| Self::resolve(&request, &include))
+                .flat_map(|include| Self::resolve(request, include))
                 .collect();
         }
         Vec::new()
@@ -32,21 +32,24 @@ impl LatexIncludeLinkProvider {
     fn resolve(
         request: &FeatureRequest<DocumentLinkParams>,
         include: &LatexInclude,
-    ) -> Option<DocumentLink> {
-        for target in &include.targets {
-            let link = request
-                .workspace()
-                .find(target)
-                .map(|document| DocumentLink {
-                    range: include.path().range(),
-                    target: document.uri.clone(),
-                });
-
-            if link.is_some() {
-                return link;
+    ) -> Vec<DocumentLink> {
+        let mut links = Vec::new();
+        let paths = include.paths();
+        for (i, targets) in include.all_targets.iter().enumerate() {
+            for target in targets {
+                if let Some(link) = request
+                    .workspace()
+                    .find(target)
+                    .map(|document| DocumentLink {
+                        range: paths[i].range(),
+                        target: document.uri.clone(),
+                    })
+                {
+                    links.push(link);
+                }
             }
         }
-        None
+        links
     }
 }
 

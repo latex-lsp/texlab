@@ -163,6 +163,14 @@ async fn test_class_environment() {
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
+async fn test_multiple_packages() {
+    let items = run("component", "bar.tex", Position::new(2, 8)).await;
+    assert!(items.iter().any(|item| item == "varDelta"));
+    let items = run("component", "bar.tex", Position::new(3, 8)).await;
+    assert!(items.iter().any(|item| item == "geometry"));
+}
+
+#[runtime::test(runtime_tokio::Tokio)]
 async fn test_pgf_library() {
     let items = run("pgf_library", "foo.tex", Position::new(0, 18)).await;
     assert!(items.iter().any(|item| item == "arrows"));

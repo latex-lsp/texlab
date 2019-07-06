@@ -53,10 +53,12 @@ impl Workspace {
         for parent in self.documents.iter().filter(|document| document.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 for include in &tree.includes {
-                    for target in &include.targets {
-                        if let Some(ref child) = self.find(target) {
-                            edges.push((Arc::clone(&parent), Arc::clone(&child)));
-                            edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                    for targets in &include.all_targets {
+                        for target in targets {
+                            if let Some(ref child) = self.find(target) {
+                                edges.push((Arc::clone(&parent), Arc::clone(&child)));
+                                edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                            }
                         }
                     }
                 }
@@ -107,18 +109,16 @@ impl Workspace {
                         continue;
                     }
 
-                    if include
-                        .targets
-                        .iter()
-                        .any(|target| self.find(target).is_some())
-                    {
-                        continue;
-                    }
+                    for targets in &include.all_targets {
+                        if targets.iter().any(|target| self.find(target).is_some()) {
+                            continue;
+                        }
 
-                    for target in &include.targets {
-                        let path = target.to_file_path().unwrap();
-                        if path.exists() {
-                            includes.push(path);
+                        for target in targets {
+                            let path = target.to_file_path().unwrap();
+                            if path.exists() {
+                                includes.push(path);
+                            }
                         }
                     }
                 }

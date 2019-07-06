@@ -249,26 +249,30 @@ pub struct LatexInclude {
     pub command: Arc<LatexCommand>,
     pub index: usize,
     pub kind: LatexIncludeKind,
-    pub targets: Vec<Uri>,
+    pub all_targets: Vec<Vec<Uri>>,
     pub include_extension: bool,
 }
 
 impl LatexInclude {
-    pub fn path(&self) -> &LatexToken {
-        self.command.extract_word(self.index).unwrap()
+    pub fn paths(&self) -> Vec<&LatexToken> {
+        self.command.extract_comma_separated_words(self.index)
     }
 
-    pub fn component_name(&self) -> Option<String> {
-        match self.kind {
-            LatexIncludeKind::Package => Some(format!("{}.sty", self.path().text())),
-            LatexIncludeKind::Class => Some(format!("{}.cls", self.path().text())),
-            LatexIncludeKind::Latex
-            | LatexIncludeKind::Bibliography
-            | LatexIncludeKind::Image
-            | LatexIncludeKind::Svg
-            | LatexIncludeKind::Pdf
-            | LatexIncludeKind::Everything => None,
+    pub fn components(&self) -> Vec<String> {
+        let mut components = Vec::new();
+        for path in self.paths() {
+            match self.kind {
+                LatexIncludeKind::Package => components.push(format!("{}.sty", path.text())),
+                LatexIncludeKind::Class => components.push(format!("{}.cls", path.text())),
+                LatexIncludeKind::Latex
+                | LatexIncludeKind::Bibliography
+                | LatexIncludeKind::Image
+                | LatexIncludeKind::Svg
+                | LatexIncludeKind::Pdf
+                | LatexIncludeKind::Everything => (),
+            }
         }
+        components
     }
 
     fn parse(uri: &Uri, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
@@ -292,28 +296,35 @@ impl LatexInclude {
             return None;
         }
 
-        let relative_path = command.extract_word(0)?;
-        let mut path = uri.to_file_path().ok()?;
-        path.pop();
-        path.push(relative_path.text());
-        path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
-        path = path.clean();
-        let path = path.to_str()?.to_owned();
+        if command.args.len() <= description.index {
+            return None;
+        }
 
-        let mut targets = Vec::new();
-        targets.push(Uri::from_file_path(&path).ok()?);
-        if let Some(extensions) = description.kind.extensions() {
-            for extension in extensions {
-                let path = format!("{}.{}", &path, extension);
-                targets.push(Uri::from_file_path(&path).ok()?);
+        let mut all_targets = Vec::new();
+        for relative_path in command.extract_comma_separated_words(description.index) {
+            let mut path = uri.to_file_path().ok()?;
+            path.pop();
+            path.push(relative_path.text());
+            path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
+            path = path.clean();
+            let path = path.to_str()?.to_owned();
+
+            let mut targets = Vec::new();
+            targets.push(Uri::from_file_path(&path).ok()?);
+            if let Some(extensions) = description.kind.extensions() {
+                for extension in extensions {
+                    let path = format!("{}.{}", &path, extension);
+                    targets.push(Uri::from_file_path(&path).ok()?);
+                }
             }
+            all_targets.push(targets);
         }
 
         let include = Self {
             command: Arc::clone(command),
             index: description.index,
             kind: description.kind,
-            targets,
+            all_targets,
             include_extension: description.include_extension,
         };
         Some(include)
@@ -603,10 +614,7 @@ impl LatexSyntaxTree {
         let root = Arc::new(parser.root());
         let commands = LatexCommandAnalyzer::parse(Arc::clone(&root));
         let includes = LatexInclude::parse(uri, &commands);
-        let components = includes
-            .iter()
-            .flat_map(LatexInclude::component_name)
-            .collect();
+        let components = includes.iter().flat_map(LatexInclude::components).collect();
         let environments = LatexEnvironment::parse(&commands);
         let is_standalone = environments.iter().any(LatexEnvironment::is_root);
         let labels = LatexLabel::parse(&commands);
