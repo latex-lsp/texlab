@@ -1,4 +1,4 @@
-use crate::action::{Action, ActionMananger};
+use crate::action::{Action, ActionMananger, LintReason};
 use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
@@ -214,13 +214,19 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
         self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::ScanComponents);
+        self.action_manager.push(Action::RunLinter(
+            params.text_document.uri,
+            LintReason::Change,
+        ));
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.action_manager
-            .push(Action::RunLinter(params.text_document.uri.clone()));
+        self.action_manager.push(Action::RunLinter(
+            params.text_document.uri.clone(),
+            LintReason::Save,
+        ));
         self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager
             .push(Action::Build(params.text_document.uri));
@@ -573,11 +579,18 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                             .await;
                     }
                 }
-                Action::RunLinter(uri) => {
+                Action::RunLinter(uri, reason) => {
                     let config: LatexLintOptions = self.configuration("latex.lint").await;
-                    if config.on_save() {
-                        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                        diagnostics_manager.latex.update(&uri);
+                    let should_lint = match reason {
+                        LintReason::Change => config.on_change(),
+                        LintReason::Save => config.on_save(),
+                    };
+                    if should_lint {
+                        let workspace = self.workspace_manager.get();
+                        if let Some(document) = workspace.find(&uri) {
+                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+                            diagnostics_manager.latex.update(&uri, &document.text);
+                        }
                     }
                 }
                 Action::ParseLog { tex_uri, log_path } => {

@@ -4,17 +4,21 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::Path;
-use std::process::Command;
+use std::io::{Read, Write};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexLintOptions {
+    pub on_change: Option<bool>,
     pub on_save: Option<bool>,
 }
 
 impl LatexLintOptions {
+    pub fn on_change(&self) -> bool {
+        self.on_change.unwrap_or(false)
+    }
+
     pub fn on_save(&self) -> bool {
         self.on_save.unwrap_or(false)
     }
@@ -33,30 +37,44 @@ impl LatexDiagnosticsProvider {
         }
     }
 
-    pub fn update(&mut self, uri: &Uri) {
+    pub fn update(&mut self, uri: &Uri, text: &str) {
         if uri.scheme() != "file" {
             return;
         }
 
-        let path = uri.to_file_path().unwrap();
         self.diagnostics_by_uri
-            .insert(uri.clone(), lint(&path).unwrap_or_default());
+            .insert(uri.clone(), lint(text).unwrap_or_default());
     }
 }
 
 pub static LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w)+:(.*)").unwrap());
 
-fn lint(path: &Path) -> Option<Vec<Diagnostic>> {
-    let file = File::open(path).ok()?;
-    let output = Command::new("chktex")
+fn lint(text: &str) -> Option<Vec<Diagnostic>> {
+    let mut process = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
-        .stdin(file)
-        .output()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+
+    process
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(text.as_bytes())
+        .ok()?;
+
+    let mut stdout = String::new();
+    process
+        .stdout
+        .take()
+        .unwrap()
+        .read_to_string(&mut stdout)
         .ok()?;
 
     let mut diagnostics = Vec::new();
-    let stdout = String::from_utf8(output.stdout).ok()?;
     for line in stdout.lines() {
         if let Some(captures) = LINE_REGEX.captures(line) {
             let line = captures[1].parse::<u64>().unwrap() - 1;

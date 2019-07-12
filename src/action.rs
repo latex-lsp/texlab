@@ -4,6 +4,12 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub enum LintReason {
+    Change,
+    Save,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
     RegisterCapabilities,
     LoadResolver,
@@ -11,7 +17,7 @@ pub enum Action {
     DetectRoot(Uri),
     DetectChildren,
     PublishDiagnostics,
-    RunLinter(Uri),
+    RunLinter(Uri, LintReason),
     ParseLog { tex_uri: Uri, log_path: PathBuf },
     Build(Uri),
     ScanComponents,
