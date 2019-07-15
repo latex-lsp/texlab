@@ -7,5 +7,5 @@ pub mod import;
 pub mod include;
 pub mod label;
 pub mod theorem;
-pub mod user;
 pub mod tikz;
+pub mod user;

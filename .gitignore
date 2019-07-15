@@ -2,3 +2,4 @@ target/
 **/*.rs.bk
 /.idea
 tarpaulin-report.html
+src/data/completion.json
