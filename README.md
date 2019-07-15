@@ -12,8 +12,8 @@ Learn more about the project on our [website](https://texlab.netlify.com).
 
 ## Installation
 
-If you want to use the server with [Visual Studio Code](https://code.visualstudio.com), then you can simply install
-our extension from the [marketplace](https://marketplace.visualstudio.com/items?itemName=efoerster.texlab).
+- Visual Studio Code users, simply install extension from the [marketplace](https://marketplace.visualstudio.com/items?itemName=efoerster.texlab)
+- Vim/Neovim users, use [coc-texlab](https://github.com/fannheyward/coc-texlab) with [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 For other [tools](https://microsoft.github.io/language-server-protocol/implementors/tools/)
 implementing the [Language Server Protocol](https://microsoft.github.io/language-server-protocol),
