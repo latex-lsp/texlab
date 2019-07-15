@@ -8,7 +8,6 @@ use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 fn initialize(name: &'static str) -> Scenario {
     let scenario = block_on(Scenario::new("completion/bench", &FULL_CAPABILITIES));
     block_on(scenario.open(name));
-    block_on(scenario.server.stop_scanning());
     scenario
 }
 

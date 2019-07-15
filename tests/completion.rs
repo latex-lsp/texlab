@@ -7,7 +7,6 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
     let scenario = format!("completion/{}", scenario);
     let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     scenario.open(file).await;
-    scenario.server.stop_scanning().await;
 
     let params = CompletionParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file)),

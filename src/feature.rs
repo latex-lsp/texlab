@@ -1,4 +1,3 @@
-use crate::data::completion::LatexComponentDatabase;
 use crate::tex::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
@@ -32,7 +31,6 @@ pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
     pub resolver: Arc<TexResolver>,
-    pub component_database: LatexComponentDatabase,
     pub client_capabilities: Arc<ClientCapabilities>,
 }
 
@@ -138,7 +136,6 @@ pub struct FeatureSpec {
     pub new_name: &'static str,
     pub include_declaration: bool,
     pub resolver: TexResolver,
-    pub component_database: LatexComponentDatabase,
     pub client_capabilities: ClientCapabilities,
 }
 
@@ -174,7 +171,6 @@ impl FeatureSpec {
             params,
             view: self.view(),
             resolver: Arc::new(self.resolver),
-            component_database: self.component_database,
             client_capabilities: Arc::new(self.client_capabilities),
         }
     }

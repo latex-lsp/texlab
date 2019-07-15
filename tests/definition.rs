@@ -14,7 +14,6 @@ pub async fn run(
     let params = TextDocumentPositionParams::new(identifier, position);
     scenario.open(file).await;
     let definitions = scenario.server.definition(params).await.unwrap();
-    scenario.server.stop_scanning().await;
     (scenario, definitions)
 }
 

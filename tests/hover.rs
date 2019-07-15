@@ -21,7 +21,6 @@ pub async fn run(
         .await
         .unwrap()
         .map(|hover| hover.contents);
-    scenario.server.stop_scanning().await;
     contents
 }
 

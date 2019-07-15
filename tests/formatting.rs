@@ -24,7 +24,6 @@ pub async fn run(
         },
     };
     let edits = scenario.server.formatting(params).await.unwrap();
-    scenario.server.stop_scanning().await;
     (scenario, edits)
 }
 

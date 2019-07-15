@@ -42,7 +42,6 @@ async fn test_lint_latex() {
         }],
     });
     scenario.server.execute_actions().await;
-    scenario.server.stop_scanning().await;
     {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
         let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
@@ -59,7 +58,6 @@ async fn test_lint_latex_disabled() {
         text_document: identifier,
     });
     scenario.server.execute_actions().await;
-    scenario.server.stop_scanning().await;
     let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
     let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
     assert!(diagnostics.is_empty());
@@ -69,7 +67,6 @@ async fn test_lint_latex_disabled() {
 async fn test_lint_bibtex() {
     let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.bib").await;
-    scenario.server.stop_scanning().await;
     let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
     let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.bib")).unwrap();
     assert_eq!(diagnostics.len(), 1);
@@ -93,7 +90,6 @@ async fn test_build() {
             }],
         });
     scenario.server.execute_actions().await;
-    scenario.server.stop_scanning().await;
 
     let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
     let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();

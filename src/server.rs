@@ -3,7 +3,6 @@ use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::data::citation::render_citation;
-use crate::data::completion::{LatexComponentDatabase, LatexComponentDatabaseManager};
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
@@ -64,8 +63,6 @@ pub struct LatexLspServer<C> {
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
-    database_manager: OnceCell<Arc<LatexComponentDatabaseManager<C>>>,
-    database_listener: Mutex<Option<JoinHandle<()>>>,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     resolver: Mutex<Arc<TexResolver>>,
     completion_provider: CompletionProvider,
@@ -88,8 +85,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             client_capabilities: OnceCell::new(),
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
-            database_manager: OnceCell::new(),
-            database_listener: Mutex::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             resolver: Mutex::new(Arc::new(TexResolver::default())),
             completion_provider: CompletionProvider::new(),
@@ -159,8 +154,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::LoadResolver);
-        self.action_manager.push(Action::LoadComponentDatabase);
-        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -202,7 +195,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.workspace_manager.add(params.text_document);
         self.action_manager.push(Action::DetectRoot(uri));
         self.action_manager.push(Action::DetectChildren);
-        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -213,7 +205,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             self.workspace_manager.update(uri, change.text);
         }
         self.action_manager.push(Action::DetectChildren);
-        self.action_manager.push(Action::ScanComponents);
         self.action_manager.push(Action::RunLinter(
             params.text_document.uri,
             LintReason::Change,
@@ -392,14 +383,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .ok_or_else(|| format!("Unable to execute forward search"))
     }
 
-    pub async fn stop_scanning(&self) {
-        self.database_manager.get().unwrap().close().await;
-        let mut listener = self.database_listener.lock().await;
-        if let Some(handle) = mem::replace(&mut *listener, None) {
-            handle.await;
-        }
-    }
-
     async fn configuration<T>(&self, section: &'static str) -> T
     where
         T: DeserializeOwned + Default,
@@ -510,23 +493,6 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         }
                     };
                 }
-                Action::LoadComponentDatabase => {
-                    let resolver = self.resolver.lock().await;
-                    let manager = Arc::new(LatexComponentDatabaseManager::load_or_create(
-                        &self.config.component_database_path,
-                        Arc::clone(&resolver),
-                        Arc::clone(&self.client),
-                    ));
-
-                    {
-                        let manager = Arc::clone(&manager);
-                        let listener = runtime::spawn(async move { manager.listen().await });
-
-                        *self.database_listener.lock().await = Some(listener);
-                    }
-
-                    self.database_manager.set(manager).ok().unwrap();
-                }
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {
                         let mut path = uri.to_file_path().unwrap();
@@ -606,18 +572,6 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
                 }
-                Action::ScanComponents => {
-                    let workspace = self.workspace_manager.get();
-                    if let Some(database) = self.database_manager.get() {
-                        for document in &workspace.documents {
-                            if let SyntaxTree::Latex(tree) = &document.tree {
-                                for component in &tree.components {
-                                    database.enqueue(component).await;
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -628,10 +582,6 @@ macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
         let resolver = $server.resolver.lock().await;
-        let component_database = match $server.database_manager.get() {
-            Some(manager) => manager.get().await,
-            None => LatexComponentDatabase::default(),
-        };
         let client_capabilities = $server
             .client_capabilities
             .get()
@@ -642,7 +592,6 @@ macro_rules! request {
                 params: $params,
                 view: DocumentView::new(workspace, document),
                 resolver: Arc::clone(&resolver),
-                component_database,
                 client_capabilities: Arc::clone(&client_capabilities),
             })
         } else {
