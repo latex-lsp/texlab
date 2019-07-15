@@ -160,7 +160,6 @@ pub struct LanguageData {
     pub fields: Vec<BibtexField>,
     pub pgf_libraries: Vec<String>,
     pub tikz_libraries: Vec<String>,
-    pub tikz_commands: Vec<String>,
     pub math_environments: Vec<String>,
 }
 

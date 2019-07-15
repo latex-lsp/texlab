@@ -1,5 +1,4 @@
 use crate::completion::factory;
-use crate::completion::factory::LatexComponentId;
 use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
@@ -45,36 +44,6 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
                 let text_edit = TextEdit::new(context.range, name.into());
                 let item = factory::tikz_library(request, name, text_edit);
                 items.push(item);
-            }
-            items
-        })
-        .await
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct LatexTikzCommandCompletionProvider;
-
-impl FeatureProvider for LatexTikzCommandCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    #[boxed]
-    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, async move |command| {
-            let component = LatexComponentId::Component(vec!["tikz.sty"]);
-            let mut items = Vec::new();
-            if request
-                .component_database
-                .related_components(request.related_documents())
-                .iter()
-                .any(|component| component.file_names.iter().any(|file| file == "tikz.sty"))
-            {
-                for name in &language_data().tikz_commands {
-                    let text_edit = TextEdit::new(command.short_name_range(), name.into());
-                    let item = factory::command(request, name.into(), text_edit, &component);
-                    items.push(item);
-                }
             }
             items
         })

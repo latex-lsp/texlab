@@ -13,12 +13,9 @@ use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
-use self::latex::component::*;
 use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
-use self::latex::kernel::*;
 use self::latex::label::LatexLabelCompletionProvider;
-use self::latex::symbol::*;
 use self::latex::theorem::LatexTheoremEnvironmentCompletionProvider;
 use self::latex::tikz::*;
 use self::latex::user::*;
@@ -46,24 +43,17 @@ impl CompletionProvider {
                     Box::new(BibtexEntryTypeCompletionProvider),
                     Box::new(BibtexFieldNameCompletionProvider),
                     Box::new(BibtexCommandCompletionProvider),
-                    Box::new(LatexArgumentSymbolCompletionProvider),
                     Box::new(LatexPgfLibraryCompletionProvider),
                     Box::new(LatexTikzLibraryCompletionProvider),
                     Box::new(LatexColorCompletionProvider),
                     Box::new(LatexColorModelCompletionProvider),
                     Box::new(LatexTheoremEnvironmentCompletionProvider),
-                    Box::new(LatexComponentEnvironmentProvider),
-                    Box::new(LatexKernelEnvironmentCompletionProvider),
                     Box::new(LatexLabelCompletionProvider),
                     Box::new(LatexCitationCompletionProvider),
                     Box::new(LatexIncludeCompletionProvider),
                     Box::new(LatexClassImportProvider),
                     Box::new(LatexPackageImportProvider),
                     Box::new(LatexBeginCommandCompletionProvider),
-                    Box::new(LatexCommandSymbolCompletionProvider),
-                    Box::new(LatexComponentCommandProvider),
-                    Box::new(LatexTikzCommandCompletionProvider),
-                    Box::new(LatexKernelCommandCompletionProvider),
                     Box::new(LatexUserCommandCompletionProvider),
                     Box::new(LatexUserEnvironmentCompletionProvider),
                 ]),
