@@ -39,6 +39,32 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct LatexComponentEnvironmentCompletionProvider;
+
+impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
+     type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        combinators::environment(request, async move |context| {
+            let mut items = Vec::new();
+            for component in DATABASE.related_components(request.related_documents()) {
+                let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
+                let id = LatexComponentId::Component(file_names);
+                for environment in &component.environments {
+                    let text_edit = TextEdit::new(context.range, environment.into());
+                    let item = factory::environment(request, environment.into(), text_edit, &id);
+                    items.push(item);
+                }
+            }
+            items
+        })
+        .await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,4 +165,109 @@ mod tests {
         assert!(items.iter().any(|item| item.label == "chapter"));
     }
 
+ #[test]
+    fn test_environment_inside_of_empty_begin() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 7, 0, 7))
+        );
+    }
+
+    #[test]
+    fn test_environment_inside_of_non_empty_end() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\end{foo}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(!items.is_empty());
+        assert_eq!(
+            items[0].text_edit.as_ref().map(|edit| edit.range),
+            Some(Range::new_simple(0, 5, 0, 8))
+        );
+    }
+
+    #[test]
+    fn test_environment_outside_of_empty_begin() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_environment_outside_of_empty_end() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\end{}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_environment_inside_of_other_command() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 6),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_environment_inside_second_argument() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{foo}{bar}")],
+                main_file: "foo.tex",
+                position: Position::new(0, 14),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn test_environment_unterminated() {
+        let items = test_feature(
+            LatexComponentEnvironmentCompletionProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file("foo.tex", "\\begin{ foo")],
+                main_file: "foo.tex",
+                position: Position::new(0, 7),
+                ..FeatureSpec::default()
+            },
+        );
+        assert!(!items.is_empty());
+    }
 }

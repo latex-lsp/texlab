@@ -47,6 +47,7 @@ impl CompletionProvider {
                     Box::new(LatexTikzLibraryCompletionProvider),
                     Box::new(LatexColorCompletionProvider),
                     Box::new(LatexColorModelCompletionProvider),
+                    Box::new(LatexComponentEnvironmentCompletionProvider),
                     Box::new(LatexTheoremEnvironmentCompletionProvider),
                     Box::new(LatexLabelCompletionProvider),
                     Box::new(LatexCitationCompletionProvider),
