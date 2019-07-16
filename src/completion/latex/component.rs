@@ -43,7 +43,7 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
 pub struct LatexComponentEnvironmentCompletionProvider;
 
 impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
-     type Params = CompletionParams;
+    type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
     #[boxed]
@@ -165,7 +165,7 @@ mod tests {
         assert!(items.iter().any(|item| item.label == "chapter"));
     }
 
- #[test]
+    #[test]
     fn test_environment_inside_of_empty_begin() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,

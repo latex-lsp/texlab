@@ -1,3 +1,4 @@
+pub mod argument;
 pub mod begin_command;
 pub mod citation;
 pub mod color;

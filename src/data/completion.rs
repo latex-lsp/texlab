@@ -77,7 +77,7 @@ pub struct Command {
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Parameter(Vec<Argument>);
+pub struct Parameter(pub Vec<Argument>);
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

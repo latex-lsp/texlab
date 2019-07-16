@@ -8,6 +8,7 @@ use self::bibtex::command::BibtexCommandCompletionProvider;
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
 use self::bibtex::field_name::BibtexFieldNameCompletionProvider;
 pub use self::factory::CompletionItemData;
+use self::latex::argument::LatexArgumentCompletionProvider;
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
@@ -47,6 +48,7 @@ impl CompletionProvider {
                     Box::new(LatexTikzLibraryCompletionProvider),
                     Box::new(LatexColorCompletionProvider),
                     Box::new(LatexColorModelCompletionProvider),
+                    Box::new(LatexArgumentCompletionProvider),
                     Box::new(LatexComponentEnvironmentCompletionProvider),
                     Box::new(LatexTheoremEnvironmentCompletionProvider),
                     Box::new(LatexLabelCompletionProvider),
