@@ -10,19 +10,11 @@ We provide an [extension](https://github.com/latex-lsp/texlab-vscode) for [Visua
 
 Learn more about the project on our [website](https://texlab.netlify.com).
 
-## Installation
+## Getting Started
 
-- Visual Studio Code users, simply install extension from the [marketplace](https://marketplace.visualstudio.com/items?itemName=efoerster.texlab)
-- Vim/Neovim users, use [coc-texlab](https://github.com/fannheyward/coc-texlab) with [coc.nvim](https://github.com/neoclide/coc.nvim)
+See the [installation chapter](https://texlab.netlify.com/docs) from our docs.
 
-For other [tools](https://microsoft.github.io/language-server-protocol/implementors/tools/)
-implementing the [Language Server Protocol](https://microsoft.github.io/language-server-protocol),
-we provide [precompiled binaries for Windows, Linux and macOS](https://github.com/latex-lsp/texlab/releases).
-You can place them on any directory that is in your `PATH`, for example `/usr/local/bin`
-on Linux and macOS. On Windows, you will need to install
-[Microsoft Visual C++ Redistributable for Visual Studio 2015](https://aka.ms/vs/16/release/vc_redist.x64.exe) to run the server.
-
-## Building
+## Building from Source
 
 You will need to install the following dependencies to compile the server:
 
