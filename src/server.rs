@@ -3,6 +3,7 @@ use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::data::citation::render_citation;
+use crate::data::completion::DATABASE;
 use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
@@ -27,6 +28,7 @@ use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
+use once_cell::sync::Lazy;
 use once_cell::sync::OnceCell;
 use serde::de::DeserializeOwned;
 use std::ffi::OsStr;
@@ -145,6 +147,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             selection_range_provider: None,
         };
 
+        Lazy::force(&DATABASE);
         Ok(InitializeResult { capabilities })
     }
 
