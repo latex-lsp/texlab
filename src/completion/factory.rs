@@ -1,8 +1,7 @@
 use crate::data::label::LabelContext;
 use crate::data::language::{BibtexEntryType, BibtexField};
 use crate::feature::FeatureRequest;
-use crate::formatting::bibtex;
-use crate::formatting::bibtex::BibtexFormattingParams;
+use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::syntax::bibtex::BibtexEntry;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
@@ -26,8 +25,7 @@ pub enum CompletionItemData {
     EntryType,
     FieldName,
     Citation { entry_code: String },
-    CommandSymbol,
-    ArgumentSymbol,
+    Argument,
 }
 
 impl Into<serde_json::Value> for CompletionItemData {
@@ -38,17 +36,25 @@ impl Into<serde_json::Value> for CompletionItemData {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LatexComponentId<'a> {
-    Kernel,
     User,
     Component(Vec<&'a str>),
 }
 
 impl<'a> LatexComponentId<'a> {
+    pub fn kernel() -> Self {
+        LatexComponentId::Component(vec![])
+    }
+
     pub fn detail(&self) -> Cow<'static, str> {
         match self {
-            LatexComponentId::Kernel => "built-in".into(),
             LatexComponentId::User => "user-defined".into(),
-            LatexComponentId::Component(files) => files.join(", ").into(),
+            LatexComponentId::Component(files) => {
+                if files.is_empty() {
+                    "built-in".into()
+                } else {
+                    files.join(", ").into()
+                }
+            }
         }
     }
 }
@@ -56,12 +62,14 @@ impl<'a> LatexComponentId<'a> {
 pub fn command(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
+    image: Option<&str>,
     text_edit: TextEdit,
     component: &LatexComponentId,
 ) -> CompletionItem {
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Function)),
         data: Some(CompletionItemData::Command.into()),
+        documentation: image.map(|image| image_documentation(&name, image)),
         text_edit: Some(text_edit),
         ..CompletionItem::new_simple(name, component.detail())
     }
@@ -70,12 +78,14 @@ pub fn command(
 pub fn command_snippet(
     request: &FeatureRequest<CompletionParams>,
     name: &'static str,
+    image: Option<&str>,
     template: &'static str,
     component: &LatexComponentId,
 ) -> CompletionItem {
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Snippet)),
         data: Some(CompletionItemData::CommandSnippet.into()),
+        documentation: image.map(|image| image_documentation(&name, image)),
         insert_text: Some(template.into()),
         insert_text_format: Some(InsertTextFormat::Snippet),
         ..CompletionItem::new_simple(name.into(), component.detail())
@@ -289,34 +299,18 @@ pub fn field_name(
     }
 }
 
-pub fn command_symbol(
+pub fn argument(
     request: &FeatureRequest<CompletionParams>,
     name: &'static str,
     text_edit: TextEdit,
-    component: &LatexComponentId,
-    image: &str,
-) -> CompletionItem {
-    CompletionItem {
-        kind: Some(adjust_kind(request, CompletionItemKind::Function)),
-        data: Some(CompletionItemData::CommandSymbol.into()),
-        text_edit: Some(text_edit),
-        documentation: Some(image_documentation(name, image)),
-        ..CompletionItem::new_simple(name.into(), component.detail())
-    }
-}
-
-pub fn argument_symbol(
-    request: &FeatureRequest<CompletionParams>,
-    name: &'static str,
-    text_edit: TextEdit,
-    image: &str,
+    image: Option<&str>,
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
-        data: Some(CompletionItemData::ArgumentSymbol.into()),
+        data: Some(CompletionItemData::Argument.into()),
         text_edit: Some(text_edit),
-        documentation: Some(image_documentation(name, image)),
+        documentation: image.map(|image| image_documentation(&name, image)),
         ..CompletionItem::default()
     }
 }

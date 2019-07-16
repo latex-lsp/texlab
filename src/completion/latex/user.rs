@@ -6,7 +6,7 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use itertools::Itertools;
-use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
+use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexUserCommandCompletionProvider;
@@ -34,6 +34,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                             factory::command(
                                 request,
                                 command.to_owned().into(),
+                                None,
                                 text_edit,
                                 &LatexComponentId::User,
                             )

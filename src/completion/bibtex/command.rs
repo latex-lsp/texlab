@@ -1,12 +1,11 @@
-use crate::completion::factory;
-use crate::completion::util::make_kernel_items;
-use crate::data::kernel_primitives::KERNEL_COMMANDS;
+use crate::completion::factory::{self, LatexComponentId};
+use crate::data::completion::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::bibtex::BibtexNode;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
+use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexCommandCompletionProvider;
@@ -17,6 +16,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let mut items = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             let position = request.params.position;
             if let Some(BibtexNode::Command(command)) = tree.find(position).last() {
@@ -25,11 +25,23 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
                 {
                     let mut range = command.range();
                     range.start.character += 1;
-                    return make_kernel_items(KERNEL_COMMANDS, request, range, factory::command);
+
+                    let component = LatexComponentId::kernel();
+                    for command in &DATABASE.kernel().commands {
+                        let text_edit = TextEdit::new(range, (&command.name).into());
+                        let item = factory::command(
+                            request,
+                            (&command.name).into(),
+                            command.image.as_ref().map(AsRef::as_ref),
+                            text_edit,
+                            &component,
+                        );
+                        items.push(item);
+                    }
                 }
             }
         }
-        Vec::new()
+        items
     }
 }
 

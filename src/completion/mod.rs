@@ -3,7 +3,6 @@ mod factory;
 mod latex;
 mod preselect;
 mod quality;
-mod util;
 
 use self::bibtex::command::BibtexCommandCompletionProvider;
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
@@ -13,6 +12,7 @@ use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
+use self::latex::component::*;
 use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
 use self::latex::label::LatexLabelCompletionProvider;
@@ -54,6 +54,7 @@ impl CompletionProvider {
                     Box::new(LatexClassImportProvider),
                     Box::new(LatexPackageImportProvider),
                     Box::new(LatexBeginCommandCompletionProvider),
+                    Box::new(LatexComponentCommandCompletionProvider),
                     Box::new(LatexUserCommandCompletionProvider),
                     Box::new(LatexUserEnvironmentCompletionProvider),
                 ]),

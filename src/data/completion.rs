@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use crate::workspace::Document;
 use crate::syntax::SyntaxTree;
+use crate::workspace::Document;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,6 +48,8 @@ impl Database {
                 .flat_map(|file| self.find(&file))
                 .for_each(|component| all_components.push(component))
         }
+
+        log::info!("Components = {:?}", all_components.len());
 
         all_components
             .into_iter()

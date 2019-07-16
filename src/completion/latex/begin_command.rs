@@ -17,8 +17,9 @@ impl FeatureProvider for LatexBeginCommandCompletionProvider {
             let snippet = factory::command_snippet(
                 request,
                 "begin",
+                None,
                 "begin{$1}\n\t$0\n\\end{$1}",
-                &LatexComponentId::Kernel,
+                &LatexComponentId::kernel(),
             );
             vec![snippet]
         })
