@@ -88,12 +88,15 @@ where
             .current_dir(path.parent().unwrap())
             .spawn()?;
 
-        Self::read(Arc::clone(&self.client), process.stdout.take().unwrap());
-        Self::read(Arc::clone(&self.client), process.stderr.take().unwrap());
-        Ok(process.wait()?.success())
+        let handle1 = Self::read(Arc::clone(&self.client), process.stdout.take().unwrap());
+        let handle2 = Self::read(Arc::clone(&self.client), process.stderr.take().unwrap());
+        let success = process.wait()?.success();
+        handle1.join().unwrap();
+        handle2.join().unwrap();
+        Ok(success)
     }
 
-    fn read<R>(client: Arc<C>, output: R)
+    fn read<R>(client: Arc<C>, output: R) -> thread::JoinHandle<()>
     where
         R: io::Read + Send + 'static,
     {
@@ -109,7 +112,7 @@ where
                     block_on(client.log_message(params));
                 }
             });
-        });
+        })
     }
 }
 
