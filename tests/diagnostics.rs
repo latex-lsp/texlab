@@ -2,52 +2,8 @@
 
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
-use texlab::diagnostics::{BibtexErrorCode, LatexLintOptions};
+use texlab::diagnostics::BibtexErrorCode;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
-
-#[runtime::test(runtime_tokio::Tokio)]
-async fn test_lint_latex() {
-    let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
-    scenario.open("foo.tex").await;
-    {
-        let mut options = scenario.client.options.lock().await;
-        options.latex_lint = Some(LatexLintOptions {
-            on_change: Some(true),
-            on_save: Some(true),
-        });
-    }
-    let identifier = TextDocumentIdentifier::new(scenario.uri("foo.tex"));
-    scenario.server.did_save(DidSaveTextDocumentParams {
-        text_document: identifier,
-    });
-    scenario.server.execute_actions().await;
-
-    {
-        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
-        let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
-        assert_eq!(diagnostics.len(), 1);
-        assert_eq!(
-            diagnostics[0].message,
-            "Wrong length of dash may have been used."
-        );
-        assert_eq!(diagnostics[0].range.start.line, 4);
-    }
-
-    scenario.server.did_change(DidChangeTextDocumentParams {
-        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.tex"), 1),
-        content_changes: vec![TextDocumentContentChangeEvent {
-            range: None,
-            range_length: None,
-            text: "\\foo{}".to_owned(),
-        }],
-    });
-    scenario.server.execute_actions().await;
-    {
-        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
-        let diagnostics = diagnostics_by_uri.get(&scenario.uri("foo.tex")).unwrap();
-        assert_eq!(*diagnostics, Vec::new());
-    }
-}
 
 #[runtime::test(runtime_tokio::Tokio)]
 async fn test_lint_latex_disabled() {
