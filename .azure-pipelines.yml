@@ -12,10 +12,6 @@ jobs:
     pool:
       vmImage: "ubuntu-16.04"
     steps:
-      - script: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-base latexmk chktex
-        displayName: "Install TeX Live"
       - template: .build-steps.yml
         parameters:
           target: "x86_64-unknown-linux-gnu"
@@ -27,16 +23,6 @@ jobs:
     pool:
       vmImage: "vs2017-win2016"
     steps:
-      - powershell: |
-          Invoke-WebRequest -Uri https://miktex.org/download/win/miktexsetup-x64.zip -OutFile miktexsetup.zip
-          Expand-Archive miktexsetup.zip -DestinationPath .
-          .\miktexsetup.exe --verbose --package-set=basic download
-          .\miktexsetup.exe --verbose --portable="$(Build.SourcesDirectory)\miktex" install
-          echo "##vso[task.prependpath]$(Build.SourcesDirectory)\miktex\texmfs\install\miktex\bin\x64"
-        displayName: "Install MiKTeX"
-      - powershell: |
-          mpm --install="latexmk"
-        displayName: "Install LaTeX dependencies"
       - template: .build-steps.yml
         parameters:
           target: "x86_64-pc-windows-msvc"
@@ -51,14 +37,6 @@ jobs:
           curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain none
           echo "##vso[task.prependpath]$HOME/.cargo/bin"
         displayName: "Install rustup"
-      - bash: |
-          brew cask install basictex
-          echo "##vso[task.prependpath]/Library/TeX/texbin"
-        displayName: "Install BasicTeX"
-      - bash: |
-          sudo tlmgr update --self
-          sudo tlmgr install latexmk chktex
-        displayName: "Install LaTeX dependencies"
       - template: .build-steps.yml
         parameters:
           target: "x86_64-apple-darwin"
