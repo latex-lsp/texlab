@@ -56,6 +56,13 @@ impl Database {
             .unique_by(|component| &component.file_names)
             .collect()
     }
+
+    pub fn exists(&self, file_name: &str) -> bool {
+        return self
+            .components
+            .iter()
+            .any(|component| component.file_names.iter().any(|f| f == file_name));
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]

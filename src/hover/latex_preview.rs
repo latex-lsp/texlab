@@ -1,3 +1,4 @@
+use crate::data::completion::DATABASE;
 use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::latex::*;
@@ -163,7 +164,7 @@ impl LatexPreviewHoverProvider {
                             .paths()
                             .iter()
                             .map(|path| format!("{}.sty", path.text()))
-                            .any(|name| !request.resolver.files_by_name.contains_key(&name))
+                            .any(|name| !DATABASE.exists(&name))
                         {
                             continue;
                         }
