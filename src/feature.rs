@@ -1,4 +1,3 @@
-use crate::tex::resolver::TexResolver;
 #[cfg(test)]
 use crate::workspace::WorkspaceBuilder;
 use crate::workspace::{Document, Workspace};
@@ -30,7 +29,6 @@ impl DocumentView {
 pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
-    pub resolver: Arc<TexResolver>,
     pub client_capabilities: Arc<ClientCapabilities>,
 }
 
@@ -135,7 +133,6 @@ pub struct FeatureSpec {
     pub position: Position,
     pub new_name: &'static str,
     pub include_declaration: bool,
-    pub resolver: TexResolver,
     pub client_capabilities: ClientCapabilities,
 }
 
@@ -170,7 +167,6 @@ impl FeatureSpec {
         FeatureRequest {
             params,
             view: self.view(),
-            resolver: Arc::new(self.resolver),
             client_capabilities: Arc::new(self.client_capabilities),
         }
     }

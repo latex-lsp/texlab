@@ -20,7 +20,6 @@ use crate::request;
 use crate::syntax::bibtex::BibtexDeclaration;
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::{Language, SyntaxTree};
-use crate::tex::resolver::{self, TexResolver, TEX_RESOLVER};
 use crate::workspace::WorkspaceManager;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
@@ -64,7 +63,6 @@ pub struct LatexLspServer<C> {
     workspace_manager: WorkspaceManager,
     action_manager: ActionMananger,
     diagnostics_manager: Mutex<DiagnosticsManager>,
-    resolver: Mutex<Arc<TexResolver>>,
     completion_provider: CompletionProvider,
     definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
@@ -86,7 +84,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             workspace_manager: WorkspaceManager::default(),
             action_manager: ActionMananger::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
-            resolver: Mutex::new(Arc::new(TexResolver::default())),
             completion_provider: CompletionProvider::new(),
             definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
@@ -154,7 +151,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
-        self.action_manager.push(Action::LoadResolver);
         self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -463,37 +459,6 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         }
                     }
                 }
-                Action::LoadResolver => {
-                    match &*TEX_RESOLVER {
-                        Ok(res) => {
-                            let mut resolver = self.resolver.lock().await;
-                            *resolver = Arc::clone(&res);
-                        }
-                        Err(why) => {
-                            let message = match why {
-                                resolver::Error::KpsewhichNotFound => {
-                                    "An error occurred while executing `kpsewhich`.\
-                                     Please make sure that your distribution is in your PATH \
-                                     environment variable and provides the `kpsewhich` tool."
-                                }
-                                resolver::Error::UnsupportedTexDistribution => {
-                                    "Your TeX distribution is not supported."
-                                }
-                                resolver::Error::CorruptFileDatabase => {
-                                    "The file database of your TeX distribution seems \
-                                     to be corrupt. Please rebuild it and try again."
-                                }
-                            };
-
-                            let params = ShowMessageParams {
-                                message: message.into(),
-                                typ: MessageType::Error,
-                            };
-
-                            self.client.show_message(params).await;
-                        }
-                    };
-                }
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {
                         let mut path = uri.to_file_path().unwrap();
@@ -582,7 +547,6 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
 macro_rules! request {
     ($server:expr, $params:expr) => {{
         let workspace = $server.workspace_manager.get();
-        let resolver = $server.resolver.lock().await;
         let client_capabilities = $server
             .client_capabilities
             .get()
@@ -592,7 +556,6 @@ macro_rules! request {
             Ok(FeatureRequest {
                 params: $params,
                 view: DocumentView::new(workspace, document),
-                resolver: Arc::clone(&resolver),
                 client_capabilities: Arc::clone(&client_capabilities),
             })
         } else {

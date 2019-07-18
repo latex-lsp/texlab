@@ -1,5 +1,4 @@
 mod compile;
-pub mod resolver;
 
 pub use compile::*;
 use std::path::Path;

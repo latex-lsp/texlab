@@ -12,7 +12,6 @@ pub enum LintReason {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
     RegisterCapabilities,
-    LoadResolver,
     DetectRoot(Uri),
     DetectChildren,
     PublishDiagnostics,
