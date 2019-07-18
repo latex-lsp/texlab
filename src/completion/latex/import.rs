@@ -4,7 +4,7 @@ use crate::data::language::{language_data, LatexIncludeKind};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
-use std::ffi::OsStr;
+use crate::data::completion::DATABASE;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexClassImportProvider;
@@ -38,7 +38,7 @@ async fn import<F>(
     factory: F,
 ) -> Vec<CompletionItem>
 where
-    F: Fn(&FeatureRequest<CompletionParams>, String, TextEdit) -> CompletionItem,
+    F: Fn(&FeatureRequest<CompletionParams>, &'static str, TextEdit) -> CompletionItem,
 {
     let extension = if kind == LatexIncludeKind::Package {
         "sty"
@@ -53,20 +53,18 @@ where
         .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
     combinators::argument(request, parameters, async move |context| {
-        request
-            .resolver
-            .files_by_name
-            .values()
-            .filter(|file| file.extension().and_then(OsStr::to_str) == Some(extension))
-            .flat_map(|file| file.file_stem().unwrap().to_str())
-            .map(|name| {
-                factory(
-                    request,
-                    name.to_owned(),
-                    TextEdit::new(context.range, name.to_owned().into()),
-                )
-            })
-            .collect()
+        let mut items = Vec::new();
+        for component in &DATABASE.components {
+            for file_name in &component.file_names {
+                if file_name.ends_with(extension) {
+                    let stem = &file_name[0..file_name.len() - 4];
+                    let text_edit = TextEdit::new(context.range, stem.into());
+                    let item = factory(request, stem, text_edit);
+                    items.push(item);
+                }
+            }
+        }
+        items
     })
     .await
 }
@@ -75,16 +73,7 @@ where
 mod tests {
     use super::*;
     use crate::feature::{test_feature, FeatureSpec};
-    use crate::tex::resolver::TexResolver;
-    use lsp_types::{Position, Range};
-    use std::collections::HashMap;
-
-    fn create_resolver() -> TexResolver {
-        let mut files_by_name = HashMap::new();
-        files_by_name.insert("foo.sty".into(), "./foo.sty".into());
-        files_by_name.insert("bar.cls".into(), "./bar.cls".into());
-        TexResolver { files_by_name }
-    }
+    use lsp_types::Position;
 
     #[test]
     fn test_class() {
@@ -94,17 +83,12 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\documentclass{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 15),
-                resolver: create_resolver(),
                 ..FeatureSpec::default()
             },
         );
 
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].label, "bar");
-        assert_eq!(
-            items[0].text_edit.as_ref().map(|edit| edit.range),
-            Some(Range::new_simple(0, 15, 0, 15))
-        );
+        assert!(items.iter().any(|item| item.label == "beamer"));
+        assert!(items.iter().all(|item| item.label != "amsmath"));
     }
 
     #[test]
@@ -115,16 +99,11 @@ mod tests {
                 files: vec![FeatureSpec::file("foo.tex", "\\usepackage{}")],
                 main_file: "foo.tex",
                 position: Position::new(0, 12),
-                resolver: create_resolver(),
                 ..FeatureSpec::default()
             },
         );
 
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].label, "foo");
-        assert_eq!(
-            items[0].text_edit.as_ref().map(|edit| edit.range),
-            Some(Range::new_simple(0, 12, 0, 12))
-        );
+        assert!(items.iter().all(|item| item.label != "beamer"));
+        assert!(items.iter().any(|item| item.label == "amsmath"));
     }
 }

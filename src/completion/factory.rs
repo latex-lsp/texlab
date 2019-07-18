@@ -218,7 +218,7 @@ pub fn color_model(
 
 pub fn package(
     request: &FeatureRequest<CompletionParams>,
-    name: String,
+    name: &'static str,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
@@ -232,7 +232,7 @@ pub fn package(
 
 pub fn class(
     request: &FeatureRequest<CompletionParams>,
-    name: String,
+    name: &'static str,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
