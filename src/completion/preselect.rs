@@ -37,8 +37,10 @@ where
 
                     if cond1 || cond2 {
                         for item in &mut items {
+                            item.preselect = Some(false);
                             if item.label == name.text() {
                                 item.preselect = Some(true);
+                                break;
                             }
                         }
                     }
