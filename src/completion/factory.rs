@@ -4,9 +4,13 @@ use crate::feature::FeatureRequest;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::syntax::bibtex::BibtexEntry;
 use lsp_types::*;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
+
+static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub enum CompletionItemData {
@@ -112,11 +116,23 @@ pub fn label(
     text_edit: TextEdit,
     context: &LabelContext,
 ) -> CompletionItem {
+    fn to_str(value: &Option<String>) -> &str {
+        value.as_ref().map(String::as_str).unwrap_or_default()
+    }
+
+    let filter_text = format!(
+        "{} {} {}",
+        &name,
+        to_str(&context.caption),
+        to_str(&context.section)
+    );
+
     CompletionItem {
         label: name,
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
+        filter_text: Some(filter_text.into()),
         documentation: context.documentation().map(Documentation::MarkupContent),
         ..CompletionItem::default()
     }
@@ -252,9 +268,25 @@ pub fn citation(
 ) -> CompletionItem {
     let params = BibtexFormattingParams::default();
     let entry_code = bibtex::format_entry(&entry, &params);
+    let filter_text = format!(
+        "{} {}",
+        &key,
+        WHITESPACE_REGEX
+            .replace_all(
+                &entry_code
+                    .replace('{', " ")
+                    .replace('}', " ")
+                    .replace(',', " ")
+                    .replace('=', " "),
+                " ",
+            )
+            .trim()
+    );
+    log::info!("FilterText = {}", filter_text);
     CompletionItem {
         label: key.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
+        filter_text: Some(filter_text.into()),
         data: Some(CompletionItemData::Citation { entry_code }.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
