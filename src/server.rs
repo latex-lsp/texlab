@@ -501,14 +501,17 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                 }
                 Action::PublishDiagnostics => {
                     let workspace = self.workspace_manager.get();
-                    let diagnostics_manager = self.diagnostics_manager.lock().await;
                     for document in &workspace.documents {
-                        self.client
-                            .publish_diagnostics(PublishDiagnosticsParams {
-                                uri: document.uri.clone(),
-                                diagnostics: diagnostics_manager.get(&document),
-                            })
-                            .await;
+                        let diagnostics = {
+                            let manager = self.diagnostics_manager.lock().await;
+                            manager.get(&document)
+                        };
+
+                        let params = PublishDiagnosticsParams {
+                            uri: document.uri.clone(),
+                            diagnostics,
+                        };
+                        self.client.publish_diagnostics(params).await;
                     }
                 }
                 Action::RunLinter(uri, reason) => {
