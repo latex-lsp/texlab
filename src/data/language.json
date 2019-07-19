@@ -438,6 +438,12 @@
       "includeExtension": false
     },
     {
+      "name": "\\RequirePackage",
+      "index": 0,
+      "kind": "package",
+      "includeExtension": false
+    },
+    {
       "name": "\\include",
       "index": 0,
       "kind": "latex",
