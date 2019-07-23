@@ -35,7 +35,7 @@ regex = "1.2.0"
 reqwest = "0.9.18"
 runtime = "0.3.0-alpha.4"
 runtime-tokio = "0.3.0-alpha.4"
-serde = { version = "1.0.90", features = ["derive", "rc"] }
+serde = { version = "1.0.97", features = ["derive", "rc"] }
 serde_json = "1.0.40"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
