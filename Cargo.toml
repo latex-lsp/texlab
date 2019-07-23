@@ -16,7 +16,6 @@ bytes = "0.4.12"
 byteorder = "1"
 clap = "2.33"
 copy_dir = "0.1.2"
-dirs = "2.0"
 futures-boxed = { path = "futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 html2md = "0.2.9"

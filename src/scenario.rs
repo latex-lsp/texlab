@@ -1,5 +1,5 @@
 use crate::client::LspClientMock;
-use crate::server::{LatexLspServer, ServerConfig};
+use crate::server::LatexLspServer;
 use copy_dir::copy_dir;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
@@ -44,10 +44,7 @@ impl Scenario {
         copy_dir(source, directory.path()).unwrap();
 
         let client = Arc::new(LspClientMock::default());
-        let config = ServerConfig {
-            component_database_path: directory.path().join("components.json"),
-        };
-        let server = LatexLspServer::new(Arc::clone(&client), config);
+        let server = LatexLspServer::new(Arc::clone(&client));
 
         let root_uri = Uri::from_file_path(directory.path()).unwrap();
         let init_params = InitializeParams {

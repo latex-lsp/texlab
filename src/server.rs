@@ -36,28 +36,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ServerConfig {
-    pub component_database_path: PathBuf,
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        let directory = dirs::home_dir()
-            .expect("Could not find HOME directory")
-            .join(".texlab");
-        if !directory.exists() {
-            fs::create_dir(&directory).expect("Could not create server directory");
-        }
-
-        Self {
-            component_database_path: directory.join("components.json"),
-        }
-    }
-}
-
 pub struct LatexLspServer<C> {
-    config: ServerConfig,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     workspace_manager: WorkspaceManager,
@@ -76,9 +55,8 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>, config: ServerConfig) -> Self {
+    pub fn new(client: Arc<C>) -> Self {
         LatexLspServer {
-            config,
             client,
             client_capabilities: OnceCell::new(),
             workspace_manager: WorkspaceManager::default(),
