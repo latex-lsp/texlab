@@ -29,7 +29,7 @@ nom = "5.0.0"
 once_cell = "0.2.2"
 path-clean = "0.1.0"
 regex = "1.2.0"
-reqwest = "0.9.18"
+reqwest = { version = "0.9", default-features = false, features = ["rustls-tls"] }
 runtime = "0.3.0-alpha.4"
 runtime-tokio = "0.3.0-alpha.4"
 serde = { version = "1.0.97", features = ["derive", "rc"] }
@@ -50,7 +50,7 @@ walkdir = "2"
 criterion = "0.2"
 
 [build-dependencies]
-reqwest = "0.9.18"
+reqwest = { version = "0.9", default-features = false, features = ["rustls-tls"] }
 
 [[bench]]
 name = "completion"
