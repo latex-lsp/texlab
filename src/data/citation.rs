@@ -6,7 +6,7 @@ use tempfile::tempdir;
 use tokio_process::CommandExt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum CitationError {
+pub enum RenderCitationError {
     InitializationFailed,
     InvalidEntry,
     NodeNotInstalled,
@@ -14,18 +14,18 @@ pub enum CitationError {
     InvalidOutput,
 }
 
-pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, CitationError> {
+pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, RenderCitationError> {
     let tree = BibtexSyntaxTree::from(entry_code);
     if tree.entries().iter().any(|entry| entry.fields.len() == 0) {
-        return Err(CitationError::InvalidEntry);
+        return Err(RenderCitationError::InvalidEntry);
     }
 
-    let directory = tempdir().map_err(|_| CitationError::InitializationFailed)?;
+    let directory = tempdir().map_err(|_| RenderCitationError::InitializationFailed)?;
     let entry_path = directory.path().join("entry.bib");
     tokio::fs::write(entry_path, &entry_code)
         .compat()
         .await
-        .map_err(|_| CitationError::InitializationFailed)?;
+        .map_err(|_| RenderCitationError::InitializationFailed)?;
 
     let mut process = Command::new("node")
         .stdin(Stdio::piped())
@@ -33,28 +33,28 @@ pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, Citation
         .stderr(Stdio::piped())
         .current_dir(directory.path())
         .spawn_async()
-        .map_err(|_| CitationError::NodeNotInstalled)?;
+        .map_err(|_| RenderCitationError::NodeNotInstalled)?;
 
     tokio::io::write_all(process.stdin().as_mut().unwrap(), SCRIPT)
         .compat()
         .await
-        .map_err(|_| CitationError::ScriptFaulty)?;
+        .map_err(|_| RenderCitationError::ScriptFaulty)?;
 
     let output = process
         .wait_with_output()
         .compat()
         .await
-        .map_err(|_| CitationError::ScriptFaulty)?;
+        .map_err(|_| RenderCitationError::ScriptFaulty)?;
 
     if output.status.success() {
-        let html = String::from_utf8(output.stdout).map_err(|_| CitationError::InvalidOutput)?;
+        let html = String::from_utf8(output.stdout).map_err(|_| RenderCitationError::InvalidOutput)?;
         let markdown = html2md::parse_html(&html);
         Ok(MarkupContent {
             kind: MarkupKind::Markdown,
             value: markdown.trim().to_owned().into(),
         })
     } else {
-        Err(CitationError::InvalidEntry)
+        Err(RenderCitationError::InvalidEntry)
     }
 }
 
@@ -75,12 +75,12 @@ mod tests {
     #[runtime::test(runtime_tokio::Tokio)]
     async fn test_invalid() {
         let markdown = render_citation("@article{}").await;
-        assert_eq!(markdown, Err(CitationError::InvalidEntry));
+        assert_eq!(markdown, Err(RenderCitationError::InvalidEntry));
     }
 
     #[runtime::test(runtime_tokio::Tokio)]
     async fn test_empty() {
         let markdown = render_citation("@article{foo,}").await;
-        assert_eq!(markdown, Err(CitationError::InvalidEntry));
+        assert_eq!(markdown, Err(RenderCitationError::InvalidEntry));
     }
 }

@@ -1,4 +1,4 @@
-use crate::data::citation::render_citation;
+use crate::data::citation::{render_citation, RenderCitationError};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
@@ -8,6 +8,7 @@ use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
 use lsp_types::*;
+use log::warn;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;
@@ -26,11 +27,25 @@ impl FeatureProvider for LatexCitationHoverProvider {
             None
         } else {
             let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
-            let markdown = render_citation(&entry_code).await.ok()?;
-            Some(Hover {
-                contents: HoverContents::Markup(markdown),
-                range: None,
-            })
+            match render_citation(&entry_code).await {
+                Ok(markdown) => {
+                    Some(Hover {
+                        contents: HoverContents::Markup(markdown),
+                        range: None,
+                    })
+                }
+                Err(why) => {
+                    let message = match why {
+                        RenderCitationError::InitializationFailed => "Failed to initialize citeproc",
+                        RenderCitationError::ScriptFaulty => "Failed to execute citeproc",
+                        RenderCitationError::InvalidEntry => "Failed to render entry",
+                        RenderCitationError::InvalidOutput => "Unable to decode output",
+                        RenderCitationError::NodeNotInstalled => "NodeJS is not installed",
+                    };
+                    warn!("{}:\n{}", &message, &entry_code);
+                    None
+                }
+            }
         }
     }
 }
