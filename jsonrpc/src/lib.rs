@@ -43,8 +43,10 @@ where
                     runtime::spawn(async move {
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
-                        let mut output = output.lock().await;
-                        output.send(json).await.unwrap();
+                        {
+                            let mut output = output.lock().await;
+                            output.send(json).await.unwrap();
+                        }
                         server.execute_actions().await;
                     });
                 }
@@ -61,8 +63,10 @@ where
                 Err(why) => {
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
-                    let mut output = self.output.lock().await;
-                    output.send(json).await.unwrap();
+                    {
+                        let mut output = self.output.lock().await;
+                        output.send(json).await.unwrap();
+                    }
                 }
             }
         }

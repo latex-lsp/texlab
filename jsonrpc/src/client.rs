@@ -59,8 +59,10 @@ where
 
     async fn send(&self, message: Message) {
         let json = serde_json::to_string(&message).unwrap();
-        let mut output = self.output.lock().await;
-        output.send(json).await.unwrap();
+        {
+            let mut output = self.output.lock().await;
+            output.send(json).await.unwrap();
+        }
     }
 }
 
@@ -71,8 +73,10 @@ where
     #[boxed]
     async fn handle(&self, response: Response) {
         let id = response.id.expect("Expected response with id");
-        let mut queue = self.queue.lock().await;
-        let sender = queue.remove(&id).expect("Unexpected response received");
+        let sender = {
+            let mut queue = self.queue.lock().await;
+            queue.remove(&id).expect("Unexpected response received")
+        };
 
         let result = match response.error {
             Some(why) => Err(why),
