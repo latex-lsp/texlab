@@ -9,6 +9,7 @@ use futures::compat::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
+use log::*;
 use lsp_types::*;
 use std::io;
 use std::io::Cursor;
@@ -63,14 +64,22 @@ impl<'a> SyntaxNode for MathElement<'a> {
 #[derive(Debug)]
 enum RenderError {
     IO(io::Error),
+    Compile(tex::CompileError),
+    DviNotFound,
     DviPngNotInstalled,
     DviPngFaulty,
-    CannotDecodeImage,
+    DecodeImage,
 }
 
 impl From<io::Error> for RenderError {
     fn from(error: io::Error) -> Self {
         RenderError::IO(error)
+    }
+}
+
+impl From<tex::CompileError> for RenderError {
+    fn from(error: tex::CompileError) -> Self {
+        RenderError::Compile(error)
     }
 }
 
@@ -114,11 +123,10 @@ impl LatexPreviewHoverProvider {
             .await?
             .directory;
         if !directory.path().join("preview.dvi").exists() {
-            return Err(RenderError::IO(io::ErrorKind::NotFound.into()));
+            return Err(RenderError::DviNotFound);
         }
 
-        let image = Self::dvipng(&directory).await?;
-        let image = Self::add_margin(image);
+        let image = Self::add_margin(Self::dvipng(&directory).await?);
         let base64 = Self::encode_image(image);
         let markdown = format!("![preview](data:image/png;base64,{})", base64);
         directory.close()?;
@@ -243,7 +251,7 @@ impl LatexPreviewHoverProvider {
             .map_err(|_| RenderError::DviPngFaulty)?;
 
         let png_file = directory.path().join("preview1.png");
-        let png = image::open(png_file).map_err(|_| RenderError::CannotDecodeImage)?;
+        let png = image::open(png_file).map_err(|_| RenderError::DecodeImage)?;
         Ok(png)
     }
 
@@ -311,7 +319,32 @@ impl FeatureProvider for LatexPreviewHoverProvider {
                 .find(|elem| elem.range().contains(request.params.position))
                 .map(MathElement::range)?;
 
-            return Some(Self::render(request, range).await.ok()?);
+            return match Self::render(request, range).await {
+                Ok(hover) => Some(hover),
+                Err(why) => {
+                    let message = match why {
+                        RenderError::IO(why) => format!("I/O error: {}", why),
+                        RenderError::Compile(why) => match why {
+                            tex::CompileError::Initialization => {
+                                "compilation initialization failed".to_owned()
+                            }
+                            tex::CompileError::LatexNotInstalled => {
+                                "latex not installed".to_owned()
+                            }
+                            tex::CompileError::Timeout => "compilation timed out".to_owned(),
+                            tex::CompileError::Wait => "failed to wait for latex".to_owned(),
+                            tex::CompileError::ReadLog => "failed to read log file".to_owned(),
+                            tex::CompileError::Cleanup => "failed to cleanup latex".to_owned(),
+                        },
+                        RenderError::DviNotFound => "compilation failed".to_owned(),
+                        RenderError::DviPngNotInstalled => "dvipng is not installed".to_owned(),
+                        RenderError::DviPngFaulty => "dvipng failed".to_owned(),
+                        RenderError::DecodeImage => "failed to decode image".to_owned(),
+                    };
+                    warn!("Preview failed: {}", message);
+                    None
+                }
+            };
         }
         None
     }

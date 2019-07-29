@@ -47,7 +47,8 @@ pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, RenderCi
         .map_err(|_| RenderCitationError::ScriptFaulty)?;
 
     if output.status.success() {
-        let html = String::from_utf8(output.stdout).map_err(|_| RenderCitationError::InvalidOutput)?;
+        let html =
+            String::from_utf8(output.stdout).map_err(|_| RenderCitationError::InvalidOutput)?;
         let markdown = html2md::parse_html(&html);
         Ok(MarkupContent {
             kind: MarkupKind::Markdown,

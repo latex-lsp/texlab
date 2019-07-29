@@ -7,8 +7,8 @@ use crate::syntax::latex::{LatexCitation, LatexToken};
 use crate::syntax::text::SyntaxNode;
 use crate::syntax::SyntaxTree;
 use futures_boxed::boxed;
-use lsp_types::*;
 use log::warn;
+use lsp_types::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;
@@ -28,15 +28,15 @@ impl FeatureProvider for LatexCitationHoverProvider {
         } else {
             let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
             match render_citation(&entry_code).await {
-                Ok(markdown) => {
-                    Some(Hover {
-                        contents: HoverContents::Markup(markdown),
-                        range: None,
-                    })
-                }
+                Ok(markdown) => Some(Hover {
+                    contents: HoverContents::Markup(markdown),
+                    range: None,
+                }),
                 Err(why) => {
                     let message = match why {
-                        RenderCitationError::InitializationFailed => "Failed to initialize citeproc",
+                        RenderCitationError::InitializationFailed => {
+                            "Failed to initialize citeproc"
+                        }
                         RenderCitationError::ScriptFaulty => "Failed to execute citeproc",
                         RenderCitationError::InvalidEntry => "Failed to render entry",
                         RenderCitationError::InvalidOutput => "Unable to decode output",
