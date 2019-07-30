@@ -1,4 +1,3 @@
-use texlab_completion_data::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::tex;
 use futures::compat::*;
@@ -11,6 +10,7 @@ use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
 use tempfile::TempDir;
+use texlab_completion_data::DATABASE;
 use texlab_syntax::*;
 use tokio_process::CommandExt;
 

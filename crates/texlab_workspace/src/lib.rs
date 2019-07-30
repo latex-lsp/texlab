@@ -1,3 +1,6 @@
+mod outline;
+
+pub use self::outline::*;
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};
 use std::ffi::OsStr;

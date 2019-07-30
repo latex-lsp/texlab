@@ -1,9 +1,9 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
-use texlab_completion_data::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
+use texlab_completion_data::DATABASE;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexComponentCommandCompletionProvider;

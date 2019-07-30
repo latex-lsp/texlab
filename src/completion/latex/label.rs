@@ -1,11 +1,10 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
-use crate::data::label::LabelContext;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::outline::Outline;
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;
@@ -34,11 +33,11 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         .filter(|label| label.kind == LatexLabelKind::Definition)
                         .filter(|label| Self::is_included(tree, label, source))
                     {
-                        let label_ctx = LabelContext::find(&outline, &document, label.start());
+                        let outline_ctx = OutlineContext::find(&outline, &document, label.start());
                         for name in label.names() {
                             let text = name.text().to_owned();
                             let text_edit = TextEdit::new(context.range, text.clone().into());
-                            let item = factory::label(request, text.into(), text_edit, &label_ctx);
+                            let item = factory::label(request, text.into(), text_edit, &outline_ctx);
                             items.push(item);
                         }
                     }

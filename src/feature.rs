@@ -1,7 +1,5 @@
 use futures_boxed::boxed;
 use lsp_types::*;
-#[cfg(test)]
-use std::path::PathBuf;
 use std::sync::Arc;
 use texlab_workspace::*;
 

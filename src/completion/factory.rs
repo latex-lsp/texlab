@@ -1,4 +1,3 @@
-use crate::data::label::LabelContext;
 use crate::feature::FeatureRequest;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use lsp_types::*;
@@ -8,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
 use texlab_syntax::*;
+use texlab_workspace::OutlineContext;
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 
@@ -113,7 +113,7 @@ pub fn label(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
     text_edit: TextEdit,
-    context: &LabelContext,
+    context: &OutlineContext,
 ) -> CompletionItem {
     fn to_str(value: &Option<String>) -> &str {
         value.as_ref().map(String::as_str).unwrap_or_default()

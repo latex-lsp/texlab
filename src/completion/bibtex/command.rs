@@ -1,8 +1,8 @@
 use crate::completion::factory::{self, LatexComponentId};
-use texlab_completion_data::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
+use texlab_completion_data::DATABASE;
 use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

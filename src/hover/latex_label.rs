@@ -1,9 +1,8 @@
-use crate::data::label::LabelContext;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::outline::Outline;
 use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub struct LatexLabelHoverProvider;
 
@@ -28,7 +27,7 @@ impl FeatureProvider for LatexLabelHoverProvider {
                 .find(|label| label.text() == reference.text())?;
 
             let outline = Outline::from(&request.view);
-            let context = LabelContext::find(&outline, request.document(), definition.start());
+            let context = OutlineContext::find(&outline, request.document(), definition.start());
             let markup = context.documentation()?;
             return Some(Hover {
                 contents: HoverContents::Markup(markup),
