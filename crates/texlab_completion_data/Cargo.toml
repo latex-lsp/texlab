@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 itertools = "0.8.0"
 lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3013ce84e20ef566267754d594b268", features = ["proposed"] }
-once_cell = "0.2.2"
+once_cell = "0.2.4"
 serde = { version = "1.0.97", features = ["derive", "rc"] }
 serde_json = "1.0.40"
 texlab-syntax = { path = "../texlab_syntax" }
