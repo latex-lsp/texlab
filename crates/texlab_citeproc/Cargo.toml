@@ -11,7 +11,7 @@ futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 html2md = "0.2.9"
 lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3013ce84e20ef566267754d594b268", features = ["proposed"] }
 runtime = "0.3.0-alpha.4"
-runtime-tokio = "0.3.0-alpha.4"
+runtime-tokio = "0.3.0-alpha.5"
 serde = { version = "1.0.97", features = ["derive", "rc"] }
 tempfile = "3"
 texlab-syntax = { path = "../texlab_syntax" }
