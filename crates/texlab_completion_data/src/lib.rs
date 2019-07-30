@@ -51,8 +51,6 @@ impl Database {
                 .for_each(|component| all_components.push(component))
         }
 
-        log::info!("Components = {:?}", all_components.len());
-
         all_components
             .into_iter()
             .unique_by(|component| &component.file_names)

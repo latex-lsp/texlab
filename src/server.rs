@@ -2,7 +2,7 @@ use crate::action::{Action, ActionMananger, LintReason};
 use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
-use crate::data::completion::DATABASE;
+use texlab_completion_data::DATABASE;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::feature::{DocumentView, FeatureProvider, FeatureRequest};

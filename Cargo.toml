@@ -12,6 +12,7 @@ members = [
     "crates/jsonrpc", 
     "crates/jsonrpc_derive", 
     "crates/texlab_citeproc",
+    "crates/texlab_completion_data",
     "crates/texlab_syntax",
     "crates/texlab_workspace"]
 
@@ -42,6 +43,7 @@ serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
+texlab-completion-data = { path = "crates/texlab_completion_data" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = "0.1"
@@ -55,9 +57,6 @@ walkdir = "2"
 
 [dev-dependencies]
 criterion = "0.2"
-
-[build-dependencies]
-reqwest = { version = "0.9", default-features = false, features = ["rustls-tls"] }
 
 [[bench]]
 name = "completion"

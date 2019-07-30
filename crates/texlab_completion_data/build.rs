@@ -5,5 +5,5 @@ fn main() {
         .expect("Failed to download completion database")
         .text()
         .unwrap();
-    fs::write("src/data/completion.json", text).expect("Failed to save completion database");
+    fs::write("src/completion.json", text).expect("Failed to save completion database");
 }
