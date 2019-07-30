@@ -1,10 +1,10 @@
-use texlab_syntax::*;
-use crate::workspace::Document;
 use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use texlab_syntax::*;
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

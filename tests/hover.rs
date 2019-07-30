@@ -2,8 +2,8 @@
 
 use lsp_types::*;
 use std::borrow::Cow;
-use texlab_syntax::LANGUAGE_DATA;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
+use texlab_syntax::LANGUAGE_DATA;
 
 pub async fn run(
     scenario: &'static str,

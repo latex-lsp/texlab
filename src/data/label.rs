@@ -1,7 +1,7 @@
 use crate::outline::Outline;
-use texlab_syntax::*;
-use crate::workspace::Document;
 use lsp_types::*;
+use texlab_syntax::*;
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LabelContext {

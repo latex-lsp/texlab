@@ -1,11 +1,9 @@
-#[cfg(test)]
-use crate::workspace::WorkspaceBuilder;
-use crate::workspace::{Document, Workspace};
 use futures_boxed::boxed;
 use lsp_types::*;
 #[cfg(test)]
 use std::path::PathBuf;
 use std::sync::Arc;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DocumentView {
@@ -143,7 +141,7 @@ impl FeatureSpec {
     }
 
     pub fn uri(name: &str) -> Uri {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
+        let path = std::env::temp_dir().join(name);
         Uri::from_file_path(path).unwrap()
     }
 

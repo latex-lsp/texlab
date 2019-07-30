@@ -2,7 +2,6 @@ use crate::action::{Action, ActionMananger, LintReason};
 use crate::build::*;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
-use texlab_citeproc::render_citation;
 use crate::data::completion::DATABASE;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
@@ -16,8 +15,6 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
-use texlab_syntax::*;
-use crate::workspace::WorkspaceManager;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;
@@ -31,6 +28,9 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
+use texlab_citeproc::render_citation;
+use texlab_syntax::*;
+use texlab_workspace::WorkspaceManager;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {

@@ -1,5 +1,5 @@
-use texlab_syntax::*;
 use serde::{Deserialize, Serialize};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

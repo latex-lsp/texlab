@@ -1,13 +1,13 @@
 use crate::data::label::LabelContext;
 use crate::feature::FeatureRequest;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
-use texlab_syntax::*;
 use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
+use texlab_syntax::*;
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 

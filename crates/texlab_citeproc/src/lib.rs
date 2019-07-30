@@ -1,12 +1,11 @@
 #![feature(async_await)]
 
-use texlab_syntax::*;
 use futures::compat::*;
 use lsp_types::*;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
+use texlab_syntax::*;
 use tokio_process::CommandExt;
-
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum RenderCitationError {

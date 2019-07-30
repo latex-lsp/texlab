@@ -1,6 +1,5 @@
 use crate::data::completion::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
 use crate::tex;
 use futures::compat::*;
 use futures_boxed::boxed;
@@ -12,6 +11,7 @@ use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
 use tempfile::TempDir;
+use texlab_syntax::*;
 use tokio_process::CommandExt;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[

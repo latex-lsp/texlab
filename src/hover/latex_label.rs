@@ -1,9 +1,9 @@
 use crate::data::label::LabelContext;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::outline::Outline;
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
+use texlab_syntax::*;
 
 pub struct LatexLabelHoverProvider;
 

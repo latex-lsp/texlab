@@ -1,7 +1,7 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFieldHoverProvider;
@@ -55,10 +55,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: LANGUAGE_DATA
-                        .field_documentation("author")
-                        .unwrap()
-                        .into(),
+                    value: LANGUAGE_DATA.field_documentation("author").unwrap().into(),
                 }),
                 range: None,
             })

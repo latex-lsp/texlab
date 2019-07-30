@@ -12,7 +12,8 @@ members = [
     "crates/jsonrpc", 
     "crates/jsonrpc_derive", 
     "crates/texlab_citeproc",
-    "crates/texlab_syntax"]
+    "crates/texlab_syntax",
+    "crates/texlab_workspace"]
 
 [dependencies]
 base64 = "0.10.1"
@@ -42,6 +43,7 @@ stderrlog = "0.4.1"
 tempfile = "3"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
 texlab-syntax = { path = "crates/texlab_syntax" }
+texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = "0.1"
 tokio-codec = "0.1"
 tokio-process = "0.2.4"

@@ -1,13 +1,13 @@
 mod bibtex;
+mod language;
 mod latex;
 mod text;
-mod language;
 
-use lsp_types::Uri;
-pub use self::text::*;
 pub use self::bibtex::*;
-pub use self::latex::*;
 pub use self::language::*;
+pub use self::latex::*;
+pub use self::text::*;
+use lsp_types::Uri;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Language {

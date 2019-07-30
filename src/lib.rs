@@ -22,4 +22,3 @@ pub mod rename;
 pub mod scenario;
 pub mod server;
 pub mod tex;
-pub mod workspace;

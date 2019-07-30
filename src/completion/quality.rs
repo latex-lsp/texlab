@@ -1,9 +1,9 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
-use crate::workspace::Document;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Position};
 use std::borrow::Cow;
+use texlab_syntax::*;
+use texlab_workspace::Document;
 
 pub struct OrderByQualityCompletionProvider<F> {
     pub provider: F,

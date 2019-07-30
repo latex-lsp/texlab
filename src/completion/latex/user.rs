@@ -1,10 +1,10 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexUserCommandCompletionProvider;

@@ -1,7 +1,7 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
+use texlab_syntax::*;
 
 pub struct LatexCommandDefinitionProvider;
 

@@ -1,8 +1,8 @@
 use crate::completion::factory;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexFieldNameCompletionProvider;

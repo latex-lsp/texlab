@@ -1,4 +1,3 @@
-use crate::workspace::Document;
 use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -6,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]

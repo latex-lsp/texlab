@@ -3,9 +3,9 @@ use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
 use crate::data::label::LabelContext;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::outline::Outline;
-use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;

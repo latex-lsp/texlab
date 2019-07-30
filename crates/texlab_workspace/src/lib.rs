@@ -1,10 +1,10 @@
-use texlab_syntax::*;
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {
@@ -222,12 +222,10 @@ impl WorkspaceManager {
     }
 }
 
-#[cfg(test)]
 pub struct WorkspaceBuilder {
     pub workspace: Workspace,
 }
 
-#[cfg(test)]
 impl WorkspaceBuilder {
     pub fn new() -> Self {
         WorkspaceBuilder {
@@ -236,7 +234,7 @@ impl WorkspaceBuilder {
     }
 
     pub fn document(&mut self, name: &str, text: &str) -> Uri {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name);
+        let path = std::env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Uri::from_file_path(path).unwrap();
         let document = Document::parse(uri.clone(), text.to_owned(), language);

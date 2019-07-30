@@ -1,8 +1,8 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use texlab_syntax::*;
-use crate::workspace::Document;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
+use texlab_syntax::*;
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelDefinitionProvider;
