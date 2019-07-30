@@ -1,7 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexCitation;
-use crate::syntax::text::{Span, SyntaxNode};
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::collections::HashMap;

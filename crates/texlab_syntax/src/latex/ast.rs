@@ -1,4 +1,4 @@
-use crate::syntax::text::{Span, SyntaxNode};
+use crate::text::{Span, SyntaxNode};
 use itertools::Itertools;
 use lsp_types::Range;
 use std::sync::Arc;

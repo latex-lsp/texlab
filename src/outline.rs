@@ -1,7 +1,5 @@
 use crate::feature::DocumentView;
-use crate::syntax::latex::{LatexInclude, LatexSection};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use crate::workspace::Document;
 use lsp_types::{Position, Range, Uri};
 use std::collections::HashSet;

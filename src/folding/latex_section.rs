@@ -1,6 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 

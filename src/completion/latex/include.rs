@@ -1,9 +1,7 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexCommand;
-use crate::syntax::text::SyntaxNode;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
 use std::path::{Path, PathBuf};
@@ -18,7 +16,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = language_data()
+        let parameters = LANGUAGE_DATA
             .include_commands
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
@@ -52,7 +50,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
             {
                 if entry.file_type().is_file() && is_included(&command, &entry.path()) {
                     let mut path = entry.into_path();
-                    let include_extension = language_data()
+                    let include_extension = LANGUAGE_DATA
                         .include_commands
                         .iter()
                         .find(|cmd| command.name.text() == cmd.name)
@@ -94,7 +92,7 @@ fn current_directory(
 }
 
 fn is_included(command: &LatexCommand, file: &Path) -> bool {
-    if let Some(allowed_extensions) = language_data()
+    if let Some(allowed_extensions) = LANGUAGE_DATA
         .include_commands
         .iter()
         .find(|cmd| command.name.text() == cmd.name)

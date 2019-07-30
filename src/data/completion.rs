@@ -1,4 +1,4 @@
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use crate::workspace::Document;
 use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};

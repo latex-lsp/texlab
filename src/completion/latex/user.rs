@@ -1,9 +1,7 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::LatexEnvironmentDelimiter;
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::*;

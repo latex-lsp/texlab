@@ -1,6 +1,4 @@
-use crate::syntax::bibtex::{BibtexContent, BibtexSyntaxTree};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use crate::workspace::Document;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 

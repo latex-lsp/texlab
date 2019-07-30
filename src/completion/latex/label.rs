@@ -1,12 +1,9 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
 use crate::data::label::LabelContext;
-use crate::data::language::*;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::outline::Outline;
-use crate::syntax::latex::{LatexLabel, LatexSyntaxTree};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
@@ -19,7 +16,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = language_data()
+        let parameters = LANGUAGE_DATA
             .label_commands
             .iter()
             .filter(|cmd| cmd.kind.is_reference())
@@ -55,7 +52,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
 impl LatexLabelCompletionProvider {
     fn find_source(context: &ArgumentContext) -> LatexLabelReferenceSource {
-        match language_data()
+        match LANGUAGE_DATA
             .label_commands
             .iter()
             .find(|cmd| cmd.name == context.parameter.name && cmd.index == context.parameter.index)

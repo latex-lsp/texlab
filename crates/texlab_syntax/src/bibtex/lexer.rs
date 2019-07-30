@@ -1,5 +1,5 @@
-use crate::syntax::bibtex::ast::{BibtexToken, BibtexTokenKind};
-use crate::syntax::text::CharStream;
+use super::ast::{BibtexToken, BibtexTokenKind};
+use crate::text::CharStream;
 
 pub struct BibtexLexer<'a> {
     stream: CharStream<'a>,
@@ -100,7 +100,7 @@ impl<'a> Iterator for BibtexLexer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::text::Span;
+    use crate::text::Span;
     use lsp_types::{Position, Range};
 
     fn verify<'a>(

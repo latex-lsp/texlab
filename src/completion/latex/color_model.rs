@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::data::language::language_data;
+use texlab_syntax::LANGUAGE_DATA;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
@@ -14,7 +14,7 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = language_data()
+        let parameters = LANGUAGE_DATA
             .color_model_commands
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));

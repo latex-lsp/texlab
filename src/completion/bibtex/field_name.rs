@@ -1,9 +1,6 @@
 use crate::completion::factory;
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::bibtex::BibtexNode;
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
 
@@ -48,7 +45,7 @@ fn make_items(
     edit_range: Range,
 ) -> Vec<CompletionItem> {
     let mut items = Vec::new();
-    for field in &language_data().fields {
+    for field in &LANGUAGE_DATA.fields {
         let text_edit = TextEdit::new(edit_range, (&field.name).into());
         let item = factory::field_name(request, field, text_edit);
         items.push(item);

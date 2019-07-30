@@ -1,5 +1,5 @@
-use crate::syntax::bibtex::ast::*;
-use crate::syntax::text::SyntaxNode;
+use crate::bibtex::ast::*;
+use crate::text::SyntaxNode;
 use lsp_types::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

@@ -1,8 +1,7 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
 
@@ -15,7 +14,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = language_data()
+        let parameters = LANGUAGE_DATA
             .citation_commands
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));

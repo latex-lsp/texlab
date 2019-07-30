@@ -1,4 +1,4 @@
-use crate::syntax::text::{Span, SyntaxNode};
+use crate::text::{Span, SyntaxNode};
 use lsp_types::Range;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

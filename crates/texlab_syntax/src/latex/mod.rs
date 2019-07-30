@@ -6,10 +6,10 @@ mod parser;
 pub use self::ast::*;
 use self::finder::LatexFinder;
 pub use self::finder::LatexNode;
-use crate::data::language::*;
-use crate::syntax::latex::lexer::LatexLexer;
-use crate::syntax::latex::parser::LatexParser;
-use crate::syntax::text::SyntaxNode;
+use super::language::*;
+use self::lexer::LatexLexer;
+use self::parser::LatexParser;
+use super::text::SyntaxNode;
 use lsp_types::{Position, Range, Uri};
 use path_clean::PathClean;
 use std::path::PathBuf;
@@ -67,7 +67,7 @@ impl LatexEnvironmentDelimiter {
 
     pub fn is_math(&self) -> bool {
         if let Some(name) = self.name() {
-            language_data()
+            LANGUAGE_DATA
                 .math_environments
                 .iter()
                 .any(|env| env == name.text())
@@ -159,7 +159,7 @@ impl LatexCitation {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut citations = Vec::new();
         for command in commands {
-            for LatexCitationCommand { name, index } in &language_data().citation_commands {
+            for LatexCitationCommand { name, index } in &LANGUAGE_DATA.citation_commands {
                 if command.name.text() == name && command.has_comma_separated_words(*index) {
                     citations.push(Self {
                         command: Arc::clone(command),
@@ -193,7 +193,7 @@ impl LatexLabel {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut labels = Vec::new();
         for command in commands {
-            for LatexLabelCommand { name, index, kind } in &language_data().label_commands {
+            for LatexLabelCommand { name, index, kind } in &LANGUAGE_DATA.label_commands {
                 if command.name.text() == name && command.has_comma_separated_words(*index) {
                     labels.push(Self {
                         command: Arc::clone(command),
@@ -224,7 +224,7 @@ impl LatexSection {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut sections = Vec::new();
         for command in commands {
-            for LatexSectionCommand { name, index, level } in &language_data().section_commands {
+            for LatexSectionCommand { name, index, level } in &LANGUAGE_DATA.section_commands {
                 if command.name.text() == name && command.args.len() > *index {
                     sections.push(Self {
                         command: Arc::clone(command),
@@ -278,7 +278,7 @@ impl LatexInclude {
     fn parse(uri: &Uri, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut includes = Vec::new();
         for command in commands {
-            for description in &language_data().include_commands {
+            for description in &LANGUAGE_DATA.include_commands {
                 if let Some(include) = Self::parse_single(uri, &command, &description) {
                     includes.push(include);
                 }
@@ -449,7 +449,7 @@ impl LatexMathOperator {
                 name,
                 definition_index,
                 implementation_index,
-            } in &language_data().math_operator_commands
+            } in &LANGUAGE_DATA.math_operator_commands
             {
                 if command.name.text() == name
                     && command.args.len() > *definition_index
@@ -496,7 +496,7 @@ impl LatexCommandDefinition {
                 definition_index,
                 argument_count_index,
                 implementation_index,
-            } in &language_data().command_definition_commands
+            } in &LANGUAGE_DATA.command_definition_commands
             {
                 if command.name.text() == name
                     && command.args.len() > *definition_index
@@ -541,7 +541,7 @@ impl LatexTheoremDefinition {
         let mut definitions = Vec::new();
         for command in commands {
             for LatexTheoremDefinitionCommand { name, index } in
-                &language_data().theorem_definition_commands
+                &LANGUAGE_DATA.theorem_definition_commands
             {
                 if command.name.text() == name && command.has_word(*index) {
                     definitions.push(Self {

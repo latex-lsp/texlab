@@ -1,8 +1,7 @@
 use crate::data::label::LabelContext;
-use crate::data::language::{BibtexEntryType, BibtexField};
 use crate::feature::FeatureRequest;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
-use crate::syntax::bibtex::BibtexEntry;
+use texlab_syntax::*;
 use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -295,7 +294,7 @@ pub fn citation(
 
 pub fn entry_type(
     request: &FeatureRequest<CompletionParams>,
-    ty: &'static BibtexEntryType,
+    ty: &'static BibtexEntryTypeDoc,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
@@ -315,7 +314,7 @@ pub fn entry_type(
 
 pub fn field_name(
     request: &FeatureRequest<CompletionParams>,
-    field: &'static BibtexField,
+    field: &'static BibtexFieldDoc,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {

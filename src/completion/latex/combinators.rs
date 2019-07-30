@@ -1,8 +1,5 @@
-use crate::data::language::language_data;
 use crate::feature::FeatureRequest;
-use crate::syntax::latex::*;
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use lsp_types::*;
 use std::future::Future;
 use std::sync::Arc;
@@ -133,7 +130,7 @@ where
     E: FnOnce(ArgumentContext<'a>) -> F,
     F: Future<Output = Vec<CompletionItem>>,
 {
-    let parameters = language_data()
+    let parameters = LANGUAGE_DATA
         .environment_commands
         .iter()
         .map(|cmd| Parameter::new(&cmd.name, cmd.index));

@@ -1,9 +1,6 @@
 use crate::data::completion::DATABASE;
-use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::*;
-use crate::syntax::text::{CharStream, SyntaxNode};
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use crate::tex;
 use futures::compat::*;
 use futures_boxed::boxed;

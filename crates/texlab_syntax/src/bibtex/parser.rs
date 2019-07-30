@@ -1,4 +1,4 @@
-use crate::syntax::bibtex::ast::*;
+use crate::bibtex::ast::*;
 use std::iter::Peekable;
 
 pub struct BibtexParser<I: Iterator<Item = BibtexToken>> {

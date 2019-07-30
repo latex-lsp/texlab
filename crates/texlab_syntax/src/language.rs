@@ -1,4 +1,4 @@
-use once_cell::sync::OnceCell;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -131,13 +131,13 @@ pub struct LatexColorModelCommand {
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BibtexEntryType {
+pub struct BibtexEntryTypeDoc {
     pub name: String,
     pub documentation: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct BibtexField {
+pub struct BibtexFieldDoc {
     pub name: String,
     pub documentation: String,
 }
@@ -156,8 +156,8 @@ pub struct LanguageData {
     pub colors: Vec<String>,
     pub color_commands: Vec<LatexColorCommand>,
     pub color_model_commands: Vec<LatexColorModelCommand>,
-    pub entry_types: Vec<BibtexEntryType>,
-    pub fields: Vec<BibtexField>,
+    pub entry_types: Vec<BibtexEntryTypeDoc>,
+    pub fields: Vec<BibtexFieldDoc>,
     pub pgf_libraries: Vec<String>,
     pub tikz_libraries: Vec<String>,
     pub math_environments: Vec<String>,
@@ -183,10 +183,7 @@ impl LanguageData {
     }
 }
 
-pub fn language_data() -> &'static LanguageData {
-    static INSTANCE: OnceCell<LanguageData> = OnceCell::new();
-    INSTANCE.get_or_init(|| {
-        const JSON: &str = include_str!("language.json");
-        serde_json::from_str(JSON).expect("Failed to deserialize language.json")
-    })
-}
+pub static LANGUAGE_DATA: Lazy<LanguageData> = Lazy::new(|| {
+    const JSON: &str = include_str!("language.json");
+    serde_json::from_str(JSON).expect("Failed to deserialize language.json")
+});

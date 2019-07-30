@@ -4,7 +4,6 @@ use crate::data::completion::DATABASE;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
-use lsp_types::{CompletionItem, CompletionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexComponentCommandCompletionProvider;

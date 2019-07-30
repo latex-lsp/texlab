@@ -3,11 +3,11 @@ mod finder;
 mod lexer;
 mod parser;
 
-use crate::syntax::bibtex::lexer::BibtexLexer;
-use crate::syntax::bibtex::parser::BibtexParser;
+use crate::bibtex::lexer::BibtexLexer;
+use crate::bibtex::parser::BibtexParser;
 
-pub use crate::syntax::bibtex::ast::*;
-pub use crate::syntax::bibtex::finder::*;
+pub use crate::bibtex::ast::*;
+pub use crate::bibtex::finder::*;
 use lsp_types::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

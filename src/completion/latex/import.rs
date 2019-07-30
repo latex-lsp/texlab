@@ -1,7 +1,7 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
 use crate::data::completion::DATABASE;
-use crate::data::language::{language_data, LatexIncludeKind};
+use texlab_syntax::*;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
@@ -46,7 +46,7 @@ where
         "cls"
     };
 
-    let parameters = language_data()
+    let parameters = LANGUAGE_DATA
         .include_commands
         .iter()
         .filter(|cmd| cmd.kind == kind)

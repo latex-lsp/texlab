@@ -1,5 +1,5 @@
-use crate::syntax::latex::ast::{LatexToken, LatexTokenKind};
-use crate::syntax::text::CharStream;
+use super::ast::{LatexToken, LatexTokenKind};
+use crate::text::CharStream;
 
 pub struct LatexLexer<'a> {
     stream: CharStream<'a>,
@@ -106,7 +106,7 @@ fn is_word_char(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::text::Span;
+    use crate::text::Span;
     use lsp_types::{Position, Range};
 
     fn verify<'a>(

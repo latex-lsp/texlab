@@ -1,7 +1,5 @@
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::bibtex::*;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
@@ -20,7 +18,7 @@ impl FeatureProvider for BibtexFieldHoverProvider {
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             for node in tree.find(request.params.position) {
                 if let BibtexNode::Field(field) = node {
-                    let documentation = language_data().field_documentation(field.name.text())?;
+                    let documentation = LANGUAGE_DATA.field_documentation(field.name.text())?;
                     return Some(Hover {
                         contents: HoverContents::Markup(MarkupContent {
                             kind: MarkupKind::Markdown,
@@ -57,7 +55,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: language_data()
+                    value: LANGUAGE_DATA
                         .field_documentation("author")
                         .unwrap()
                         .into(),

@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::data::language::language_data;
+use texlab_syntax::LANGUAGE_DATA;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
@@ -17,7 +17,7 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
         let parameter = Parameter::new("\\usepgflibrary", 0);
         combinators::argument(request, std::iter::once(parameter), async move |context| {
             let mut items = Vec::new();
-            for name in &language_data().pgf_libraries {
+            for name in &LANGUAGE_DATA.pgf_libraries {
                 let text_edit = TextEdit::new(context.range, name.into());
                 let item = factory::pgf_library(request, name, text_edit);
                 items.push(item);
@@ -40,7 +40,7 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
         let parameter = Parameter::new("\\usetikzlibrary", 0);
         combinators::argument(request, std::iter::once(parameter), async move |context| {
             let mut items = Vec::new();
-            for name in &language_data().tikz_libraries {
+            for name in &LANGUAGE_DATA.tikz_libraries {
                 let text_edit = TextEdit::new(context.range, name.into());
                 let item = factory::tikz_library(request, name, text_edit);
                 items.push(item);

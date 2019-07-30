@@ -1,5 +1,4 @@
-use crate::syntax::bibtex::*;
-use crate::syntax::text::SyntaxNode;
+use texlab_syntax::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -251,7 +250,6 @@ pub fn format_entry(entry: &BibtexEntry, params: &BibtexFormattingParams) -> Str
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::bibtex::BibtexSyntaxTree;
     use indoc::indoc;
 
     fn verify(source: &str, expected: &str, line_length: i32) {

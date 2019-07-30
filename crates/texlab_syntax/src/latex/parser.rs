@@ -1,4 +1,4 @@
-use crate::syntax::latex::ast::*;
+use super::ast::*;
 use std::iter::Peekable;
 use std::sync::Arc;
 

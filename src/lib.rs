@@ -21,6 +21,5 @@ pub mod reference;
 pub mod rename;
 pub mod scenario;
 pub mod server;
-pub mod syntax;
 pub mod tex;
 pub mod workspace;

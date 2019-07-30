@@ -1,4 +1,4 @@
-use crate::syntax::bibtex::BibtexSyntaxTree;
+use texlab_syntax::*;
 use futures::compat::*;
 use lsp_types::*;
 use std::process::{Command, Stdio};

@@ -1,7 +1,5 @@
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::latex::{LatexCitation, LatexToken};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use crate::workspace::Document;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};

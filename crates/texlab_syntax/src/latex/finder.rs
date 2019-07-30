@@ -1,5 +1,5 @@
-use crate::syntax::latex::ast::*;
-use crate::syntax::text::SyntaxNode;
+use crate::latex::ast::*;
+use crate::text::SyntaxNode;
 use lsp_types::Position;
 use std::sync::Arc;
 

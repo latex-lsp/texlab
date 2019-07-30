@@ -1,7 +1,5 @@
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
@@ -21,7 +19,7 @@ impl FeatureProvider for BibtexEntryTypeHoverProvider {
             for entry in tree.entries() {
                 if entry.ty.range().contains(request.params.position) {
                     let ty = &entry.ty.text()[1..];
-                    if let Some(documentation) = language_data().entry_type_documentation(ty) {
+                    if let Some(documentation) = LANGUAGE_DATA.entry_type_documentation(ty) {
                         return Some(Hover {
                             contents: HoverContents::Markup(MarkupContent {
                                 kind: MarkupKind::Markdown,
@@ -59,7 +57,7 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: language_data()
+                    value: LANGUAGE_DATA
                         .entry_type_documentation("article")
                         .unwrap()
                         .into(),

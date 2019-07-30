@@ -1,10 +1,13 @@
-pub mod bibtex;
-pub mod latex;
-pub mod text;
+mod bibtex;
+mod latex;
+mod text;
+mod language;
 
-use crate::syntax::bibtex::BibtexSyntaxTree;
-use crate::syntax::latex::LatexSyntaxTree;
 use lsp_types::Uri;
+pub use self::text::*;
+pub use self::bibtex::*;
+pub use self::latex::*;
+pub use self::language::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Language {

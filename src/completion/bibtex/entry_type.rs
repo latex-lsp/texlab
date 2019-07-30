@@ -1,9 +1,6 @@
 use crate::completion::factory;
-use crate::data::language::language_data;
 use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::syntax::bibtex::{BibtexDeclaration, BibtexToken};
-use crate::syntax::text::SyntaxNode;
-use crate::syntax::SyntaxTree;
+use texlab_syntax::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
@@ -50,7 +47,7 @@ fn contains(ty: &BibtexToken, position: Position) -> bool {
 fn make_items(request: &FeatureRequest<CompletionParams>, mut range: Range) -> Vec<CompletionItem> {
     range.start.character += 1;
     let mut items = Vec::new();
-    for ty in &language_data().entry_types {
+    for ty in &LANGUAGE_DATA.entry_types {
         let text_edit = TextEdit::new(range, (&ty.name).into());
         let item = factory::entry_type(request, ty, text_edit);
         items.push(item);

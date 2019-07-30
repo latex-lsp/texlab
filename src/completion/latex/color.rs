@@ -1,6 +1,6 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::data::language::language_data;
+use texlab_syntax::*;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, TextEdit};
@@ -14,14 +14,14 @@ impl FeatureProvider for LatexColorCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = language_data()
+        let parameters = LANGUAGE_DATA
             .color_commands
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
         combinators::argument(request, parameters, async move |context| {
             let mut items = Vec::new();
-            for name in &language_data().colors {
+            for name in &LANGUAGE_DATA.colors {
                 let text_edit = TextEdit::new(context.range, name.into());
                 let item = factory::color(request, name, text_edit);
                 items.push(item);

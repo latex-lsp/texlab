@@ -1,5 +1,4 @@
-use crate::data::language::LatexIncludeKind;
-use crate::syntax::{Language, SyntaxTree};
+use texlab_syntax::*;
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};
 use std::ffi::OsStr;
