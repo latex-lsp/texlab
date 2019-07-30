@@ -18,7 +18,7 @@ impl<'a> Outline<'a> {
             .iter()
             .filter(|sec| sec.document.uri == *uri)
             .rev()
-            .find(|sec| sec.item.end() < position)
+            .find(|sec| sec.item.end() <= position)
             .map(|sec| sec.item)
     }
 }
