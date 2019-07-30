@@ -1,9 +1,12 @@
+#![feature(async_await)]
+
 use texlab_syntax::*;
 use futures::compat::*;
 use lsp_types::*;
 use std::process::{Command, Stdio};
 use tempfile::tempdir;
 use tokio_process::CommandExt;
+
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum RenderCitationError {
@@ -59,7 +62,7 @@ pub async fn render_citation(entry_code: &str) -> Result<MarkupContent, RenderCi
     }
 }
 
-const SCRIPT: &str = include_str!("../../citeproc/dist/citeproc.js");
+const SCRIPT: &str = include_str!("../script/dist/citeproc.js");
 
 #[cfg(test)]
 mod tests {

@@ -10,11 +10,6 @@ steps:
     inputs:
       versionSpec: ">=10.x"
     displayName: "Install Node.js"
-  - bash: |
-      cd citeproc
-      npm ci
-      npm run dist
-    displayName: "Bundle citeproc"
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1

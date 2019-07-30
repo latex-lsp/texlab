@@ -21,13 +21,9 @@ You will need to install the following dependencies to compile the server:
 - [Rust](https://rustup.rs/)
 - [Node.js](https://nodejs.org/)
 
-Then run the following commands in the project folder:
+Then run the following command in the project folder:
 
 ```shell
-cd citeproc
-npm install
-npm run dist
-cd ..
 cargo build --release
 ```
 

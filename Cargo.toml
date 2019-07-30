@@ -8,7 +8,11 @@ authors = [
 edition = "2018"
 
 [workspace]
-members = ["./jsonrpc", "./jsonrpc_derive", "crates/texlab_syntax"]
+members = [
+    "jsonrpc", 
+    "jsonrpc_derive", 
+    "crates/texlab_citeproc",
+    "crates/texlab_syntax"]
 
 [dependencies]
 base64 = "0.10.1"
@@ -36,6 +40,7 @@ serde_json = "1.0.40"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
+texlab-citeproc = { path = "crates/texlab_citeproc" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 tokio = "0.1"
 tokio-codec = "0.1"

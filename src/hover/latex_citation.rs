@@ -1,4 +1,4 @@
-use crate::data::citation::{render_citation, RenderCitationError};
+use texlab_citeproc::{render_citation, RenderCitationError};
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::formatting::bibtex;
 use crate::formatting::bibtex::BibtexFormattingParams;
