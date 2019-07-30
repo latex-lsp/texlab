@@ -1,10 +1,10 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, Parameter};
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
 use std::path::{Path, PathBuf};
 use texlab_syntax::*;
+use texlab_workspace::*;
 use walkdir::WalkDir;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

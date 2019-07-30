@@ -2119,6 +2119,8 @@ dependencies = [
 name = "texlab-workspace"
 version = "0.1.0"
 dependencies = [
+ "futures-boxed 0.1.0",
+ "futures-preview 0.3.0-alpha.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "lsp-types 0.57.1 (git+https://github.com/latex-lsp/lsp-types?rev=9fcc5d9b9d3013ce84e20ef566267754d594b268)",
  "texlab-syntax 0.1.0",

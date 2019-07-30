@@ -1,7 +1,7 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSectionFoldingProvider;
@@ -49,7 +49,6 @@ impl FeatureProvider for LatexSectionFoldingProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
 
     #[test]
     fn test_nesting() {

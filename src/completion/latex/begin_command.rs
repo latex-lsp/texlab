@@ -1,8 +1,8 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexBeginCommandCompletionProvider;

@@ -1,6 +1,5 @@
 use crate::completion::factory;
 use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_syntax::*;
@@ -37,7 +36,8 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         for name in label.names() {
                             let text = name.text().to_owned();
                             let text_edit = TextEdit::new(context.range, text.clone().into());
-                            let item = factory::label(request, text.into(), text_edit, &outline_ctx);
+                            let item =
+                                factory::label(request, text.into(), text_edit, &outline_ctx);
                             items.push(item);
                         }
                     }
@@ -82,7 +82,6 @@ impl LatexLabelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]

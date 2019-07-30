@@ -1,10 +1,10 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::latex::combinators;
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use itertools::Itertools;
 use lsp_types::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexUserCommandCompletionProvider;
@@ -106,7 +106,6 @@ impl LatexUserEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]

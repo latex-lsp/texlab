@@ -1,9 +1,9 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCommandPrepareRenameProvider;
@@ -67,7 +67,6 @@ fn find_command(tree: &SyntaxTree, position: Position) -> Option<Arc<LatexComman
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]

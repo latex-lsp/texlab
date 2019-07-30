@@ -4,7 +4,6 @@ use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
-use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
 use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult};

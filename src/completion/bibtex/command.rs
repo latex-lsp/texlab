@@ -1,9 +1,9 @@
 use crate::completion::factory::{self, LatexComponentId};
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_completion_data::DATABASE;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexCommandCompletionProvider;
@@ -46,7 +46,6 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]

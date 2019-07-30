@@ -1,5 +1,9 @@
+#![feature(async_await)]
+
+mod feature;
 mod outline;
 
+pub use self::feature::*;
 pub use self::outline::*;
 use log::*;
 use lsp_types::{TextDocumentItem, Uri};

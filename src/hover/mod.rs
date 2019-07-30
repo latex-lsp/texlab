@@ -11,9 +11,9 @@ use self::latex_citation::LatexCitationHoverProvider;
 use self::latex_component::LatexComponentHoverProvider;
 use self::latex_label::LatexLabelHoverProvider;
 use self::latex_preview::LatexPreviewHoverProvider;
-use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{Hover, TextDocumentPositionParams};
+use texlab_workspace::*;
 
 pub struct HoverProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Hover>,

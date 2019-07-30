@@ -1,7 +1,7 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, TextDocumentPositionParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelHighlightProvider;
@@ -47,7 +47,6 @@ impl FeatureProvider for LatexLabelHighlightProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]

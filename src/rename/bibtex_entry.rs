@@ -1,8 +1,8 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::collections::HashMap;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryPrepareRenameProvider;
@@ -95,7 +95,6 @@ fn find_key(tree: &SyntaxTree, position: Position) -> Option<&Span> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]

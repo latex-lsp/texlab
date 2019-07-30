@@ -1,7 +1,7 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub struct LatexCommandDefinitionProvider;
 
@@ -38,7 +38,6 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::{Position, Range};
 
     #[test]

@@ -1,7 +1,7 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug)]
 pub struct PreselectCompletionProvider<F> {

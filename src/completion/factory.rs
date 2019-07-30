@@ -1,4 +1,3 @@
-use crate::feature::FeatureRequest;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use lsp_types::*;
 use once_cell::sync::Lazy;
@@ -7,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::path::Path;
 use texlab_syntax::*;
-use texlab_workspace::OutlineContext;
+use texlab_workspace::*;
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 

@@ -1,7 +1,7 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFieldHoverProvider;
@@ -36,7 +36,6 @@ impl FeatureProvider for BibtexFieldHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::{test_feature, FeatureSpec};
     use lsp_types::Position;
 
     #[test]

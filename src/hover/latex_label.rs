@@ -1,4 +1,3 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
 use texlab_syntax::*;

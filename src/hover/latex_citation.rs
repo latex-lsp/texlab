@@ -1,11 +1,10 @@
-use crate::feature::{FeatureProvider, FeatureRequest};
-use crate::formatting::bibtex;
-use crate::formatting::bibtex::BibtexFormattingParams;
+use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use futures_boxed::boxed;
 use log::warn;
 use lsp_types::*;
 use texlab_citeproc::{render_citation, RenderCitationError};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;

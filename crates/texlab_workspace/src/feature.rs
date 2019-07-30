@@ -1,7 +1,7 @@
+use super::{Document, DocumentView, Workspace, WorkspaceBuilder};
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::sync::Arc;
-use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FeatureRequest<P> {
@@ -96,14 +96,12 @@ where
     }
 }
 
-#[cfg(test)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeatureSpecFile {
     name: &'static str,
     text: &'static str,
 }
 
-#[cfg(test)]
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct FeatureSpec {
     pub files: Vec<FeatureSpecFile>,
@@ -114,7 +112,6 @@ pub struct FeatureSpec {
     pub client_capabilities: ClientCapabilities,
 }
 
-#[cfg(test)]
 impl FeatureSpec {
     pub fn file(name: &'static str, text: &'static str) -> FeatureSpecFile {
         FeatureSpecFile { name, text }
@@ -150,7 +147,6 @@ impl FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<TextDocumentPositionParams> {
         let params = TextDocumentPositionParams::new(self.identifier(), self.position);
@@ -158,7 +154,6 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<CompletionParams> {
         let params = CompletionParams {
@@ -170,7 +165,6 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<FoldingRangeParams> {
         let params = FoldingRangeParams {
@@ -180,7 +174,6 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<DocumentLinkParams> {
         let params = DocumentLinkParams {
@@ -190,7 +183,6 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<ReferenceParams> {
         let params = ReferenceParams {
@@ -204,7 +196,6 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<RenameParams> {
         let params = RenameParams {
@@ -216,7 +207,6 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
     }
 }
 
-#[cfg(test)]
 pub fn test_feature<F, P, O, S>(provider: F, spec: S) -> O
 where
     F: FeatureProvider<Params = P, Output = O>,
