@@ -5,24 +5,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use texlab_workspace::*;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct DocumentView {
-    pub workspace: Arc<Workspace>,
-    pub document: Arc<Document>,
-    pub related_documents: Vec<Arc<Document>>,
-}
-
-impl DocumentView {
-    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
-        let related_documents = workspace.related_documents(&document.uri);
-        Self {
-            workspace,
-            document,
-            related_documents,
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct FeatureRequest<P> {
     pub params: P,

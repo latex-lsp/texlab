@@ -127,6 +127,24 @@ impl Workspace {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct DocumentView {
+    pub workspace: Arc<Workspace>,
+    pub document: Arc<Document>,
+    pub related_documents: Vec<Arc<Document>>,
+}
+
+impl DocumentView {
+    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
+        let related_documents = workspace.related_documents(&document.uri);
+        Self {
+            workspace,
+            document,
+            related_documents,
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct WorkspaceManager {
     workspace: Mutex<Arc<Workspace>>,

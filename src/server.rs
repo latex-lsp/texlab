@@ -5,7 +5,7 @@ use crate::completion::{CompletionItemData, CompletionProvider};
 use texlab_completion_data::DATABASE;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
-use crate::feature::{DocumentView, FeatureProvider, FeatureRequest};
+use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
 use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult};
@@ -30,7 +30,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use texlab_citeproc::render_citation;
 use texlab_syntax::*;
-use texlab_workspace::WorkspaceManager;
+use texlab_workspace::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {

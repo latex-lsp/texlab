@@ -1,8 +1,7 @@
-use crate::feature::DocumentView;
 use lsp_types::{Position, Range, Uri};
 use std::collections::HashSet;
 use texlab_syntax::*;
-use texlab_workspace::Document;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Outline<'a> {
