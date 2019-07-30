@@ -260,7 +260,7 @@ dependencies = [
  "serde_derive 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
  "tinytemplate 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "walkdir 2.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -835,7 +835,7 @@ dependencies = [
  "error-chain 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "jni-sys 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "walkdir 2.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2071,7 +2071,7 @@ dependencies = [
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "url_serde 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wait-timeout 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "walkdir 2.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2107,7 +2107,7 @@ dependencies = [
  "texlab-formatting 0.1.0",
  "texlab-syntax 0.1.0",
  "texlab-workspace 0.1.0",
- "walkdir 2.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2584,7 +2584,7 @@ dependencies = [
 
 [[package]]
 name = "walkdir"
-version = "2.2.8"
+version = "2.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "same-file 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3005,7 +3005,7 @@ dependencies = [
 "checksum void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 "checksum wait-timeout 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9f200f5b12eb75f8c1ed65abd4b2db8a6e1b138a20de009dacee265a2498f3f6"
 "checksum walkdir 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "c66c0b9792f0a765345452775f3adbd28dde9d33f30d13e5dcc5ae17cf6f3780"
-"checksum walkdir 2.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "c7904a7e2bb3cdf0cf5e783f44204a85a37a93151738fa349f06680f59a98b45"
+"checksum walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)" = "9658c94fa8b940eab2250bd5a457f9c48b748420d71293b165c8cdbe2f55f71e"
 "checksum want 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b6395efa4784b027708f7451087e647ec73cc74f5d9bc2e418404248d679a230"
 "checksum wasm-bindgen 0.2.45 (registry+https://github.com/rust-lang/crates.io-index)" = "b7ccc7b93cfd13e26700a9e2e41e6305f1951b87e166599069f77d10358100e6"
 "checksum wasm-bindgen-backend 0.2.45 (registry+https://github.com/rust-lang/crates.io-index)" = "1953f91b1608eb1522513623c7739f047bb0fed4128ce51a93f08e12cc314645"
