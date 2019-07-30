@@ -9,8 +9,8 @@ edition = "2018"
 
 [workspace]
 members = [
-    "jsonrpc", 
-    "jsonrpc_derive", 
+    "crates/jsonrpc", 
+    "crates/jsonrpc_derive", 
     "crates/texlab_citeproc",
     "crates/texlab_syntax"]
 
@@ -19,14 +19,14 @@ base64 = "0.10.1"
 bytes = "0.4.12"
 clap = "2.33"
 copy_dir = "0.1.2"
-futures-boxed = { path = "futures_boxed" }
+futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 html2md = "0.2.9"
 image = "0.21.2"
 indoc = "0.3.1"
 itertools = "0.8.0"
-jsonrpc = { path = "jsonrpc" }
-jsonrpc-derive = { path = "jsonrpc_derive" }
+jsonrpc = { path = "crates/jsonrpc" }
+jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
 lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3013ce84e20ef566267754d594b268", features = ["proposed"] }
 nom = "5.0.0"
