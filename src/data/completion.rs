@@ -1,6 +1,7 @@
 use crate::syntax::SyntaxTree;
 use crate::workspace::Document;
 use itertools::Itertools;
+use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 #[serde(rename_all = "camelCase")]
 pub struct Database {
     pub components: Vec<Component>,
+    pub metadata: Vec<Metadata>,
 }
 
 impl Database {
@@ -63,6 +65,19 @@ impl Database {
             .iter()
             .any(|component| component.file_names.iter().any(|f| f == file_name));
     }
+
+    pub fn documentation(&self, name: &str) -> Option<MarkupContent> {
+        let metadata = self
+            .metadata
+            .iter()
+            .find(|metadata| metadata.name == name)?;
+
+        let desc = metadata.description.to_owned()?;
+        Some(MarkupContent {
+            kind: MarkupKind::PlainText,
+            value: desc.into(),
+        })
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -91,6 +106,14 @@ pub struct Parameter(pub Vec<Argument>);
 pub struct Argument {
     pub name: String,
     pub image: Option<String>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Metadata {
+    pub name: String,
+    pub caption: Option<String>,
+    pub description: Option<String>,
 }
 
 const JSON: &str = include_str!("completion.json");

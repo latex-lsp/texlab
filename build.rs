@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let text = reqwest::get("https://github.com/latex-lsp/latex-completion-data/releases/download/v19.07/completion.json")
+    let text = reqwest::get("https://github.com/latex-lsp/latex-completion-data/releases/download/v19.07.1/completion.json")
         .expect("Failed to download completion database")
         .text()
         .unwrap();

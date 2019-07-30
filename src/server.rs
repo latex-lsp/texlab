@@ -4,7 +4,6 @@ use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::data::citation::render_citation;
 use crate::data::completion::DATABASE;
-use crate::data::component::ComponentDocumentation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::feature::{DocumentView, FeatureProvider, FeatureRequest};
@@ -216,9 +215,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
         match data {
             CompletionItemData::Package | CompletionItemData::Class => {
-                item.documentation = ComponentDocumentation::lookup(&item.label)
-                    .await
-                    .map(|documentation| Documentation::MarkupContent(documentation.content));
+                item.documentation = DATABASE
+                    .documentation(&item.label)
+                    .map(|content| Documentation::MarkupContent(content));
             }
             CompletionItemData::Citation { entry_code } => {
                 if let Ok(markdown) = render_citation(&entry_code).await {

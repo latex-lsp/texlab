@@ -1,4 +1,4 @@
-use crate::data::component::ComponentDocumentation;
+use crate::data::completion::DATABASE;
 use crate::data::language::LatexIncludeKind;
 use crate::feature::{FeatureProvider, FeatureRequest};
 use crate::syntax::text::SyntaxNode;
@@ -25,9 +25,9 @@ impl FeatureProvider for LatexComponentHoverProvider {
                 {
                     for path in include.paths() {
                         if path.range().contains(request.params.position) {
-                            let documentation = ComponentDocumentation::lookup(path.text()).await?;
+                            let documentation = DATABASE.documentation(path.text())?;
                             return Some(Hover {
-                                contents: HoverContents::Markup(documentation.content),
+                                contents: HoverContents::Markup(documentation),
                                 range: Some(path.range()),
                             });
                         }
