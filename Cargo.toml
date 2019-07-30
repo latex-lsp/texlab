@@ -12,7 +12,9 @@ members = [
     "crates/jsonrpc", 
     "crates/jsonrpc_derive", 
     "crates/texlab_citeproc",
+    "crates/texlab_completion",
     "crates/texlab_completion_data",
+    "crates/texlab_formatting",
     "crates/texlab_syntax",
     "crates/texlab_workspace"]
 
@@ -25,7 +27,6 @@ futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 html2md = "0.2.9"
 image = "0.21.2"
-indoc = "0.3.1"
 itertools = "0.8.0"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
@@ -43,7 +44,9 @@ serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
+texlab-completion = { path = "crates/texlab_completion" }
 texlab-completion-data = { path = "crates/texlab_completion_data" }
+texlab-formatting = { path = "crates/texlab_formatting" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = "0.1"

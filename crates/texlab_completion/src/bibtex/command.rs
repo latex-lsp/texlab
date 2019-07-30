@@ -1,4 +1,4 @@
-use crate::completion::factory::{self, LatexComponentId};
+use crate::factory::{self, LatexComponentId};
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_completion_data::DATABASE;

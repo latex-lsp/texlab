@@ -54,7 +54,7 @@ impl<'a> BibtexFormatter<'a> {
             "\t".into()
         };
 
-        BibtexFormatter {
+        Self {
             params,
             indent,
             output: String::new(),

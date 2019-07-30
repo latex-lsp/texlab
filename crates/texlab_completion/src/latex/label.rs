@@ -1,5 +1,5 @@
-use crate::completion::factory;
-use crate::completion::latex::combinators::{self, ArgumentContext, Parameter};
+use super::combinators::{self, ArgumentContext, Parameter};
+use crate::factory;
 use futures_boxed::boxed;
 use lsp_types::*;
 use texlab_syntax::*;

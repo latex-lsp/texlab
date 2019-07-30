@@ -1,4 +1,4 @@
-use crate::completion::factory;
+use crate::factory;
 use futures_boxed::boxed;
 use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
 use texlab_syntax::*;

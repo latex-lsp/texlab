@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 mod bibtex;
 mod factory;
 mod latex;

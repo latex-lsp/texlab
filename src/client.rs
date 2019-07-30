@@ -1,6 +1,5 @@
 use crate::build::BuildOptions;
 use crate::diagnostics::LatexLintOptions;
-use crate::formatting::bibtex::BibtexFormattingOptions;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::client::Result;
@@ -9,6 +8,7 @@ use lsp_types::*;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use texlab_formatting::bibtex::BibtexFormattingOptions;
 
 #[jsonrpc_client(LatexLspClient)]
 pub trait LspClient {

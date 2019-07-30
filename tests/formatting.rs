@@ -2,7 +2,7 @@
 
 use lsp_types::*;
 use std::collections::HashMap;
-use texlab::formatting::bibtex::BibtexFormattingOptions;
+use texlab_formatting::bibtex::BibtexFormattingOptions;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(

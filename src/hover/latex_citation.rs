@@ -1,8 +1,8 @@
-use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use futures_boxed::boxed;
 use log::warn;
 use lsp_types::*;
 use texlab_citeproc::{render_citation, RenderCitationError};
+use texlab_formatting::bibtex::{self, BibtexFormattingParams};
 use texlab_syntax::*;
 use texlab_workspace::*;
 

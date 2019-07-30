@@ -1,5 +1,5 @@
-use crate::completion::factory;
-use crate::completion::latex::combinators::{self, Parameter};
+use super::combinators::{self, Parameter};
+use crate::factory;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::iter;
