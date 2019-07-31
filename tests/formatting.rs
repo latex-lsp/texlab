@@ -2,8 +2,8 @@
 
 use lsp_types::*;
 use std::collections::HashMap;
-use texlab_formatting::bibtex::BibtexFormattingOptions;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
+use texlab_formatting::bibtex::BibtexFormattingOptions;
 
 pub async fn run(
     scenario: &'static str,
