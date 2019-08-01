@@ -27,7 +27,7 @@ copy_dir = "0.1.2"
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
 html2md = "0.2.9"
-image = "0.21.2"
+image = "0.22.0"
 itertools = "0.8.0"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
