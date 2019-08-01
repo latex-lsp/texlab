@@ -24,7 +24,7 @@ bytes = "0.4.12"
 clap = "2.33"
 copy_dir = "0.1.2"
 futures-boxed = { path = "crates/futures_boxed" }
-futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
+futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
 html2md = "0.2.9"
 image = "0.21.2"
 itertools = "0.8.0"
