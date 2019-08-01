@@ -10,6 +10,9 @@ steps:
     inputs:
       versionSpec: ">=10.x"
     displayName: "Install Node.js"
+  - bash: |
+      cargo run --manifest-path scripts/build/Cargo.toml
+    displayName: "Bundle citeproc and download completion database"
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1

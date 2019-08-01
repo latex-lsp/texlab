@@ -9,14 +9,15 @@ edition = "2018"
 
 [workspace]
 members = [
+    "crates/citeproc",
     "crates/jsonrpc", 
     "crates/jsonrpc_derive", 
-    "crates/texlab_citeproc",
     "crates/texlab_completion",
     "crates/texlab_completion_data",
     "crates/texlab_formatting",
     "crates/texlab_syntax",
-    "crates/texlab_workspace"]
+    "crates/texlab_workspace",
+    "scripts/build"]
 
 [dependencies]
 base64 = "0.10.1"
@@ -43,7 +44,7 @@ serde_json = "1.0.40"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
-texlab-citeproc = { path = "crates/texlab_citeproc" }
+citeproc = { path = "crates/citeproc" }
 texlab-completion = { path = "crates/texlab_completion" }
 texlab-completion-data = { path = "crates/texlab_completion_data" }
 texlab-formatting = { path = "crates/texlab_formatting" }

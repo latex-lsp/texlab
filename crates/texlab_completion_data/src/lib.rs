@@ -114,6 +114,6 @@ pub struct Metadata {
     pub description: Option<String>,
 }
 
-const JSON: &str = include_str!("completion.json");
+const JSON: &str = include_str!("../completion.json");
 
 pub static DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());
