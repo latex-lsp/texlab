@@ -3,9 +3,9 @@ mod latex_label;
 
 use self::bibtex_entry::BibtexEntryReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, ReferenceParams};
-use texlab_workspace::*;
 
 pub struct ReferenceProvider {
     provider: ConcatProvider<ReferenceParams, Location>,

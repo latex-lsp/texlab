@@ -1,4 +1,5 @@
 use crate::client::LspClient;
+use crate::workspace::*;
 use futures::executor::block_on;
 use futures_boxed::boxed;
 use lsp_types::*;
@@ -9,7 +10,6 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::thread;
-use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

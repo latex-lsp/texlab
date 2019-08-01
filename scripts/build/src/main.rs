@@ -23,7 +23,7 @@ fn bundle_citeproc() {
     let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("..")
-        .join("crates")
+        .join("src")
         .join("citeproc")
         .join("script");
 
@@ -46,10 +46,10 @@ fn download_completion_database() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("..")
-        .join("crates")
-        .join("texlab_completion_data")
-        .join("completion.json");
-        
+        .join("src")
+        .join("completion")
+        .join("data.json");
+
     fs::write(path, text).expect("Failed to save completion database");
 }
 

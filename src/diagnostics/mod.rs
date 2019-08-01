@@ -7,8 +7,8 @@ pub use self::bibtex::BibtexErrorCode;
 use self::build::BuildDiagnosticsProvider;
 use self::latex::LatexDiagnosticsProvider;
 pub use self::latex::LatexLintOptions;
+use crate::workspace::Document;
 use lsp_types::Diagnostic;
-use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct DiagnosticsManager {

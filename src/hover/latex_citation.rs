@@ -1,10 +1,10 @@
-use citeproc::{render_citation, RenderCitationError};
+use crate::citeproc::{render_citation, RenderCitationError};
+use crate::formatting::bibtex::{self, BibtexFormattingParams};
+use crate::syntax::*;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use log::warn;
 use lsp_types::*;
-use texlab_formatting::bibtex::{self, BibtexFormattingParams};
-use texlab_syntax::*;
-use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;

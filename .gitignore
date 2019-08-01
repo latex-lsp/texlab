@@ -2,4 +2,4 @@ target/
 **/*.rs.bk
 /.idea
 tarpaulin-report.html
-crates/texlab_completion_data/src/completion.json
+src/completion/data.json

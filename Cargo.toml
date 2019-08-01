@@ -9,14 +9,9 @@ edition = "2018"
 
 [workspace]
 members = [
-    "crates/citeproc",
+    "crates/futures_boxed",
     "crates/jsonrpc", 
-    "crates/jsonrpc_derive", 
-    "crates/texlab_completion",
-    "crates/texlab_completion_data",
-    "crates/texlab_formatting",
-    "crates/texlab_syntax",
-    "crates/texlab_workspace",
+    "crates/jsonrpc_derive",
     "scripts/build"]
 
 [dependencies]
@@ -44,12 +39,6 @@ serde_json = "1.0.40"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
-citeproc = { path = "crates/citeproc" }
-texlab-completion = { path = "crates/texlab_completion" }
-texlab-completion-data = { path = "crates/texlab_completion_data" }
-texlab-formatting = { path = "crates/texlab_formatting" }
-texlab-syntax = { path = "crates/texlab_syntax" }
-texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = "0.1"
 tokio-codec = "0.1"
 tokio-process = "0.2.4"
@@ -61,6 +50,7 @@ walkdir = "2"
 
 [dev-dependencies]
 criterion = "0.2"
+indoc = "0.3.3"
 
 [[bench]]
 name = "completion"

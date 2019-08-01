@@ -1,9 +1,12 @@
 use crate::action::{Action, ActionMananger, LintReason};
 use crate::build::*;
+use crate::citeproc::render_citation;
 use crate::client::LspClient;
+use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::folding::FoldingProvider;
+use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
 use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult};
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
@@ -11,7 +14,8 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
-use citeproc::render_citation;
+use crate::syntax::*;
+use crate::workspace::*;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;
@@ -25,11 +29,6 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
-use texlab_completion::{CompletionItemData, CompletionProvider};
-use texlab_completion_data::DATABASE;
-use texlab_formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
-use texlab_syntax::*;
-use texlab_workspace::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {

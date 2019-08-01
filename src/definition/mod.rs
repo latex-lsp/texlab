@@ -5,9 +5,9 @@ mod latex_label;
 use self::latex_citation::LatexCitationDefinitionProvider;
 use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::{Location, TextDocumentPositionParams};
-use texlab_workspace::*;
 
 pub struct DefinitionProvider {
     provider: ConcatProvider<TextDocumentPositionParams, Location>,

@@ -1,4 +1,7 @@
+use crate::completion::DATABASE;
+use crate::syntax::*;
 use crate::tex;
+use crate::workspace::*;
 use futures::compat::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
@@ -9,9 +12,6 @@ use std::io;
 use std::io::Cursor;
 use std::process::{Command, Stdio};
 use tempfile::TempDir;
-use texlab_completion_data::DATABASE;
-use texlab_syntax::*;
-use texlab_workspace::*;
 use tokio_process::CommandExt;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[

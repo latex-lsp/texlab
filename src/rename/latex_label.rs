@@ -1,8 +1,8 @@
+use crate::syntax::*;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::collections::HashMap;
-use texlab_syntax::*;
-use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelPrepareRenameProvider;

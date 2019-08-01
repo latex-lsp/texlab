@@ -1,3 +1,4 @@
+use crate::workspace::Document;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Uri};
 use once_cell::sync::Lazy;
 use path_clean::PathClean;
@@ -6,7 +7,6 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str;
-use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct BuildDiagnosticsProvider {

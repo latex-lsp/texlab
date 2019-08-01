@@ -7,9 +7,9 @@ use self::bibtex_entry::*;
 use self::latex_command::*;
 use self::latex_environment::*;
 use self::latex_label::*;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
-use texlab_workspace::*;
 
 pub struct PrepareRenameProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Range>,

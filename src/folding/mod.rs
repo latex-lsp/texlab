@@ -5,9 +5,9 @@ mod latex_section;
 use self::bibtex_declaration::BibtexDeclarationFoldingProvider;
 use self::latex_environment::LatexEnvironmentFoldingProvider;
 use self::latex_section::LatexSectionFoldingProvider;
+use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::{FoldingRange, FoldingRangeParams};
-use texlab_workspace::*;
 
 pub struct FoldingProvider {
     provider: ConcatProvider<FoldingRangeParams, FoldingRange>,
