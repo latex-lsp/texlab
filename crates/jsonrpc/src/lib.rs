@@ -30,12 +30,7 @@ where
 {
     pub async fn listen(&mut self) {
         while let Some(json) = self.input.next().await {
-            let message = serde_json::from_str(&json.expect("")).map_err(|_| Error {
-                code: ErrorCode::ParseError,
-                message: "Could not parse the input".to_owned(),
-                data: serde_json::Value::Null,
-            });
-
+            let message = serde_json::from_str(&json.unwrap()).map_err(|_| Error::parse_error());
             match message {
                 Ok(Message::Request(request)) => {
                     let server = Arc::clone(&self.server);
