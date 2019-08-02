@@ -14,6 +14,7 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
+use crate::symbol::SymbolProvider;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures::channel::*;
@@ -45,6 +46,7 @@ pub struct LatexLspServer<C> {
     definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
+    symbol_provider: SymbolProvider,
     hover_provider: HoverProvider,
     link_provider: LinkProvider,
     reference_provider: ReferenceProvider,
@@ -66,6 +68,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
+            symbol_provider: SymbolProvider::new(),
             hover_provider: HoverProvider::new(),
             link_provider: LinkProvider::new(),
             reference_provider: ReferenceProvider::new(),
@@ -102,7 +105,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             implementation_provider: None,
             references_provider: Some(true),
             document_highlight_provider: Some(true),
-            document_symbol_provider: None,
+            document_symbol_provider: Some(true),
             workspace_symbol_provider: None,
             code_action_provider: None,
             code_lens_provider: None,
@@ -272,9 +275,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(
         &self,
-        _params: DocumentSymbolParams,
+        params: DocumentSymbolParams,
     ) -> Result<Vec<DocumentSymbol>> {
-        Ok(Vec::new())
+        let request = request!(self, params)?;
+        let symbols = self.symbol_provider.execute(&request).await;
+        Ok(symbols)
     }
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]

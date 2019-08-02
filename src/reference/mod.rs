@@ -13,7 +13,7 @@ pub struct ReferenceProvider {
 
 impl ReferenceProvider {
     pub fn new() -> Self {
-        ReferenceProvider {
+        Self {
             provider: ConcatProvider::new(vec![
                 Box::new(BibtexEntryReferenceProvider),
                 Box::new(LatexLabelReferenceProvider),
