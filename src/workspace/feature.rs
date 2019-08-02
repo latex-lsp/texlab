@@ -32,7 +32,7 @@ pub trait FeatureProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output;
 }
 
-type ListProvider<P, O> = Box<FeatureProvider<Params = P, Output = Vec<O>> + Send + Sync>;
+type ListProvider<P, O> = Box<dyn FeatureProvider<Params = P, Output = Vec<O>> + Send + Sync>;
 
 #[derive(Default)]
 pub struct ConcatProvider<P, O> {
@@ -63,7 +63,7 @@ where
     }
 }
 
-type OptionProvider<P, O> = Box<FeatureProvider<Params = P, Output = Option<O>> + Send + Sync>;
+type OptionProvider<P, O> = Box<dyn FeatureProvider<Params = P, Output = Option<O>> + Send + Sync>;
 
 #[derive(Default)]
 pub struct ChoiceProvider<P, O> {
