@@ -68,7 +68,7 @@ mod tests {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             params: json!(value),
             method: METHOD_NAME.to_owned(),
-            id: 0,
+            id: Id::Number(0),
         }
     }
 
