@@ -16,7 +16,10 @@ use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
 use crate::syntax::*;
 use crate::workspace::*;
+use futures::channel::*;
+use futures::executor;
 use futures::lock::Mutex;
+use futures::prelude::*;
 use futures_boxed::boxed;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
@@ -32,6 +35,7 @@ use std::sync::Arc;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {
+    build_engine_tx: mpsc::Sender<BuildEngineMessage>,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     workspace_manager: WorkspaceManager,
@@ -50,8 +54,9 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>) -> Self {
+    pub fn new(client: Arc<C>, build_engine_tx: mpsc::Sender<BuildEngineMessage>) -> Self {
         LatexLspServer {
+            build_engine_tx,
             client,
             client_capabilities: OnceCell::new(),
             workspace_manager: WorkspaceManager::default(),
@@ -196,6 +201,14 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub fn did_close(&self, _params: DidCloseTextDocumentParams) {}
 
+    #[jsonrpc_method("window/progress/cancel", kind = "notification")]
+    pub fn progress_cancel(&self, params: ProgressCancelParams) {
+        let message = BuildEngineMessage::Cancel(params.id.into());
+        let mut build_engine_tx = self.build_engine_tx.clone();
+
+        executor::block_on(build_engine_tx.send(message)).unwrap();
+    }
+
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
         let request = request!(self, params)?;
@@ -327,8 +340,19 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
         let request = request!(self, params)?;
         let options = self.configuration::<BuildOptions>("latex.build").await;
-        let provider = BuildProvider::new(Arc::clone(&self.client), options);
-        let result = provider.execute(&request).await;
+
+        let (result_tx, result_rx) = oneshot::channel();
+        let message = BuildEngineMessage::Build(request, options, result_tx);
+        let mut build_engine_tx = self.build_engine_tx.clone();
+        build_engine_tx.send(message).await.unwrap();
+
+        let result = match result_rx.await {
+            Ok(result) => result,
+            Err(_) => BuildResult {
+                status: BuildStatus::Cancelled,
+            },
+        };
+
         Ok(result)
     }
 

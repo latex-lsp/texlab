@@ -1,15 +1,22 @@
 use crate::client::LspClient;
 use crate::workspace::*;
-use futures::executor::block_on;
+use futures::channel::*;
+use futures::compat::*;
+use futures::future::{AbortHandle, Abortable, Aborted};
+use futures::prelude::*;
+use futures::stream;
 use futures_boxed::boxed;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
-use std::io::{self, BufRead};
+use std::collections::HashMap;
+use std::io::{self, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
-use std::thread;
+use tokio::io::lines;
+use tokio_process::CommandExt;
+use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,6 +61,7 @@ pub enum BuildStatus {
     Success = 0,
     Error = 1,
     Failure = 2,
+    Cancelled = 3,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -64,8 +72,9 @@ pub struct BuildResult {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BuildProvider<C> {
-    client: Arc<C>,
-    options: BuildOptions,
+    pub client: Arc<C>,
+    pub options: BuildOptions,
+    pub progress_id: String,
 }
 
 impl<C> BuildProvider<C>
@@ -73,7 +82,11 @@ where
     C: LspClient + Send + Sync + 'static,
 {
     pub fn new(client: Arc<C>, options: BuildOptions) -> Self {
-        Self { client, options }
+        Self {
+            client,
+            options,
+            progress_id: format!("texlab-build-{}", Uuid::new_v4()),
+        }
     }
 
     async fn build<'a>(&'a self, path: &'a Path) -> io::Result<bool> {
@@ -86,33 +99,23 @@ where
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(path.parent().unwrap())
-            .spawn()?;
+            .spawn_async()?;
 
-        let handle1 = Self::read(Arc::clone(&self.client), process.stdout.take().unwrap());
-        let handle2 = Self::read(Arc::clone(&self.client), process.stderr.take().unwrap());
-        let success = process.wait()?.success();
-        handle1.join().unwrap();
-        handle2.join().unwrap();
-        Ok(success)
-    }
+        let stdout = lines(BufReader::new(process.stdout().take().unwrap())).compat();
+        let stderr = lines(BufReader::new(process.stderr().take().unwrap())).compat();
+        let mut output = stream::select(stdout, stderr);
 
-    fn read<R>(client: Arc<C>, output: R) -> thread::JoinHandle<()>
-    where
-        R: io::Read + Send + 'static,
-    {
-        thread::spawn(move || {
-            let client = Arc::clone(&client);
-            let reader = io::BufReader::new(output);
-            reader.lines().for_each(|line| {
-                if let Ok(line) = line {
-                    let params = LogMessageParams {
-                        typ: MessageType::Log,
-                        message: line.into(),
-                    };
-                    block_on(client.log_message(params));
-                }
-            });
-        })
+        while let Some(Ok(line)) = output.next().await {
+            let params = LogMessageParams {
+                typ: MessageType::Log,
+                message: line.into(),
+            };
+
+            self.client.log_message(params).await;
+        }
+
+        let status = process.compat().await?;
+        Ok(status.success())
     }
 }
 
@@ -131,12 +134,11 @@ where
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
 
-        let progress_id = "build";
         let title = path.file_name().unwrap().to_string_lossy().into_owned();
         let params = ProgressStartParams {
-            id: progress_id.into(),
+            id: self.progress_id.clone().into(),
             title: title.into(),
-            cancellable: Some(false),
+            cancellable: Some(true),
             message: Some("Building".into()),
             percentage: None,
         };
@@ -148,10 +150,75 @@ where
             Err(_) => BuildStatus::Failure,
         };
 
-        let params = ProgressDoneParams {
-            id: progress_id.into(),
-        };
-        self.client.progress_done(params).await;
         BuildResult { status }
+    }
+}
+
+pub enum BuildEngineMessage {
+    Build(
+        FeatureRequest<BuildParams>,
+        BuildOptions,
+        oneshot::Sender<BuildResult>,
+    ),
+    Cancel(String),
+}
+
+pub struct BuildEngine<C> {
+    pub message_tx: mpsc::Sender<BuildEngineMessage>,
+    message_rx: mpsc::Receiver<BuildEngineMessage>,
+    client: Arc<C>,
+}
+
+impl<C> BuildEngine<C>
+where
+    C: LspClient + Send + Sync + 'static,
+{
+    pub fn new(client: Arc<C>) -> Self {
+        let (message_tx, message_rx) = mpsc::channel(0);
+        Self {
+            message_tx,
+            message_rx,
+            client,
+        }
+    }
+
+    pub async fn listen(&mut self) {
+        let mut handles_by_id = HashMap::new();
+        while let Some(message) = self.message_rx.next().await {
+            match message {
+                BuildEngineMessage::Build(request, options, result_tx) => {
+                    let provider = BuildProvider::new(Arc::clone(&self.client), options);
+                    let (handle, reg) = AbortHandle::new_pair();
+                    handles_by_id.insert(provider.progress_id.clone(), handle);
+
+                    let result = match Abortable::new(provider.execute(&request), reg).await {
+                        Ok(result) => result,
+                        Err(Aborted) => BuildResult {
+                            status: BuildStatus::Cancelled,
+                        },
+                    };
+
+                    let params = ProgressDoneParams {
+                        id: provider.progress_id.clone().into(),
+                    };
+
+                    self.client.progress_done(params).await;
+                    handles_by_id.remove(&provider.progress_id);
+                    result_tx.send(result).unwrap();
+                }
+                BuildEngineMessage::Cancel(id) => {
+                    if id == "texlab-build-*" {
+                        handles_by_id
+                            .iter()
+                            .filter(|(id, _)| id.starts_with("texlab-build-"))
+                            .for_each(|(_, handle)| handle.abort());
+                    } else {
+                        if let Some(handle) = handles_by_id.get(&id) {
+                            handle.abort();
+                        }
+                    }
+                }
+            }
+        }
     }
 }

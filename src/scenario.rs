@@ -1,6 +1,7 @@
 use crate::client::LspClientMock;
 use crate::server::LatexLspServer;
 use copy_dir::copy_dir;
+use futures::channel::mpsc;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
 use std::fs::remove_dir;
@@ -44,7 +45,8 @@ impl Scenario {
         copy_dir(source, directory.path()).unwrap();
 
         let client = Arc::new(LspClientMock::default());
-        let server = LatexLspServer::new(Arc::clone(&client));
+        let (build_engine_tx, _) = mpsc::channel(0);
+        let server = LatexLspServer::new(Arc::clone(&client), build_engine_tx);
 
         let root_uri = Uri::from_file_path(directory.path()).unwrap();
         let init_params = InitializeParams {
