@@ -5,7 +5,7 @@ use futures::prelude::*;
 use futures_boxed::boxed;
 use serde::Serialize;
 use serde_json::json;
-use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -16,7 +16,7 @@ pub trait ResponseHandler {
 
 pub struct Client {
     output: mpsc::Sender<String>,
-    request_id: AtomicI32,
+    request_id: AtomicU64,
     senders_by_id: CHashMap<Id, oneshot::Sender<Result<serde_json::Value>>>,
 }
 
@@ -24,7 +24,7 @@ impl Client {
     pub fn new(output: mpsc::Sender<String>) -> Self {
         Client {
             output,
-            request_id: AtomicI32::new(0),
+            request_id: AtomicU64::new(0),
             senders_by_id: CHashMap::new(),
         }
     }
@@ -35,7 +35,7 @@ impl Client {
         params: T,
     ) -> Result<serde_json::Value> {
         let id = self.request_id.fetch_add(1, Ordering::SeqCst);
-        let request = Request::new(method, json!(params), id);
+        let request = Request::new(method, json!(params), Id::Number(id));
 
         let (result_tx, result_rx) = oneshot::channel();
         self.senders_by_id.insert(request.id.clone(), result_tx);

@@ -3,7 +3,12 @@ use serde_repr::*;
 
 pub const PROTOCOL_VERSION: &str = "2.0";
 
-pub type Id = i32;
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Id {
+    Number(u64),
+    String(String),
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize_repr, Serialize_repr)]
 #[repr(i32)]
