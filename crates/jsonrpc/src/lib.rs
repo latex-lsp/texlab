@@ -1,4 +1,4 @@
-#![feature(async_await, trait_alias, async_closure)]
+#![feature(async_await, async_closure)]
 
 pub mod client;
 pub mod server;
@@ -10,23 +10,23 @@ pub use self::{
     types::*,
 };
 
-use futures::lock::Mutex;
+use futures::channel::*;
 use futures::prelude::*;
+use std::io;
 use std::sync::Arc;
 
-pub struct MessageHandler<S, C, I, O> {
+pub struct MessageHandler<S, C, I> {
     pub server: Arc<S>,
     pub client: Arc<C>,
     pub input: I,
-    pub output: Arc<Mutex<O>>,
+    pub output: mpsc::Sender<String>,
 }
 
-impl<S, C, I, O> MessageHandler<S, C, I, O>
+impl<S, C, I> MessageHandler<S, C, I>
 where
     S: RequestHandler + ActionHandler + Send + Sync + 'static,
     C: ResponseHandler + Send + Sync + 'static,
-    I: Input,
-    O: Output + 'static,
+    I: Stream<Item = io::Result<String>> + Unpin,
 {
     pub async fn listen(&mut self) {
         while let Some(json) = self.input.next().await {
@@ -34,14 +34,12 @@ where
             match message {
                 Ok(Message::Request(request)) => {
                     let server = Arc::clone(&self.server);
-                    let output = Arc::clone(&self.output);
+                    let mut output = self.output.clone();
+
                     runtime::spawn(async move {
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
-                        {
-                            let mut output = output.lock().await;
-                            output.send(json).await.unwrap();
-                        }
+                        output.send(json).await.unwrap();
                         server.execute_actions().await;
                     });
                 }
@@ -58,10 +56,7 @@ where
                 Err(why) => {
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
-                    {
-                        let mut output = self.output.lock().await;
-                        output.send(json).await.unwrap();
-                    }
+                    self.output.send(json).await.unwrap();
                 }
             }
         }

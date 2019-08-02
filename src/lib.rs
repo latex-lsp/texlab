@@ -22,4 +22,3 @@ pub mod server;
 pub mod syntax;
 pub mod tex;
 pub mod workspace;
- 

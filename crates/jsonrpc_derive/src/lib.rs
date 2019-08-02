@@ -105,31 +105,25 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
     let tokens = quote! {
         #trait_
 
-        pub struct #struct_ident<O> {
-            client: jsonrpc::Client<O>
+        pub struct #struct_ident {
+            client: jsonrpc::Client
         }
 
-        impl<O> #struct_ident<O>
-        where
-            O: jsonrpc::Output,
+        impl #struct_ident
         {
-            pub fn new(output: std::sync::Arc<futures::lock::Mutex<O>>) -> Self {
+            pub fn new(output: futures::channel::mpsc::Sender<String>) -> Self {
                 Self {
                     client: jsonrpc::Client::new(output),
                 }
             }
         }
 
-        impl<O> #trait_ident for #struct_ident<O>
-        where
-            O: jsonrpc::Output,
+        impl #trait_ident for #struct_ident
         {
             #(#stubs)*
         }
 
-        impl<O> jsonrpc::ResponseHandler for #struct_ident<O>
-        where
-            O: jsonrpc::Output,
+        impl jsonrpc::ResponseHandler for #struct_ident
         {
             #[boxed]
             async fn handle(&self, response: jsonrpc::Response) -> () {

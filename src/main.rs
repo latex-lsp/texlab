@@ -1,8 +1,10 @@
 #![feature(async_await)]
 
 use clap::*;
+use futures::channel::mpsc;
 use futures::compat::*;
-use futures::lock::Mutex;
+use futures::future;
+use futures::prelude::*;
 use jsonrpc::MessageHandler;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
@@ -40,18 +42,22 @@ async fn main() {
         .init()
         .unwrap();
 
-    let stdin = tokio_stdin_stdout::stdin(0);
-    let stdout = tokio_stdin_stdout::stdout(0);
-    let input = FramedRead::new(stdin, LspCodec).compat();
-    let output = Arc::new(Mutex::new(FramedWrite::new(stdout, LspCodec).sink_compat()));
-    let client = Arc::new(LatexLspClient::new(Arc::clone(&output)));
+    let stdin = FramedRead::new(tokio_stdin_stdout::stdin(0), LspCodec).compat();
+    let stdout = FramedWrite::new(tokio_stdin_stdout::stdout(0), LspCodec).sink_compat();
+    let (stdout_tx, stdout_rx) = mpsc::channel(0);
+
+    let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
     let mut handler = MessageHandler {
         server,
         client,
-        input,
-        output,
+        input: stdin,
+        output: stdout_tx,
     };
 
-    handler.listen().await;
+    let handle = runtime::spawn(async move {
+        stdout_rx.map(|x| Ok(x)).forward(stdout).await.unwrap();
+    });
+
+    future::join(handler.listen(), handle).await;
 }

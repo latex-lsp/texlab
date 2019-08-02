@@ -7,6 +7,7 @@ authors = [
 edition = "2018"
 
 [dependencies]
+chashmap = "2.2"
 futures-boxed = { path = "../futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
 runtime = "0.3.0-alpha.4"
