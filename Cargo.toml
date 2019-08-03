@@ -44,7 +44,7 @@ tokio-codec = "0.1"
 tokio-process = "0.2.4"
 tokio-stdin-stdout = "0.1"
 uuid = { version = "0.7", features = ["v4"] }
-url = "1.7.2"
+url = "2.0.0"
 url_serde = "0.2.0"
 wait-timeout = "0.2.0"
 walkdir = "2"
