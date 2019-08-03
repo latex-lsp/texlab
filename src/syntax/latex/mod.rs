@@ -9,7 +9,7 @@ pub use self::finder::LatexNode;
 use self::lexer::LatexLexer;
 use self::parser::LatexParser;
 use super::language::*;
-use super::text::SyntaxNode;
+use super::text::{CharStream, SyntaxNode};
 use lsp_types::{Position, Range, Uri};
 use path_clean::PathClean;
 use std::path::PathBuf;
@@ -235,6 +235,18 @@ impl LatexSection {
             }
         }
         sections
+    }
+
+    pub fn extract_text(&self, text: &str) -> Option<String> {
+        let content = &self.command.args[self.index];
+        let right = content.right.as_ref()?;
+        let range = Range::new_simple(
+            content.left.start().line,
+            content.left.start().character + 1,
+            right.end().line,
+            right.end().character - 1,
+        );
+        Some(CharStream::extract(&text, range))
     }
 }
 

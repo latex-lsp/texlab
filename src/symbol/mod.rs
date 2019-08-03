@@ -1,6 +1,8 @@
 mod bibtex_entry;
+mod latex_section;
 
 use self::bibtex_entry::BibtexEntrySymbolProvider;
+use self::latex_section::LatexSectionSymbolProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::{DocumentSymbol, DocumentSymbolParams};
@@ -12,7 +14,10 @@ pub struct SymbolProvider {
 impl SymbolProvider {
     pub fn new() -> Self {
         Self {
-            provider: ConcatProvider::new(vec![Box::new(BibtexEntrySymbolProvider)]),
+            provider: ConcatProvider::new(vec![
+                Box::new(BibtexEntrySymbolProvider),
+                Box::new(LatexSectionSymbolProvider),
+            ]),
         }
     }
 }
