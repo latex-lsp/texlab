@@ -71,7 +71,7 @@ pub enum LatexContent {
 }
 
 impl LatexContent {
-    pub fn accept<T : LatexVisitor>(&self, visitor: &mut T) {
+    pub fn accept<T: LatexVisitor>(&self, visitor: &mut T) {
         match self {
             LatexContent::Group(group) => visitor.visit_group(Arc::clone(&group)),
             LatexContent::Command(command) => visitor.visit_command(Arc::clone(&command)),
@@ -318,27 +318,27 @@ pub trait LatexVisitor {
 pub struct LatexWalker;
 
 impl LatexWalker {
-    pub fn walk_root<T : LatexVisitor>(visitor: &mut T, root: Arc<LatexRoot>) {
+    pub fn walk_root<T: LatexVisitor>(visitor: &mut T, root: Arc<LatexRoot>) {
         for child in &root.children {
             child.accept(visitor);
         }
     }
 
-    pub fn walk_group<T : LatexVisitor>(visitor: &mut T, group: Arc<LatexGroup>) {
+    pub fn walk_group<T: LatexVisitor>(visitor: &mut T, group: Arc<LatexGroup>) {
         for child in &group.children {
             child.accept(visitor);
         }
     }
 
-    pub fn walk_command<T : LatexVisitor>(visitor: &mut T, command: Arc<LatexCommand>) {
+    pub fn walk_command<T: LatexVisitor>(visitor: &mut T, command: Arc<LatexCommand>) {
         for arg in &command.groups {
             visitor.visit_group(Arc::clone(&arg));
         }
     }
 
-    pub fn walk_text<T : LatexVisitor>(_visitor: &mut T, _text: Arc<LatexText>) {}
+    pub fn walk_text<T: LatexVisitor>(_visitor: &mut T, _text: Arc<LatexText>) {}
 
-    pub fn walk_comma<T : LatexVisitor>(_visitor: &mut T, _comma: Arc<LatexComma>) {}
+    pub fn walk_comma<T: LatexVisitor>(_visitor: &mut T, _comma: Arc<LatexComma>) {}
 
-    pub fn walk_math<T : LatexVisitor>(_visitor: &mut T, _math: Arc<LatexMath>) {}
+    pub fn walk_math<T: LatexVisitor>(_visitor: &mut T, _math: Arc<LatexMath>) {}
 }

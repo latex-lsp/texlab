@@ -1,8 +1,8 @@
 use crate::client::LspClient;
 use crate::workspace::*;
-use futures::channel::*;
 use futures::compat::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
+use futures::lock::Mutex;
 use futures::prelude::*;
 use futures::stream;
 use futures_boxed::boxed;
@@ -154,70 +154,64 @@ where
     }
 }
 
-pub enum BuildEngineMessage {
-    Build(
-        FeatureRequest<BuildParams>,
-        BuildOptions,
-        oneshot::Sender<BuildResult>,
-    ),
-    Cancel(String),
-}
-
-pub struct BuildEngine<C> {
-    pub message_tx: mpsc::Sender<BuildEngineMessage>,
-    message_rx: mpsc::Receiver<BuildEngineMessage>,
+pub struct BuildManager<C> {
+    handles_by_id: Mutex<HashMap<String, AbortHandle>>,
     client: Arc<C>,
 }
 
-impl<C> BuildEngine<C>
+impl<C> BuildManager<C>
 where
     C: LspClient + Send + Sync + 'static,
 {
     pub fn new(client: Arc<C>) -> Self {
-        let (message_tx, message_rx) = mpsc::channel(0);
         Self {
-            message_tx,
-            message_rx,
+            handles_by_id: Mutex::new(HashMap::new()),
             client,
         }
     }
 
-    pub async fn listen(&mut self) {
-        let mut handles_by_id = HashMap::new();
-        while let Some(message) = self.message_rx.next().await {
-            match message {
-                BuildEngineMessage::Build(request, options, result_tx) => {
-                    let provider = BuildProvider::new(Arc::clone(&self.client), options);
-                    let (handle, reg) = AbortHandle::new_pair();
-                    handles_by_id.insert(provider.progress_id.clone(), handle);
+    pub async fn build(
+        &self,
+        request: FeatureRequest<BuildParams>,
+        options: BuildOptions,
+    ) -> BuildResult {
+        let provider = BuildProvider::new(Arc::clone(&self.client), options);
+        let (handle, reg) = AbortHandle::new_pair();
+        {
+            let mut handles_by_id = self.handles_by_id.lock().await;
+            handles_by_id.insert(provider.progress_id.clone(), handle);
+        }
 
-                    let result = match Abortable::new(provider.execute(&request), reg).await {
-                        Ok(result) => result,
-                        Err(Aborted) => BuildResult {
-                            status: BuildStatus::Cancelled,
-                        },
-                    };
+        let result = match Abortable::new(provider.execute(&request), reg).await {
+            Ok(result) => result,
+            Err(Aborted) => BuildResult {
+                status: BuildStatus::Cancelled,
+            },
+        };
 
-                    let params = ProgressDoneParams {
-                        id: provider.progress_id.clone().into(),
-                    };
+        let params = ProgressDoneParams {
+            id: provider.progress_id.clone().into(),
+        };
+        self.client.progress_done(params).await;
 
-                    self.client.progress_done(params).await;
-                    handles_by_id.remove(&provider.progress_id);
-                    result_tx.send(result).unwrap();
-                }
-                BuildEngineMessage::Cancel(id) => {
-                    if id == "texlab-build-*" {
-                        handles_by_id
-                            .iter()
-                            .filter(|(id, _)| id.starts_with("texlab-build-"))
-                            .for_each(|(_, handle)| handle.abort());
-                    } else {
-                        if let Some(handle) = handles_by_id.get(&id) {
-                            handle.abort();
-                        }
-                    }
-                }
+        {
+            let mut handles_by_id = self.handles_by_id.lock().await;
+            handles_by_id.remove(&provider.progress_id);
+        }
+
+        return result;
+    }
+
+    pub async fn cancel(&self, id: &str) {
+        let handles_by_id = self.handles_by_id.lock().await;
+        if id == "texlab-build-*" {
+            handles_by_id
+                .iter()
+                .filter(|(id, _)| id.starts_with("texlab-build-"))
+                .for_each(|(_, handle)| handle.abort());
+        } else {
+            if let Some(handle) = handles_by_id.get(id) {
+                handle.abort();
             }
         }
     }

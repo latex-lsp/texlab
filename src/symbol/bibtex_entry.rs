@@ -1,7 +1,7 @@
+use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
-use crate::syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntrySymbolProvider;
@@ -28,7 +28,6 @@ impl FeatureProvider for BibtexEntrySymbolProvider {
                         };
                         symbols.push(symbol);
                     }
-
                 }
             }
         }

@@ -8,7 +8,6 @@ use futures::prelude::*;
 use jsonrpc::MessageHandler;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
-use texlab::build::BuildEngine;
 use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
@@ -48,11 +47,7 @@ async fn main() {
     let (stdout_tx, stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
-    let mut build_engine = BuildEngine::new(Arc::clone(&client));
-    let server = Arc::new(LatexLspServer::new(
-        Arc::clone(&client),
-        build_engine.message_tx.clone(),
-    ));
+    let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
     let mut handler = MessageHandler {
         server,
         client,
@@ -63,9 +58,6 @@ async fn main() {
     let stdout_handle = runtime::spawn(async move {
         stdout_rx.map(|x| Ok(x)).forward(stdout).await.unwrap();
     });
-    let build_engine_handle = runtime::spawn(async move {
-        build_engine.listen().await;
-    });
 
-    future::join3(handler.listen(), stdout_handle, build_engine_handle).await;
+    future::join(handler.listen(), stdout_handle).await;
 }
