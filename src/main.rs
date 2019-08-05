@@ -13,7 +13,6 @@ use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
 use tokio::codec::FramedRead;
 use tokio_codec::FramedWrite;
-use tokio_stdin_stdout;
 
 #[runtime::main(runtime_tokio::Tokio)]
 async fn main() {
@@ -42,8 +41,8 @@ async fn main() {
         .init()
         .unwrap();
 
-    let stdin = FramedRead::new(tokio_stdin_stdout::stdin(0), LspCodec).compat();
-    let stdout = FramedWrite::new(tokio_stdin_stdout::stdout(0), LspCodec).sink_compat();
+    let stdin = FramedRead::new(tokio::io::stdin(), LspCodec).compat();
+    let stdout = FramedWrite::new(tokio::io::stdout(), LspCodec).sink_compat();
     let (stdout_tx, stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
