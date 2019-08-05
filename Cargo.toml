@@ -31,7 +31,7 @@ lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3
 nom = "5.0.0"
 once_cell = "0.2.2"
 path-clean = "0.1.0"
-regex = "1.2.0"
+regex = "1.2.1"
 runtime = "0.3.0-alpha.4"
 runtime-tokio = "0.3.0-alpha.4"
 serde = { version = "1.0.97", features = ["derive", "rc"] }
