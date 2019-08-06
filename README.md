@@ -20,11 +20,12 @@ You will need to install the following dependencies to compile the server:
 
 - [Rust](https://rustup.rs/)
 - [Node.js](https://nodejs.org/)
+- [Python 3](https://www.python.org/)
 
 Then run the following commands in the project folder:
 
 ```shell
-cargo run --manifest-path scripts/build/Cargo.toml
+python setup.py
 cargo build --release
 ```
 

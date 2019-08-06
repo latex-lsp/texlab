@@ -11,8 +11,7 @@ edition = "2018"
 members = [
     "crates/futures_boxed",
     "crates/jsonrpc", 
-    "crates/jsonrpc_derive",
-    "scripts/build"]
+    "crates/jsonrpc_derive"]
 
 [dependencies]
 base64 = "0.10.1"

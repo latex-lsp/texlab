@@ -10,9 +10,14 @@ steps:
     inputs:
       versionSpec: ">=10.x"
     displayName: "Install Node.js"
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.7"
+      architecture: "x64"
+    displayName: "Install Python"
   - bash: |
-      cargo run --manifest-path scripts/build/Cargo.toml
-    displayName: "Bundle citeproc and download completion database"
+      python setup.py
+    displayName: "Prepare build"
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1
@@ -26,10 +31,6 @@ steps:
           export RUST_BACKTRACE=1
           cargo test --all
         displayName: "Run tests with coverage"
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: "3.7"
-          architecture: "x64"
       - script: python -m pip install --upgrade pip setuptools wheel
         displayName: "Install Python tools"
       - bash: |
