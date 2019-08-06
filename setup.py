@@ -10,5 +10,4 @@ if __name__ == '__main__':
 
     print('Bundling citeproc...')
     citeproc_dir = 'src/citeproc/script'
-    subprocess.run(['npm', 'ci'], shell=True, cwd=citeproc_dir)
-    subprocess.run(['npm', 'run', 'dist'], shell=True, cwd=citeproc_dir)
+    subprocess.run('npm ci && npm run dist', shell=True, cwd=citeproc_dir)
