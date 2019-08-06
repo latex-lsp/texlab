@@ -280,7 +280,7 @@ pub fn citation(
             )
             .trim()
     );
-    
+
     CompletionItem {
         label: key.into(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
