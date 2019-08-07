@@ -11,14 +11,27 @@ jobs:
   - job: Linux
     pool:
       vmImage: "ubuntu-16.04"
+    variables:
+      target: "x86_64-unknown-linux-gnu"
     steps:
       - template: .build-steps.yml
         parameters:
-          target: "x86_64-unknown-linux-gnu"
+          target: $(target)
           executableName: "texlab"
           archiveFile: "texlab-x86_64-linux.tar.gz"
           archiveType: "tar"
           coverage: true
+      - bash: |
+          cargo install cargo-deb
+          cargo deb --target=$(target)
+          mv target/$(target)/debian/texlab* target/$(target)/debian/texlab-x86_64-debian.deb
+        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
+        displayName: "Build Debian package"
+      - publish: target/$(target)/debian
+        artifact: texlab-x86_64-debian.deb
+        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
+        displayName: "Publish Debian artifact"
+
   - job: Windows
     pool:
       vmImage: "vs2017-win2016"
