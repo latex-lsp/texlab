@@ -1,7 +1,9 @@
 mod bibtex_entry;
+mod bibtex_string;
 mod latex_section;
 
 use self::bibtex_entry::BibtexEntrySymbolProvider;
+use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -16,6 +18,7 @@ impl SymbolProvider {
         Self {
             provider: ConcatProvider::new(vec![
                 Box::new(BibtexEntrySymbolProvider),
+                Box::new(BibtexStringSymbolProvider),
                 Box::new(LatexSectionSymbolProvider),
             ]),
         }
