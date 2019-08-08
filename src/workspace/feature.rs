@@ -207,6 +207,15 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
     }
 }
 
+impl Into<FeatureRequest<DocumentSymbolParams>> for FeatureSpec {
+    fn into(self) -> FeatureRequest<DocumentSymbolParams> {
+        let params = DocumentSymbolParams {
+            text_document: self.identifier(),
+        };
+        self.request(params)
+    }
+}
+
 pub fn test_feature<F, P, O, S>(provider: F, spec: S) -> O
 where
     F: FeatureProvider<Params = P, Output = O>,
