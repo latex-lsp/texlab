@@ -42,19 +42,34 @@ steps:
           codeCoverageTool: cobertura
           summaryFileLocation: "coverage.xml"
         displayName: "Publish coverage report"
-  - bash: |
-      cargo build --release
-    condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-    displayName: "Build release artifact"
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: "target/release/${{ parameters.executableName }}"
-      archiveType: ${{ parameters.archiveType }}
-      tarCompression: "gz"
-      archiveFile: "$(Build.ArtifactStagingDirectory)/${{ parameters.archiveFile }}"
-    condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-    displayName: "Compress release artifact"
-  - publish: $(Build.ArtifactStagingDirectory)
-    artifact: ${{ parameters.archiveFile }}
-    condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-    displayName: "Publish release artifact"
+  - ${{ if contains(variables['Build.SourceBranch'], 'tags') }}:
+      - bash: |
+          cargo build --release
+        displayName: "Build release artifact"
+      - task: ArchiveFiles@2
+        inputs:
+          rootFolderOrFile: "target/release/${{ parameters.executableName }}"
+          archiveType: ${{ parameters.archiveType }}
+          tarCompression: "gz"
+          archiveFile: "$(Build.ArtifactStagingDirectory)/${{ parameters.archiveFile }}"
+        displayName: "Compress release artifact"
+      - publish: $(Build.ArtifactStagingDirectory)
+        artifact: ${{ parameters.archiveFile }}
+        displayName: "Publish release artifact"
+      - ${{ if eq(variables['Agent.OS'], 'Linux') }}:
+          - bash: |
+              cargo install cargo-deb
+              cargo deb
+              mv target/debian/texlab* target/debian/texlab-x86_64-debian.deb
+            displayName: "Build Debian package"
+          - publish: target/debian
+            artifact: texlab-x86_64-debian.deb
+            displayName: "Publish Debian artifact"
+          - bash: |
+              cargo install cargo-rpm
+              cargo rpm build -v
+              mv target/release/rpmbuild/RPMS/x86_64/texlab* target/release/rpmbuild/RPMS/x86_64/texlab-x86_64-rhel.rpm
+            displayName: "Build RHEL package"
+          - publish: target/release/rpmbuild/RPMS/x86_64
+            artifact: texlab-x86_64-rhel.rpm
+            displayName: "Publish RHEL artifact"

@@ -5,8 +5,6 @@ trigger:
   tags:
     include:
       - v*
-variables:
-  isReleaseBuild: $[contains(variables['Build.SourceBranch'], 'tags')]
 jobs:
   - job: Linux
     pool:
@@ -18,26 +16,6 @@ jobs:
           archiveFile: "texlab-x86_64-linux.tar.gz"
           archiveType: "tar"
           coverage: true
-      - bash: |
-          cargo install cargo-deb
-          cargo deb
-          mv target/debian/texlab* target/debian/texlab-x86_64-debian.deb
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Build Debian package"
-      - publish: target/debian
-        artifact: texlab-x86_64-debian.deb
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Publish Debian artifact"
-      - bash: |
-          cargo install cargo-rpm
-          cargo rpm build -v
-          mv target/release/rpmbuild/RPMS/x86_64/texlab* target/release/rpmbuild/RPMS/x86_64/texlab-x86_64-rhel.rpm
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Build RHEL package"
-      - publish: target/release/rpmbuild/RPMS/x86_64
-        artifact: texlab-x86_64-rhel.rpm
-        condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
-        displayName: "Publish RHEL artifact"
   - job: Windows
     pool:
       vmImage: "vs2017-win2016"
@@ -67,7 +45,7 @@ jobs:
       - macOS
     condition: |
       and(
-        eq(variables['isReleaseBuild'], 'true'),
+        contains(variables['Build.SourceBranch'], 'tags'),
         succeeded('Linux'), 
         succeeded('Windows'), 
         succeeded('macOS'))
