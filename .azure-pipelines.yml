@@ -11,23 +11,20 @@ jobs:
   - job: Linux
     pool:
       vmImage: "ubuntu-16.04"
-    variables:
-      target: "x86_64-unknown-linux-gnu"
     steps:
       - template: .build-steps.yml
         parameters:
-          target: $(target)
           executableName: "texlab"
           archiveFile: "texlab-x86_64-linux.tar.gz"
           archiveType: "tar"
           coverage: true
       - bash: |
           cargo install cargo-deb
-          cargo deb --target=$(target)
-          mv target/$(target)/debian/texlab* target/$(target)/debian/texlab-x86_64-debian.deb
+          cargo deb
+          mv target/debian/texlab* target/debian/texlab-x86_64-debian.deb
         condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
         displayName: "Build Debian package"
-      - publish: target/$(target)/debian
+      - publish: target/debian
         artifact: texlab-x86_64-debian.deb
         condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
         displayName: "Publish Debian artifact"
@@ -47,7 +44,6 @@ jobs:
     steps:
       - template: .build-steps.yml
         parameters:
-          target: "x86_64-pc-windows-msvc"
           executableName: "texlab.exe"
           archiveFile: "texlab-x86_64-windows.zip"
           archiveType: "zip"
@@ -61,7 +57,6 @@ jobs:
         displayName: "Install rustup"
       - template: .build-steps.yml
         parameters:
-          target: "x86_64-apple-darwin"
           executableName: "texlab"
           archiveFile: "texlab-x86_64-macos.tar.gz"
           archiveType: "tar"

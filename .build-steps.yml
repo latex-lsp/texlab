@@ -1,10 +1,8 @@
 parameters:
-  target: ""
   executableName: ""
   archiveFile: ""
   archiveType: ""
   coverage: false
-
 steps:
   - task: NodeTool@0
     inputs:
@@ -45,12 +43,12 @@ steps:
           summaryFileLocation: "coverage.xml"
         displayName: "Publish coverage report"
   - bash: |
-      cargo build --release --target ${{ parameters.target }}
+      cargo build --release
     condition: and(succeeded(), eq(variables['isReleaseBuild'], 'true'))
     displayName: "Build release artifact"
   - task: ArchiveFiles@2
     inputs:
-      rootFolderOrFile: "target/${{ parameters.target }}/release/${{ parameters.executableName }}"
+      rootFolderOrFile: "target/release/${{ parameters.executableName }}"
       archiveType: ${{ parameters.archiveType }}
       tarCompression: "gz"
       archiveFile: "$(Build.ArtifactStagingDirectory)/${{ parameters.archiveFile }}"
