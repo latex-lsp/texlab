@@ -2,6 +2,7 @@
 name = "texlab"
 description = "LaTeX Language Server"
 version = "1.3.0"
+license = "MIT"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>", 
     "Patrick Förster <pfoerster@users.noreply.github.com>"]
@@ -69,3 +70,9 @@ assets = [
     ["target/release/texlab", "usr/bin/", "755"],
     ["README.md", "usr/share/doc/texlab/README", "644"],
 ]
+
+[package.metadata.rpm]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+texlab = { path = "/usr/bin/texlab" }
