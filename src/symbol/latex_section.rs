@@ -1,66 +1,86 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use itertools::Itertools;
 use lsp_types::*;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexSectionNode<'a> {
+fn make_label_symbols(label: &LatexLabel) -> Vec<DocumentSymbol> {
+    let mut symbols = Vec::new();
+    for name in &label.names() {
+        let symbol = DocumentSymbol {
+            name: name.text().to_owned().into(),
+            detail: None,
+            kind: SymbolKind::Field,
+            deprecated: Some(false),
+            range: name.range(),
+            selection_range: name.range(),
+            children: None,
+        };
+        symbols.push(symbol);
+    }
+    symbols
+}
+
+struct LatexSectionNode<'a> {
     section: &'a LatexSection,
-    numbers: Vec<u64>,
     full_range: Range,
-    text: &'a str,
+    full_text: &'a str,
+    labels: Vec<&'a LatexLabel>,
     children: Vec<Self>,
 }
 
 impl<'a> LatexSectionNode<'a> {
-    pub fn new(section: &'a LatexSection) -> Self {
+    fn new(section: &'a LatexSection) -> Self {
         Self {
             section,
-            numbers: Vec::new(),
             full_range: Range::default(),
-            text: "",
+            full_text: "",
+            labels: Vec::new(),
             children: Vec::new(),
         }
     }
 
-    fn populate_text(&mut self, text: &'a str) {
-        self.text = text;
+    fn set_full_text(&mut self, full_text: &'a str) {
+        self.full_text = full_text;
         for child in &mut self.children {
-            child.populate_text(text);
+            child.set_full_text(full_text);
         }
     }
 
-    fn push_number(&mut self, number: u64) {
-        self.numbers.push(number);
-        for child in &mut self.children {
-            child.push_number(number);
+    fn set_full_range(children: &mut Vec<Self>, end_position: Position) {
+        for i in 0..children.len() {
+            let current_end = children
+                .get(i + 1)
+                .map(|next| next.section.start())
+                .unwrap_or(end_position);
+
+            let mut current = &mut children[i];
+            current.full_range = Range::new(current.section.start(), current_end);
+            Self::set_full_range(&mut current.children, current_end);
         }
     }
 
-    fn populate_numbers(&mut self, number: u64) {
-        self.push_number(number);
-        for (i, child) in self.children.iter_mut().enumerate() {
-            child.populate_numbers((i + 1) as u64);
-        }
-    }
-
-    pub fn make_symbol(&self) -> DocumentSymbol {
+    fn into_symbol(&self) -> DocumentSymbol {
         let name = self
             .section
-            .extract_text(self.text)
+            .extract_text(self.full_text)
             .unwrap_or_else(|| "Unknown".to_owned());
 
-        let number = self.numbers.iter().map(u64::to_string).join(".");
+        let mut children = Vec::new();
+        self.children
+            .iter()
+            .map(Self::into_symbol)
+            .for_each(|sec| children.push(sec));
 
-        let children = self.children.iter().map(Self::make_symbol).collect();
+        for label in &self.labels {
+            children.append(&mut make_label_symbols(label));
+        }
 
         DocumentSymbol {
-            name: format!("{} {}", number, name).into(),
+            name: name.into(),
             detail: None,
             kind: SymbolKind::Module,
             deprecated: Some(false),
-            range: self.section.range(),
+            range: self.full_range,
             selection_range: self.section.range(),
             children: Some(children),
         }
@@ -80,10 +100,24 @@ impl<'a> LatexSectionNode<'a> {
             }
         }
     }
+
+    fn insert_label(&mut self, label: &'a LatexLabel) -> bool {
+        if !self.full_range.contains(label.start()) {
+            return false;
+        }
+
+        for child in &mut self.children {
+            if child.insert_label(label) {
+                return true;
+            }
+        }
+
+        self.labels.push(label);
+        true
+    }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct LatexSectionTree<'a> {
+struct LatexSectionTree<'a> {
     children: Vec<LatexSectionNode<'a>>,
 }
 
@@ -94,16 +128,19 @@ impl<'a> LatexSectionTree<'a> {
         }
     }
 
-    fn populate_text(&mut self, text: &'a str) {
+    fn set_full_text(&mut self, full_text: &'a str) {
         for child in &mut self.children {
-            child.populate_text(text);
+            child.set_full_text(full_text);
         }
     }
 
-    fn populate_numbers(&mut self) {
-        for (i, child) in self.children.iter_mut().enumerate() {
-            child.populate_numbers((i + 1) as u64);
+    fn insert_label(&mut self, label: &'a LatexLabel) -> bool {
+        for child in &mut self.children {
+            if child.insert_label(label) {
+                return true;
+            }
         }
+        false
     }
 }
 
@@ -129,10 +166,28 @@ impl FeatureProvider for LatexSectionSymbolProvider {
         let mut symbols = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut section_tree = LatexSectionTree::from(tree);
-            section_tree.populate_text(&request.document().text);
-            section_tree.populate_numbers();
+            section_tree.set_full_text(&request.document().text);
+
+            let mut stream = CharStream::new(&request.document().text);
+            while stream.next().is_some() {}
+            let end_position = tree
+                .environments
+                .iter()
+                .find(|env| env.left.name().map(LatexToken::text) == Some("document"))
+                .map(|env| env.right.start())
+                .unwrap_or(stream.current_position);
+            LatexSectionNode::set_full_range(&mut section_tree.children, end_position);
+
+            for label in &tree.labels {
+                if label.kind == LatexLabelKind::Definition {
+                    if !section_tree.insert_label(label) {
+                        symbols.append(&mut make_label_symbols(label));
+                    }
+                }
+            }
+
             for child in &section_tree.children {
-                symbols.push(child.make_symbol());
+                symbols.push(child.into_symbol());
             }
         }
         symbols

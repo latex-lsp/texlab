@@ -35,8 +35,8 @@ impl SyntaxNode for Span {
 pub struct CharStream<'a> {
     text: &'a str,
     chars: Peekable<CharIndices<'a>>,
-    current_position: Position,
-    current_index: usize,
+    pub current_position: Position,
+    pub current_index: usize,
     start_position: Position,
     start_index: usize,
 }
