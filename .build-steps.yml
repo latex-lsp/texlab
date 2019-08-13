@@ -19,7 +19,7 @@ steps:
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1
-          cargo test --all
+          cargo test --all --locked
         displayName: "Run tests"
   - ${{ if eq(parameters.coverage, 'true') }}:
       - bash: |
@@ -27,7 +27,7 @@ steps:
           export CARGO_INCREMENTAL=0
           export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads"
           export RUST_BACKTRACE=1
-          cargo test --all
+          cargo test --all --locked
         displayName: "Run tests with coverage"
       - script: python -m pip install --upgrade pip setuptools wheel
         displayName: "Install Python tools"
@@ -44,7 +44,7 @@ steps:
         displayName: "Publish coverage report"
   - ${{ if contains(variables['Build.SourceBranch'], 'tags') }}:
       - bash: |
-          cargo build --release
+          cargo build --release --locked
         displayName: "Build release artifact"
       - task: ArchiveFiles@2
         inputs:
