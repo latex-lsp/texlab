@@ -39,6 +39,8 @@ jobs:
           archiveFile: "texlab-x86_64-macos.tar.gz"
           archiveType: "tar"
   - job: Publish
+    pool:
+      vmImage: "ubuntu-16.04"
     dependsOn:
       - Linux
       - Windows
@@ -52,6 +54,20 @@ jobs:
     steps:
       - download: current
         patterns: "**/texlab*"
+      - bash: |
+          ver=`echo "$(Build.SourceBranchName)" | cut -c2-`
+          echo "##vso[task.setvariable variable=version]$ver"
+        displayName: "Set version variable"
+      - bash: |
+          curl -T $(Pipeline.Workspace)/texlab-x86_64-debian.deb/*.deb \
+               -uefoerster:$BINTRAY_API_KEY \
+               https://api.bintray.com/content/efoerster/texlab-deb/texlab/$version/texlab-x86_64-debian.deb;deb_distribution=stable;deb_component=main;deb_architecture=amd64
+          curl -T $(Pipeline.Workspace)/texlab-x86_64-rhel.rpm/*.rpm \
+               -uefoerster:$BINTRAY_API_KEY \
+               https://api.bintray.com/content/efoerster/texlab-rpm/texlab/$version/texlab-x86_64-rhel.rpm
+        env:
+          BINTRAY_API_KEY: $(bintrayKey)
+        displayName: "Upload to Bintray"
       - task: GitHubRelease@0
         inputs:
           gitHubConnection: latex-lsp
