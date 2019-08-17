@@ -119,10 +119,12 @@ pub fn label(
     }
 
     let filter_text = format!(
-        "{} {} {}",
+        "{} {} {} {} {}",
         &name,
         to_str(&context.caption),
-        to_str(&context.section)
+        to_str(&context.section),
+        context.theorem.as_ref().map(|thm| &thm.kind).unwrap_or(&String::default()),
+        context.theorem.as_ref().and_then(|thm| thm.description.as_ref()).unwrap_or(&String::default()),
     );
 
     CompletionItem {

@@ -111,16 +111,37 @@ impl<'a> SyntaxNode for OutlineItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct OutlineTheorem {
+    pub kind: String,
+    pub description: Option<String>,
+}
+
+impl OutlineTheorem {
+    pub fn documentation(&self) -> String {
+        match &self.description{
+            Some(description) => format!("{} ({})", self.kind, description),
+            None => self.kind.clone(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct OutlineContext {
     pub section: Option<String>,
     pub caption: Option<String>,
+    pub theorem: Option<OutlineTheorem>,
 }
 
 impl OutlineContext {
-    pub fn find(outline: &Outline, document: &Document, position: Position) -> Self {
-        let section = Self::find_section(outline, document, position);
-        let caption = Self::find_caption(document, position);
-        Self { section, caption }
+    pub fn find(outline: &Outline, view: &DocumentView, position: Position) -> Self {
+        let section = Self::find_section(outline, &view.document, position);
+        let caption = Self::find_caption(&view.document, position);
+        let theorem = Self::find_theorem(view, position);
+        Self {
+            section,
+            caption,
+            theorem,
+        }
     }
 
     fn find_section(outline: &Outline, document: &Document, position: Position) -> Option<String> {
@@ -148,6 +169,38 @@ impl OutlineContext {
         }
     }
 
+    fn find_theorem(view: &DocumentView, position: Position) -> Option<OutlineTheorem> {
+        if let SyntaxTree::Latex(tree) = &view.document.tree {
+            let environment = tree
+                .environments
+                .iter()
+                .find(|env| env.range().contains(position))?;
+
+            let environment_name = environment
+                .left
+                .name()
+                .map(LatexToken::text)?;
+
+            for document in &view.related_documents {
+                if let SyntaxTree::Latex(tree) = &document.tree {
+                    for definition in &tree.theorem_definitions {
+                        if environment_name == definition.name().text() {
+                            let kind = Self::extract(document, definition.command.args.get(definition.index + 1)?)?;
+                            let description = environment
+                                .left
+                                .command
+                                .options
+                                .get(0)
+                                .and_then(|opts| Self::extract(&view.document, opts));
+                            return Some(OutlineTheorem { kind, description });
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
     fn extract(document: &Document, content: &LatexGroup) -> Option<String> {
         let right = content.right.as_ref()?;
         let range = Range::new_simple(
@@ -160,11 +213,13 @@ impl OutlineContext {
     }
 
     pub fn documentation(&self) -> Option<MarkupContent> {
-        let text = match (&self.section, &self.caption) {
-            (Some(section), Some(caption)) => format!("*{}*  \n{}", section, caption),
-            (Some(section), None) => format!("*{}*", section),
-            (None, Some(caption)) => caption.to_owned(),
-            (None, None) => return None,
+        let text = match (&self.section, &self.caption, &self.theorem) {
+            (Some(section), _, Some(theorem)) => format!("*{}*  \n{}", section, theorem.documentation()),
+            (None, _, Some(theorem)) => theorem.documentation(),
+            (Some(section), Some(caption), None) => format!("*{}*  \n{}", section, caption),
+            (Some(section), None, None) => format!("*{}*", section),
+            (None, Some(caption), None) => caption.to_owned(),
+            (None, None, None) => return None,
         };
 
         Some(MarkupContent {
