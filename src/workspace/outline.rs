@@ -182,16 +182,20 @@ impl OutlineContext {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     for definition in &tree.theorem_definitions {
                         if environment_name == definition.name().text() {
-                            let kind = Self::extract(
-                                document,
-                                definition.command.args.get(definition.index + 1)?,
-                            )?;
+                            let kind = definition
+                                .command
+                                .args
+                                .get(definition.index + 1)
+                                .and_then(|group| Self::extract(document, group))
+                                .unwrap_or_else(|| Self::titlelize(environment_name));
+
                             let description = environment
                                 .left
                                 .command
                                 .options
                                 .get(0)
                                 .and_then(|opts| Self::extract(&view.document, opts));
+                                
                             return Some(OutlineTheorem { kind, description });
                         }
                     }
@@ -199,6 +203,14 @@ impl OutlineContext {
             }
         }
         None
+    }
+
+    fn titlelize(string: &str) -> String {
+        let mut chars = string.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(c) => c.to_uppercase().chain(chars).collect(),
+        }
     }
 
     fn extract(document: &Document, content: &LatexGroup) -> Option<String> {
