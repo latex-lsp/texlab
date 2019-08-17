@@ -27,7 +27,7 @@ impl FeatureProvider for LatexLabelHoverProvider {
 
             let outline = Outline::from(&request.view);
             let context = OutlineContext::find(&outline, &request.view, definition.start());
-            let markup = context.documentation()?;
+            let markup = context.formatted_reference()?;
             return Some(Hover {
                 contents: HoverContents::Markup(markup),
                 range: Some(reference.range()),

@@ -117,8 +117,8 @@ pub struct OutlineTheorem {
 }
 
 impl OutlineTheorem {
-    pub fn documentation(&self) -> String {
-        match &self.description{
+    pub fn to_string(&self) -> String {
+        match &self.description {
             Some(description) => format!("{} ({})", self.kind, description),
             None => self.kind.clone(),
         }
@@ -176,16 +176,16 @@ impl OutlineContext {
                 .iter()
                 .find(|env| env.range().contains(position))?;
 
-            let environment_name = environment
-                .left
-                .name()
-                .map(LatexToken::text)?;
+            let environment_name = environment.left.name().map(LatexToken::text)?;
 
             for document in &view.related_documents {
                 if let SyntaxTree::Latex(tree) = &document.tree {
                     for definition in &tree.theorem_definitions {
                         if environment_name == definition.name().text() {
-                            let kind = Self::extract(document, definition.command.args.get(definition.index + 1)?)?;
+                            let kind = Self::extract(
+                                document,
+                                definition.command.args.get(definition.index + 1)?,
+                            )?;
                             let description = environment
                                 .left
                                 .command
@@ -212,15 +212,15 @@ impl OutlineContext {
         Some(CharStream::extract(&document.text, range))
     }
 
-    pub fn documentation(&self) -> Option<MarkupContent> {
-        let text = match (&self.section, &self.caption, &self.theorem) {
-            (Some(section), _, Some(theorem)) => format!("*{}*  \n{}", section, theorem.documentation()),
-            (None, _, Some(theorem)) => theorem.documentation(),
-            (Some(section), Some(caption), None) => format!("*{}*  \n{}", section, caption),
-            (Some(section), None, None) => format!("*{}*", section),
-            (None, Some(caption), None) => caption.to_owned(),
-            (None, None, None) => return None,
-        };
+    pub fn formatted_reference(&self) -> Option<MarkupContent> {
+        let text: String = match self.theorem.as_ref().map(OutlineTheorem::to_string) {
+            Some(documentation) => Some(documentation),
+            None => self
+                .caption
+                .as_ref()
+                .or(self.section.as_ref())
+                .map(ToOwned::to_owned),
+        }?;
 
         Some(MarkupContent {
             kind: MarkupKind::Markdown,

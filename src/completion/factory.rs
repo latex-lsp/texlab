@@ -114,18 +114,21 @@ pub fn label(
     text_edit: TextEdit,
     context: &OutlineContext,
 ) -> CompletionItem {
-    fn to_str(value: &Option<String>) -> &str {
-        value.as_ref().map(String::as_str).unwrap_or_default()
+    let mut filter_text = String::from(name.as_ref());
+    if let Some(theorem) = &context.theorem {
+        filter_text.push(' ');
+        filter_text.push_str(&theorem.kind);
+        if let Some(description) = &theorem.description {
+            filter_text.push(' ');
+            filter_text.push_str(description);
+        }
+    } else if let Some(caption) = &context.caption {
+        filter_text.push(' ');
+        filter_text.push_str(&caption);
+    } else if let Some(section) = &context.section {
+        filter_text.push(' ');
+        filter_text.push_str(&section);
     }
-
-    let filter_text = format!(
-        "{} {} {} {} {}",
-        &name,
-        to_str(&context.caption),
-        to_str(&context.section),
-        context.theorem.as_ref().map(|thm| &thm.kind).unwrap_or(&String::default()),
-        context.theorem.as_ref().and_then(|thm| thm.description.as_ref()).unwrap_or(&String::default()),
-    );
 
     CompletionItem {
         label: name,
@@ -133,7 +136,9 @@ pub fn label(
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
         filter_text: Some(filter_text.into()),
-        documentation: context.documentation().map(Documentation::MarkupContent),
+        documentation: context
+            .formatted_reference()
+            .map(Documentation::MarkupContent),
         ..CompletionItem::default()
     }
 }
