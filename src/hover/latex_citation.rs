@@ -1,4 +1,4 @@
-use crate::citeproc::{render_citation, RenderCitationError};
+use crate::citeproc::render_citation;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::syntax::*;
 use crate::workspace::*;
@@ -23,22 +23,13 @@ impl FeatureProvider for LatexCitationHoverProvider {
             None
         } else {
             let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
-            match render_citation(&entry_code).await {
-                Ok(markdown) => Some(Hover {
+            match render_citation(&entry_code) {
+                Some(markdown) => Some(Hover {
                     contents: HoverContents::Markup(markdown),
                     range: None,
                 }),
-                Err(why) => {
-                    let message = match why {
-                        RenderCitationError::InitializationFailed => {
-                            "Failed to initialize citeproc"
-                        }
-                        RenderCitationError::ScriptFaulty => "Failed to execute citeproc",
-                        RenderCitationError::InvalidEntry => "Failed to render entry",
-                        RenderCitationError::InvalidOutput => "Unable to decode output",
-                        RenderCitationError::NodeNotInstalled => "NodeJS is not installed",
-                    };
-                    warn!("{}:\n{}", &message, &entry_code);
+                None => {
+                    warn!("Failed to render entry:\n{}", &entry_code);
                     None
                 }
             }

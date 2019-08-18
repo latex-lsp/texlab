@@ -195,7 +195,7 @@ impl OutlineContext {
                                 .options
                                 .get(0)
                                 .and_then(|opts| Self::extract(&view.document, opts));
-                                
+
                             return Some(OutlineTheorem { kind, description });
                         }
                     }

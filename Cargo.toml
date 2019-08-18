@@ -17,11 +17,11 @@ members = [
 [dependencies]
 base64 = "0.10.1"
 bytes = "0.4.12"
+citeproc = { git = "https://github.com/latex-lsp/citeproc", rev = "695a6205216ee15a4f1f899c03286ce9bddbe993" }
 clap = "2.33"
 copy_dir = "0.1.2"
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
-html2md = "0.2.9"
 image = "0.22.1"
 itertools = "0.8.0"
 jsonrpc = { path = "crates/jsonrpc" }

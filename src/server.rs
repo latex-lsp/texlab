@@ -229,9 +229,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .map(|content| Documentation::MarkupContent(content));
             }
             CompletionItemData::Citation { entry_code } => {
-                if let Ok(markdown) = render_citation(&entry_code).await {
-                    item.documentation = Some(Documentation::MarkupContent(markdown));
-                }
+                item.documentation = render_citation(&entry_code).map(Documentation::MarkupContent)
             }
             _ => {}
         };
