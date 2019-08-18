@@ -29,7 +29,7 @@ jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
 lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3013ce84e20ef566267754d594b268", features = ["proposed"] }
 nom = "5.0.0"
-once_cell = "0.2.2"
+once_cell = "0.2.6"
 path-clean = "0.1.0"
 regex = "1.2.1"
 runtime = "0.3.0-alpha.4"
