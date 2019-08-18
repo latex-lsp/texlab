@@ -64,7 +64,7 @@ license-file = ["LICENSE", "4"]
 extended-description = """\
 A cross-platform implementation of the Language Server Protocol \
 providing rich cross-editing support for the LaTeX typesetting system."""
-depends = "$auto, nodejs (>= 8.0.0)"
+depends = "$auto"
 section = "tex"
 assets = [
     ["target/release/texlab", "usr/bin/", "755"],

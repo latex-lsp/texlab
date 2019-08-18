@@ -9,7 +9,6 @@ Release: 1
 License: MIT
 Group: Development/Tools
 Source0: %{name}-%{version}.tar.gz
-Requires: nodejs >= 8.0.0
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
