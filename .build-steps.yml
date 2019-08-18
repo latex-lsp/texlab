@@ -13,9 +13,6 @@ steps:
       versionSpec: "3.7"
       architecture: "x64"
     displayName: "Install Python"
-  - bash: |
-      python setup.py
-    displayName: "Prepare build"
   - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1
