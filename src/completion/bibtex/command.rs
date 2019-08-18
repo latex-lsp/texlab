@@ -1,4 +1,4 @@
-use crate::completion::factory::{self, LatexComponentId};
+use crate::completion::factory::{self, LatexComponentId, LatexDocumentation};
 use crate::completion::DATABASE;
 use crate::syntax::*;
 use crate::workspace::*;
@@ -30,7 +30,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
                         let item = factory::command(
                             request,
                             (&command.name).into(),
-                            command.image.as_ref().map(AsRef::as_ref),
+                            LatexDocumentation::from_opt(command.image.as_ref().map(AsRef::as_ref)),
                             text_edit,
                             &component,
                         );

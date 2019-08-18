@@ -61,17 +61,45 @@ impl<'a> LatexComponentId<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum LatexDocumentation {
+    None,
+    Glyph(&'static str),
+    Image(&'static str),
+}
+
+impl LatexDocumentation {
+    pub fn from_opt(opt: Option<&'static str>) ->  Self {
+        match opt {
+            None => LatexDocumentation::None,
+            Some(str) => LatexDocumentation::Image(str),
+        }
+    }
+
+    pub fn documentation(&self, name: &str) -> Option<Documentation> {
+        match self {
+            LatexDocumentation::None => None,
+            LatexDocumentation::Glyph(glyph) => 
+                Some(Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::PlainText,
+                    value: format!("Glyph: {}", glyph).into(),
+                })),
+            LatexDocumentation::Image(image) => Some(image_documentation(&name, image)),
+        }
+    }
+}
+
 pub fn command(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
-    image: Option<&str>,
+    image: LatexDocumentation,
     text_edit: TextEdit,
     component: &LatexComponentId,
 ) -> CompletionItem {
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Function)),
         data: Some(CompletionItemData::Command.into()),
-        documentation: image.map(|image| image_documentation(&name, image)),
+        documentation: image.documentation(&name),
         text_edit: Some(text_edit),
         ..CompletionItem::new_simple(name, component.detail())
     }

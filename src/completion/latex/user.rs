@@ -1,5 +1,5 @@
 use super::combinators;
-use crate::completion::factory::{self, LatexComponentId};
+use crate::completion::factory::{self, LatexComponentId, LatexDocumentation};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -32,7 +32,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                             factory::command(
                                 request,
                                 command.to_owned().into(),
-                                None,
+                                LatexDocumentation::None,
                                 text_edit,
                                 &LatexComponentId::User,
                             )
