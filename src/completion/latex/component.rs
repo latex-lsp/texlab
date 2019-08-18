@@ -1,5 +1,5 @@
 use super::combinators;
-use crate::completion::factory::{self, LatexComponentId, LatexDocumentation};
+use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::DATABASE;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -14,14 +14,6 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let supports_images: bool = request
-            .client_capabilities
-            .text_document
-            .as_ref()
-            .and_then(|cap| cap.completion.as_ref())
-            .and_then(|cap| cap.completion_item.as_ref())
-            .and_then(|cap| cap.documentation_format.as_ref())
-            .map_or(true, |formats| formats.contains(&MarkupKind::Markdown));
         combinators::command(request, async move |command| {
             let range = command.short_name_range();
             let mut items = Vec::new();
@@ -30,21 +22,11 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
                 let id = LatexComponentId::Component(file_names);
                 for command in &component.commands {
                     let text_edit = TextEdit::new(range, (&command.name).into());
-                    let doc: LatexDocumentation = if supports_images {
-                        match &command.image {
-                            None => LatexDocumentation::None,
-                            Some(image) => LatexDocumentation::Image(&image),
-                        }
-                    } else {
-                        match &command.glyph {
-                            None => LatexDocumentation::None,
-                            Some(glyph) => LatexDocumentation::Glyph(&glyph),
-                        }
-                    };
                     let item = factory::command(
                         request,
                         (&command.name).into(),
-                        doc,
+                        command.image.as_ref().map(AsRef::as_ref),
+                        command.glyph.as_ref().map(AsRef::as_ref),
                         text_edit,
                         &id,
                     );
