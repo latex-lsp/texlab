@@ -16,7 +16,7 @@ use tokio_codec::FramedWrite;
 
 #[runtime::main(runtime_tokio::Tokio)]
 async fn main() {
-    // Force initialization of the underlying JavaScript engine 
+    // Force initialization of the underlying JavaScript engine
     // to decrease the time of the initial citation rendering
     drop(texlab::citeproc::render_citation(""));
 

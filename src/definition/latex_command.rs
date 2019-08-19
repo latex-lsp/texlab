@@ -1,13 +1,13 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Location, TextDocumentPositionParams};
+use lsp_types::{LocationLink, TextDocumentPositionParams};
 
 pub struct LatexCommandDefinitionProvider;
 
 impl FeatureProvider for LatexCommandDefinitionProvider {
     type Params = TextDocumentPositionParams;
-    type Output = Vec<Location>;
+    type Output = Vec<LocationLink>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -19,13 +19,23 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                         tree.command_definitions
                             .iter()
                             .filter(|def| def.definition.name.text() == command.name.text())
-                            .map(|def| Location::new(document.uri.clone(), def.range()))
+                            .map(|def| LocationLink {
+                                origin_selection_range: Some(command.range()),
+                                target_uri: document.uri.clone(),
+                                target_range: def.range(),
+                                target_selection_range: def.range(),
+                            })
                             .for_each(|def| definitions.push(def));
 
                         tree.math_operators
                             .iter()
                             .filter(|op| op.definition.name.text() == command.name.text())
-                            .map(|op| Location::new(document.uri.clone(), op.range()))
+                            .map(|op| LocationLink {
+                                origin_selection_range: Some(command.range()),
+                                target_uri: document.uri.clone(),
+                                target_range: op.range(),
+                                target_selection_range: op.range(),
+                            })
                             .for_each(|def| definitions.push(def));
                     }
                 }
@@ -42,7 +52,7 @@ mod tests {
 
     #[test]
     fn test_command_definition() {
-        let locations = test_feature(
+        let links = test_feature(
             LatexCommandDefinitionProvider,
             FeatureSpec {
                 files: vec![
@@ -56,17 +66,19 @@ mod tests {
             },
         );
         assert_eq!(
-            locations,
-            vec![Location::new(
-                FeatureSpec::uri("bar.tex"),
-                Range::new_simple(0, 0, 0, 22)
-            )]
+            links,
+            vec![LocationLink {
+                origin_selection_range: Some(Range::new_simple(1, 0, 1, 4)),
+                target_uri: FeatureSpec::uri("bar.tex"),
+                target_range: Range::new_simple(0, 0, 0, 22),
+                target_selection_range: Range::new_simple(0, 0, 0, 22),
+            }]
         );
     }
 
     #[test]
     fn test_math_operator() {
-        let locations = test_feature(
+        let links = test_feature(
             LatexCommandDefinitionProvider,
             FeatureSpec {
                 files: vec![
@@ -80,11 +92,13 @@ mod tests {
             },
         );
         assert_eq!(
-            locations,
-            vec![Location::new(
-                FeatureSpec::uri("bar.tex"),
-                Range::new_simple(0, 0, 0, 31)
-            )]
+            links,
+            vec![LocationLink {
+                origin_selection_range: Some(Range::new_simple(1, 0, 1, 4)),
+                target_uri: FeatureSpec::uri("bar.tex"),
+                target_range: Range::new_simple(0, 0, 0, 31),
+                target_selection_range: Range::new_simple(0, 0, 0, 31)
+            }]
         );
     }
 }

@@ -1,52 +1,60 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Location, TextDocumentPositionParams};
+use lsp_types::{LocationLink, TextDocumentPositionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelDefinitionProvider;
 
 impl FeatureProvider for LatexLabelDefinitionProvider {
     type Params = TextDocumentPositionParams;
-    type Output = Vec<Location>;
+    type Output = Vec<LocationLink>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-    ) -> Vec<Location> {
+    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let mut links = Vec::new();
         if let Some(reference) = Self::find_reference(&request) {
             for document in request.related_documents() {
-                if let Some(definition) = Self::find_definition(&document, &reference) {
-                    return vec![definition];
-                }
+                Self::find_definitions(&document, &reference, &mut links);
             }
         }
-        Vec::new()
+        links
     }
 }
 
 impl LatexLabelDefinitionProvider {
-    fn find_definition(document: &Document, reference: &str) -> Option<Location> {
+    fn find_definitions(
+        document: &Document,
+        reference: &LatexToken,
+        links: &mut Vec<LocationLink>,
+    ) {
         if let SyntaxTree::Latex(tree) = &document.tree {
             tree.labels
                 .iter()
                 .filter(|label| label.kind == LatexLabelKind::Definition)
                 .flat_map(LatexLabel::names)
-                .find(|label| label.text() == reference)
-                .map(|label| Location::new(document.uri.clone(), label.range()))
-        } else {
-            None
+                .filter(|label| label.text() == reference.text())
+                .map(|label| LocationLink {
+                    origin_selection_range: Some(reference.range()),
+                    target_uri: document.uri.clone(),
+                    target_range: tree
+                        .environments
+                        .iter()
+                        .find(|env| env.range().contains(label.start()))
+                        .map(|env| env.range())
+                        .unwrap_or(label.range()),
+                    target_selection_range: label.range(),
+                })
+                .for_each(|link| links.push(link));
         }
     }
 
-    fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&str> {
+    fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&LatexToken> {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             tree.labels
                 .iter()
                 .flat_map(LatexLabel::names)
                 .find(|label| label.range().contains(request.params.position))
-                .map(LatexToken::text)
         } else {
             None
         }
@@ -60,12 +68,15 @@ mod tests {
 
     #[test]
     fn test_has_definition() {
-        let locations = test_feature(
+        let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {
                 files: vec![
                     FeatureSpec::file("foo.tex", "\\label{foo}"),
-                    FeatureSpec::file("bar.tex", "\\label{foo}\n\\input{baz.tex}"),
+                    FeatureSpec::file(
+                        "bar.tex",
+                        "\\begin{a}\\begin{b}\\label{foo}\\end{b}\\end{a}\n\\input{baz.tex}",
+                    ),
                     FeatureSpec::file("baz.tex", "\\ref{foo}"),
                 ],
                 main_file: "baz.tex",
@@ -74,17 +85,19 @@ mod tests {
             },
         );
         assert_eq!(
-            locations,
-            vec![Location::new(
-                FeatureSpec::uri("bar.tex"),
-                Range::new_simple(0, 7, 0, 10)
-            )]
+            links,
+            vec![LocationLink {
+                origin_selection_range: Some(Range::new_simple(0, 5, 0, 8)),
+                target_uri: FeatureSpec::uri("bar.tex"),
+                target_range: Range::new_simple(0, 9, 0, 36),
+                target_selection_range: Range::new_simple(0, 25, 0, 28)
+            }]
         );
     }
 
     #[test]
     fn test_no_definition_latex() {
-        let locations = test_feature(
+        let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.tex", "")],
@@ -93,12 +106,12 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert!(locations.is_empty());
+        assert!(links.is_empty());
     }
 
     #[test]
     fn test_no_definition_bibtex() {
-        let locations = test_feature(
+        let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {
                 files: vec![FeatureSpec::file("foo.bib", "")],
@@ -107,6 +120,6 @@ mod tests {
                 ..FeatureSpec::default()
             },
         );
-        assert!(locations.is_empty());
+        assert!(links.is_empty());
     }
 }

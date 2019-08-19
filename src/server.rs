@@ -3,7 +3,7 @@ use crate::build::*;
 use crate::citeproc::render_citation;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
-use crate::definition::DefinitionProvider;
+use crate::definition::{DefinitionProvider, DefinitionResponse};
 use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
 use crate::folding::FoldingProvider;
 use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
@@ -244,10 +244,33 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]
-    pub async fn definition(&self, params: TextDocumentPositionParams) -> Result<Vec<Location>> {
+    pub async fn definition(
+        &self,
+        params: TextDocumentPositionParams,
+    ) -> Result<DefinitionResponse> {
         let request = request!(self, params)?;
         let results = self.definition_provider.execute(&request).await;
-        Ok(results)
+
+        let supports_links = request
+            .client_capabilities
+            .text_document
+            .as_ref()
+            .and_then(|cap| cap.definition.as_ref())
+            .and_then(|cap| cap.link_support)
+            == Some(true);
+
+        let response = if supports_links {
+            DefinitionResponse::LocationLinks(results)
+        } else {
+            DefinitionResponse::Locations(
+                results
+                    .into_iter()
+                    .map(|link| Location::new(link.target_uri, link.target_selection_range))
+                    .collect(),
+            )
+        };
+
+        Ok(response)
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]

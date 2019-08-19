@@ -2,6 +2,7 @@
 
 use lsp_types::*;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
+use texlab::definition::DefinitionResponse;
 
 pub async fn run(
     scenario: &'static str,
@@ -14,7 +15,11 @@ pub async fn run(
     let params = TextDocumentPositionParams::new(identifier, position);
     scenario.open(file).await;
     let definitions = scenario.server.definition(params).await.unwrap();
-    (scenario, definitions)
+    let locations = match definitions {
+        DefinitionResponse::Locations(locations) => locations,
+        DefinitionResponse::LocationLinks(_) => unreachable!(),
+    };
+    (scenario, locations)
 }
 
 #[runtime::test(runtime_tokio::Tokio)]
