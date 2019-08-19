@@ -32,12 +32,7 @@ cargo build --release
 
 You can create a debug build by building the server without the `--release` flag.
 The resulting build can be used with the [Visual Studio Code extension](https://github.com/latex-lsp/texlab-vscode)
-by creating a symbolic link:
-
-| Platform     | Symlink                                                             |
-| ------------ | ------------------------------------------------------------------- |
-| Windows      | `texlab/target/debug/texlab.exe -> texlab-vscode/server/texlab.exe` |
-| Linux, macOS | `texlab/target/debug/texlab -> texlab-vscode/server/texlab`         |
+by adding the absolute path of the `target/debug` folder to your `PATH` environment variable.
 
 TexLab has an extensive test suite of unit and integration tests. You can run them by executing
 
