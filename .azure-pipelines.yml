@@ -59,12 +59,12 @@ jobs:
           echo "##vso[task.setvariable variable=version]$ver"
         displayName: "Set version variable"
       - bash: |
-          curl -T $(Pipeline.Workspace)/texlab-x86_64-debian.deb/texlab-x86_64-debian.deb \
+          curl -T $(Pipeline.Workspace)/texlab-x86_64-debian.deb/*.deb \
                -uefoerster:$BINTRAY_API_KEY \
-               https://api.bintray.com/content/efoerster/texlab-deb/texlab/$(version)/texlab-x86_64-debian.deb;deb_distribution=stable;deb_component=main;deb_architecture=amd64
-          curl -T $(Pipeline.Workspace)/texlab-x86_64-rhel.rpm/texlab-x86_64-rhel.rpm \
+               "https://api.bintray.com/content/efoerster/texlab-deb/texlab/$(version)/texlab-x86_64-debian.deb;deb_distribution=stable;deb_component=main;deb_architecture=amd64;publish=1"
+          curl -T $(Pipeline.Workspace)/texlab-x86_64-rhel.rpm/*.rpm \
                -uefoerster:$BINTRAY_API_KEY \
-               https://api.bintray.com/content/efoerster/texlab-rpm/texlab/$(version)/texlab-x86_64-rhel.rpm
+               "https://api.bintray.com/content/efoerster/texlab-rpm/texlab/$(version)/texlab-x86_64-rhel.rpm;publish=1"
         env:
           BINTRAY_API_KEY: $(bintrayKey)
         displayName: "Upload to Bintray"
