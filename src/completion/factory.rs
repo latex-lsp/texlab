@@ -61,19 +61,32 @@ impl<'a> LatexComponentId<'a> {
     }
 }
 
+fn supports_images(request: &FeatureRequest<CompletionParams>) -> bool {
+        request
+            .client_capabilities
+            .text_document
+            .as_ref()
+            .and_then(|cap| cap.completion.as_ref())
+            .and_then(|cap| cap.completion_item.as_ref())
+            .and_then(|cap| cap.documentation_format.as_ref())
+            .map_or(true, |formats| formats.contains(&MarkupKind::Markdown))
+}
+
 pub fn command(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
     image: Option<&str>,
+    glyph: Option<&str>,
     text_edit: TextEdit,
     component: &LatexComponentId,
 ) -> CompletionItem {
+    let detail = glyph.map_or_else(|| component.detail(), |glyph| format!("{}, {}", glyph, component.detail()).into());
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Function)),
         data: Some(CompletionItemData::Command.into()),
-        documentation: image.map(|image| image_documentation(&name, image)),
+        documentation: image.and_then(|image| image_documentation(&request, &name, image)),
         text_edit: Some(text_edit),
-        ..CompletionItem::new_simple(name, component.detail())
+        ..CompletionItem::new_simple(name, detail)
     }
 }
 
@@ -87,7 +100,7 @@ pub fn command_snippet(
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Snippet)),
         data: Some(CompletionItemData::CommandSnippet.into()),
-        documentation: image.map(|image| image_documentation(&name, image)),
+        documentation: image.and_then(|image| image_documentation(&request, &name, image)),
         insert_text: Some(template.into()),
         insert_text_format: Some(InsertTextFormat::Snippet),
         ..CompletionItem::new_simple(name.into(), component.detail())
@@ -347,20 +360,24 @@ pub fn argument(
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Argument.into()),
         text_edit: Some(text_edit),
-        documentation: image.map(|image| image_documentation(&name, image)),
+        documentation: image.and_then(|image| image_documentation(&request, &name, image)),
         ..CompletionItem::default()
     }
 }
 
-fn image_documentation(name: &str, image: &str) -> Documentation {
-    Documentation::MarkupContent(MarkupContent {
-        kind: MarkupKind::Markdown,
-        value: format!(
-            "![{}](data:image/png;base64,{}|width=48,height=48)",
-            name, image
-        )
-        .into(),
-    })
+fn image_documentation(request: &FeatureRequest<CompletionParams>, name: &str, image: &str) -> Option<Documentation> {
+    if supports_images(request) {
+        Some(Documentation::MarkupContent(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: format!(
+                "![{}](data:image/png;base64,{}|width=48,height=48)",
+                name, image
+            )
+            .into(),
+        }))
+    }  else {
+        None
+    }
 }
 
 fn adjust_kind(

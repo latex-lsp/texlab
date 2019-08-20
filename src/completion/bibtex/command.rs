@@ -31,6 +31,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
                             request,
                             (&command.name).into(),
                             command.image.as_ref().map(AsRef::as_ref),
+                            command.glyph.as_ref().map(AsRef::as_ref),
                             text_edit,
                             &component,
                         );

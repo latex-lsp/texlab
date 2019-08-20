@@ -33,6 +33,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                                 request,
                                 command.to_owned().into(),
                                 None,
+                                None,
                                 text_edit,
                                 &LatexComponentId::User,
                             )

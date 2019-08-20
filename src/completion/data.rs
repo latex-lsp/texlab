@@ -92,6 +92,7 @@ pub struct Component {
 pub struct Command {
     pub name: String,
     pub image: Option<String>,
+    pub glyph: Option<String>,
     pub parameters: Vec<Parameter>,
 }
 
