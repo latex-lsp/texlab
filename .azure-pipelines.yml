@@ -15,7 +15,7 @@ jobs:
           executableName: "texlab"
           archiveFile: "texlab-x86_64-linux.tar.gz"
           archiveType: "tar"
-          coverage: true
+          linux: true
   - job: Windows
     pool:
       vmImage: "vs2017-win2016"
