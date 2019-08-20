@@ -82,7 +82,9 @@ jobs:
           sed -i -E -e "s/[0-9]+\.[0-9]+\.[0-9]+/$(version)/" \
                     -e "s/(pkgrel\s*=\s*)[0-9]+/\11/" \
                     -e "s/[0-9a-fA-F]{128}/$checksum/" PKGBUILD .SRCINFO
-          git commit -am "Update to upstream version $(version)" --author="Eric Förster <eric.foerster@outlook.com>"
+          git config --global user.name "Eric Förster"
+          git config --global user.email "eric.foerster@outlook.com"
+          git commit -am "Update to upstream version $(version)"
           git push
         displayName: "Update AUR package"
       - task: GitHubRelease@0
