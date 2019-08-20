@@ -58,6 +58,16 @@ jobs:
           ver=`echo "$(Build.SourceBranchName)" | cut -c2-`
           echo "##vso[task.setvariable variable=version]$ver"
         displayName: "Set version variable"
+      - task: DownloadSecureFile@1
+        name: gpgKey
+        inputs:
+          secureFile: "gpg.key"
+        displayName: "Download GPG key"
+      - bash: |
+          sudo apt-get install -y rpm
+          gpg --import $(gpgKey.secureFilePath)
+          rpm --define "_gpg_name Eric Förster <eric.foerster@outlook.com>" --addsign texlab-x86_64-rhel.rpm/*.rpm
+        displayName: "Sign RPM package"
       - bash: |
           curl -T $(Pipeline.Workspace)/texlab-x86_64-debian.deb/*.deb \
                -uefoerster:$BINTRAY_API_KEY \
