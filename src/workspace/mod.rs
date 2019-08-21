@@ -33,6 +33,14 @@ impl Document {
     }
 }
 
+fn eq_uri(left: &Uri, right: &Uri) -> bool {
+    if cfg!(windows) {
+        left.as_str().to_lowercase() == right.as_str().to_lowercase()
+    } else {
+        left.as_str() == right.as_str()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Workspace {
     pub documents: Vec<Arc<Document>>,
@@ -48,7 +56,7 @@ impl Workspace {
     pub fn find(&self, uri: &Uri) -> Option<Arc<Document>> {
         self.documents
             .iter()
-            .find(|document| document.uri == *uri)
+            .find(|document| eq_uri(&document.uri, uri))
             .map(|document| Arc::clone(&document))
     }
 
@@ -72,8 +80,7 @@ impl Workspace {
         let mut results = Vec::new();
         if let Some(start) = self.find(uri) {
             let mut visited: Vec<Arc<Document>> = Vec::new();
-            let mut stack = Vec::new();
-            stack.push(start);
+            let mut stack = vec![start];
             while let Some(current) = stack.pop() {
                 if visited.contains(&current) {
                     continue;
@@ -328,6 +335,16 @@ mod tests {
         let uri2 = builder.document("bar.tex", "\\input{foo.tex}");
         let documents = builder.workspace.related_documents(&uri1);
         verify_documents(vec![uri1, uri2], documents);
+    }
+
+    #[test]
+    fn test_related_documents_same_parent() {
+        let mut builder = WorkspaceBuilder::new();
+        let uri1 = builder.document("test.tex", "\\include{test1}\\include{test2}");
+        let uri2 = builder.document("test1.tex", "\\label{foo}");
+        let uri3 = builder.document("test2.tex", "\\ref{foo}");
+        let documents = builder.workspace.related_documents(&uri3);
+        verify_documents(vec![uri3, uri1, uri2], documents);
     }
 
     #[test]
