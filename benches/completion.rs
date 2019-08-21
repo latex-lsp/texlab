@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use criterion::{criterion_group, Criterion};
 use futures::executor::block_on;
 use lsp_types::*;

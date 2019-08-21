@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use lsp_types::*;
 use std::collections::HashMap;
 use texlab::formatting::bibtex::BibtexFormattingOptions;

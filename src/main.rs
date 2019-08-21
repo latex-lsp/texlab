@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use clap::*;
 use futures::channel::mpsc;
 use futures::compat::*;

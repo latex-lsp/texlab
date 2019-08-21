@@ -1,5 +1,3 @@
-#![feature(async_await)]
-
 use lsp_types::*;
 use std::borrow::Cow;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};

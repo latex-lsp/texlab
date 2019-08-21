@@ -1,4 +1,4 @@
-#![feature(async_await, async_closure)]
+#![feature(async_closure)]
 
 pub mod client;
 pub mod server;
