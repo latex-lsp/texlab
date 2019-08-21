@@ -36,19 +36,19 @@ where
                     let server = Arc::clone(&self.server);
                     let mut output = self.output.clone();
 
-                    runtime::spawn(async move {
+                    drop(runtime::spawn(async move {
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
                         output.send(json).await.unwrap();
                         server.execute_actions().await;
-                    });
+                    }));
                 }
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
                     let server = Arc::clone(&self.server);
-                    runtime::spawn(async move {
+                    drop(runtime::spawn(async move {
                         server.execute_actions().await;
-                    });
+                    }));
                 }
                 Ok(Message::Response(response)) => {
                     self.client.handle(response).await;
