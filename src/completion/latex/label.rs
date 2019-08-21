@@ -4,6 +4,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexLabelCompletionProvider;
@@ -22,7 +23,6 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
         combinators::argument(request, parameters, |context| {
             async move {
-                let outline = Outline::from(&request.view);
                 let source = Self::find_source(&context);
                 let mut items = Vec::new();
                 for document in request.related_documents() {
@@ -33,8 +33,10 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                             .filter(|label| label.kind == LatexLabelKind::Definition)
                             .filter(|label| Self::is_included(tree, label, source))
                         {
-                            let outline_ctx =
-                                OutlineContext::find(&outline, &request.view, label.start());
+                            let workspace = Arc::clone(&request.view.workspace);
+                            let view = DocumentView::new(workspace, Arc::clone(&document));
+                            let outline = Outline::from(&view);
+                            let outline_ctx = OutlineContext::find(&outline, &view, label.start());
                             for name in label.names() {
                                 let text = name.text().to_owned();
                                 let text_edit = TextEdit::new(context.range, text.clone().into());
