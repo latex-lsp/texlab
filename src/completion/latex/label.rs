@@ -20,31 +20,33 @@ impl FeatureProvider for LatexLabelCompletionProvider {
             .filter(|cmd| cmd.kind.is_reference())
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, |context| async move {
-            let outline = Outline::from(&request.view);
-            let source = Self::find_source(&context);
-            let mut items = Vec::new();
-            for document in request.related_documents() {
-                if let SyntaxTree::Latex(tree) = &document.tree {
-                    for label in tree
-                        .labels
-                        .iter()
-                        .filter(|label| label.kind == LatexLabelKind::Definition)
-                        .filter(|label| Self::is_included(tree, label, source))
-                    {
-                        let outline_ctx =
-                            OutlineContext::find(&outline, &request.view, label.start());
-                        for name in label.names() {
-                            let text = name.text().to_owned();
-                            let text_edit = TextEdit::new(context.range, text.clone().into());
-                            let item =
-                                factory::label(request, text.into(), text_edit, &outline_ctx);
-                            items.push(item);
+        combinators::argument(request, parameters, |context| {
+            async move {
+                let outline = Outline::from(&request.view);
+                let source = Self::find_source(&context);
+                let mut items = Vec::new();
+                for document in request.related_documents() {
+                    if let SyntaxTree::Latex(tree) = &document.tree {
+                        for label in tree
+                            .labels
+                            .iter()
+                            .filter(|label| label.kind == LatexLabelKind::Definition)
+                            .filter(|label| Self::is_included(tree, label, source))
+                        {
+                            let outline_ctx =
+                                OutlineContext::find(&outline, &request.view, label.start());
+                            for name in label.names() {
+                                let text = name.text().to_owned();
+                                let text_edit = TextEdit::new(context.range, text.clone().into());
+                                let item =
+                                    factory::label(request, text.into(), text_edit, &outline_ctx);
+                                items.push(item);
+                            }
                         }
                     }
                 }
+                items
             }
-            items
         })
         .await
     }

@@ -19,23 +19,26 @@ impl FeatureProvider for LatexCitationCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, |context| async move {
-            let mut items = Vec::new();
-            for document in request.related_documents() {
-                if let SyntaxTree::Bibtex(tree) = &document.tree {
-                    for entry in &tree.entries() {
-                        if !entry.is_comment() {
-                            if let Some(key) = &entry.key {
-                                let key = key.text().to_owned();
-                                let text_edit = TextEdit::new(context.range, key.clone().into());
-                                let item = factory::citation(request, entry, key, text_edit);
-                                items.push(item);
+        combinators::argument(request, parameters, |context| {
+            async move {
+                let mut items = Vec::new();
+                for document in request.related_documents() {
+                    if let SyntaxTree::Bibtex(tree) = &document.tree {
+                        for entry in &tree.entries() {
+                            if !entry.is_comment() {
+                                if let Some(key) = &entry.key {
+                                    let key = key.text().to_owned();
+                                    let text_edit =
+                                        TextEdit::new(context.range, key.clone().into());
+                                    let item = factory::citation(request, entry, key, text_edit);
+                                    items.push(item);
+                                }
                             }
                         }
                     }
                 }
+                items
             }
-            items
         })
         .await
     }

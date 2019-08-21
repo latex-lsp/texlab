@@ -15,33 +15,35 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, |current_command| async move {
-            let mut items = Vec::new();
-            for document in request.related_documents() {
-                if let SyntaxTree::Latex(tree) = &document.tree {
-                    tree.commands
-                        .iter()
-                        .filter(|command| command.range() != current_command.range())
-                        .map(|command| &command.name.text()[1..])
-                        .unique()
-                        .map(|command| {
-                            let text_edit = TextEdit::new(
-                                current_command.short_name_range(),
-                                command.to_owned().into(),
-                            );
-                            factory::command(
-                                request,
-                                command.to_owned().into(),
-                                None,
-                                None,
-                                text_edit,
-                                &LatexComponentId::User,
-                            )
-                        })
-                        .for_each(|item| items.push(item));
+        combinators::command(request, |current_command| {
+            async move {
+                let mut items = Vec::new();
+                for document in request.related_documents() {
+                    if let SyntaxTree::Latex(tree) = &document.tree {
+                        tree.commands
+                            .iter()
+                            .filter(|command| command.range() != current_command.range())
+                            .map(|command| &command.name.text()[1..])
+                            .unique()
+                            .map(|command| {
+                                let text_edit = TextEdit::new(
+                                    current_command.short_name_range(),
+                                    command.to_owned().into(),
+                                );
+                                factory::command(
+                                    request,
+                                    command.to_owned().into(),
+                                    None,
+                                    None,
+                                    text_edit,
+                                    &LatexComponentId::User,
+                                )
+                            })
+                            .for_each(|item| items.push(item));
+                    }
                 }
+                items
             }
-            items
         })
         .await
     }
@@ -56,32 +58,34 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, |context| async move {
-            let mut items = Vec::new();
-            for document in request.related_documents() {
-                if let SyntaxTree::Latex(tree) = &document.tree {
-                    for environment in &tree.environments {
-                        if environment.left.command == context.command
-                            || environment.right.command == context.command
-                        {
-                            continue;
-                        }
+        combinators::environment(request, |context| {
+            async move {
+                let mut items = Vec::new();
+                for document in request.related_documents() {
+                    if let SyntaxTree::Latex(tree) = &document.tree {
+                        for environment in &tree.environments {
+                            if environment.left.command == context.command
+                                || environment.right.command == context.command
+                            {
+                                continue;
+                            }
 
-                        if let Some(item) =
-                            Self::make_item(request, &environment.left, context.range)
-                        {
-                            items.push(item);
-                        }
+                            if let Some(item) =
+                                Self::make_item(request, &environment.left, context.range)
+                            {
+                                items.push(item);
+                            }
 
-                        if let Some(item) =
-                            Self::make_item(request, &environment.right, context.range)
-                        {
-                            items.push(item);
+                            if let Some(item) =
+                                Self::make_item(request, &environment.right, context.range)
+                            {
+                                items.push(item);
+                            }
                         }
                     }
                 }
+                items
             }
-            items
         })
         .await
     }

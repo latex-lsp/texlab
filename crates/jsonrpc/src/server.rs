@@ -26,10 +26,12 @@ where
     I: DeserializeOwned + Send,
     O: Serialize,
 {
-    let handle = |json| async move {
-        let params: I = serde_json::from_value(json).map_err(|_| Error::deserialize_error())?;
-        let result = handler(params).await.map_err(Error::internal_error)?;
-        Ok(result)
+    let handle = |json| {
+        async move {
+            let params: I = serde_json::from_value(json).map_err(|_| Error::deserialize_error())?;
+            let result = handler(params).await.map_err(Error::internal_error)?;
+            Ok(result)
+        }
     };
 
     match handle(request.params).await {

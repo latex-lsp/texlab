@@ -62,14 +62,14 @@ impl<'a> LatexComponentId<'a> {
 }
 
 fn supports_images(request: &FeatureRequest<CompletionParams>) -> bool {
-        request
-            .client_capabilities
-            .text_document
-            .as_ref()
-            .and_then(|cap| cap.completion.as_ref())
-            .and_then(|cap| cap.completion_item.as_ref())
-            .and_then(|cap| cap.documentation_format.as_ref())
-            .map_or(true, |formats| formats.contains(&MarkupKind::Markdown))
+    request
+        .client_capabilities
+        .text_document
+        .as_ref()
+        .and_then(|cap| cap.completion.as_ref())
+        .and_then(|cap| cap.completion_item.as_ref())
+        .and_then(|cap| cap.documentation_format.as_ref())
+        .map_or(true, |formats| formats.contains(&MarkupKind::Markdown))
 }
 
 pub fn command(
@@ -80,7 +80,10 @@ pub fn command(
     text_edit: TextEdit,
     component: &LatexComponentId,
 ) -> CompletionItem {
-    let detail = glyph.map_or_else(|| component.detail(), |glyph| format!("{}, {}", glyph, component.detail()).into());
+    let detail = glyph.map_or_else(
+        || component.detail(),
+        |glyph| format!("{}, {}", glyph, component.detail()).into(),
+    );
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Function)),
         data: Some(CompletionItemData::Command.into()),
@@ -365,7 +368,11 @@ pub fn argument(
     }
 }
 
-fn image_documentation(request: &FeatureRequest<CompletionParams>, name: &str, image: &str) -> Option<Documentation> {
+fn image_documentation(
+    request: &FeatureRequest<CompletionParams>,
+    name: &str,
+    image: &str,
+) -> Option<Documentation> {
     if supports_images(request) {
         Some(Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
@@ -375,7 +382,7 @@ fn image_documentation(request: &FeatureRequest<CompletionParams>, name: &str, i
             )
             .into(),
         }))
-    }  else {
+    } else {
         None
     }
 }

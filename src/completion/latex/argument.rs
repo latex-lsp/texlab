@@ -23,20 +23,22 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
                     let mut items = combinators::argument(
                         request,
                         iter::once(Parameter::new(&name, i)),
-                        |context| async move {
-                            let mut items = Vec::new();
-                            for argument in &parameter.0 {
-                                let text_edit =
-                                    TextEdit::new(context.range, (&argument.name).into());
-                                let item = factory::argument(
-                                    request,
-                                    &argument.name,
-                                    text_edit,
-                                    argument.image.as_ref().map(AsRef::as_ref),
-                                );
-                                items.push(item);
+                        |context| {
+                            async move {
+                                let mut items = Vec::new();
+                                for argument in &parameter.0 {
+                                    let text_edit =
+                                        TextEdit::new(context.range, (&argument.name).into());
+                                    let item = factory::argument(
+                                        request,
+                                        &argument.name,
+                                        text_edit,
+                                        argument.image.as_ref().map(AsRef::as_ref),
+                                    );
+                                    items.push(item);
+                                }
+                                items
                             }
-                            items
                         },
                     )
                     .await;

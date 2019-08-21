@@ -1,6 +1,6 @@
 use lsp_types::*;
-use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 use texlab::definition::DefinitionResponse;
+use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
     scenario: &'static str,

@@ -21,54 +21,56 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument_word(request, parameters, |command, index| async move {
-            if !request.document().is_file() {
-                return Vec::new();
-            }
-
-            let position = request.params.position;
-            let mut items = Vec::new();
-            let path_word = command.extract_word(index);
-            let name_range = match path_word {
-                Some(path_word) => Range::new_simple(
-                    path_word.start().line,
-                    path_word.end().character
-                        - path_word.text().split('/').last().unwrap().chars().count() as u64,
-                    path_word.end().line,
-                    path_word.end().character,
-                ),
-                None => Range::new(position, position),
-            };
-            let directory = current_directory(&request, &command);
-
-            for entry in WalkDir::new(directory)
-                .min_depth(1)
-                .max_depth(1)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-            {
-                if entry.file_type().is_file() && is_included(&command, &entry.path()) {
-                    let mut path = entry.into_path();
-                    let include_extension = LANGUAGE_DATA
-                        .include_commands
-                        .iter()
-                        .find(|cmd| command.name.text() == cmd.name)
-                        .unwrap()
-                        .include_extension;
-
-                    if !include_extension {
-                        remove_extension(&mut path);
-                    }
-                    let text_edit = make_text_edit(name_range, &path);
-                    items.push(factory::file(request, &path, text_edit));
-                } else if entry.file_type().is_dir() {
-                    let path = entry.into_path();
-                    let text_edit = make_text_edit(name_range, &path);
-                    items.push(factory::folder(request, &path, text_edit));
+        combinators::argument_word(request, parameters, |command, index| {
+            async move {
+                if !request.document().is_file() {
+                    return Vec::new();
                 }
+
+                let position = request.params.position;
+                let mut items = Vec::new();
+                let path_word = command.extract_word(index);
+                let name_range = match path_word {
+                    Some(path_word) => Range::new_simple(
+                        path_word.start().line,
+                        path_word.end().character
+                            - path_word.text().split('/').last().unwrap().chars().count() as u64,
+                        path_word.end().line,
+                        path_word.end().character,
+                    ),
+                    None => Range::new(position, position),
+                };
+                let directory = current_directory(&request, &command);
+
+                for entry in WalkDir::new(directory)
+                    .min_depth(1)
+                    .max_depth(1)
+                    .follow_links(false)
+                    .into_iter()
+                    .filter_map(std::result::Result::ok)
+                {
+                    if entry.file_type().is_file() && is_included(&command, &entry.path()) {
+                        let mut path = entry.into_path();
+                        let include_extension = LANGUAGE_DATA
+                            .include_commands
+                            .iter()
+                            .find(|cmd| command.name.text() == cmd.name)
+                            .unwrap()
+                            .include_extension;
+
+                        if !include_extension {
+                            remove_extension(&mut path);
+                        }
+                        let text_edit = make_text_edit(name_range, &path);
+                        items.push(factory::file(request, &path, text_edit));
+                    } else if entry.file_type().is_dir() {
+                        let path = entry.into_path();
+                        let text_edit = make_text_edit(name_range, &path);
+                        items.push(factory::folder(request, &path, text_edit));
+                    }
+                }
+                items
             }
-            items
         })
         .await
     }

@@ -52,19 +52,21 @@ where
         .filter(|cmd| cmd.kind == kind)
         .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-    combinators::argument(request, parameters, |context| async move {
-        let mut items = Vec::new();
-        for component in &DATABASE.components {
-            for file_name in &component.file_names {
-                if file_name.ends_with(extension) {
-                    let stem = &file_name[0..file_name.len() - 4];
-                    let text_edit = TextEdit::new(context.range, stem.into());
-                    let item = factory(request, stem, text_edit);
-                    items.push(item);
+    combinators::argument(request, parameters, |context| {
+        async move {
+            let mut items = Vec::new();
+            for component in &DATABASE.components {
+                for file_name in &component.file_names {
+                    if file_name.ends_with(extension) {
+                        let stem = &file_name[0..file_name.len() - 4];
+                        let text_edit = TextEdit::new(context.range, stem.into());
+                        let item = factory(request, stem, text_edit);
+                        items.push(item);
+                    }
                 }
             }
+            items
         }
-        items
     })
     .await
 }

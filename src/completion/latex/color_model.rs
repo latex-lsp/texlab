@@ -19,14 +19,16 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(&request, parameters, |context| async move {
-            let mut items = Vec::new();
-            for name in MODEL_NAMES {
-                let text_edit = TextEdit::new(context.range, (*name).into());
-                let item = factory::color_model(request, name, text_edit);
-                items.push(item);
+        combinators::argument(&request, parameters, |context| {
+            async move {
+                let mut items = Vec::new();
+                for name in MODEL_NAMES {
+                    let text_edit = TextEdit::new(context.range, (*name).into());
+                    let item = factory::color_model(request, name, text_edit);
+                    items.push(item);
+                }
+                items
             }
-            items
         })
         .await
     }

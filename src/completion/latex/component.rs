@@ -14,26 +14,28 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, |command| async move {
-            let range = command.short_name_range();
-            let mut items = Vec::new();
-            for component in DATABASE.related_components(request.related_documents()) {
-                let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
-                let id = LatexComponentId::Component(file_names);
-                for command in &component.commands {
-                    let text_edit = TextEdit::new(range, (&command.name).into());
-                    let item = factory::command(
-                        request,
-                        (&command.name).into(),
-                        command.image.as_ref().map(AsRef::as_ref),
-                        command.glyph.as_ref().map(AsRef::as_ref),
-                        text_edit,
-                        &id,
-                    );
-                    items.push(item);
+        combinators::command(request, |command| {
+            async move {
+                let range = command.short_name_range();
+                let mut items = Vec::new();
+                for component in DATABASE.related_components(request.related_documents()) {
+                    let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
+                    let id = LatexComponentId::Component(file_names);
+                    for command in &component.commands {
+                        let text_edit = TextEdit::new(range, (&command.name).into());
+                        let item = factory::command(
+                            request,
+                            (&command.name).into(),
+                            command.image.as_ref().map(AsRef::as_ref),
+                            command.glyph.as_ref().map(AsRef::as_ref),
+                            text_edit,
+                            &id,
+                        );
+                        items.push(item);
+                    }
                 }
+                items
             }
-            items
         })
         .await
     }
@@ -48,18 +50,21 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, |context| async move {
-            let mut items = Vec::new();
-            for component in DATABASE.related_components(request.related_documents()) {
-                let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
-                let id = LatexComponentId::Component(file_names);
-                for environment in &component.environments {
-                    let text_edit = TextEdit::new(context.range, environment.into());
-                    let item = factory::environment(request, environment.into(), text_edit, &id);
-                    items.push(item);
+        combinators::environment(request, |context| {
+            async move {
+                let mut items = Vec::new();
+                for component in DATABASE.related_components(request.related_documents()) {
+                    let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
+                    let id = LatexComponentId::Component(file_names);
+                    for environment in &component.environments {
+                        let text_edit = TextEdit::new(context.range, environment.into());
+                        let item =
+                            factory::environment(request, environment.into(), text_edit, &id);
+                        items.push(item);
+                    }
                 }
+                items
             }
-            items
         })
         .await
     }
