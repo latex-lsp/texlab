@@ -144,7 +144,6 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
         }
 
         let ident = &method.sig.ident;
-        let return_ty = &method.sig.decl.output;
         let param_ty = unwrap!(&method.sig.decl.inputs[1], FnArg::Captured(x) => &x.ty);
         let meta = MethodMeta::parse(method.attrs.first().unwrap());
         let name = &meta.name.as_str();
@@ -153,7 +152,7 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
             MethodKind::Request => {
                 requests.push(quote!(
                     #name => {
-                        let handler = async move |param: #param_ty| #return_ty {
+                        let handler = |param: #param_ty| async move {
                            self.#ident(param).await
                         };
 

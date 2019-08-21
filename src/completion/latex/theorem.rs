@@ -14,7 +14,7 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |context| {
+        combinators::environment(request, |context| async move {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {

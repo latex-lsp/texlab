@@ -13,7 +13,7 @@ impl FeatureProvider for LatexBeginCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, async move |_| {
+        combinators::command(request, |_| async move {
             let snippet = factory::command_snippet(
                 request,
                 "begin",

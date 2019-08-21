@@ -15,7 +15,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, async move |current_command| {
+        combinators::command(request, |current_command| async move {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
@@ -56,7 +56,7 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |context| {
+        combinators::environment(request, |context| async move {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {

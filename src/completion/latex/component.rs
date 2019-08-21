@@ -14,7 +14,7 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(request, async move |command| {
+        combinators::command(request, |command| async move {
             let range = command.short_name_range();
             let mut items = Vec::new();
             for component in DATABASE.related_components(request.related_documents()) {
@@ -48,7 +48,7 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(request, async move |context| {
+        combinators::environment(request, |context| async move {
             let mut items = Vec::new();
             for component in DATABASE.related_components(request.related_documents()) {
                 let file_names = component.file_names.iter().map(AsRef::as_ref).collect();

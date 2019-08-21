@@ -19,7 +19,7 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(&request, parameters, async move |context| {
+        combinators::argument(&request, parameters, |context| async move {
             let mut items = Vec::new();
             for name in MODEL_NAMES {
                 let text_edit = TextEdit::new(context.range, (*name).into());

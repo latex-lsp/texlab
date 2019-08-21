@@ -26,7 +26,7 @@ where
     I: DeserializeOwned + Send,
     O: Serialize,
 {
-    let handle = async move |json| -> std::result::Result<O, Error> {
+    let handle = |json| async move {
         let params: I = serde_json::from_value(json).map_err(|_| Error::deserialize_error())?;
         let result = handler(params).await.map_err(Error::internal_error)?;
         Ok(result)

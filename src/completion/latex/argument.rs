@@ -23,7 +23,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
                     let mut items = combinators::argument(
                         request,
                         iter::once(Parameter::new(&name, i)),
-                        async move |context| {
+                        |context| async move {
                             let mut items = Vec::new();
                             for argument in &parameter.0 {
                                 let text_edit =

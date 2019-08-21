@@ -15,7 +15,7 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameter = Parameter::new("\\usepgflibrary", 0);
-        combinators::argument(request, std::iter::once(parameter), async move |context| {
+        combinators::argument(request, std::iter::once(parameter), |context| async move {
             let mut items = Vec::new();
             for name in &LANGUAGE_DATA.pgf_libraries {
                 let text_edit = TextEdit::new(context.range, name.into());
@@ -38,7 +38,7 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameter = Parameter::new("\\usetikzlibrary", 0);
-        combinators::argument(request, std::iter::once(parameter), async move |context| {
+        combinators::argument(request, std::iter::once(parameter), |context| async move {
             let mut items = Vec::new();
             for name in &LANGUAGE_DATA.tikz_libraries {
                 let text_edit = TextEdit::new(context.range, name.into());

@@ -52,7 +52,7 @@ where
         .filter(|cmd| cmd.kind == kind)
         .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-    combinators::argument(request, parameters, async move |context| {
+    combinators::argument(request, parameters, |context| async move {
         let mut items = Vec::new();
         for component in &DATABASE.components {
             for file_name in &component.file_names {

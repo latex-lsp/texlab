@@ -21,7 +21,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument_word(request, parameters, async move |command, index| {
+        combinators::argument_word(request, parameters, |command, index| async move {
             if !request.document().is_file() {
                 return Vec::new();
             }

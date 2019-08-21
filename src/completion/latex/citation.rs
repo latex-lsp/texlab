@@ -19,7 +19,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
             .iter()
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, async move |context| {
+        combinators::argument(request, parameters, |context| async move {
             let mut items = Vec::new();
             for document in request.related_documents() {
                 if let SyntaxTree::Bibtex(tree) = &document.tree {

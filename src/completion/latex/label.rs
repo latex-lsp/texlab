@@ -20,7 +20,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
             .filter(|cmd| cmd.kind.is_reference())
             .map(|cmd| Parameter::new(&cmd.name, cmd.index));
 
-        combinators::argument(request, parameters, async move |context| {
+        combinators::argument(request, parameters, |context| async move {
             let outline = Outline::from(&request.view);
             let source = Self::find_source(&context);
             let mut items = Vec::new();
