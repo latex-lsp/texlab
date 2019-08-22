@@ -3,6 +3,7 @@ name = "texlab"
 description = "LaTeX Language Server"
 version = "1.4.1"
 license = "MIT"
+readme = "README.md"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>", 
     "Patrick Förster <pfoerster@users.noreply.github.com>"]
