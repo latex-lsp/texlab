@@ -58,27 +58,6 @@ jobs:
           ver=`echo "$(Build.SourceBranchName)" | cut -c2-`
           echo "##vso[task.setvariable variable=version]$ver"
         displayName: "Set version variable"
-      - task: DownloadSecureFile@1
-        name: gpgKey
-        inputs:
-          secureFile: "gpg.key"
-        displayName: "Download GPG key"
-      - bash: |
-          gpg --import $(gpgKey.secureFilePath)
-        displayName: "Import GPG key"
-      - bash: |
-          rpm --define "_gpg_name Eric Förster <eric.foerster@outlook.com>" --addsign texlab-x86_64-rhel.rpm/*.rpm
-        displayName: "Sign RPM package"
-      - bash: |
-          curl -T $(Pipeline.Workspace)/texlab-x86_64-debian.deb/*.deb \
-               -uefoerster:$BINTRAY_API_KEY \
-               "https://api.bintray.com/content/efoerster/texlab-deb/texlab/$(version)/texlab-x86_64-debian.deb;deb_distribution=stable;deb_component=main;deb_architecture=amd64;publish=1"
-          curl -T $(Pipeline.Workspace)/texlab-x86_64-rhel.rpm/*.rpm \
-               -uefoerster:$BINTRAY_API_KEY \
-               "https://api.bintray.com/content/efoerster/texlab-rpm/texlab/$(version)/texlab-x86_64-rhel.rpm;publish=1"
-        env:
-          BINTRAY_API_KEY: $(bintrayKey)
-        displayName: "Upload to Bintray"
       - task: InstallSSHKey@0
         inputs:
           knownHostsEntry: "$(aurKnownHosts)"

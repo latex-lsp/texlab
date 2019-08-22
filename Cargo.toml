@@ -59,19 +59,3 @@ harness = false
 
 [profile.release]
 lto = true
-
-[package.metadata.deb]
-license-file = ["LICENSE", "4"]
-extended-description = """\
-A cross-platform implementation of the Language Server Protocol \
-providing rich cross-editing support for the LaTeX typesetting system."""
-depends = "$auto"
-section = "tex"
-assets = [
-    ["target/release/texlab", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/texlab/README", "644"],
-]
-
-[package.metadata.rpm]
-cargo = { buildflags = ["--release"] }
-targets = { texlab = { path = "/usr/bin/texlab" } }

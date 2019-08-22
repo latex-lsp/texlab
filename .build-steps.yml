@@ -53,20 +53,3 @@ steps:
       - publish: $(Build.ArtifactStagingDirectory)
         artifact: ${{ parameters.archiveFile }}
         displayName: "Publish release artifact"
-      - ${{ if eq(parameters.linux, 'true') }}:
-          - bash: |
-              cargo install cargo-deb
-              cargo deb
-              mv target/debian/texlab* target/debian/texlab-x86_64-debian.deb
-            displayName: "Build Debian package"
-          - publish: target/debian
-            artifact: texlab-x86_64-debian.deb
-            displayName: "Publish Debian artifact"
-          - bash: |
-              cargo install cargo-rpm
-              cargo rpm build -v
-              mv target/release/rpmbuild/RPMS/x86_64/texlab* target/release/rpmbuild/RPMS/x86_64/texlab-x86_64-rhel.rpm
-            displayName: "Build RHEL package"
-          - publish: target/release/rpmbuild/RPMS/x86_64
-            artifact: texlab-x86_64-rhel.rpm
-            displayName: "Publish RHEL artifact"
