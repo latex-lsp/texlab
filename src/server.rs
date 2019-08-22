@@ -14,7 +14,7 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::request;
-use crate::symbol::SymbolProvider;
+use crate::symbol::{SymbolProvider, SymbolResponse};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures::executor;
@@ -291,13 +291,15 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
-    pub async fn document_symbol(
-        &self,
-        params: DocumentSymbolParams,
-    ) -> Result<Vec<DocumentSymbol>> {
+    pub async fn document_symbol(&self, params: DocumentSymbolParams) -> Result<SymbolResponse> {
         let request = request!(self, params)?;
         let symbols = self.symbol_provider.execute(&request).await;
-        Ok(symbols)
+        let response = SymbolResponse::new(
+            &self.client_capabilities.get().unwrap(),
+            &request.document().uri,
+            symbols,
+        );
+        Ok(response)
     }
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]

@@ -1,8 +1,8 @@
 use super::{Document, DocumentView};
 use crate::syntax::*;
+use crate::workspace::eq_uri;
 use lsp_types::*;
 use std::collections::HashSet;
-use crate::workspace::eq_uri;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Outline<'a> {
