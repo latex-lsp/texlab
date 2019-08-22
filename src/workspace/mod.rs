@@ -33,7 +33,7 @@ impl Document {
     }
 }
 
-fn eq_uri(left: &Uri, right: &Uri) -> bool {
+pub fn eq_uri(left: &Uri, right: &Uri) -> bool {
     if cfg!(windows) {
         left.as_str().to_lowercase() == right.as_str().to_lowercase()
     } else {

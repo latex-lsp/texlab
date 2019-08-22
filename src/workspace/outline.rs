@@ -2,6 +2,7 @@ use super::{Document, DocumentView};
 use crate::syntax::*;
 use lsp_types::*;
 use std::collections::HashSet;
+use crate::workspace::eq_uri;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Outline<'a> {
@@ -82,7 +83,7 @@ impl<'a> OutlineSectionFinder<'a> {
                     OutlineItem::Include(item) => {
                         for document in &view.related_documents {
                             for targets in &item.all_targets {
-                                if targets.contains(&document.uri) {
+                                if targets.iter().any(|uri| eq_uri(uri, &document.uri)) {
                                     self.analyze(view, document);
                                     break;
                                 }
