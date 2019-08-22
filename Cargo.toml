@@ -72,7 +72,5 @@ assets = [
 ]
 
 [package.metadata.rpm]
-buildflags = ["--release"]
-
-[package.metadata.rpm.targets]
-texlab = { path = "/usr/bin/texlab" }
+cargo = { buildflags = ["--release"] }
+targets = { texlab = { path = "/usr/bin/texlab" } }
