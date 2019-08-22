@@ -64,8 +64,9 @@ jobs:
           secureFile: "gpg.key"
         displayName: "Download GPG key"
       - bash: |
-          sudo apt-get install -y rpm
           gpg --import $(gpgKey.secureFilePath)
+        displayName: "Import GPG key"
+      - bash: |
           rpm --define "_gpg_name Eric Förster <eric.foerster@outlook.com>" --addsign texlab-x86_64-rhel.rpm/*.rpm
         displayName: "Sign RPM package"
       - bash: |
