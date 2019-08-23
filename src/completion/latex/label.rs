@@ -35,13 +35,16 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         {
                             let workspace = Arc::clone(&request.view.workspace);
                             let view = DocumentView::new(workspace, Arc::clone(&document));
-                            let outline = Outline::from(&view);
-                            let outline_ctx = OutlineContext::find(&outline, &view, label.start());
+                            let outline = OutlineContext::parse(&view, label.start());
                             for name in label.names() {
                                 let text = name.text().to_owned();
                                 let text_edit = TextEdit::new(context.range, text.clone().into());
-                                let item =
-                                    factory::label(request, text.into(), text_edit, &outline_ctx);
+                                let item = factory::label(
+                                    request,
+                                    text.into(),
+                                    text_edit,
+                                    outline.as_ref(),
+                                );
                                 items.push(item);
                             }
                         }

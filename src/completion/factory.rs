@@ -128,23 +128,28 @@ pub fn label(
     request: &FeatureRequest<CompletionParams>,
     name: Cow<'static, str>,
     text_edit: TextEdit,
-    context: &OutlineContext,
+    context: Option<&OutlineContext>,
 ) -> CompletionItem {
-    let mut filter_text = String::from(name.as_ref());
-    if let Some(theorem) = &context.theorem {
-        filter_text.push(' ');
-        filter_text.push_str(&theorem.kind);
-        if let Some(description) = &theorem.description {
-            filter_text.push(' ');
-            filter_text.push_str(description);
-        }
-    } else if let Some(caption) = &context.caption {
-        filter_text.push(' ');
-        filter_text.push_str(&caption.text);
-    } else if let Some(section) = &context.section {
-        filter_text.push(' ');
-        filter_text.push_str(&section);
-    }
+    let filter_text = match &context {
+        Some(context) => match &context.item {
+            OutlineContextItem::Caption(caption) => format!("{} {}", &name, caption),
+            OutlineContextItem::Equation => format!("{} Equation", &name),
+            OutlineContextItem::Section(section) => format!("{} {}", &name, section),
+            OutlineContextItem::Theorem {
+                kind,
+                description: None,
+            } => format!("{} {}", &name, &kind),
+            OutlineContextItem::Theorem {
+                kind,
+                description: Some(description),
+            } => format!("{} {} {}", &name, &kind, &description),
+        },
+        None => name.clone().into_owned(),
+    };
+
+    let documentation = context
+        .map(|ctx| ctx.item.to_owned().documentation())
+        .map(Documentation::MarkupContent);
 
     CompletionItem {
         label: name,
@@ -152,9 +157,7 @@ pub fn label(
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
         filter_text: Some(filter_text.into()),
-        documentation: context
-            .formatted_reference()
-            .map(Documentation::MarkupContent),
+        documentation,
         ..CompletionItem::default()
     }
 }

@@ -6,54 +6,56 @@ use lsp_types::*;
 fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
     let position = label.start();
-    if let Some(equation) = OutlineContext::find_equation(view, position) {
-        for name in label.names() {
-            let symbol = DocumentSymbol {
-                name: name.text().to_owned().into(),
-                detail: None,
-                kind: SymbolKind::Number,
-                deprecated: Some(false),
-                range: equation,
-                selection_range: name.range(),
-                children: None,
-            };
-            symbols.push(symbol);
+    if let Some(context) = OutlineContext::parse(view, position) {
+        match &context.item {
+            OutlineContextItem::Equation => {
+                for name in label.names() {
+                    let symbol = DocumentSymbol {
+                        name: name.text().to_owned().into(),
+                        detail: None,
+                        kind: SymbolKind::Number,
+                        deprecated: Some(false),
+                        range: context.range,
+                        selection_range: name.range(),
+                        children: None,
+                    };
+                    symbols.push(symbol);
+                }
+            }
+            OutlineContextItem::Caption(caption) => {
+                for name in label.names() {
+                    let symbol = DocumentSymbol {
+                        name: caption.clone().into(),
+                        detail: None,
+                        kind: SymbolKind::Method,
+                        deprecated: Some(false),
+                        range: context.range,
+                        selection_range: name.range(),
+                        children: None,
+                    };
+                    symbols.push(symbol);
+                }
+            }
+            OutlineContextItem::Theorem {
+                kind: _,
+                description: _,
+            } => {
+                for name in label.names() {
+                    let symbol = DocumentSymbol {
+                        name: context.item.clone().reference().into(),
+                        detail: None,
+                        kind: SymbolKind::EnumMember,
+                        deprecated: Some(false),
+                        range: context.range,
+                        selection_range: name.range(),
+                        children: None,
+                    };
+                    symbols.push(symbol);
+                }
+            }
+            OutlineContextItem::Section(_) => {}
         }
-        return symbols;
     }
-
-    if let Some(caption) = OutlineContext::find_caption(&view.document, position) {
-        for name in label.names() {
-            let symbol = DocumentSymbol {
-                name: caption.text.clone().into(),
-                detail: None,
-                kind: SymbolKind::Method,
-                deprecated: Some(false),
-                range: caption.range,
-                selection_range: name.range(),
-                children: None,
-            };
-            symbols.push(symbol);
-        }
-        return symbols;
-    }
-
-    if let Some(theorem) = OutlineContext::find_theorem(view, position) {
-        for name in label.names() {
-            let symbol = DocumentSymbol {
-                name: theorem.to_string().into(),
-                detail: None,
-                kind: SymbolKind::EnumMember,
-                deprecated: Some(false),
-                range: theorem.range,
-                selection_range: name.range(),
-                children: None,
-            };
-            symbols.push(symbol);
-        }
-        return symbols;
-    }
-
     symbols
 }
 
