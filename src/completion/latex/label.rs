@@ -26,6 +26,10 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                 let source = Self::find_source(&context);
                 let mut items = Vec::new();
                 for document in request.related_documents() {
+                    let workspace = Arc::clone(&request.view.workspace);
+                    let view = DocumentView::new(workspace, Arc::clone(&document));
+                    let outline = Outline::from(&view);
+
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         for label in tree
                             .labels
@@ -33,9 +37,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                             .filter(|label| label.kind == LatexLabelKind::Definition)
                             .filter(|label| Self::is_included(tree, label, source))
                         {
-                            let workspace = Arc::clone(&request.view.workspace);
-                            let view = DocumentView::new(workspace, Arc::clone(&document));
-                            let outline = OutlineContext::parse(&view, label.start());
+                            let outline_context = OutlineContext::parse(&view, label.start(), &outline);
                             for name in label.names() {
                                 let text = name.text().to_owned();
                                 let text_edit = TextEdit::new(context.range, text.clone().into());
@@ -43,7 +45,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                                     request,
                                     text.into(),
                                     text_edit,
-                                    outline.as_ref(),
+                                    outline_context.as_ref(),
                                 );
                                 items.push(item);
                             }

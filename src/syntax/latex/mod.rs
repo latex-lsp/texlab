@@ -2,10 +2,13 @@ mod ast;
 mod finder;
 mod lexer;
 mod parser;
+mod printer;
 
 pub use self::ast::*;
-use self::finder::LatexFinder;
 pub use self::finder::LatexNode;
+pub use self::printer::LatexPrinter;
+
+use self::finder::LatexFinder;
 use self::lexer::LatexLexer;
 use self::parser::LatexParser;
 use super::language::*;

@@ -18,14 +18,16 @@ impl FeatureProvider for LatexLabelHoverProvider {
 
             let workspace = Arc::clone(&request.view.workspace);
             let view = DocumentView::new(workspace, document);
-            let outline = OutlineContext::parse(&view, definition.start())?;
-            let markup = outline.item.documentation();
-            return Some(Hover {
+            let outline = Outline::from(&view);
+            let outline_context = OutlineContext::parse(&view, definition.start(), &outline)?;
+            let markup = outline_context.item.documentation();
+            Some(Hover {
                 contents: HoverContents::Markup(markup),
                 range: Some(reference.range()),
-            });
+            })
+        } else {
+            None
         }
-        None
     }
 }
 

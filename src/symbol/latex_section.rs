@@ -3,10 +3,10 @@ use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
-fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSymbol> {
+fn make_label_symbols(view: &DocumentView, outline: &Outline, label: &LatexLabel) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
     let position = label.start();
-    if let Some(context) = OutlineContext::parse(view, position) {
+    if let Some(context) = OutlineContext::parse(view, position, outline) {
         match &context.item {
             OutlineContextItem::Equation => {
                 for name in label.names() {
@@ -98,7 +98,7 @@ impl<'a> LatexSectionNode<'a> {
         }
     }
 
-    fn into_symbol(&self, view: &DocumentView) -> DocumentSymbol {
+    fn into_symbol(&self, view: &DocumentView, outline: &Outline) -> DocumentSymbol {
         let name = self
             .section
             .extract_text(self.full_text)
@@ -107,11 +107,11 @@ impl<'a> LatexSectionNode<'a> {
         let mut children = Vec::new();
         self.children
             .iter()
-            .map(|child| child.into_symbol(view))
+            .map(|child| child.into_symbol(view, outline))
             .for_each(|sec| children.push(sec));
 
         for label in &self.labels {
-            children.append(&mut make_label_symbols(view, label));
+            children.append(&mut make_label_symbols(view, outline, label));
         }
 
         DocumentSymbol {
@@ -216,16 +216,17 @@ impl FeatureProvider for LatexSectionSymbolProvider {
                 .unwrap_or(stream.current_position);
             LatexSectionNode::set_full_range(&mut section_tree.children, end_position);
 
+            let outline = Outline::from(&request.view);
             for label in &tree.labels {
                 if label.kind == LatexLabelKind::Definition {
                     if !section_tree.insert_label(label) {
-                        symbols.append(&mut make_label_symbols(&request.view, label));
+                        symbols.append(&mut make_label_symbols(&request.view, &outline, label));
                     }
                 }
             }
 
             for child in &section_tree.children {
-                symbols.push(child.into_symbol(&request.view));
+                symbols.push(child.into_symbol(&request.view, &outline));
             }
         }
         symbols

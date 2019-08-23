@@ -154,19 +154,18 @@ pub struct OutlineContext {
 }
 
 impl OutlineContext {
-    pub fn parse(view: &DocumentView, position: Position) -> Option<Self> {
+    pub fn parse(view: &DocumentView, position: Position, outline: &Outline) -> Option<Self> {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
-            Self::find_caption(view, position, tree)
+            Self::find_caption(position, tree)
                 .or_else(|| Self::find_theorem(view, position, tree))
                 .or_else(|| Self::find_equation(position, tree))
-                .or_else(|| Self::find_section(view, position))
+                .or_else(|| Self::find_section(view, position, outline))
         } else {
             None
         }
     }
 
     fn find_caption(
-        view: &DocumentView,
         position: Position,
         tree: &LatexSyntaxTree,
     ) -> Option<Self> {
@@ -182,7 +181,8 @@ impl OutlineContext {
             .find(|cap| caption_env.range().contains(cap.start()))?;
 
         let caption_content = &caption.command.args[caption.index];
-        let caption_text = Self::extract(&view.document, caption_content)?;
+        let caption_text = Self::extract(caption_content);
+
         Some(Self {
             range: caption_env.range(),
             item: OutlineContextItem::Caption(caption_text),
@@ -209,7 +209,7 @@ impl OutlineContext {
                             .command
                             .args
                             .get(definition.index + 1)
-                            .and_then(|group| Self::extract(document, group))
+                            .map(|content| Self::extract(&content))
                             .unwrap_or_else(|| Self::titlelize(env_name));
 
                         let description = env
@@ -217,7 +217,7 @@ impl OutlineContext {
                             .command
                             .options
                             .get(0)
-                            .and_then(|opts| Self::extract(&view.document, opts));
+                            .map(|content| Self::extract(&content));
 
                         return Some(Self {
                             range: env.range(),
@@ -242,13 +242,12 @@ impl OutlineContext {
             })
     }
 
-    fn find_section(view: &DocumentView, position: Position) -> Option<Self> {
-        let outline = Outline::from(view);
+    fn find_section(view: &DocumentView, position: Position, outline: &Outline) -> Option<Self> {
         let section = outline.find(&view.document.uri, position)?;
         let content = &section.command.args[section.index];
         Some(Self {
             range: section.range(),
-            item: OutlineContextItem::Section(Self::extract(&view.document, content)?),
+            item: OutlineContextItem::Section(Self::extract(content)),
         })
     }
 
@@ -260,14 +259,15 @@ impl OutlineContext {
         }
     }
 
-    fn extract(document: &Document, content: &LatexGroup) -> Option<String> {
-        let right = content.right.as_ref()?;
-        let range = Range::new_simple(
-            content.left.start().line,
-            content.left.start().character + 1,
-            right.end().line,
-            right.end().character - 1,
-        );
-        Some(CharStream::extract(&document.text, range))
+    fn extract(content: &LatexGroup) -> String {
+        if content.children.len() == 0 || content.right.is_none() {
+            return String::new();
+        }
+
+        let mut printer = LatexPrinter::new(content.children[0].start());
+        for child in &content.children {
+            child.accept(&mut printer);
+        }
+        printer.output
     }
 }
