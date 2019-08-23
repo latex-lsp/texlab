@@ -3,20 +3,59 @@ use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
-fn make_label_symbols(label: &LatexLabel) -> Vec<DocumentSymbol> {
+fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
-    for name in &label.names() {
-        let symbol = DocumentSymbol {
-            name: name.text().to_owned().into(),
-            detail: None,
-            kind: SymbolKind::Variable,
-            deprecated: Some(false),
-            range: name.range(),
-            selection_range: name.range(),
-            children: None,
-        };
-        symbols.push(symbol);
+    let outline = Outline::from(view);
+    let outline_ctx = OutlineContext::find(&outline, view, label.start());
+
+    if let Some(equation) = outline_ctx.equation {
+        for name in label.names() {
+            let symbol = DocumentSymbol {
+                name: name.text().to_owned().into(),
+                detail: None,
+                kind: SymbolKind::Number,
+                deprecated: Some(false),
+                range: equation,
+                selection_range: name.range(),
+                children: None,
+            };
+            symbols.push(symbol);
+        }
+        return symbols;
     }
+
+    if let Some(caption) = outline_ctx.caption {
+        for name in label.names() {
+            let symbol = DocumentSymbol {
+                name: caption.text.clone().into(),
+                detail: None,
+                kind : SymbolKind::Method,
+                deprecated: Some(false),
+                range: caption.range,
+                selection_range: name.range(),
+                children: None,
+            };
+            symbols.push(symbol);
+        }
+        return symbols;
+    }
+
+    if let Some(theorem) = outline_ctx.theorem {
+        for name in label.names() {
+            let symbol = DocumentSymbol {
+                name: theorem.to_string().into(),
+                detail: None,
+                kind: SymbolKind::EnumMember,
+                deprecated: Some(false),
+                range: theorem.range,
+                selection_range: name.range(),
+                children: None,
+            };
+            symbols.push(symbol);
+        }
+        return symbols;
+    }
+
     symbols
 }
 
@@ -59,7 +98,7 @@ impl<'a> LatexSectionNode<'a> {
         }
     }
 
-    fn into_symbol(&self) -> DocumentSymbol {
+    fn into_symbol(&self, view: &DocumentView) -> DocumentSymbol {
         let name = self
             .section
             .extract_text(self.full_text)
@@ -68,11 +107,11 @@ impl<'a> LatexSectionNode<'a> {
         let mut children = Vec::new();
         self.children
             .iter()
-            .map(Self::into_symbol)
+            .map(|child| child.into_symbol(view))
             .for_each(|sec| children.push(sec));
 
         for label in &self.labels {
-            children.append(&mut make_label_symbols(label));
+            children.append(&mut make_label_symbols(view, label));
         }
 
         DocumentSymbol {
@@ -181,13 +220,13 @@ impl FeatureProvider for LatexSectionSymbolProvider {
             for label in &tree.labels {
                 if label.kind == LatexLabelKind::Definition {
                     if !section_tree.insert_label(label) {
-                        symbols.append(&mut make_label_symbols(label));
+                        symbols.append(&mut make_label_symbols(&request.view, label));
                     }
                 }
             }
 
             for child in &section_tree.children {
-                symbols.push(child.into_symbol());
+                symbols.push(child.into_symbol(&request.view));
             }
         }
         symbols

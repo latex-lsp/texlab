@@ -140,7 +140,7 @@ pub fn label(
         }
     } else if let Some(caption) = &context.caption {
         filter_text.push(' ');
-        filter_text.push_str(&caption);
+        filter_text.push_str(&caption.text);
     } else if let Some(section) = &context.section {
         filter_text.push(' ');
         filter_text.push_str(&section);
