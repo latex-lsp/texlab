@@ -60,6 +60,10 @@ impl SymbolResponse {
             Self::Hierarchical(symbols)
         } else {
             fn flatten(results: &mut Vec<SymbolInformation>, uri: &Uri, symbol: DocumentSymbol) {
+                if symbol.kind == SymbolKind::Field {
+                    return;
+                }
+
                 let info = SymbolInformation {
                     name: symbol.name,
                     deprecated: Some(false),
@@ -74,6 +78,7 @@ impl SymbolResponse {
                     }
                 }
             }
+
             let mut results = Vec::new();
             for symbol in symbols {
                 flatten(&mut results, uri, symbol);

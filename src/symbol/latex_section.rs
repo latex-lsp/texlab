@@ -9,7 +9,7 @@ fn make_label_symbols(label: &LatexLabel) -> Vec<DocumentSymbol> {
         let symbol = DocumentSymbol {
             name: name.text().to_owned().into(),
             detail: None,
-            kind: SymbolKind::Field,
+            kind: SymbolKind::Variable,
             deprecated: Some(false),
             range: name.range(),
             selection_range: name.range(),
