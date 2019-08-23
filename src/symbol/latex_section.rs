@@ -5,10 +5,8 @@ use lsp_types::*;
 
 fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
-    let outline = Outline::from(view);
-    let outline_ctx = OutlineContext::find(&outline, view, label.start());
-
-    if let Some(equation) = outline_ctx.equation {
+    let position = label.start();
+    if let Some(equation) = OutlineContext::find_equation(view, position) {
         for name in label.names() {
             let symbol = DocumentSymbol {
                 name: name.text().to_owned().into(),
@@ -24,12 +22,12 @@ fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSy
         return symbols;
     }
 
-    if let Some(caption) = outline_ctx.caption {
+    if let Some(caption) = OutlineContext::find_caption(&view.document, position) {
         for name in label.names() {
             let symbol = DocumentSymbol {
                 name: caption.text.clone().into(),
                 detail: None,
-                kind : SymbolKind::Method,
+                kind: SymbolKind::Method,
                 deprecated: Some(false),
                 range: caption.range,
                 selection_range: name.range(),
@@ -40,7 +38,7 @@ fn make_label_symbols(view: &DocumentView, label: &LatexLabel) -> Vec<DocumentSy
         return symbols;
     }
 
-    if let Some(theorem) = outline_ctx.theorem {
+    if let Some(theorem) = OutlineContext::find_theorem(view, position) {
         for name in label.names() {
             let symbol = DocumentSymbol {
                 name: theorem.to_string().into(),
@@ -206,7 +204,6 @@ impl FeatureProvider for LatexSectionSymbolProvider {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut section_tree = LatexSectionTree::from(tree);
             section_tree.set_full_text(&request.document().text);
-
             let mut stream = CharStream::new(&request.document().text);
             while stream.next().is_some() {}
             let end_position = tree

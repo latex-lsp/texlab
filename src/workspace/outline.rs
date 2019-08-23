@@ -155,13 +155,17 @@ impl OutlineContext {
         }
     }
 
-    fn find_section(outline: &Outline, document: &Document, position: Position) -> Option<String> {
+    pub fn find_section(
+        outline: &Outline,
+        document: &Document,
+        position: Position,
+    ) -> Option<String> {
         let section = outline.find(&document.uri, position)?;
         let content = &section.command.args[section.index];
         Some(Self::extract(document, content)?)
     }
 
-    fn find_caption(document: &Document, position: Position) -> Option<OutlineCaption> {
+    pub fn find_caption(document: &Document, position: Position) -> Option<OutlineCaption> {
         if let SyntaxTree::Latex(tree) = &document.tree {
             let environment = tree
                 .environments
@@ -184,7 +188,7 @@ impl OutlineContext {
         }
     }
 
-    fn find_theorem(view: &DocumentView, position: Position) -> Option<OutlineTheorem> {
+    pub fn find_theorem(view: &DocumentView, position: Position) -> Option<OutlineTheorem> {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
             let environment = tree
                 .environments
@@ -211,7 +215,11 @@ impl OutlineContext {
                                 .get(0)
                                 .and_then(|opts| Self::extract(&view.document, opts));
 
-                            return Some(OutlineTheorem { range: environment.range(), kind, description });
+                            return Some(OutlineTheorem {
+                                range: environment.range(),
+                                kind,
+                                description,
+                            });
                         }
                     }
                 }
@@ -220,12 +228,13 @@ impl OutlineContext {
         None
     }
 
-    fn find_equation(view: &DocumentView, position: Position) -> Option<Range> {
+    pub fn find_equation(view: &DocumentView, position: Position) -> Option<Range> {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
-            tree.environments.iter()
-            .filter(|env| env.left.is_math())
-            .map(|env| env.range())
-            .find(|range| range.contains(position))
+            tree.environments
+                .iter()
+                .filter(|env| env.left.is_math())
+                .map(|env| env.range())
+                .find(|range| range.contains(position))
         } else {
             None
         }
