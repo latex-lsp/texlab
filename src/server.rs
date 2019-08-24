@@ -1,5 +1,6 @@
 use crate::action::{Action, ActionMananger, LintReason};
 use crate::build::*;
+use crate::capabilities::ClientCapabilitiesExt;
 use crate::citeproc::render_citation;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
@@ -253,16 +254,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     ) -> Result<DefinitionResponse> {
         let request = self.into_feature_request(params.text_document.as_uri(), params)?;
         let results = self.definition_provider.execute(&request).await;
-
-        let supports_links = request
-            .client_capabilities
-            .text_document
-            .as_ref()
-            .and_then(|cap| cap.definition.as_ref())
-            .and_then(|cap| cap.link_support)
-            == Some(true);
-
-        let response = if supports_links {
+        let response = if request.client_capabilities.has_definition_link_support() {
             DefinitionResponse::LocationLinks(results)
         } else {
             DefinitionResponse::Locations(

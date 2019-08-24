@@ -1,3 +1,4 @@
+use crate::capabilities::ClientCapabilitiesExt;
 use crate::client::LspClient;
 use crate::workspace::*;
 use futures::compat::*;
@@ -133,23 +134,27 @@ where
             .find_parent(&request.document().uri)
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
-        let title = path.file_name().unwrap().to_string_lossy().into_owned();
 
-        let params = WorkDoneProgressCreateParams {
-            token: self.token.clone(),
-        };
-        self.client.work_done_progress_create(params).await.unwrap();
+        if request.client_capabilities.has_work_done_progress() {
+            let params = WorkDoneProgressCreateParams {
+                token: self.token.clone(),
+            };
+            self.client.work_done_progress_create(params).await.unwrap();
 
-        let params = ProgressParams {
-            token: self.token.clone(),
-            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(WorkDoneProgressBegin {
-                title: title.into(),
-                cancellable: Some(true),
-                message: Some("Building".into()),
-                percentage: None,
-            })),
-        };
-        self.client.progress(params).await;
+            let title = path.file_name().unwrap().to_string_lossy().into_owned();
+            let params = ProgressParams {
+                token: self.token.clone(),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                    WorkDoneProgressBegin {
+                        title: title.into(),
+                        cancellable: Some(true),
+                        message: Some("Building".into()),
+                        percentage: None,
+                    },
+                )),
+            };
+            self.client.progress(params).await;
+        }
 
         let status = match self.build(&path).await {
             Ok(true) => BuildStatus::Success,
@@ -196,13 +201,15 @@ where
             },
         };
 
-        let params = ProgressParams {
-            token: provider.token.clone(),
-            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(WorkDoneProgressDone {
-                message: None,
-            })),
-        };
-        self.client.progress(params).await;
+        if request.client_capabilities.has_work_done_progress() {
+            let params = ProgressParams {
+                token: provider.token.clone(),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(
+                    WorkDoneProgressDone { message: None },
+                )),
+            };
+            self.client.progress(params).await;
+        }
 
         {
             let mut handles_by_token = self.handles_by_token.lock().await;

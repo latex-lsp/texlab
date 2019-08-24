@@ -2,6 +2,7 @@
 
 pub mod action;
 pub mod build;
+pub mod capabilities;
 pub mod citeproc;
 pub mod client;
 pub mod codec;

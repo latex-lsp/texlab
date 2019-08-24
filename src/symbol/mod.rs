@@ -5,6 +5,7 @@ mod latex_section;
 use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
+use crate::capabilities::ClientCapabilitiesExt;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
@@ -49,14 +50,7 @@ impl SymbolResponse {
         uri: &Uri,
         symbols: Vec<DocumentSymbol>,
     ) -> Self {
-        let supports_hierarchical = client_capabilities
-            .text_document
-            .as_ref()
-            .and_then(|cap| cap.document_symbol.as_ref())
-            .and_then(|cap| cap.hierarchical_document_symbol_support)
-            == Some(true);
-
-        if supports_hierarchical {
+        if client_capabilities.has_hierarchical_document_symbol_support() {
             Self::Hierarchical(symbols)
         } else {
             fn flatten(results: &mut Vec<SymbolInformation>, uri: &Uri, symbol: DocumentSymbol) {
