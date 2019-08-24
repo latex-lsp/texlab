@@ -53,6 +53,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

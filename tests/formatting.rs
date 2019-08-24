@@ -1,6 +1,7 @@
 use lsp_types::*;
 use std::collections::HashMap;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
+use texlab::range::RangeExt;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
@@ -14,7 +15,7 @@ pub async fn run(
     scenario.client.options.lock().await.bibtex_formatting = options;
 
     let params = DocumentFormattingParams {
-        text_document: TextDocumentIdentifier::new(scenario.uri(file)),
+        text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
         options: FormattingOptions {
             tab_size: 4,
             insert_spaces: true,

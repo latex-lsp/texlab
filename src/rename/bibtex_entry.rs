@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -32,7 +33,10 @@ impl FeatureProvider for BibtexEntryRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let key_name = find_key(&request.document().tree, request.params.position)?;
+        let key_name = find_key(
+            &request.document().tree,
+            request.params.text_document_position.position,
+        )?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             let mut edits = Vec::new();
@@ -60,7 +64,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                     }
                 }
             };
-            changes.insert(document.uri.clone(), edits);
+            changes.insert(document.uri.clone().into(), edits);
         }
         Some(WorkspaceEdit::new(changes))
     }

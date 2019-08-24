@@ -117,9 +117,9 @@ impl FeatureSpec {
         FeatureSpecFile { name, text }
     }
 
-    pub fn uri(name: &str) -> Uri {
+    pub fn uri(name: &str) -> Url {
         let path = std::env::temp_dir().join(name);
-        Uri::from_file_path(path).unwrap()
+        Url::from_file_path(path).unwrap()
     }
 
     fn identifier(&self) -> TextDocumentIdentifier {
@@ -134,7 +134,7 @@ impl FeatureSpec {
         }
         let workspace = builder.workspace;
         let main_uri = Self::uri(self.main_file);
-        let main_document = workspace.find(&main_uri).unwrap();
+        let main_document = workspace.find(&main_uri.into()).unwrap();
         DocumentView::new(Arc::new(workspace), main_document)
     }
 
@@ -157,8 +157,10 @@ impl Into<FeatureRequest<TextDocumentPositionParams>> for FeatureSpec {
 impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<CompletionParams> {
         let params = CompletionParams {
-            text_document: self.identifier(),
-            position: self.position,
+            text_document_position: TextDocumentPositionParams::new(
+                self.identifier(),
+                self.position,
+            ),
             context: None,
         };
         self.request(params)
@@ -186,8 +188,10 @@ impl Into<FeatureRequest<DocumentLinkParams>> for FeatureSpec {
 impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<ReferenceParams> {
         let params = ReferenceParams {
-            text_document: self.identifier(),
-            position: self.position,
+            text_document_position: TextDocumentPositionParams::new(
+                self.identifier(),
+                self.position,
+            ),
             context: ReferenceContext {
                 include_declaration: self.include_declaration,
             },
@@ -199,8 +203,10 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
 impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<RenameParams> {
         let params = RenameParams {
-            text_document: self.identifier(),
-            position: self.position,
+            text_document_position: TextDocumentPositionParams::new(
+                self.identifier(),
+                self.position,
+            ),
             new_name: self.new_name.to_owned(),
         };
         self.request(params)

@@ -1,4 +1,5 @@
 use crate::completion::factory;
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -14,7 +15,7 @@ impl FeatureProvider for BibtexEntryTypeCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
-            let position = request.params.position;
+            let position = request.params.text_document_position.position;
             for declaration in &tree.root.children {
                 match declaration {
                     BibtexDeclaration::Preamble(preamble) => {

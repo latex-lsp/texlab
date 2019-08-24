@@ -1,5 +1,6 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::DATABASE;
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -16,7 +17,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut items = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
-            let position = request.params.position;
+            let position = request.params.text_document_position.position;
             if let Some(BibtexNode::Command(command)) = tree.find(position).last() {
                 if command.token.range().contains(position)
                     && command.token.start().character != position.character

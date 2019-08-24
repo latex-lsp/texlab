@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -23,7 +24,10 @@ where
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let query = Self::get_query(request.document(), request.params.position);
+        let query = Self::get_query(
+            request.document(),
+            request.params.text_document_position.position,
+        );
         let mut items = self.provider.execute(&request).await;
         items.sort_by_key(|item| -Self::get_quality(&query, &item));
         items

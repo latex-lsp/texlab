@@ -7,7 +7,7 @@ use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 async fn test_lint_latex_disabled() {
     let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
-    let identifier = TextDocumentIdentifier::new(scenario.uri("foo.tex"));
+    let identifier = TextDocumentIdentifier::new(scenario.uri("foo.tex").into());
     scenario.server.did_save(DidSaveTextDocumentParams {
         text_document: identifier,
     });
@@ -39,7 +39,7 @@ async fn test_build() {
         .server
         .did_change_watched_files(DidChangeWatchedFilesParams {
             changes: vec![FileEvent {
-                uri: scenario.uri("foo.log"),
+                uri: scenario.uri("foo.log").into(),
                 typ: FileChangeType::Changed,
             }],
         });

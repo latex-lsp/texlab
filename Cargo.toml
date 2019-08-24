@@ -28,7 +28,7 @@ itertools = "0.8.0"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
-lsp-types = { git = "https://github.com/latex-lsp/lsp-types", rev = "9fcc5d9b9d3013ce84e20ef566267754d594b268", features = ["proposed"] }
+lsp-types = { git = "https://github.com/gluon-lang/lsp-types", rev = "e7a7e99c71edb20623429f9d7de1fbdc4d55faed", features = ["proposed"] }
 nom = "5.0.0"
 once_cell = "0.2.6"
 path-clean = "0.1.0"

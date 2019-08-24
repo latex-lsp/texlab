@@ -1,5 +1,6 @@
 use crate::citeproc::render_citation;
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;

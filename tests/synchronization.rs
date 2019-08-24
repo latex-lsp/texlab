@@ -1,5 +1,6 @@
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
+use texlab::range::RangeExt;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 async fn run_completion(
@@ -8,8 +9,10 @@ async fn run_completion(
     position: Position,
 ) -> Vec<CompletionItem> {
     let params = CompletionParams {
-        text_document: TextDocumentIdentifier::new(scenario.uri(file)),
-        position,
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+            position,
+        },
         context: None,
     };
     scenario.server.completion(params).await.unwrap().items
@@ -28,7 +31,7 @@ async fn test_did_change() {
     );
 
     let params = DidChangeTextDocumentParams {
-        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.tex"), 0),
+        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.tex").into(), 0),
         content_changes: vec![TextDocumentContentChangeEvent {
             range: None,
             range_length: None,
@@ -52,7 +55,7 @@ async fn test_indexing() {
     std::fs::write(&path, "\\foo").unwrap();
 
     let params = DidChangeTextDocumentParams {
-        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.tex"), 0),
+        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.tex").into(), 0),
         content_changes: vec![TextDocumentContentChangeEvent {
             range: None,
             range_length: None,
@@ -71,8 +74,10 @@ async fn test_find_root() {
     scenario.open("test1.tex").await;
 
     let params = RenameParams {
-        text_document: TextDocumentIdentifier::new(scenario.uri("test1.tex")),
-        position: Position::new(0, 28),
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier::new(scenario.uri("test1.tex").into()),
+            position: Position::new(0, 28),
+        },
         new_name: "foo".into(),
     };
     let changes = scenario

@@ -1,4 +1,5 @@
 use crate::completion::DATABASE;
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;

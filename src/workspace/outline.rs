@@ -1,6 +1,7 @@
 use super::{Document, DocumentView};
+use crate::range::RangeExt;
 use crate::syntax::*;
-use crate::workspace::eq_uri;
+use crate::workspace::Uri;
 use lsp_types::*;
 use std::collections::HashSet;
 
@@ -83,7 +84,7 @@ impl<'a> OutlineSectionFinder<'a> {
                     OutlineItem::Include(item) => {
                         for document in &view.related_documents {
                             for targets in &item.all_targets {
-                                if targets.iter().any(|uri| eq_uri(uri, &document.uri)) {
+                                if targets.contains(&document.uri) {
                                     self.analyze(view, document);
                                     break;
                                 }

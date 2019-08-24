@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::text::{Span, SyntaxNode};
 use itertools::Itertools;
 use lsp_types::Range;

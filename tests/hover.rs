@@ -1,5 +1,4 @@
 use lsp_types::*;
-use std::borrow::Cow;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 use texlab::syntax::LANGUAGE_DATA;
 
@@ -11,7 +10,7 @@ pub async fn run(
     let scenario = format!("hover/{}", scenario);
     let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
     scenario.open(file).await;
-    let identifier = TextDocumentIdentifier::new(scenario.uri(file));
+    let identifier = TextDocumentIdentifier::new(scenario.uri(file).into());
     let params = TextDocumentPositionParams::new(identifier, position);
     let contents = scenario
         .server
@@ -31,7 +30,10 @@ async fn test_entry_type_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(LANGUAGE_DATA.entry_type_documentation("article").unwrap())
+            value: LANGUAGE_DATA
+                .entry_type_documentation("article")
+                .unwrap()
+                .to_owned()
         })
     );
 }
@@ -51,7 +53,10 @@ async fn test_field_known() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: Cow::from(LANGUAGE_DATA.field_documentation("author").unwrap())
+            value: LANGUAGE_DATA
+                .field_documentation("author")
+                .unwrap()
+                .to_owned()
         })
     )
 }

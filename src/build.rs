@@ -134,15 +134,15 @@ where
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
 
-        let title = path.file_name().unwrap().to_string_lossy().into_owned();
-        let params = ProgressStartParams {
-            id: self.progress_id.clone().into(),
-            title: title.into(),
-            cancellable: Some(true),
-            message: Some("Building".into()),
-            percentage: None,
-        };
-        self.client.progress_start(params).await;
+        // let title = path.file_name().unwrap().to_string_lossy().into_owned();
+        // let params = ProgressStartParams {
+        //     id: self.progress_id.clone().into(),
+        //     title: title.into(),
+        //     cancellable: Some(true),
+        //     message: Some("Building".into()),
+        //     percentage: None,
+        // };
+        // self.client.progress_start(params).await;
 
         let status = match self.build(&path).await {
             Ok(true) => BuildStatus::Success,
@@ -189,10 +189,10 @@ where
             },
         };
 
-        let params = ProgressDoneParams {
-            id: provider.progress_id.clone().into(),
-        };
-        self.client.progress_done(params).await;
+        // let params = ProgressDoneParams {
+        //     id: provider.progress_id.clone().into(),
+        // };
+        // self.client.progress_done(params).await;
 
         {
             let mut handles_by_id = self.handles_by_id.lock().await;

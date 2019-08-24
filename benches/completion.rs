@@ -12,8 +12,10 @@ fn initialize(name: &'static str) -> Scenario {
 fn run(scenario: &Scenario, name: &str, position: Position, has_items: bool) {
     let uri = scenario.uri(name);
     let params = CompletionParams {
-        text_document: TextDocumentIdentifier::new(uri),
-        position,
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier::new(uri.into()),
+            position,
+        },
         context: None,
     };
     let items = block_on(scenario.server.completion(params)).unwrap();

@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -34,7 +35,7 @@ impl LatexCitationDefinitionProvider {
                     if key.text() == reference.text() {
                         let link = LocationLink {
                             origin_selection_range: Some(reference.range()),
-                            target_uri: document.uri.clone(),
+                            target_uri: document.uri.clone().into(),
                             target_range: entry.range(),
                             target_selection_range: key.range(),
                         };

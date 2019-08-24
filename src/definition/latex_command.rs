@@ -21,7 +21,7 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                             .filter(|def| def.definition.name.text() == command.name.text())
                             .map(|def| LocationLink {
                                 origin_selection_range: Some(command.range()),
-                                target_uri: document.uri.clone(),
+                                target_uri: document.uri.clone().into(),
                                 target_range: def.range(),
                                 target_selection_range: def.range(),
                             })
@@ -32,7 +32,7 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                             .filter(|op| op.definition.name.text() == command.name.text())
                             .map(|op| LocationLink {
                                 origin_selection_range: Some(command.range()),
-                                target_uri: document.uri.clone(),
+                                target_uri: document.uri.clone().into(),
                                 target_range: op.range(),
                                 target_selection_range: op.range(),
                             })
@@ -48,6 +48,7 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

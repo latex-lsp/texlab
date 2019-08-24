@@ -5,7 +5,6 @@ use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::path::Path;
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
@@ -47,12 +46,12 @@ impl<'a> LatexComponentId<'a> {
         LatexComponentId::Component(vec![])
     }
 
-    pub fn detail(&self) -> Cow<'static, str> {
+    pub fn detail(&self) -> String {
         match self {
-            LatexComponentId::User => "user-defined".into(),
+            LatexComponentId::User => "user-defined".to_owned(),
             LatexComponentId::Component(files) => {
                 if files.is_empty() {
-                    "built-in".into()
+                    "built-in".to_owned()
                 } else {
                     files.join(", ").into()
                 }
@@ -74,7 +73,7 @@ fn supports_images(request: &FeatureRequest<CompletionParams>) -> bool {
 
 pub fn command(
     request: &FeatureRequest<CompletionParams>,
-    name: Cow<'static, str>,
+    name: String,
     image: Option<&str>,
     glyph: Option<&str>,
     text_edit: TextEdit,
@@ -112,7 +111,7 @@ pub fn command_snippet(
 
 pub fn environment(
     request: &FeatureRequest<CompletionParams>,
-    name: Cow<'static, str>,
+    name: String,
     text_edit: TextEdit,
     component: &LatexComponentId,
 ) -> CompletionItem {
@@ -126,7 +125,7 @@ pub fn environment(
 
 pub fn label(
     request: &FeatureRequest<CompletionParams>,
-    name: Cow<'static, str>,
+    name: String,
     text_edit: TextEdit,
     context: Option<&OutlineContext>,
 ) -> CompletionItem {
@@ -144,7 +143,7 @@ pub fn label(
                 description: Some(description),
             } => format!("{} {} {}", &name, &kind, &description),
         },
-        None => name.clone().into_owned(),
+        None => name.clone(),
     };
 
     let documentation = context

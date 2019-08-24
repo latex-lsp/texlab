@@ -1,5 +1,6 @@
 use crate::client::LspClientMock;
 use crate::server::LatexLspServer;
+use crate::workspace::Uri;
 use copy_dir::copy_dir;
 use jsonrpc::server::ActionHandler;
 use lsp_types::*;
@@ -50,7 +51,7 @@ impl Scenario {
         let init_params = InitializeParams {
             process_id: None,
             root_path: Some(directory.path().to_string_lossy().into_owned()),
-            root_uri: Some(root_uri),
+            root_uri: Some(root_uri.into()),
             initialization_options: None,
             capabilities: client_capabilities.to_owned(),
             trace: None,
@@ -90,7 +91,7 @@ impl Scenario {
 
         self.server.did_open(DidOpenTextDocumentParams {
             text_document: TextDocumentItem {
-                uri: self.uri(name),
+                uri: self.uri(name).into(),
                 version: 0,
                 language_id: language_id.to_owned(),
                 text,

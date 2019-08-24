@@ -40,7 +40,7 @@ impl LatexIncludeLinkProvider {
                     .find(target)
                     .map(|document| DocumentLink {
                         range: paths[i].range(),
-                        target: document.uri.clone(),
+                        target: document.uri.clone().into(),
                     })
                 {
                     links.push(link);
@@ -54,6 +54,7 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

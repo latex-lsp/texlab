@@ -1,11 +1,13 @@
 mod feature;
 mod outline;
+mod uri;
 
 pub use self::feature::*;
 pub use self::outline::*;
+pub use self::uri::*;
 use crate::syntax::*;
 use log::*;
-use lsp_types::{TextDocumentItem, Uri};
+use lsp_types::*;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -33,14 +35,6 @@ impl Document {
     }
 }
 
-pub fn eq_uri(left: &Uri, right: &Uri) -> bool {
-    if cfg!(windows) {
-        left.as_str().to_lowercase() == right.as_str().to_lowercase()
-    } else {
-        left.as_str() == right.as_str()
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Workspace {
     pub documents: Vec<Arc<Document>>,
@@ -56,7 +50,7 @@ impl Workspace {
     pub fn find(&self, uri: &Uri) -> Option<Arc<Document>> {
         self.documents
             .iter()
-            .find(|document| eq_uri(&document.uri, uri))
+            .find(|document| &document.uri == uri)
             .map(|document| Arc::clone(&document))
     }
 
@@ -178,7 +172,7 @@ impl WorkspaceManager {
         };
 
         let mut workspace = self.workspace.lock().unwrap();
-        *workspace = Self::add_or_update(&workspace, document.uri, document.text, language);
+        *workspace = Self::add_or_update(&workspace, document.uri.into(), document.text, language);
     }
 
     pub fn load(&self, path: &Path) {

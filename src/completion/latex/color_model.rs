@@ -39,6 +39,7 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

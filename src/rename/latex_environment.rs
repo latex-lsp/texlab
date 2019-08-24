@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -40,7 +41,10 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let environment = find_environment(&request.document().tree, request.params.position)?;
+        let environment = find_environment(
+            &request.document().tree,
+            request.params.text_document_position.position,
+        )?;
         let edits = vec![
             TextEdit::new(
                 environment.left.name().unwrap().range(),
@@ -52,7 +56,7 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
             ),
         ];
         let mut changes = HashMap::new();
-        changes.insert(request.document().uri.clone(), edits);
+        changes.insert(request.document().uri.clone().into(), edits);
         Some(WorkspaceEdit::new(changes))
     }
 }

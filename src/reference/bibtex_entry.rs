@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -21,7 +22,9 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
                         .iter()
                         .flat_map(LatexCitation::keys)
                         .filter(|citation| citation.text() == key)
-                        .map(|citation| Location::new(document.uri.clone(), citation.range()))
+                        .map(|citation| {
+                            Location::new(document.uri.clone().into(), citation.range())
+                        })
                         .for_each(|location| references.push(location)),
                     SyntaxTree::Bibtex(tree) => {
                         if request.params.context.include_declaration {
@@ -29,7 +32,7 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
                                 if let Some(key_token) = &entry.key {
                                     if key_token.text() == key {
                                         let uri = document.uri.clone();
-                                        let location = Location::new(uri, key_token.range());
+                                        let location = Location::new(uri.into(), key_token.range());
                                         references.push(location);
                                     }
                                 }
@@ -50,12 +53,18 @@ impl BibtexEntryReferenceProvider {
                 .citations
                 .iter()
                 .flat_map(LatexCitation::keys)
-                .find(|key| key.range().contains(request.params.position))
+                .find(|key| {
+                    key.range()
+                        .contains(request.params.text_document_position.position)
+                })
                 .map(LatexToken::text),
             SyntaxTree::Bibtex(tree) => {
                 for entry in tree.entries() {
                     if let Some(key) = &entry.key {
-                        if key.range().contains(request.params.position) {
+                        if key
+                            .range()
+                            .contains(request.params.text_document_position.position)
+                        {
                             return Some(key.text());
                         }
                     }
@@ -69,6 +78,7 @@ impl BibtexEntryReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

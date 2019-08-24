@@ -1,5 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::completion::factory;
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -27,7 +28,7 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
                     return Vec::new();
                 }
 
-                let position = request.params.position;
+                let position = request.params.text_document_position.position;
                 let mut items = Vec::new();
                 let path_word = command.extract_word(index);
                 let name_range = match path_word {

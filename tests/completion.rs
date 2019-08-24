@@ -7,8 +7,10 @@ pub async fn run(scenario: &'static str, file: &'static str, position: Position)
     scenario.open(file).await;
 
     let params = CompletionParams {
-        text_document: TextDocumentIdentifier::new(scenario.uri(file)),
-        position,
+        text_document_position: TextDocumentPositionParams {
+            text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+            position,
+        },
         context: None,
     };
 

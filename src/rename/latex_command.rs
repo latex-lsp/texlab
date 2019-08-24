@@ -34,7 +34,10 @@ impl FeatureProvider for LatexCommandRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let command = find_command(&request.document().tree, request.params.position)?;
+        let command = find_command(
+            &request.document().tree,
+            request.params.text_document_position.position,
+        )?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
@@ -49,7 +52,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
                         )
                     })
                     .collect();
-                changes.insert(document.uri.clone(), edits);
+                changes.insert(document.uri.clone().into(), edits);
             }
         }
         Some(WorkspaceEdit::new(changes))
@@ -67,6 +70,7 @@ fn find_command(tree: &SyntaxTree, position: Position) -> Option<Arc<LatexComman
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

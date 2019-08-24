@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use lsp_types::*;
@@ -25,7 +26,9 @@ where
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let SyntaxTree::Latex(tree) = &request.document().tree {
-        if let Some(command) = tree.find_command_by_name(request.params.position) {
+        if let Some(command) =
+            tree.find_command_by_name(request.params.text_document_position.position)
+        {
             return execute(command).await;
         }
     }
@@ -50,7 +53,7 @@ where
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let SyntaxTree::Latex(tree) = &request.document().tree {
-        let position = request.params.position;
+        let position = request.params.text_document_position.position;
         if let Some(command) = find_command(tree, position) {
             for parameter in parameters.by_ref() {
                 if command.name.text() != parameter.name {
@@ -98,7 +101,7 @@ where
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let SyntaxTree::Latex(tree) = &request.document().tree {
-        let position = request.params.position;
+        let position = request.params.text_document_position.position;
         if let Some(command) = find_command(tree, position) {
             for parameter in parameters.by_ref() {
                 if command.name.text() != parameter.name {

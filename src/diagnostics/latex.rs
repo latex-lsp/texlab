@@ -1,4 +1,5 @@
-use crate::workspace::Document;
+use crate::range::RangeExt;
+use crate::workspace::{Document, Uri};
 use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;

@@ -1,13 +1,13 @@
 use crate::build::BuildOptions;
 use crate::diagnostics::LatexLintOptions;
 use crate::formatting::bibtex::BibtexFormattingOptions;
+use crate::workspace::Uri;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::client::Result;
 use jsonrpc_derive::{jsonrpc_client, jsonrpc_method};
 use lsp_types::*;
 use serde::Serialize;
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[jsonrpc_client(LatexLspClient)]
@@ -28,17 +28,17 @@ pub trait LspClient {
     #[boxed]
     async fn publish_diagnostics(&self, params: PublishDiagnosticsParams);
 
-    #[jsonrpc_method("window/progress/start", kind = "notification")]
-    #[boxed]
-    async fn progress_start(&self, params: ProgressStartParams) -> ();
+    // #[jsonrpc_method("window/progress/start", kind = "notification")]
+    // #[boxed]
+    // async fn progress_start(&self, params: ProgressStartParams) -> ();
 
-    #[jsonrpc_method("window/progress/report", kind = "notification")]
-    #[boxed]
-    async fn progress_report(&self, params: ProgressReportParams) -> ();
+    // #[jsonrpc_method("window/progress/report", kind = "notification")]
+    // #[boxed]
+    // async fn progress_report(&self, params: ProgressReportParams) -> ();
 
-    #[jsonrpc_method("window/progress/done", kind = "notification")]
-    #[boxed]
-    async fn progress_done(&self, params: ProgressDoneParams) -> ();
+    // #[jsonrpc_method("window/progress/done", kind = "notification")]
+    // #[boxed]
+    // async fn progress_done(&self, params: ProgressDoneParams) -> ();
 
     #[jsonrpc_method("window/logMessage", kind = "notification")]
     #[boxed]
@@ -86,10 +86,10 @@ impl LspClient for LspClientMock {
         }
 
         let options = self.options.lock().await;
-        match params.items[0].section {
-            Some(Cow::Borrowed("bibtex.formatting")) => serialize(&options.bibtex_formatting),
-            Some(Cow::Borrowed("latex.lint")) => serialize(&options.latex_lint),
-            Some(Cow::Borrowed("latex.build")) => serialize(&options.latex_build),
+        match params.items[0].section.as_ref().unwrap().as_ref() {
+            "bibtex.formatting" => serialize(&options.bibtex_formatting),
+            "latex.lint" => serialize(&options.latex_lint),
+            "latex.build" => serialize(&options.latex_build),
             _ => panic!("Invalid language configuration!"),
         }
     }
@@ -108,17 +108,17 @@ impl LspClient for LspClientMock {
     #[boxed]
     async fn publish_diagnostics(&self, params: PublishDiagnosticsParams) {
         let mut diagnostics_by_uri = self.diagnostics_by_uri.lock().await;
-        diagnostics_by_uri.insert(params.uri, params.diagnostics);
+        diagnostics_by_uri.insert(params.uri.into(), params.diagnostics);
     }
 
-    #[boxed]
-    async fn progress_start(&self, _params: ProgressStartParams) {}
+    // #[boxed]
+    // async fn progress_start(&self, _params: ProgressStartParams) {}
 
-    #[boxed]
-    async fn progress_report(&self, _params: ProgressReportParams) {}
+    // #[boxed]
+    // async fn progress_report(&self, _params: ProgressReportParams) {}
 
-    #[boxed]
-    async fn progress_done(&self, _params: ProgressDoneParams) {}
+    // #[boxed]
+    // async fn progress_done(&self, _params: ProgressDoneParams) {}
 
     #[boxed]
     async fn log_message(&self, params: LogMessageParams) {

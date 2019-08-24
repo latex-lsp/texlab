@@ -1,5 +1,6 @@
 use lsp_types::*;
 use texlab::definition::DefinitionResponse;
+use texlab::range::RangeExt;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
 pub async fn run(
@@ -9,7 +10,7 @@ pub async fn run(
 ) -> (Scenario, Vec<Location>) {
     let scenario = format!("definition/{}", scenario);
     let scenario = Scenario::new(&scenario, &FULL_CAPABILITIES).await;
-    let identifier = TextDocumentIdentifier::new(scenario.uri(file));
+    let identifier = TextDocumentIdentifier::new(scenario.uri(file).into());
     let params = TextDocumentPositionParams::new(identifier, position);
     scenario.open(file).await;
     let definitions = scenario.server.definition(params).await.unwrap();
@@ -26,7 +27,7 @@ async fn test_citation() {
     assert_eq!(
         definitions,
         vec![Location::new(
-            scenario.uri("foo.bib"),
+            scenario.uri("foo.bib").into(),
             Range::new_simple(2, 9, 2, 12)
         )]
     );
@@ -38,7 +39,7 @@ async fn test_label() {
     assert_eq!(
         definitions,
         vec![Location::new(
-            scenario.uri("bar.tex"),
+            scenario.uri("bar.tex").into(),
             Range::new_simple(0, 7, 0, 10)
         )]
     );

@@ -1,4 +1,5 @@
 use super::ast::*;
+use crate::range::RangeExt;
 use crate::syntax::text::SyntaxNode;
 use lsp_types::Position;
 

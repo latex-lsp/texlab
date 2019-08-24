@@ -7,7 +7,8 @@ pub use self::bibtex::*;
 pub use self::language::*;
 pub use self::latex::*;
 pub use self::text::*;
-use lsp_types::Uri;
+
+use crate::workspace::Uri;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Language {

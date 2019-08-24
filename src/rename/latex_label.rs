@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -32,7 +33,10 @@ impl FeatureProvider for LatexLabelRenameProvider {
         &'a self,
         request: &'a FeatureRequest<RenameParams>,
     ) -> Option<WorkspaceEdit> {
-        let name = find_label(&request.document().tree, request.params.position)?;
+        let name = find_label(
+            &request.document().tree,
+            request.params.text_document_position.position,
+        )?;
         let mut changes = HashMap::new();
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
@@ -45,7 +49,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
                         TextEdit::new(label.range(), request.params.new_name.clone().into())
                     })
                     .collect();
-                changes.insert(document.uri.clone(), edits);
+                changes.insert(document.uri.clone().into(), edits);
             }
         }
         Some(WorkspaceEdit::new(changes))

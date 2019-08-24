@@ -1,4 +1,4 @@
-use lsp_types::Uri;
+use crate::workspace::Uri;
 use std::mem;
 use std::path::PathBuf;
 use std::sync::Mutex;

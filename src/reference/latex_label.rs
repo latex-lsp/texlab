@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -21,7 +22,7 @@ impl FeatureProvider for LatexLabelReferenceProvider {
                         .filter(|label| Self::is_included(request, label))
                         .flat_map(LatexLabel::names)
                         .filter(|label| label.text() == definition)
-                        .map(|label| Location::new(document.uri.clone(), label.range()))
+                        .map(|label| Location::new(document.uri.clone().into(), label.range()))
                         .for_each(|location| references.push(location))
                 }
             }
@@ -36,7 +37,11 @@ impl LatexLabelReferenceProvider {
             tree.labels
                 .iter()
                 .flat_map(LatexLabel::names)
-                .find(|label| label.range().contains(request.params.position))
+                .find(|label| {
+                    label
+                        .range()
+                        .contains(request.params.text_document_position.position)
+                })
                 .map(LatexToken::text)
         } else {
             None
@@ -54,6 +59,7 @@ impl LatexLabelReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

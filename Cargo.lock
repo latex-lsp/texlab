@@ -770,17 +770,14 @@ dependencies = [
 
 [[package]]
 name = "lsp-types"
-version = "0.57.1"
-source = "git+https://github.com/latex-lsp/lsp-types?rev=9fcc5d9b9d3013ce84e20ef566267754d594b268#9fcc5d9b9d3013ce84e20ef566267754d594b268"
+version = "0.60.0"
+source = "git+https://github.com/gluon-lang/lsp-types?rev=e7a7e99c71edb20623429f9d7de1fbdc4d55faed#e7a7e99c71edb20623429f9d7de1fbdc4d55faed"
 dependencies = [
  "bitflags 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-derive 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.98 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
- "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "url_serde 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_repr 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "url 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1743,7 +1740,7 @@ dependencies = [
  "jsonrpc 0.1.0",
  "jsonrpc-derive 0.1.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "lsp-types 0.57.1 (git+https://github.com/latex-lsp/lsp-types?rev=9fcc5d9b9d3013ce84e20ef566267754d594b268)",
+ "lsp-types 0.60.0 (git+https://github.com/gluon-lang/lsp-types?rev=e7a7e99c71edb20623429f9d7de1fbdc4d55faed)",
  "nom 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "once_cell 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "path-clean 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2076,6 +2073,7 @@ dependencies = [
  "idna 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "matches 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "percent-encoding 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.99 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2333,7 +2331,7 @@ dependencies = [
 "checksum lock_api 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "62ebf1391f6acad60e5c8b43706dde4582df75c06698ab44511d15016bc2442c"
 "checksum lock_api 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f8912e782533a93a167888781b836336a6ca5da6175c05944c86cf28c31104dc"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
-"checksum lsp-types 0.57.1 (git+https://github.com/latex-lsp/lsp-types?rev=9fcc5d9b9d3013ce84e20ef566267754d594b268)" = "<none>"
+"checksum lsp-types 0.60.0 (git+https://github.com/gluon-lang/lsp-types?rev=e7a7e99c71edb20623429f9d7de1fbdc4d55faed)" = "<none>"
 "checksum lzw 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7d947cbb889ed21c2a84be6ffbaebf5b4e0f4340638cba0444907e38b56be084"
 "checksum mac 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
 "checksum markup5ever 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)" = "897636f9850c3eef4905a5540683ed53dc9393860f0846cab2c2ddf9939862ff"

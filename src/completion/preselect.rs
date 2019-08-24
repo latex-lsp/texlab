@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -30,9 +31,11 @@ where
                     let right_args = &environment.right.command.args[0];
                     let cond1 = right_args
                         .range()
-                        .contains_exclusive(request.params.position);
+                        .contains_exclusive(request.params.text_document_position.position);
                     let cond2 = right_args.right.is_none()
-                        && right_args.range().contains(request.params.position);
+                        && right_args
+                            .range()
+                            .contains(request.params.text_document_position.position);
 
                     if cond1 || cond2 {
                         for item in &mut items {

@@ -1,3 +1,4 @@
+use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -36,7 +37,7 @@ impl LatexLabelDefinitionProvider {
                 .filter(|label| label.text() == reference.text())
                 .map(|label| LocationLink {
                     origin_selection_range: Some(reference.range()),
-                    target_uri: document.uri.clone(),
+                    target_uri: document.uri.clone().into(),
                     target_range: tree
                         .environments
                         .iter()

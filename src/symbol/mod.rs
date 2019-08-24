@@ -69,7 +69,7 @@ impl SymbolResponse {
                     deprecated: Some(false),
                     kind: symbol.kind,
                     container_name: None,
-                    location: Location::new(uri.clone(), symbol.range),
+                    location: Location::new(uri.clone().into(), symbol.range),
                 };
                 results.push(info);
                 if let Some(children) = symbol.children {
