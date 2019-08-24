@@ -28,21 +28,17 @@ pub trait LspClient {
     #[boxed]
     async fn publish_diagnostics(&self, params: PublishDiagnosticsParams);
 
-    // #[jsonrpc_method("window/progress/start", kind = "notification")]
-    // #[boxed]
-    // async fn progress_start(&self, params: ProgressStartParams) -> ();
+    #[jsonrpc_method("$/progress", kind = "notification")]
+    #[boxed]
+    async fn progress(&self, params: ProgressParams);
 
-    // #[jsonrpc_method("window/progress/report", kind = "notification")]
-    // #[boxed]
-    // async fn progress_report(&self, params: ProgressReportParams) -> ();
-
-    // #[jsonrpc_method("window/progress/done", kind = "notification")]
-    // #[boxed]
-    // async fn progress_done(&self, params: ProgressDoneParams) -> ();
+    #[jsonrpc_method("window/workDoneProgress/create", kind = "request")]
+    #[boxed]
+    async fn work_done_progress_create(&self, params: WorkDoneProgressCreateParams) -> Result<()>;
 
     #[jsonrpc_method("window/logMessage", kind = "notification")]
     #[boxed]
-    async fn log_message(&self, params: LogMessageParams) -> ();
+    async fn log_message(&self, params: LogMessageParams);
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
@@ -111,14 +107,13 @@ impl LspClient for LspClientMock {
         diagnostics_by_uri.insert(params.uri.into(), params.diagnostics);
     }
 
-    // #[boxed]
-    // async fn progress_start(&self, _params: ProgressStartParams) {}
+    #[boxed]
+    async fn work_done_progress_create(&self, _params: WorkDoneProgressCreateParams) -> Result<()> {
+        Ok(())
+    }
 
-    // #[boxed]
-    // async fn progress_report(&self, _params: ProgressReportParams) {}
-
-    // #[boxed]
-    // async fn progress_done(&self, _params: ProgressDoneParams) {}
+    #[boxed]
+    async fn progress(&self, _params: ProgressParams) {}
 
     #[boxed]
     async fn log_message(&self, params: LogMessageParams) {

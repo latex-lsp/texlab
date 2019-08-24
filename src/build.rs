@@ -74,7 +74,7 @@ pub struct BuildResult {
 pub struct BuildProvider<C> {
     pub client: Arc<C>,
     pub options: BuildOptions,
-    pub progress_id: String,
+    pub token: ProgressToken,
 }
 
 impl<C> BuildProvider<C>
@@ -85,7 +85,7 @@ where
         Self {
             client,
             options,
-            progress_id: format!("texlab-build-{}", Uuid::new_v4()),
+            token: ProgressToken::String(format!("texlab-build-{}", Uuid::new_v4())),
         }
     }
 
@@ -133,16 +133,23 @@ where
             .find_parent(&request.document().uri)
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
+        let title = path.file_name().unwrap().to_string_lossy().into_owned();
 
-        // let title = path.file_name().unwrap().to_string_lossy().into_owned();
-        // let params = ProgressStartParams {
-        //     id: self.progress_id.clone().into(),
-        //     title: title.into(),
-        //     cancellable: Some(true),
-        //     message: Some("Building".into()),
-        //     percentage: None,
-        // };
-        // self.client.progress_start(params).await;
+        let params = WorkDoneProgressCreateParams {
+            token: self.token.clone(),
+        };
+        self.client.work_done_progress_create(params).await.unwrap();
+
+        let params = ProgressParams {
+            token: self.token.clone(),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(WorkDoneProgressBegin {
+                title: title.into(),
+                cancellable: Some(true),
+                message: Some("Building".into()),
+                percentage: None,
+            })),
+        };
+        self.client.progress(params).await;
 
         let status = match self.build(&path).await {
             Ok(true) => BuildStatus::Success,
@@ -155,7 +162,7 @@ where
 }
 
 pub struct BuildManager<C> {
-    handles_by_id: Mutex<HashMap<String, AbortHandle>>,
+    handles_by_token: Mutex<HashMap<ProgressToken, AbortHandle>>,
     client: Arc<C>,
 }
 
@@ -165,7 +172,7 @@ where
 {
     pub fn new(client: Arc<C>) -> Self {
         Self {
-            handles_by_id: Mutex::new(HashMap::new()),
+            handles_by_token: Mutex::new(HashMap::new()),
             client,
         }
     }
@@ -178,8 +185,8 @@ where
         let provider = BuildProvider::new(Arc::clone(&self.client), options);
         let (handle, reg) = AbortHandle::new_pair();
         {
-            let mut handles_by_id = self.handles_by_id.lock().await;
-            handles_by_id.insert(provider.progress_id.clone(), handle);
+            let mut handles_by_token = self.handles_by_token.lock().await;
+            handles_by_token.insert(provider.token.clone(), handle);
         }
 
         let result = match Abortable::new(provider.execute(&request), reg).await {
@@ -189,29 +196,29 @@ where
             },
         };
 
-        // let params = ProgressDoneParams {
-        //     id: provider.progress_id.clone().into(),
-        // };
-        // self.client.progress_done(params).await;
+        let params = ProgressParams {
+            token: provider.token.clone(),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(WorkDoneProgressDone {
+                message: None,
+            })),
+        };
+        self.client.progress(params).await;
 
         {
-            let mut handles_by_id = self.handles_by_id.lock().await;
-            handles_by_id.remove(&provider.progress_id);
+            let mut handles_by_token = self.handles_by_token.lock().await;
+            handles_by_token.remove(&provider.token);
         }
 
         return result;
     }
 
-    pub async fn cancel(&self, id: &str) {
-        let handles_by_id = self.handles_by_id.lock().await;
-        if id == "texlab-build-*" {
-            handles_by_id
-                .iter()
-                .filter(|(id, _)| id.starts_with("texlab-build-"))
-                .for_each(|(_, handle)| handle.abort());
-        } else {
-            if let Some(handle) = handles_by_id.get(id) {
-                handle.abort();
+    pub async fn cancel(&self, token: ProgressToken) {
+        let handles_by_token = self.handles_by_token.lock().await;
+        if let Some(handle) = handles_by_token.get(&token) {
+            handle.abort();
+        } else if let ProgressToken::String(id) = token {
+            if id == "texlab-build-*" {
+                handles_by_token.values().for_each(|handle| handle.abort());
             }
         }
     }

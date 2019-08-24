@@ -207,12 +207,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub fn did_close(&self, _params: DidCloseTextDocumentParams) {}
 
-    // #[jsonrpc_method("window/progress/cancel", kind = "notification")]
-    // pub fn progress_cancel(&self, params: ProgressCancelParams) {
-    //     executor::block_on(async move {
-    //         self.build_manager.cancel(&params.id).await;
-    //     });
-    // }
+    #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
+    pub fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
+        self.action_manager.push(Action::CancelBuild(params.token));
+    }
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
@@ -574,6 +572,9 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         let text_document = TextDocumentIdentifier::new(uri.into());
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
+                }
+                Action::CancelBuild(token) => {
+                    self.build_manager.cancel(token).await;
                 }
             }
         }

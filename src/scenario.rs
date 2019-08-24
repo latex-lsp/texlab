@@ -25,7 +25,7 @@ pub static FULL_CAPABILITIES: ClientCapabilities = ClientCapabilities {
     text_document: None,
     experimental: None,
     window: Some(WindowClientCapabilities {
-        progress: Some(true),
+        work_done_progress: Some(true),
     }),
 };
 

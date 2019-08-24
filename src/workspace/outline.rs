@@ -166,10 +166,7 @@ impl OutlineContext {
         }
     }
 
-    fn find_caption(
-        position: Position,
-        tree: &LatexSyntaxTree,
-    ) -> Option<Self> {
+    fn find_caption(position: Position, tree: &LatexSyntaxTree) -> Option<Self> {
         let caption_env = tree
             .environments
             .iter()

@@ -4,7 +4,11 @@ use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 
-fn make_label_symbols(view: &DocumentView, outline: &Outline, label: &LatexLabel) -> Vec<DocumentSymbol> {
+fn make_label_symbols(
+    view: &DocumentView,
+    outline: &Outline,
+    label: &LatexLabel,
+) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
     let position = label.start();
     if let Some(context) = OutlineContext::parse(view, position, outline) {
