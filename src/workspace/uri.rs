@@ -2,8 +2,9 @@ use lsp_types::*;
 use std::fmt;
 use std::ops::Deref;
 use std::path::Path;
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug, Clone, Eq, Hash)]
+#[derive(Debug, Clone, Eq)]
 pub struct Uri(Url);
 
 impl Uri {
@@ -19,6 +20,12 @@ impl PartialEq for Uri {
         } else {
             self.as_str() == other.as_str()
         }
+    }
+}
+
+impl Hash for Uri {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.as_str().to_lowercase().hash(state);
     }
 }
 
