@@ -1,3 +1,4 @@
+use crate::capabilities::ClientCapabilitiesExt;
 use crate::completion::DATABASE;
 use crate::range::RangeExt;
 use crate::syntax::*;
@@ -294,6 +295,10 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        if !request.client_capabilities.has_hover_markdown_support() {
+            return None;
+        }
+
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut elements = Vec::new();
             tree.inlines
