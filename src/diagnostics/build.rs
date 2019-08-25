@@ -256,6 +256,7 @@ mod tests {
 
     fn verify(name: &str, expected: Vec<BuildError>) {
         let log_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
             .join("logs")
             .join(name);
 

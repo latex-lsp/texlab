@@ -40,6 +40,7 @@ impl Scenario {
         let directory = tempfile::tempdir().unwrap();
         remove_dir(directory.path()).unwrap();
         let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
             .join("scenarios")
             .join(name);
         copy_dir(source, directory.path()).unwrap();
