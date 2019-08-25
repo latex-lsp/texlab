@@ -14,7 +14,7 @@ pub enum BibtexErrorCode {
 }
 
 impl BibtexErrorCode {
-    pub fn message(&self) -> &'static str {
+    pub fn message(self) -> &'static str {
         match self {
             BibtexErrorCode::MissingBeginBrace => "Expecting a curly bracket: \"{\"",
             BibtexErrorCode::MissingEntryKey => "Expecting an entry key",
@@ -171,7 +171,7 @@ impl Into<Diagnostic> for BibtexError {
 pub struct BibtexDiagnosticsProvider;
 
 impl BibtexDiagnosticsProvider {
-    pub fn get(&self, document: &Document) -> Vec<Diagnostic> {
+    pub fn get(self, document: &Document) -> Vec<Diagnostic> {
         if let SyntaxTree::Bibtex(tree) = &document.tree {
             BibtexError::analyze(&tree)
                 .into_iter()

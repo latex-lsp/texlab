@@ -1,8 +1,8 @@
 use lsp_types::*;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::path::Path;
-use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone, Eq)]
 pub struct Uri(Url);
@@ -51,7 +51,7 @@ impl Into<Url> for Uri {
 
 impl fmt::Display for Uri {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        return self.0.fmt(f);
+        self.0.fmt(f)
     }
 }
 

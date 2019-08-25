@@ -215,7 +215,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
-        let request = self.into_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
         let items = self.completion_provider.execute(&request).await;
         Ok(CompletionList {
             is_incomplete: true,
@@ -230,7 +230,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             CompletionItemData::Package | CompletionItemData::Class => {
                 item.documentation = DATABASE
                     .documentation(&item.label)
-                    .map(|content| Documentation::MarkupContent(content));
+                    .map(Documentation::MarkupContent);
             }
             CompletionItemData::Citation { entry_code } => {
                 item.documentation = render_citation(&entry_code).map(Documentation::MarkupContent)
@@ -242,7 +242,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let hover = self.hover_provider.execute(&request).await;
         Ok(hover)
     }
@@ -252,7 +252,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<DefinitionResponse> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let results = self.definition_provider.execute(&request).await;
         let response = if request.client_capabilities.has_definition_link_support() {
             DefinitionResponse::LocationLinks(results)
@@ -270,7 +270,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
-        let request = self.into_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
         let results = self.reference_provider.execute(&request).await;
         Ok(results)
     }
@@ -280,14 +280,14 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let results = self.highlight_provider.execute(&request).await;
         Ok(results)
     }
 
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(&self, params: DocumentSymbolParams) -> Result<SymbolResponse> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let symbols = self.symbol_provider.execute(&request).await;
         let response = SymbolResponse::new(
             &self.client_capabilities.get().unwrap(),
@@ -299,14 +299,14 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let links = self.link_provider.execute(&request).await;
         Ok(links)
     }
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
     pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let mut edits = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             let params = BibtexFormattingParams {
@@ -325,7 +325,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 };
                 if should_format {
                     let text = bibtex::format_declaration(&declaration, &params);
-                    edits.push(TextEdit::new(declaration.range(), text.into()));
+                    edits.push(TextEdit::new(declaration.range(), text));
                 }
             }
         }
@@ -337,28 +337,28 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Option<Range>> {
-        let request = self.into_feature_request(params.as_uri(), params)?;
+        let request = self.make_feature_request(params.as_uri(), params)?;
         let range = self.prepare_rename_provider.execute(&request).await;
         Ok(range)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
-        let request = self.into_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
         let edit = self.rename_provider.execute(&request).await;
         Ok(edit)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let foldings = self.folding_provider.execute(&request).await;
         Ok(foldings)
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let options = self.configuration::<BuildOptions>("latex.build").await;
         let result = self.build_manager.build(request, options).await;
         Ok(result)
@@ -369,7 +369,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<ForwardSearchResult> {
-        let request = self.into_feature_request(params.text_document.as_uri(), params)?;
+        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let options = self
             .configuration::<ForwardSearchOptions>("latex.forwardSearch")
             .await;
@@ -382,7 +382,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let parent = parent.uri.to_file_path().unwrap();
         forward_search::search(&tex_file, &parent, request.params.position.line, options)
             .await
-            .ok_or_else(|| format!("Unable to execute forward search"))
+            .ok_or_else(|| "Unable to execute forward search".into())
     }
 
     async fn configuration<T>(&self, section: &'static str) -> T
@@ -424,7 +424,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    fn into_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
+    fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
         let workspace = self.workspace_manager.get();
         let client_capabilities = self
             .client_capabilities
@@ -442,6 +442,41 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             Err(msg)
         }
     }
+
+    async fn register_capabilities(&self) {
+        if self
+            .client_capabilities
+            .get()
+            .and_then(|cap| cap.workspace.as_ref())
+            .and_then(|cap| cap.did_change_watched_files.as_ref())
+            .and_then(|cap| cap.dynamic_registration)
+            .unwrap_or(false)
+        {
+            let options = DidChangeWatchedFilesRegistrationOptions {
+                watchers: vec![FileSystemWatcher {
+                    kind: Some(WatchKind::Create | WatchKind::Change),
+                    glob_pattern: "**/*.log".into(),
+                }],
+            };
+
+            if let Err(why) = self
+                .client
+                .register_capability(RegistrationParams {
+                    registrations: vec![Registration {
+                        id: "build-log-watcher".into(),
+                        method: "workspace/didChangeWatchedFiles".into(),
+                        register_options: Some(serde_json::to_value(options).unwrap()),
+                    }],
+                })
+                .await
+            {
+                warn!(
+                    "Client does not support dynamic capability registration: {}",
+                    why.message
+                );
+            }
+        }
+    }
 }
 
 impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspServer<C> {
@@ -449,40 +484,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
     async fn execute_actions(&self) {
         for action in self.action_manager.take() {
             match action {
-                Action::RegisterCapabilities => {
-                    if self
-                        .client_capabilities
-                        .get()
-                        .and_then(|cap| cap.workspace.as_ref())
-                        .and_then(|cap| cap.did_change_watched_files.as_ref())
-                        .and_then(|cap| cap.dynamic_registration)
-                        .unwrap_or(false)
-                    {
-                        let options = DidChangeWatchedFilesRegistrationOptions {
-                            watchers: vec![FileSystemWatcher {
-                                kind: Some(WatchKind::Create | WatchKind::Change),
-                                glob_pattern: "**/*.log".into(),
-                            }],
-                        };
-
-                        if let Err(why) = self
-                            .client
-                            .register_capability(RegistrationParams {
-                                registrations: vec![Registration {
-                                    id: "build-log-watcher".into(),
-                                    method: "workspace/didChangeWatchedFiles".into(),
-                                    register_options: Some(serde_json::to_value(options).unwrap()),
-                                }],
-                            })
-                            .await
-                        {
-                            warn!(
-                                "Client does not support dynamic capability registration: {}",
-                                why.message
-                            );
-                        }
-                    }
-                }
+                Action::RegisterCapabilities => self.register_capabilities().await,
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {
                         let mut path = uri.to_file_path().unwrap();

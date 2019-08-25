@@ -48,11 +48,11 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
         let edits = vec![
             TextEdit::new(
                 environment.left.name().unwrap().range(),
-                request.params.new_name.clone().into(),
+                request.params.new_name.clone(),
             ),
             TextEdit::new(
                 environment.right.name().unwrap().range(),
-                request.params.new_name.clone().into(),
+                request.params.new_name.clone(),
             ),
         ];
         let mut changes = HashMap::new();

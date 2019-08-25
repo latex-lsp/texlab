@@ -26,6 +26,12 @@ impl DefinitionProvider {
     }
 }
 
+impl Default for DefinitionProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for DefinitionProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<LocationLink>;

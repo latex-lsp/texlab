@@ -16,7 +16,7 @@ fn make_label_symbols(
             OutlineContextItem::Equation => {
                 for name in label.names() {
                     let symbol = DocumentSymbol {
-                        name: name.text().to_owned().into(),
+                        name: name.text().to_owned(),
                         detail: None,
                         kind: SymbolKind::Number,
                         deprecated: Some(false),
@@ -30,7 +30,7 @@ fn make_label_symbols(
             OutlineContextItem::Caption(caption) => {
                 for name in label.names() {
                     let symbol = DocumentSymbol {
-                        name: caption.clone().into(),
+                        name: caption.clone(),
                         detail: None,
                         kind: SymbolKind::Method,
                         deprecated: Some(false),
@@ -41,13 +41,10 @@ fn make_label_symbols(
                     symbols.push(symbol);
                 }
             }
-            OutlineContextItem::Theorem {
-                kind: _,
-                description: _,
-            } => {
+            OutlineContextItem::Theorem { .. } => {
                 for name in label.names() {
                     let symbol = DocumentSymbol {
-                        name: context.item.clone().reference().into(),
+                        name: context.item.clone().reference(),
                         detail: None,
                         kind: SymbolKind::EnumMember,
                         deprecated: Some(false),
@@ -103,7 +100,7 @@ impl<'a> LatexSectionNode<'a> {
         }
     }
 
-    fn into_symbol(&self, view: &DocumentView, outline: &Outline) -> DocumentSymbol {
+    fn make_symbol(&self, view: &DocumentView, outline: &Outline) -> DocumentSymbol {
         let name = self
             .section
             .extract_text(self.full_text)
@@ -112,7 +109,7 @@ impl<'a> LatexSectionNode<'a> {
         let mut children = Vec::new();
         self.children
             .iter()
-            .map(|child| child.into_symbol(view, outline))
+            .map(|child| child.make_symbol(view, outline))
             .for_each(|sec| children.push(sec));
 
         for label in &self.labels {
@@ -120,7 +117,7 @@ impl<'a> LatexSectionNode<'a> {
         }
 
         DocumentSymbol {
-            name: name.into(),
+            name,
             detail: None,
             kind: SymbolKind::Module,
             deprecated: Some(false),
@@ -209,7 +206,7 @@ impl FeatureProvider for LatexSectionSymbolProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut symbols = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            let mut section_tree = LatexSectionTree::from(tree);
+            let mut section_tree = LatexSectionTree::from(tree.as_ref());
             section_tree.set_full_text(&request.document().text);
             let mut stream = CharStream::new(&request.document().text);
             while stream.next().is_some() {}
@@ -223,15 +220,13 @@ impl FeatureProvider for LatexSectionSymbolProvider {
 
             let outline = Outline::from(&request.view);
             for label in &tree.labels {
-                if label.kind == LatexLabelKind::Definition {
-                    if !section_tree.insert_label(label) {
-                        symbols.append(&mut make_label_symbols(&request.view, &outline, label));
-                    }
+                if label.kind == LatexLabelKind::Definition && !section_tree.insert_label(label) {
+                    symbols.append(&mut make_label_symbols(&request.view, &outline, label));
                 }
             }
 
             for child in &section_tree.children {
-                symbols.push(child.into_symbol(&request.view, &outline));
+                symbols.push(child.make_symbol(&request.view, &outline));
             }
         }
         symbols

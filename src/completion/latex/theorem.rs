@@ -21,10 +21,10 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         for theorem in &tree.theorem_definitions {
                             let name = theorem.name().text().to_owned();
-                            let text_edit = TextEdit::new(context.range, name.clone().into());
+                            let text_edit = TextEdit::new(context.range, name.clone());
                             let item = factory::environment(
                                 request,
-                                name.into(),
+                                name,
                                 text_edit,
                                 &LatexComponentId::User,
                             );

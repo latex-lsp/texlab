@@ -132,7 +132,7 @@ impl LatexPreviewHoverProvider {
             range: Some(range),
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: markdown.into(),
+                value: markdown,
             }),
         })
     }

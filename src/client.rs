@@ -78,7 +78,7 @@ impl LspClient for LspClientMock {
             options
                 .as_ref()
                 .map(|options| serde_json::to_value(vec![options]).unwrap())
-                .ok_or(jsonrpc::Error::internal_error("Internal error".to_owned()))
+                .ok_or_else(|| jsonrpc::Error::internal_error("Internal error".to_owned()))
         }
 
         let options = self.options.lock().await;

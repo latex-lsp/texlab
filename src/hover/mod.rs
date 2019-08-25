@@ -34,6 +34,12 @@ impl HoverProvider {
     }
 }
 
+impl Default for HoverProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for HoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;

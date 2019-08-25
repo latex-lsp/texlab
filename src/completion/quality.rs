@@ -117,9 +117,9 @@ impl<F> OrderByQualityCompletionProvider<F> {
                 return 2;
             }
 
-            return 1;
+            1
         } else {
-            return 0;
+            0
         }
     }
 }

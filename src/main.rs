@@ -57,7 +57,7 @@ async fn main() {
     };
 
     let stdout_handle = runtime::spawn(async move {
-        stdout_rx.map(|x| Ok(x)).forward(stdout).await.unwrap();
+        stdout_rx.map(Ok).forward(stdout).await.unwrap();
     });
 
     future::join(handler.listen(), stdout_handle).await;

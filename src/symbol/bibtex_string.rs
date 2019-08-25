@@ -18,7 +18,7 @@ impl FeatureProvider for BibtexStringSymbolProvider {
                 if let BibtexDeclaration::String(string) = &child {
                     if let Some(name) = &string.name {
                         symbols.push(DocumentSymbol {
-                            name: name.text().to_owned().into(),
+                            name: name.text().to_owned(),
                             detail: None,
                             kind: SymbolKind::String,
                             deprecated: Some(false),

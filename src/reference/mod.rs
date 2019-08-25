@@ -22,6 +22,12 @@ impl ReferenceProvider {
     }
 }
 
+impl Default for ReferenceProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for ReferenceProvider {
     type Params = ReferenceParams;
     type Output = Vec<Location>;

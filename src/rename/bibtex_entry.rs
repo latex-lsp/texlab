@@ -47,7 +47,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                         .flat_map(LatexCitation::keys)
                         .filter(|citation| citation.text() == key_name.text)
                         .map(|citation| {
-                            TextEdit::new(citation.range(), request.params.new_name.clone().into())
+                            TextEdit::new(citation.range(), request.params.new_name.clone())
                         })
                         .for_each(|edit| edits.push(edit));
                 }
@@ -57,7 +57,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                             if key.text() == key_name.text {
                                 edits.push(TextEdit::new(
                                     key.range(),
-                                    request.params.new_name.clone().into(),
+                                    request.params.new_name.clone(),
                                 ));
                             }
                         }

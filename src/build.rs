@@ -109,7 +109,7 @@ where
         while let Some(Ok(line)) = output.next().await {
             let params = LogMessageParams {
                 typ: MessageType::Log,
-                message: line.into(),
+                message: line,
             };
 
             self.client.log_message(params).await;
@@ -146,7 +146,7 @@ where
                 token: self.token.clone(),
                 value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
                     WorkDoneProgressBegin {
-                        title: title.into(),
+                        title,
                         cancellable: Some(true),
                         message: Some("Building".into()),
                         percentage: None,
@@ -216,7 +216,7 @@ where
             handles_by_token.remove(&provider.token);
         }
 
-        return result;
+        result
     }
 
     pub async fn cancel(&self, token: ProgressToken) {

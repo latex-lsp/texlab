@@ -20,13 +20,10 @@ impl FeatureProvider for LatexSectionFoldingProvider {
             let sections = &tree.sections;
             for i in 0..sections.len() {
                 let current = &sections[i];
-                let mut next = None;
-                for j in i + 1..sections.len() {
-                    next = Some(&sections[j]);
-                    if current.level >= sections[j].level {
-                        break;
-                    }
-                }
+                let next = sections
+                    .iter()
+                    .skip(i + 1)
+                    .find(|sec| current.level >= sec.level);
 
                 if let Some(next) = next {
                     if next.command.start().line > 0 {

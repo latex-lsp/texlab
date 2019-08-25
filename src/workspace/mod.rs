@@ -246,15 +246,14 @@ impl WorkspaceManager {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct WorkspaceBuilder {
     pub workspace: Workspace,
 }
 
 impl WorkspaceBuilder {
     pub fn new() -> Self {
-        WorkspaceBuilder {
-            workspace: Workspace::default(),
-        }
+        Self::default()
     }
 
     pub fn document(&mut self, name: &str, text: &str) -> Uri {

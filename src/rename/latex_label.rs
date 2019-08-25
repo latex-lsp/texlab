@@ -45,9 +45,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
                     .iter()
                     .flat_map(LatexLabel::names)
                     .filter(|label| label.text() == name.text)
-                    .map(|label| {
-                        TextEdit::new(label.range(), request.params.new_name.clone().into())
-                    })
+                    .map(|label| TextEdit::new(label.range(), request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.clone().into(), edits);
             }

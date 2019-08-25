@@ -43,7 +43,7 @@ impl LatexLabelDefinitionProvider {
                         .iter()
                         .find(|env| env.range().contains(label.start()))
                         .map(|env| env.range())
-                        .unwrap_or(label.range()),
+                        .unwrap_or_else(|| label.range()),
                     target_selection_range: label.range(),
                 })
                 .for_each(|link| links.push(link));

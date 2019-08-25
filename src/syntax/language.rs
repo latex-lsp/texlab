@@ -30,7 +30,7 @@ pub enum LatexLabelKind {
 }
 
 impl LatexLabelKind {
-    pub fn is_reference(&self) -> bool {
+    pub fn is_reference(self) -> bool {
         match self {
             LatexLabelKind::Definition => false,
             LatexLabelKind::Reference(_) => true,
@@ -68,7 +68,7 @@ pub enum LatexIncludeKind {
 }
 
 impl LatexIncludeKind {
-    pub fn extensions(&self) -> Option<&'static [&'static str]> {
+    pub fn extensions(self) -> Option<&'static [&'static str]> {
         match self {
             LatexIncludeKind::Package => Some(&["sty"]),
             LatexIncludeKind::Class => Some(&["cls"]),

@@ -143,7 +143,7 @@ impl OutlineContextItem {
     pub fn documentation(self) -> MarkupContent {
         MarkupContent {
             kind: MarkupKind::PlainText,
-            value: self.reference().into(),
+            value: self.reference(),
         }
     }
 }
@@ -258,7 +258,7 @@ impl OutlineContext {
     }
 
     fn extract(content: &LatexGroup) -> String {
-        if content.children.len() == 0 || content.right.is_none() {
+        if content.children.is_empty() || content.right.is_none() {
             return String::new();
         }
 

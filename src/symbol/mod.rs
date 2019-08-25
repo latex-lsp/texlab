@@ -27,6 +27,12 @@ impl SymbolProvider {
     }
 }
 
+impl Default for SymbolProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for SymbolProvider {
     type Params = DocumentSymbolParams;
     type Output = Vec<DocumentSymbol>;

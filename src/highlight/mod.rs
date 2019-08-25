@@ -17,6 +17,12 @@ impl HighlightProvider {
     }
 }
 
+impl Default for HighlightProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for HighlightProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<DocumentHighlight>;

@@ -17,6 +17,12 @@ impl LinkProvider {
     }
 }
 
+impl Default for LinkProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for LinkProvider {
     type Params = DocumentLinkParams;
     type Output = Vec<DocumentLink>;

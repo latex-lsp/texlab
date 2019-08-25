@@ -126,7 +126,7 @@ impl LatexEnvironment {
             return None;
         }
 
-        if command.args.len() == 0 {
+        if command.args.is_empty() {
             return None;
         }
 
@@ -588,7 +588,7 @@ impl LatexCaption {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut captions = Vec::new();
         for command in commands {
-            if command.name.text() == "\\caption" && command.args.len() > 0 {
+            if command.name.text() == "\\caption" && !command.args.is_empty() {
                 captions.push(Self {
                     command: Arc::clone(&command),
                     index: 0,

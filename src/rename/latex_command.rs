@@ -46,10 +46,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
                     .iter()
                     .filter(|cmd| cmd.name.text() == command.name.text())
                     .map(|cmd| {
-                        TextEdit::new(
-                            cmd.name.range(),
-                            format!("\\{}", request.params.new_name).into(),
-                        )
+                        TextEdit::new(cmd.name.range(), format!("\\{}", request.params.new_name))
                     })
                     .collect();
                 changes.insert(document.uri.clone().into(), edits);

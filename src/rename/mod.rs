@@ -28,6 +28,12 @@ impl PrepareRenameProvider {
     }
 }
 
+impl Default for PrepareRenameProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for PrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
@@ -55,6 +61,12 @@ impl RenameProvider {
                 Box::new(LatexLabelRenameProvider),
             ]),
         }
+    }
+}
+
+impl Default for RenameProvider {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

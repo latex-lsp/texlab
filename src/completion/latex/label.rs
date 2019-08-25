@@ -42,10 +42,10 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                                 OutlineContext::parse(&view, label.start(), &outline);
                             for name in label.names() {
                                 let text = name.text().to_owned();
-                                let text_edit = TextEdit::new(context.range, text.clone().into());
+                                let text_edit = TextEdit::new(context.range, text.clone());
                                 let item = factory::label(
                                     request,
-                                    text.into(),
+                                    text,
                                     text_edit,
                                     outline_context.as_ref(),
                                 );

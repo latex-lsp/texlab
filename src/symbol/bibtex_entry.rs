@@ -22,7 +22,7 @@ impl FeatureProvider for BibtexEntrySymbolProvider {
             {
                 let key = entry.key.as_ref().unwrap();
                 let symbol = DocumentSymbol {
-                    name: key.text().to_owned().into(),
+                    name: key.text().to_owned(),
                     detail: None,
                     kind: SymbolKind::Interface,
                     deprecated: Some(false),
@@ -42,7 +42,7 @@ impl BibtexEntrySymbolProvider {
         let mut symbols = Vec::new();
         for field in &entry.fields {
             let symbol = DocumentSymbol {
-                name: field.name.text().to_owned().into(),
+                name: field.name.text().to_owned(),
                 detail: None,
                 kind: SymbolKind::Field,
                 deprecated: Some(false),

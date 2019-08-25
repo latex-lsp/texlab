@@ -124,11 +124,6 @@ fn remove_extension(path: &mut PathBuf) {
 }
 
 fn make_text_edit(range: Range, path: &Path) -> TextEdit {
-    let text = path
-        .file_name()
-        .unwrap()
-        .to_string_lossy()
-        .into_owned()
-        .into();
+    let text = path.file_name().unwrap().to_string_lossy().into_owned();
     TextEdit::new(range, text)
 }

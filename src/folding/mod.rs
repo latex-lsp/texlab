@@ -15,13 +15,19 @@ pub struct FoldingProvider {
 
 impl FoldingProvider {
     pub fn new() -> Self {
-        FoldingProvider {
+        Self {
             provider: ConcatProvider::new(vec![
                 Box::new(BibtexDeclarationFoldingProvider),
                 Box::new(LatexEnvironmentFoldingProvider),
                 Box::new(LatexSectionFoldingProvider),
             ]),
         }
+    }
+}
+
+impl Default for FoldingProvider {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

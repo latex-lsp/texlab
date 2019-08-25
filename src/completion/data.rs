@@ -58,10 +58,9 @@ impl Database {
     }
 
     pub fn exists(&self, file_name: &str) -> bool {
-        return self
-            .components
+        self.components
             .iter()
-            .any(|component| component.file_names.iter().any(|f| f == file_name));
+            .any(|component| component.file_names.iter().any(|f| f == file_name))
     }
 
     pub fn documentation(&self, name: &str) -> Option<MarkupContent> {
@@ -73,7 +72,7 @@ impl Database {
         let desc = metadata.description.to_owned()?;
         Some(MarkupContent {
             kind: MarkupKind::PlainText,
-            value: desc.into(),
+            value: desc,
         })
     }
 }

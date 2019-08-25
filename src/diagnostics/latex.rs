@@ -94,7 +94,7 @@ fn lint(text: &str) -> Option<Vec<Diagnostic>> {
             diagnostics.push(Diagnostic {
                 source: Some("chktex".into()),
                 code: Some(NumberOrString::String(code.to_owned())),
-                message: message.into(),
+                message,
                 severity: Some(severity),
                 range,
                 related_information: None,

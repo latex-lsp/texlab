@@ -68,6 +68,12 @@ impl CompletionProvider {
     }
 }
 
+impl Default for CompletionProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureProvider for CompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;

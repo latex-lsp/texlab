@@ -113,7 +113,7 @@ where
                         continue;
                     }
 
-                    if args.children.len() != 0 && !command.has_word(parameter.index) {
+                    if !args.children.is_empty() && !command.has_word(parameter.index) {
                         continue;
                     }
 

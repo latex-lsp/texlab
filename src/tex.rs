@@ -15,7 +15,7 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn executable(&self) -> &'static str {
+    pub fn executable(self) -> &'static str {
         match self {
             Format::Latex => "latex",
             Format::Pdflatex => "pdflatex",

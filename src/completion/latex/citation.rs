@@ -28,8 +28,7 @@ impl FeatureProvider for LatexCitationCompletionProvider {
                             if !entry.is_comment() {
                                 if let Some(key) = &entry.key {
                                     let key = key.text().to_owned();
-                                    let text_edit =
-                                        TextEdit::new(context.range, key.clone().into());
+                                    let text_edit = TextEdit::new(context.range, key.clone());
                                     let item = factory::citation(request, entry, key, text_edit);
                                     items.push(item);
                                 }

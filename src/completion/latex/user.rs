@@ -28,11 +28,11 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                             .map(|command| {
                                 let text_edit = TextEdit::new(
                                     current_command.short_name_range(),
-                                    command.to_owned().into(),
+                                    command.to_owned(),
                                 );
                                 factory::command(
                                     request,
-                                    command.to_owned().into(),
+                                    command.to_owned(),
                                     None,
                                     None,
                                     text_edit,
@@ -99,9 +99,8 @@ impl LatexUserEnvironmentCompletionProvider {
     ) -> Option<CompletionItem> {
         if let Some(name) = delimiter.name() {
             let text = name.text().to_owned();
-            let text_edit = TextEdit::new(name_range, text.clone().into());
-            let item =
-                factory::environment(request, text.into(), text_edit, &LatexComponentId::User);
+            let text_edit = TextEdit::new(name_range, text.clone());
+            let item = factory::environment(request, text, text_edit, &LatexComponentId::User);
             return Some(item);
         }
         None

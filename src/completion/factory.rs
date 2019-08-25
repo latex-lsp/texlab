@@ -53,7 +53,7 @@ impl<'a> LatexComponentId<'a> {
                 if files.is_empty() {
                     "built-in".to_owned()
                 } else {
-                    files.join(", ").into()
+                    files.join(", ")
                 }
             }
         }
@@ -81,7 +81,7 @@ pub fn command(
 ) -> CompletionItem {
     let detail = glyph.map_or_else(
         || component.detail(),
-        |glyph| format!("{}, {}", glyph, component.detail()).into(),
+        |glyph| format!("{}, {}", glyph, component.detail()),
     );
     CompletionItem {
         kind: Some(adjust_kind(request, CompletionItemKind::Function)),
@@ -155,7 +155,7 @@ pub fn label(
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
-        filter_text: Some(filter_text.into()),
+        filter_text: Some(filter_text),
         documentation,
         ..CompletionItem::default()
     }
@@ -167,12 +167,7 @@ pub fn folder(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .into_owned()
-            .into(),
+        label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(adjust_kind(request, CompletionItemKind::Folder)),
         data: Some(CompletionItemData::Folder.into()),
         text_edit: Some(text_edit),
@@ -186,12 +181,7 @@ pub fn file(
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .into_owned()
-            .into(),
+        label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(adjust_kind(request, CompletionItemKind::File)),
         data: Some(CompletionItemData::File.into()),
         text_edit: Some(text_edit),
@@ -307,9 +297,9 @@ pub fn citation(
     );
 
     CompletionItem {
-        label: key.into(),
+        label: key,
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
-        filter_text: Some(filter_text.into()),
+        filter_text: Some(filter_text),
         data: Some(CompletionItemData::Citation { entry_code }.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -381,8 +371,7 @@ fn image_documentation(
             value: format!(
                 "![{}](data:image/png;base64,{}|width=48,height=48)",
                 name, image
-            )
-            .into(),
+            ),
         }))
     } else {
         None
