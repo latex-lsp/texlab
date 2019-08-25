@@ -549,8 +549,10 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                     if should_lint {
                         let workspace = self.workspace_manager.get();
                         if let Some(document) = workspace.find(&uri) {
-                            let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                            diagnostics_manager.latex.update(&uri, &document.text);
+                            if let SyntaxTree::Latex(_) = &document.tree {
+                                let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+                                diagnostics_manager.latex.update(&uri, &document.text);
+                            }
                         }
                     }
                 }
