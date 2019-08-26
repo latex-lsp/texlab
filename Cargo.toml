@@ -29,7 +29,7 @@ jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
 lsp-types = { version = "0.61.0", features = ["proposed"] }
-nom = "5.0.0"
+nom = "5.0.1"
 once_cell = "0.2.6"
 path-clean = "0.1.0"
 regex = "1.2.1"
