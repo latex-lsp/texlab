@@ -55,22 +55,7 @@ impl Workspace {
     }
 
     pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
-        let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
-        for parent in self.documents.iter().filter(|document| document.is_file()) {
-            if let SyntaxTree::Latex(tree) = &parent.tree {
-                for include in &tree.includes {
-                    for targets in &include.all_targets {
-                        for target in targets {
-                            if let Some(ref child) = self.find(target) {
-                                edges.push((Arc::clone(&parent), Arc::clone(&child)));
-                                edges.push((Arc::clone(&child), Arc::clone(&parent)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
+        let edges = self.build_dependency_graph();
         let mut results = Vec::new();
         if let Some(start) = self.find(uri) {
             let mut visited: Vec<Arc<Document>> = Vec::new();
@@ -90,6 +75,32 @@ impl Workspace {
             }
         }
         results
+    }
+
+    fn build_dependency_graph(&self) -> Vec<(Arc<Document>, Arc<Document>)> {
+        let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
+        for parent in self.documents.iter().filter(|document| document.is_file()) {
+            if let SyntaxTree::Latex(tree) = &parent.tree {
+                for include in &tree.includes {
+                    for targets in &include.all_targets {
+                        for target in targets {
+                            if let Some(ref child) = self.find(target) {
+                                edges.push((Arc::clone(&parent), Arc::clone(&child)));
+                                edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                            }
+                        }
+                    }
+                }
+
+                let tex_path = parent.uri.to_file_path().unwrap();
+                let aux_path = tex_path.with_extension("aux");
+                if let Some(child) = self.find(&Uri::from_file_path(aux_path).unwrap()) {
+                    edges.push((Arc::clone(&parent), Arc::clone(&child)));
+                    edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                }
+            }
+        }
+        edges
     }
 
     pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
@@ -338,6 +349,16 @@ mod tests {
         let uri3 = builder.document("test2.tex", "\\ref{foo}");
         let documents = builder.workspace.related_documents(&uri3);
         verify_documents(vec![uri3, uri1, uri2], documents);
+    }
+
+    #[test]
+    fn test_related_documents_aux_file() {
+        let mut builder = WorkspaceBuilder::new();
+        let uri1 = builder.document("foo.tex", "\\include{bar}");
+        let uri2 = builder.document("bar.tex", "");
+        let uri3 = builder.document("foo.aux", "");
+        let documents = builder.workspace.related_documents(&uri2);
+        verify_documents(vec![uri2, uri1, uri3], documents);
     }
 
     #[test]
