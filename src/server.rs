@@ -28,7 +28,6 @@ use once_cell::sync::OnceCell;
 use serde::de::DeserializeOwned;
 use std::ffi::OsStr;
 use std::fs;
-use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -159,13 +158,24 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 continue;
             }
 
-            let log_path = change.uri.to_file_path().unwrap();
-            let name = log_path.to_string_lossy().into_owned();
-            let tex_path = PathBuf::from(format!("{}tex", &name[0..name.len() - 3]));
-            let tex_uri = Uri::from_file_path(tex_path).unwrap();
-            if workspace.find(&tex_uri).is_some() {
-                self.action_manager
-                    .push(Action::ParseLog { tex_uri, log_path });
+            let file_path = change.uri.to_file_path().unwrap();
+            match file_path.extension().unwrap().to_str().unwrap() {
+                "log" => {
+                    let tex_path = file_path.with_extension("tex");
+                    let tex_uri = Uri::from_file_path(tex_path).unwrap();
+                    if workspace.find(&tex_uri).is_some() {
+                        self.action_manager.push(Action::ParseLog {
+                            tex_uri,
+                            log_path: file_path,
+                        });
+                    }
+                }
+                "aux" => {
+                    self.workspace_manager.load(&file_path);
+                }
+                extension => {
+                    warn!("Unknown file extension in file watcher: {}", extension);
+                }
             }
         }
         self.action_manager.push(Action::PublishDiagnostics);
@@ -453,17 +463,23 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .unwrap_or(false)
         {
             let options = DidChangeWatchedFilesRegistrationOptions {
-                watchers: vec![FileSystemWatcher {
-                    kind: Some(WatchKind::Create | WatchKind::Change),
-                    glob_pattern: "**/*.log".into(),
-                }],
+                watchers: vec![
+                    FileSystemWatcher {
+                        kind: Some(WatchKind::Create | WatchKind::Change),
+                        glob_pattern: "**/*.log".into(),
+                    },
+                    FileSystemWatcher {
+                        kind: Some(WatchKind::Create | WatchKind::Change),
+                        glob_pattern: "**/*.aux".into(),
+                    },
+                ],
             };
 
             if let Err(why) = self
                 .client
                 .register_capability(RegistrationParams {
                     registrations: vec![Registration {
-                        id: "build-log-watcher".into(),
+                        id: "file-watcher".into(),
                         method: "workspace/didChangeWatchedFiles".into(),
                         register_options: Some(serde_json::to_value(options).unwrap()),
                     }],
