@@ -129,25 +129,10 @@ pub fn label(
     text_edit: TextEdit,
     context: Option<&OutlineContext>,
 ) -> CompletionItem {
-    let filter_text = match &context {
-        Some(context) => match &context.item {
-            OutlineContextItem::Caption(caption) => format!("{} {}", &name, caption),
-            OutlineContextItem::Equation => format!("{} Equation", &name),
-            OutlineContextItem::Section(section) => format!("{} {}", &name, section),
-            OutlineContextItem::Theorem {
-                kind,
-                description: None,
-            } => format!("{} {}", &name, &kind),
-            OutlineContextItem::Theorem {
-                kind,
-                description: Some(description),
-            } => format!("{} {} {}", &name, &kind, &description),
-        },
-        None => name.clone(),
-    };
+    let filter_text = context.map(|ctx| format!("{} {}", name, ctx.reference()));
 
     let documentation = context
-        .map(|ctx| ctx.item.to_owned().documentation())
+        .map(OutlineContext::documentation)
         .map(Documentation::MarkupContent);
 
     CompletionItem {
@@ -155,7 +140,7 @@ pub fn label(
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
-        filter_text: Some(filter_text),
+        filter_text,
         documentation,
         ..CompletionItem::default()
     }

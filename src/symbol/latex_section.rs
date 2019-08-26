@@ -10,8 +10,7 @@ fn make_label_symbols(
     label: &LatexLabel,
 ) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
-    let position = label.start();
-    if let Some(context) = OutlineContext::parse(view, position, outline) {
+    if let Some(context) = OutlineContext::parse(view, label, outline) {
         match &context.item {
             OutlineContextItem::Equation => {
                 for name in label.names() {
@@ -44,7 +43,7 @@ fn make_label_symbols(
             OutlineContextItem::Theorem { .. } => {
                 for name in label.names() {
                     let symbol = DocumentSymbol {
-                        name: context.item.clone().reference(),
+                        name: context.clone().documentation().value,
                         detail: None,
                         kind: SymbolKind::EnumMember,
                         deprecated: Some(false),

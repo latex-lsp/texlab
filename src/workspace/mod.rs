@@ -140,7 +140,10 @@ impl Workspace {
                 }
 
                 let aux_path = document.uri.to_file_path().unwrap().with_extension("aux");
-                if self.find(&Uri::from_file_path(&aux_path).unwrap()).is_none() {
+                if self
+                    .find(&Uri::from_file_path(&aux_path).unwrap())
+                    .is_none()
+                {
                     includes.push(aux_path);
                 }
             }

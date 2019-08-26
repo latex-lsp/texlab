@@ -123,55 +123,81 @@ pub enum OutlineContextItem {
     Equation,
 }
 
-impl OutlineContextItem {
-    pub fn reference(self) -> String {
-        match self {
-            Self::Section(text) => text,
-            Self::Caption(text) => text,
-            Self::Theorem {
-                kind,
-                description: None,
-            } => kind,
-            Self::Theorem {
-                kind,
-                description: Some(description),
-            } => format!("{} ({})", kind, description),
-            Self::Equation => "Equation".to_owned(),
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct OutlineContext {
+    pub range: Range,
+    pub number: Option<String>,
+    pub item: OutlineContextItem,
+}
+
+impl OutlineContext {
+    pub fn reference(&self) -> String {
+        match (&self.number, &self.item) {
+            (Some(number), OutlineContextItem::Section(text)) => format!("{} {}", number, text),
+            (Some(number), OutlineContextItem::Caption(text)) => format!("{} {}", number, text),
+            (
+                Some(number),
+                OutlineContextItem::Theorem {
+                    kind,
+                    description: None,
+                },
+            ) => format!("{} {}", kind, number),
+            (
+                Some(number),
+                OutlineContextItem::Theorem {
+                    kind,
+                    description: Some(description),
+                },
+            ) => format!("{} {} ({})", kind, number, description),
+            (Some(number), OutlineContextItem::Equation) => format!("Equation {}", number),
+            (None, OutlineContextItem::Section(text)) => text.clone(),
+            (None, OutlineContextItem::Caption(text)) => text.clone(),
+            (
+                None,
+                OutlineContextItem::Theorem {
+                    kind,
+                    description: None,
+                },
+            ) => format!("{}", kind),
+            (
+                None,
+                OutlineContextItem::Theorem {
+                    kind,
+                    description: Some(description),
+                },
+            ) => format!("{} ({})", kind, description),
+            (None, OutlineContextItem::Equation) => "Equation".to_owned(),
         }
     }
 
-    pub fn documentation(self) -> MarkupContent {
+    pub fn documentation(&self) -> MarkupContent {
         MarkupContent {
             kind: MarkupKind::PlainText,
             value: self.reference(),
         }
     }
-}
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct OutlineContext {
-    pub range: Range,
-    pub item: OutlineContextItem,
-}
-
-impl OutlineContext {
-    pub fn parse(view: &DocumentView, position: Position, outline: &Outline) -> Option<Self> {
+    pub fn parse(view: &DocumentView, label: &LatexLabel, outline: &Outline) -> Option<Self> {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
-            Self::find_caption(position, tree)
-                .or_else(|| Self::find_theorem(view, position, tree))
-                .or_else(|| Self::find_equation(position, tree))
-                .or_else(|| Self::find_section(view, position, outline))
+            Self::find_caption(view, label, tree)
+                .or_else(|| Self::find_theorem(view, label, tree))
+                .or_else(|| Self::find_equation(view, label, tree))
+                .or_else(|| Self::find_section(view, label, outline))
         } else {
             None
         }
     }
 
-    fn find_caption(position: Position, tree: &LatexSyntaxTree) -> Option<Self> {
+    fn find_caption(
+        view: &DocumentView,
+        label: &LatexLabel,
+        tree: &LatexSyntaxTree,
+    ) -> Option<Self> {
         let caption_env = tree
             .environments
             .iter()
             .filter(|env| env.left.name().map(LatexToken::text) != Some("document"))
-            .find(|env| env.range().contains(position))?;
+            .find(|env| env.range().contains(label.start()))?;
 
         let caption = tree
             .captions
@@ -183,19 +209,20 @@ impl OutlineContext {
 
         Some(Self {
             range: caption_env.range(),
+            number: Self::find_number(view, label),
             item: OutlineContextItem::Caption(caption_text),
         })
     }
 
     fn find_theorem(
         view: &DocumentView,
-        position: Position,
+        label: &LatexLabel,
         tree: &LatexSyntaxTree,
     ) -> Option<Self> {
         let env = tree
             .environments
             .iter()
-            .find(|env| env.range().contains(position))?;
+            .find(|env| env.range().contains(label.start()))?;
 
         let env_name = env.left.name().map(LatexToken::text)?;
 
@@ -219,6 +246,7 @@ impl OutlineContext {
 
                         return Some(Self {
                             range: env.range(),
+                            number: Self::find_number(view, label),
                             item: OutlineContextItem::Theorem { kind, description },
                         });
                     }
@@ -228,25 +256,49 @@ impl OutlineContext {
         None
     }
 
-    fn find_equation(position: Position, tree: &LatexSyntaxTree) -> Option<Self> {
+    fn find_equation(
+        view: &DocumentView,
+        label: &LatexLabel,
+        tree: &LatexSyntaxTree,
+    ) -> Option<Self> {
         tree.environments
             .iter()
             .filter(|env| env.left.is_math())
             .map(|env| env.range())
-            .find(|range| range.contains(position))
+            .find(|range| range.contains(label.start()))
             .map(|range| Self {
                 range,
+                number: Self::find_number(view, label),
                 item: OutlineContextItem::Equation,
             })
     }
 
-    fn find_section(view: &DocumentView, position: Position, outline: &Outline) -> Option<Self> {
-        let section = outline.find(&view.document.uri, position)?;
+    fn find_section(view: &DocumentView, label: &LatexLabel, outline: &Outline) -> Option<Self> {
+        let section = outline.find(&view.document.uri, label.start())?;
         let content = &section.command.args[section.index];
         Some(Self {
             range: section.range(),
+            number: Self::find_number(view, label),
             item: OutlineContextItem::Section(Self::extract(content)),
         })
+    }
+
+    fn find_number(view: &DocumentView, label: &LatexLabel) -> Option<String> {
+        let label_names = label.names();
+        if label_names.len() != 1 {
+            return None;
+        }
+
+        for document in &view.related_documents {
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                for numbering in &tree.label_numberings {
+                    if numbering.name().text() == label_names[0].text() {
+                        return Some(numbering.number.clone());
+                    }
+                }
+            }
+        }
+        None
     }
 
     fn titlelize(string: &str) -> String {

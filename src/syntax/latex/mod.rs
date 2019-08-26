@@ -219,6 +219,49 @@ impl SyntaxNode for LatexLabel {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexLabelNumbering {
+    pub command: Arc<LatexCommand>,
+    pub number: String,
+}
+
+impl LatexLabelNumbering {
+    pub fn name(&self) -> &LatexToken {
+        self.command.extract_word(0).unwrap()
+    }
+
+    fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        commands
+            .iter()
+            .map(Arc::clone)
+            .filter_map(Self::parse_single)
+            .collect()
+    }
+
+    fn parse_single(command: Arc<LatexCommand>) -> Option<Self> {
+        if command.name.text() != "\\newlabel" || !command.has_word(0) {
+            return None;
+        }
+
+        let args = command.args.get(1)?;
+        if !args.children.is_empty() {
+            if let LatexContent::Group(number_group) = &args.children[0] {
+                for child in &number_group.children {
+                    if let LatexContent::Text(number_text) = &child {
+                        if number_text.words.len() == 1 {
+                            return Some(Self {
+                                command: Arc::clone(&command),
+                                number: number_text.words[0].text().to_owned(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSection {
     pub command: Arc<LatexCommand>,
     pub index: usize,
@@ -614,6 +657,7 @@ pub struct LatexSyntaxTree {
     pub environments: Vec<LatexEnvironment>,
     pub is_standalone: bool,
     pub labels: Vec<LatexLabel>,
+    pub label_numberings: Vec<LatexLabelNumbering>,
     pub sections: Vec<LatexSection>,
     pub citations: Vec<LatexCitation>,
     pub equations: Vec<LatexEquation>,
@@ -635,6 +679,7 @@ impl LatexSyntaxTree {
         let environments = LatexEnvironment::parse(&commands);
         let is_standalone = environments.iter().any(LatexEnvironment::is_root);
         let labels = LatexLabel::parse(&commands);
+        let label_numberings = LatexLabelNumbering::parse(&commands);
         let sections = LatexSection::parse(&commands);
         let citations = LatexCitation::parse(&commands);
         let equations = LatexEquation::parse(&commands);
@@ -651,6 +696,7 @@ impl LatexSyntaxTree {
             environments,
             is_standalone,
             labels,
+            label_numberings,
             sections,
             citations,
             equations,

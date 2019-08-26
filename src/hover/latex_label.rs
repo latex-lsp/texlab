@@ -20,8 +20,8 @@ impl FeatureProvider for LatexLabelHoverProvider {
             let workspace = Arc::clone(&request.view.workspace);
             let view = DocumentView::new(workspace, document);
             let outline = Outline::from(&view);
-            let outline_context = OutlineContext::parse(&view, definition.start(), &outline)?;
-            let markup = outline_context.item.documentation();
+            let outline_context = OutlineContext::parse(&view, &definition, &outline)?;
+            let markup = outline_context.documentation();
             Some(Hover {
                 contents: HoverContents::Markup(markup),
                 range: Some(reference.range()),
@@ -52,14 +52,14 @@ impl LatexLabelHoverProvider {
     fn find_definition<'a, 'b>(
         view: &'a DocumentView,
         reference: &'b LatexToken,
-    ) -> Option<(Arc<Document>, &'a LatexToken)> {
+    ) -> Option<(Arc<Document>, &'a LatexLabel)> {
         for document in &view.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 for label in &tree.labels {
                     if label.kind == LatexLabelKind::Definition {
                         for name in label.names() {
                             if name.text() == reference.text() {
-                                return Some((Arc::clone(&document), name));
+                                return Some((Arc::clone(&document), label));
                             }
                         }
                     }
