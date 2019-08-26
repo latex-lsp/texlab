@@ -5,56 +5,38 @@ use futures_boxed::boxed;
 use lsp_types::*;
 
 fn make_label_symbols(
+    section: Option<&mut LatexSectionNode>,
     view: &DocumentView,
     outline: &Outline,
     label: &LatexLabel,
 ) -> Vec<DocumentSymbol> {
     let mut symbols = Vec::new();
     if let Some(context) = OutlineContext::parse(view, label, outline) {
-        match &context.item {
-            OutlineContextItem::Equation => {
-                for name in label.names() {
-                    let symbol = DocumentSymbol {
-                        name: name.text().to_owned(),
-                        detail: None,
-                        kind: SymbolKind::Number,
-                        deprecated: Some(false),
-                        range: context.range,
-                        selection_range: name.range(),
-                        children: None,
-                    };
-                    symbols.push(symbol);
-                }
+        if let OutlineContextItem::Section(_) = &context.item {
+            if let Some(section) = section {
+                section.label_name = label.names().first().map(|name| name.text().to_owned());
+                section.number = context.number;
             }
-            OutlineContextItem::Caption(caption) => {
-                for name in label.names() {
-                    let symbol = DocumentSymbol {
-                        name: caption.clone(),
-                        detail: None,
-                        kind: SymbolKind::Method,
-                        deprecated: Some(false),
-                        range: context.range,
-                        selection_range: name.range(),
-                        children: None,
-                    };
-                    symbols.push(symbol);
-                }
+        } else {
+            let kind = match &context.item {
+                OutlineContextItem::Section(_) => unreachable!(),
+                OutlineContextItem::Caption(_) => SymbolKind::Method,
+                OutlineContextItem::Theorem { .. } => SymbolKind::Class,
+                OutlineContextItem::Equation => SymbolKind::Number,
+            };
+
+            for name in label.names() {
+                let symbol = DocumentSymbol {
+                    name: context.reference(),
+                    detail: Some(name.text().to_owned()),
+                    kind,
+                    deprecated: Some(false),
+                    range: context.range,
+                    selection_range: name.range(),
+                    children: None,
+                };
+                symbols.push(symbol);
             }
-            OutlineContextItem::Theorem { .. } => {
-                for name in label.names() {
-                    let symbol = DocumentSymbol {
-                        name: context.clone().documentation().value,
-                        detail: None,
-                        kind: SymbolKind::EnumMember,
-                        deprecated: Some(false),
-                        range: context.range,
-                        selection_range: name.range(),
-                        children: None,
-                    };
-                    symbols.push(symbol);
-                }
-            }
-            OutlineContextItem::Section(_) => {}
         }
     }
     symbols
@@ -65,6 +47,8 @@ struct LatexSectionNode<'a> {
     full_range: Range,
     full_text: &'a str,
     labels: Vec<&'a LatexLabel>,
+    label_name: Option<String>,
+    number: Option<String>,
     children: Vec<Self>,
 }
 
@@ -75,6 +59,8 @@ impl<'a> LatexSectionNode<'a> {
             full_range: Range::default(),
             full_text: "",
             labels: Vec::new(),
+            label_name: None,
+            number: None,
             children: Vec::new(),
         }
     }
@@ -99,7 +85,7 @@ impl<'a> LatexSectionNode<'a> {
         }
     }
 
-    fn make_symbol(&self, view: &DocumentView, outline: &Outline) -> DocumentSymbol {
+    fn make_symbol(&mut self, view: &DocumentView, outline: &Outline) -> DocumentSymbol {
         let name = self
             .section
             .extract_text(self.full_text)
@@ -107,17 +93,22 @@ impl<'a> LatexSectionNode<'a> {
 
         let mut children = Vec::new();
         self.children
-            .iter()
+            .iter_mut()
             .map(|child| child.make_symbol(view, outline))
             .for_each(|sec| children.push(sec));
 
-        for label in &self.labels {
-            children.append(&mut make_label_symbols(view, outline, label));
+        for label in &self.labels.clone() {
+            children.append(&mut make_label_symbols(Some(self), view, outline, label));
         }
 
+        let full_name = match &self.number {
+            Some(number) => format!("{} {}", number, name),
+            None => name,
+        };
+
         DocumentSymbol {
-            name,
-            detail: None,
+            name: full_name,
+            detail: self.label_name.clone(),
             kind: SymbolKind::Module,
             deprecated: Some(false),
             range: self.full_range,
@@ -220,11 +211,11 @@ impl FeatureProvider for LatexSectionSymbolProvider {
             let outline = Outline::from(&request.view);
             for label in &tree.labels {
                 if label.kind == LatexLabelKind::Definition && !section_tree.insert_label(label) {
-                    symbols.append(&mut make_label_symbols(&request.view, &outline, label));
+                    symbols.append(&mut make_label_symbols(None, &request.view, &outline, label));
                 }
             }
 
-            for child in &section_tree.children {
+            for child in &mut section_tree.children {
                 symbols.push(child.make_symbol(&request.view, &outline));
             }
         }
