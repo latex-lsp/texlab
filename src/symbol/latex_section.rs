@@ -211,7 +211,12 @@ impl FeatureProvider for LatexSectionSymbolProvider {
             let outline = Outline::from(&request.view);
             for label in &tree.labels {
                 if label.kind == LatexLabelKind::Definition && !section_tree.insert_label(label) {
-                    symbols.append(&mut make_label_symbols(None, &request.view, &outline, label));
+                    symbols.append(&mut make_label_symbols(
+                        None,
+                        &request.view,
+                        &outline,
+                        label,
+                    ));
                 }
             }
 

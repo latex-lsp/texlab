@@ -247,6 +247,12 @@ pub fn format_entry(entry: &BibtexEntry, params: &BibtexFormattingParams) -> Str
     formatter.output
 }
 
+pub fn format_content(content: &BibtexContent, params: &BibtexFormattingParams) -> String {
+    let mut formatter = BibtexFormatter::new(params);
+    formatter.format_content(content, 0);
+    formatter.output
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
