@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 27.08.2019
+
+### Added
+
+- Add support for clients that do not support hierarchical symbols
+- Add support for hovering over BibTeX strings
+
+### Changed
+
+- Use formatted references in symbol request
+
+### Fixed
+
+- Do not run ChkTeX on BibTeX files
+- Fix build freezes on Windows ([#63](https://github.com/latex-lsp/texlab/issues/63))
+
 ## [1.4.1] - 22.08.2019
 
 ### Added
