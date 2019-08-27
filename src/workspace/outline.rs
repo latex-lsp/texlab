@@ -149,7 +149,7 @@ impl OutlineContext {
                     description: Some(description),
                 },
             ) => format!("{} {} ({})", kind, number, description),
-            (Some(number), OutlineContextItem::Equation) => format!("Equation {}", number),
+            (Some(number), OutlineContextItem::Equation) => format!("Equation ({})", number),
             (None, OutlineContextItem::Section(text)) => text.clone(),
             (None, OutlineContextItem::Caption(text)) => text.clone(),
             (
