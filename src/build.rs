@@ -97,6 +97,7 @@ where
 
         let mut process = Command::new(self.options.executable())
             .args(args)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(path.parent().unwrap())
