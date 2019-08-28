@@ -14,7 +14,7 @@ use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
-use crate::symbol::{SymbolProvider, SymbolResponse};
+use crate::symbol::{self, SymbolProvider, SymbolResponse};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures::lock::Mutex;
@@ -109,7 +109,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             references_provider: Some(true),
             document_highlight_provider: Some(true),
             document_symbol_provider: Some(true),
-            workspace_symbol_provider: None,
+            workspace_symbol_provider: Some(true),
             code_action_provider: None,
             code_lens_provider: None,
             document_formatting_provider: Some(true),
@@ -293,6 +293,17 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let results = self.highlight_provider.execute(&request).await;
         Ok(results)
+    }
+
+    #[jsonrpc_method("workspace/symbol", kind = "request")]
+    pub async fn workspace_symbol(
+        &self,
+        params: WorkspaceSymbolParams,
+    ) -> Result<Vec<SymbolInformation>> {
+        let client_capabilities = Arc::clone(&self.client_capabilities.get().unwrap());
+        let workspace = self.workspace_manager.get();
+        let symbols = symbol::workspace_symbols(client_capabilities, workspace, &params).await;
+        Ok(symbols)
     }
 
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
