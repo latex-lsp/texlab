@@ -20,7 +20,7 @@ fn make_label_symbols(
         } else {
             let kind = match &context.item {
                 OutlineContextItem::Section(_) => unreachable!(),
-                OutlineContextItem::Caption(_) => SymbolKind::Method,
+                OutlineContextItem::Caption { .. } => SymbolKind::Method,
                 OutlineContextItem::Theorem { .. } => SymbolKind::Class,
                 OutlineContextItem::Equation => SymbolKind::Number,
             };

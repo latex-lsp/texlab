@@ -112,10 +112,39 @@ impl<'a> SyntaxNode for OutlineItem<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum OutlineCaptionKind {
+    Figure,
+    Table,
+    Listing,
+}
+
+impl OutlineCaptionKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Figure => "Figure",
+            Self::Table => "Table",
+            Self::Listing => "Listing",
+        }
+    }
+
+    pub fn parse(environment_name: &str) -> Option<Self> {
+        match environment_name {
+            "figure" | "subfigure" => Some(Self::Figure),
+            "table" => Some(Self::Table),
+            "listing" | "lstlisting" => Some(Self::Listing),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OutlineContextItem {
     Section(String),
-    Caption(String),
+    Caption {
+        kind: Option<OutlineCaptionKind>,
+        text: String,
+    },
     Theorem {
         kind: String,
         description: Option<String>,
@@ -134,7 +163,16 @@ impl OutlineContext {
     pub fn reference(&self) -> String {
         match (&self.number, &self.item) {
             (Some(number), OutlineContextItem::Section(text)) => format!("{} {}", number, text),
-            (Some(number), OutlineContextItem::Caption(text)) => format!("{} {}", number, text),
+            (Some(number), OutlineContextItem::Caption { kind: None, text }) => {
+                format!("{} {}", number, text)
+            }
+            (
+                Some(number),
+                OutlineContextItem::Caption {
+                    kind: Some(kind),
+                    text,
+                },
+            ) => format!("{} {}: {}", kind.as_str(), number, text),
             (
                 Some(number),
                 OutlineContextItem::Theorem {
@@ -151,7 +189,14 @@ impl OutlineContext {
             ) => format!("{} {} ({})", kind, number, description),
             (Some(number), OutlineContextItem::Equation) => format!("Equation ({})", number),
             (None, OutlineContextItem::Section(text)) => text.clone(),
-            (None, OutlineContextItem::Caption(text)) => text.clone(),
+            (None, OutlineContextItem::Caption { kind: None, text }) => text.clone(),
+            (
+                None,
+                OutlineContextItem::Caption {
+                    kind: Some(kind),
+                    text,
+                },
+            ) => format!("{}: {}", kind.as_str(), text),
             (
                 None,
                 OutlineContextItem::Theorem {
@@ -206,11 +251,19 @@ impl OutlineContext {
 
         let caption_content = &caption.command.args[caption.index];
         let caption_text = Self::extract(caption_content);
+        let caption_kind = caption_env
+            .left
+            .name()
+            .map(LatexToken::text)
+            .and_then(OutlineCaptionKind::parse);
 
         Some(Self {
             range: caption_env.range(),
             number: Self::find_number(view, label),
-            item: OutlineContextItem::Caption(caption_text),
+            item: OutlineContextItem::Caption {
+                kind: caption_kind,
+                text: caption_text,
+            },
         })
     }
 
