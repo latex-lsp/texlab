@@ -1,10 +1,11 @@
 use lsp_types::*;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::path::Path;
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct Uri(Url);
 
 impl Uri {

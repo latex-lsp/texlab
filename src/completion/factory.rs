@@ -25,7 +25,7 @@ pub enum CompletionItemData {
     Class,
     EntryType,
     FieldName,
-    Citation { entry_code: String },
+    Citation { uri: Uri, key: String },
     Argument,
 }
 
@@ -260,6 +260,7 @@ pub fn class(
 
 pub fn citation(
     request: &FeatureRequest<CompletionParams>,
+    uri: Uri,
     entry: &BibtexEntry,
     key: String,
     text_edit: TextEdit,
@@ -282,10 +283,10 @@ pub fn citation(
     );
 
     CompletionItem {
-        label: key,
+        label: key.to_owned(),
         kind: Some(adjust_kind(request, CompletionItemKind::Field)),
         filter_text: Some(filter_text),
-        data: Some(CompletionItemData::Citation { entry_code }.into()),
+        data: Some(CompletionItemData::Citation { uri, key }.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
     }

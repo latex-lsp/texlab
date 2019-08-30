@@ -1,0 +1,15 @@
+{
+    "presets": [
+        [
+            "@babel/preset-env",
+            {
+                "targets": {
+                    "ie": "7",
+                    "esmodules": false,
+                    "uglify": true
+                },
+                "forceAllTransforms": true
+            }
+        ]
+    ],
+}

@@ -29,7 +29,13 @@ impl FeatureProvider for LatexCitationCompletionProvider {
                                 if let Some(key) = &entry.key {
                                     let key = key.text().to_owned();
                                     let text_edit = TextEdit::new(context.range, key.clone());
-                                    let item = factory::citation(request, entry, key, text_edit);
+                                    let item = factory::citation(
+                                        request,
+                                        document.uri.clone(),
+                                        entry,
+                                        key,
+                                        text_edit,
+                                    );
                                     items.push(item);
                                 }
                             }

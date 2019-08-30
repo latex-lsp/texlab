@@ -242,8 +242,14 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .documentation(&item.label)
                     .map(Documentation::MarkupContent);
             }
-            CompletionItemData::Citation { entry_code } => {
-                item.documentation = render_citation(&entry_code).map(Documentation::MarkupContent)
+            CompletionItemData::Citation { uri, key } => {
+                let workspace = self.workspace_manager.get();
+                if let Some(document) = workspace.find(&uri) {
+                    if let SyntaxTree::Bibtex(tree) = &document.tree {
+                        let markup = render_citation(&tree, &key);
+                        item.documentation = markup.map(Documentation::MarkupContent);
+                    }
+                }
             }
             _ => {}
         };

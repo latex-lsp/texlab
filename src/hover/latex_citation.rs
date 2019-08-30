@@ -1,5 +1,4 @@
 use crate::citeproc::render_citation;
-use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
@@ -19,18 +18,18 @@ impl FeatureProvider for LatexCitationHoverProvider {
         &'a self,
         request: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Option<Hover> {
-        let entry = Self::get_entry(request)?;
+        let (tree, entry) = Self::get_entry(request)?;
         if entry.is_comment() {
             None
         } else {
-            let entry_code = bibtex::format_entry(&entry, &BibtexFormattingParams::default());
-            match render_citation(&entry_code) {
+            let key = entry.key.as_ref().unwrap().text();
+            match render_citation(&tree, key) {
                 Some(markdown) => Some(Hover {
                     contents: HoverContents::Markup(markdown),
                     range: None,
                 }),
                 None => {
-                    warn!("Failed to render entry:\n{}", &entry_code);
+                    warn!("Failed to render entry: {}", key);
                     None
                 }
             }
@@ -39,14 +38,16 @@ impl FeatureProvider for LatexCitationHoverProvider {
 }
 
 impl LatexCitationHoverProvider {
-    fn get_entry(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&BibtexEntry> {
+    fn get_entry(
+        request: &FeatureRequest<TextDocumentPositionParams>,
+    ) -> Option<(&BibtexSyntaxTree, &BibtexEntry)> {
         let key = Self::get_key(request)?;
         for document in request.related_documents() {
             if let SyntaxTree::Bibtex(tree) = &document.tree {
                 for entry in tree.entries() {
                     if let Some(current_key) = &entry.key {
                         if current_key.text() == key {
-                            return Some(entry);
+                            return Some((tree, entry));
                         }
                     }
                 }
