@@ -129,6 +129,14 @@ pub fn label(
     text_edit: TextEdit,
     context: Option<&OutlineContext>,
 ) -> CompletionItem {
+    let kind = match context.as_ref().map(|ctx| &ctx.item) {
+        Some(OutlineContextItem::Section(_)) => CompletionItemKind::Module,
+        Some(OutlineContextItem::Caption { .. }) => CompletionItemKind::Method,
+        Some(OutlineContextItem::Theorem { .. }) => CompletionItemKind::Class,
+        Some(OutlineContextItem::Equation) => CompletionItemKind::Value,
+        None => CompletionItemKind::Field,
+    };
+
     let filter_text = context.map(|ctx| format!("{} {}", name, ctx.reference()));
 
     let documentation = context
@@ -137,7 +145,7 @@ pub fn label(
 
     CompletionItem {
         label: name,
-        kind: Some(adjust_kind(request, CompletionItemKind::Field)),
+        kind: Some(adjust_kind(request, kind)),
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
         filter_text,
