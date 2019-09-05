@@ -1,7 +1,6 @@
 use crate::capabilities::ClientCapabilitiesExt;
 use crate::client::LspClient;
 use crate::workspace::*;
-use futures::compat::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
 use futures::lock::Mutex;
 use futures::prelude::*;
@@ -11,12 +10,12 @@ use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
 use std::collections::HashMap;
-use std::io::{self, BufReader};
+use std::io;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::Arc;
-use tokio::io::lines;
-use tokio_process::CommandExt;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio_net::process::Command;
 use uuid::Uuid;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -101,10 +100,10 @@ where
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(path.parent().unwrap())
-            .spawn_async()?;
+            .spawn()?;
 
-        let stdout = lines(BufReader::new(process.stdout().take().unwrap())).compat();
-        let stderr = lines(BufReader::new(process.stderr().take().unwrap())).compat();
+        let stdout = BufReader::new(process.stdout().take().unwrap()).lines();
+        let stderr = BufReader::new(process.stderr().take().unwrap()).lines();
         let mut output = stream::select(stdout, stderr);
 
         while let Some(Ok(line)) = output.next().await {
@@ -116,8 +115,7 @@ where
             self.client.log_message(params).await;
         }
 
-        let status = process.compat().await?;
-        Ok(status.success())
+        Ok(process.await?.success())
     }
 }
 

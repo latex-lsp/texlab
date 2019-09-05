@@ -89,7 +89,7 @@ fn criterion_benchmark(criterion: &mut Criterion) {
 
 criterion_group!(benches, criterion_benchmark);
 
-#[runtime::main(runtime_tokio::Tokio)]
+#[tokio::main]
 async fn main() {
     benches();
 }

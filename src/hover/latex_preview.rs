@@ -4,7 +4,6 @@ use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::tex;
 use crate::workspace::*;
-use futures::compat::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
@@ -12,9 +11,9 @@ use log::*;
 use lsp_types::*;
 use std::io;
 use std::io::Cursor;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use tempfile::TempDir;
-use tokio_process::CommandExt;
+use tokio_net::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "align",
@@ -241,13 +240,10 @@ impl LatexPreviewHoverProvider {
             .current_dir(directory.path())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .spawn_async()
+            .spawn()
             .map_err(|_| RenderError::DviPngNotInstalled)?;
 
-        process
-            .compat()
-            .await
-            .map_err(|_| RenderError::DviPngFaulty)?;
+        process.await.map_err(|_| RenderError::DviPngFaulty)?;
 
         let png_file = directory.path().join("preview1.png");
         let png = image::open(png_file).map_err(|_| RenderError::DecodeImage)?;

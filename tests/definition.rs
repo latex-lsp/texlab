@@ -21,7 +21,7 @@ pub async fn run(
     (scenario, locations)
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_citation() {
     let (scenario, definitions) = run("citation", "foo.tex", Position::new(5, 8)).await;
     assert_eq!(
@@ -33,7 +33,7 @@ async fn test_citation() {
     );
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_label() {
     let (scenario, definitions) = run("label", "foo.tex", Position::new(8, 8)).await;
     assert_eq!(

@@ -18,7 +18,7 @@ async fn run_completion(
     scenario.server.completion(params).await.unwrap().items
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_did_change() {
     let scenario = Scenario::new("synchronization/did_change", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
@@ -45,7 +45,7 @@ async fn test_did_change() {
         .is_empty());
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_indexing() {
     let scenario = Scenario::new("synchronization/did_change", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
@@ -68,7 +68,7 @@ async fn test_indexing() {
     assert!(items.iter().any(|item| item.label == "foo"));
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_find_root() {
     let scenario = Scenario::new("synchronization/find_root", &FULL_CAPABILITIES).await;
     scenario.open("test1.tex").await;

@@ -1,19 +1,18 @@
-use clap::*;
+use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 use futures::channel::mpsc;
-use futures::compat::*;
-use futures::future;
 use futures::prelude::*;
 use jsonrpc::MessageHandler;
+use std::error::Error;
+use std::io::Write;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
 use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
-use tokio::codec::FramedRead;
-use tokio_codec::FramedWrite;
+use tokio::codec::{FramedRead, FramedWrite};
 
-#[runtime::main(runtime_tokio::Tokio)]
-async fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     texlab::citeproc::JavaScriptEngine::initialize();
     let matches = app_from_crate!()
         .author("")
@@ -40,9 +39,8 @@ async fn main() {
         .init()
         .unwrap();
 
-    let stdin = FramedRead::new(tokio::io::stdin(), LspCodec).compat();
-    let stdout = FramedWrite::new(tokio::io::stdout(), LspCodec).sink_compat();
-    let (stdout_tx, stdout_rx) = mpsc::channel(0);
+    let stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
+    let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
@@ -53,9 +51,15 @@ async fn main() {
         output: stdout_tx,
     };
 
-    let stdout_handle = runtime::spawn(async move {
-        stdout_rx.map(Ok).forward(stdout).await.unwrap();
+    tokio::spawn(async move {
+        let mut stdout = FramedWrite::new(tokio::io::stdout(), LspCodec);
+        loop {
+            let message = stdout_rx.next().await.unwrap();
+            stdout.send(message).await.unwrap();
+            std::io::stdout().flush().unwrap(); // Workaround for tokio-rs/tokio#1527
+        }
     });
 
-    future::join(handler.listen(), stdout_handle).await;
+    handler.listen().await;
+    Ok(())
 }

@@ -1,11 +1,10 @@
-use futures::compat::*;
 use log::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
 use std::io;
 use std::path::Path;
-use std::process::{Command, Stdio};
-use tokio_process::CommandExt;
+use std::process::Stdio;
+use tokio_net::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 pub struct ForwardSearchOptions {
@@ -82,8 +81,7 @@ async fn spawn_process(executable: String, args: Vec<String>) -> io::Result<()> 
         .args(args)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn_async()?
-        .compat()
+        .spawn()?
         .await?;
     Ok(())
 }

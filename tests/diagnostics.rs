@@ -3,7 +3,7 @@ use lsp_types::*;
 use texlab::diagnostics::BibtexErrorCode;
 use texlab::scenario::{Scenario, FULL_CAPABILITIES};
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_lint_latex_disabled() {
     let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
@@ -17,7 +17,7 @@ async fn test_lint_latex_disabled() {
     assert!(diagnostics.is_empty());
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_lint_bibtex() {
     let scenario = Scenario::new("diagnostics/lint", &FULL_CAPABILITIES).await;
     scenario.open("foo.bib").await;
@@ -31,7 +31,7 @@ async fn test_lint_bibtex() {
     assert_eq!(diagnostics[0].range.start.line, 0);
 }
 
-#[runtime::test(runtime_tokio::Tokio)]
+#[tokio::test]
 async fn test_build() {
     let scenario = Scenario::new("diagnostics/build", &FULL_CAPABILITIES).await;
     scenario.open("foo.tex").await;
