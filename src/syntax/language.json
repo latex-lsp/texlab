@@ -1624,5 +1624,10 @@
     "Vmatrix*",
     "vmatrix",
     "vmatrix*"
+  ],
+  "enumEnvironments": [
+    "enumerate",
+    "itemize",
+    "description"
   ]
 }

@@ -19,6 +19,7 @@ pub enum LatexSymbolKind {
     Algorithm,
     Table,
     Listing,
+    Enumeration,
     Theorem,
     Equation,
     Entry,
@@ -31,6 +32,7 @@ impl Into<SymbolKind> for LatexSymbolKind {
         match self {
             Self::Section => SymbolKind::Module,
             Self::Figure | Self::Algorithm | Self::Table | Self::Listing => SymbolKind::Method,
+            Self::Enumeration => SymbolKind::Enum,
             Self::Theorem => SymbolKind::Class,
             Self::Equation => SymbolKind::Constant,
             Self::Entry => SymbolKind::Interface,
@@ -59,6 +61,7 @@ impl LatexSymbol {
             LatexSymbolKind::Algorithm => "algorithm",
             LatexSymbolKind::Table => "table",
             LatexSymbolKind::Listing => "listing",
+            LatexSymbolKind::Enumeration => "enumeration",
             LatexSymbolKind::Theorem => "math",
             LatexSymbolKind::Equation => "math equation",
             LatexSymbolKind::Entry => "entry",

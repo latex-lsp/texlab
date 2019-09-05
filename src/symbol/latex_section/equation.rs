@@ -15,14 +15,10 @@ pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> 
             symbols.push(make_symbol(view, tree, equation.range()));
         }
     }
-    symbols.into_iter().filter_map(|sym| sym).collect()
+    symbols
 }
 
-fn make_symbol(
-    view: &DocumentView,
-    tree: &LatexSyntaxTree,
-    full_range: Range,
-) -> Option<LatexSymbol> {
+fn make_symbol(view: &DocumentView, tree: &LatexSyntaxTree, full_range: Range) -> LatexSymbol {
     let label = tree.find_label_definition(full_range);
 
     let name = match label
@@ -33,7 +29,7 @@ fn make_symbol(
         None => "Equation".to_owned(),
     };
 
-    let symbol = LatexSymbol {
+    LatexSymbol {
         name,
         label: label_name(label.clone()),
         kind: LatexSymbolKind::Equation,
@@ -41,6 +37,5 @@ fn make_symbol(
         full_range,
         selection_range: selection_range(full_range, label),
         children: Vec::new(),
-    };
-    Some(symbol)
+    }
 }

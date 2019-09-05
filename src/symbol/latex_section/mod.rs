@@ -1,3 +1,4 @@
+mod enumeration;
 mod equation;
 mod float;
 mod theorem;
@@ -30,6 +31,10 @@ impl FeatureProvider for LatexSectionSymbolProvider {
             let outline = Outline::from(&request.view);
             for child in &mut section_tree.children {
                 child.set_label(tree, &request.view, &outline);
+            }
+
+            for symbol in enumeration::symbols(tree) {
+                section_tree.insert_symbol(&symbol);
             }
 
             for symbol in equation::symbols(&request.view, tree) {

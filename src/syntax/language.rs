@@ -161,6 +161,7 @@ pub struct LanguageData {
     pub pgf_libraries: Vec<String>,
     pub tikz_libraries: Vec<String>,
     pub math_environments: Vec<String>,
+    pub enum_environments: Vec<String>,
 }
 
 impl LanguageData {

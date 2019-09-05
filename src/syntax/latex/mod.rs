@@ -80,6 +80,17 @@ impl LatexEnvironmentDelimiter {
             false
         }
     }
+
+    pub fn is_enum(&self) -> bool {
+        if let Some(name) = self.name() {
+            LANGUAGE_DATA
+                .enum_environments
+                .iter()
+                .any(|env| env == name.text())
+        } else {
+            false
+        }
+    }
 }
 
 impl SyntaxNode for LatexEnvironmentDelimiter {
