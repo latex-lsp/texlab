@@ -1,3 +1,4 @@
+use super::{LatexSymbol, LatexSymbolKind};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -8,7 +9,7 @@ pub struct BibtexStringSymbolProvider;
 
 impl FeatureProvider for BibtexStringSymbolProvider {
     type Params = DocumentSymbolParams;
-    type Output = Vec<DocumentSymbol>;
+    type Output = Vec<LatexSymbol>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -17,14 +18,14 @@ impl FeatureProvider for BibtexStringSymbolProvider {
             for child in &tree.root.children {
                 if let BibtexDeclaration::String(string) = &child {
                     if let Some(name) = &string.name {
-                        symbols.push(DocumentSymbol {
+                        symbols.push(LatexSymbol {
                             name: name.text().to_owned(),
-                            detail: None,
-                            kind: SymbolKind::String,
-                            deprecated: Some(false),
-                            range: string.range(),
+                            label: None,
+                            kind: LatexSymbolKind::String,
+                            deprecated: false,
+                            full_range: string.range(),
                             selection_range: name.range(),
-                            children: None,
+                            children: Vec::new(),
                         });
                     }
                 }
@@ -51,14 +52,14 @@ mod tests {
         );
         assert_eq!(
             symbols,
-            vec![DocumentSymbol {
+            vec![LatexSymbol {
                 name: "key".into(),
-                detail: None,
-                kind: SymbolKind::String,
-                deprecated: Some(false),
-                range: Range::new_simple(0, 0, 0, 22),
+                label: None,
+                kind: LatexSymbolKind::String,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 0, 22),
                 selection_range: Range::new_simple(0, 8, 0, 11),
-                children: None,
+                children: Vec::new(),
             }]
         );
     }

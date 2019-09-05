@@ -253,7 +253,7 @@ impl OutlineContext {
             .find(|cap| caption_env.range().contains(cap.start()))?;
 
         let caption_content = &caption.command.args[caption.index];
-        let caption_text = Self::extract(caption_content);
+        let caption_text = extract_group(caption_content);
         let caption_kind = caption_env
             .left
             .name()
@@ -290,15 +290,15 @@ impl OutlineContext {
                             .command
                             .args
                             .get(definition.index + 1)
-                            .map(|content| Self::extract(&content))
-                            .unwrap_or_else(|| Self::titlelize(env_name));
+                            .map(|content| extract_group(&content))
+                            .unwrap_or_else(|| titlelize(env_name));
 
                         let description = env
                             .left
                             .command
                             .options
                             .get(0)
-                            .map(|content| Self::extract(&content));
+                            .map(|content| extract_group(&content));
 
                         return Some(Self {
                             range: env.range(),
@@ -335,11 +335,11 @@ impl OutlineContext {
         Some(Self {
             range: section.range(),
             number: Self::find_number(view, label),
-            item: OutlineContextItem::Section(Self::extract(content)),
+            item: OutlineContextItem::Section(extract_group(content)),
         })
     }
 
-    fn find_number(view: &DocumentView, label: &LatexLabel) -> Option<String> {
+    pub fn find_number(view: &DocumentView, label: &LatexLabel) -> Option<String> {
         let label_names = label.names();
         if label_names.len() != 1 {
             return None;
@@ -355,25 +355,5 @@ impl OutlineContext {
             }
         }
         None
-    }
-
-    fn titlelize(string: &str) -> String {
-        let mut chars = string.chars();
-        match chars.next() {
-            None => String::new(),
-            Some(c) => c.to_uppercase().chain(chars).collect(),
-        }
-    }
-
-    fn extract(content: &LatexGroup) -> String {
-        if content.children.is_empty() || content.right.is_none() {
-            return String::new();
-        }
-
-        let mut printer = LatexPrinter::new(content.children[0].start());
-        for child in &content.children {
-            child.accept(&mut printer);
-        }
-        printer.output
     }
 }

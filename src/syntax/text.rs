@@ -149,6 +149,14 @@ fn is_command_char(c: char) -> bool {
     c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '@'
 }
 
+pub fn titlelize(string: &str) -> String {
+    let mut chars = string.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(c) => c.to_uppercase().chain(chars).collect(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

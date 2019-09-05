@@ -726,4 +726,24 @@ impl LatexSyntaxTree {
         }
         None
     }
+
+    pub fn find_label_definition(&self, range: Range) -> Option<&LatexLabel> {
+        self.labels
+            .iter()
+            .filter(|label| label.kind == LatexLabelKind::Definition)
+            .filter(|label| label.names().len() == 1)
+            .find(|label| range.contains(label.start()))
+    }
+}
+
+pub fn extract_group(content: &LatexGroup) -> String {
+    if content.children.is_empty() || content.right.is_none() {
+        return String::new();
+    }
+
+    let mut printer = LatexPrinter::new(content.children[0].start());
+    for child in &content.children {
+        child.accept(&mut printer);
+    }
+    printer.output
 }

@@ -133,7 +133,7 @@ pub fn label(
         Some(OutlineContextItem::Section(_)) => CompletionItemKind::Module,
         Some(OutlineContextItem::Caption { .. }) => CompletionItemKind::Method,
         Some(OutlineContextItem::Theorem { .. }) => CompletionItemKind::Class,
-        Some(OutlineContextItem::Equation) => CompletionItemKind::Value,
+        Some(OutlineContextItem::Equation) => CompletionItemKind::Constant,
         None => CompletionItemKind::Field,
     };
 

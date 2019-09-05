@@ -1,3 +1,4 @@
+use super::{LatexSymbol, LatexSymbolKind};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -8,7 +9,7 @@ pub struct BibtexEntrySymbolProvider;
 
 impl FeatureProvider for BibtexEntrySymbolProvider {
     type Params = DocumentSymbolParams;
-    type Output = Vec<DocumentSymbol>;
+    type Output = Vec<LatexSymbol>;
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
@@ -21,14 +22,14 @@ impl FeatureProvider for BibtexEntrySymbolProvider {
                 .filter(|entry| entry.key.is_some())
             {
                 let key = entry.key.as_ref().unwrap();
-                let symbol = DocumentSymbol {
+                let symbol = LatexSymbol {
                     name: key.text().to_owned(),
-                    detail: None,
-                    kind: SymbolKind::Interface,
-                    deprecated: Some(false),
-                    range: entry.range(),
+                    label: None,
+                    kind: LatexSymbolKind::Entry,
+                    deprecated: false,
+                    full_range: entry.range(),
                     selection_range: key.range(),
-                    children: Some(Self::field_symbols(&entry)),
+                    children: Self::field_symbols(&entry),
                 };
                 symbols.push(symbol);
             }
@@ -38,17 +39,17 @@ impl FeatureProvider for BibtexEntrySymbolProvider {
 }
 
 impl BibtexEntrySymbolProvider {
-    fn field_symbols(entry: &BibtexEntry) -> Vec<DocumentSymbol> {
+    fn field_symbols(entry: &BibtexEntry) -> Vec<LatexSymbol> {
         let mut symbols = Vec::new();
         for field in &entry.fields {
-            let symbol = DocumentSymbol {
+            let symbol = LatexSymbol {
                 name: field.name.text().to_owned(),
-                detail: None,
-                kind: SymbolKind::Field,
-                deprecated: Some(false),
-                range: field.range(),
+                label: None,
+                kind: LatexSymbolKind::Field,
+                deprecated: false,
+                full_range: field.range(),
                 selection_range: field.name.range(),
-                children: None,
+                children: Vec::new(),
             };
             symbols.push(symbol);
         }
@@ -76,33 +77,33 @@ mod tests {
         );
         assert_eq!(
             symbols,
-            vec![DocumentSymbol {
+            vec![LatexSymbol {
                 name: "key".into(),
-                detail: None,
-                kind: SymbolKind::Interface,
-                deprecated: Some(false),
-                range: Range::new_simple(0, 0, 0, 35),
+                label: None,
+                kind: LatexSymbolKind::Entry,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 0, 35),
                 selection_range: Range::new_simple(0, 9, 0, 12),
-                children: Some(vec![
-                    DocumentSymbol {
+                children: vec![
+                    LatexSymbol {
                         name: "foo".into(),
-                        detail: None,
-                        kind: SymbolKind::Field,
-                        deprecated: Some(false),
-                        range: Range::new_simple(0, 14, 0, 24),
+                        label: None,
+                        kind: LatexSymbolKind::Field,
+                        deprecated: false,
+                        full_range: Range::new_simple(0, 14, 0, 24),
                         selection_range: Range::new_simple(0, 14, 0, 17),
-                        children: None,
+                        children: Vec::new(),
                     },
-                    DocumentSymbol {
+                    LatexSymbol {
                         name: "baz".into(),
-                        detail: None,
-                        kind: SymbolKind::Field,
-                        deprecated: Some(false),
-                        range: Range::new_simple(0, 25, 0, 34),
+                        label: None,
+                        kind: LatexSymbolKind::Field,
+                        deprecated: false,
+                        full_range: Range::new_simple(0, 25, 0, 34),
                         selection_range: Range::new_simple(0, 25, 0, 28),
-                        children: None,
+                        children: Vec::new(),
                     },
-                ]),
+                ],
             }]
         );
     }

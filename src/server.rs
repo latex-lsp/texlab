@@ -319,7 +319,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let response = SymbolResponse::new(
             &self.client_capabilities.get().unwrap(),
             &request.document().uri,
-            symbols,
+            symbols.into_iter().map(Into::into).collect(),
         );
         Ok(response)
     }
