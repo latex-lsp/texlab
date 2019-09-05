@@ -117,6 +117,7 @@ pub enum OutlineCaptionKind {
     Figure,
     Table,
     Listing,
+    Algorithm,
 }
 
 impl OutlineCaptionKind {
@@ -125,6 +126,7 @@ impl OutlineCaptionKind {
             Self::Figure => "Figure",
             Self::Table => "Table",
             Self::Listing => "Listing",
+            Self::Algorithm => "Algorithm",
         }
     }
 
@@ -133,6 +135,7 @@ impl OutlineCaptionKind {
             "figure" | "subfigure" => Some(Self::Figure),
             "table" => Some(Self::Table),
             "listing" | "lstlisting" => Some(Self::Listing),
+            "algorithm" => Some(Self::Algorithm),
             _ => None,
         }
     }
