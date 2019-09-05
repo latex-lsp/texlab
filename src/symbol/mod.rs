@@ -56,17 +56,17 @@ pub struct LatexSymbol {
 impl LatexSymbol {
     pub fn search_text(&self) -> String {
         let kind = match self.kind {
-            LatexSymbolKind::Section => "section",
-            LatexSymbolKind::Figure => "figure",
-            LatexSymbolKind::Algorithm => "algorithm",
-            LatexSymbolKind::Table => "table",
-            LatexSymbolKind::Listing => "listing",
-            LatexSymbolKind::Enumeration => "enumeration",
-            LatexSymbolKind::Theorem => "math",
-            LatexSymbolKind::Equation => "math equation",
-            LatexSymbolKind::Entry => "entry",
-            LatexSymbolKind::Field => "field",
-            LatexSymbolKind::String => "string",
+            LatexSymbolKind::Section => "latex section",
+            LatexSymbolKind::Figure => "latex float figure",
+            LatexSymbolKind::Algorithm => "latex float algorithm",
+            LatexSymbolKind::Table => "latex float table",
+            LatexSymbolKind::Listing => "latex float listing",
+            LatexSymbolKind::Enumeration => "latex enumeration",
+            LatexSymbolKind::Theorem => "latex math",
+            LatexSymbolKind::Equation => "latex math equation",
+            LatexSymbolKind::Entry => "bibtex entry",
+            LatexSymbolKind::Field => "bibtex field",
+            LatexSymbolKind::String => "bibtex string",
         };
         format!("{} {}", kind, self.name).to_lowercase()
     }
