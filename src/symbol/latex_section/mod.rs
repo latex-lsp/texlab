@@ -258,3 +258,370 @@ pub fn label_name(label: Option<&LatexLabel>) -> Option<String> {
 pub fn selection_range(full_range: Range, label: Option<&LatexLabel>) -> Range {
     label.map(|label| label.range()).unwrap_or(full_range)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::range::RangeExt;
+
+    #[test]
+    fn test_subsection() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\section{Foo}\n\\subsection{Bar}\\label{sec:bar}\n\\subsection{Baz}\n\\section{Qux}",
+                    ),
+                    FeatureSpec::file(
+                        "foo.aux", 
+                        "\\newlabel{sec:bar}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Foo".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Section,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 0, 3, 0),
+                    selection_range: Range::new_simple(0, 0, 0, 13),
+                    children: vec![
+                        LatexSymbol {
+                            name: "2.1 Bar".into(),
+                            label: Some("sec:bar".into()),
+                            kind: LatexSymbolKind::Section,
+                            deprecated: false,
+                            full_range: Range::new_simple(1, 0, 2, 0),
+                            selection_range: Range::new_simple(1, 0, 1, 16),
+                            children: Vec::new(),
+                        },
+                        LatexSymbol {
+                            name: "Baz".into(),
+                            label: None,
+                            kind: LatexSymbolKind::Section,
+                            deprecated: false,
+                            full_range: Range::new_simple(2, 0, 3, 0),
+                            selection_range: Range::new_simple(2, 0, 2, 16),
+                            children: Vec::new(),
+                        },
+                    ],
+                },
+                LatexSymbol {
+                    name: "Qux".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Section,
+                    deprecated: false,
+                    full_range: Range::new_simple(3, 0, 3, 13),
+                    selection_range: Range::new_simple(3, 0, 3, 13),
+                    children: Vec::new(),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_section_inside_document_environment() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\begin{document}\\section{Foo}\\relax\n\\end{document}",
+                )],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![LatexSymbol {
+                name: "Foo".into(),
+                label: None,
+                kind: LatexSymbolKind::Section,
+                deprecated: false,
+                full_range: Range::new_simple(0, 16, 1, 0),
+                selection_range: Range::new_simple(0, 16, 0, 29),
+                children: Vec::new()
+            }]
+        );
+    }
+
+    #[test]
+    fn test_enumeration() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\section{Foo}\n\\begin{enumerate}\n\\end{enumerate}",
+                )],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![LatexSymbol {
+                name: "Foo".into(),
+                label: None,
+                kind: LatexSymbolKind::Section,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 2, 15),
+                selection_range: Range::new_simple(0, 0, 0, 13),
+                children: vec![LatexSymbol {
+                    name: "Enumerate".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Enumeration,
+                    deprecated: false,
+                    full_range: Range::new_simple(1, 0, 2, 15),
+                    selection_range: Range::new_simple(1, 0, 2, 15),
+                    children: Vec::new(),
+                },],
+            },]
+        );
+    }
+
+    #[test]
+    fn test_equation() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\[Foo\\]\n\\begin{equation}\\label{eq:foo}\\end{equation}",
+                )],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Equation".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Equation,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 0, 0, 7),
+                    selection_range: Range::new_simple(0, 0, 0, 7),
+                    children: Vec::new(),
+                },
+                LatexSymbol {
+                    name: "Equation".into(),
+                    label: Some("eq:foo".into()),
+                    kind: LatexSymbolKind::Equation,
+                    deprecated: false,
+                    full_range: Range::new_simple(1, 0, 1, 44),
+                    selection_range: Range::new_simple(1, 16, 1, 30),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_equation_number() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\[\\label{eq:foo}\\]",
+                    ),
+                    FeatureSpec::file(
+                        "foo.aux", 
+                        "\\newlabel{eq:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Equation (2.1)".into(),
+                    label: Some("eq:foo".into()),
+                    kind: LatexSymbolKind::Equation,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 0, 0, 18),
+                    selection_range: Range::new_simple(0, 2, 0, 16),
+                    children: Vec::new(),
+                },
+            ]
+        );        
+    }
+
+    #[test]
+    fn test_table() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\begin{table}\\caption{Foo}\\end{table}",
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Table: Foo".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Table,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 0, 0, 37),
+                    selection_range: Range::new_simple(0, 0, 0, 37),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_figure_number() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\begin{figure}\\caption{Foo}\\label{fig:foo}\\end{figure}",
+                    ),
+                    FeatureSpec::file(
+                        "foo.aux", 
+                        "\\newlabel{fig:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Figure 2.1: Foo".into(),
+                    label: Some("fig:foo".into()),
+                    kind: LatexSymbolKind::Figure,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 0, 0, 54),
+                    selection_range: Range::new_simple(0, 27, 0, 42),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+
+     #[test]
+    fn test_lemma() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\newtheorem{lemma}{Lemma}\\begin{lemma}\\end{lemma}",
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Lemma".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Theorem,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 25, 0, 49),
+                    selection_range: Range::new_simple(0, 25, 0, 49),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_lemma_number() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\newtheorem{lemma}{Lemma}\n\\begin{lemma}\\label{thm:foo}\\end{lemma}",
+                    ),
+                    FeatureSpec::file(
+                        "foo.aux", 
+                        "\\newlabel{thm:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Lemma 2.1".into(),
+                    label: Some("thm:foo".into()),
+                    kind: LatexSymbolKind::Theorem,
+                    deprecated: false,
+                    full_range: Range::new_simple(1, 0, 1, 39),
+                    selection_range: Range::new_simple(1, 13, 1, 28),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_lemma_description() {
+        let symbols = test_feature(
+            LatexSectionSymbolProvider,
+            FeatureSpec {
+                files: vec![
+                    FeatureSpec::file(
+                        "foo.tex",
+                        "\\newtheorem{lemma}{Lemma}\\begin{lemma}[Foo]\\end{lemma}",
+                    ),
+                ],
+                main_file: "foo.tex",
+                ..FeatureSpec::default()
+            },
+        );
+        assert_eq!(
+            symbols,
+            vec![
+                LatexSymbol {
+                    name: "Lemma (Foo)".into(),
+                    label: None,
+                    kind: LatexSymbolKind::Theorem,
+                    deprecated: false,
+                    full_range: Range::new_simple(0, 25, 0, 54),
+                    selection_range: Range::new_simple(0, 25, 0, 54),
+                    children: Vec::new(),
+                },
+            ]
+        );
+    }
+}
