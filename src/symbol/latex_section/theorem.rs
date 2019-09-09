@@ -6,11 +6,11 @@ use crate::workspace::*;
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
     tree.environments
         .iter()
-        .filter_map(|env| make_symbol(view, env))
+        .filter_map(|env| make_symbol(view, tree, env))
         .collect()
 }
 
-fn make_symbol(view: &DocumentView, environment: &LatexEnvironment) -> Option<LatexSymbol> {
+fn make_symbol(view: &DocumentView, main_tree: &LatexSyntaxTree, environment: &LatexEnvironment) -> Option<LatexSymbol> {
     let environment_name = environment.left.name().map(LatexToken::text)?;
 
     for document in &view.related_documents {
@@ -31,7 +31,7 @@ fn make_symbol(view: &DocumentView, environment: &LatexEnvironment) -> Option<La
                         .get(0)
                         .map(|content| extract_group(content));
 
-                    let label = tree.find_label_definition(environment.range());
+                    let label = main_tree.find_label_definition(environment.range());
                     let number = label
                         .as_ref()
                         .and_then(|label| OutlineContext::find_number(view, label));
