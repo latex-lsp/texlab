@@ -21,18 +21,7 @@ impl FeatureProvider for LatexSectionSymbolProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut symbols = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            let mut section_tree = LatexSectionTree::from(tree.as_ref());
-
-            section_tree.set_full_text(&request.document().text);
-
-            let end_position = Self::compute_end_position(tree, &request.document().text);
-            LatexSectionNode::set_full_range(&mut section_tree.children, end_position);
-
-            let outline = Outline::from(&request.view);
-            for child in &mut section_tree.children {
-                child.set_label(tree, &request.view, &outline);
-            }
-
+            let mut section_tree = build_section_tree(&request.view, tree);
             for symbol in enumeration::symbols(tree) {
                 section_tree.insert_symbol(&symbol);
             }
@@ -61,22 +50,35 @@ impl FeatureProvider for LatexSectionSymbolProvider {
     }
 }
 
-impl LatexSectionSymbolProvider {
-    fn compute_end_position(tree: &LatexSyntaxTree, text: &str) -> Position {
-        let mut stream = CharStream::new(text);
-        while stream.next().is_some() {}
-        tree.environments
-            .iter()
-            .find(|env| env.left.name().map(LatexToken::text) == Some("document"))
-            .map(|env| env.right.start())
-            .unwrap_or(stream.current_position)
+pub fn build_section_tree<'a>(
+    view: &'a DocumentView,
+    tree: &'a LatexSyntaxTree,
+) -> LatexSectionTree<'a> {
+    let mut section_tree = LatexSectionTree::from(tree);
+    section_tree.set_full_text(&view.document.text);
+    let end_position = compute_end_position(tree, &view.document.text);
+    LatexSectionNode::set_full_range(&mut section_tree.children, end_position);
+    let outline = Outline::from(view);
+    for child in &mut section_tree.children {
+        child.set_label(tree, view, &outline);
     }
+    section_tree
+}
+
+fn compute_end_position(tree: &LatexSyntaxTree, text: &str) -> Position {
+    let mut stream = CharStream::new(text);
+    while stream.next().is_some() {}
+    tree.environments
+        .iter()
+        .find(|env| env.left.name().map(LatexToken::text) == Some("document"))
+        .map(|env| env.right.start())
+        .unwrap_or(stream.current_position)
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-struct LatexSectionNode<'a> {
-    section: &'a LatexSection,
-    full_range: Range,
+pub struct LatexSectionNode<'a> {
+    pub section: &'a LatexSection,
+    pub full_range: Range,
     full_text: &'a str,
     label: Option<String>,
     number: Option<String>,
@@ -182,6 +184,20 @@ impl<'a> LatexSectionNode<'a> {
         self.symbols.push(symbol.clone());
         true
     }
+
+    fn find(&self, label: &str) -> Option<&Self> {
+        if self.label.as_ref().map(AsRef::as_ref) == Some(label) {
+            Some(self)
+        } else {
+            for child in &self.children {
+                let result = child.find(label);
+                if result.is_some() {
+                    return result;
+                }
+            }
+            None
+        }
+    }
 }
 
 impl<'a> Into<LatexSymbol> for LatexSectionNode<'a> {
@@ -212,7 +228,7 @@ impl<'a> Into<LatexSymbol> for LatexSectionNode<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-struct LatexSectionTree<'a> {
+pub struct LatexSectionTree<'a> {
     symbols: Vec<LatexSymbol>,
     children: Vec<LatexSectionNode<'a>>,
 }
@@ -238,6 +254,16 @@ impl<'a> LatexSectionTree<'a> {
             }
         }
         self.symbols.push(symbol.clone());
+    }
+
+    pub fn find(&self, label: &str) -> Option<&LatexSectionNode<'a>> {
+        for child in &self.children {
+            let result = child.find(label);
+            if result.is_some() {
+                return result;
+            }
+        }
+        None
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::range::RangeExt;
+use crate::symbol::build_section_tree;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -34,18 +35,26 @@ impl LatexLabelDefinitionProvider {
     ) {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
             let outline = Outline::from(view);
+            let section_tree = build_section_tree(view, tree);
             for label in &tree.labels {
                 if label.kind == LatexLabelKind::Definition {
                     let context = OutlineContext::parse(view, label, &outline);
                     for name in label.names() {
                         if name.text() == reference.text() {
+                            let target_range = if let Some(OutlineContextItem::Section(_)) =
+                                context.as_ref().map(|ctx| &ctx.item)
+                            {
+                                section_tree
+                                    .find(reference.text())
+                                    .map(|sec| sec.full_range)
+                            } else {
+                                context.as_ref().map(|ctx| ctx.range)
+                            };
+
                             links.push(LocationLink {
                                 origin_selection_range: Some(reference.range()),
                                 target_uri: view.document.uri.clone().into(),
-                                target_range: context
-                                    .as_ref()
-                                    .map(|ctx| ctx.range)
-                                    .unwrap_or_else(|| label.range()),
+                                target_range: target_range.unwrap_or_else(|| label.range()),
                                 target_selection_range: label.range(),
                             });
                         }

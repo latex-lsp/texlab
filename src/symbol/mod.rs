@@ -12,6 +12,8 @@ use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexSymbolKind {
     Section,
