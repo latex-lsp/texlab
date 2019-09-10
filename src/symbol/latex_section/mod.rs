@@ -433,13 +433,10 @@ mod tests {
             LatexSectionSymbolProvider,
             FeatureSpec {
                 files: vec![
+                    FeatureSpec::file("foo.tex", "\\[\\label{eq:foo}\\]"),
                     FeatureSpec::file(
-                        "foo.tex",
-                        "\\[\\label{eq:foo}\\]",
-                    ),
-                    FeatureSpec::file(
-                        "foo.aux", 
-                        "\\newlabel{eq:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                        "foo.aux",
+                        "\\newlabel{eq:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}",
                     ),
                 ],
                 main_file: "foo.tex",
@@ -448,18 +445,16 @@ mod tests {
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Equation (2.1)".into(),
-                    label: Some("eq:foo".into()),
-                    kind: LatexSymbolKind::Equation,
-                    deprecated: false,
-                    full_range: Range::new_simple(0, 0, 0, 18),
-                    selection_range: Range::new_simple(0, 2, 0, 16),
-                    children: Vec::new(),
-                },
-            ]
-        );        
+            vec![LatexSymbol {
+                name: "Equation (2.1)".into(),
+                label: Some("eq:foo".into()),
+                kind: LatexSymbolKind::Equation,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 0, 18),
+                selection_range: Range::new_simple(0, 2, 0, 16),
+                children: Vec::new(),
+            },]
+        );
     }
 
     #[test]
@@ -467,29 +462,25 @@ mod tests {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
-                files: vec![
-                    FeatureSpec::file(
-                        "foo.tex",
-                        "\\begin{table}\\caption{Foo}\\end{table}",
-                    ),
-                ],
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\begin{table}\\caption{Foo}\\end{table}",
+                )],
                 main_file: "foo.tex",
                 ..FeatureSpec::default()
             },
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Table: Foo".into(),
-                    label: None,
-                    kind: LatexSymbolKind::Table,
-                    deprecated: false,
-                    full_range: Range::new_simple(0, 0, 0, 37),
-                    selection_range: Range::new_simple(0, 0, 0, 37),
-                    children: Vec::new(),
-                },
-            ]
+            vec![LatexSymbol {
+                name: "Table: Foo".into(),
+                label: None,
+                kind: LatexSymbolKind::Table,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 0, 37),
+                selection_range: Range::new_simple(0, 0, 0, 37),
+                children: Vec::new(),
+            },]
         );
     }
 
@@ -504,8 +495,8 @@ mod tests {
                         "\\begin{figure}\\caption{Foo}\\label{fig:foo}\\end{figure}",
                     ),
                     FeatureSpec::file(
-                        "foo.aux", 
-                        "\\newlabel{fig:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                        "foo.aux",
+                        "\\newlabel{fig:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}",
                     ),
                 ],
                 main_file: "foo.tex",
@@ -514,48 +505,42 @@ mod tests {
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Figure 2.1: Foo".into(),
-                    label: Some("fig:foo".into()),
-                    kind: LatexSymbolKind::Figure,
-                    deprecated: false,
-                    full_range: Range::new_simple(0, 0, 0, 54),
-                    selection_range: Range::new_simple(0, 27, 0, 42),
-                    children: Vec::new(),
-                },
-            ]
+            vec![LatexSymbol {
+                name: "Figure 2.1: Foo".into(),
+                label: Some("fig:foo".into()),
+                kind: LatexSymbolKind::Figure,
+                deprecated: false,
+                full_range: Range::new_simple(0, 0, 0, 54),
+                selection_range: Range::new_simple(0, 27, 0, 42),
+                children: Vec::new(),
+            },]
         );
     }
 
-     #[test]
+    #[test]
     fn test_lemma() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
-                files: vec![
-                    FeatureSpec::file(
-                        "foo.tex",
-                        "\\newtheorem{lemma}{Lemma}\\begin{lemma}\\end{lemma}",
-                    ),
-                ],
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\newtheorem{lemma}{Lemma}\\begin{lemma}\\end{lemma}",
+                )],
                 main_file: "foo.tex",
                 ..FeatureSpec::default()
             },
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Lemma".into(),
-                    label: None,
-                    kind: LatexSymbolKind::Theorem,
-                    deprecated: false,
-                    full_range: Range::new_simple(0, 25, 0, 49),
-                    selection_range: Range::new_simple(0, 25, 0, 49),
-                    children: Vec::new(),
-                },
-            ]
+            vec![LatexSymbol {
+                name: "Lemma".into(),
+                label: None,
+                kind: LatexSymbolKind::Theorem,
+                deprecated: false,
+                full_range: Range::new_simple(0, 25, 0, 49),
+                selection_range: Range::new_simple(0, 25, 0, 49),
+                children: Vec::new(),
+            },]
         );
     }
 
@@ -570,8 +555,8 @@ mod tests {
                         "\\newtheorem{lemma}{Lemma}\n\\begin{lemma}\\label{thm:foo}\\end{lemma}",
                     ),
                     FeatureSpec::file(
-                        "foo.aux", 
-                        "\\newlabel{thm:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}"
+                        "foo.aux",
+                        "\\newlabel{thm:foo}{{\\relax 2.1}{4}{Bar\\relax }{figure.caption.4}{}}",
                     ),
                 ],
                 main_file: "foo.tex",
@@ -580,17 +565,15 @@ mod tests {
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Lemma 2.1".into(),
-                    label: Some("thm:foo".into()),
-                    kind: LatexSymbolKind::Theorem,
-                    deprecated: false,
-                    full_range: Range::new_simple(1, 0, 1, 39),
-                    selection_range: Range::new_simple(1, 13, 1, 28),
-                    children: Vec::new(),
-                },
-            ]
+            vec![LatexSymbol {
+                name: "Lemma 2.1".into(),
+                label: Some("thm:foo".into()),
+                kind: LatexSymbolKind::Theorem,
+                deprecated: false,
+                full_range: Range::new_simple(1, 0, 1, 39),
+                selection_range: Range::new_simple(1, 13, 1, 28),
+                children: Vec::new(),
+            },]
         );
     }
 
@@ -599,29 +582,25 @@ mod tests {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
-                files: vec![
-                    FeatureSpec::file(
-                        "foo.tex",
-                        "\\newtheorem{lemma}{Lemma}\\begin{lemma}[Foo]\\end{lemma}",
-                    ),
-                ],
+                files: vec![FeatureSpec::file(
+                    "foo.tex",
+                    "\\newtheorem{lemma}{Lemma}\\begin{lemma}[Foo]\\end{lemma}",
+                )],
                 main_file: "foo.tex",
                 ..FeatureSpec::default()
             },
         );
         assert_eq!(
             symbols,
-            vec![
-                LatexSymbol {
-                    name: "Lemma (Foo)".into(),
-                    label: None,
-                    kind: LatexSymbolKind::Theorem,
-                    deprecated: false,
-                    full_range: Range::new_simple(0, 25, 0, 54),
-                    selection_range: Range::new_simple(0, 25, 0, 54),
-                    children: Vec::new(),
-                },
-            ]
+            vec![LatexSymbol {
+                name: "Lemma (Foo)".into(),
+                label: None,
+                kind: LatexSymbolKind::Theorem,
+                deprecated: false,
+                full_range: Range::new_simple(0, 25, 0, 54),
+                selection_range: Range::new_simple(0, 25, 0, 54),
+                children: Vec::new(),
+            },]
         );
     }
 }

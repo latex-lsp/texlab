@@ -3,6 +3,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::{LocationLink, TextDocumentPositionParams};
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelDefinitionProvider;
@@ -16,7 +17,9 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
         let mut links = Vec::new();
         if let Some(reference) = Self::find_reference(&request) {
             for document in request.related_documents() {
-                Self::find_definitions(&document, &reference, &mut links);
+                let workspace = Arc::clone(&request.view.workspace);
+                let view = DocumentView::new(workspace, Arc::clone(&document));
+                Self::find_definitions(&view, &reference, &mut links);
             }
         }
         links
@@ -25,28 +28,30 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
 
 impl LatexLabelDefinitionProvider {
     fn find_definitions(
-        document: &Document,
+        view: &DocumentView,
         reference: &LatexToken,
         links: &mut Vec<LocationLink>,
     ) {
-        if let SyntaxTree::Latex(tree) = &document.tree {
-            tree.labels
-                .iter()
-                .filter(|label| label.kind == LatexLabelKind::Definition)
-                .flat_map(LatexLabel::names)
-                .filter(|label| label.text() == reference.text())
-                .map(|label| LocationLink {
-                    origin_selection_range: Some(reference.range()),
-                    target_uri: document.uri.clone().into(),
-                    target_range: tree
-                        .environments
-                        .iter()
-                        .find(|env| env.range().contains(label.start()))
-                        .map(|env| env.range())
-                        .unwrap_or_else(|| label.range()),
-                    target_selection_range: label.range(),
-                })
-                .for_each(|link| links.push(link));
+        if let SyntaxTree::Latex(tree) = &view.document.tree {
+            let outline = Outline::from(view);
+            for label in &tree.labels {
+                if label.kind == LatexLabelKind::Definition {
+                    let context = OutlineContext::parse(view, label, &outline);
+                    for name in label.names() {
+                        if name.text() == reference.text() {
+                            links.push(LocationLink {
+                                origin_selection_range: Some(reference.range()),
+                                target_uri: view.document.uri.clone().into(),
+                                target_range: context
+                                    .as_ref()
+                                    .map(|ctx| ctx.range)
+                                    .unwrap_or_else(|| label.range()),
+                                target_selection_range: label.range(),
+                            });
+                        }
+                    }
+                }
+            }
         }
     }
 

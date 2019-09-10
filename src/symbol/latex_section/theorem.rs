@@ -10,7 +10,11 @@ pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> 
         .collect()
 }
 
-fn make_symbol(view: &DocumentView, main_tree: &LatexSyntaxTree, environment: &LatexEnvironment) -> Option<LatexSymbol> {
+fn make_symbol(
+    view: &DocumentView,
+    main_tree: &LatexSyntaxTree,
+    environment: &LatexEnvironment,
+) -> Option<LatexSymbol> {
     let environment_name = environment.left.name().map(LatexToken::text)?;
 
     for document in &view.related_documents {
