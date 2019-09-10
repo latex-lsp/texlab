@@ -40,7 +40,7 @@ async fn test_label() {
         definitions,
         vec![Location::new(
             scenario.uri("bar.tex").into(),
-            Range::new_simple(0, 7, 0, 10)
+            Range::new_simple(0, 0, 0, 11)
         )]
     );
 }

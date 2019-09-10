@@ -95,8 +95,8 @@ mod tests {
             vec![LocationLink {
                 origin_selection_range: Some(Range::new_simple(0, 5, 0, 8)),
                 target_uri: FeatureSpec::uri("bar.tex"),
-                target_range: Range::new_simple(0, 9, 0, 36),
-                target_selection_range: Range::new_simple(0, 25, 0, 28)
+                target_range: Range::new_simple(0, 18, 0, 29),
+                target_selection_range: Range::new_simple(0, 18, 0, 29)
             }]
         );
     }
