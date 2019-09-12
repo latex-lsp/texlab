@@ -281,8 +281,8 @@ pub fn citation(
         WHITESPACE_REGEX
             .replace_all(
                 &entry_code
-                    .replace('{', " ")
-                    .replace('}', " ")
+                    .replace('{', "")
+                    .replace('}', "")
                     .replace(',', " ")
                     .replace('=', " "),
                 " ",
