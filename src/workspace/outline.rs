@@ -153,6 +153,7 @@ pub enum OutlineContextItem {
         description: Option<String>,
     },
     Equation,
+    Item,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -191,6 +192,7 @@ impl OutlineContext {
                 },
             ) => format!("{} {} ({})", kind, number, description),
             (Some(number), OutlineContextItem::Equation) => format!("Equation ({})", number),
+            (Some(number), OutlineContextItem::Item) => format!("Item {}", number),
             (None, OutlineContextItem::Section(text)) => text.clone(),
             (None, OutlineContextItem::Caption { kind: None, text }) => text.clone(),
             (
@@ -215,6 +217,7 @@ impl OutlineContext {
                 },
             ) => format!("{} ({})", kind, description),
             (None, OutlineContextItem::Equation) => "Equation".to_owned(),
+            (None, OutlineContextItem::Item) => "Item".to_owned(),
         }
     }
 
@@ -230,6 +233,7 @@ impl OutlineContext {
             Self::find_caption(view, label, tree)
                 .or_else(|| Self::find_theorem(view, label, tree))
                 .or_else(|| Self::find_equation(view, label, tree))
+                .or_else(|| Self::find_item(view, label, tree))
                 .or_else(|| Self::find_section(view, label, outline))
         } else {
             None
@@ -327,6 +331,53 @@ impl OutlineContext {
                 number: Self::find_number(view, label),
                 item: OutlineContextItem::Equation,
             })
+    }
+
+    fn find_item(view: &DocumentView, label: &LatexLabel, tree: &LatexSyntaxTree) -> Option<Self> {
+        struct LatexItemNode<'a> {
+            item: &'a LatexItem,
+            range: Range,
+        }
+
+        let enumeration = tree
+            .environments
+            .iter()
+            .find(|env| env.left.is_enum() && env.range().contains(label.start()))?;
+
+        let mut item_nodes: Vec<_> = tree
+            .items
+            .iter()
+            .filter(|item| tree.is_enumeration_item(enumeration, item))
+            .map(|item| LatexItemNode {
+                item,
+                range: Range::default(),
+            })
+            .collect();
+
+        for i in 0..item_nodes.len() {
+            let start = item_nodes[i].item.start();
+            let end = item_nodes
+                .get(i + 1)
+                .map(|node| node.item.start())
+                .unwrap_or_else(|| enumeration.right.start());
+            item_nodes[i].range = Range::new(start, end);
+        }
+
+        let node = item_nodes
+            .iter()
+            .find(|node| node.range.contains(label.start()))?;
+
+        let number = node
+            .item
+            .name()
+            .map(|name| name.text().to_owned())
+            .or_else(|| Self::find_number(view, label));
+
+        Some(Self {
+            range: node.range,
+            number,
+            item: OutlineContextItem::Item,
+        })
     }
 
     fn find_section(view: &DocumentView, label: &LatexLabel, outline: &Outline) -> Option<Self> {

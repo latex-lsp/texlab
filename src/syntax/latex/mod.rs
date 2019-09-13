@@ -660,6 +660,44 @@ impl SyntaxNode for LatexCaption {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LatexItem {
+    pub command: Arc<LatexCommand>,
+}
+
+impl LatexItem {
+    fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+        let mut items = Vec::new();
+        for command in commands {
+            if command.name.text() == "\\item" {
+                items.push(Self {
+                    command: Arc::clone(&command),
+                });
+            }
+        }
+        items
+    }
+
+    pub fn name(&self) -> Option<&LatexToken> {
+        if let Some(options) = self.command.options.get(0) {
+            if options.children.len() == 1 {
+                if let LatexContent::Text(text) = &options.children[0] {
+                    if text.words.len() == 1 {
+                        return Some(&text.words[0]);
+                    }
+                }
+            }
+        }
+        None
+    }
+}
+
+impl SyntaxNode for LatexItem {
+    fn range(&self) -> Range {
+        self.command.range()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSyntaxTree {
     pub root: Arc<LatexRoot>,
     pub commands: Vec<Arc<LatexCommand>>,
@@ -677,6 +715,7 @@ pub struct LatexSyntaxTree {
     pub command_definitions: Vec<LatexCommandDefinition>,
     pub theorem_definitions: Vec<LatexTheoremDefinition>,
     pub captions: Vec<LatexCaption>,
+    pub items: Vec<LatexItem>,
 }
 
 impl LatexSyntaxTree {
@@ -699,6 +738,7 @@ impl LatexSyntaxTree {
         let command_definitions = LatexCommandDefinition::parse(&commands);
         let theorem_definitions = LatexTheoremDefinition::parse(&commands);
         let captions = LatexCaption::parse(&commands);
+        let items = LatexItem::parse(&commands);
         Self {
             root,
             commands,
@@ -716,6 +756,7 @@ impl LatexSyntaxTree {
             command_definitions,
             theorem_definitions,
             captions,
+            items,
         }
     }
 
@@ -744,6 +785,16 @@ impl LatexSyntaxTree {
             .filter(|label| label.kind == LatexLabelKind::Definition)
             .filter(|label| label.names().len() == 1)
             .find(|label| range.contains(label.start()))
+    }
+
+    pub fn is_enumeration_item(&self, enumeration: &LatexEnvironment, item: &LatexItem) -> bool {
+        enumeration.range().contains(item.start())
+            && !self
+                .environments
+                .iter()
+                .filter(|env| *env != enumeration)
+                .filter(|env| env.left.is_enum() && enumeration.range().contains(env.start()))
+                .any(|env| env.range().contains(item.start()))
     }
 }
 

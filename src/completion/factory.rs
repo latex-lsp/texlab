@@ -134,6 +134,7 @@ pub fn label(
         Some(OutlineContextItem::Caption { .. }) => CompletionItemKind::Method,
         Some(OutlineContextItem::Theorem { .. }) => CompletionItemKind::Class,
         Some(OutlineContextItem::Equation) => CompletionItemKind::Constant,
+        Some(OutlineContextItem::Item) => CompletionItemKind::EnumMember,
         None => CompletionItemKind::Field,
     };
 
