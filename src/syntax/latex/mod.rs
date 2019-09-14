@@ -15,6 +15,7 @@ use super::language::*;
 use super::text::{CharStream, SyntaxNode};
 use crate::range::RangeExt;
 use crate::workspace::Uri;
+use itertools::Itertools;
 use lsp_types::{Position, Range};
 use path_clean::PathClean;
 use std::path::PathBuf;
@@ -249,26 +250,56 @@ impl LatexLabelNumbering {
     }
 
     fn parse_single(command: Arc<LatexCommand>) -> Option<Self> {
+        #[derive(Debug, Default)]
+        struct FirstText {
+            text: Option<Arc<LatexText>>,
+        }
+
+        impl LatexVisitor for FirstText {
+            fn visit_root(&mut self, root: Arc<LatexRoot>) {
+                LatexWalker::walk_root(self, root);
+            }
+
+            fn visit_group(&mut self, group: Arc<LatexGroup>) {
+                LatexWalker::walk_group(self, group);
+            }
+
+            fn visit_command(&mut self, command: Arc<LatexCommand>) {
+                LatexWalker::walk_command(self, command);
+            }
+
+            fn visit_text(&mut self, text: Arc<LatexText>) {
+                if self.text.is_none() {
+                    self.text = Some(text);
+                }
+            }
+
+            fn visit_comma(&mut self, comma: Arc<LatexComma>) {
+                LatexWalker::walk_comma(self, comma);
+            }
+
+            fn visit_math(&mut self, math: Arc<LatexMath>) {
+                LatexWalker::walk_math(self, math);
+            }
+        }
+
         if command.name.text() != "\\newlabel" || !command.has_word(0) {
             return None;
         }
 
-        let args = command.args.get(1)?;
-        if !args.children.is_empty() {
-            if let LatexContent::Group(number_group) = &args.children[0] {
-                for child in &number_group.children {
-                    if let LatexContent::Text(number_text) = &child {
-                        if number_text.words.len() == 1 {
-                            return Some(Self {
-                                command: Arc::clone(&command),
-                                number: number_text.words[0].text().to_owned(),
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        None
+        let mut analyzer = FirstText::default();
+        analyzer.visit_group(Arc::clone(command.args.get(1)?));
+        let number = analyzer
+            .text?
+            .words
+            .iter()
+            .map(|word| word.text())
+            .join(" ");
+
+        Some(Self {
+            command: Arc::clone(&command),
+            number,
+        })
     }
 }
 
@@ -677,13 +708,11 @@ impl LatexItem {
         items
     }
 
-    pub fn name(&self) -> Option<&LatexToken> {
+    pub fn name(&self) -> Option<String> {
         if let Some(options) = self.command.options.get(0) {
             if options.children.len() == 1 {
                 if let LatexContent::Text(text) = &options.children[0] {
-                    if text.words.len() == 1 {
-                        return Some(&text.words[0]);
-                    }
+                    return Some(text.words.iter().map(|word| word.text()).join(" "));
                 }
             }
         }

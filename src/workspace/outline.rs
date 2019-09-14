@@ -367,14 +367,10 @@ impl OutlineContext {
             .iter()
             .find(|node| node.range.contains(label.start()))?;
 
-        let number = node
-            .item
-            .name()
-            .map(|name| name.text().to_owned())
-            .or_else(|| Self::find_number(view, label));
+        let number = node.item.name().or_else(|| Self::find_number(view, label));
 
         Some(Self {
-            range: node.range,
+            range: enumeration.range(),
             number,
             item: OutlineContextItem::Item,
         })
