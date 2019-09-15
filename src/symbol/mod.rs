@@ -10,6 +10,7 @@ use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
 use serde::{Deserialize, Serialize};
+use std::cmp::Reverse;
 use std::sync::Arc;
 
 pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
@@ -164,12 +165,12 @@ impl SymbolResponse {
             for symbol in symbols {
                 symbol.flatten(&mut buffer);
             }
-            Self::Flat(
-                buffer
-                    .into_iter()
-                    .map(|symbol| symbol.into_symbol_info(uri.clone()))
-                    .collect(),
-            )
+            let mut buffer = buffer
+                .into_iter()
+                .map(|symbol| symbol.into_symbol_info(uri.clone()))
+                .collect();
+            sort_symbols(&mut buffer);
+            Self::Flat(buffer)
         }
     }
 }
@@ -229,5 +230,22 @@ pub async fn workspace_symbols(
             filtered.push(symbol.info);
         }
     }
+    sort_symbols(&mut filtered);
     filtered
+}
+
+fn sort_symbols(symbols: &mut Vec<SymbolInformation>) {
+    symbols.sort_by(|left, right| {
+        let left_key = (
+            left.location.uri.to_string(),
+            left.location.range.start,
+            Reverse(left.location.range.end),
+        );
+        let right_key = (
+            right.location.uri.to_string(),
+            right.location.range.start,
+            Reverse(right.location.range.end),
+        );
+        left_key.cmp(&right_key)
+    });
 }
