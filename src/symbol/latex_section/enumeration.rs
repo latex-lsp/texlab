@@ -1,4 +1,5 @@
 use super::{label_name, selection_range};
+use crate::range::RangeExt;
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
 use crate::syntax::*;
 use crate::workspace::*;
@@ -36,7 +37,8 @@ fn make_symbol(
             .unwrap_or_else(|| enumeration.right.start());
         let range = Range::new(start, end);
 
-        let label = tree.find_label_definition(range);
+        let label = find_item_label(tree, range);
+
         let number = items[i].name().or_else(|| {
             label
                 .as_ref()
@@ -63,5 +65,19 @@ fn make_symbol(
         full_range: enumeration.range(),
         selection_range: enumeration.range(),
         children,
+    }
+}
+
+fn find_item_label(tree: &LatexSyntaxTree, item_range: Range) -> Option<&LatexLabel> {
+    let label = tree.find_label_definition(item_range)?;
+    if tree
+        .environments
+        .iter()
+        .filter(|env| item_range.contains(env.start()))
+        .all(|env| !env.range().contains(label.start()))
+    {
+        Some(label)
+    } else {
+        None
     }
 }
