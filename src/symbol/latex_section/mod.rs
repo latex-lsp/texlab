@@ -22,7 +22,7 @@ impl FeatureProvider for LatexSectionSymbolProvider {
         let mut symbols = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut section_tree = build_section_tree(&request.view, tree);
-            for symbol in enumeration::symbols(tree) {
+            for symbol in enumeration::symbols(&request.view, tree) {
                 section_tree.insert_symbol(&symbol);
             }
 
