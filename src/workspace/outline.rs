@@ -133,7 +133,7 @@ impl OutlineCaptionKind {
     pub fn parse(environment_name: &str) -> Option<Self> {
         match environment_name {
             "figure" | "subfigure" => Some(Self::Figure),
-            "table" => Some(Self::Table),
+            "table" | "subtable" => Some(Self::Table),
             "listing" | "lstlisting" => Some(Self::Listing),
             "algorithm" => Some(Self::Algorithm),
             _ => None,
