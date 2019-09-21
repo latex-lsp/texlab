@@ -138,11 +138,18 @@ pub fn label(
         None => CompletionItemKind::Field,
     };
 
-    let filter_text = context.map(|ctx| format!("{} {}", name, ctx.reference()));
+    let detail = context.as_ref().and_then(|ctx| ctx.detail());
+
+    let filter_text = context
+        .as_ref()
+        .map(|ctx| format!("{} {}", name, ctx.reference()));
 
     let documentation = context
-        .map(OutlineContext::documentation)
-        .map(Documentation::MarkupContent);
+        .and_then(|ctx| match &ctx.item {
+            OutlineContextItem::Caption { text, .. } => Some(text.clone()),
+            _ => None,
+        })
+        .map(Documentation::String);
 
     CompletionItem {
         label: name,
@@ -150,6 +157,7 @@ pub fn label(
         data: Some(CompletionItemData::Label.into()),
         text_edit: Some(text_edit),
         filter_text,
+        detail,
         documentation,
         ..CompletionItem::default()
     }

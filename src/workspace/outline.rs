@@ -221,6 +221,22 @@ impl OutlineContext {
         }
     }
 
+    pub fn detail(&self) -> Option<String> {
+        match &self.item {
+            OutlineContextItem::Section(_)
+            | OutlineContextItem::Theorem { .. }
+            | OutlineContextItem::Equation
+            | OutlineContextItem::Item => Some(self.reference()),
+            OutlineContextItem::Caption {
+                kind: Some(kind), ..
+            } => Some(match &self.number {
+                Some(number) => format!("{} {}", kind.as_str(), number),
+                None => kind.as_str().to_owned(),
+            }),
+            OutlineContextItem::Caption { .. } => None,
+        }
+    }
+
     pub fn documentation(&self) -> MarkupContent {
         MarkupContent {
             kind: MarkupKind::PlainText,
