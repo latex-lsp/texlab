@@ -270,7 +270,7 @@ impl OutlineContext {
         let caption = tree
             .captions
             .iter()
-            .find(|cap| caption_env.range().contains(cap.start()))?;
+            .find(|cap| tree.is_caption(caption_env, cap))?;
 
         let caption_content = &caption.command.args[caption.index];
         let caption_text = extract_group(caption_content);

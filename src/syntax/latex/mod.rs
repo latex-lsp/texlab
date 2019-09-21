@@ -825,6 +825,16 @@ impl LatexSyntaxTree {
                 .filter(|env| env.left.is_enum() && enumeration.range().contains(env.start()))
                 .any(|env| env.range().contains(item.start()))
     }
+
+    pub fn is_caption(&self, environment: &LatexEnvironment, caption: &LatexCaption) -> bool {
+        environment.range().contains(caption.start())
+            && !self
+                .environments
+                .iter()
+                .filter(|env| *env != environment)
+                .filter(|env| environment.range().contains(env.start()))
+                .any(|env| env.range().contains(caption.start()))
+    }
 }
 
 pub fn extract_group(content: &LatexGroup) -> String {
