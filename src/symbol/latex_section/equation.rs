@@ -19,7 +19,7 @@ pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> 
 }
 
 fn make_symbol(view: &DocumentView, tree: &LatexSyntaxTree, full_range: Range) -> LatexSymbol {
-    let label = tree.find_label_definition(full_range);
+    let label = tree.find_label_by_range(full_range);
 
     let name = match label
         .as_ref()

@@ -808,12 +808,20 @@ impl LatexSyntaxTree {
         None
     }
 
-    pub fn find_label_definition(&self, range: Range) -> Option<&LatexLabel> {
+    pub fn find_label_by_range(&self, range: Range) -> Option<&LatexLabel> {
         self.labels
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)
             .filter(|label| label.names().len() == 1)
             .find(|label| range.contains(label.start()))
+    }
+
+    pub fn find_label_by_environment(&self, environment: &LatexEnvironment) -> Option<&LatexLabel> {
+        self.labels
+            .iter()
+            .filter(|label| label.kind == LatexLabelKind::Definition)
+            .filter(|label| label.names().len() == 1)
+            .find(|label| self.is_direct_child(environment, label.start()))
     }
 
     pub fn is_enumeration_item(&self, enumeration: &LatexEnvironment, item: &LatexItem) -> bool {
@@ -826,14 +834,14 @@ impl LatexSyntaxTree {
                 .any(|env| env.range().contains(item.start()))
     }
 
-    pub fn is_caption(&self, environment: &LatexEnvironment, caption: &LatexCaption) -> bool {
-        environment.range().contains(caption.start())
+    pub fn is_direct_child(&self, environment: &LatexEnvironment, position: Position) -> bool {
+        environment.range().contains(position)
             && !self
                 .environments
                 .iter()
                 .filter(|env| *env != environment)
                 .filter(|env| environment.range().contains(env.start()))
-                .any(|env| env.range().contains(caption.start()))
+                .any(|env| env.range().contains(position))
     }
 }
 

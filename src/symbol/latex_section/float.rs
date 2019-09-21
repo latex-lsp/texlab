@@ -1,5 +1,4 @@
 use super::{label_name, selection_range};
-use crate::range::RangeExt;
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
 use crate::syntax::*;
 use crate::workspace::*;
@@ -19,7 +18,7 @@ fn make_symbol(
     let environment = tree
         .environments
         .iter()
-        .find(|env| env.range().contains(caption.start()))?;
+        .find(|env| tree.is_direct_child(env, caption.start()))?;
     let text = extract_group(&caption.command.args[caption.index]);
 
     let kind = environment
@@ -28,7 +27,7 @@ fn make_symbol(
         .map(LatexToken::text)
         .and_then(OutlineCaptionKind::parse)?;
 
-    let label = tree.find_label_definition(environment.range());
+    let label = tree.find_label_by_environment(environment);
     let number = label
         .as_ref()
         .and_then(|label| OutlineContext::find_number(view, label));

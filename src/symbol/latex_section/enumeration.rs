@@ -69,7 +69,7 @@ fn make_symbol(
 }
 
 fn find_item_label(tree: &LatexSyntaxTree, item_range: Range) -> Option<&LatexLabel> {
-    let label = tree.find_label_definition(item_range)?;
+    let label = tree.find_label_by_range(item_range)?;
     if tree
         .environments
         .iter()

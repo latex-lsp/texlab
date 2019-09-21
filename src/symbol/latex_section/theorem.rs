@@ -35,7 +35,7 @@ fn make_symbol(
                         .get(0)
                         .map(|content| extract_group(content));
 
-                    let label = main_tree.find_label_definition(environment.range());
+                    let label = main_tree.find_label_by_environment(environment);
                     let number = label
                         .as_ref()
                         .and_then(|label| OutlineContext::find_number(view, label));
