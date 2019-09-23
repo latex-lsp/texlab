@@ -1,6 +1,7 @@
 mod bibtex_entry;
 mod bibtex_string;
 mod latex_section;
+mod project_order;
 
 use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
@@ -12,6 +13,7 @@ use lsp_types::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::sync::Arc;
+use self::project_order::ProjectOrder;
 
 pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
 
@@ -155,6 +157,7 @@ pub enum SymbolResponse {
 impl SymbolResponse {
     pub fn new(
         client_capabilities: &ClientCapabilities,
+        workspace: &Workspace,
         uri: &Uri,
         symbols: Vec<LatexSymbol>,
     ) -> Self {
@@ -169,7 +172,7 @@ impl SymbolResponse {
                 .into_iter()
                 .map(|symbol| symbol.into_symbol_info(uri.clone()))
                 .collect();
-            sort_symbols(&mut buffer);
+            sort_symbols(workspace, &mut buffer);
             Self::Flat(buffer)
         }
     }
@@ -230,19 +233,23 @@ pub async fn workspace_symbols(
             filtered.push(symbol.info);
         }
     }
-    sort_symbols(&mut filtered);
+    sort_symbols(&workspace, &mut filtered);
     filtered
 }
 
-fn sort_symbols(symbols: &mut Vec<SymbolInformation>) {
+fn sort_symbols(workspace: &Workspace, symbols: &mut Vec<SymbolInformation>) {
+    let order = ProjectOrder::new(workspace);
     symbols.sort_by(|left, right| {
+        let left_idx = order.rank(workspace, &Uri::from(left.location.uri.clone()));
         let left_key = (
-            left.location.uri.to_string(),
+            left_idx,
             left.location.range.start,
             Reverse(left.location.range.end),
         );
+
+        let right_idx = order.rank(workspace, &Uri::from(right.location.uri.clone()));
         let right_key = (
-            right.location.uri.to_string(),
+            right_idx,
             right.location.range.start,
             Reverse(right.location.range.end),
         );
