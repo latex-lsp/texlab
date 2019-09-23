@@ -171,7 +171,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     }
                 }
                 "aux" => {
-                    self.workspace_manager.load(&file_path);
+                    drop(self.workspace_manager.load(&file_path));
                 }
                 extension => {
                     warn!("Unknown file extension in file watcher: {}", extension);
@@ -544,7 +544,7 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                             {
                                 if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
                                     if workspace.find(&parent_uri).is_none() {
-                                        self.workspace_manager.load(entry.path());
+                                        drop(self.workspace_manager.load(entry.path()));
                                     }
                                 }
                             }
@@ -552,11 +552,18 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                     }
                 }
                 Action::DetectChildren => {
-                    let workspace = self.workspace_manager.get();
-                    workspace
-                        .unresolved_includes()
-                        .iter()
-                        .for_each(|path| self.workspace_manager.load(&path));
+                    loop {
+                        let mut changed = false;
+
+                        let workspace = self.workspace_manager.get();
+                        for path in workspace.unresolved_includes() {
+                            changed |= self.workspace_manager.load(&path).is_ok();
+                        }
+
+                        if !changed {
+                            break;
+                        }
+                    }
                 }
                 Action::PublishDiagnostics => {
                     let workspace = self.workspace_manager.get();

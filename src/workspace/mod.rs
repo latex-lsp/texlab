@@ -170,6 +170,13 @@ impl DocumentView {
     }
 }
 
+#[derive(Debug)]
+pub enum LoadError {
+    UnknownLanguage,
+    InvalidPath,
+    IO(std::io::Error),
+}
+
 #[derive(Debug, Default)]
 pub struct WorkspaceManager {
     workspace: Mutex<Arc<Workspace>>,
@@ -194,7 +201,7 @@ impl WorkspaceManager {
         *workspace = Self::add_or_update(&workspace, document.uri.into(), document.text, language);
     }
 
-    pub fn load(&self, path: &Path) {
+    pub fn load(&self, path: &Path) -> Result<(), LoadError> {
         let language = match path
             .extension()
             .and_then(OsStr::to_str)
@@ -203,7 +210,7 @@ impl WorkspaceManager {
             Some(language) => language,
             None => {
                 warn!("Could not determine language: {}", path.to_string_lossy());
-                return;
+                return Err(LoadError::UnknownLanguage);
             }
         };
 
@@ -211,20 +218,21 @@ impl WorkspaceManager {
             Ok(uri) => uri,
             Err(_) => {
                 error!("Invalid path: {}", path.to_string_lossy());
-                return;
+                return Err(LoadError::InvalidPath);
             }
         };
 
         let text = match fs::read_to_string(path) {
             Ok(text) => text,
-            Err(_) => {
+            Err(why) => {
                 warn!("Could not open file: {}", path.to_string_lossy());
-                return;
+                return Err(LoadError::IO(why));
             }
         };
 
         let mut workspace = self.workspace.lock().unwrap();
         *workspace = Self::add_or_update(&workspace, uri, text, language);
+        Ok(())
     }
 
     pub fn update(&self, uri: Uri, text: String) {
