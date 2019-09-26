@@ -1,3 +1,4 @@
+use lsp_types::{CompletionItemKind, SymbolKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
@@ -139,6 +140,32 @@ pub enum BibtexEntryTypeCategory {
     Collection,
     Part,
     Thesis,
+}
+
+impl BibtexEntryTypeCategory {
+    pub fn completion_kind(&self) -> CompletionItemKind {
+        match self {
+            Self::Misc => CompletionItemKind::Interface,
+            Self::String => CompletionItemKind::Text,
+            Self::Article => CompletionItemKind::Event,
+            Self::Book => CompletionItemKind::Struct,
+            Self::Collection => CompletionItemKind::TypeParameter,
+            Self::Part => CompletionItemKind::Operator,
+            Self::Thesis => CompletionItemKind::Property,
+        }
+    }
+
+    pub fn symbol_kind(&self) -> SymbolKind {
+        match self {
+            Self::Misc => SymbolKind::Interface,
+            Self::String => SymbolKind::String,
+            Self::Article => SymbolKind::Event,
+            Self::Book => SymbolKind::Struct,
+            Self::Collection => SymbolKind::TypeParameter,
+            Self::Part => SymbolKind::Operator,
+            Self::Thesis => SymbolKind::Property,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]

@@ -10,6 +10,7 @@ use std::path::Path;
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum CompletionItemData {
     Command,
     CommandSnippet,
@@ -299,9 +300,14 @@ pub fn citation(
             .trim()
     );
 
+    let kind = LANGUAGE_DATA
+        .find_entry_type(&entry.ty.text()[1..])
+        .map(|ty| ty.category.completion_kind())
+        .unwrap_or(CompletionItemKind::Interface);
+
     CompletionItem {
         label: key.to_owned(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Field)),
+        kind: Some(adjust_kind(request, kind)),
         filter_text: Some(filter_text),
         data: Some(CompletionItemData::Citation { uri, key }.into()),
         text_edit: Some(text_edit),
@@ -314,16 +320,7 @@ pub fn entry_type(
     ty: &BibtexEntryTypeDoc,
     text_edit: TextEdit,
 ) -> CompletionItem {
-    let kind = match &ty.category {
-        BibtexEntryTypeCategory::Misc => CompletionItemKind::Interface,
-        BibtexEntryTypeCategory::String => CompletionItemKind::Text,
-        BibtexEntryTypeCategory::Article => CompletionItemKind::Event,
-        BibtexEntryTypeCategory::Book => CompletionItemKind::Struct,
-        BibtexEntryTypeCategory::Collection => CompletionItemKind::TypeParameter,
-        BibtexEntryTypeCategory::Part => CompletionItemKind::Operator,
-        BibtexEntryTypeCategory::Thesis => CompletionItemKind::Property,
-    };
-
+    let kind = ty.category.completion_kind();
     CompletionItem {
         label: (&ty.name).into(),
         kind: Some(adjust_kind(request, kind)),
