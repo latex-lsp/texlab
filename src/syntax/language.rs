@@ -129,14 +129,28 @@ pub struct LatexColorModelCommand {
     pub index: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum BibtexEntryTypeCategory {
+    Misc,
+    String,
+    Article,
+    Book,
+    Collection,
+    Part,
+    Thesis,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BibtexEntryTypeDoc {
     pub name: String,
+    pub category: BibtexEntryTypeCategory,
     pub documentation: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BibtexFieldDoc {
     pub name: String,
     pub documentation: String,
@@ -165,15 +179,16 @@ pub struct LanguageData {
 }
 
 impl LanguageData {
+    pub fn find_entry_type(&self, name: &str) -> Option<&BibtexEntryTypeDoc> {
+        let name = name.to_lowercase();
+        self.entry_types
+            .iter()
+            .find(|ty| ty.name.to_lowercase() == name)
+    }
+
     pub fn entry_type_documentation(&self, name: &str) -> Option<&str> {
-        for ty in self.entry_types.iter() {
-            if ty.name.to_lowercase() == name.to_lowercase() {
-                if let Some(documentation) = &ty.documentation {
-                    return Some(&documentation);
-                }
-            }
-        }
-        None
+        self.find_entry_type(name)
+            .and_then(|ty| ty.documentation.as_ref().map(AsRef::as_ref))
     }
 
     pub fn field_documentation(&self, name: &str) -> Option<&str> {

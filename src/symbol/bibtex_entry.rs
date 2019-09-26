@@ -21,11 +21,16 @@ impl FeatureProvider for BibtexEntrySymbolProvider {
                 .filter(|entry| !entry.is_comment())
                 .filter(|entry| entry.key.is_some())
             {
+                let category = LANGUAGE_DATA
+                    .find_entry_type(&entry.ty.text()[1..])
+                    .map(|ty| ty.category)
+                    .unwrap_or(BibtexEntryTypeCategory::Misc);
+
                 let key = entry.key.as_ref().unwrap();
                 let symbol = LatexSymbol {
                     name: key.text().to_owned(),
                     label: None,
-                    kind: LatexSymbolKind::Entry,
+                    kind: LatexSymbolKind::Entry(category),
                     deprecated: false,
                     full_range: entry.range(),
                     selection_range: key.range(),
@@ -80,7 +85,7 @@ mod tests {
             vec![LatexSymbol {
                 name: "key".into(),
                 label: None,
-                kind: LatexSymbolKind::Entry,
+                kind: LatexSymbolKind::Entry(BibtexEntryTypeCategory::Article),
                 deprecated: false,
                 full_range: Range::new_simple(0, 0, 0, 35),
                 selection_range: Range::new_simple(0, 9, 0, 12),

@@ -311,12 +311,22 @@ pub fn citation(
 
 pub fn entry_type(
     request: &FeatureRequest<CompletionParams>,
-    ty: &'static BibtexEntryTypeDoc,
+    ty: &BibtexEntryTypeDoc,
     text_edit: TextEdit,
 ) -> CompletionItem {
+    let kind = match &ty.category {
+        BibtexEntryTypeCategory::Misc => CompletionItemKind::Interface,
+        BibtexEntryTypeCategory::String => CompletionItemKind::Text,
+        BibtexEntryTypeCategory::Article => CompletionItemKind::Event,
+        BibtexEntryTypeCategory::Book => CompletionItemKind::Struct,
+        BibtexEntryTypeCategory::Collection => CompletionItemKind::TypeParameter,
+        BibtexEntryTypeCategory::Part => CompletionItemKind::Operator,
+        BibtexEntryTypeCategory::Thesis => CompletionItemKind::Property,
+    };
+
     CompletionItem {
         label: (&ty.name).into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Interface)),
+        kind: Some(adjust_kind(request, kind)),
         data: Some(CompletionItemData::EntryType.into()),
         text_edit: Some(text_edit),
         documentation: ty.documentation.as_ref().map(|doc| {

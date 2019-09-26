@@ -6,6 +6,7 @@ use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use crate::capabilities::ClientCapabilitiesExt;
+use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
@@ -26,7 +27,7 @@ pub enum LatexSymbolKind {
     EnumerationItem,
     Theorem,
     Equation,
-    Entry,
+    Entry(BibtexEntryTypeCategory),
     Field,
     String,
 }
@@ -40,7 +41,13 @@ impl Into<SymbolKind> for LatexSymbolKind {
             Self::EnumerationItem => SymbolKind::EnumMember,
             Self::Theorem => SymbolKind::Class,
             Self::Equation => SymbolKind::Constant,
-            Self::Entry => SymbolKind::Interface,
+            Self::Entry(BibtexEntryTypeCategory::Misc) => SymbolKind::Interface,
+            Self::Entry(BibtexEntryTypeCategory::String) => SymbolKind::String,
+            Self::Entry(BibtexEntryTypeCategory::Article) => SymbolKind::Event,
+            Self::Entry(BibtexEntryTypeCategory::Book) => SymbolKind::Struct,
+            Self::Entry(BibtexEntryTypeCategory::Collection) => SymbolKind::TypeParameter,
+            Self::Entry(BibtexEntryTypeCategory::Part) => SymbolKind::Operator,
+            Self::Entry(BibtexEntryTypeCategory::Thesis) => SymbolKind::Property,
             Self::Field => SymbolKind::Field,
             Self::String => SymbolKind::String,
         }
@@ -70,7 +77,7 @@ impl LatexSymbol {
             LatexSymbolKind::EnumerationItem => "latex enumeration item",
             LatexSymbolKind::Theorem => "latex math",
             LatexSymbolKind::Equation => "latex math equation",
-            LatexSymbolKind::Entry => "bibtex entry",
+            LatexSymbolKind::Entry(_) => "bibtex entry",
             LatexSymbolKind::Field => "bibtex field",
             LatexSymbolKind::String => "bibtex string",
         };

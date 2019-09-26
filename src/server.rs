@@ -551,20 +551,18 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspSe
                         }
                     }
                 }
-                Action::DetectChildren => {
-                    loop {
-                        let mut changed = false;
+                Action::DetectChildren => loop {
+                    let mut changed = false;
 
-                        let workspace = self.workspace_manager.get();
-                        for path in workspace.unresolved_includes() {
-                            changed |= self.workspace_manager.load(&path).is_ok();
-                        }
-
-                        if !changed {
-                            break;
-                        }
+                    let workspace = self.workspace_manager.get();
+                    for path in workspace.unresolved_includes() {
+                        changed |= self.workspace_manager.load(&path).is_ok();
                     }
-                }
+
+                    if !changed {
+                        break;
+                    }
+                },
                 Action::PublishDiagnostics => {
                     let workspace = self.workspace_manager.get();
                     for document in &workspace.documents {
