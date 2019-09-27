@@ -38,25 +38,31 @@ where
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
                         output.send(json).await.unwrap();
+                        server.after_message().await;
                     });
                 }
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
+                    self.after_message();
                 }
                 Ok(Message::Response(response)) => {
                     self.client.handle(response).await;
+                    self.after_message();
                 }
                 Err(why) => {
                     let response = Response::error(why, None);
                     let json = serde_json::to_string(&response).unwrap();
                     self.output.send(json).await.unwrap();
+                    self.after_message();
                 }
-            }
-
-            let server = Arc::clone(&self.server);
-            tokio::spawn(async move {
-                server.after_message().await;
-            });
+            };
         }
+    }
+
+    fn after_message(&self) {
+        let server = Arc::clone(&self.server);
+        tokio::spawn(async move {
+            server.after_message().await;
+        });
     }
 }

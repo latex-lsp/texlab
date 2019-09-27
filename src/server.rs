@@ -134,7 +134,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
-        self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
@@ -149,37 +148,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("$/cancelRequest", kind = "notification")]
     pub fn cancel_request(&self, _params: CancelParams) {}
-
-    #[jsonrpc_method("workspace/didChangeWatchedFiles", kind = "notification")]
-    pub fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workspace = self.workspace_manager.get();
-        for change in params.changes {
-            if change.uri.scheme() != "file" {
-                continue;
-            }
-
-            let file_path = change.uri.to_file_path().unwrap();
-            match file_path.extension().unwrap().to_str().unwrap() {
-                "log" => {
-                    let tex_path = file_path.with_extension("tex");
-                    let tex_uri = Uri::from_file_path(tex_path).unwrap();
-                    if workspace.find(&tex_uri).is_some() {
-                        self.action_manager.push(Action::ParseLog {
-                            tex_uri,
-                            log_path: file_path,
-                        });
-                    }
-                }
-                "aux" => {
-                    drop(self.workspace_manager.load(&file_path));
-                }
-                extension => {
-                    warn!("Unknown file extension in file watcher: {}", extension);
-                }
-            }
-        }
-        self.action_manager.push(Action::PublishDiagnostics);
-    }
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
@@ -470,43 +438,36 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    async fn register_capabilities(&self) {
-        if self
-            .client_capabilities
-            .get()
-            .and_then(|cap| cap.workspace.as_ref())
-            .and_then(|cap| cap.did_change_watched_files.as_ref())
-            .and_then(|cap| cap.dynamic_registration)
-            .unwrap_or(false)
-        {
-            let options = DidChangeWatchedFilesRegistrationOptions {
-                watchers: vec![
-                    FileSystemWatcher {
-                        kind: Some(WatchKind::Create | WatchKind::Change),
-                        glob_pattern: "**/*.log".into(),
-                    },
-                    FileSystemWatcher {
-                        kind: Some(WatchKind::Create | WatchKind::Change),
-                        glob_pattern: "**/*.aux".into(),
-                    },
-                ],
-            };
+    fn update_document(&self, document: &Document) -> std::result::Result<(), LoadError> {
+        if document.uri.scheme() != "file" {
+            return Ok(());
+        }
 
-            if let Err(why) = self
-                .client
-                .register_capability(RegistrationParams {
-                    registrations: vec![Registration {
-                        id: "file-watcher".into(),
-                        method: "workspace/didChangeWatchedFiles".into(),
-                        register_options: Some(serde_json::to_value(options).unwrap()),
-                    }],
-                })
-                .await
-            {
-                warn!(
-                    "Client does not support dynamic capability registration: {}",
-                    why.message
-                );
+        let path = document.uri.to_file_path().unwrap();
+        let data = fs::metadata(&path).map_err(LoadError::IO)?;
+        if data.modified().map_err(LoadError::IO)? > document.modified {
+            self.workspace_manager.load(&path)
+        } else {
+            Ok(())
+        }
+    }
+
+    async fn update_build_diagnostics(&self) {
+        let workspace = self.workspace_manager.get();
+        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+        for document in &workspace.documents {
+            if document.uri.scheme() != "file" {
+                continue;
+            }
+
+            if let SyntaxTree::Latex(tree) = &document.tree {
+                if tree.is_standalone {
+                    match diagnostics_manager.build.update(&document.uri) {
+                        Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
+                        Ok(false) => (),
+                        Err(_) => warn!("Unable to read log file: {}", document.uri.as_str()),
+                    }
+                }
             }
         }
     }
@@ -514,13 +475,18 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
 impl<C: LspClient + Send + Sync + 'static> jsonrpc::Middleware for LatexLspServer<C> {
     #[boxed]
-    async fn before_message(&self) {}
+    async fn before_message(&self) {
+        let workspace = self.workspace_manager.get();
+        for document in &workspace.documents {
+            drop(self.update_document(document));
+        }
+    }
 
     #[boxed]
     async fn after_message(&self) {
+        self.update_build_diagnostics().await;
         for action in self.action_manager.take() {
             match action {
-                Action::RegisterCapabilities => self.register_capabilities().await,
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {
                         let mut path = uri.to_file_path().unwrap();
@@ -595,12 +561,6 @@ impl<C: LspClient + Send + Sync + 'static> jsonrpc::Middleware for LatexLspServe
                                 diagnostics_manager.latex.update(&uri, &document.text);
                             }
                         }
-                    }
-                }
-                Action::ParseLog { tex_uri, log_path } => {
-                    if let Ok(log) = fs::read_to_string(&log_path) {
-                        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                        diagnostics_manager.build.update(&tex_uri, &log);
                     }
                 }
                 Action::Build(uri) => {

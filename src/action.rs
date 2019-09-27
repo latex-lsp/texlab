@@ -1,7 +1,6 @@
 use crate::workspace::Uri;
 use lsp_types::ProgressToken;
 use std::mem;
-use std::path::PathBuf;
 use std::sync::Mutex;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -12,12 +11,10 @@ pub enum LintReason {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
-    RegisterCapabilities,
     DetectRoot(Uri),
     DetectChildren,
     PublishDiagnostics,
     RunLinter(Uri, LintReason),
-    ParseLog { tex_uri: Uri, log_path: PathBuf },
     Build(Uri),
     CancelBuild(ProgressToken),
 }

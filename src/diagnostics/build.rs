@@ -5,12 +5,22 @@ use path_clean::PathClean;
 use regex::{Match, Regex};
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
 use std::str;
+use std::time::SystemTime;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct LogFile {
+    path: PathBuf,
+    modified: SystemTime,
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct BuildDiagnosticsProvider {
     diagnostics_by_uri: HashMap<Uri, Vec<Diagnostic>>,
+    log_files: Vec<LogFile>,
 }
 
 impl BuildDiagnosticsProvider {
@@ -21,15 +31,44 @@ impl BuildDiagnosticsProvider {
         }
     }
 
-    pub fn update(&mut self, uri: &Uri, log: &str) {
+    pub fn update(&mut self, tex_uri: &Uri) -> io::Result<bool> {
+        if tex_uri.scheme() != "file" {
+            return Ok(false);
+        }
+
+        let log_path = tex_uri.to_file_path().unwrap().with_extension("log");
+        let modified = fs::metadata(&log_path)?.modified()?;
+
+        for log_file in &mut self.log_files {
+            if log_file.path == log_path {
+                return if modified > log_file.modified {
+                    log_file.modified = modified;
+                    self.update_diagnostics(tex_uri, &log_path)
+                } else {
+                    Ok(false)
+                };
+            }
+        }
+
+        self.update_diagnostics(tex_uri, &log_path)?;
+        self.log_files.push(LogFile {
+            path: log_path,
+            modified,
+        });
+        Ok(true)
+    }
+
+    fn update_diagnostics(&mut self, tex_uri: &Uri, log_path: &Path) -> io::Result<bool> {
+        let log = fs::read_to_string(log_path)?;
         self.diagnostics_by_uri.clear();
-        for error in parse_build_log(uri, log) {
+        for error in parse_build_log(tex_uri, &log) {
             let diagnostics = self
                 .diagnostics_by_uri
                 .entry(error.uri.clone())
                 .or_insert_with(Vec::new);
             diagnostics.push(error.into());
         }
+        Ok(true)
     }
 }
 
