@@ -52,7 +52,7 @@ where
                     self.output.send(json).await.unwrap();
                 }
             }
-            
+
             let server = Arc::clone(&self.server);
             tokio::spawn(async move {
                 server.after_message().await;

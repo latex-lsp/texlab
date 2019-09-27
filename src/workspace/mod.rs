@@ -12,22 +12,29 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {
     pub uri: Uri,
     pub text: String,
     pub tree: SyntaxTree,
+    pub modified: SystemTime,
 }
 
 impl Document {
     pub fn new(uri: Uri, text: String, tree: SyntaxTree) -> Self {
-        Document { uri, text, tree }
+        Self {
+            uri,
+            text,
+            tree,
+            modified: SystemTime::now(),
+        }
     }
 
     pub fn parse(uri: Uri, text: String, language: Language) -> Self {
         let tree = SyntaxTree::parse(&uri, &text, language);
-        Document::new(uri, text, tree)
+        Self::new(uri, text, tree)
     }
 
     pub fn is_file(&self) -> bool {
