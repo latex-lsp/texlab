@@ -4,7 +4,7 @@ mod types;
 
 pub use self::{
     client::{Client, ResponseHandler},
-    server::{handle_notification, handle_request, ActionHandler, RequestHandler},
+    server::{handle_notification, handle_request, Middleware, RequestHandler},
     types::*,
 };
 
@@ -22,31 +22,26 @@ pub struct MessageHandler<S, C, I> {
 
 impl<S, C, I> MessageHandler<S, C, I>
 where
-    S: RequestHandler + ActionHandler + Send + Sync + 'static,
+    S: RequestHandler + Middleware + Send + Sync + 'static,
     C: ResponseHandler + Send + Sync + 'static,
     I: Stream<Item = io::Result<String>> + Unpin,
 {
     pub async fn listen(&mut self) {
         while let Some(json) = self.input.next().await {
-            let message = serde_json::from_str(&json.unwrap()).map_err(|_| Error::parse_error());
-            match message {
+            self.server.before_message().await;
+
+            match serde_json::from_str(&json.unwrap()).map_err(|_| Error::parse_error()) {
                 Ok(Message::Request(request)) => {
                     let server = Arc::clone(&self.server);
                     let mut output = self.output.clone();
-
                     tokio::spawn(async move {
                         let response = server.handle_request(request).await;
                         let json = serde_json::to_string(&response).unwrap();
                         output.send(json).await.unwrap();
-                        server.execute_actions().await;
                     });
                 }
                 Ok(Message::Notification(notification)) => {
                     self.server.handle_notification(notification);
-                    let server = Arc::clone(&self.server);
-                    tokio::spawn(async move {
-                        server.execute_actions().await;
-                    });
                 }
                 Ok(Message::Response(response)) => {
                     self.client.handle(response).await;
@@ -57,6 +52,11 @@ where
                     self.output.send(json).await.unwrap();
                 }
             }
+            
+            let server = Arc::clone(&self.server);
+            tokio::spawn(async move {
+                server.after_message().await;
+            });
         }
     }
 }

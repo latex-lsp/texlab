@@ -512,9 +512,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 }
 
-impl<C: LspClient + Send + Sync + 'static> jsonrpc::ActionHandler for LatexLspServer<C> {
+impl<C: LspClient + Send + Sync + 'static> jsonrpc::Middleware for LatexLspServer<C> {
     #[boxed]
-    async fn execute_actions(&self) {
+    async fn before_message(&self) {}
+
+    #[boxed]
+    async fn after_message(&self) {
         for action in self.action_manager.take() {
             match action {
                 Action::RegisterCapabilities => self.register_capabilities().await,

@@ -14,9 +14,12 @@ pub trait RequestHandler {
     fn handle_notification(&self, notification: Notification);
 }
 
-pub trait ActionHandler {
+pub trait Middleware {
     #[boxed]
-    async fn execute_actions(&self);
+    async fn before_message(&self);
+
+    #[boxed]
+    async fn after_message(&self);
 }
 
 pub async fn handle_request<'a, H, F, I, O>(request: Request, handler: H) -> Response
