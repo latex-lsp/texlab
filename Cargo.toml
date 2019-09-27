@@ -50,9 +50,5 @@ walkdir = "2"
 criterion = "0.3"
 indoc = "0.3.4"
 
-[[bench]]
-name = "completion"
-harness = false
-
 [profile.release]
 lto = true

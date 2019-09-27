@@ -18,7 +18,6 @@ pub mod link;
 pub mod range;
 pub mod reference;
 pub mod rename;
-pub mod scenario;
 pub mod server;
 pub mod symbol;
 pub mod syntax;
