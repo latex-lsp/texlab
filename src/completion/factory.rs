@@ -1,4 +1,5 @@
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
+use crate::lsp_kind::Structure;
 use crate::syntax::*;
 use crate::workspace::*;
 use lsp_types::*;
@@ -85,7 +86,7 @@ pub fn command(
         |glyph| format!("{}, {}", glyph, component.detail()),
     );
     CompletionItem {
-        kind: Some(adjust_kind(request, CompletionItemKind::Function)),
+        kind: Some(adjust_kind(request, Structure::Command.completion_kind())),
         data: Some(CompletionItemData::Command.into()),
         documentation: image.and_then(|image| image_documentation(&request, &name, image)),
         text_edit: Some(text_edit),
@@ -101,7 +102,7 @@ pub fn command_snippet(
     component: &LatexComponentId,
 ) -> CompletionItem {
     CompletionItem {
-        kind: Some(adjust_kind(request, CompletionItemKind::Snippet)),
+        kind: Some(adjust_kind(request, Structure::Snippet.completion_kind())),
         data: Some(CompletionItemData::CommandSnippet.into()),
         documentation: image.and_then(|image| image_documentation(&request, &name, image)),
         insert_text: Some(template.into()),
@@ -117,7 +118,10 @@ pub fn environment(
     component: &LatexComponentId,
 ) -> CompletionItem {
     CompletionItem {
-        kind: Some(adjust_kind(request, CompletionItemKind::EnumMember)),
+        kind: Some(adjust_kind(
+            request,
+            Structure::Environment.completion_kind(),
+        )),
         data: Some(CompletionItemData::Environment.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::new_simple(name, component.detail())
@@ -131,12 +135,12 @@ pub fn label(
     context: Option<&OutlineContext>,
 ) -> CompletionItem {
     let kind = match context.as_ref().map(|ctx| &ctx.item) {
-        Some(OutlineContextItem::Section(_)) => CompletionItemKind::Module,
-        Some(OutlineContextItem::Caption { .. }) => CompletionItemKind::Method,
-        Some(OutlineContextItem::Theorem { .. }) => CompletionItemKind::Class,
-        Some(OutlineContextItem::Equation) => CompletionItemKind::Constant,
-        Some(OutlineContextItem::Item) => CompletionItemKind::EnumMember,
-        None => CompletionItemKind::Field,
+        Some(OutlineContextItem::Section(_)) => Structure::Section.completion_kind(),
+        Some(OutlineContextItem::Caption { .. }) => Structure::Float.completion_kind(),
+        Some(OutlineContextItem::Theorem { .. }) => Structure::Theorem.completion_kind(),
+        Some(OutlineContextItem::Equation) => Structure::Equation.completion_kind(),
+        Some(OutlineContextItem::Item) => Structure::Item.completion_kind(),
+        None => Structure::Label.completion_kind(),
     };
 
     let detail = context.as_ref().and_then(|ctx| ctx.detail());
@@ -171,7 +175,7 @@ pub fn folder(
 ) -> CompletionItem {
     CompletionItem {
         label: path.file_name().unwrap().to_string_lossy().into_owned(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Folder)),
+        kind: Some(adjust_kind(request, Structure::Folder.completion_kind())),
         data: Some(CompletionItemData::Folder.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -185,7 +189,7 @@ pub fn file(
 ) -> CompletionItem {
     CompletionItem {
         label: path.file_name().unwrap().to_string_lossy().into_owned(),
-        kind: Some(adjust_kind(request, CompletionItemKind::File)),
+        kind: Some(adjust_kind(request, Structure::File.completion_kind())),
         data: Some(CompletionItemData::File.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -199,7 +203,10 @@ pub fn pgf_library(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Module)),
+        kind: Some(adjust_kind(
+            request,
+            Structure::PgfLibrary.completion_kind(),
+        )),
         data: Some(CompletionItemData::PgfLibrary.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -213,7 +220,10 @@ pub fn tikz_library(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Module)),
+        kind: Some(adjust_kind(
+            request,
+            Structure::TikzLibrary.completion_kind(),
+        )),
         data: Some(CompletionItemData::TikzLibrary.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -227,7 +237,7 @@ pub fn color(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Color)),
+        kind: Some(adjust_kind(request, Structure::Color.completion_kind())),
         data: Some(CompletionItemData::Color.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -241,7 +251,10 @@ pub fn color_model(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Color)),
+        kind: Some(adjust_kind(
+            request,
+            Structure::ColorModel.completion_kind(),
+        )),
         data: Some(CompletionItemData::ColorModel.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -255,7 +268,7 @@ pub fn package(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Class)),
+        kind: Some(adjust_kind(request, Structure::Package.completion_kind())),
         data: Some(CompletionItemData::Package.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -269,7 +282,7 @@ pub fn class(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Class)),
+        kind: Some(adjust_kind(request, Structure::Class.completion_kind())),
         data: Some(CompletionItemData::Class.into()),
         text_edit: Some(text_edit),
         ..CompletionItem::default()
@@ -302,8 +315,8 @@ pub fn citation(
 
     let kind = LANGUAGE_DATA
         .find_entry_type(&entry.ty.text()[1..])
-        .map(|ty| ty.category.completion_kind())
-        .unwrap_or(CompletionItemKind::Interface);
+        .map(|ty| Structure::Entry(ty.category).completion_kind())
+        .unwrap_or(Structure::Entry(BibtexEntryTypeCategory::Misc).completion_kind());
 
     CompletionItem {
         label: key.to_owned(),
@@ -320,7 +333,7 @@ pub fn entry_type(
     ty: &BibtexEntryTypeDoc,
     text_edit: TextEdit,
 ) -> CompletionItem {
-    let kind = ty.category.completion_kind();
+    let kind = Structure::Entry(ty.category).completion_kind();
     CompletionItem {
         label: (&ty.name).into(),
         kind: Some(adjust_kind(request, kind)),
@@ -343,7 +356,7 @@ pub fn field_name(
 ) -> CompletionItem {
     CompletionItem {
         label: (&field.name).into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Field)),
+        kind: Some(adjust_kind(request, Structure::Field.completion_kind())),
         data: Some(CompletionItemData::FieldName.into()),
         text_edit: Some(text_edit),
         documentation: Some(Documentation::MarkupContent(MarkupContent {
@@ -362,7 +375,7 @@ pub fn argument(
 ) -> CompletionItem {
     CompletionItem {
         label: name.into(),
-        kind: Some(adjust_kind(request, CompletionItemKind::Field)),
+        kind: Some(adjust_kind(request, Structure::Argument.completion_kind())),
         data: Some(CompletionItemData::Argument.into()),
         text_edit: Some(text_edit),
         documentation: image.and_then(|image| image_documentation(&request, &name, image)),

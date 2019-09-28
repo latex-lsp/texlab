@@ -15,6 +15,7 @@ pub mod forward_search;
 pub mod highlight;
 pub mod hover;
 pub mod link;
+pub mod lsp_kind;
 pub mod range;
 pub mod reference;
 pub mod rename;

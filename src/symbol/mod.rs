@@ -6,6 +6,7 @@ use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use crate::capabilities::ClientCapabilitiesExt;
+use crate::lsp_kind::Structure;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -35,15 +36,17 @@ pub enum LatexSymbolKind {
 impl Into<SymbolKind> for LatexSymbolKind {
     fn into(self) -> SymbolKind {
         match self {
-            Self::Section => SymbolKind::Module,
-            Self::Figure | Self::Algorithm | Self::Table | Self::Listing => SymbolKind::Method,
-            Self::Enumeration => SymbolKind::Enum,
-            Self::EnumerationItem => SymbolKind::EnumMember,
-            Self::Theorem => SymbolKind::Class,
-            Self::Equation => SymbolKind::Constant,
-            Self::Entry(category) => category.symbol_kind(),
-            Self::Field => SymbolKind::Field,
-            Self::String => SymbolKind::String,
+            Self::Section => Structure::Section.symbol_kind(),
+            Self::Figure | Self::Algorithm | Self::Table | Self::Listing => {
+                Structure::Float.symbol_kind()
+            }
+            Self::Enumeration => Structure::Environment.symbol_kind(),
+            Self::EnumerationItem => Structure::Item.symbol_kind(),
+            Self::Theorem => Structure::Theorem.symbol_kind(),
+            Self::Equation => Structure::Equation.symbol_kind(),
+            Self::Entry(category) => Structure::Entry(category).symbol_kind(),
+            Self::Field => Structure::Field.symbol_kind(),
+            Self::String => Structure::Entry(BibtexEntryTypeCategory::String).symbol_kind(),
         }
     }
 }
