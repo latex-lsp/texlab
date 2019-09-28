@@ -77,7 +77,8 @@ async fn verify_labels(
     expected_labels: Vec<&'static str>,
 ) {
     let (_, items) = run_completion(scenario_short_name, file, line, character).await;
-    let actual_labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
+    let mut actual_labels: Vec<&str> = items.iter().map(|item| item.label.as_ref()).collect();
+    actual_labels.sort();
     assert_eq!(actual_labels, expected_labels);
 }
 
@@ -215,7 +216,7 @@ async fn completion_latex_label() {
         *items[4].documentation.as_ref().unwrap(),
         Documentation::String("Baz".into())
     );
-    verify_labels("latex/label", "bar.tex", 5, 7, vec!["eq:foo", "eq:bar"]).await;
+    verify_labels("latex/label", "bar.tex", 5, 7, vec!["eq:bar", "eq:foo"]).await;
 }
 
 #[tokio::test]
