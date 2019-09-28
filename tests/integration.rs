@@ -1,5 +1,7 @@
 use lsp_types::*;
+use std::collections::HashMap;
 use texlab::definition::DefinitionResponse;
+use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::range::RangeExt;
 use texlab::test_scenario::*;
 
@@ -459,4 +461,56 @@ async fn definition_latex_label_theorem() {
     assert_eq!(link.target_uri, scenario.uri("theorem.tex").into());
     assert_eq!(link.target_range, Range::new_simple(3, 0, 6, 11));
     assert_eq!(link.target_selection_range, Range::new_simple(4, 0, 4, 15));
+}
+
+async fn run_bibtex_formatting(
+    scenario_short_name: &'static str,
+    file: &'static str,
+    options: Option<BibtexFormattingOptions>,
+) -> (TestScenario, Vec<TextEdit>) {
+    let scenario_name = format!("formatting/bibtex/{}", scenario_short_name);
+    let scenario = TestScenario::new(&scenario_name, &DEFAULT_CAPABILITIES).await;
+    scenario.open(file).await;
+    {
+        scenario.client.options.lock().await.bibtex_formatting = options;
+    }
+
+    let params = DocumentFormattingParams {
+        text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+        options: FormattingOptions {
+            tab_size: 4,
+            insert_spaces: true,
+            properties: HashMap::new(),
+        },
+    };
+
+    let edits = scenario
+        .server
+        .execute_async(|svr| svr.formatting(params))
+        .await
+        .unwrap();
+    (scenario, edits)
+}
+
+#[tokio::test]
+async fn formatting_bibtex_default_settings() {
+    let (scenario, edits) = run_bibtex_formatting("default", "unformatted.bib", None).await;
+    assert_eq!(edits.len(), 1);
+    assert_eq!(edits[0].new_text, scenario.read("formatted.bib").await);
+    assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 52));
+}
+
+#[tokio::test]
+async fn formatting_bibtex_infinite_line_length() {
+    let (scenario, edits) = run_bibtex_formatting(
+        "infinite_line_length",
+        "unformatted.bib",
+        Some(BibtexFormattingOptions {
+            line_length: Some(0),
+        }),
+    )
+    .await;
+    assert_eq!(edits.len(), 1);
+    assert_eq!(edits[0].new_text, scenario.read("formatted.bib").await);
+    assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 149));
 }
