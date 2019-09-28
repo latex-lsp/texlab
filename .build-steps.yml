@@ -22,6 +22,7 @@ steps:
       - bash: |
           cargo install grcov
           export CARGO_INCREMENTAL=0
+          export RUSTUP_TOOLCHAIN="nightly-2019-08-21"
           export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads"
           export RUST_BACKTRACE=1
           cargo test --all --locked
