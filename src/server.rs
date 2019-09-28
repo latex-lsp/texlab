@@ -488,7 +488,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     match diagnostics_manager.build.update(&document.uri) {
                         Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
                         Ok(false) => (),
-                        Err(_) => warn!("Unable to read log file: {}", document.uri.as_str()),
+                        Err(why) => warn!("Unable to read log file ({}): {}", why, document.uri.as_str()),
                     }
                 }
             }

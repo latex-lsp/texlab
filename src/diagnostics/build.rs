@@ -59,7 +59,7 @@ impl BuildDiagnosticsProvider {
     }
 
     fn update_diagnostics(&mut self, tex_uri: &Uri, log_path: &Path) -> io::Result<bool> {
-        let log = fs::read_to_string(log_path)?;
+        let log = String::from_utf8_lossy(&fs::read(log_path)?).into_owned();
         self.diagnostics_by_uri.clear();
         for error in parse_build_log(tex_uri, &log) {
             let diagnostics = self
