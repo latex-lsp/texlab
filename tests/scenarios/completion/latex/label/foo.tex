@@ -1,0 +1,36 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
+
+\begin{document}
+
+\section{Foo}%
+\label{sec:foo}
+
+\begin{equation}%
+\label{eq:foo}
+    1 + 1 = 2
+\end{equation}
+
+\begin{equation}%
+\label{eq:bar}
+    1 + 1 = 2
+\end{equation}
+
+\begin{figure}%
+\LaTeX{}
+\caption{Baz}%
+\label{fig:baz}
+\end{figure}
+
+\begin{lemma}%
+\label{thm:foo}
+    1 + 1 = 2
+\end{lemma}
+
+\include{bar}
+
+\end{document}

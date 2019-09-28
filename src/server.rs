@@ -19,6 +19,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
+use jsonrpc::server::Middleware;
 use jsonrpc::server::Result;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
@@ -28,6 +29,7 @@ use once_cell::sync::OnceCell;
 use serde::de::DeserializeOwned;
 use std::ffi::OsStr;
 use std::fs;
+use std::future::Future;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -71,6 +73,27 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             prepare_rename_provider: PrepareRenameProvider::new(),
             rename_provider: RenameProvider::new(),
         }
+    }
+
+    pub async fn execute<'a, T, A>(&'a self, action: A) -> T
+    where
+        A: FnOnce(&'a Self) -> T,
+    {
+        self.before_message().await;
+        let result = action(&self);
+        self.after_message().await;
+        result
+    }
+
+    pub async fn execute_async<'a, T, F, A>(&'a self, action: A) -> T
+    where
+        F: Future<Output = T>,
+        A: FnOnce(&'a Self) -> F,
+    {
+        self.before_message().await;
+        let result = action(&self).await;
+        self.after_message().await;
+        result
     }
 
     #[jsonrpc_method("initialize", kind = "request")]
@@ -473,7 +496,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 }
 
-impl<C: LspClient + Send + Sync + 'static> jsonrpc::Middleware for LatexLspServer<C> {
+impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
     #[boxed]
     async fn before_message(&self) {
         let workspace = self.workspace_manager.get();
