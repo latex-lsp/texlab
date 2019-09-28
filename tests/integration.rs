@@ -1,6 +1,8 @@
 use lsp_types::*;
 use std::collections::HashMap;
+use std::fs;
 use texlab::definition::DefinitionResponse;
+use texlab::diagnostics::BibtexErrorCode;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::range::RangeExt;
 use texlab::test_scenario::*;
@@ -461,6 +463,56 @@ async fn definition_latex_label_theorem() {
     assert_eq!(link.target_uri, scenario.uri("theorem.tex").into());
     assert_eq!(link.target_range, Range::new_simple(3, 0, 6, 11));
     assert_eq!(link.target_selection_range, Range::new_simple(4, 0, 4, 15));
+}
+
+#[tokio::test]
+async fn diagnostics_bibtex() {
+    let scenario = TestScenario::new("diagnostics/bibtex", &DEFAULT_CAPABILITIES).await;
+    scenario.open("foo.bib").await;
+    {
+        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
+        let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.bib")];
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(
+            diagnostics[0].message,
+            BibtexErrorCode::MissingBeginBrace.message()
+        );
+        assert_eq!(diagnostics[0].range.start.line, 0);
+    }
+    let params = DidChangeTextDocumentParams {
+        text_document: VersionedTextDocumentIdentifier::new(scenario.uri("foo.bib").into(), 0),
+        content_changes: vec![TextDocumentContentChangeEvent {
+            range: None,
+            range_length: None,
+            text: "@article{foo,}\n".into(),
+        }],
+    };
+    scenario.server.execute(|svr| svr.did_change(params)).await;
+    {
+        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
+        let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.bib")];
+        assert_eq!(diagnostics.len(), 0);
+    }
+}
+
+#[tokio::test]
+async fn diagnostics_build() {
+    let scenario = TestScenario::new("diagnostics/build", &DEFAULT_CAPABILITIES).await;
+    scenario.open("foo.tex").await;
+    {
+        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
+        let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.tex")];
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].message, "Undefined control sequence.");
+    }
+    let log_path = scenario.uri("foo.log").to_file_path().unwrap();
+    fs::write(&log_path, "").unwrap();
+    scenario.server.execute(|_| ()).await;
+    {
+        let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
+        let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.tex")];
+        assert!(diagnostics.is_empty());
+    }
 }
 
 async fn run_bibtex_formatting(
