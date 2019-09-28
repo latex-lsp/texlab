@@ -5,6 +5,7 @@ use texlab::definition::DefinitionResponse;
 use texlab::diagnostics::BibtexErrorCode;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::range::RangeExt;
+use texlab::syntax::LANGUAGE_DATA;
 use texlab::test_scenario::*;
 
 async fn run_completion(
@@ -565,4 +566,81 @@ async fn formatting_bibtex_infinite_line_length() {
     assert_eq!(edits.len(), 1);
     assert_eq!(edits[0].new_text, scenario.read("formatted.bib").await);
     assert_eq!(edits[0].range, Range::new_simple(0, 0, 0, 149));
+}
+
+async fn run_hover(
+    scenario_short_name: &'static str,
+    file: &'static str,
+    line: u64,
+    character: u64,
+) -> Option<HoverContents> {
+    let scenario_name = format!("hover/{}", scenario_short_name);
+    let scenario = TestScenario::new(&scenario_name, &DEFAULT_CAPABILITIES).await;
+    scenario.open(file).await;
+    let identifier = TextDocumentIdentifier::new(scenario.uri(file).into());
+    let params = TextDocumentPositionParams::new(identifier, Position::new(line, character));
+    scenario
+        .server
+        .execute_async(|svr| svr.hover(params))
+        .await
+        .unwrap()
+        .map(|hover| hover.contents)
+}
+
+#[tokio::test]
+async fn hover_bibtex_field() {
+    let contents = run_hover("bibtex/field", "foo.bib", 1, 4).await.unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: LANGUAGE_DATA
+                .field_documentation("author")
+                .unwrap()
+                .to_owned()
+        })
+    );
+
+    let contents = run_hover("bibtex/field", "foo.bib", 2, 5).await;
+    assert_eq!(contents, None);
+}
+
+#[tokio::test]
+async fn hover_bibtex_type() {
+    let contents = run_hover("bibtex/type", "foo.bib", 0, 5).await.unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: LANGUAGE_DATA
+                .entry_type_documentation("article")
+                .unwrap()
+                .to_owned()
+        })
+    );
+
+    let contents = run_hover("bibtex/type", "foo.bib", 2, 2).await;
+    assert_eq!(contents, None);
+}
+
+#[tokio::test]
+async fn hover_latex_citation() {
+    let contents = run_hover("latex/citation", "foo.tex", 2, 7).await.unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: "Bar, F. (2019). Baz Qux.".into()
+        })
+    );
+}
+
+#[tokio::test]
+async fn hover_latex_class() {
+    run_hover("latex/class", "foo.tex", 0, 18).await.unwrap();
+}
+
+#[tokio::test]
+async fn hover_latex_package() {
+    run_hover("latex/package", "foo.tex", 0, 17).await.unwrap();
 }
