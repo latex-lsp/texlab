@@ -1,4 +1,5 @@
 use lsp_types::*;
+use texlab::definition::DefinitionResponse;
 use texlab::range::RangeExt;
 use texlab::test_scenario::*;
 
@@ -266,4 +267,196 @@ async fn completion_latex_user_environment() {
     let item = run_completion_item("latex/user_environment", "foo.tex", 2, 7, "foo").await;
     verify_text_edit(&item, 2, 7, 2, 9, "foo");
     verify_detail(&item, "user-defined");
+}
+
+async fn run_definition(
+    scenario_short_name: &'static str,
+    file: &'static str,
+    line: u64,
+    character: u64,
+    capabilities: &ClientCapabilities,
+) -> (TestScenario, DefinitionResponse) {
+    let scenario_name = format!("definition/{}", scenario_short_name);
+    let scenario = TestScenario::new(&scenario_name, capabilities).await;
+    scenario.open(file).await;
+
+    let params = TextDocumentPositionParams {
+        text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+        position: Position::new(line, character),
+    };
+
+    let response = scenario
+        .server
+        .execute_async(|svr| svr.definition(params))
+        .await
+        .unwrap();
+
+    (scenario, response)
+}
+
+async fn run_definition_link(
+    scenario_short_name: &'static str,
+    file: &'static str,
+    line: u64,
+    character: u64,
+) -> (TestScenario, Vec<LocationLink>) {
+    let (scenario, response) = run_definition(
+        scenario_short_name,
+        file,
+        line,
+        character,
+        &DEFAULT_CAPABILITIES,
+    )
+    .await;
+    match response {
+        DefinitionResponse::LocationLinks(links) => (scenario, links),
+        DefinitionResponse::Locations(_) => unreachable!(),
+    }
+}
+
+async fn run_definition_location(
+    scenario_short_name: &'static str,
+    file: &'static str,
+    line: u64,
+    character: u64,
+) -> (TestScenario, Vec<Location>) {
+    let (scenario, response) = run_definition(
+        scenario_short_name,
+        file,
+        line,
+        character,
+        &NO_LINK_SUPPORT_CAPABILITIES,
+    )
+    .await;
+    match response {
+        DefinitionResponse::LocationLinks(_) => unreachable!(),
+        DefinitionResponse::Locations(locations) => (scenario, locations),
+    }
+}
+
+fn verify_origin_selection_range(
+    link: &LocationLink,
+    start_line: u64,
+    start_character: u64,
+    end_line: u64,
+    end_character: u64,
+) {
+    assert_eq!(
+        link.origin_selection_range,
+        Some(Range::new_simple(
+            start_line,
+            start_character,
+            end_line,
+            end_character
+        ))
+    );
+}
+
+#[tokio::test]
+async fn definition_latex_citation() {
+    let (scenario, mut links) = run_definition_link("latex/citation", "foo.tex", 1, 7).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    assert_eq!(
+        link.origin_selection_range.unwrap(),
+        Range::new_simple(1, 6, 1, 9)
+    );
+    assert_eq!(link.target_uri, scenario.uri("bar.bib").into());
+    assert_eq!(link.target_range, Range::new_simple(2, 0, 2, 14));
+    assert_eq!(link.target_selection_range, Range::new_simple(2, 9, 2, 12));
+
+    let (scenario, mut locations) =
+        run_definition_location("latex/citation", "foo.tex", 1, 7).await;
+    assert_eq!(locations.len(), 1);
+    let location = locations.pop().unwrap();
+    assert_eq!(location.uri, scenario.uri("bar.bib").into());
+    assert_eq!(location.range, Range::new_simple(2, 9, 2, 12));
+}
+
+#[tokio::test]
+async fn definition_latex_command() {
+    let (scenario, mut links) = run_definition_link("latex/command", "foo.tex", 2, 2).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 2, 0, 2, 4);
+    assert_eq!(link.target_uri, scenario.uri("foo.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 22));
+    assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 22));
+}
+
+#[tokio::test]
+async fn definition_latex_math_operator() {
+    let (scenario, mut links) = run_definition_link("latex/math_operator", "foo.tex", 2, 2).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 2, 0, 2, 4);
+    assert_eq!(link.target_uri, scenario.uri("foo.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 31));
+    assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 31));
+}
+
+#[tokio::test]
+async fn definition_latex_label_default() {
+    let (scenario, mut links) = run_definition_link("latex/label", "default.tex", 1, 7).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 1, 5, 1, 8);
+    assert_eq!(link.target_uri, scenario.uri("default.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 11));
+    assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 11));
+}
+
+#[tokio::test]
+async fn definition_latex_label_equation() {
+    let (scenario, mut links) = run_definition_link("latex/label", "equation.tex", 5, 8).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 5, 5, 5, 11);
+    assert_eq!(link.target_uri, scenario.uri("equation.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 3, 14));
+    assert_eq!(link.target_selection_range, Range::new_simple(1, 0, 1, 14));
+}
+
+#[tokio::test]
+async fn definition_latex_label_float() {
+    let (scenario, mut links) = run_definition_link("latex/label", "float.tex", 6, 6).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 6, 5, 6, 8);
+    assert_eq!(link.target_uri, scenario.uri("float.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 4, 12));
+    assert_eq!(link.target_selection_range, Range::new_simple(3, 0, 3, 11));
+}
+
+#[tokio::test]
+async fn definition_latex_label_item() {
+    let (scenario, mut links) = run_definition_link("latex/label", "item.tex", 6, 6).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 6, 5, 6, 8);
+    assert_eq!(link.target_uri, scenario.uri("item.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 4, 15));
+    assert_eq!(link.target_selection_range, Range::new_simple(2, 9, 2, 20));
+}
+
+#[tokio::test]
+async fn definition_latex_label_section() {
+    let (scenario, mut links) = run_definition_link("latex/label", "section.tex", 6, 6).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 6, 5, 6, 12);
+    assert_eq!(link.target_uri, scenario.uri("section.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 3, 0));
+    assert_eq!(link.target_selection_range, Range::new_simple(1, 0, 1, 15));
+}
+
+#[tokio::test]
+async fn definition_latex_label_theorem() {
+    let (scenario, mut links) = run_definition_link("latex/label", "theorem.tex", 8, 7).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 8, 5, 8, 12);
+    assert_eq!(link.target_uri, scenario.uri("theorem.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(3, 0, 6, 11));
+    assert_eq!(link.target_selection_range, Range::new_simple(4, 0, 4, 15));
 }
