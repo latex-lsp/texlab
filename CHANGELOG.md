@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 29.09.2019
+
+### Added
+
+- Include enumeration environments in symbols
+- Implement `workspace/symbol` request
+- Handle enumeration items when rendering labels
+- Handle subtables in symbols and completion
+
+### Changed
+
+- Handle BibTeX strings when rendering citations
+- Improve rendering of labels
+- Do not require a label when generating symbols
+- Improve detection of included files
+- Reorganize completion and symbol kinds
+- Do not rely on `workspace/didChangeWatchedFiles`
+- Use Rust Beta instead of Rust Nightly
+- Make rendering of section labels more consistent
+
+### Fixed
+
+- Fix theorem numbers in multi-file projects
+- Fix filter text of citations with braces inside a field
+- Handle invalid UTF-8 in log files
+
 ## [1.5.0] - 27.08.2019
 
 ### Added
