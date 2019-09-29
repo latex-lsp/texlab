@@ -1524,7 +1524,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",

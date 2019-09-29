@@ -1,7 +1,7 @@
 [package]
 name = "texlab"
 description = "LaTeX Language Server"
-version = "1.5.0"
+version = "1.6.0"
 license = "MIT"
 readme = "README.md"
 authors = [
