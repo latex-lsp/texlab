@@ -134,8 +134,8 @@ impl<'a> LatexSectionNode<'a> {
         {
             if let Some(ctx) = OutlineContext::parse(view, label, outline) {
                 let mut is_section = false;
-                if let OutlineContextItem::Section(section) = &ctx.item {
-                    if self.name() == *section {
+                if let OutlineContextItem::Section { text, .. } = &ctx.item {
+                    if self.name() == *text {
                         for name in label.names() {
                             self.label = Some(name.text().to_owned());
                         }

@@ -206,8 +206,8 @@ async fn completion_latex_label() {
     verify_text_edit(&items[3], 4, 5, 4, 5, "eq:bar");
     verify_text_edit(&items[4], 4, 5, 4, 5, "fig:baz");
     verify_text_edit(&items[5], 4, 5, 4, 5, "thm:foo");
-    verify_detail(&items[0], "2 Bar");
-    verify_detail(&items[1], "1 Foo");
+    verify_detail(&items[0], "Section 2 (Bar)");
+    verify_detail(&items[1], "Section 1 (Foo)");
     verify_detail(&items[2], "Equation (1)");
     verify_detail(&items[3], "Equation (2)");
     verify_detail(&items[4], "Figure 1");
@@ -665,7 +665,7 @@ async fn hover_latex_label_section_reload_aux() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::PlainText,
-            value: "Foo".into()
+            value: "Section (Foo)".into()
         })
     );
 
@@ -688,7 +688,7 @@ async fn hover_latex_label_section_reload_aux() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::PlainText,
-            value: "1 Foo".into()
+            value: "Section 1 (Foo)".into()
         })
     );
 }

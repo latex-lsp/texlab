@@ -135,7 +135,7 @@ pub fn label(
     context: Option<&OutlineContext>,
 ) -> CompletionItem {
     let kind = match context.as_ref().map(|ctx| &ctx.item) {
-        Some(OutlineContextItem::Section(_)) => Structure::Section.completion_kind(),
+        Some(OutlineContextItem::Section { .. }) => Structure::Section.completion_kind(),
         Some(OutlineContextItem::Caption { .. }) => Structure::Float.completion_kind(),
         Some(OutlineContextItem::Theorem { .. }) => Structure::Theorem.completion_kind(),
         Some(OutlineContextItem::Equation) => Structure::Equation.completion_kind(),

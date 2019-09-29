@@ -52,6 +52,7 @@ pub struct LatexSectionCommand {
     pub name: String,
     pub index: usize,
     pub level: i32,
+    pub prefix: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]

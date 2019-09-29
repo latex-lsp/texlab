@@ -41,7 +41,7 @@ impl LatexLabelDefinitionProvider {
                     let context = OutlineContext::parse(view, label, &outline);
                     for name in label.names() {
                         if name.text() == reference.text() {
-                            let target_range = if let Some(OutlineContextItem::Section(_)) =
+                            let target_range = if let Some(OutlineContextItem::Section { .. }) =
                                 context.as_ref().map(|ctx| &ctx.item)
                             {
                                 section_tree

@@ -143,7 +143,10 @@ impl OutlineCaptionKind {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OutlineContextItem {
-    Section(String),
+    Section {
+        prefix: &'static str,
+        text: String,
+    },
     Caption {
         kind: Option<OutlineCaptionKind>,
         text: String,
@@ -166,7 +169,7 @@ pub struct OutlineContext {
 impl OutlineContext {
     pub fn reference(&self) -> String {
         match (&self.number, &self.item) {
-            (Some(number), OutlineContextItem::Section(text)) => format!("{} {}", number, text),
+            (Some(number), OutlineContextItem::Section { prefix, text }) => format!("{} {} ({})", prefix, number, text),
             (Some(number), OutlineContextItem::Caption { kind: None, text }) => {
                 format!("{} {}", number, text)
             }
@@ -193,7 +196,7 @@ impl OutlineContext {
             ) => format!("{} {} ({})", kind, number, description),
             (Some(number), OutlineContextItem::Equation) => format!("Equation ({})", number),
             (Some(number), OutlineContextItem::Item) => format!("Item {}", number),
-            (None, OutlineContextItem::Section(text)) => text.clone(),
+            (None, OutlineContextItem::Section { prefix, text }) => format!("{} ({})", prefix, text),
             (None, OutlineContextItem::Caption { kind: None, text }) => text.clone(),
             (
                 None,
@@ -223,7 +226,7 @@ impl OutlineContext {
 
     pub fn detail(&self) -> Option<String> {
         match &self.item {
-            OutlineContextItem::Section(_)
+            OutlineContextItem::Section { .. }
             | OutlineContextItem::Theorem { .. }
             | OutlineContextItem::Equation
             | OutlineContextItem::Item => Some(self.reference()),
@@ -398,7 +401,7 @@ impl OutlineContext {
         Some(Self {
             range: section.range(),
             number: Self::find_number(view, label),
-            item: OutlineContextItem::Section(extract_group(content)),
+            item: OutlineContextItem::Section { prefix: section.prefix, text: extract_group(content) },
         })
     }
 

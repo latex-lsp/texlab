@@ -308,18 +308,20 @@ pub struct LatexSection {
     pub command: Arc<LatexCommand>,
     pub index: usize,
     pub level: i32,
+    pub prefix: &'static str,
 }
 
 impl LatexSection {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut sections = Vec::new();
         for command in commands {
-            for LatexSectionCommand { name, index, level } in &LANGUAGE_DATA.section_commands {
+            for LatexSectionCommand { name, index, level, prefix } in &LANGUAGE_DATA.section_commands {
                 if command.name.text() == name && command.args.len() > *index {
                     sections.push(Self {
                         command: Arc::clone(command),
                         index: *index,
                         level: *level,
+                        prefix: prefix.as_ref(),
                     })
                 }
             }

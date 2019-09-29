@@ -366,72 +366,86 @@
     {
       "name": "\\part",
       "index": 0,
-      "level": 0
+      "level": 0,
+      "prefix": "Part"
     },
     {
       "name": "\\part*",
       "index": 0,
-      "level": 0
+      "level": 0,
+      "prefix": "Part"
     },
     {
       "name": "\\chapter",
       "index": 0,
-      "level": 1
+      "level": 1,
+      "prefix": "Chapter"
     },
     {
       "name": "\\chapter*",
       "index": 0,
-      "level": 1
+      "level": 1,
+      "prefix": "Chapter"
     },
     {
       "name": "\\section",
       "index": 0,
-      "level": 2
+      "level": 2,
+      "prefix": "Section"
     },
     {
       "name": "\\section*",
       "index": 0,
-      "level": 2
+      "level": 2,
+      "prefix": "Section"
     },
     {
       "name": "\\subsection",
       "index": 0,
-      "level": 3
+      "level": 3,
+      "prefix": "Subsection"
     },
     {
       "name": "\\subsection*",
       "index": 0,
-      "level": 3
+      "level": 3,
+      "prefix": "Subsection"
     },
     {
       "name": "\\subsubsection",
       "index": 0,
-      "level": 4
+      "level": 4,
+      "prefix": "Subsection"
     },
     {
       "name": "\\subsubsection*",
       "index": 0,
-      "level": 4
+      "level": 4,
+      "prefix": "Subsection"
     },
     {
       "name": "\\paragraph",
       "index": 0,
-      "level": 5
+      "level": 5,
+      "prefix": "Paragraph"
     },
     {
       "name": "\\paragraph*",
       "index": 0,
-      "level": 5
+      "level": 5,
+      "prefix": "Paragraph"
     },
     {
       "name": "\\subparagraph",
       "index": 0,
-      "level": 6
+      "level": 6,
+      "prefix": "Subparagraph"
     },
     {
       "name": "\\subparagraph*",
       "index": 0,
-      "level": 6
+      "level": 6,
+      "prefix": "Subparagraph"
     }
   ],
   "includeCommands": [
