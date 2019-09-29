@@ -645,3 +645,50 @@ async fn hover_latex_class() {
 async fn hover_latex_package() {
     run_hover("latex/package", "foo.tex", 0, 17).await.unwrap();
 }
+
+#[tokio::test]
+async fn hover_latex_label_section_reload_aux() {
+    let scenario = TestScenario::new("hover/latex/label", &DEFAULT_CAPABILITIES).await;
+    scenario.open("section.tex").await;
+    let position = Position::new(3, 10);
+    let identifier = TextDocumentIdentifier::new(scenario.uri("section.tex").into());
+    let params = TextDocumentPositionParams::new(identifier, position);
+    let contents = scenario
+        .server
+        .execute_async(|svr| svr.hover(params.clone()))
+        .await
+        .unwrap()
+        .unwrap()
+        .contents;
+
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::PlainText,
+            value: "Foo".into()
+        })
+    );
+
+    let aux_path = scenario
+        .uri("section.tex")
+        .to_file_path()
+        .unwrap()
+        .with_extension("aux");
+    fs::write(&aux_path, "\\newlabel{sec:foo}{{1}{1}}").unwrap();
+
+    let contents = scenario
+        .server
+        .execute_async(|svr| svr.hover(params))
+        .await
+        .unwrap()
+        .unwrap()
+        .contents;
+
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::PlainText,
+            value: "1 Foo".into()
+        })
+    );
+}

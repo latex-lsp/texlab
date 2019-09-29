@@ -157,7 +157,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
-        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -177,7 +176,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let uri = params.text_document.uri.clone();
         self.workspace_manager.add(params.text_document);
         self.action_manager.push(Action::DetectRoot(uri.into()));
-        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -187,7 +185,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             let uri = params.text_document.uri.clone();
             self.workspace_manager.update(uri.into(), change.text);
         }
-        self.action_manager.push(Action::DetectChildren);
         self.action_manager.push(Action::RunLinter(
             params.text_document.uri.into(),
             LintReason::Change,
@@ -461,6 +458,21 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
+    async fn detect_children(&self) {
+        loop {
+            let mut changed = false;
+
+            let workspace = self.workspace_manager.get();
+            for path in workspace.unresolved_includes() {
+                changed |= self.workspace_manager.load(&path).is_ok();
+            }
+
+            if !changed {
+                break;
+            }
+        }
+    }
+
     fn update_document(&self, document: &Document) -> std::result::Result<(), LoadError> {
         if document.uri.scheme() != "file" {
             return Ok(());
@@ -488,7 +500,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     match diagnostics_manager.build.update(&document.uri) {
                         Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
                         Ok(false) => (),
-                        Err(why) => warn!("Unable to read log file ({}): {}", why, document.uri.as_str()),
+                        Err(why) => warn!(
+                            "Unable to read log file ({}): {}",
+                            why,
+                            document.uri.as_str()
+                        ),
                     }
                 }
             }
@@ -499,6 +515,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
     #[boxed]
     async fn before_message(&self) {
+        self.detect_children().await;
+
         let workspace = self.workspace_manager.get();
         for document in &workspace.documents {
             drop(self.update_document(document));
@@ -543,18 +561,6 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         }
                     }
                 }
-                Action::DetectChildren => loop {
-                    let mut changed = false;
-
-                    let workspace = self.workspace_manager.get();
-                    for path in workspace.unresolved_includes() {
-                        changed |= self.workspace_manager.load(&path).is_ok();
-                    }
-
-                    if !changed {
-                        break;
-                    }
-                },
                 Action::PublishDiagnostics => {
                     let workspace = self.workspace_manager.get();
                     for document in &workspace.documents {
