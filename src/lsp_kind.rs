@@ -84,7 +84,7 @@ impl Structure {
             Self::Entry(BibtexEntryTypeCategory::Part) => SymbolKind::Operator,
             Self::Entry(BibtexEntryTypeCategory::Thesis) => SymbolKind::Object,
             Self::Field => SymbolKind::Field,
-            Self::Argument => SymbolKind::Object,
+            Self::Argument => SymbolKind::Number,
         }
     }
 }
