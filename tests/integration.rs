@@ -692,3 +692,82 @@ async fn hover_latex_label_section_reload_aux() {
         })
     );
 }
+
+async fn run_workspace_symbol(query: &'static str) -> (TestScenario, Vec<SymbolInformation>) {
+    let scenario = TestScenario::new("symbol/workspace", &DEFAULT_CAPABILITIES).await;
+    scenario.open("foo.tex").await;
+    scenario.open("bar.bib").await;
+    let params = WorkspaceSymbolParams {
+        query: query.into(),
+    };
+    let symbols = scenario
+        .server
+        .execute_async(|svr| svr.workspace_symbol(params))
+        .await
+        .unwrap();
+
+    (scenario, symbols)
+}
+
+async fn verify_symbol_info<'a>(
+    symbol: &'a SymbolInformation,
+    scenario: &'a TestScenario,
+    file: &'static str,
+    name: &'static str,
+    start_line: u64,
+    start_character: u64,
+    end_line: u64,
+    end_character: u64,
+) {
+    assert_eq!(symbol.name, name);
+    let range = Range::new_simple(start_line, start_character, end_line, end_character);
+    assert_eq!(
+        symbol.location,
+        Location::new(scenario.uri(file).into(), range)
+    );
+}
+
+#[tokio::test]
+async fn symbol_workspace_filter_type_section() {
+    let (scenario, symbols) = run_workspace_symbol("section").await;
+    assert_eq!(symbols.len(), 4);
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1 Foo", 07, 0, 13, 0).await;
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2 Bar", 13, 0, 21, 0).await;
+    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3 Baz", 21, 0, 29, 0).await;
+    verify_symbol_info(&symbols[3], &scenario, "foo.tex", "4 Qux", 29, 0, 37, 0).await;
+}
+
+#[tokio::test]
+async fn symbol_workspace_filter_type_figure() {
+    let (scenario, symbols) = run_workspace_symbol("figure").await;
+    assert_eq!(symbols.len(), 1);
+    let name = "Figure 1: Bar";
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name, 15, 0, 19, 12).await;
+}
+
+#[tokio::test]
+async fn symbol_workspace_filter_type_item() {
+    let (scenario, symbols) = run_workspace_symbol("item").await;
+    assert_eq!(symbols.len(), 3);
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1", 24, 4, 25, 4).await;
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2", 25, 4, 26, 4).await;
+    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3", 26, 4, 27, 0).await;
+}
+
+#[tokio::test]
+async fn symbol_workspace_filter_type_math() {
+    let (scenario, symbols) = run_workspace_symbol("math").await;
+    assert_eq!(symbols.len(), 2);
+    let name1 = "Equation (1)";
+    let name2 = "Lemma 1 (Qux)";
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name1, 9, 0, 11, 14).await;
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", name2, 33, 0, 35, 11).await;
+}
+
+#[tokio::test]
+async fn symbol_workspace_filter_bibtex() {
+    let (scenario, symbols) = run_workspace_symbol("bibtex").await;
+    assert_eq!(symbols.len(), 2);
+    verify_symbol_info(&symbols[0], &scenario, "bar.bib", "foo", 0, 0, 0, 14).await;
+    verify_symbol_info(&symbols[1], &scenario, "bar.bib", "bar", 2, 0, 2, 20).await;
+}
