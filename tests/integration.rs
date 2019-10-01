@@ -607,6 +607,20 @@ async fn hover_bibtex_field() {
 }
 
 #[tokio::test]
+async fn hover_bibtex_string_reference() {
+    let contents = run_hover("bibtex/string_reference", "foo.bib", 3, 15)
+        .await
+        .unwrap();
+    assert_eq!(
+        contents,
+        HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::PlainText,
+            value: "\"foo {bar} baz\"".into(),
+        })
+    )
+}
+
+#[tokio::test]
 async fn hover_bibtex_type() {
     let contents = run_hover("bibtex/type", "foo.bib", 0, 5).await.unwrap();
     assert_eq!(

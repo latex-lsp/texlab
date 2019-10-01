@@ -315,7 +315,13 @@ impl LatexSection {
     fn parse(commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut sections = Vec::new();
         for command in commands {
-            for LatexSectionCommand { name, index, level, prefix } in &LANGUAGE_DATA.section_commands {
+            for LatexSectionCommand {
+                name,
+                index,
+                level,
+                prefix,
+            } in &LANGUAGE_DATA.section_commands
+            {
                 if command.name.text() == name && command.args.len() > *index {
                     sections.push(Self {
                         command: Arc::clone(command),
