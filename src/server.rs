@@ -465,7 +465,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
             let workspace = self.workspace_manager.get();
             for path in workspace.unresolved_includes() {
-                changed |= self.workspace_manager.load(&path).is_ok();
+                if path.exists() {
+                    changed |= self.workspace_manager.load(&path).is_ok();
+                }
             }
 
             if !changed {

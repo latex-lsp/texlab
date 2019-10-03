@@ -37,6 +37,10 @@ impl BuildDiagnosticsProvider {
         }
 
         let log_path = tex_uri.to_file_path().unwrap().with_extension("log");
+        if !log_path.exists() {
+            return Ok(false);
+        }
+
         let modified = fs::metadata(&log_path)?.modified()?;
 
         for log_file in &mut self.log_files {
