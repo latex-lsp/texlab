@@ -306,6 +306,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let symbols = self.symbol_provider.execute(&request).await;
         let response = SymbolResponse::new(
             &self.client_capabilities.get().unwrap(),
+            &request.view.workspace,
             &request.document().uri,
             symbols.into_iter().map(Into::into).collect(),
         );

@@ -1,10 +1,12 @@
 mod bibtex_entry;
 mod bibtex_string;
 mod latex_section;
+mod project_order;
 
 use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
+use self::project_order::ProjectOrdering;
 use crate::capabilities::ClientCapabilitiesExt;
 use crate::lsp_kind::Structure;
 use crate::syntax::*;
@@ -159,6 +161,7 @@ pub enum SymbolResponse {
 impl SymbolResponse {
     pub fn new(
         client_capabilities: &ClientCapabilities,
+        workspace: &Workspace,
         uri: &Uri,
         symbols: Vec<LatexSymbol>,
     ) -> Self {
@@ -173,7 +176,7 @@ impl SymbolResponse {
                 .into_iter()
                 .map(|symbol| symbol.into_symbol_info(uri.clone()))
                 .collect();
-            sort_symbols(&mut buffer);
+            sort_symbols(workspace, &mut buffer);
             Self::Flat(buffer)
         }
     }
@@ -234,19 +237,20 @@ pub async fn workspace_symbols(
             filtered.push(symbol.info);
         }
     }
-    sort_symbols(&mut filtered);
+    sort_symbols(&workspace, &mut filtered);
     filtered
 }
 
-fn sort_symbols(symbols: &mut Vec<SymbolInformation>) {
+fn sort_symbols(workspace: &Workspace, symbols: &mut Vec<SymbolInformation>) {
+    let ordering = ProjectOrdering::new(workspace);
     symbols.sort_by(|left, right| {
         let left_key = (
-            left.location.uri.to_string(),
+            ordering.get(&Uri::from(left.location.uri.clone())),
             left.location.range.start,
             Reverse(left.location.range.end),
         );
         let right_key = (
-            right.location.uri.to_string(),
+            ordering.get(&Uri::from(right.location.uri.clone())),
             right.location.range.start,
             Reverse(right.location.range.end),
         );
