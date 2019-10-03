@@ -27,7 +27,11 @@ pub static DEFAULT_CAPABILITIES: ClientCapabilities = ClientCapabilities {
         signature_help: None,
         references: None,
         document_highlight: None,
-        document_symbol: None,
+        document_symbol: Some(DocumentSymbolCapability {
+            dynamic_registration: None,
+            hierarchical_document_symbol_support: Some(true),
+            symbol_kind: None,
+        }),
         formatting: None,
         range_formatting: None,
         on_type_formatting: None,

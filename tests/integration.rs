@@ -5,6 +5,7 @@ use texlab::definition::DefinitionResponse;
 use texlab::diagnostics::BibtexErrorCode;
 use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::range::RangeExt;
+use texlab::symbol::SymbolResponse;
 use texlab::syntax::LANGUAGE_DATA;
 use texlab::test_scenario::*;
 
@@ -707,6 +708,25 @@ async fn hover_latex_label_section_reload_aux() {
     );
 }
 
+async fn run_hierarchical_symbol(file: &'static str) -> Vec<DocumentSymbol> {
+    let scenario = TestScenario::new("symbol/hierarchical", &DEFAULT_CAPABILITIES).await;
+    scenario.open(file).await;
+    let params = DocumentSymbolParams {
+        text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+    };
+
+    let response = scenario
+        .server
+        .execute_async(|svr| svr.document_symbol(params))
+        .await
+        .unwrap();
+
+    match response {
+        SymbolResponse::Hierarchical(symbols) => symbols,
+        SymbolResponse::Flat(_) => unreachable!(),
+    }
+}
+
 async fn run_workspace_symbol(query: &'static str) -> (TestScenario, Vec<SymbolInformation>) {
     let scenario = TestScenario::new("symbol/workspace", &DEFAULT_CAPABILITIES).await;
     scenario.open("foo.tex").await;
@@ -723,11 +743,24 @@ async fn run_workspace_symbol(query: &'static str) -> (TestScenario, Vec<SymbolI
     (scenario, symbols)
 }
 
-async fn verify_symbol_info<'a>(
-    symbol: &'a SymbolInformation,
-    scenario: &'a TestScenario,
-    file: &'static str,
-    name: &'static str,
+fn verify_symbol(
+    symbol: &DocumentSymbol,
+    name: &str,
+    detail: Option<&str>,
+    selection_range: Range,
+    range: Range,
+) {
+    assert_eq!(symbol.name, name);
+    assert_eq!(symbol.detail.as_ref().map(AsRef::as_ref), detail);
+    assert_eq!(symbol.selection_range, selection_range);
+    assert_eq!(symbol.range, range);
+}
+
+fn verify_symbol_info(
+    symbol: &SymbolInformation,
+    scenario: &TestScenario,
+    file: &str,
+    name: &str,
     start_line: u64,
     start_character: u64,
     end_line: u64,
@@ -742,13 +775,175 @@ async fn verify_symbol_info<'a>(
 }
 
 #[tokio::test]
+async fn symbol_hierarchical_enumerate() {
+    let mut symbols = run_hierarchical_symbol("enumerate.tex").await;
+    assert_eq!(symbols.len(), 1);
+    verify_symbol(
+        &symbols[0],
+        "Enumerate",
+        None,
+        Range::new_simple(4, 0, 9, 15),
+        Range::new_simple(4, 0, 9, 15),
+    );
+
+    let children = symbols[0].children.take().unwrap();
+    assert_eq!(children.len(), 4);
+    verify_symbol(
+        &children[0],
+        "1",
+        Some("it:foo"),
+        Range::new_simple(5, 9, 5, 23),
+        Range::new_simple(5, 4, 6, 4),
+    );
+    verify_symbol(
+        &children[1],
+        "Item",
+        Some("it:bar"),
+        Range::new_simple(6, 9, 6, 23),
+        Range::new_simple(6, 4, 7, 4),
+    );
+    verify_symbol(
+        &children[2],
+        "Baz",
+        None,
+        Range::new_simple(7, 4, 7, 14),
+        Range::new_simple(7, 4, 8, 4),
+    );
+    verify_symbol(
+        &children[3],
+        "Qux",
+        Some("it:qux"),
+        Range::new_simple(8, 14, 8, 28),
+        Range::new_simple(8, 4, 9, 0),
+    );
+}
+
+#[tokio::test]
+async fn symbol_hierarchical_equation() {
+    let symbols = run_hierarchical_symbol("equation.tex").await;
+    assert_eq!(symbols.len(), 3);
+    verify_symbol(
+        &symbols[0],
+        "Equation (1)",
+        Some("eq:foo"),
+        Range::new_simple(4, 16, 4, 30),
+        Range::new_simple(4, 0, 6, 14),
+    );
+    verify_symbol(
+        &symbols[1],
+        "Equation",
+        Some("eq:bar"),
+        Range::new_simple(8, 16, 8, 30),
+        Range::new_simple(8, 0, 10, 14),
+    );
+    verify_symbol(
+        &symbols[2],
+        "Equation",
+        None,
+        Range::new_simple(12, 0, 14, 14),
+        Range::new_simple(12, 0, 14, 14),
+    );
+}
+
+#[tokio::test]
+async fn symbol_hierarchical_float() {
+    let symbols = run_hierarchical_symbol("float.tex").await;
+    assert_eq!(symbols.len(), 3);
+    verify_symbol(
+        &symbols[0],
+        "Figure 1: Foo",
+        Some("fig:foo"),
+        Range::new_simple(6, 17, 6, 32),
+        Range::new_simple(4, 0, 7, 12),
+    );
+    verify_symbol(
+        &symbols[1],
+        "Figure: Bar",
+        Some("fig:bar"),
+        Range::new_simple(11, 17, 11, 32),
+        Range::new_simple(9, 0, 12, 12),
+    );
+    verify_symbol(
+        &symbols[2],
+        "Figure: Baz",
+        None,
+        Range::new_simple(14, 0, 17, 12),
+        Range::new_simple(14, 0, 17, 12),
+    );
+}
+
+#[tokio::test]
+async fn symbol_hierarchical_section() {
+    let mut symbols = run_hierarchical_symbol("section.tex").await;
+    assert_eq!(symbols.len(), 2);
+    verify_symbol(
+        &symbols[0],
+        "Foo",
+        None,
+        Range::new_simple(4, 0, 4, 13),
+        Range::new_simple(4, 0, 6, 0),
+    );
+    verify_symbol(
+        &symbols[1],
+        "2 Bar",
+        Some("sec:bar"),
+        Range::new_simple(6, 0, 6, 13),
+        Range::new_simple(6, 0, 10, 0),
+    );
+
+    let children = symbols[1].children.take().unwrap();
+    assert_eq!(children.len(), 1);
+    verify_symbol(
+        &children[0],
+        "Baz",
+        Some("sec:baz"),
+        Range::new_simple(8, 0, 8, 16),
+        Range::new_simple(8, 0, 10, 0),
+    );
+}
+
+#[tokio::test]
+async fn symbol_hierarchical_theorem() {
+    let symbols = run_hierarchical_symbol("theorem.tex").await;
+    assert_eq!(symbols.len(), 4);
+    verify_symbol(
+        &symbols[0],
+        "Lemma 1 (Foo)",
+        Some("thm:foo"),
+        Range::new_simple(6, 18, 6, 33),
+        Range::new_simple(6, 0, 8, 11),
+    );
+    verify_symbol(
+        &symbols[1],
+        "Lemma 2",
+        Some("thm:bar"),
+        Range::new_simple(10, 13, 10, 28),
+        Range::new_simple(10, 0, 12, 11),
+    );
+    verify_symbol(
+        &symbols[2],
+        "Lemma",
+        Some("thm:baz"),
+        Range::new_simple(14, 13, 14, 28),
+        Range::new_simple(14, 0, 16, 11),
+    );
+    verify_symbol(
+        &symbols[3],
+        "Lemma (Qux)",
+        None,
+        Range::new_simple(18, 0, 20, 11),
+        Range::new_simple(18, 0, 20, 11),
+    );
+}
+
+#[tokio::test]
 async fn symbol_workspace_filter_type_section() {
     let (scenario, symbols) = run_workspace_symbol("section").await;
     assert_eq!(symbols.len(), 4);
-    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1 Foo", 07, 0, 13, 0).await;
-    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2 Bar", 13, 0, 21, 0).await;
-    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3 Baz", 21, 0, 29, 0).await;
-    verify_symbol_info(&symbols[3], &scenario, "foo.tex", "4 Qux", 29, 0, 37, 0).await;
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1 Foo", 07, 0, 13, 0);
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2 Bar", 13, 0, 21, 0);
+    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3 Baz", 21, 0, 29, 0);
+    verify_symbol_info(&symbols[3], &scenario, "foo.tex", "4 Qux", 29, 0, 37, 0);
 }
 
 #[tokio::test]
@@ -756,16 +951,16 @@ async fn symbol_workspace_filter_type_figure() {
     let (scenario, symbols) = run_workspace_symbol("figure").await;
     assert_eq!(symbols.len(), 1);
     let name = "Figure 1: Bar";
-    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name, 15, 0, 19, 12).await;
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name, 15, 0, 19, 12);
 }
 
 #[tokio::test]
 async fn symbol_workspace_filter_type_item() {
     let (scenario, symbols) = run_workspace_symbol("item").await;
     assert_eq!(symbols.len(), 3);
-    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1", 24, 4, 25, 4).await;
-    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2", 25, 4, 26, 4).await;
-    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3", 26, 4, 27, 0).await;
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", "1", 24, 4, 25, 4);
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", "2", 25, 4, 26, 4);
+    verify_symbol_info(&symbols[2], &scenario, "foo.tex", "3", 26, 4, 27, 0);
 }
 
 #[tokio::test]
@@ -774,14 +969,14 @@ async fn symbol_workspace_filter_type_math() {
     assert_eq!(symbols.len(), 2);
     let name1 = "Equation (1)";
     let name2 = "Lemma 1 (Qux)";
-    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name1, 9, 0, 11, 14).await;
-    verify_symbol_info(&symbols[1], &scenario, "foo.tex", name2, 33, 0, 35, 11).await;
+    verify_symbol_info(&symbols[0], &scenario, "foo.tex", name1, 9, 0, 11, 14);
+    verify_symbol_info(&symbols[1], &scenario, "foo.tex", name2, 33, 0, 35, 11);
 }
 
 #[tokio::test]
 async fn symbol_workspace_filter_bibtex() {
     let (scenario, symbols) = run_workspace_symbol("bibtex").await;
     assert_eq!(symbols.len(), 2);
-    verify_symbol_info(&symbols[0], &scenario, "bar.bib", "foo", 0, 0, 0, 14).await;
-    verify_symbol_info(&symbols[1], &scenario, "bar.bib", "bar", 2, 0, 2, 20).await;
+    verify_symbol_info(&symbols[0], &scenario, "bar.bib", "foo", 0, 0, 0, 14);
+    verify_symbol_info(&symbols[1], &scenario, "bar.bib", "bar", 2, 0, 2, 20);
 }
