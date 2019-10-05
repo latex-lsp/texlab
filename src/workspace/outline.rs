@@ -215,7 +215,7 @@ impl OutlineContext {
                     kind,
                     description: None,
                 },
-            ) => format!("{}", kind),
+            ) => kind.to_owned(),
             (
                 None,
                 OutlineContextItem::Theorem {

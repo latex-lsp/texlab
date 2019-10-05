@@ -31,7 +31,7 @@ fn make_symbol(view: &DocumentView, tree: &LatexSyntaxTree, full_range: Range) -
 
     LatexSymbol {
         name,
-        label: label_name(label.clone()),
+        label: label_name(label),
         kind: LatexSymbolKind::Equation,
         deprecated: false,
         full_range,

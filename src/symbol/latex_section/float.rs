@@ -39,7 +39,7 @@ fn make_symbol(
 
     let symbol = LatexSymbol {
         name,
-        label: label_name(label.clone()),
+        label: label_name(label),
         kind: match kind {
             OutlineCaptionKind::Figure => LatexSymbolKind::Figure,
             OutlineCaptionKind::Table => LatexSymbolKind::Table,

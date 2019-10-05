@@ -15,7 +15,7 @@ pub struct JavaScriptEngine {
 impl JavaScriptEngine {
     fn new() -> Self {
         let ducc = Ducc::new();
-        let _: () = ducc.exec(JS_CODE, None, ExecSettings::default()).unwrap();
+        ducc.exec::<()>(JS_CODE, None, ExecSettings::default()).unwrap();
         Self { ducc }
     }
 

@@ -316,7 +316,7 @@ pub fn citation(
     let kind = LANGUAGE_DATA
         .find_entry_type(&entry.ty.text()[1..])
         .map(|ty| Structure::Entry(ty.category).completion_kind())
-        .unwrap_or(Structure::Entry(BibtexEntryTypeCategory::Misc).completion_kind());
+        .unwrap_or_else(|| Structure::Entry(BibtexEntryTypeCategory::Misc).completion_kind());
 
     CompletionItem {
         label: key.to_owned(),

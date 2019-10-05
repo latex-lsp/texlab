@@ -49,7 +49,7 @@ fn make_symbol(
 
                     let symbol = LatexSymbol {
                         name,
-                        label: label_name(label.clone()),
+                        label: label_name(label),
                         kind: LatexSymbolKind::Theorem,
                         deprecated: false,
                         full_range: environment.range(),

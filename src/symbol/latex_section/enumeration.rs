@@ -48,7 +48,7 @@ fn make_symbol(
         let name = number.unwrap_or_else(|| "Item".into());
         children.push(LatexSymbol {
             name,
-            label: label_name(label.clone()),
+            label: label_name(label),
             kind: LatexSymbolKind::EnumerationItem,
             deprecated: false,
             full_range: range,
