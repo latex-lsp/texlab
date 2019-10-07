@@ -25,9 +25,9 @@ impl BibtexStringDefinitionProvider {
     fn find_reference(tree: &BibtexSyntaxTree, position: Position) -> Option<&BibtexToken> {
         let mut nodes = tree.find(position);
         nodes.reverse();
-        match (&nodes[0], &nodes[1]) {
-            (BibtexNode::Word(word), BibtexNode::Field(_))
-            | (BibtexNode::Word(word), BibtexNode::Concat(_)) => Some(&word.token),
+        match (&nodes[0], &nodes.get(1)) {
+            (BibtexNode::Word(word), Some(BibtexNode::Field(_)))
+            | (BibtexNode::Word(word), Some(BibtexNode::Concat(_))) => Some(&word.token),
             _ => None,
         }
     }
