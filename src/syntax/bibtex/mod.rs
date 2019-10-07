@@ -26,6 +26,16 @@ impl BibtexSyntaxTree {
         entries
     }
 
+    pub fn strings(&self) -> Vec<&BibtexString> {
+        let mut strings: Vec<&BibtexString> = Vec::new();
+        for declaration in &self.root.children {
+            if let BibtexDeclaration::String(string) = declaration {
+                strings.push(&string);
+            }
+        }
+        strings
+    }
+
     pub fn find(&self, position: Position) -> Vec<BibtexNode> {
         let mut finder = BibtexFinder::new(position);
         finder.visit_root(&self.root);

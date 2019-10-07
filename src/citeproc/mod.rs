@@ -15,7 +15,8 @@ pub struct JavaScriptEngine {
 impl JavaScriptEngine {
     fn new() -> Self {
         let ducc = Ducc::new();
-        ducc.exec::<()>(JS_CODE, None, ExecSettings::default()).unwrap();
+        ducc.exec::<()>(JS_CODE, None, ExecSettings::default())
+            .unwrap();
         Self { ducc }
     }
 
@@ -57,14 +58,7 @@ pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupConte
 }
 
 fn replace_strings(tree: &BibtexSyntaxTree, old_entry: &BibtexEntry) -> BibtexEntry {
-    let mut strings = Vec::new();
-    for child in &tree.root.children {
-        if let BibtexDeclaration::String(string) = &child {
-            if string.value.is_some() {
-                strings.push(string);
-            }
-        }
-    }
+    let strings = tree.strings();
 
     let mut new_entry = old_entry.clone();
     for field in &mut new_entry.fields {

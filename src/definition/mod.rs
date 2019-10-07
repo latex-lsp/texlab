@@ -1,7 +1,9 @@
+mod bibtex_string;
 mod latex_citation;
 mod latex_command;
 mod latex_label;
 
+use self::bibtex_string::BibtexStringDefinitionProvider;
 use self::latex_citation::LatexCitationDefinitionProvider;
 use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
@@ -18,6 +20,7 @@ impl DefinitionProvider {
     pub fn new() -> Self {
         Self {
             provider: ConcatProvider::new(vec![
+                Box::new(BibtexStringDefinitionProvider),
                 Box::new(LatexCitationDefinitionProvider),
                 Box::new(LatexCommandDefinitionProvider),
                 Box::new(LatexLabelDefinitionProvider),

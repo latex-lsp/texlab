@@ -360,14 +360,22 @@ fn verify_origin_selection_range(
 }
 
 #[tokio::test]
+async fn definition_bibtex_string() {
+    let (scenario, mut links) = run_definition_link("bibtex/string", "foo.bib", 5, 14).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 5, 13, 5, 16);
+    assert_eq!(link.target_uri, scenario.uri("foo.bib").into());
+    assert_eq!(link.target_range, Range::new_simple(2, 0, 2, 20));
+    assert_eq!(link.target_selection_range, Range::new_simple(2, 8, 2, 11));
+}
+
+#[tokio::test]
 async fn definition_latex_citation() {
     let (scenario, mut links) = run_definition_link("latex/citation", "foo.tex", 1, 7).await;
     assert_eq!(links.len(), 1);
     let link = links.pop().unwrap();
-    assert_eq!(
-        link.origin_selection_range.unwrap(),
-        Range::new_simple(1, 6, 1, 9)
-    );
+    verify_origin_selection_range(&link, 1, 6, 1, 9);
     assert_eq!(link.target_uri, scenario.uri("bar.bib").into());
     assert_eq!(link.target_range, Range::new_simple(2, 0, 2, 14));
     assert_eq!(link.target_selection_range, Range::new_simple(2, 9, 2, 12));
@@ -389,17 +397,6 @@ async fn definition_latex_command() {
     assert_eq!(link.target_uri, scenario.uri("foo.tex").into());
     assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 22));
     assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 22));
-}
-
-#[tokio::test]
-async fn definition_latex_math_operator() {
-    let (scenario, mut links) = run_definition_link("latex/math_operator", "foo.tex", 2, 2).await;
-    assert_eq!(links.len(), 1);
-    let link = links.pop().unwrap();
-    verify_origin_selection_range(&link, 2, 0, 2, 4);
-    assert_eq!(link.target_uri, scenario.uri("foo.tex").into());
-    assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 31));
-    assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 31));
 }
 
 #[tokio::test]
@@ -466,6 +463,17 @@ async fn definition_latex_label_theorem() {
     assert_eq!(link.target_uri, scenario.uri("theorem.tex").into());
     assert_eq!(link.target_range, Range::new_simple(3, 0, 6, 11));
     assert_eq!(link.target_selection_range, Range::new_simple(4, 0, 4, 15));
+}
+
+#[tokio::test]
+async fn definition_latex_math_operator() {
+    let (scenario, mut links) = run_definition_link("latex/math_operator", "foo.tex", 2, 2).await;
+    assert_eq!(links.len(), 1);
+    let link = links.pop().unwrap();
+    verify_origin_selection_range(&link, 2, 0, 2, 4);
+    assert_eq!(link.target_uri, scenario.uri("foo.tex").into());
+    assert_eq!(link.target_range, Range::new_simple(0, 0, 0, 31));
+    assert_eq!(link.target_selection_range, Range::new_simple(0, 0, 0, 31));
 }
 
 #[tokio::test]
