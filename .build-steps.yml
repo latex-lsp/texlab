@@ -31,7 +31,7 @@ steps:
         displayName: "Install Python tools"
       - bash: |
           zip -0 ccov.zip `find . \( -name "texlab*.gc*" -o -name "deps*build*.gc*" -o -name "integration*.gc*" \) -print`;
-          grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore-dir "{/*,target/*}" -o lcov.info
+          grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore "{/*,target/*}" -o lcov.info
           python -m pip install lcov_cobertura
           python -m lcov_cobertura lcov.info
         displayName: "Build coverage report"
