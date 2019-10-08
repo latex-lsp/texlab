@@ -568,6 +568,12 @@
       "index": 0,
       "kind": "everything",
       "includeExtension": true
+    },
+    {
+      "name": "\\subfile",
+      "index": 0,
+      "kind": "latex",
+      "includeExtension": false
     }
   ],
   "commandDefinitionCommands": [
