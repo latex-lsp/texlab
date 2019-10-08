@@ -1,7 +1,9 @@
 mod bibtex_entry;
+mod bibtex_string;
 mod latex_label;
 
 use self::bibtex_entry::BibtexEntryReferenceProvider;
+use self::bibtex_string::BibtexStringReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -16,6 +18,7 @@ impl ReferenceProvider {
         Self {
             provider: ConcatProvider::new(vec![
                 Box::new(BibtexEntryReferenceProvider),
+                Box::new(BibtexStringReferenceProvider),
                 Box::new(LatexLabelReferenceProvider),
             ]),
         }
