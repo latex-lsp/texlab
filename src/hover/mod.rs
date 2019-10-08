@@ -3,6 +3,7 @@ mod bibtex_field;
 mod bibtex_string_reference;
 mod latex_citation;
 mod latex_component;
+mod latex_include;
 mod latex_label;
 mod latex_preview;
 
@@ -11,6 +12,7 @@ use self::bibtex_field::BibtexFieldHoverProvider;
 use self::bibtex_string_reference::BibtexStringReferenceHoverProvider;
 use self::latex_citation::LatexCitationHoverProvider;
 use self::latex_component::LatexComponentHoverProvider;
+use self::latex_include::LatexIncludeHoverProvider;
 use self::latex_label::LatexLabelHoverProvider;
 use self::latex_preview::LatexPreviewHoverProvider;
 use crate::workspace::*;
@@ -30,6 +32,7 @@ impl HoverProvider {
                 Box::new(BibtexFieldHoverProvider),
                 Box::new(LatexCitationHoverProvider),
                 Box::new(LatexComponentHoverProvider),
+                Box::new(LatexIncludeHoverProvider),
                 Box::new(LatexLabelHoverProvider),
                 Box::new(LatexPreviewHoverProvider),
             ]),
