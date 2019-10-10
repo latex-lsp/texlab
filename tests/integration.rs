@@ -1,4 +1,5 @@
 use lsp_types::*;
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::fs;
 use texlab::definition::DefinitionResponse;
@@ -524,6 +525,89 @@ async fn diagnostics_build() {
         let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.tex")];
         assert!(diagnostics.is_empty());
     }
+}
+
+async fn run_folding(file: &'static str) -> Vec<FoldingRange> {
+    let scenario = TestScenario::new("folding", &DEFAULT_CAPABILITIES).await;
+    scenario.open(file).await;
+    let params = FoldingRangeParams {
+        text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+    };
+
+    let mut foldings = scenario
+        .server
+        .execute_async(|svr| svr.folding_range(params))
+        .await
+        .unwrap();
+
+    foldings.sort_by_key(|folding| {
+        let start = Position::new(folding.start_line, folding.start_character.unwrap());
+        let end = Position::new(folding.end_line, folding.end_character.unwrap());
+        (start, Reverse(end))
+    });
+    foldings
+}
+
+#[tokio::test]
+async fn folding_bibtex() {
+    let foldings = run_folding("bar.bib").await;
+    assert_eq!(
+        foldings,
+        vec![
+            FoldingRange {
+                start_line: 0,
+                start_character: Some(0),
+                end_line: 0,
+                end_character: Some(23),
+                kind: Some(FoldingRangeKind::Region)
+            },
+            FoldingRange {
+                start_line: 2,
+                start_character: Some(0),
+                end_line: 2,
+                end_character: Some(19),
+                kind: Some(FoldingRangeKind::Region)
+            },
+            FoldingRange {
+                start_line: 4,
+                start_character: Some(0),
+                end_line: 23,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region)
+            }
+        ]
+    );
+}
+
+#[tokio::test]
+async fn folding_latex() {
+    let foldings = run_folding("foo.tex").await;
+    assert_eq!(
+        foldings,
+        vec![
+            FoldingRange {
+                start_line: 4,
+                start_character: Some(16),
+                end_line: 12,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region)
+            },
+            FoldingRange {
+                start_line: 6,
+                start_character: Some(13),
+                end_line: 9,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region)
+            },
+            FoldingRange {
+                start_line: 8,
+                start_character: Some(16),
+                end_line: 9,
+                end_character: Some(0),
+                kind: Some(FoldingRangeKind::Region)
+            },
+        ]
+    );
 }
 
 async fn run_bibtex_formatting(

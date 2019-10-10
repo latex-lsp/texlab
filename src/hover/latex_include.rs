@@ -77,7 +77,11 @@ mod tests {
             Some(Hover {
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::PlainText,
-                    value: FeatureSpec::uri("baz.tex").to_file_path().unwrap().to_string_lossy().into_owned(),
+                    value: FeatureSpec::uri("baz.tex")
+                        .to_file_path()
+                        .unwrap()
+                        .to_string_lossy()
+                        .into_owned(),
                 }),
                 range: Some(Range::new_simple(0, 14, 0, 17)),
             })
@@ -89,9 +93,7 @@ mod tests {
         let hover = test_feature(
             LatexIncludeHoverProvider,
             FeatureSpec {
-                files: vec![
-                    FeatureSpec::file("foo.tex", "")
-                ],
+                files: vec![FeatureSpec::file("foo.tex", "")],
                 main_file: "foo.tex",
                 position: Position::new(0, 0),
                 ..FeatureSpec::default()
