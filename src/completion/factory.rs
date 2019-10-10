@@ -29,6 +29,7 @@ pub enum CompletionItemData {
     FieldName,
     Citation { uri: Uri, key: String },
     Argument,
+    GlossaryEntry,
 }
 
 impl Into<serde_json::Value> for CompletionItemData {
@@ -379,6 +380,23 @@ pub fn argument(
         data: Some(CompletionItemData::Argument.into()),
         text_edit: Some(text_edit),
         documentation: image.and_then(|image| image_documentation(&request, &name, image)),
+        ..CompletionItem::default()
+    }
+}
+
+pub fn glossary_entry(
+    request: &FeatureRequest<CompletionParams>,
+    label: String,
+    text_edit: TextEdit,
+) -> CompletionItem {
+    CompletionItem {
+        label,
+        kind: Some(adjust_kind(
+            request,
+            Structure::GlossaryEntry.completion_kind(),
+        )),
+        data: Some(CompletionItemData::GlossaryEntry.into()),
+        text_edit: Some(text_edit),
         ..CompletionItem::default()
     }
 }

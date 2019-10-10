@@ -23,6 +23,7 @@ pub enum Structure {
     Entry(BibtexEntryTypeCategory),
     Field,
     Argument,
+    GlossaryEntry,
 }
 
 impl Structure {
@@ -54,6 +55,7 @@ impl Structure {
             Self::Entry(BibtexEntryTypeCategory::Thesis) => CompletionItemKind::Unit,
             Self::Field => CompletionItemKind::Field,
             Self::Argument => CompletionItemKind::Value,
+            Self::GlossaryEntry => CompletionItemKind::Keyword,
         }
     }
 
@@ -85,6 +87,7 @@ impl Structure {
             Self::Entry(BibtexEntryTypeCategory::Thesis) => SymbolKind::Object,
             Self::Field => SymbolKind::Field,
             Self::Argument => SymbolKind::Number,
+            Self::GlossaryEntry => unimplemented!(),
         }
     }
 }

@@ -5,6 +5,7 @@ pub mod color;
 pub mod color_model;
 pub mod combinators;
 pub mod component;
+pub mod glossary;
 pub mod import;
 pub mod include;
 pub mod label;

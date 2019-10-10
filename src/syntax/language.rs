@@ -132,6 +132,29 @@ pub struct LatexColorModelCommand {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum LatexGlossaryEntryKind {
+    General,
+    Acronym,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatexGlossaryEntryDefinitionCommand {
+    pub name: String,
+    pub label_index: usize,
+    pub kind: LatexGlossaryEntryKind,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatexGlossaryEntryReferenceCommand {
+    pub name: String,
+    pub index: usize,
+    pub kind: LatexGlossaryEntryKind,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum BibtexEntryTypeCategory {
     Misc,
     String,
@@ -171,6 +194,8 @@ pub struct LanguageData {
     pub colors: Vec<String>,
     pub color_commands: Vec<LatexColorCommand>,
     pub color_model_commands: Vec<LatexColorModelCommand>,
+    pub glossary_entry_definition_commands: Vec<LatexGlossaryEntryDefinitionCommand>,
+    pub glossary_entry_reference_commands: Vec<LatexGlossaryEntryReferenceCommand>,
     pub entry_types: Vec<BibtexEntryTypeDoc>,
     pub fields: Vec<BibtexFieldDoc>,
     pub pgf_libraries: Vec<String>,

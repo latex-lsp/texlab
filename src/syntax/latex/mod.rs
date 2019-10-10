@@ -1,6 +1,7 @@
 mod ast;
 mod env;
 mod finder;
+mod glossary;
 mod lexer;
 mod math;
 mod parser;
@@ -10,6 +11,7 @@ mod structure;
 pub use self::ast::*;
 pub use self::env::*;
 pub use self::finder::LatexNode;
+pub use self::glossary::*;
 pub use self::math::*;
 pub use self::printer::LatexPrinter;
 pub use self::structure::*;
@@ -252,6 +254,7 @@ pub struct LatexSyntaxTree {
     pub citations: Vec<LatexCitation>,
     pub math: LatexMathInfo,
     pub command_definitions: Vec<LatexCommandDefinition>,
+    pub glossary: LatexGlossaryInfo,
 }
 
 impl LatexSyntaxTree {
@@ -267,6 +270,7 @@ impl LatexSyntaxTree {
         let citations = LatexCitation::parse(&commands);
         let math = LatexMathInfo::parse(Arc::clone(&root), &commands);
         let command_definitions = LatexCommandDefinition::parse(&commands);
+        let glossary = LatexGlossaryInfo::parse(&commands);
         Self {
             root,
             commands,
@@ -277,6 +281,7 @@ impl LatexSyntaxTree {
             citations,
             math,
             command_definitions,
+            glossary,
         }
     }
 

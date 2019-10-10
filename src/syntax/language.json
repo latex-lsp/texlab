@@ -244,122 +244,170 @@
     {
       "name": "\\ref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\autoref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\pageref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\eqref",
       "index": 0,
-      "kind": { "reference": "math" }
+      "kind": {
+        "reference": "math"
+      }
     },
     {
       "name": "\\cref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Cref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\crefrange",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\crefrange",
       "index": 1,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Crefrange",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Crefrange",
       "index": 1,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\cref*",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Cref*",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\crefrange*",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\crefrange*",
       "index": 1,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Crefrange*",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\Crefrange*",
       "index": 1,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\namecref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\nameCref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\lcnamecref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\namecrefs",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\nameCrefs",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\lcnamecrefs",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\labelcref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     },
     {
       "name": "\\labelcpageref",
       "index": 0,
-      "kind": { "reference": "everything" }
+      "kind": {
+        "reference": "everything"
+      }
     }
   ],
   "sectionCommands": [
@@ -679,6 +727,465 @@
     {
       "name": "\\definecolorset",
       "index": 0
+    }
+  ],
+  "glossaryEntryDefinitionCommands": [
+    {
+      "name": "\\newglossaryentry",
+      "labelIndex": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\newacronym",
+      "labelIndex": 0,
+      "kind": "acronym"
+    }
+  ],
+  "glossaryEntryReferenceCommands": [
+    {
+      "name": "\\gls",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Gls",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLS",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glspl",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glspl",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSpl",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsdisp",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glslink",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glstext",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glstext",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLStext",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsfirst",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsfirst",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSfirst",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsfirstplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsfirstplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSfirstplural",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsname",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsname",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSname",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glssymbol",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glssymbol",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsdesc",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsdesc",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSdesc",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuseri",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuseri",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuseri",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuserii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuserii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuserii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuseriii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuseriii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuseriii",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuseriv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuseriv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuseriv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuserv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuserv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuserv",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\glsuservi",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\Glsuservi",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\GLSuservi",
+      "index": 0,
+      "kind": "general"
+    },
+    {
+      "name": "\\acrshort",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrshort",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRshort",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acrshortpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrshortpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRshortpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acrlong",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrlong",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRlong",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acrlongpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrlongpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRlongpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acrfull",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrfull",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRfull",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acrfullpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acrfullpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ACRfullpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acs",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acs",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acsp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acsp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\aclp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Aclp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acf",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acf",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acfp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Acfp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\ac",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Ac",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\acp",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\glsentrylong",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Glsentrylong",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\glsentrylongpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Glsentrylongpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\glsentryshort",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Glsentryshort",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\glsentryshortpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Glsentryshortpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\glsentryfullpl",
+      "index": 0,
+      "kind": "acronym"
+    },
+    {
+      "name": "\\Glsentryfullpl",
+      "index": 0,
+      "kind": "acronym"
     }
   ],
   "entryTypes": [

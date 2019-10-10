@@ -16,6 +16,7 @@ use self::latex::citation::LatexCitationCompletionProvider;
 use self::latex::color::LatexColorCompletionProvider;
 use self::latex::color_model::LatexColorModelCompletionProvider;
 use self::latex::component::*;
+use self::latex::glossary::LatexGlossaryCompletionProvider;
 use self::latex::import::{LatexClassImportProvider, LatexPackageImportProvider};
 use self::latex::include::LatexIncludeCompletionProvider;
 use self::latex::label::LatexLabelCompletionProvider;
@@ -55,6 +56,7 @@ impl CompletionProvider {
                     Box::new(LatexTheoremEnvironmentCompletionProvider),
                     Box::new(LatexLabelCompletionProvider),
                     Box::new(LatexCitationCompletionProvider),
+                    Box::new(LatexGlossaryCompletionProvider),
                     Box::new(LatexIncludeCompletionProvider),
                     Box::new(LatexClassImportProvider),
                     Box::new(LatexPackageImportProvider),
