@@ -27,7 +27,8 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                             })
                             .for_each(|def| definitions.push(def));
 
-                        tree.math_operators
+                        tree.math
+                            .operators
                             .iter()
                             .filter(|op| op.definition.name.text() == command.name.text())
                             .map(|op| LocationLink {

@@ -67,7 +67,7 @@ impl<'a> OutlineSectionFinder<'a> {
 
         if let SyntaxTree::Latex(tree) = &document.tree {
             let mut items = Vec::new();
-            for section in &tree.sections {
+            for section in &tree.structure.sections {
                 items.push(OutlineItem::Section(section));
             }
             for include in &tree.includes {
@@ -269,12 +269,14 @@ impl OutlineContext {
         tree: &LatexSyntaxTree,
     ) -> Option<Self> {
         let caption_env = tree
+            .env
             .environments
             .iter()
             .filter(|env| env.left.name().map(LatexToken::text) != Some("document"))
             .find(|env| env.range().contains(label.start()))?;
 
         let caption = tree
+            .structure
             .captions
             .iter()
             .find(|cap| tree.is_direct_child(caption_env, cap.start()))?;
@@ -303,6 +305,7 @@ impl OutlineContext {
         tree: &LatexSyntaxTree,
     ) -> Option<Self> {
         let env = tree
+            .env
             .environments
             .iter()
             .find(|env| env.range().contains(label.start()))?;
@@ -311,7 +314,7 @@ impl OutlineContext {
 
         for document in &view.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                for definition in &tree.theorem_definitions {
+                for definition in &tree.math.theorem_definitions {
                     if env_name == definition.name().text() {
                         let kind = definition
                             .command
@@ -344,7 +347,8 @@ impl OutlineContext {
         label: &LatexLabel,
         tree: &LatexSyntaxTree,
     ) -> Option<Self> {
-        tree.environments
+        tree.env
+            .environments
             .iter()
             .filter(|env| env.left.is_math())
             .map(|env| env.range())
@@ -363,11 +367,13 @@ impl OutlineContext {
         }
 
         let enumeration = tree
+            .env
             .environments
             .iter()
             .find(|env| env.left.is_enum() && env.range().contains(label.start()))?;
 
         let mut item_nodes: Vec<_> = tree
+            .structure
             .items
             .iter()
             .filter(|item| tree.is_enumeration_item(enumeration, item))
@@ -420,7 +426,7 @@ impl OutlineContext {
 
         for document in &view.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                for numbering in &tree.label_numberings {
+                for numbering in &tree.structure.label_numberings {
                     if numbering.name().text() == label_names[0].text() {
                         return Some(numbering.number.clone());
                     }

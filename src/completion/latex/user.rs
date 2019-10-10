@@ -63,7 +63,7 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
                 let mut items = Vec::new();
                 for document in request.related_documents() {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        for environment in &tree.environments {
+                        for environment in &tree.env.environments {
                             if environment.left.command == context.command
                                 || environment.right.command == context.command
                             {

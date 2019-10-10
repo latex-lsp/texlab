@@ -17,7 +17,8 @@ impl FeatureProvider for LatexLabelReferenceProvider {
         if let Some(definition) = Self::find_name(request) {
             for document in request.related_documents() {
                 if let SyntaxTree::Latex(tree) = &document.tree {
-                    tree.labels
+                    tree.structure
+                        .labels
                         .iter()
                         .filter(|label| Self::is_included(request, label))
                         .flat_map(LatexLabel::names)
@@ -34,7 +35,8 @@ impl FeatureProvider for LatexLabelReferenceProvider {
 impl LatexLabelReferenceProvider {
     fn find_name(request: &FeatureRequest<ReferenceParams>) -> Option<&str> {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            tree.labels
+            tree.structure
+                .labels
                 .iter()
                 .flat_map(LatexLabel::names)
                 .find(|label| {

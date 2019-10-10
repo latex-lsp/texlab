@@ -33,6 +33,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         for label in tree
+                            .structure
                             .labels
                             .iter()
                             .filter(|label| label.kind == LatexLabelKind::Definition)
@@ -82,6 +83,7 @@ impl LatexLabelCompletionProvider {
         match source {
             LatexLabelReferenceSource::Everything => true,
             LatexLabelReferenceSource::Math => tree
+                .env
                 .environments
                 .iter()
                 .filter(|env| env.left.is_math())

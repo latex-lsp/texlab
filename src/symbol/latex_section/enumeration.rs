@@ -7,7 +7,7 @@ use lsp_types::Range;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
     let mut symbols = Vec::new();
-    for environment in &tree.environments {
+    for environment in &tree.env.environments {
         if environment.left.is_enum() {
             symbols.push(make_symbol(view, tree, environment));
         }
@@ -23,6 +23,7 @@ fn make_symbol(
     let name = titlelize(enumeration.left.name().unwrap().text());
 
     let items: Vec<_> = tree
+        .structure
         .items
         .iter()
         .filter(|item| tree.is_enumeration_item(enumeration, item))
@@ -71,6 +72,7 @@ fn make_symbol(
 fn find_item_label(tree: &LatexSyntaxTree, item_range: Range) -> Option<&LatexLabel> {
     let label = tree.find_label_by_range(item_range)?;
     if tree
+        .env
         .environments
         .iter()
         .filter(|env| item_range.contains(env.start()))

@@ -17,7 +17,7 @@ impl FeatureProvider for LatexSectionFoldingProvider {
     ) -> Vec<FoldingRange> {
         let mut foldings = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            let sections = &tree.sections;
+            let sections = &tree.structure.sections;
             for i in 0..sections.len() {
                 let current = &sections[i];
                 let next = sections

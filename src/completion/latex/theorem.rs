@@ -19,7 +19,7 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
                 let mut items = Vec::new();
                 for document in request.related_documents() {
                     if let SyntaxTree::Latex(tree) = &document.tree {
-                        for theorem in &tree.theorem_definitions {
+                        for theorem in &tree.math.theorem_definitions {
                             let name = theorem.name().text().to_owned();
                             let text_edit = TextEdit::new(context.range, name.clone());
                             let item = factory::environment(

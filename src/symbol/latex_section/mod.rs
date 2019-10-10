@@ -68,7 +68,8 @@ pub fn build_section_tree<'a>(
 fn compute_end_position(tree: &LatexSyntaxTree, text: &str) -> Position {
     let mut stream = CharStream::new(text);
     while stream.next().is_some() {}
-    tree.environments
+    tree.env
+        .environments
         .iter()
         .find(|env| env.left.name().map(LatexToken::text) == Some("document"))
         .map(|env| env.right.start())
@@ -127,6 +128,7 @@ impl<'a> LatexSectionNode<'a> {
 
     fn set_label(&mut self, tree: &LatexSyntaxTree, view: &DocumentView, outline: &Outline) {
         if let Some(label) = tree
+            .structure
             .labels
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)
@@ -270,7 +272,7 @@ impl<'a> LatexSectionTree<'a> {
 impl<'a> From<&'a LatexSyntaxTree> for LatexSectionTree<'a> {
     fn from(tree: &'a LatexSyntaxTree) -> Self {
         let mut root = Self::new();
-        for section in &tree.sections {
+        for section in &tree.structure.sections {
             LatexSectionNode::insert_section(&mut root.children, section);
         }
         root

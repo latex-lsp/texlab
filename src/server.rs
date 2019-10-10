@@ -498,7 +498,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             }
 
             if let SyntaxTree::Latex(tree) = &document.tree {
-                if tree.is_standalone {
+                if tree.env.is_standalone {
                     match diagnostics_manager.build.update(&document.uri) {
                         Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
                         Ok(false) => (),

@@ -36,7 +36,7 @@ impl LatexLabelDefinitionProvider {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
             let outline = Outline::from(view);
             let section_tree = build_section_tree(view, tree);
-            for label in &tree.labels {
+            for label in &tree.structure.labels {
                 if label.kind == LatexLabelKind::Definition {
                     let context = OutlineContext::parse(view, label, &outline);
                     for name in label.names() {
@@ -66,7 +66,8 @@ impl LatexLabelDefinitionProvider {
 
     fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&LatexToken> {
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            tree.labels
+            tree.structure
+                .labels
                 .iter()
                 .flat_map(LatexLabel::names)
                 .find(|label| label.range().contains(request.params.position))

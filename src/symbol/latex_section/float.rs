@@ -4,7 +4,8 @@ use crate::syntax::*;
 use crate::workspace::*;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
-    tree.captions
+    tree.structure
+        .captions
         .iter()
         .filter_map(|caption| make_symbol(view, tree, caption))
         .collect()
@@ -16,6 +17,7 @@ fn make_symbol(
     caption: &LatexCaption,
 ) -> Option<LatexSymbol> {
     let environment = tree
+        .env
         .environments
         .iter()
         .find(|env| tree.is_direct_child(env, caption.start()))?;

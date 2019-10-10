@@ -63,7 +63,7 @@ impl FeatureProvider for LatexEnvironmentRenameProvider {
 
 fn find_environment(tree: &SyntaxTree, position: Position) -> Option<&LatexEnvironment> {
     if let SyntaxTree::Latex(tree) = &tree {
-        for environment in &tree.environments {
+        for environment in &tree.env.environments {
             if let Some(left_name) = environment.left.name() {
                 if let Some(right_name) = environment.right.name() {
                     if left_name.range().contains(position) || right_name.range().contains(position)

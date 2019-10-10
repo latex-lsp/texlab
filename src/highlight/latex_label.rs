@@ -19,13 +19,14 @@ impl FeatureProvider for LatexLabelHighlightProvider {
         let mut highlights = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             if let Some(name) = tree
+                .structure
                 .labels
                 .iter()
                 .flat_map(LatexLabel::names)
                 .find(|label| label.range().contains(request.params.position))
                 .map(|label| label.text())
             {
-                for label_group in &tree.labels {
+                for label_group in &tree.structure.labels {
                     for label in label_group.names() {
                         if label.text() == name {
                             let highlight = DocumentHighlight {

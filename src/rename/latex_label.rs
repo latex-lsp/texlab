@@ -41,6 +41,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 let edits = tree
+                    .structure
                     .labels
                     .iter()
                     .flat_map(LatexLabel::names)
@@ -56,7 +57,8 @@ impl FeatureProvider for LatexLabelRenameProvider {
 
 fn find_label(tree: &SyntaxTree, position: Position) -> Option<&Span> {
     if let SyntaxTree::Latex(tree) = tree {
-        tree.labels
+        tree.structure
+            .labels
             .iter()
             .flat_map(LatexLabel::names)
             .find(|label| label.range().contains(position))

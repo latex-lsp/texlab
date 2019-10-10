@@ -6,11 +6,11 @@ use lsp_types::Range;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
     let mut symbols = Vec::new();
-    for equation in &tree.equations {
+    for equation in &tree.math.equations {
         symbols.push(make_symbol(view, tree, equation.range()));
     }
 
-    for equation in &tree.environments {
+    for equation in &tree.env.environments {
         if equation.left.is_math() {
             symbols.push(make_symbol(view, tree, equation.range()));
         }

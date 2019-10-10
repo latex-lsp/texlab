@@ -34,7 +34,7 @@ impl FeatureProvider for LatexLabelHoverProvider {
 
 impl LatexLabelHoverProvider {
     fn find_reference(tree: &LatexSyntaxTree, position: Position) -> Option<&LatexToken> {
-        for label in &tree.labels {
+        for label in &tree.structure.labels {
             let names = label.names();
             if names.len() == 1 && label.range().contains(position) {
                 return Some(&label.names()[0]);
@@ -55,7 +55,7 @@ impl LatexLabelHoverProvider {
     ) -> Option<(Arc<Document>, &'a LatexLabel)> {
         for document in &view.related_documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                for label in &tree.labels {
+                for label in &tree.structure.labels {
                     if label.kind == LatexLabelKind::Definition {
                         for name in label.names() {
                             if name.text() == reference.text() {

@@ -4,7 +4,8 @@ use crate::syntax::*;
 use crate::workspace::*;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
-    tree.environments
+    tree.env
+        .environments
         .iter()
         .filter_map(|env| make_symbol(view, tree, env))
         .collect()
@@ -19,7 +20,7 @@ fn make_symbol(
 
     for document in &view.related_documents {
         if let SyntaxTree::Latex(tree) = &document.tree {
-            for definition in &tree.theorem_definitions {
+            for definition in &tree.math.theorem_definitions {
                 if environment_name == definition.name().text() {
                     let kind = definition
                         .command

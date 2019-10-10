@@ -26,7 +26,7 @@ where
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut items = self.provider.execute(request).await;
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            for environment in &tree.environments {
+            for environment in &tree.env.environments {
                 if let Some(name) = environment.left.name() {
                     let right_args = &environment.right.command.args[0];
                     let cond1 = right_args

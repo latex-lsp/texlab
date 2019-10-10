@@ -103,7 +103,8 @@ impl LatexPreviewHoverProvider {
         let mut names = Vec::new();
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                tree.theorem_definitions
+                tree.math
+                    .theorem_definitions
                     .iter()
                     .map(|thm| thm.name().text())
                     .for_each(|thm| names.push(thm));
@@ -206,7 +207,8 @@ impl LatexPreviewHoverProvider {
     ) {
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                tree.math_operators
+                tree.math
+                    .operators
                     .iter()
                     .map(|op| CharStream::extract(&document.text, op.range()))
                     .for_each(|op| {
@@ -223,7 +225,8 @@ impl LatexPreviewHoverProvider {
     ) {
         for document in request.related_documents() {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                tree.theorem_definitions
+                tree.math
+                    .theorem_definitions
                     .iter()
                     .map(|thm| CharStream::extract(&document.text, thm.range()))
                     .for_each(|thm| {
@@ -297,17 +300,20 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
         if let SyntaxTree::Latex(tree) = &request.document().tree {
             let mut elements = Vec::new();
-            tree.inlines
+            tree.math
+                .inlines
                 .iter()
                 .map(MathElement::Inline)
                 .for_each(|inline| elements.push(inline));
 
-            tree.equations
+            tree.math
+                .equations
                 .iter()
                 .map(MathElement::Equation)
                 .for_each(|eq| elements.push(eq));
 
-            tree.environments
+            tree.env
+                .environments
                 .iter()
                 .filter(|env| Self::is_math_environment(request, env))
                 .map(MathElement::Environment)

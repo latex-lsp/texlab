@@ -113,7 +113,7 @@ impl Workspace {
     pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
         for document in self.related_documents(uri) {
             if let SyntaxTree::Latex(tree) = &document.tree {
-                if tree.is_standalone {
+                if tree.env.is_standalone {
                     return Some(document);
                 }
             }
