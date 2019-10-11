@@ -57,7 +57,7 @@ pub async fn compile<'a>(
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
-        .map_err(|_| CompileError::LatexNotInstalled)?
+        .map_err(|_| CompileError::LatexNotInstalled)
         .timeout(Duration::from_secs(10))
         .map_err(|_| CompileError::Timeout)
         .await?
