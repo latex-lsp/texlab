@@ -20,7 +20,7 @@ base64 = "0.10.1"
 bytes = "0.4.12"
 clap = "2.33"
 copy_dir = "0.1.2"
-ducc = "0.1.0"
+ducc = "0.1.1"
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = "0.3.0-alpha.18"
 html2md = "0.2.9"
