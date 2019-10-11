@@ -315,16 +315,16 @@ dependencies = [
 
 [[package]]
 name = "ducc"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cesu8 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ducc-sys 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ducc-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "ducc-sys"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cc 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1563,7 +1563,7 @@ dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "copy_dir 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "criterion 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ducc 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ducc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-boxed 0.1.0",
  "futures-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2019,8 +2019,8 @@ dependencies = [
 "checksum csv 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "37519ccdfd73a75821cac9319d4fce15a81b9fcf75f951df5b9988aa3a0af87d"
 "checksum csv-core 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "9b5cadb6b25c77aeff80ba701712494213f4a8418fcda2ee11b6560c3ad0bf4c"
 "checksum deflate 0.7.20 (registry+https://github.com/rust-lang/crates.io-index)" = "707b6a7b384888a70c8d2e8650b3e60170dfc6a67bb4aa67b6dfca57af4bedb4"
-"checksum ducc 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "79092c3948388d961c99cf83174a2ecb1b6ebc34b37b8dfd75c22d722143e43d"
-"checksum ducc-sys 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "86a4d4217ea11a3b3aa218518bc31b694cfe50cd1282f06e0985305e6c7b6de6"
+"checksum ducc 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1c033da156a7e0f354ae338144bd7b4375022e77c090c93e4355da2c52b53ac1"
+"checksum ducc-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0cdea834bf6a0fde522374db4404695c5f0465fc0ee814f2878d76eaabd4ffed"
 "checksum either 1.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "5527cfe0d098f36e3f8839852688e63c8fff1c90b2b405aef730615f9a7bcf7b"
 "checksum error-chain 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3ab49e9dcb602294bc42f9a7dfc9bc6e936fca4418ea300dbfb84fe16de0b7d9"
 "checksum fixedbitset 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "86d4de0081402f5e88cdac65c8dcdcc73118c1a7a465e2a05f0da05843a8ea33"
