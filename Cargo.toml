@@ -42,7 +42,7 @@ stderrlog = "0.4.1"
 tempfile = "3"
 tokio = "0.2.0-alpha.6"
 tokio-net = { version = "0.2.0-alpha.6", features = ["process"]}
-uuid = { version = "0.7", features = ["v4"] }
+uuid = { version = "0.8", features = ["v4"] }
 url = "2.0.0"
 url_serde = "0.2.0"
 walkdir = "2"
