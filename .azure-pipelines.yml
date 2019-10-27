@@ -58,25 +58,6 @@ jobs:
           ver=`echo "$(Build.SourceBranchName)" | cut -c2-`
           echo "##vso[task.setvariable variable=version]$ver"
         displayName: "Set version variable"
-      - task: InstallSSHKey@0
-        inputs:
-          knownHostsEntry: "$(aurKnownHosts)"
-          sshPublicKey: "$(aurPubKey)"
-          sshKeySecureFile: "aur"
-        displayName: "Use AUR SSH key"
-      - bash: |
-          git clone ssh://aur@aur.archlinux.org/texlab.git
-          cd texlab
-          wget https://github.com/latex-lsp/texlab/archive/$(Build.SourceBranchName).tar.gz
-          checksum=`sha512sum $(Build.SourceBranchName).tar.gz | cut -d " " -f 1`
-          sed -i -E -e "s/[0-9]+\.[0-9]+\.[0-9]+/$(version)/" \
-                    -e "s/(pkgrel\s*=\s*)[0-9]+/\11/" \
-                    -e "s/[0-9a-fA-F]{128}/$checksum/" PKGBUILD .SRCINFO
-          git config --global user.name "Eric Förster"
-          git config --global user.email "eric.foerster@outlook.com"
-          git commit -am "Update to upstream version $(version)"
-          git push
-        displayName: "Update AUR package"
       - task: GitHubRelease@0
         inputs:
           gitHubConnection: latex-lsp
