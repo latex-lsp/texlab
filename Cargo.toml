@@ -16,7 +16,7 @@ members = [
     "crates/jsonrpc_derive"]
 
 [dependencies]
-base64 = "0.10.1"
+base64 = "0.11.0"
 bytes = "0.4.12"
 clap = "2.33"
 copy_dir = "0.1.2"
