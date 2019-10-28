@@ -25,7 +25,7 @@ futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = "0.3.0-alpha.18"
 html2md = "0.2.9"
 image = "0.22.3"
-itertools = "0.8.0"
+itertools = "0.8.1"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
