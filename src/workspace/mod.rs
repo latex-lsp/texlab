@@ -5,6 +5,7 @@ mod uri;
 pub use self::feature::*;
 pub use self::outline::*;
 pub use self::uri::*;
+use crate::completion::DATABASE;
 use crate::syntax::*;
 use log::*;
 use lsp_types::*;
@@ -126,10 +127,21 @@ impl Workspace {
         for document in &self.documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 for include in &tree.includes {
-                    if include.kind != LatexIncludeKind::Latex
-                        && include.kind != LatexIncludeKind::Bibliography
-                    {
-                        continue;
+                    match include.kind {
+                        LatexIncludeKind::Bibliography | LatexIncludeKind::Latex => (),
+                        LatexIncludeKind::Everything
+                        | LatexIncludeKind::Image
+                        | LatexIncludeKind::Pdf
+                        | LatexIncludeKind::Svg => continue,
+                        LatexIncludeKind::Package | LatexIncludeKind::Class => {
+                            if include
+                                .paths()
+                                .iter()
+                                .all(|name| DATABASE.contains(name.text()))
+                            {
+                                continue;
+                            }
+                        }
                     }
 
                     for targets in &include.all_targets {

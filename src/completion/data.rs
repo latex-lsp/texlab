@@ -23,6 +23,12 @@ impl Database {
         })
     }
 
+    pub fn contains(&self, short_name: &str) -> bool {
+        let sty = format!("{}.sty", short_name);
+        let cls = format!("{}.cls", short_name);
+        self.find(&sty).is_some() || self.find(&cls).is_some()
+    }
+
     pub fn kernel(&self) -> &Component {
         self.components
             .iter()
