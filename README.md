@@ -1,5 +1,6 @@
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab)](https://github.com/latex-lsp/texlab/releases)
 [![Arch Linux](https://img.shields.io/archlinux/v/community/x86_64/texlab)](https://www.archlinux.org/packages/community/x86_64/texlab/)
+[![Rust](https://img.shields.io/badge/rustc-1.39%2B-blue)](https://blog.rust-lang.org/2019/11/07/Rust-1.39.0.html)
 [![Build Status](https://dev.azure.com/latex-lsp/texlab/_apis/build/status/latex-lsp.texlab?branchName=master)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
 [![Coverage](https://img.shields.io/azure-devops/coverage/latex-lsp/texlab/8.svg?logo=azuredevops)](https://dev.azure.com/latex-lsp/texlab/_build/latest?definitionId=8&branchName=master)
 [![Dependabot](https://api.dependabot.com/badges/status?host=github&repo=latex-lsp/texlab)](https://dependabot.com)
@@ -20,7 +21,7 @@ See the [installation chapter](https://texlab.netlify.com/docs) from our docs.
 
 You will need to install the following dependencies to compile the server:
 
-- [Rust Beta](https://rustup.rs/)
+- [Rust (>= 1.39)](https://rustup.rs/)
 - [Node.js](https://nodejs.org/)
 
 Then run the following command in the project folder:
