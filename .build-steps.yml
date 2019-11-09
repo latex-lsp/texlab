@@ -13,6 +13,9 @@ steps:
       versionSpec: "3.7"
       architecture: "x64"
     displayName: "Install Python"
+  - bash: |
+      rustup update
+    displayName: "Install latest Rust version"
   - ${{ if eq(parameters.linux, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1
