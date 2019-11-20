@@ -28,11 +28,11 @@ pub fn boxed(_attr: TokenStream, item: TokenStream) -> TokenStream {
 fn boxed_fn(fn_: ItemFn) -> TokenStream {
     let attrs = &fn_.attrs;
     let vis = &fn_.vis;
-    let decl = boxed_fn_decl(&fn_.decl, &fn_.constness, &fn_.ident);
+    let sig = boxed_fn_sig(&fn_.sig);
     let block = &fn_.block;
     let tokens = quote! {
         #(#attrs)*
-        #vis #decl {
+        #vis #sig {
             use futures::future::FutureExt;
             let task = async move #block;
             task.boxed()
@@ -44,23 +44,21 @@ fn boxed_fn(fn_: ItemFn) -> TokenStream {
 
 fn boxed_trait_method(method: TraitItemMethod) -> TokenStream {
     let attrs = &method.attrs;
-    let decl = boxed_fn_decl(&method.sig.decl, &method.sig.constness, &method.sig.ident);
+    let sig = boxed_fn_sig(&method.sig);
     let tokens = quote! {
         #(#attrs)*
-        #decl;
+        #sig;
     };
 
     tokens.into()
 }
 
-fn boxed_fn_decl(
-    decl: &FnDecl,
-    constness: &Option<syn::token::Const>,
-    ident: &Ident,
-) -> TokenStream2 {
-    let generics = &decl.generics;
-    let inputs = &decl.inputs;
-    let return_ty = match &decl.output {
+fn boxed_fn_sig(sig: &Signature) -> TokenStream2 {
+    let constness = &sig.constness;
+    let ident = &sig.ident;
+    let generics = &sig.generics;
+    let inputs = &sig.inputs;
+    let return_ty = match &sig.output {
         ReturnType::Default => quote!(()),
         ReturnType::Type(_, ty) => ty.into_token_stream(),
     };

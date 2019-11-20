@@ -30,12 +30,12 @@ struct MethodMeta {
 impl MethodMeta {
     pub fn parse(attr: &Attribute) -> Self {
         let meta = attr.parse_meta().unwrap();
-        if meta.name() != "jsonrpc_method" {
+        if meta.path().get_ident().unwrap() != "jsonrpc_method" {
             panic!("Expected jsonrpc_method attribute");
         }
 
         let nested = unwrap!(meta, Meta::List(x) => x.nested);
-        let name = unwrap!(&nested[0], NestedMeta::Literal(Lit::Str(x)) => x.value());
+        let name = unwrap!(&nested[0], NestedMeta::Lit(Lit::Str(x)) => x.value());
         let kind = {
             let lit = unwrap!(&nested[1], NestedMeta::Meta(Meta::NameValue(x)) => &x.lit);
             let kind = unwrap!(lit, Lit::Str(x) => x.value());
@@ -99,7 +99,7 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
     let trait_ident = &trait_.ident;
     let stubs = generate_client_stubs(&trait_.items);
     let attr: AttributeArgs = parse_macro_input!(attr);
-    let struct_ident = unwrap!(attr.first().unwrap(), NestedMeta::Meta(Meta::Word(x)) => x);
+    let struct_ident = unwrap!(attr.first().unwrap(), NestedMeta::Meta(Meta::Path(x)) => x);
 
     let tokens = quote! {
         #trait_
@@ -144,7 +144,7 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
         }
 
         let ident = &method.sig.ident;
-        let param_ty = unwrap!(&method.sig.decl.inputs[1], FnArg::Captured(x) => &x.ty);
+        let param_ty = unwrap!(&method.sig.inputs[1], FnArg::Typed(x) => &x.ty);
         let meta = MethodMeta::parse(method.attrs.first().unwrap());
         let name = &meta.name.as_str();
 
@@ -183,7 +183,7 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
         let method = unwrap!(item, TraitItem::Method(x) => x);
         let attrs = &method.attrs;
         let sig = &method.sig;
-        let param = unwrap!(&sig.decl.inputs[1], FnArg::Captured(x) => &x.pat);
+        let param = unwrap!(&sig.inputs[1], FnArg::Typed(x) => &x.pat);
         let meta = MethodMeta::parse(attrs.first().unwrap());
         let name = &meta.name;
 
