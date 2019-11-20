@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 20.11.2019
+
+### Added 
+
+- Add logging for JSON-RPC errors via `stderr` ([#111](https://github.com/latex-lsp/texlab/issues/111))
+- Provide completion for `\subfile`
+- Provide completion for glossary entries
+- Show full path when hovering over includes
+- Implement "Goto Definition" for BibTeX strings
+
+### Changed
+
+- Use Rust Stable (1.39+) instead of Rust Beta
+- Sort symbols by project order ([#93](https://github.com/latex-lsp/texlab/issues/93))
+
+### Fixed
+
+- Improve detection of local packages inside the current workspace 
+  ([#110](https://github.com/latex-lsp/texlab/issues/110))
+- Fix potential crash in "Goto Definition"
+
 ## [1.6.0] - 29.09.2019
 
 ### Added
