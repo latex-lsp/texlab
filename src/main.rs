@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     stderrlog::new()
         .module(module_path!())
+        .module("jsonrpc")
         .verbosity(matches.occurrences_of("verbosity") as usize)
         .quiet(matches.is_present("quiet"))
         .timestamp(Timestamp::Off)

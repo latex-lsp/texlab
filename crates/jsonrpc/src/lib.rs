@@ -12,6 +12,7 @@ use futures::channel::*;
 use futures::prelude::*;
 use std::io;
 use std::sync::Arc;
+use log::error;
 
 pub struct MessageHandler<S, C, I> {
     pub server: Arc<S>,
@@ -36,6 +37,9 @@ where
                     let mut output = self.output.clone();
                     tokio::spawn(async move {
                         let response = server.handle_request(request).await;
+                        if let Some(error) = response.error.as_ref() {
+                            error!("{:?}", error);
+                        }
                         let json = serde_json::to_string(&response).unwrap();
                         output.send(json).await.unwrap();
                         server.after_message().await;

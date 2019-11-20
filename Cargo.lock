@@ -611,6 +611,7 @@ dependencies = [
  "chashmap 2.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-boxed 0.1.0",
  "futures-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.102 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_repr 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
