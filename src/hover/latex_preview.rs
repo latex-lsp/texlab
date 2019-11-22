@@ -2,7 +2,6 @@ use crate::capabilities::ClientCapabilitiesExt;
 use crate::completion::DATABASE;
 use crate::range::RangeExt;
 use crate::syntax::*;
-use crate::tex;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
@@ -12,6 +11,7 @@ use lsp_types::*;
 use std::io;
 use std::io::Cursor;
 use std::process::Stdio;
+use std::time::Duration;
 use tempfile::TempDir;
 use tokio_net::process::Command;
 
@@ -118,9 +118,14 @@ impl LatexPreviewHoverProvider {
         range: Range,
     ) -> Result<Hover, RenderError> {
         let code = Self::generate_code(request, range);
-        let directory = tex::compile("preview.tex", &code, tex::Format::Latex)
-            .await?
-            .directory;
+        let params = tex::CompileParams {
+            file_name: "preview.tex",
+            code: &code,
+            format: tex::Format::Latex,
+            timeout: Duration::from_secs(10),
+        };
+        let directory = request.distribution.compile(params).await?.directory;
+
         if !directory.path().join("preview.dvi").exists() {
             return Err(RenderError::DviNotFound);
         }
@@ -294,7 +299,9 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        if !request.client_capabilities.has_hover_markdown_support() {
+        if !request.client_capabilities.has_hover_markdown_support()
+            || !request.distribution.supports_format(tex::Format::Latex)
+        {
             return None;
         }
 
@@ -330,16 +337,9 @@ impl FeatureProvider for LatexPreviewHoverProvider {
                     let message = match why {
                         RenderError::IO(why) => format!("I/O error: {}", why),
                         RenderError::Compile(why) => match why {
-                            tex::CompileError::Initialization => {
-                                "compilation initialization failed".to_owned()
-                            }
-                            tex::CompileError::LatexNotInstalled => {
-                                "latex not installed".to_owned()
-                            }
-                            tex::CompileError::Timeout => "compilation timed out".to_owned(),
-                            tex::CompileError::Wait => "failed to wait for latex".to_owned(),
-                            tex::CompileError::ReadLog => "failed to read log file".to_owned(),
-                            tex::CompileError::Cleanup => "failed to cleanup latex".to_owned(),
+                            tex::CompileError::NotInstalled => "latex not installed".into(),
+                            tex::CompileError::Timeout => "compilation timed out".into(),
+                            tex::CompileError::IO(_) => "an I/O error occurred".into(),
                         },
                         RenderError::DviNotFound => "compilation failed".to_owned(),
                         RenderError::DviPngNotInstalled => "dvipng is not installed".to_owned(),

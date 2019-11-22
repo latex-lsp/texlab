@@ -99,6 +99,22 @@ pub static NO_LINK_SUPPORT_CAPABILITIES: ClientCapabilities = ClientCapabilities
     }),
 };
 
+pub struct TestScenarioParams<'a> {
+    pub name: &'a str,
+    pub client_capabilities: &'a ClientCapabilities,
+    pub distribution: Box<dyn tex::Distribution>,
+}
+
+impl<'a> TestScenarioParams<'a> {
+    pub fn new(name: &'a str) -> Self {
+        Self {
+            name,
+            client_capabilities: &DEFAULT_CAPABILITIES,
+            distribution: Box::new(tex::Unknown::default()),
+        }
+    }
+}
+
 pub struct TestScenario {
     pub server: LatexLspServer<LspClientMock>,
     pub client: Arc<LspClientMock>,
@@ -106,17 +122,17 @@ pub struct TestScenario {
 }
 
 impl TestScenario {
-    pub async fn new<'a>(name: &'a str, client_capabilities: &'a ClientCapabilities) -> Self {
+    pub async fn new<'a>(params: TestScenarioParams<'a>) -> Self {
         let directory = tempfile::tempdir().unwrap();
         remove_dir(directory.path()).unwrap();
         let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests")
             .join("scenarios")
-            .join(name);
+            .join(params.name);
         copy_dir(source, directory.path()).unwrap();
 
         let client = Arc::new(LspClientMock::default());
-        let server = LatexLspServer::new(Arc::clone(&client));
+        let server = LatexLspServer::new(Arc::new(params.distribution), Arc::clone(&client));
 
         let root_uri = Uri::from_file_path(directory.path()).unwrap();
         let init_params = InitializeParams {
@@ -124,7 +140,7 @@ impl TestScenario {
             root_path: Some(directory.path().to_string_lossy().into_owned()),
             root_uri: Some(root_uri.into()),
             initialization_options: None,
-            capabilities: client_capabilities.to_owned(),
+            capabilities: params.client_capabilities.to_owned(),
             trace: None,
             workspace_folders: None,
         };

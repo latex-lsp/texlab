@@ -17,7 +17,7 @@ async fn run_completion(
     character: u64,
 ) -> (TestScenario, Vec<CompletionItem>) {
     let scenario_name = format!("completion/{}", scenario_short_name);
-    let scenario = TestScenario::new(&scenario_name, &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new(&scenario_name)).await;
     scenario.open(file).await;
 
     let params = CompletionParams {
@@ -285,7 +285,12 @@ async fn run_definition(
     capabilities: &ClientCapabilities,
 ) -> (TestScenario, DefinitionResponse) {
     let scenario_name = format!("definition/{}", scenario_short_name);
-    let scenario = TestScenario::new(&scenario_name, capabilities).await;
+    let scenario_params = TestScenarioParams {
+        name: &scenario_name,
+        client_capabilities: capabilities,
+        distribution: Box::new(tex::Unknown::default()),
+    };
+    let scenario = TestScenario::new(scenario_params).await;
     scenario.open(file).await;
 
     let params = TextDocumentPositionParams {
@@ -479,7 +484,7 @@ async fn definition_latex_math_operator() {
 
 #[tokio::test]
 async fn diagnostics_bibtex() {
-    let scenario = TestScenario::new("diagnostics/bibtex", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("diagnostics/bibtex")).await;
     scenario.open("foo.bib").await;
     {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
@@ -509,7 +514,7 @@ async fn diagnostics_bibtex() {
 
 #[tokio::test]
 async fn diagnostics_build() {
-    let scenario = TestScenario::new("diagnostics/build", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("diagnostics/build")).await;
     scenario.open("foo.tex").await;
     {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
@@ -528,7 +533,7 @@ async fn diagnostics_build() {
 }
 
 async fn run_folding(file: &'static str) -> Vec<FoldingRange> {
-    let scenario = TestScenario::new("folding", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("folding")).await;
     scenario.open(file).await;
     let params = FoldingRangeParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
@@ -616,7 +621,7 @@ async fn run_bibtex_formatting(
     options: Option<BibtexFormattingOptions>,
 ) -> (TestScenario, Vec<TextEdit>) {
     let scenario_name = format!("formatting/bibtex/{}", scenario_short_name);
-    let scenario = TestScenario::new(&scenario_name, &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new(&scenario_name)).await;
     scenario.open(file).await;
     {
         scenario.client.options.lock().await.bibtex_formatting = options;
@@ -669,7 +674,7 @@ async fn run_hover(
     character: u64,
 ) -> Option<HoverContents> {
     let scenario_name = format!("hover/{}", scenario_short_name);
-    let scenario = TestScenario::new(&scenario_name, &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new(&scenario_name)).await;
     scenario.open(file).await;
     let identifier = TextDocumentIdentifier::new(scenario.uri(file).into());
     let params = TextDocumentPositionParams::new(identifier, Position::new(line, character));
@@ -755,7 +760,7 @@ async fn hover_latex_package() {
 
 #[tokio::test]
 async fn hover_latex_label_section_reload_aux() {
-    let scenario = TestScenario::new("hover/latex/label", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("hover/latex/label")).await;
     scenario.open("section.tex").await;
     let position = Position::new(3, 10);
     let identifier = TextDocumentIdentifier::new(scenario.uri("section.tex").into());
@@ -801,7 +806,7 @@ async fn hover_latex_label_section_reload_aux() {
 }
 
 async fn run_hierarchical_symbol(file: &'static str) -> Vec<DocumentSymbol> {
-    let scenario = TestScenario::new("symbol/hierarchical", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("symbol/hierarchical")).await;
     scenario.open(file).await;
     let params = DocumentSymbolParams {
         text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
@@ -820,7 +825,7 @@ async fn run_hierarchical_symbol(file: &'static str) -> Vec<DocumentSymbol> {
 }
 
 async fn run_workspace_symbol(query: &'static str) -> (TestScenario, Vec<SymbolInformation>) {
-    let scenario = TestScenario::new("symbol/workspace", &DEFAULT_CAPABILITIES).await;
+    let scenario = TestScenario::new(TestScenarioParams::new("symbol/workspace")).await;
     scenario.open("foo.tex").await;
     scenario.open("bar.bib").await;
     let params = WorkspaceSymbolParams {

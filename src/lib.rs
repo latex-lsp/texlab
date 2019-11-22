@@ -23,5 +23,4 @@ pub mod server;
 pub mod symbol;
 pub mod syntax;
 pub mod test_scenario;
-pub mod tex;
 pub mod workspace;

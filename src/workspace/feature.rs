@@ -3,11 +3,11 @@ use futures_boxed::boxed;
 use lsp_types::*;
 use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Clone)]
 pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
     pub client_capabilities: Arc<ClientCapabilities>,
+    pub distribution: Arc<Box<dyn tex::Distribution>>,
 }
 
 impl<P> FeatureRequest<P> {
@@ -102,7 +102,6 @@ pub struct FeatureSpecFile {
     text: &'static str,
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
 pub struct FeatureSpec {
     pub files: Vec<FeatureSpecFile>,
     pub main_file: &'static str,
@@ -110,6 +109,21 @@ pub struct FeatureSpec {
     pub new_name: &'static str,
     pub include_declaration: bool,
     pub client_capabilities: ClientCapabilities,
+    pub distribution: Box<dyn tex::Distribution>,
+}
+
+impl Default for FeatureSpec {
+    fn default() -> Self {
+        Self {
+            files: Vec::new(),
+            main_file: "",
+            position: Position::new(0, 0),
+            new_name: "",
+            include_declaration: false,
+            client_capabilities: ClientCapabilities::default(),
+            distribution: Box::new(tex::Unknown::default()),
+        }
+    }
 }
 
 impl FeatureSpec {
@@ -143,6 +157,7 @@ impl FeatureSpec {
             params,
             view: self.view(),
             client_capabilities: Arc::new(self.client_capabilities),
+            distribution: Arc::new(self.distribution),
         }
     }
 }

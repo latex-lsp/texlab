@@ -188,6 +188,7 @@ struct WorkspaceSymbol {
 }
 
 pub async fn workspace_symbols(
+    distribution: Arc<Box<dyn tex::Distribution>>,
     client_capabilities: Arc<ClientCapabilities>,
     workspace: Arc<Workspace>,
     params: &WorkspaceSymbolParams,
@@ -203,6 +204,7 @@ pub async fn workspace_symbols(
             params: DocumentSymbolParams {
                 text_document: TextDocumentIdentifier::new(uri.clone().into()),
             },
+            distribution: Arc::clone(&distribution),
         };
 
         let mut buffer = Vec::new();

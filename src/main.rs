@@ -44,7 +44,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
-    let server = Arc::new(LatexLspServer::new(Arc::clone(&client)));
+    let server = Arc::new(LatexLspServer::new(
+        Arc::new(tex::Distribution::detect().await),
+        Arc::clone(&client),
+    ));
     let mut handler = MessageHandler {
         server,
         client,

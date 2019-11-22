@@ -1,10 +1,12 @@
 use criterion::{criterion_group, Criterion};
 use futures::executor::block_on;
 use lsp_types::*;
-use texlab::test_scenario::{TestScenario, DEFAULT_CAPABILITIES};
+use texlab::test_scenario::{TestScenario, TestScenarioParams};
 
 fn initialize(name: &'static str) -> TestScenario {
-    let scenario = block_on(TestScenario::new("completion/bench", &DEFAULT_CAPABILITIES));
+    let scenario = block_on(TestScenario::new(TestScenarioParams::new(
+        "completion/bench",
+    )));
     block_on(scenario.open(name));
     scenario
 }

@@ -10,9 +10,9 @@ pub use self::{
 
 use futures::channel::*;
 use futures::prelude::*;
+use log::error;
 use std::io;
 use std::sync::Arc;
-use log::error;
 
 pub struct MessageHandler<S, C, I> {
     pub server: Arc<S>,

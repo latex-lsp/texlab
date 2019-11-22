@@ -14,6 +14,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
+use tex::Language;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {

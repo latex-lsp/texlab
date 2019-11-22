@@ -30,9 +30,11 @@ use std::ffi::OsStr;
 use std::fs;
 use std::future::Future;
 use std::sync::Arc;
+use tex::Language;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {
+    distribution: Arc<Box<dyn tex::Distribution>>,
     build_manager: BuildManager<C>,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
@@ -53,8 +55,9 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>) -> Self {
+    pub fn new(distribution: Arc<Box<dyn tex::Distribution>>, client: Arc<C>) -> Self {
         LatexLspServer {
+            distribution,
             build_manager: BuildManager::new(Arc::clone(&client)),
             client,
             client_capabilities: OnceCell::new(),
@@ -156,6 +159,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
+        self.action_manager.push(Action::CheckInstalledDistribution);
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
@@ -293,9 +297,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: WorkspaceSymbolParams,
     ) -> Result<Vec<SymbolInformation>> {
+        let distribution = Arc::clone(&self.distribution);
         let client_capabilities = Arc::clone(&self.client_capabilities.get().unwrap());
         let workspace = self.workspace_manager.get();
-        let symbols = symbol::workspace_symbols(client_capabilities, workspace, &params).await;
+        let symbols =
+            symbol::workspace_symbols(distribution, client_capabilities, workspace, &params).await;
         Ok(symbols)
     }
 
@@ -451,6 +457,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 params,
                 view: DocumentView::new(workspace, document),
                 client_capabilities: Arc::clone(&client_capabilities),
+                distribution: Arc::clone(&self.distribution),
             })
         } else {
             let msg = format!("Unknown document: {}", uri);
@@ -530,6 +537,18 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
         self.update_build_diagnostics().await;
         for action in self.action_manager.take() {
             match action {
+                Action::CheckInstalledDistribution => {
+                    info!("Detected TeX distribution: {:?}", self.distribution.kind());
+                    if self.distribution.kind() == tex::DistributionKind::Unknown {
+                        let params = ShowMessageParams {
+                            message: "Your TeX distribution could not be detected. \
+                                      Please make sure that your distribution is in your PATH."
+                                .into(),
+                            typ: MessageType::Error,
+                        };
+                        self.client.show_message(params).await;
+                    }
+                }
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {
                         let mut path = uri.to_file_path().unwrap();
