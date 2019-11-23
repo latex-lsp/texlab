@@ -20,11 +20,11 @@ pub enum Action {
 }
 
 #[derive(Debug, Default)]
-pub struct ActionMananger {
+pub struct ActionManager {
     actions: Mutex<Vec<Action>>,
 }
 
-impl ActionMananger {
+impl ActionManager {
     pub fn push(&self, action: Action) {
         let mut actions = self.actions.lock().unwrap();
         actions.push(action);

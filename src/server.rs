@@ -1,4 +1,4 @@
-use crate::action::{Action, ActionMananger, LintReason};
+use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
 use crate::capabilities::ClientCapabilitiesExt;
 use crate::citeproc::render_citation;
@@ -39,7 +39,7 @@ pub struct LatexLspServer<C> {
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     workspace_manager: WorkspaceManager,
-    action_manager: ActionMananger,
+    action_manager: ActionManager,
     diagnostics_manager: Mutex<DiagnosticsManager>,
     completion_provider: CompletionProvider,
     definition_provider: DefinitionProvider,
@@ -62,7 +62,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             client,
             client_capabilities: OnceCell::new(),
             workspace_manager: WorkspaceManager::default(),
-            action_manager: ActionMananger::default(),
+            action_manager: ActionManager::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             completion_provider: CompletionProvider::new(),
             definition_provider: DefinitionProvider::new(),
