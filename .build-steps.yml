@@ -33,7 +33,7 @@ steps:
       - script: python -m pip install --upgrade pip setuptools wheel
         displayName: "Install Python tools"
       - bash: |
-          zip -0 ccov.zip `find . \( -name "texlab*.gc*" -o -name "deps*build*.gc*" -o -name "integration*.gc*" \) -print`;
+          zip -0 ccov.zip `find . \( -name "texlab*.gc*" -o -name "deps*build*.gc*" -o -name "test_*.gc*" \) -print`;
           grcov ccov.zip -s . -t lcov --llvm --branch --ignore-not-existing --ignore "{/*,target/*}" -o lcov.info
           python -m pip install lcov_cobertura
           python -m lcov_cobertura lcov.info
