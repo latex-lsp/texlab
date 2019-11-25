@@ -20,7 +20,6 @@ members = [
 base64 = "0.11.0"
 bytes = "0.4.12"
 clap = "2.33"
-copy_dir = "0.1.2"
 ducc = "0.1.2"
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = "0.3.0-alpha.18"
@@ -50,6 +49,7 @@ url_serde = "0.2.0"
 walkdir = "2"
 
 [dev-dependencies]
+copy_dir = "0.1.2"
 indoc = "0.3.4"
 
 [profile.release]
