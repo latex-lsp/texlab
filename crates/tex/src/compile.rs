@@ -26,6 +26,12 @@ impl Format {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum OutputKind {
+    Dvi,
+    Pdf,
+}
+
 #[derive(Debug)]
 pub struct CompileResult {
     pub log: String,

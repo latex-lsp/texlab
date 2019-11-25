@@ -6,7 +6,7 @@ use texlab::formatting::bibtex::BibtexFormattingOptions;
 use texlab::range::RangeExt;
 
 #[tokio::test]
-async fn formatting_bibtex_default_settings() {
+async fn default_settings() {
     let (scenario, edits) = run_bibtex("default/unformatted.bib", None).await;
     assert_eq!(edits.len(), 1);
     assert_eq!(
@@ -17,7 +17,7 @@ async fn formatting_bibtex_default_settings() {
 }
 
 #[tokio::test]
-async fn formatting_bibtex_infinite_line_length() {
+async fn infinite_line_length() {
     let (scenario, edits) = run_bibtex(
         "infinite_line_length/unformatted.bib",
         Some(BibtexFormattingOptions {

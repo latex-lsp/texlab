@@ -12,9 +12,13 @@ impl Distribution for Tectonic {
 
     fn supports_format(&self, format: Format) -> bool {
         match format {
-            Format::Latex | Format::Lualatex => false,
-            Format::Pdflatex | Format::Xelatex => true,
+            Format::Latex | Format::Pdflatex | Format::Xelatex => true,
+            Format::Lualatex => false,
         }
+    }
+
+    fn output_kind(&self, _format: Format) -> OutputKind {
+        OutputKind::Pdf
     }
 
     #[boxed]

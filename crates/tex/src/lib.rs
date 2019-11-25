@@ -53,6 +53,13 @@ pub trait Distribution: Send + Sync {
 
     fn supports_format(&self, format: Format) -> bool;
 
+    fn output_kind(&self, format: Format) -> OutputKind {
+        match format {
+            Format::Latex => OutputKind::Dvi,
+            Format::Pdflatex | Format::Xelatex | Format::Lualatex => OutputKind::Pdf,
+        }
+    }
+
     #[boxed]
     async fn compile<'a>(
         &'a self,

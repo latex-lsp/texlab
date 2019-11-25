@@ -1,8 +1,8 @@
 pub mod support;
 
+use lsp_types::Range;
 use support::symbol::*;
 use texlab::range::RangeExt;
-use lsp_types::Range;
 
 #[tokio::test]
 async fn enumerate() {

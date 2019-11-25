@@ -301,6 +301,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if !request.client_capabilities.has_hover_markdown_support()
             || !request.distribution.supports_format(tex::Format::Latex)
+            || request.distribution.output_kind(tex::Format::Latex) != tex::OutputKind::Dvi
         {
             return None;
         }
