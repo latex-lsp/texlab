@@ -26,6 +26,7 @@ impl Distribution for Tectonic {
         &'a self,
         params: CompileParams<'a>,
     ) -> Result<CompileResult, CompileError> {
-        compile("tectonic", &[params.file_name], params).await
+        let args = [params.file_name];
+        compile("tectonic", &args, params).await
     }
 }
