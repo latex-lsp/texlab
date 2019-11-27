@@ -14,6 +14,7 @@
 #include "str_conv.h"
 #include "xml.h"
 #include "xml_encoding.h"
+#include "msvc_fix.h"
 
 static int
 xml_getencodingr( xml *node )

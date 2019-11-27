@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "charsets.h"
+#include "msvc_fix.h"
 
 #define ARRAYSIZE( a )     ( sizeof(a) / sizeof(a[0]) )
 #define ARRAYSTART( a )    ( &(a[0]) )

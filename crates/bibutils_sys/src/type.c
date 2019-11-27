@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "type.h"
+#include "msvc_fix.h"
 
 static int
 is_genre_element( fields *in, int n )

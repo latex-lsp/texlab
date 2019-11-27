@@ -15,6 +15,7 @@
 #include "charsets.h"
 #include "str_conv.h"
 #include "is_ws.h"
+#include "msvc_fix.h"
 
 /* illegal modes to pass in, but use internally for consistency */
 #define BIBL_INTERNALIN   (BIBL_LASTIN+1)

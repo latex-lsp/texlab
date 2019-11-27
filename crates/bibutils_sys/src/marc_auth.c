@@ -8,6 +8,7 @@
  */
 #include "marc_auth.h"
 #include <string.h>
+#include "msvc_fix.h"
 
 static const char *marc_genre[] = {
 	"abstract or summary",

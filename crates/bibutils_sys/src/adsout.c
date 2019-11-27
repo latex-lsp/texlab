@@ -22,6 +22,7 @@
 #include "type.h"
 #include "url.h"
 #include "bibformats.h"
+#include "msvc_fix.h"
 
 /*****************************************************
  PUBLIC: int adsout_initparams()

@@ -12,6 +12,7 @@
 #include "is_ws.h"
 #include "strsearch.h"
 #include "xml.h"
+#include "msvc_fix.h"
 
 char *xml_pns = NULL;
 

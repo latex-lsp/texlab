@@ -22,6 +22,7 @@
 #include "reftypes.h"
 #include "bibformats.h"
 #include "generic.h"
+#include "msvc_fix.h"
 
 static slist find    = { 0, 0, 0, NULL };
 static slist replace = { 0, 0, 0, NULL };

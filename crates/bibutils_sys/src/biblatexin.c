@@ -22,6 +22,7 @@
 #include "reftypes.h"
 #include "bibformats.h"
 #include "generic.h"
+#include "msvc_fix.h"
 
 extern variants biblatex_all[];
 extern int biblatex_nall;

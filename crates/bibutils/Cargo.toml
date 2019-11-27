@@ -1,0 +1,13 @@
+[package]
+name = "bibutils"
+version = "0.1.0"
+authors = [
+    "Eric Förster <efoerster@users.noreply.github.com>",
+    "Patrick Förster <pfoerster@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+bibutils-sys = { path = "../bibutils_sys" }
+libc = "0.2"
+tempfile = "3"
+tokio = "0.2.0-alpha.6"

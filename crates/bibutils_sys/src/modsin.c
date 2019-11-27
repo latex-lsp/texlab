@@ -27,6 +27,7 @@
 #include "iso639_3.h"
 #include "bibutils.h"
 #include "bibformats.h"
+#include "msvc_fix.h"
 
 static int modsin_readf( FILE *fp, char *buf, int bufsize, int *bufpos, str *line, str *reference, int *fcharset );
 static int modsin_processf( fields *medin, const char *data, const char *filename, long nref, param *p );

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "entities.h"
+#include "msvc_fix.h"
 
 /* HTML 4.0 entities */
 

@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include "bibutils.h"
 #include "url.h"
+#include "msvc_fix.h"
 
 static void
 construct_url( char *prefix, str *id, str *id_url, char sep )

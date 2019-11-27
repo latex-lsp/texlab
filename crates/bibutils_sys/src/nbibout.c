@@ -19,6 +19,7 @@
 #include "title.h"
 #include "bibutils.h"
 #include "bibformats.h"
+#include "msvc_fix.h"
 
 /*****************************************************
  PUBLIC: int nbibout_initparams()

@@ -15,6 +15,7 @@
 #include "fields.h"
 #include "utf8.h"
 #include "bibformats.h"
+#include "msvc_fix.h"
 
 /*****************************************************
  PUBLIC: int wordout_initparams()

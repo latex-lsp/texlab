@@ -21,6 +21,7 @@
 #include "bu_auth.h"
 #include "marc_auth.h"
 #include "bibformats.h"
+#include "msvc_fix.h"
 
 /*****************************************************
  PUBLIC: int modsout_initparams()

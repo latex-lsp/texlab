@@ -7,6 +7,7 @@
  */
 #include <string.h>
 #include "bu_auth.h"
+#include "msvc_fix.h"
 
 const char *bu_genre[] = {
 	"academic journal",

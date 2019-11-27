@@ -19,6 +19,7 @@
 #include "slist.h"
 #include "intlist.h"
 #include "name.h"
+#include "msvc_fix.h"
 
 /* name_build_withcomma()
  *

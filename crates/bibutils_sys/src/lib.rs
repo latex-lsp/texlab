@@ -67,7 +67,6 @@ pub const LEVEL_ANY: i32 = -1;
 pub const LEVEL_MAIN: u32 = 0;
 pub const LEVEL_HOST: u32 = 1;
 pub const LEVEL_SERIES: u32 = 2;
-pub const __GNUC_VA_LIST: u32 = 1;
 pub const VPLIST_MEMERR: i32 = -1;
 pub const VPLIST_OK: u32 = 0;
 pub const FIELDS_CAN_DUP: u32 = 0;
@@ -1504,7 +1503,6 @@ extern "C" {
 extern "C" {
     pub fn str_is_empty(s: *mut str) -> ::std::os::raw::c_int;
 }
-pub type __gnuc_va_list = __builtin_va_list;
 pub type vplist_index = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2200,7 +2198,21 @@ extern "C" {
         _Alignment: usize,
     ) -> *mut ::std::os::raw::c_void;
 }
-pub type max_align_t = f64;
+extern "C" {
+    pub fn _errno() -> *mut ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn _set_errno(_Value: ::std::os::raw::c_int) -> errno_t;
+}
+extern "C" {
+    pub fn _get_errno(_Value: *mut ::std::os::raw::c_int) -> errno_t;
+}
+extern "C" {
+    pub fn __threadid() -> ::std::os::raw::c_ulong;
+}
+extern "C" {
+    pub fn __threadhandle() -> usize;
+}
 pub type _CoreCrtSecureSearchSortCompareFunction = ::std::option::Option<
     unsafe extern "C" fn(
         arg1: *mut ::std::os::raw::c_void,
@@ -2695,15 +2707,6 @@ extern "C" {
 }
 extern "C" {
     pub fn _set_error_mode(_Mode: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn _errno() -> *mut ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn _set_errno(_Value: ::std::os::raw::c_int) -> errno_t;
-}
-extern "C" {
-    pub fn _get_errno(_Value: *mut ::std::os::raw::c_int) -> errno_t;
 }
 extern "C" {
     pub fn __doserrno() -> *mut ::std::os::raw::c_ulong;
@@ -5239,7 +5242,7 @@ extern "C" {
         p: *mut param,
         readmode: ::std::os::raw::c_int,
         writemode: ::std::os::raw::c_int,
-        progname: *mut ::std::os::raw::c_char,
+        progname: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -5273,7 +5276,7 @@ extern "C" {
     pub fn bibl_read(
         b: *mut bibl,
         fp: *mut FILE,
-        filename: *mut ::std::os::raw::c_char,
+        filename: *const ::std::os::raw::c_char,
         p: *mut param,
     ) -> ::std::os::raw::c_int;
 }

@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "fields.h"
+#include "msvc_fix.h"
 
 fields*
 fields_new( void )

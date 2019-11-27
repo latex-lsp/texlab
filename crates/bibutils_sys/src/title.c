@@ -15,6 +15,7 @@
 #include "fields.h"
 #include "title.h"
 #include "is_ws.h"
+#include "msvc_fix.h"
 
 int
 title_process( fields *info, const char *tag, const char *value, int level, unsigned char nosplittitle )

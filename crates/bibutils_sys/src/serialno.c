@@ -8,6 +8,7 @@
  */
 #include <string.h>
 #include "serialno.h"
+#include "msvc_fix.h"
 
 int
 addsn( fields *info, char *buf, int level )

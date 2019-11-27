@@ -11,6 +11,7 @@
 #include "is_ws.h"
 #include "fields.h"
 #include "reftypes.h"
+#include "msvc_fix.h"
 
 int
 get_reftype( const char *p, long refnum, char *progname, variants *all, int nall, char *tag, int *is_default, int chattiness )

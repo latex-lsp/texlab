@@ -17,6 +17,7 @@
 #include "title.h"
 #include "url.h"
 #include "utf8.h"
+#include "msvc_fix.h"
 
 /*****************************************************
  PUBLIC: int risout_initparams()

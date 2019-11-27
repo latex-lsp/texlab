@@ -19,6 +19,7 @@
 #include <limits.h>
 #include "is_ws.h"
 #include "str.h"
+#include "msvc_fix.h"
 
 /* Do not use asserts in STR_NOASSERT defined */
 #ifdef STR_NOASSERT

@@ -9,6 +9,7 @@
 #include <string.h>
 #include "url.h"
 #include "notes.h"
+#include "msvc_fix.h"
 
 /*
  * notes are mostly directly copies; however, lots of formats hide

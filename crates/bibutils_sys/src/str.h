@@ -135,4 +135,3 @@ int  str_is_empty( str *s );
  */
 
 #endif
-

@@ -21,6 +21,7 @@
 #include "reftypes.h"
 #include "bibformats.h"
 #include "generic.h"
+#include "msvc_fix.h"
 
 extern variants ris_all[];
 extern int ris_nall;

@@ -11,6 +11,7 @@ edition = "2018"
 
 [workspace]
 members = [
+    "crates/bibutils",
     "crates/bibutils_sys",
     "crates/futures_boxed",
     "crates/jsonrpc", 
@@ -19,7 +20,7 @@ members = [
 
 [dependencies]
 base64 = "0.11.0"
-bibutils-sys = { path = "crates/bibutils_sys" }
+bibutils = { path = "crates/bibutils" }
 bytes = "0.4.12"
 clap = "2.33"
 ducc = "0.1.2"

@@ -3,6 +3,7 @@
  */
 #include <string.h>
 #include "iso639_3.h"
+#include "msvc_fix.h"
 
 typedef struct {
         char *code;
