@@ -59,6 +59,13 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "bibutils-sys"
+version = "0.1.0"
+dependencies = [
+ "cc 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1495,6 +1502,7 @@ name = "texlab"
 version = "1.7.0"
 dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bibutils-sys 0.1.0",
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "copy_dir 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
