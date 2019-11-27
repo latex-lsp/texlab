@@ -2,7 +2,7 @@
 name = "texlab"
 description = "LaTeX Language Server"
 version = "1.7.0"
-license = "MIT"
+license = "GPLv3"
 readme = "README.md"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>", 
