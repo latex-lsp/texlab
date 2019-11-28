@@ -22,8 +22,9 @@ members = [
 base64 = "0.11.0"
 bibutils = { path = "crates/bibutils" }
 bytes = "0.4.12"
+citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 clap = "2.33"
-ducc = "0.1.2"
+csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = "0.3.0-alpha.18"
 html2md = "0.2.9"
@@ -31,6 +32,7 @@ image = "0.22.3"
 itertools = "0.8.2"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
+lalrpop-util = "0.17.2"
 log = "0.4.6"
 lsp-types = { version = "0.61.0", features = ["proposed"] }
 nom = "5.0.1"
@@ -54,6 +56,9 @@ walkdir = "2"
 [dev-dependencies]
 copy_dir = "0.1.2"
 indoc = "0.3.4"
+
+[build-dependencies]
+lalrpop = "0.17.2"
 
 [profile.release]
 lto = true

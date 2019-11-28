@@ -1,8 +1,6 @@
-use std::process::Command;
-
 fn main() {
-    Command::new("node")
-        .arg("src/citeproc/js/build.js")
-        .output()
-        .expect("Failed to bundle citeproc");
+    lalrpop::Configuration::new()
+        .generate_in_source_tree()
+        .process()
+        .unwrap();
 }

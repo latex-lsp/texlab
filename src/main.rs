@@ -13,7 +13,6 @@ use tokio::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    texlab::citeproc::JavaScriptEngine::initialize();
     let matches = app_from_crate!()
         .author("")
         .arg(

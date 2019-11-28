@@ -3,3 +3,6 @@ target/
 /.idea
 tarpaulin-report.html
 crates/**/Cargo.lock
+
+# LALRPOP
+src/citeproc/name/parser.rs
