@@ -1,7 +1,10 @@
 // Ported from: https://github.com/michel-kraemer/citeproc-java/tree/master/citeproc-java/templates
 // Michel Kraemer
 // Apache License 2.0
-use csl::CslType;
+use super::name;
+use citeproc_io::{DateOrRange, Name, NumericValue, Reference};
+use csl::*;
+use fnv::FnvHashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -292,4 +295,153 @@ impl RisLibrary {
         }
         library
     }
+}
+
+impl Into<Reference> for RisReference {
+    fn into(self) -> Reference {
+        let csl_type = self.ty.expect("RIS type is missing").csl();
+        let mut date: FnvHashMap<DateVariable, DateOrRange> = FnvHashMap::default();
+        let mut name: FnvHashMap<NameVariable, Vec<Name>> = FnvHashMap::default();
+        let mut number: FnvHashMap<NumberVariable, NumericValue> = FnvHashMap::default();
+        let mut ordinary: FnvHashMap<Variable, String> = FnvHashMap::default();
+
+        if let Some(access_date) = self.access_date {
+            date.insert(DateVariable::Accessed, DateOrRange::Literal(access_date));
+        }
+
+        name.insert(NameVariable::Author, parse_authors(self.authors));
+        name.insert(NameVariable::Editor, parse_authors(self.editors));
+
+        if let Some(container_title) = self
+            .journal
+            .or(self.name_of_database)
+            .or(self.book_or_conference)
+        {
+            ordinary.insert(Variable::ContainerTitle, container_title.clone());
+            ordinary.insert(Variable::CollectionTitle, container_title);
+        }
+
+        if let Some(value) = self.date.or(self.year) {
+            date.insert(DateVariable::Issued, DateOrRange::Literal(value.clone()));
+            date.insert(DateVariable::EventDate, DateOrRange::Literal(value));
+        }
+
+        if let Some(url) = self.url {
+            ordinary.insert(Variable::URL, url);
+        }
+
+        let notes = self.notes;
+        ordinary.insert(
+            Variable::Note,
+            self.research_notes.unwrap_or_else(|| notes.join("\n")),
+        );
+
+        if let Some(issue) = self.issue {
+            number.insert(NumberVariable::Issue, parse_number(issue));
+        }
+
+        if let Some(num) = self.number {
+            number.insert(NumberVariable::Number, parse_number(num));
+        }
+
+        if let Some(place) = self.place {
+            ordinary.insert(Variable::EventPlace, place.clone());
+            ordinary.insert(Variable::PublisherPlace, place.clone());
+        }
+
+        if let Some(abstrct) = self.abstrct {
+            ordinary.insert(Variable::Abstract, abstrct);
+        }
+
+        if let Some(call_number) = self.call_number {
+            ordinary.insert(Variable::CallNumber, call_number);
+        }
+
+        if let Some(doi) = self.doi {
+            ordinary.insert(Variable::DOI, doi);
+        }
+
+        if let Some(edition) = self.edition {
+            number.insert(NumberVariable::Edition, parse_number(edition));
+        }
+
+        if let Some(isbn_or_issn) = self.isbn_or_issn {
+            ordinary.insert(Variable::ISBN, isbn_or_issn.clone());
+            ordinary.insert(Variable::ISSN, isbn_or_issn);
+        }
+
+        ordinary.insert(Variable::Keyword, self.keywords.join(", "));
+
+        if let Some(number_of_volumes) = self.number_of_volumes {
+            number.insert(
+                NumberVariable::NumberOfVolumes,
+                parse_number(number_of_volumes),
+            );
+        }
+
+        if let Some(original_publication) = self.original_publication {
+            ordinary.insert(Variable::OriginalTitle, original_publication);
+        }
+
+        match (self.start_page, self.end_page) {
+            (Some(start_page), Some(end_page)) => {
+                number.insert(
+                    NumberVariable::Page,
+                    NumericValue::Str(format!("{}-{}", start_page, end_page)),
+                );
+            }
+            (Some(page), None) | (None, Some(page)) => {
+                number.insert(NumberVariable::Page, parse_number(page));
+            }
+            (None, None) => {}
+        }
+
+        if let Some(publisher) = self.publisher {
+            ordinary.insert(Variable::Publisher, publisher);
+        }
+
+        if let Some(reviewed_item) = self.reviewed_item {
+            ordinary.insert(Variable::ReviewedTitle, reviewed_item);
+        }
+
+        if let Some(section) = self.section {
+            ordinary.insert(Variable::Section, section);
+        }
+
+        if let Some(short_title) = self.short_title {
+            ordinary.insert(Variable::TitleShort, short_title);
+        }
+
+        if let Some(title) = self.title {
+            ordinary.insert(Variable::Title, title);
+        }
+
+        if let Some(volume) = self.volume {
+            number.insert(NumberVariable::Volume, parse_number(volume));
+        }
+
+        Reference {
+            id: Atom::from(self.id.or(self.label).expect("RIS id is missing").as_str()),
+            csl_type,
+            language: None,
+            name,
+            number,
+            date,
+            ordinary,
+        }
+    }
+}
+
+fn parse_number(value: String) -> NumericValue {
+    match value.parse() {
+        Ok(value) => NumericValue::num(value),
+        Err(_) => NumericValue::Str(value),
+    }
+}
+
+fn parse_authors(authors: Vec<String>) -> Vec<Name> {
+    authors
+        .into_iter()
+        .flat_map(|author| name::parse(&author))
+        .collect()
 }

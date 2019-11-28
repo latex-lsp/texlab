@@ -25,6 +25,7 @@ bytes = "0.4.12"
 citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 clap = "2.33"
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
+fnv = "1.0.3"
 futures-boxed = { path = "crates/futures_boxed" }
 futures-preview = "0.3.0-alpha.18"
 html2md = "0.2.9"
