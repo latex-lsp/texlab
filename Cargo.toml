@@ -22,6 +22,8 @@ members = [
 base64 = "0.11.0"
 bibutils = { path = "crates/bibutils" }
 bytes = "0.4.12"
+citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
+citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 clap = "2.33"
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }

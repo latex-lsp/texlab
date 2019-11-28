@@ -41,6 +41,12 @@ impl BibtexSyntaxTree {
         finder.visit_root(&self.root);
         finder.results
     }
+
+    pub fn find_entry(&self, key: &str) -> Option<&BibtexEntry> {
+        self.entries()
+            .into_iter()
+            .find(|entry| entry.key.as_ref().map(BibtexToken::text) == Some(key))
+    }
 }
 
 impl From<BibtexRoot> for BibtexSyntaxTree {

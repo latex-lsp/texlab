@@ -257,6 +257,12 @@ impl BibtexEntry {
     pub fn is_comment(&self) -> bool {
         self.ty.text().to_lowercase() == "@comment"
     }
+
+    pub fn find_field(&self, name: &str) -> Option<&BibtexField> {
+        self.fields
+            .iter()
+            .find(|field| field.name.text().to_lowercase() == name)
+    }
 }
 
 impl SyntaxNode for BibtexEntry {
