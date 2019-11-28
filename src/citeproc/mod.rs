@@ -1,4 +1,5 @@
 mod name;
+mod ris;
 
 use crate::syntax::*;
 use lsp_types::*;
