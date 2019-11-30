@@ -13,7 +13,7 @@ async fn valid_citation() {
         item.documentation.unwrap(),
         Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: "Bar, F. (2019). Baz Qux.".into()
+            value: "Bar, F. (2019). *Baz Qux*.".into()
         })
     );
 }

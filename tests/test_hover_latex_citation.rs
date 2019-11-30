@@ -12,7 +12,7 @@ async fn valid() {
         contents,
         HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: "Bar, F. (2019). Baz Qux.".into()
+            value: "Bar, F. (2019). *Baz Qux*.".into()
         })
     );
 }
