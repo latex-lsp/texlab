@@ -2,7 +2,7 @@
 // Michel Kraemer
 // Apache License 2.0
 use super::name;
-use citeproc_io::{DateOrRange, Name, NumericValue, Reference};
+use citeproc_io::{Date, DateOrRange, Name, NumericValue, Reference};
 use csl::*;
 use fnv::FnvHashMap;
 use serde::{Deserialize, Serialize};
@@ -306,7 +306,7 @@ impl Into<Reference> for RisReference {
         let mut ordinary: FnvHashMap<Variable, String> = FnvHashMap::default();
 
         if let Some(access_date) = self.access_date {
-            date.insert(DateVariable::Accessed, DateOrRange::Literal(access_date));
+            date.insert(DateVariable::Accessed, parse_date_or_range(access_date));
         }
 
         name.insert(NameVariable::Author, parse_authors(self.authors));
@@ -322,8 +322,9 @@ impl Into<Reference> for RisReference {
         }
 
         if let Some(value) = self.date.or(self.year) {
-            date.insert(DateVariable::Issued, DateOrRange::Literal(value.clone()));
-            date.insert(DateVariable::EventDate, DateOrRange::Literal(value));
+            let value = parse_date_or_range(value);
+            date.insert(DateVariable::Issued, value.clone());
+            date.insert(DateVariable::EventDate, value);
         }
 
         if let Some(url) = self.url {
@@ -444,4 +445,22 @@ fn parse_authors(authors: Vec<String>) -> Vec<Name> {
         .into_iter()
         .flat_map(|author| name::parse(&author))
         .collect()
+}
+
+fn parse_date_or_range(value: String) -> DateOrRange {
+    parse_date(&value)
+        .map(DateOrRange::Single)
+        .unwrap_or_else(|| DateOrRange::Literal(value))
+}
+
+fn parse_date(value: &str) -> Option<Date> {
+    let mut parts = value.split('/');
+    let year: i32 = parts.next()?.parse().ok()?;
+    match parts.next().and_then(|p| p.parse().ok()) {
+        Some(month) => match parts.next().and_then(|p| p.parse().ok()) {
+            Some(day) => Some(Date::new(year, month, day)),
+            None => Some(Date::new(year, month, 0)),
+        },
+        None => Some(Date::new(year, 0, 0)),
+    }
 }
