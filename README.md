@@ -22,7 +22,6 @@ See the [installation chapter](https://texlab.netlify.com/docs) from our docs.
 You will need to install the following dependencies to compile the server:
 
 - [Rust (>= 1.39)](https://rustup.rs/)
-- [Node.js](https://nodejs.org/)
 
 Then run the following command in the project folder:
 
