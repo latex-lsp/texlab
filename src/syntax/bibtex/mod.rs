@@ -47,6 +47,17 @@ impl BibtexSyntaxTree {
             .into_iter()
             .find(|entry| entry.key.as_ref().map(BibtexToken::text) == Some(key))
     }
+
+    pub fn resolve_crossref(&self, entry: &BibtexEntry) -> Option<&BibtexEntry> {
+        if let Some(field) = entry.find_field("crossref") {
+            if let Some(BibtexContent::BracedContent(content)) = &field.content {
+                if let Some(BibtexContent::Word(name)) = content.children.get(0) {
+                    return self.find_entry(name.token.text());
+                }
+            }
+        }
+        None
+    }
 }
 
 impl From<BibtexRoot> for BibtexSyntaxTree {

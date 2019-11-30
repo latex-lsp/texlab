@@ -6,15 +6,29 @@ use crate::formatting::bibtex::{format_entry, format_string, BibtexFormattingPar
 use crate::syntax::*;
 use bibutils::{InputFormat, OutputFormat};
 use citeproc::prelude::*;
-use citeproc::Processor;
 use citeproc_db::PredefinedLocales;
-use citeproc_io::Reference;
-use lsp_types::*;
+use lsp_types::{MarkupContent, MarkupKind};
 use std::sync::Arc;
 
 static APA_STYLE: &str = include_str!("apa.csl");
 
 pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupContent> {
+    let reference: Reference = convert_to_ris(tree, key)?.into();
+
+    let html = generate_bibliography(reference)?;
+    let markdown = html2md::parse_html(&html).trim().to_owned();
+    if markdown == "" {
+        return None;
+    }
+
+    let content = MarkupContent {
+        kind: MarkupKind::Markdown,
+        value: markdown,
+    };
+    Some(content)
+}
+
+fn convert_to_ris(tree: &BibtexSyntaxTree, key: &str) -> Option<RisReference> {
     let bib_params = BibtexFormattingParams::default();
     let mut bib_code = String::new();
 
@@ -24,16 +38,9 @@ pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupConte
     }
 
     let entry = tree.find_entry(key)?;
-
-    if let Some(crossref_field) = entry.find_field("crossref") {
-        if let Some(BibtexContent::BracedContent(crossref_content)) = &crossref_field.content {
-            if let Some(BibtexContent::Word(crossref_name)) = crossref_content.children.get(0) {
-                if let Some(crossref_entry) = tree.find_entry(crossref_name.token.text()) {
-                    bib_code.push_str(&format_entry(crossref_entry, &bib_params));
-                    bib_code.push('\n');
-                }
-            }
-        }
+    if let Some(crossref) = tree.resolve_crossref(entry) {
+        bib_code.push_str(&format_entry(crossref, &bib_params));
+        bib_code.push('\n');
     }
 
     bib_code.push_str(&format_entry(entry, &bib_params));
@@ -41,32 +48,22 @@ pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupConte
 
     let ris_code = unsafe { bibutils::convert(bib_code, InputFormat::Biblatex, OutputFormat::Ris) };
     let ris_lib = RisLibrary::parse(ris_code.lines());
-    let ris_ref = ris_lib
+    ris_lib
         .references
         .into_iter()
-        .find(|reference| reference.id.as_ref().map(AsRef::as_ref) == Some(key))?;
+        .find(|reference| reference.id.as_ref().map(AsRef::as_ref) == Some(key))
+}
 
-    let csl_ref: Reference = ris_ref.into();
-
+fn generate_bibliography(reference: Reference) -> Option<String> {
     let locales = Arc::new(PredefinedLocales::bundled_en_us());
     let mut processor = Processor::new(APA_STYLE, locales, false, SupportedFormat::Html).unwrap();
-    let mut clusters = Vec::new();
-    let cite = Cite::basic(&csl_ref.id);
-    clusters.push(Cluster2::Note {
+    let cite = Cite::basic(&reference.id);
+    let cluster = Cluster2::Note {
         id: 1,
         note: IntraNote::Single(1),
         cites: vec![cite],
-    });
-    processor.insert_reference(csl_ref);
-    processor.init_clusters(clusters);
-    let html = processor.get_bibliography().pop().unwrap();
-    let markdown = html2md::parse_html(&html).trim().to_owned();
-    if markdown == "" {
-        return None;
-    }
-
-    Some(MarkupContent {
-        kind: MarkupKind::Markdown,
-        value: markdown,
-    })
+    };
+    processor.insert_reference(reference);
+    processor.init_clusters(vec![cluster]);
+    processor.get_bibliography().pop()
 }

@@ -1,3 +1,6 @@
+// Ported from: https://github.com/michel-kraemer/citeproc-java/blob/master/citeproc-java/grammars/InternalName.g4
+// Michel Kraemer
+// Apache License 2.0
 use citeproc_io::{Name, PersonName};
 use itertools::Itertools;
 
@@ -5,7 +8,7 @@ grammar;
 
 pub Names: Vec<Name> = And<Name>;
 
-And<T>: Vec<T> = { // (1)
+And<T>: Vec<T> = {
     <v:(<T> "and")*> <e:T?> => match e {
         None => v,
         Some(e) => {
