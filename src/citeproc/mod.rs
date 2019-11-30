@@ -23,7 +23,7 @@ pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupConte
 
     let content = MarkupContent {
         kind: MarkupKind::Markdown,
-        value: markdown,
+        value: markdown.replace("..", "."),
     };
     Some(content)
 }
