@@ -46,7 +46,7 @@ fn convert_to_ris(tree: &BibtexSyntaxTree, key: &str) -> Option<RisReference> {
     bib_code.push_str(&format_entry(entry, &bib_params));
     bib_code.push('\n');
 
-    let ris_code = unsafe { bibutils::convert(bib_code, InputFormat::Biblatex, OutputFormat::Ris) };
+    let ris_code = bibutils::convert(bib_code, InputFormat::Biblatex, OutputFormat::Ris)?;
     let ris_lib = RisLibrary::parse(ris_code.lines());
     ris_lib
         .references

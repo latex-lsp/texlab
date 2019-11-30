@@ -2,6 +2,7 @@ use bibutils_sys::*;
 use std::ffi::CString;
 use std::fs;
 use std::mem::MaybeUninit;
+use std::path::Path;
 use tempfile::tempdir;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -64,42 +65,121 @@ impl OutputFormat {
     }
 }
 
-pub unsafe fn convert(input: String, from: InputFormat, to: OutputFormat) -> String {
-    let program = CString::new("texlab").unwrap();
-    let mut context = MaybeUninit::zeroed();
-    bibl_init(context.as_mut_ptr());
-    let mut params = MaybeUninit::zeroed();
-    bibl_initparams(
-        params.as_mut_ptr(),
-        from.read_mode() as i32,
-        to.write_mode() as i32,
-        program.as_ptr(),
-    );
+struct Context {
+    inner: MaybeUninit<bibl>,
+}
 
+impl Context {
+    fn new() -> Self {
+        let mut inner = MaybeUninit::zeroed();
+        unsafe {
+            bibl_init(inner.as_mut_ptr());
+        }
+        Self { inner }
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        unsafe {
+            bibl_free(self.inner.as_mut_ptr());
+        }
+    }
+}
+
+unsafe impl Send for Context {}
+
+struct Params {
+    inner: MaybeUninit<param>,
+}
+
+impl Params {
+    fn new(from: InputFormat, to: OutputFormat) -> Self {
+        let program = CString::new("texlab").unwrap();
+        let mut inner = MaybeUninit::zeroed();
+        unsafe {
+            bibl_initparams(
+                inner.as_mut_ptr(),
+                from.read_mode() as i32,
+                to.write_mode() as i32,
+                program.as_ptr(),
+            );
+        }
+        Self { inner }
+    }
+}
+
+impl Drop for Params {
+    fn drop(&mut self) {
+        unsafe {
+            bibl_freeparams(self.inner.as_mut_ptr());
+        }
+    }
+}
+
+unsafe impl Send for Params {}
+
+struct File {
+    path: CString,
+    handle: *mut FILE,
+}
+
+impl File {
+    fn new<M: Into<Vec<u8>>>(path: &Path, mode: M) -> Self {
+        let path = CString::new(path.to_str().unwrap()).unwrap();
+        let mode = CString::new(mode).unwrap();
+        let handle = unsafe { fopen(path.as_ptr(), mode.as_ptr()) };
+        Self { path, handle }
+    }
+}
+
+impl Drop for File {
+    fn drop(&mut self) {
+        unsafe {
+            fclose(self.handle);
+        }
+    }
+}
+
+unsafe impl Send for File {}
+
+pub fn convert(input: String, from: InputFormat, to: OutputFormat) -> Option<String> {
+    let mut context = Context::new();
+    let mut params = Params::new(from, to);
     let dir = tempdir().expect("failed to create a temporary directory");
-    let input_path = dir.path().join("input");
-    let input_path_ffi = CString::new(input_path.to_str().unwrap()).unwrap();
-    fs::write(input_path, input).unwrap();
-    let input_mode_ffi = CString::new("r").unwrap();
 
-    let input_file = fopen(input_path_ffi.as_ptr(), input_mode_ffi.as_ptr());
-    bibl_read(
-        context.as_mut_ptr(),
-        input_file,
-        input_path_ffi.as_ptr(),
-        params.as_mut_ptr(),
-    );
-    fclose(input_file);
+    let input_path = dir.path().join("input");
+    fs::write(&input_path, input).ok()?;
+    let input_file = File::new(&input_path, "r");
+    unsafe {
+        let status = bibl_read(
+            context.inner.as_mut_ptr(),
+            input_file.handle,
+            input_file.path.as_ptr(),
+            params.inner.as_mut_ptr(),
+        );
+
+        if status != BIBL_OK as i32 {
+            return None;
+        }
+    }
 
     let output_path = dir.path().join("output");
-    let output_path_ffi = CString::new(output_path.to_str().unwrap()).unwrap();
-    let output_mode_ffi = CString::new("w").unwrap();
-    let output_file = fopen(output_path_ffi.as_ptr(), output_mode_ffi.as_ptr());
-    bibl_write(context.as_mut_ptr(), output_file, params.as_mut_ptr());
-    fclose(output_file);
-    bibl_freeparams(params.as_mut_ptr());
-    bibl_free(context.as_mut_ptr());
-    let data = fs::read(output_path).unwrap();
+    let output_file = File::new(&output_path, "w");
+    unsafe {
+        let status = bibl_write(
+            context.inner.as_mut_ptr(),
+            output_file.handle,
+            params.inner.as_mut_ptr(),
+        );
+
+        if status != BIBL_OK as i32 {
+            return None;
+        }
+    }
+
     // Remove BOM
-    String::from_utf8_lossy(&data[3..]).into_owned()
+    let data = fs::read(&output_path).ok()?;
+    let text = String::from_utf8_lossy(&data[3..]).into_owned();
+    Some(text)
 }
