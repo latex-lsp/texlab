@@ -4,10 +4,6 @@ parameters:
   archiveType: ""
   linux: false
 steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: ">=10.x"
-    displayName: "Install Node.js"
   - task: UsePythonVersion@0
     inputs:
       versionSpec: "3.7"
