@@ -23,7 +23,7 @@ fn main() {
         .file("src/entities.c")
         .file("src/fields.c")
         .file("src/gb18030.c")
-        .file("src/gb18030_enumeration.c")
+        // .file("src/gb18030_enumeration.c")
         .file("src/generic.c")
         .file("src/intlist.c")
         .file("src/isiin.c")
