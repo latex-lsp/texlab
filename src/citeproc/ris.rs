@@ -358,10 +358,6 @@ impl Into<Reference> for RisReference {
             ordinary.insert(Variable::CallNumber, call_number);
         }
 
-        if let Some(doi) = self.doi {
-            ordinary.insert(Variable::DOI, doi);
-        }
-
         if let Some(edition) = self.edition {
             number.insert(NumberVariable::Edition, parse_number(edition));
         }
