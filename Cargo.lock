@@ -2019,7 +2019,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "1.7.0"
+version = "1.8.0"
 dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bibutils 0.1.0",

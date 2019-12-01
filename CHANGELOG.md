@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 01.12.2019
+
+### Added
+
+- Add support for `crossref` when previewing citations ([#16](https://github.com/latex-lsp/texlab/issues/16))
+- Warn if the user does not have a TeX distribution installed
+
+### Changed
+
+- Change license to GPLv3
+- Do not require Node.js when building the server (#[87](https://github.com/latex-lsp/texlab/issues/87))
+
 ## [1.7.0] - 20.11.2019
 
-### Added 
+### Added
 
 - Add logging for JSON-RPC errors via `stderr` ([#111](https://github.com/latex-lsp/texlab/issues/111))
 - Provide completion for `\subfile`
@@ -22,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Improve detection of local packages inside the current workspace 
+- Improve detection of local packages inside the current workspace
   ([#110](https://github.com/latex-lsp/texlab/issues/110))
 - Fix potential crash in "Goto Definition"
 
