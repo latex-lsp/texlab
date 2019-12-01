@@ -1,5 +1,7 @@
 fn main() {
     cc::Build::new()
+        .warnings(false)
+        .extra_warnings(false)
         .define("_CRT_SECURE_NO_WARNINGS", None)
         .file("src/adsout.c")
         .file("src/adsout_journals.c")
