@@ -1,0 +1,38 @@
+.TH TEXLAB 1
+.SH NAME
+texlab \- An implementation of the Language Server Protocol for LaTeX
+.SH SYNOPSIS
+\fBtexlab\fR [FLAGS]
+.SH FLAGS
+.TP
+\fB\-v\fR
+Increase message verbosity
+
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+No output printed to stderr
+.SH EXIT STATUS
+.TP
+\fB0\fR
+Successful program execution.
+
+.TP
+\fB1\fR
+Unsuccessful program execution.
+
+.TP
+\fB101\fR
+The program panicked.
+.SH EXAMPLES
+.TP
+Run with debug verbosity
+\fB$ texlab \-vvv\fR
+.br
+Debug Mode: texlab will print debug messages to stderr
+
+.SH AUTHORS
+.P
+.RS 2
+.nf
+Eric Förster <eric.foerster@outlook.com>
+Patrick Förster <patrick.foerster@outlook.de>
