@@ -131,6 +131,7 @@ where
         let document = request
             .workspace()
             .find_parent(&request.document().uri)
+            .or_else(|| request.workspace().find(&request.document().uri))
             .unwrap();
         let path = document.uri.to_file_path().unwrap();
 
