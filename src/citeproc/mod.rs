@@ -8,22 +8,40 @@ use bibutils::{InputFormat, OutputFormat};
 use citeproc::prelude::*;
 use citeproc_db::PredefinedLocales;
 use lsp_types::{MarkupContent, MarkupKind};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::sync::Arc;
 
 static APA_STYLE: &str = include_str!("apa.csl");
 
-pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupContent> {
-    let reference: Reference = convert_to_ris(tree, key)?.into();
+static DOI_URL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"https://doi.org/\[.*\]\(.*\)"#).unwrap());
 
-    let html = generate_bibliography(reference)?;
-    let markdown = html2md::parse_html(&html).trim().to_owned();
+pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupContent> {
+    let ris_reference = convert_to_ris(tree, key)?;
+    let doi_url = ris_reference
+        .doi
+        .as_ref()
+        .map(|doi| format!("[doi:{}](https://doi.org/{})", doi, doi));
+
+    let csl_reference: Reference = ris_reference.into();
+    let html = generate_bibliography(csl_reference)?;
+
+    let mut markdown = html2md::parse_html(&html).trim().to_owned();
     if markdown == "" {
         return None;
     }
 
+    if let Some(doi_url) = doi_url {
+        markdown = DOI_URL_REGEX
+            .replace(&markdown, doi_url.as_str())
+            .into_owned();
+    }
+
+    markdown = markdown.replace("..", ".");
     let content = MarkupContent {
         kind: MarkupKind::Markdown,
-        value: markdown.replace("..", "."),
+        value: markdown,
     };
     Some(content)
 }
