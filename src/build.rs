@@ -133,36 +133,42 @@ where
             .find_parent(&request.document().uri)
             .or_else(|| request.workspace().find(&request.document().uri))
             .unwrap();
-        let path = document.uri.to_file_path().unwrap();
 
-        if request.client_capabilities.has_work_done_progress() {
-            let params = WorkDoneProgressCreateParams {
-                token: self.token.clone(),
-            };
-            self.client.work_done_progress_create(params).await.unwrap();
+        match document.uri.to_file_path() {
+            Ok(path) => {
+                if request.client_capabilities.has_work_done_progress() {
+                    let params = WorkDoneProgressCreateParams {
+                        token: self.token.clone(),
+                    };
+                    self.client.work_done_progress_create(params).await.unwrap();
 
-            let title = path.file_name().unwrap().to_string_lossy().into_owned();
-            let params = ProgressParams {
-                token: self.token.clone(),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                    WorkDoneProgressBegin {
-                        title,
-                        cancellable: Some(true),
-                        message: Some("Building".into()),
-                        percentage: None,
-                    },
-                )),
-            };
-            self.client.progress(params).await;
+                    let title = path.file_name().unwrap().to_string_lossy().into_owned();
+                    let params = ProgressParams {
+                        token: self.token.clone(),
+                        value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                            WorkDoneProgressBegin {
+                                title,
+                                cancellable: Some(true),
+                                message: Some("Building".into()),
+                                percentage: None,
+                            },
+                        )),
+                    };
+                    self.client.progress(params).await;
+                }
+
+                let status = match self.build(&path).await {
+                    Ok(true) => BuildStatus::Success,
+                    Ok(false) => BuildStatus::Error,
+                    Err(_) => BuildStatus::Failure,
+                };
+
+                BuildResult { status }
+            }
+            Err(()) => BuildResult {
+                status: BuildStatus::Failure,
+            },
         }
-
-        let status = match self.build(&path).await {
-            Ok(true) => BuildStatus::Success,
-            Ok(false) => BuildStatus::Error,
-            Err(_) => BuildStatus::Failure,
-        };
-
-        BuildResult { status }
     }
 }
 
