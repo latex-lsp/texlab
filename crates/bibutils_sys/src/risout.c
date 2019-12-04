@@ -213,19 +213,19 @@ write_type( FILE *fp, int type )
 static void
 verbose_type_identified( char *element_type, param *p, int type )
 {
-	if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-	fprintf( stderr, "Type from %s element: ", element_type );
+	// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+	// fprintf( stderr, "Type from %s element: ", element_type );
 	write_type( stderr, type );
-	fprintf( stderr, "\n" );
+	// fprintf( stderr, "\n" );
 }
 
 static void
 verbose_type_assignment( char *tag, char *value, param *p, int type )
 {
-	if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-	fprintf( stderr, "Type from tag '%s' data '%s': ", tag, value );
+	// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+	// fprintf( stderr, "Type from tag '%s' data '%s': ", tag, value );
 	write_type( stderr, type );
-	fprintf( stderr, "\n" );
+	// fprintf( stderr, "\n" );
 }
 
 typedef struct match_type {
@@ -364,10 +364,10 @@ get_type_issuance( fields *f, param *p )
 	}
 
 	if ( p->verbose ) {
-		if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-		fprintf( stderr, "Type from issuance/typeOfReference elements: " );
+		// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+		// fprintf( stderr, "Type from issuance/typeOfReference elements: " );
 		write_type( stderr, type );
-		fprintf( stderr, "\n" );
+		// fprintf( stderr, "\n" );
 	}
 
 	return type;
@@ -386,10 +386,10 @@ get_type( fields *f, param *p )
 	}
 
 	if ( p->verbose ) {
-		if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-		fprintf( stderr, "Final type: " );
+		// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+		// fprintf( stderr, "Final type: " );
 		write_type( stderr, type );
-		fprintf( stderr, "\n" );
+		// fprintf( stderr, "\n" );
 	}
 
 
@@ -430,8 +430,8 @@ append_type( int type, param *p, fields *out, int *status )
 	int fstatus;
 
 	if ( type < 0 || type >= NUM_TYPES ) {
-		if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-		fprintf( stderr, "Internal error: Cannot recognize type %d, switching to TYPE_STD %d\n", type, TYPE_STD );
+		// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+		// fprintf( stderr, "Internal error: Cannot recognize type %d, switching to TYPE_STD %d\n", type, TYPE_STD );
 		type = TYPE_STD;
 	}
 

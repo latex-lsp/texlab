@@ -27,7 +27,7 @@ bibl_malloc( bibl * b )
 		b->maxrefs = alloc;
 		return 1;
 	} else {
-		fprintf( stderr, "%s: allocation error\n", __FUNCTION__ );
+		// fprintf( stderr, "%s: allocation error\n", __FUNCTION__ );
 		return 0;
 	}
 }
@@ -43,7 +43,7 @@ bibl_realloc( bibl * b )
 		b->maxrefs = alloc;
 		return 1;
 	} else {
-		fprintf( stderr, "%s: allocation error\n", __FUNCTION__ );
+		// fprintf( stderr, "%s: allocation error\n", __FUNCTION__ );
 		return 0;
 	}
 }

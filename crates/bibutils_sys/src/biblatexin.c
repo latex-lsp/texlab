@@ -245,10 +245,10 @@ biblatex_data( const char *p, fields *bibin, slist *tokens, long nref, param *pm
 	}
 out:
 	if ( nbracket!=0 ) {
-		fprintf( stderr, "%s: Mismatch in number of brackets in reference %ld\n", pm->progname, nref );
+		// fprintf( stderr, "%s: Mismatch in number of brackets in reference %ld\n", pm->progname, nref );
 	}
 	if ( nquotes!=0 ) {
-		fprintf( stderr, "%s: Mismatch in number of quotes in reference %ld\n", pm->progname, nref );
+		// fprintf( stderr, "%s: Mismatch in number of quotes in reference %ld\n", pm->progname, nref );
 	}
 	if ( str_has_value( &tok ) ) {
 		status = slist_add( tokens, &tok );
@@ -285,9 +285,9 @@ replace_strings( slist *tokens, fields *bibin, long nref, param *pm )
 					q++;
 				}
 				if ( !ok ) {
-					fprintf( stderr, "%s: Warning: Non-numeric "
-					   "BibTeX elements should be in quotations or "
-					   "curly brackets in reference %ld\n", pm->progname, nref );
+					// fprintf( stderr, "%s: Warning: Non-numeric "
+					//    "BibTeX elements should be in quotations or "
+					//    "curly brackets in reference %ld\n", pm->progname, nref );
 				}
 			}
 		}
@@ -305,20 +305,20 @@ string_concatenate( slist *tokens, fields *bibin, long nref, param *pm )
 		s = slist_str( tokens, i );
 		if ( !strcmp( str_cstr( s ), "#" ) ) {
 			if ( i==0 || i==tokens->n-1 ) {
-				fprintf( stderr, "%s: Warning: Stray string concatenation "
-					"('#' character) in reference %ld\n", pm->progname, nref );
+				// fprintf( stderr, "%s: Warning: Stray string concatenation "
+				// 	"('#' character) in reference %ld\n", pm->progname, nref );
 				status = slist_remove( tokens, i );
 				if ( status!=SLIST_OK ) return BIBL_ERR_MEMERR;
 				continue;
 			}
 			s = slist_str( tokens, i-1 );
 			if ( s->data[0]!='\"' && s->data[s->len-1]!='\"' )
-				fprintf( stderr, "%s: Warning: String concentation should "
-					"be used in context of quotations marks in reference %ld\n", pm->progname, nref );
+				// fprintf( stderr, "%s: Warning: String concentation should "
+				// 	"be used in context of quotations marks in reference %ld\n", pm->progname, nref );
 			t = slist_str( tokens, i+1 );
 			if ( t->data[0]!='\"' && t->data[t->len-1]!='\"' )
-				fprintf( stderr, "%s: Warning: String concentation should "
-					"be used in context of quotations marks in reference %ld\n", pm->progname, nref );
+				// fprintf( stderr, "%s: Warning: String concentation should "
+				// 	"be used in context of quotations marks in reference %ld\n", pm->progname, nref );
 			if ( ( s->data[s->len-1]=='\"' && t->data[0]=='\"') || (s->data[s->len-1]=='}' && t->data[0]=='{') ) {
 				str_trimend( s, 1 );
 				str_trimbegin( t, 1 );
@@ -712,11 +712,11 @@ static void
 biblatexin_nocrossref( bibl *bin, long i, int n, param *p )
 {
 	int n1 = fields_find( bin->ref[i], "REFNUM", LEVEL_ANY );
-	if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-	fprintf( stderr, "Cannot find cross-reference '%s'", bin->ref[i]->data[n].data);
-	if ( n1!=FIELDS_NOTFOUND )
-		fprintf( stderr, " for reference '%s'", bin->ref[i]->data[n1].data );
-	fprintf( stderr, "\n" );
+	// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+	// fprintf( stderr, "Cannot find cross-reference '%s'", bin->ref[i]->data[n].data);
+	// if ( n1!=FIELDS_NOTFOUND )
+		// fprintf( stderr, " for reference '%s'", bin->ref[i]->data[n1].data );
+	// fprintf( stderr, "\n" );
 }
 
 static int
@@ -1251,8 +1251,8 @@ static void
 biblatexin_notag( param *p, char *tag )
 {
 	if ( p->verbose && strcmp( tag, "INTERNAL_TYPE" ) ) {
-		if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
-		fprintf( stderr, " Cannot find tag '%s'\n", tag );
+		// if ( p->progname ) fprintf( stderr, "%s: ", p->progname );
+		// fprintf( stderr, " Cannot find tag '%s'\n", tag );
 	}
 }
 

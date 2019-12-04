@@ -265,20 +265,20 @@ bibl_addtocorps( param *p, char *d )
 void
 bibl_reporterr( int err )
 {
-	fprintf( stderr, "Bibutils: " );
-	switch( err ) {
-		case BIBL_OK:
-			fprintf( stderr, "No error." ); break;
-		case BIBL_ERR_BADINPUT:
-			fprintf( stderr, "Bad input." ); break;
-		case BIBL_ERR_MEMERR:
-			fprintf( stderr, "Memory error." ); break;
-		case BIBL_ERR_CANTOPEN:
-			fprintf( stderr, "Can't open." ); break;
-		default:
-			fprintf( stderr, "Cannot identify error code %d.", err ); break;
-	}
-	fprintf( stderr, "\n" );
+	// fprintf( stderr, "Bibutils: " );
+	// switch( err ) {
+	// 	case BIBL_OK:
+	// 		fprintf( stderr, "No error." ); break;
+	// 	case BIBL_ERR_BADINPUT:
+	// 		fprintf( stderr, "Bad input." ); break;
+	// 	case BIBL_ERR_MEMERR:
+	// 		fprintf( stderr, "Memory error." ); break;
+	// 	case BIBL_ERR_CANTOPEN:
+	// 		fprintf( stderr, "Can't open." ); break;
+	// 	default:
+	// 		fprintf( stderr, "Cannot identify error code %d.", err ); break;
+	// }
+	// fprintf( stderr, "\n" );
 }
 
 static int
@@ -298,17 +298,17 @@ bibl_illegaloutmode( int mode )
 static void
 bibl_verbose2( fields *f, char *filename, long nrefs )
 {
-	int i, n;
-	n = fields_num( f );
-	fprintf( stderr, "======== %s %ld : converted\n", filename, nrefs );
-	for ( i=0; i<n; ++i ) {
-		fprintf( stderr, "'%s'='%s' level=%d\n",
-			(char*) fields_tag( f, i, FIELDS_CHRP_NOUSE ),
-			(char*) fields_value( f, i, FIELDS_CHRP_NOUSE ),
-			fields_level( f, i ) );
-	}
-	fprintf( stderr, "\n" );
-	fflush( stderr );
+	// int i, n;
+	// n = fields_num( f );
+	// fprintf( stderr, "======== %s %ld : converted\n", filename, nrefs );
+	// for ( i=0; i<n; ++i ) {
+	// 	fprintf( stderr, "'%s'='%s' level=%d\n",
+	// 		(char*) fields_tag( f, i, FIELDS_CHRP_NOUSE ),
+	// 		(char*) fields_value( f, i, FIELDS_CHRP_NOUSE ),
+	// 		fields_level( f, i ) );
+	// }
+	// fprintf( stderr, "\n" );
+	// fflush( stderr );
 }
 
 #if 0
@@ -818,10 +818,10 @@ convert_ref( bibl *bin, char *fname, bibl *bout, param *p )
 	}
 	if ( debug_set( p ) ) {
 		fflush( stdout );
-		fprintf( stderr, "-------------------start for convert_ref\n");
+		// fprintf( stderr, "-------------------start for convert_ref\n");
 		bibl_verbose0( bout );
-		fprintf( stderr, "-------------------end for convert_ref\n" );
-		fflush( stderr );
+		// fprintf( stderr, "-------------------end for convert_ref\n" );
+		// fflush( stderr );
 	}
 	status = uniqueify_citekeys( bout );
 	return status;
@@ -870,45 +870,45 @@ bibl_read( bibl *b, FILE *fp, char *filename, param *p )
 	if ( debug_set( p ) ) {
 		fflush( stdout );
 		report_params( stderr, "bibl_read", &lp );
-		fprintf( stderr, "-------------------raw_input start for bibl_read\n");
+		// fprintf( stderr, "-------------------raw_input start for bibl_read\n");
 		bibl_verbose0( &bin );
-		fprintf( stderr, "-------------------raw_input end for bibl_read\n" );
-		fflush( stderr );
+		// fprintf( stderr, "-------------------raw_input end for bibl_read\n" );
+		// fflush( stderr );
 	}
 
 	if ( !lp.output_raw || ( lp.output_raw & BIBL_RAW_WITHCHARCONVERT ) ) {
 		status = bibl_fixcharsets( &bin, &lp );
 		if ( status!=BIBL_OK ) return status;
 		if ( debug_set( p ) ) {
-			fprintf( stderr, "-------------------post_fixcharsets start for bibl_read\n");
+			// fprintf( stderr, "-------------------post_fixcharsets start for bibl_read\n");
 			bibl_verbose0( &bin );
-			fprintf( stderr, "-------------------post_fixcharsets end for bibl_read\n" );
-			fflush( stderr );
+			// fprintf( stderr, "-------------------post_fixcharsets end for bibl_read\n" );
+			// fflush( stderr );
 		}
 	}
 	if ( !lp.output_raw ) {
 		status = clean_ref( &bin, &lp );
 		if ( status!=BIBL_OK ) return status;
 		if ( debug_set( p ) ) {
-			fprintf( stderr, "-------------------post_clean_ref start for bibl_read\n");
+			// fprintf( stderr, "-------------------post_clean_ref start for bibl_read\n");
 			bibl_verbose0( &bin );
-			fprintf( stderr, "-------------------post_clean_ref end for bibl_read\n" );
-			fflush( stderr );
+			// fprintf( stderr, "-------------------post_clean_ref end for bibl_read\n" );
+			// fflush( stderr );
 		}
 		ok = convert_ref( &bin, filename, b, &lp );
 		if ( ok!=BIBL_OK ) return ok;
 		if ( debug_set( p ) ) {
-			fprintf( stderr, "-------------------post_convert_ref start for bibl_read\n");
+			// fprintf( stderr, "-------------------post_convert_ref start for bibl_read\n");
 			bibl_verbose0( &bin );
-			fprintf( stderr, "-------------------post_convert_ref end for bibl_read\n" );
-			fflush( stderr );
+			// fprintf( stderr, "-------------------post_convert_ref end for bibl_read\n" );
+			// fflush( stderr );
 		}
 	} else {
 		if ( debug_set( p ) ) {
-			fprintf( stderr, "-------------------here1 start for bibl_read\n");
+			// fprintf( stderr, "-------------------here1 start for bibl_read\n");
 			bibl_verbose0( &bin );
-			fprintf( stderr, "-------------------here1 end for bibl_read\n" );
-			fflush( stderr );
+			// fprintf( stderr, "-------------------here1 end for bibl_read\n" );
+			// fflush( stderr );
 		}
 		ok = bibl_copy( b, &bin );
 		if ( !ok ) {
@@ -1006,7 +1006,7 @@ bibl_writefp( FILE *fp, bibl *b, param *p )
 	fields_init( &out );
 
 	if ( debug_set( p ) && p->assemblef ) {
-		fprintf( stderr, "-------------------assemblef start for bibl_write\n");
+		// fprintf( stderr, "-------------------assemblef start for bibl_write\n");
 	}
 
 	if ( p->headerf ) p->headerf( fp, p );
@@ -1054,20 +1054,20 @@ bibl_write( bibl *b, FILE *fp, param *p )
 	}
 
 	if ( debug_set( p ) ) {
-		fprintf( stderr, "-------------------raw input start for bibl_write\n");
+		// fprintf( stderr, "-------------------raw input start for bibl_write\n");
 		bibl_verbose0( b );
-		fprintf( stderr, "-------------------raw input end for bibl_write\n" );
-		fflush( stderr );
+		// fprintf( stderr, "-------------------raw input end for bibl_write\n" );
+		// fflush( stderr );
 	}
 
 	status = bibl_fixcharsets( b, &lp );
 	if ( status!=BIBL_OK ) goto out;
 
 	if ( debug_set( p ) ) {
-		fprintf( stderr, "-------------------post-fixcharsets start for bibl_write\n");
+		// fprintf( stderr, "-------------------post-fixcharsets start for bibl_write\n");
 		bibl_verbose0( b );
-		fprintf( stderr, "-------------------post-fixcharsets end for bibl_write\n" );
-		fflush( stderr );
+		// fprintf( stderr, "-------------------post-fixcharsets end for bibl_write\n" );
+		// fflush( stderr );
 	}
 
 	if ( p->singlerefperfile ) status = bibl_writeeachfp( fp, b, &lp );

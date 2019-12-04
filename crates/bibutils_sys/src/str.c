@@ -213,7 +213,7 @@ str_initalloc( str *s, unsigned long minsize )
 	if ( minsize > str_initlen ) size = minsize;
 	s->data = (char *) malloc( sizeof( *(s->data) ) * size );
 	if ( !s->data ) {
-		fprintf(stderr,"Error.  Cannot allocate memory in str_initalloc, requested %lu characters.\n", size );
+		// fprintf(stderr,"Error.  Cannot allocate memory in str_initalloc, requested %lu characters.\n", size );
 		exit( EXIT_FAILURE );
 	}
 	s->data[0]='\0';

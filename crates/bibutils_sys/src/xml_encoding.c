@@ -35,7 +35,7 @@ xml_getencodingr( xml *node )
 				n = CHARSET_GB18030;
 			else n = charset_find( t );
 			if ( n==CHARSET_UNKNOWN ) {
-				fprintf( stderr, "Warning: did not recognize encoding '%s'\n", t );
+				// fprintf( stderr, "Warning: did not recognize encoding '%s'\n", t );
 			}
 		}
 	}

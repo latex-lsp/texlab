@@ -30,9 +30,9 @@ get_reftype( const char *p, long refnum, char *progname, variants *all, int nall
 	*is_default = 1;
 
 	if ( chattiness==REFTYPE_CHATTY ) {
-		if ( progname ) fprintf( stderr, "%s: ", progname );
-		fprintf( stderr, "Did not recognize type '%s' of refnum %ld (%s).\n"
-			"\tDefaulting to %s.\n", p, refnum, tag, all[0].type );
+		// if ( progname ) fprintf( stderr, "%s: ", progname );
+		// fprintf( stderr, "Did not recognize type '%s' of refnum %ld (%s).\n"
+		// 	"\tDefaulting to %s.\n", p, refnum, tag, all[0].type );
 	}
 
 	return 0;
