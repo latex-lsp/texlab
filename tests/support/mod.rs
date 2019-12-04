@@ -266,6 +266,35 @@ pub mod capabilities {
     };
 }
 
+pub mod build {
+    use super::*;
+    use tex::DistributionKind::*;
+    use texlab::build::{BuildParams, BuildResult};
+
+    pub async fn run(scenario_short_name: &'static str, file: &'static str) -> Option<BuildResult> {
+        tex::with_distro(&[Texlive, Miktex], |distro| {
+            async move {
+                let scenario_name = format!("build/{}", scenario_short_name);
+                let scenario = Scenario::new(&scenario_name, Arc::new(distro));
+                scenario.open(file).await;
+                scenario
+                    .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
+                    .await;
+
+                let params = BuildParams {
+                    text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+                };
+                scenario
+                    .server
+                    .execute_async(|svr| svr.build(params))
+                    .await
+                    .unwrap()
+            }
+        })
+        .await
+    }
+}
+
 pub mod completion {
     use super::*;
 

@@ -11,6 +11,7 @@ use self::miktex::Miktex;
 use self::tectonic::Tectonic;
 use self::texlive::Texlive;
 use futures_boxed::boxed;
+use std::future::Future;
 use tokio::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -102,5 +103,18 @@ impl Distribution for Unknown {
         _params: CompileParams<'a>,
     ) -> Result<CompileResult, CompileError> {
         Err(CompileError::NotInstalled)
+    }
+}
+
+pub async fn with_distro<T, A, F>(supported_kinds: &[DistributionKind], action: A) -> Option<T>
+where
+    A: FnOnce(Box<dyn Distribution>) -> F,
+    F: Future<Output = T>,
+{
+    let distro = Distribution::detect().await;
+    if supported_kinds.contains(&distro.kind()) {
+        Some(action(distro).await)
+    } else {
+        None
     }
 }
