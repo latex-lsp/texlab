@@ -271,16 +271,33 @@ pub mod build {
     use tex::DistributionKind::*;
     use texlab::build::{BuildParams, BuildResult};
 
-    pub async fn run(scenario_short_name: &'static str, file: &'static str) -> Option<BuildResult> {
+    async fn create_scenario(
+        scenario_short_name: &'static str,
+        file: &'static str,
+        distro: Box<dyn tex::Distribution>,
+    ) -> Scenario {
+        let scenario_name = format!("build/{}", scenario_short_name);
+        let scenario = Scenario::new(&scenario_name, Arc::new(distro));
+        scenario
+            .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
+            .await;
+        scenario.open(file).await;
+        scenario
+    }
+
+    pub async fn run(
+        scenario_short_name: &'static str,
+        file: &'static str,
+        executable: &'static str,
+    ) -> Option<BuildResult> {
         tex::with_distro(&[Texlive, Miktex], |distro| {
             async move {
-                let scenario_name = format!("build/{}", scenario_short_name);
-                let scenario = Scenario::new(&scenario_name, Arc::new(distro));
-                scenario.open(file).await;
-                scenario
-                    .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
-                    .await;
-
+                let scenario = create_scenario(scenario_short_name, file, distro).await;
+                scenario.client.options.lock().await.latex_build = Some(BuildOptions {
+                    executable: Some(executable.into()),
+                    args: None,
+                    on_save: None,
+                });
                 let params = BuildParams {
                     text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
                 };
@@ -289,6 +306,29 @@ pub mod build {
                     .execute_async(|svr| svr.build(params))
                     .await
                     .unwrap()
+            }
+        })
+        .await
+    }
+
+    pub async fn run_on_save(
+        scenario_short_name: &'static str,
+        file: &'static str,
+        executable: &'static str,
+    ) -> Option<Scenario> {
+        tex::with_distro(&[Texlive, Miktex], |distro| {
+            async move {
+                let scenario = create_scenario(scenario_short_name, file, distro).await;
+                scenario.client.options.lock().await.latex_build = Some(BuildOptions {
+                    executable: Some(executable.into()),
+                    args: None,
+                    on_save: Some(true),
+                });
+                let params = DidSaveTextDocumentParams {
+                    text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
+                };
+                scenario.server.execute(|svr| svr.did_save(params)).await;
+                scenario
             }
         })
         .await
@@ -306,10 +346,10 @@ pub mod completion {
     ) -> (Scenario, Vec<CompletionItem>) {
         let scenario_name = format!("completion/{}", scenario_short_name);
         let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(tex::Unknown)));
-        scenario.open(file).await;
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
+        scenario.open(file).await;
 
         let params = CompletionParams {
             text_document_position: TextDocumentPositionParams {
