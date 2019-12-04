@@ -178,7 +178,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
         self.workspace_manager.add(params.text_document);
-        self.action_manager.push(Action::DetectRoot(uri.into()));
+        self.action_manager
+            .push(Action::DetectRoot(uri.clone().into()));
+        self.action_manager
+            .push(Action::RunLinter(Uri::from(uri), LintReason::Save));
         self.action_manager.push(Action::PublishDiagnostics);
     }
 
