@@ -147,7 +147,7 @@ impl Scenario {
     pub async fn read(&self, name: &'static str) -> String {
         let mut path = self.directory.path().to_owned();
         path.push(name);
-        let data = tokio::fs::read(path).await.unwrap();
+        let data = tokio::fs::read(path).await.expect("failed to read scenario file");
         let text = String::from_utf8_lossy(&data);
         text.replace('\r', "")
     }
@@ -272,35 +272,33 @@ pub mod build {
     use texlab::build::{BuildParams, BuildResult};
 
     async fn create_scenario(
-        scenario_short_name: &'static str,
+        distribution: Box<dyn tex::Distribution>,
+        executable: &'static str,
+        build_on_save: bool,
         file: &'static str,
-        distro: Box<dyn tex::Distribution>,
     ) -> Scenario {
-        let scenario_name = format!("build/{}", scenario_short_name);
-        let scenario = Scenario::new(&scenario_name, Arc::new(distro));
+        let scenario = Scenario::new("build", Arc::new(distribution));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
+
+        let options = BuildOptions {
+            executable: Some(executable.into()),
+            args: None,
+            on_save: Some(build_on_save),
+        };
+        scenario.client.options.lock().await.latex_build = Some(options);
+
         scenario.open(file).await;
         scenario
     }
 
-    pub async fn run(
-        scenario_short_name: &'static str,
-        file: &'static str,
-        executable: &'static str,
-    ) -> Option<BuildResult> {
+    pub async fn run(executable: &'static str, file: &'static str) -> Option<BuildResult> {
         tex::with_distro(&[Texlive, Miktex], |distro| {
             async move {
-                let scenario = create_scenario(scenario_short_name, file, distro).await;
-                scenario.client.options.lock().await.latex_build = Some(BuildOptions {
-                    executable: Some(executable.into()),
-                    args: None,
-                    on_save: None,
-                });
-                let params = BuildParams {
-                    text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
-                };
+                let scenario = create_scenario(distro, executable, false, file).await;
+                let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
+                let params = BuildParams { text_document };
                 scenario
                     .server
                     .execute_async(|svr| svr.build(params))
@@ -311,22 +309,12 @@ pub mod build {
         .await
     }
 
-    pub async fn run_on_save(
-        scenario_short_name: &'static str,
-        file: &'static str,
-        executable: &'static str,
-    ) -> Option<Scenario> {
+    pub async fn run_on_save(executable: &'static str, file: &'static str) -> Option<Scenario> {
         tex::with_distro(&[Texlive, Miktex], |distro| {
             async move {
-                let scenario = create_scenario(scenario_short_name, file, distro).await;
-                scenario.client.options.lock().await.latex_build = Some(BuildOptions {
-                    executable: Some(executable.into()),
-                    args: None,
-                    on_save: Some(true),
-                });
-                let params = DidSaveTextDocumentParams {
-                    text_document: TextDocumentIdentifier::new(scenario.uri(file).into()),
-                };
+                let scenario = create_scenario(distro, executable, true, file).await;
+                let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
+                let params = DidSaveTextDocumentParams { text_document };
                 scenario.server.execute(|svr| svr.did_save(params)).await;
                 scenario
             }

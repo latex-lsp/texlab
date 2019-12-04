@@ -5,7 +5,7 @@ use texlab::build::{BuildResult, BuildStatus};
 
 #[tokio::test]
 async fn success_single_file() {
-    if let Some(result) = run("success_single_file", "foo.tex", "pdflatex").await {
+    if let Some(result) = run("pdflatex", "success_single_file.tex").await {
         assert_eq!(
             result,
             BuildResult {
@@ -17,7 +17,7 @@ async fn success_single_file() {
 
 #[tokio::test]
 async fn success_multiple_file() {
-    if let Some(result) = run("success_multiple_files", "foo.tex", "pdflatex").await {
+    if let Some(result) = run("pdflatex", "success_multiple_files_main.tex").await {
         assert_eq!(
             result,
             BuildResult {
@@ -29,14 +29,14 @@ async fn success_multiple_file() {
 
 #[tokio::test]
 async fn success_on_save() {
-    if let Some(scenario) = run_on_save("success_on_save", "foo.tex", "pdflatex").await {
-        scenario.read("foo.pdf").await;
+    if let Some(scenario) = run_on_save("pdflatex", "success_on_save.tex").await {
+        scenario.read("success_on_save.pdf").await;
     }
 }
 
 #[tokio::test]
 async fn error_single_file() {
-    if let Some(result) = run("error_single_file", "foo.tex", "pdflatex").await {
+    if let Some(result) = run("pdflatex", "error_single_file.tex").await {
         assert_eq!(
             result,
             BuildResult {
@@ -48,7 +48,7 @@ async fn error_single_file() {
 
 #[tokio::test]
 async fn error_multiple_files() {
-    if let Some(result) = run("error_multiple_files", "foo.tex", "pdflatex").await {
+    if let Some(result) = run("pdflatex", "error_multiple_files_main.tex").await {
         assert_eq!(
             result,
             BuildResult {
@@ -60,20 +60,15 @@ async fn error_multiple_files() {
 
 #[tokio::test]
 async fn error_on_save() {
-    if let Some(scenario) = run_on_save("error_on_save", "foo.tex", "pdflatex").await {
-        scenario.read("foo.log").await;
+    if let Some(scenario) = run_on_save("pdflatex", "error_on_save.tex").await {
+        scenario.read("error_on_save.log").await;
     }
 }
 
 #[tokio::test]
 async fn failure_single_file() {
-    if let Some(result) = run(
-        "error_multiple_files",
-        "foo.tex",
-        "2ae97e68b8074dca880f9c17ebafaa38",
-    )
-    .await
-    {
+    let executable = "2ae97e68b8074dca880f9c17ebafaa38";
+    if let Some(result) = run(executable, "failure_single_file.tex").await {
         assert_eq!(
             result,
             BuildResult {
