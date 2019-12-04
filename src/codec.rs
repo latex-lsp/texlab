@@ -3,7 +3,7 @@ use log::*;
 use std::io::{Error, ErrorKind};
 use std::option::Option;
 use std::string::String;
-use tokio::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder};
 
 pub struct LspCodec;
 
@@ -40,7 +40,7 @@ impl Encoder for LspCodec {
         trace!("Sent message:\n{}\n", message);
 
         dst.reserve(message.len());
-        dst.put(message);
+        dst.put(message.as_bytes());
         Ok(())
     }
 }

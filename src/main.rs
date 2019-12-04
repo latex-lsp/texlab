@@ -3,13 +3,12 @@ use futures::channel::mpsc;
 use futures::prelude::*;
 use jsonrpc::MessageHandler;
 use std::error::Error;
-use std::io::Write;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
 use texlab::client::LatexLspClient;
 use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
-use tokio::codec::{FramedRead, FramedWrite};
+use tokio_util::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -59,7 +58,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         loop {
             let message = stdout_rx.next().await.unwrap();
             stdout.send(message).await.unwrap();
-            std::io::stdout().flush().unwrap(); // Workaround for tokio-rs/tokio#1527
         }
     });
 

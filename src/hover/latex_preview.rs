@@ -13,7 +13,7 @@ use std::io::Cursor;
 use std::process::Stdio;
 use std::time::Duration;
 use tempfile::TempDir;
-use tokio_net::process::Command;
+use tokio::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
     "align",

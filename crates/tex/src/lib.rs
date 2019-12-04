@@ -11,7 +11,7 @@ use self::miktex::Miktex;
 use self::tectonic::Tectonic;
 use self::texlive::Texlive;
 use futures_boxed::boxed;
-use tokio_net::process::Command;
+use tokio::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DistributionKind {

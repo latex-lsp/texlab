@@ -10,4 +10,3 @@ edition = "2018"
 bibutils-sys = { path = "../bibutils_sys" }
 libc = "0.2"
 tempfile = "3"
-tokio = "0.2.0-alpha.6"

@@ -21,7 +21,7 @@ members = [
 [dependencies]
 base64 = "0.11.0"
 bibutils = { path = "crates/bibutils" }
-bytes = "0.4.12"
+bytes = "0.5"
 citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
@@ -29,7 +29,7 @@ clap = "2.33"
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
 fnv = "1.0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-futures-preview = "0.3.0-alpha.18"
+futures = "0.3"
 html2md = "0.2.9"
 image = "0.22.3"
 itertools = "0.8.2"
@@ -49,8 +49,8 @@ serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
 tex = { path = "crates/tex" }
-tokio = "0.2.0-alpha.6"
-tokio-net = { version = "0.2.0-alpha.6", features = ["process"]}
+tokio = { version = "0.2", features = ["fs", "process"] }
+tokio-util = { version = "0.2", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }
 url = "2.0.0"
 url_serde = "0.2.0"

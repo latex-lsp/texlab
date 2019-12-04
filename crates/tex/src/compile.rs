@@ -4,8 +4,8 @@ use std::process::Stdio;
 use std::time::Duration;
 use tempfile::{tempdir, TempDir};
 use tokio::fs;
-use tokio::future::FutureExt;
-use tokio_net::process::Command;
+use tokio::process::Command;
+use tokio::time::timeout;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Format {
@@ -68,17 +68,19 @@ pub async fn compile<'a>(
     let code_file = directory.path().join(params.file_name);
     fs::write(code_file.clone(), params.code).await?;
 
-    Command::new(executable)
-        .args(args)
-        .current_dir(&directory)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map_err(|_| CompileError::NotInstalled)
-        .timeout(params.timeout)
-        .map_err(|_| CompileError::Timeout)
-        .await?
-        .map_err(|_| CompileError::NotInstalled)?;
+    timeout(
+        params.timeout,
+        Command::new(executable)
+            .args(args)
+            .current_dir(&directory)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map_err(|_| CompileError::NotInstalled),
+    )
+    .map_err(|_| CompileError::Timeout)
+    .await?
+    .map_err(|_| CompileError::NotInstalled)?;
 
     let log_file = code_file.with_extension("log");
     let log_bytes = fs::read(log_file).await?;

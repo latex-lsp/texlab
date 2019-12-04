@@ -4,7 +4,7 @@ use serde_repr::*;
 use std::io;
 use std::path::Path;
 use std::process::Stdio;
-use tokio_net::process::Command;
+use tokio::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 pub struct ForwardSearchOptions {
