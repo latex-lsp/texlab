@@ -10,6 +10,10 @@ jobs:
     pool:
       vmImage: "ubuntu-16.04"
     steps:
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base latexmk chktex
+        displayName: "Install TeX Live"
       - template: .build-steps.yml
         parameters:
           executableName: "texlab"
