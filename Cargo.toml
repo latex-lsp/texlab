@@ -49,7 +49,7 @@ serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
 tex = { path = "crates/tex" }
-tokio = "0.2.0-alpha.6"
+tokio = "0.2.2"
 tokio-net = { version = "0.2.0-alpha.6", features = ["process"]}
 uuid = { version = "0.8", features = ["v4"] }
 url = "2.0.0"
