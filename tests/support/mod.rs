@@ -35,6 +35,17 @@ impl MockLspClient {
     pub fn new() -> Self {
         Self::default()
     }
+
+    pub async fn verify_no_diagnostics(&self, uri: &Uri) {
+        let diagnostics_by_uri = self.diagnostics_by_uri.lock().await;
+        assert_eq!(
+            diagnostics_by_uri
+                .get(uri.into())
+                .map(Vec::len)
+                .unwrap_or(0),
+            0
+        );
+    }
 }
 
 impl LspClient for MockLspClient {
@@ -147,7 +158,9 @@ impl Scenario {
     pub async fn read(&self, name: &'static str) -> String {
         let mut path = self.directory.path().to_owned();
         path.push(name);
-        let data = tokio::fs::read(path).await.expect("failed to read scenario file");
+        let data = tokio::fs::read(path)
+            .await
+            .expect("failed to read scenario file");
         let text = String::from_utf8_lossy(&data);
         text.replace('\r', "")
     }
