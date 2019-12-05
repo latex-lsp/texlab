@@ -289,7 +289,8 @@ impl LatexPreviewHoverProvider {
                 image.color(),
             )
             .unwrap();
-        base64::encode(&image_buf.into_inner())
+        let data = image_buf.into_inner();
+        base64::encode(&data)
     }
 }
 

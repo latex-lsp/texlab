@@ -12,7 +12,7 @@ jobs:
     steps:
       - script: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base latexmk chktex
+          sudo apt-get install -y texlive-latex-base latexmk chktex dvipng
         displayName: "Install TeX Live"
       - template: .build-steps.yml
         parameters:
