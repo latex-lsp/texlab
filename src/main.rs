@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init()
         .unwrap();
 
-    let stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
+    let mut stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
     let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
@@ -49,7 +49,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut handler = MessageHandler {
         server,
         client,
-        input: stdin,
         output: stdout_tx,
     };
 
@@ -61,6 +60,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    handler.listen().await;
+    while let Some(json) = stdin.next().await {
+        handler.handle(&json.unwrap()).await;  
+    }
+
     Ok(())
 }
