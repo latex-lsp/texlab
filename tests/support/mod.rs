@@ -155,21 +155,17 @@ impl Scenario {
         Uri::from_file_path(path).unwrap()
     }
 
-    pub async fn read_bytes<'a>(&'a self, name: &'a str) -> Vec<u8> {
+    pub async fn read(&self, name: &'static str) -> String {
         let mut path = self.directory.path().to_owned();
         path.push(name);
-        tokio::fs::read(path)
+        let data = tokio::fs::read(path)
             .await
-            .expect("failed to read scenario file")
-    }
-
-    pub async fn read<'a>(&'a self, name: &'a str) -> String {
-        let data =self.read_bytes(name).await;
+            .expect("failed to read scenario file");
         let text = String::from_utf8_lossy(&data);
         text.replace('\r', "")
     }
 
-    pub async fn open<'a>(&'a self, name: &'a str) {
+    pub async fn open(&self, name: &'static str) {
         let text = self.read(name).await;
         let language_id = if name.ends_with(".bib") {
             "bibtex"
@@ -191,102 +187,96 @@ impl Scenario {
 
 pub mod capabilities {
     use lsp_types::*;
-    use once_cell::sync::Lazy;
 
-    pub static CLIENT_FULL_CAPABILITIES: Lazy<ClientCapabilities> =
-        Lazy::new(|| ClientCapabilities {
-            workspace: Some(WorkspaceClientCapabilities {
-                configuration: Some(true),
-                did_change_watched_files: None,
-                workspace_folders: None,
-                apply_edit: None,
-                execute_command: None,
-                symbol: None,
-                workspace_edit: None,
-                did_change_configuration: None,
+    pub static CLIENT_FULL_CAPABILITIES: ClientCapabilities = ClientCapabilities {
+        workspace: Some(WorkspaceClientCapabilities {
+            configuration: Some(true),
+            did_change_watched_files: None,
+            workspace_folders: None,
+            apply_edit: None,
+            execute_command: None,
+            symbol: None,
+            workspace_edit: None,
+            did_change_configuration: None,
+        }),
+        text_document: Some(TextDocumentClientCapabilities {
+            synchronization: None,
+            completion: None,
+            hover: None,
+            signature_help: None,
+            references: None,
+            document_highlight: None,
+            document_symbol: Some(DocumentSymbolCapability {
+                dynamic_registration: None,
+                hierarchical_document_symbol_support: Some(true),
+                symbol_kind: None,
             }),
-            text_document: Some(TextDocumentClientCapabilities {
-                synchronization: None,
-                completion: None,
-                hover: Some(HoverCapability {
-                    content_format: Some(vec![MarkupKind::PlainText, MarkupKind::Markdown]),
-                    dynamic_registration: None,
-                }),
-                signature_help: None,
-                references: None,
-                document_highlight: None,
-                document_symbol: Some(DocumentSymbolCapability {
-                    dynamic_registration: None,
-                    hierarchical_document_symbol_support: Some(true),
-                    symbol_kind: None,
-                }),
-                formatting: None,
-                range_formatting: None,
-                on_type_formatting: None,
-                declaration: None,
-                definition: Some(GotoCapability {
-                    dynamic_registration: None,
-                    link_support: Some(true),
-                }),
-                type_definition: None,
-                implementation: None,
-                code_action: None,
-                code_lens: None,
-                document_link: None,
-                color_provider: None,
-                rename: None,
-                publish_diagnostics: None,
-                folding_range: None,
+            formatting: None,
+            range_formatting: None,
+            on_type_formatting: None,
+            declaration: None,
+            definition: Some(GotoCapability {
+                dynamic_registration: None,
+                link_support: Some(true),
             }),
-            experimental: None,
-            window: Some(WindowClientCapabilities {
-                work_done_progress: Some(true),
-            }),
-        });
+            type_definition: None,
+            implementation: None,
+            code_action: None,
+            code_lens: None,
+            document_link: None,
+            color_provider: None,
+            rename: None,
+            publish_diagnostics: None,
+            folding_range: None,
+        }),
+        experimental: None,
+        window: Some(WindowClientCapabilities {
+            work_done_progress: Some(true),
+        }),
+    };
 
-    pub static CLIENT_NO_LINK_CAPABILITIES: Lazy<ClientCapabilities> =
-        Lazy::new(|| ClientCapabilities {
-            workspace: Some(WorkspaceClientCapabilities {
-                configuration: Some(true),
-                did_change_watched_files: None,
-                workspace_folders: None,
-                apply_edit: None,
-                execute_command: None,
-                symbol: None,
-                workspace_edit: None,
-                did_change_configuration: None,
+    pub static CLIENT_NO_LINK_CAPABILITIES: ClientCapabilities = ClientCapabilities {
+        workspace: Some(WorkspaceClientCapabilities {
+            configuration: Some(true),
+            did_change_watched_files: None,
+            workspace_folders: None,
+            apply_edit: None,
+            execute_command: None,
+            symbol: None,
+            workspace_edit: None,
+            did_change_configuration: None,
+        }),
+        text_document: Some(TextDocumentClientCapabilities {
+            synchronization: None,
+            completion: None,
+            hover: None,
+            signature_help: None,
+            references: None,
+            document_highlight: None,
+            document_symbol: None,
+            formatting: None,
+            range_formatting: None,
+            on_type_formatting: None,
+            declaration: None,
+            definition: Some(GotoCapability {
+                dynamic_registration: None,
+                link_support: Some(false),
             }),
-            text_document: Some(TextDocumentClientCapabilities {
-                synchronization: None,
-                completion: None,
-                hover: None,
-                signature_help: None,
-                references: None,
-                document_highlight: None,
-                document_symbol: None,
-                formatting: None,
-                range_formatting: None,
-                on_type_formatting: None,
-                declaration: None,
-                definition: Some(GotoCapability {
-                    dynamic_registration: None,
-                    link_support: Some(false),
-                }),
-                type_definition: None,
-                implementation: None,
-                code_action: None,
-                code_lens: None,
-                document_link: None,
-                color_provider: None,
-                rename: None,
-                publish_diagnostics: None,
-                folding_range: None,
-            }),
-            experimental: None,
-            window: Some(WindowClientCapabilities {
-                work_done_progress: Some(true),
-            }),
-        });
+            type_definition: None,
+            implementation: None,
+            code_action: None,
+            code_lens: None,
+            document_link: None,
+            color_provider: None,
+            rename: None,
+            publish_diagnostics: None,
+            folding_range: None,
+        }),
+        experimental: None,
+        window: Some(WindowClientCapabilities {
+            work_done_progress: Some(true),
+        }),
+    };
 }
 
 pub mod build {
