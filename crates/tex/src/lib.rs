@@ -1,4 +1,5 @@
 mod compile;
+mod kpsewhich;
 mod language;
 mod miktex;
 mod tectonic;
@@ -11,7 +12,10 @@ use self::miktex::Miktex;
 use self::tectonic::Tectonic;
 use self::texlive::Texlive;
 use futures_boxed::boxed;
+use std::collections::HashMap;
 use std::future::Future;
+use std::path::PathBuf;
+use std::sync::Arc;
 use tokio::process::Command;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -49,6 +53,23 @@ impl DistributionKind {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct Resolver {
+    pub files_by_name: HashMap<String, PathBuf>,
+}
+
+impl Resolver {
+    pub fn new(files_by_name: HashMap<String, PathBuf>) -> Self {
+        Self { files_by_name }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LoadError {
+    KpsewhichNotFound,
+    CorruptFileDatabase,
+}
+
 pub trait Distribution: Send + Sync {
     fn kind(&self) -> DistributionKind;
 
@@ -70,16 +91,22 @@ pub trait Distribution: Send + Sync {
         let args = &["--interaction=batchmode", "-shell-escape", params.file_name];
         compile(executable, args, params).await
     }
+
+    #[boxed]
+    async fn load(&self) -> Result<(), LoadError>;
+
+    #[boxed]
+    async fn resolver(&self) -> Arc<Resolver>;
 }
 
 impl dyn Distribution {
     pub async fn detect() -> Box<Self> {
         let kind = DistributionKind::detect().await;
         let distro: Box<Self> = match kind {
-            DistributionKind::Texlive => Box::new(Texlive),
-            DistributionKind::Miktex => Box::new(Miktex),
-            DistributionKind::Tectonic => Box::new(Tectonic),
-            DistributionKind::Unknown => Box::new(Unknown),
+            DistributionKind::Texlive => Box::new(Texlive::new()),
+            DistributionKind::Miktex => Box::new(Miktex::new()),
+            DistributionKind::Tectonic => Box::new(Tectonic::new()),
+            DistributionKind::Unknown => Box::new(Unknown::new()),
         };
         distro
     }
@@ -87,6 +114,12 @@ impl dyn Distribution {
 
 #[derive(Debug, Default)]
 pub struct Unknown;
+
+impl Unknown {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl Distribution for Unknown {
     fn kind(&self) -> DistributionKind {
@@ -103,6 +136,16 @@ impl Distribution for Unknown {
         _params: CompileParams<'a>,
     ) -> Result<CompileResult, CompileError> {
         Err(CompileError::NotInstalled)
+    }
+
+    #[boxed]
+    async fn load(&self) -> Result<(), LoadError> {
+        Ok(())
+    }
+
+    #[boxed]
+    async fn resolver(&self) -> Arc<Resolver> {
+        Arc::new(Resolver::default())
     }
 }
 

@@ -160,8 +160,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
-        self.action_manager.push(Action::CheckInstalledDistribution);
         self.action_manager.push(Action::PublishDiagnostics);
+        self.action_manager.push(Action::LoadDistribution);
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -550,7 +550,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
         self.update_build_diagnostics().await;
         for action in self.action_manager.take() {
             match action {
-                Action::CheckInstalledDistribution => {
+                Action::LoadDistribution => {
                     info!("Detected TeX distribution: {:?}", self.distribution.kind());
                     if self.distribution.kind() == tex::DistributionKind::Unknown {
                         let params = ShowMessageParams {
@@ -561,6 +561,25 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         };
                         self.client.show_message(params).await;
                     }
+
+                    if let Err(why) = self.distribution.load().await {
+                        let message = match why {
+                            tex::LoadError::KpsewhichNotFound => {
+                                "An error occurred while executing `kpsewhich`.\
+                                 Please make sure that your distribution is in your PATH \
+                                 environment variable and provides the `kpsewhich` tool."
+                            }
+                            tex::LoadError::CorruptFileDatabase => {
+                                "The file database of your TeX distribution seems \
+                                 to be corrupt. Please rebuild it and try again."
+                            }
+                        };
+                        let params = ShowMessageParams {
+                            message: message.into(),
+                            typ: MessageType::Error,
+                        };
+                        self.client.show_message(params).await;
+                    };
                 }
                 Action::DetectRoot(uri) => {
                     if uri.scheme() == "file" {

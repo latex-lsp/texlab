@@ -1,9 +1,16 @@
 use super::compile::*;
-use super::{Distribution, DistributionKind};
+use super::{Distribution, DistributionKind, LoadError, Resolver};
 use futures_boxed::boxed;
+use std::sync::Arc;
 
 #[derive(Debug, Default)]
 pub struct Tectonic;
+
+impl Tectonic {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl Distribution for Tectonic {
     fn kind(&self) -> DistributionKind {
@@ -28,5 +35,15 @@ impl Distribution for Tectonic {
     ) -> Result<CompileResult, CompileError> {
         let args = [params.file_name];
         compile("tectonic", &args, params).await
+    }
+
+    #[boxed]
+    async fn load(&self) -> Result<(), LoadError> {
+        Ok(())
+    }
+
+    #[boxed]
+    async fn resolver(&self) -> Arc<Resolver> {
+        Arc::new(Resolver::default())
     }
 }

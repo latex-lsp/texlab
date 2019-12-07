@@ -11,7 +11,7 @@ pub enum LintReason {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Action {
-    CheckInstalledDistribution,
+    LoadDistribution,
     DetectRoot(Uri),
     PublishDiagnostics,
     RunLinter(Uri, LintReason),
