@@ -264,11 +264,11 @@ pub fn color_model(
 
 pub fn package(
     request: &FeatureRequest<CompletionParams>,
-    name: &'static str,
+    name: String,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: name.into(),
+        label: name,
         kind: Some(adjust_kind(request, Structure::Package.completion_kind())),
         data: Some(CompletionItemData::Package.into()),
         text_edit: Some(text_edit),
@@ -278,11 +278,11 @@ pub fn package(
 
 pub fn class(
     request: &FeatureRequest<CompletionParams>,
-    name: &'static str,
+    name: String,
     text_edit: TextEdit,
 ) -> CompletionItem {
     CompletionItem {
-        label: name.into(),
+        label: name,
         kind: Some(adjust_kind(request, Structure::Class.completion_kind())),
         data: Some(CompletionItemData::Class.into()),
         text_edit: Some(text_edit),

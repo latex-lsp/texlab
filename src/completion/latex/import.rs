@@ -1,6 +1,5 @@
 use super::combinators::{self, Parameter};
-use crate::completion::factory;
-use crate::completion::DATABASE;
+use crate::completion::{factory, DATABASE};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -38,7 +37,7 @@ async fn import<F>(
     factory: F,
 ) -> Vec<CompletionItem>
 where
-    F: Fn(&FeatureRequest<CompletionParams>, &'static str, TextEdit) -> CompletionItem,
+    F: Fn(&FeatureRequest<CompletionParams>, String, TextEdit) -> CompletionItem,
 {
     let extension = if kind == LatexIncludeKind::Package {
         "sty"
@@ -54,18 +53,19 @@ where
 
     combinators::argument(request, parameters, |context| {
         async move {
-            let mut items = Vec::new();
-            for component in &DATABASE.components {
-                for file_name in &component.file_names {
-                    if file_name.ends_with(extension) {
-                        let stem = &file_name[0..file_name.len() - 4];
-                        let text_edit = TextEdit::new(context.range, stem.into());
-                        let item = factory(request, stem, text_edit);
-                        items.push(item);
-                    }
-                }
-            }
-            items
+            let resolver = request.distribution.resolver().await;
+            DATABASE
+                .components
+                .iter()
+                .flat_map(|comp| comp.file_names.iter())
+                .chain(resolver.files_by_name.keys())
+                .filter(|file_name| file_name.ends_with(extension))
+                .map(|file_name| {
+                    let stem = &file_name[0..file_name.len() - 4];
+                    let text_edit = TextEdit::new(context.range, stem.to_owned());
+                    factory(request, stem.into(), text_edit)
+                })
+                .collect()
         }
     })
     .await
