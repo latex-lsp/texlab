@@ -117,7 +117,7 @@ impl Scenario {
         copy_dir(source, directory.path()).unwrap();
 
         let client = Arc::new(MockLspClient::new());
-        let server = LatexLspServer::new(distribution, Arc::clone(&client));
+        let server = LatexLspServer::new(Arc::clone(&client), distribution);
         Self {
             directory,
             server,

@@ -21,6 +21,7 @@ use self::lexer::LatexLexer;
 use self::parser::LatexParser;
 use super::language::*;
 use super::text::SyntaxNode;
+use super::SyntaxTreeContext;
 use crate::range::RangeExt;
 use crate::workspace::Uri;
 use lsp_types::{Position, Range};
@@ -132,11 +133,11 @@ impl LatexInclude {
         components
     }
 
-    fn parse(uri: &Uri, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    fn parse(context: SyntaxTreeContext, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut includes = Vec::new();
         for command in commands {
             for description in &LANGUAGE_DATA.include_commands {
-                if let Some(include) = Self::parse_single(uri, &command, &description) {
+                if let Some(include) = Self::parse_single(context, &command, &description) {
                     includes.push(include);
                 }
             }
@@ -145,7 +146,7 @@ impl LatexInclude {
     }
 
     fn parse_single(
-        uri: &Uri,
+        context: SyntaxTreeContext,
         command: &Arc<LatexCommand>,
         description: &LatexIncludeCommand,
     ) -> Option<Self> {
@@ -159,7 +160,7 @@ impl LatexInclude {
 
         let mut all_targets = Vec::new();
         for relative_path in command.extract_comma_separated_words(description.index) {
-            let mut path = uri.to_file_path().ok()?;
+            let mut path = context.uri.to_file_path().ok()?;
             path.pop();
             path.push(relative_path.text());
             path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
@@ -175,6 +176,22 @@ impl LatexInclude {
                 }
             }
             all_targets.push(targets);
+        }
+
+        for name in command.extract_comma_separated_words(description.index) {
+            let mut path = context.resolver.files_by_name.get(&name.span.text);
+            if let Some(extensions) = description.kind.extensions() {
+                for extension in extensions {
+                    path = path.or_else(|| {
+                        let full_name = format!("{}.{}", name.text(), extension);
+                        context.resolver.files_by_name.get(&full_name)
+                    });
+                }
+            }
+
+            if let Some(path) = path {
+                all_targets.push(vec![Uri::from_file_path(&path).ok()?]);
+            }
         }
 
         let include = Self {
@@ -258,12 +275,12 @@ pub struct LatexSyntaxTree {
 }
 
 impl LatexSyntaxTree {
-    pub fn parse(uri: &Uri, text: &str) -> Self {
+    pub fn parse(context: SyntaxTreeContext, text: &str) -> Self {
         let lexer = LatexLexer::new(text);
         let mut parser = LatexParser::new(lexer);
         let root = Arc::new(parser.root());
         let commands = LatexCommandAnalyzer::parse(Arc::clone(&root));
-        let includes = LatexInclude::parse(uri, &commands);
+        let includes = LatexInclude::parse(context, &commands);
         let components = includes.iter().flat_map(LatexInclude::components).collect();
         let env = LatexEnvironmentInfo::parse(&commands);
         let structure = LatexStructureInfo::parse(&commands);

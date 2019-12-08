@@ -5,10 +5,12 @@ mod uri;
 pub use self::feature::*;
 pub use self::outline::*;
 pub use self::uri::*;
+
 use crate::completion::DATABASE;
 use crate::syntax::*;
 use log::*;
 use lsp_types::*;
+use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -34,8 +36,12 @@ impl Document {
         }
     }
 
-    pub fn parse(uri: Uri, text: String, language: Language) -> Self {
-        let tree = SyntaxTree::parse(&uri, &text, language);
+    pub fn parse(resolver: &tex::Resolver, uri: Uri, text: String, language: Language) -> Self {
+        let context = SyntaxTreeContext {
+            resolver,
+            uri: &uri,
+        };
+        let tree = SyntaxTree::parse(context, &text, language);
         Self::new(uri, text, tree)
     }
 
@@ -202,12 +208,19 @@ pub enum LoadError {
     IO(std::io::Error),
 }
 
-#[derive(Debug, Default)]
 pub struct WorkspaceManager {
+    distribution: Arc<Box<dyn tex::Distribution>>,
     workspace: Mutex<Arc<Workspace>>,
 }
 
 impl WorkspaceManager {
+    pub fn new(distribution: Arc<Box<dyn tex::Distribution>>) -> Self {
+        Self {
+            distribution,
+            workspace: Mutex::default(),
+        }
+    }
+
     pub fn get(&self) -> Arc<Workspace> {
         let workspace = self.workspace.lock().unwrap();
         Arc::clone(&workspace)
@@ -223,7 +236,7 @@ impl WorkspaceManager {
         };
 
         let mut workspace = self.workspace.lock().unwrap();
-        *workspace = Self::add_or_update(&workspace, document.uri.into(), document.text, language);
+        *workspace = self.add_or_update(&workspace, document.uri.into(), document.text, language);
     }
 
     pub fn load(&self, path: &Path) -> Result<(), LoadError> {
@@ -256,7 +269,7 @@ impl WorkspaceManager {
         };
 
         let mut workspace = self.workspace.lock().unwrap();
-        *workspace = Self::add_or_update(&workspace, uri, text, language);
+        *workspace = self.add_or_update(&workspace, uri, text, language);
         Ok(())
     }
 
@@ -276,16 +289,18 @@ impl WorkspaceManager {
             SyntaxTree::Bibtex(_) => Language::Bibtex,
         };
 
-        *workspace = Self::add_or_update(&workspace, uri, text, language);
+        *workspace = self.add_or_update(&workspace, uri, text, language);
     }
 
     fn add_or_update(
+        &self,
         workspace: &Workspace,
         uri: Uri,
         text: String,
         language: Language,
     ) -> Arc<Workspace> {
-        let document = Document::parse(uri, text, language);
+        let resolver = futures::executor::block_on(self.distribution.resolver());
+        let document = Document::parse(&resolver, uri, text, language);
         let mut documents: Vec<Arc<Document>> = workspace
             .documents
             .iter()
@@ -309,10 +324,11 @@ impl WorkspaceBuilder {
     }
 
     pub fn document(&mut self, name: &str, text: &str) -> Uri {
-        let path = std::env::temp_dir().join(name);
+        let resolver = tex::Resolver::default();
+        let path = env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Uri::from_file_path(path).unwrap();
-        let document = Document::parse(uri.clone(), text.to_owned(), language);
+        let document = Document::parse(&resolver, uri.clone(), text.to_owned(), language);
         self.workspace.documents.push(Arc::new(document));
         uri
     }

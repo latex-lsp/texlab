@@ -20,8 +20,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
-use jsonrpc::server::Middleware;
-use jsonrpc::server::Result;
+use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use lsp_types::*;
@@ -35,10 +34,10 @@ use tex::Language;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {
-    distribution: Arc<Box<dyn tex::Distribution>>,
-    build_manager: BuildManager<C>,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
+    distribution: Arc<Box<dyn tex::Distribution>>,
+    build_manager: BuildManager<C>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionManager,
     diagnostics_manager: Mutex<DiagnosticsManager>,
@@ -56,13 +55,13 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(distribution: Arc<Box<dyn tex::Distribution>>, client: Arc<C>) -> Self {
-        LatexLspServer {
-            distribution,
-            build_manager: BuildManager::new(Arc::clone(&client)),
-            client,
+    pub fn new(client: Arc<C>, distribution: Arc<Box<dyn tex::Distribution>>) -> Self {
+        Self {
+            client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
-            workspace_manager: WorkspaceManager::default(),
+            distribution: Arc::clone(&distribution),
+            build_manager: BuildManager::new(client),
+            workspace_manager: WorkspaceManager::new(distribution),
             action_manager: ActionManager::default(),
             diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
             completion_provider: CompletionProvider::new(),

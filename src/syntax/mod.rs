@@ -17,10 +17,16 @@ pub enum SyntaxTree {
     Bibtex(Box<BibtexSyntaxTree>),
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct SyntaxTreeContext<'a> {
+    pub resolver: &'a tex::Resolver,
+    pub uri: &'a Uri,
+}
+
 impl SyntaxTree {
-    pub fn parse(uri: &Uri, text: &str, language: Language) -> Self {
+    pub fn parse(context: SyntaxTreeContext, text: &str, language: Language) -> Self {
         match language {
-            Language::Latex => SyntaxTree::Latex(Box::new(LatexSyntaxTree::parse(uri, text))),
+            Language::Latex => SyntaxTree::Latex(Box::new(LatexSyntaxTree::parse(context, text))),
             Language::Bibtex => SyntaxTree::Bibtex(Box::new(text.into())),
         }
     }

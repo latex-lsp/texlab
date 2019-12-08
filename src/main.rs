@@ -43,8 +43,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(
-        Arc::new(tex::Distribution::detect().await),
         Arc::clone(&client),
+        Arc::new(tex::Distribution::detect().await),
     ));
     let mut handler = MessageHandler {
         server,
