@@ -1,7 +1,6 @@
 pub mod support;
 
 use lsp_types::*;
-use std::sync::Arc;
 use support::*;
 use tex::DistributionKind::{Miktex, Texlive};
 use texlab::protocol_types::LatexLintOptions;
@@ -10,7 +9,7 @@ use texlab::protocol_types::LatexLintOptions;
 async fn disabled() {
     let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
         async move {
-            let scenario = Scenario::new("diagnostics/latex", Arc::new(distro));
+            let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
                 on_change: Some(false),
                 on_save: Some(false),
@@ -33,7 +32,7 @@ async fn disabled() {
 async fn on_open() {
     let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
         async move {
-            let scenario = Scenario::new("diagnostics/latex", Arc::new(distro));
+            let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
                 on_change: Some(false),
                 on_save: Some(true),
@@ -58,7 +57,7 @@ async fn on_open() {
 async fn on_save() {
     let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
         async move {
-            let scenario = Scenario::new("diagnostics/latex", Arc::new(distro));
+            let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
                 on_change: Some(false),
                 on_save: Some(true),
@@ -108,7 +107,7 @@ async fn on_save() {
 async fn on_change() {
     let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
         async move {
-            let scenario = Scenario::new("diagnostics/latex", Arc::new(distro));
+            let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
                 on_change: Some(true),
                 on_save: Some(true),

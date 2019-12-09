@@ -8,6 +8,7 @@ pub use self::uri::*;
 
 use crate::completion::DATABASE;
 use crate::syntax::*;
+use futures::executor::block_on;
 use log::*;
 use lsp_types::*;
 use std::env;
@@ -299,7 +300,7 @@ impl WorkspaceManager {
         text: String,
         language: Language,
     ) -> Arc<Workspace> {
-        let resolver = futures::executor::block_on(self.distribution.resolver());
+        let resolver = block_on(self.distribution.resolver());
         let document = Document::parse(&resolver, uri, text, language);
         let mut documents: Vec<Arc<Document>> = workspace
             .documents

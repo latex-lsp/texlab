@@ -11,7 +11,9 @@ pub use self::language::Language;
 use self::miktex::Miktex;
 use self::tectonic::Tectonic;
 use self::texlive::Texlive;
+use futures::lock::Mutex;
 use futures_boxed::boxed;
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::future::Future;
 use std::path::PathBuf;
@@ -149,12 +151,21 @@ impl Distribution for Unknown {
     }
 }
 
+static DISTRO: Lazy<Mutex<Option<Arc<Box<dyn Distribution>>>>> = Lazy::new(|| Mutex::new(None));
+
 pub async fn with_distro<T, A, F>(supported_kinds: &[DistributionKind], action: A) -> Option<T>
 where
-    A: FnOnce(Box<dyn Distribution>) -> F,
+    A: FnOnce(Arc<Box<dyn Distribution>>) -> F,
     F: Future<Output = T>,
 {
-    let distro = Distribution::detect().await;
+    let distro = {
+        let mut guard = DISTRO.lock().await;
+        if guard.is_none() {
+            *guard = Some(Arc::new(Distribution::detect().await));
+        }
+        Arc::clone(guard.as_ref().unwrap())
+    };
+
     if supported_kinds.contains(&distro.kind()) {
         Some(action(distro).await)
     } else {

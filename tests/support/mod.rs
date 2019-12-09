@@ -282,12 +282,12 @@ pub mod build {
     use tex::DistributionKind::*;
 
     async fn create_scenario(
-        distribution: Box<dyn tex::Distribution>,
+        distribution: Arc<Box<dyn tex::Distribution>>,
         executable: &'static str,
         build_on_save: bool,
         file: &'static str,
     ) -> Scenario {
-        let scenario = Scenario::new("build", Arc::new(distribution));
+        let scenario = Scenario::new("build", distribution);
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
