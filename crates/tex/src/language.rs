@@ -8,7 +8,7 @@ impl Language {
     pub fn by_extension(extension: &str) -> Option<Self> {
         match extension.to_lowercase().as_ref() {
             "tex" | "sty" | "cls" | "lco" | "aux" => Some(Language::Latex),
-            "bib" => Some(Language::Bibtex),
+            "bib" | "bibtex" => Some(Language::Bibtex),
             _ => None,
         }
     }
