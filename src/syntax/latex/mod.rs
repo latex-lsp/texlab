@@ -175,23 +175,13 @@ impl LatexInclude {
                     targets.push(Uri::from_file_path(&path).ok()?);
                 }
             }
+
+            if let Some(uri) =
+                Self::resolve_distro_file(&context.resolver, description, relative_path)
+            {
+                targets.push(uri);
+            }
             all_targets.push(targets);
-        }
-
-        for name in command.extract_comma_separated_words(description.index) {
-            let mut path = context.resolver.files_by_name.get(&name.span.text);
-            if let Some(extensions) = description.kind.extensions() {
-                for extension in extensions {
-                    path = path.or_else(|| {
-                        let full_name = format!("{}.{}", name.text(), extension);
-                        context.resolver.files_by_name.get(&full_name)
-                    });
-                }
-            }
-
-            if let Some(path) = path {
-                all_targets.push(vec![Uri::from_file_path(&path).ok()?]);
-            }
         }
 
         let include = Self {
@@ -202,6 +192,23 @@ impl LatexInclude {
             include_extension: description.include_extension,
         };
         Some(include)
+    }
+
+    fn resolve_distro_file(
+        resolver: &tex::Resolver,
+        description: &LatexIncludeCommand,
+        name: &LatexToken,
+    ) -> Option<Uri> {
+        let mut path = resolver.files_by_name.get(&name.span.text);
+        if let Some(extensions) = description.kind.extensions() {
+            for extension in extensions {
+                path = path.or_else(|| {
+                    let full_name = format!("{}.{}", name.text(), extension);
+                    resolver.files_by_name.get(&full_name)
+                });
+            }
+        }
+        path.and_then(|p| Uri::from_file_path(&p).ok())
     }
 }
 

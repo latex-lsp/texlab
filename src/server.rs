@@ -540,7 +540,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
 
         let workspace = self.workspace_manager.get();
         for document in &workspace.documents {
-            drop(self.update_document(document));
+            let _ = self.update_document(document);
         }
     }
 
@@ -606,7 +606,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                             {
                                 if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
                                     if workspace.find(&parent_uri).is_none() {
-                                        drop(self.workspace_manager.load(entry.path()));
+                                        let _ = self.workspace_manager.load(entry.path());
                                     }
                                 }
                             }

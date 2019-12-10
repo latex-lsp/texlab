@@ -158,9 +158,10 @@ impl Workspace {
                         }
 
                         for target in targets {
-                            let path = target.to_file_path().unwrap();
-                            if path.exists() {
-                                includes.push(path);
+                            if let Ok(path) = target.to_file_path() {
+                                if path.exists() {
+                                    includes.push(path);
+                                }
                             }
                         }
                     }
