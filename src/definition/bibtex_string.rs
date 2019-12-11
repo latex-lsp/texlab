@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::{LocationLink, Position, TextDocumentPositionParams};
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexStringDefinitionProvider;

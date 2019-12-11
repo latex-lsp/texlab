@@ -22,13 +22,11 @@ use self::parser::LatexParser;
 use super::language::*;
 use super::text::SyntaxNode;
 use super::SyntaxTreeContext;
-use crate::workspace::Uri;
-use texlab_protocol::{Position, Range};
 use path_clean::PathClean;
 use std::path::PathBuf;
 use std::sync::Arc;
 use texlab_distro::Resolver;
-use texlab_protocol::RangeExt;
+use texlab_protocol::{Position, Range, RangeExt, Uri};
 
 #[derive(Debug, Default)]
 struct LatexCommandAnalyzer {

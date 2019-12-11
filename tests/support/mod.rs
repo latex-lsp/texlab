@@ -2,7 +2,6 @@ use copy_dir::copy_dir;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::client::Result;
-use texlab_protocol::*;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::remove_dir;
@@ -10,8 +9,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::{tempdir, TempDir};
 use texlab::server::LatexLspServer;
-use texlab::workspace::Uri;
 use texlab_distro::Distribution;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct MockLspClientOptions {
@@ -402,8 +401,8 @@ pub mod completion {
     }
 
     pub mod verify {
-        use texlab_protocol::*;
         use texlab_protocol::RangeExt;
+        use texlab_protocol::*;
 
         pub fn text_edit(
             item: &CompletionItem,
@@ -624,8 +623,8 @@ pub mod hover {
 
 pub mod symbol {
     use super::*;
-    use texlab_protocol::DocumentSymbolResponse;
     use texlab_distro::UnknownDistribution;
+    use texlab_protocol::DocumentSymbolResponse;
 
     pub async fn run_hierarchical(file: &'static str) -> Vec<DocumentSymbol> {
         let scenario = Scenario::new(

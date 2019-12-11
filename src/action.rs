@@ -1,7 +1,6 @@
-use crate::workspace::Uri;
-use texlab_protocol::ProgressToken;
 use std::mem;
 use std::sync::Mutex;
+use texlab_protocol::{ProgressToken, Uri};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum LintReason {

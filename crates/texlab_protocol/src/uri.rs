@@ -1,4 +1,4 @@
-use texlab_protocol::*;
+use lsp_types::{TextDocumentIdentifier, TextDocumentPositionParams, Url};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::hash::{Hash, Hasher};

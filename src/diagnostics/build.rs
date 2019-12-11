@@ -1,5 +1,4 @@
-use crate::workspace::{Document, Uri};
-use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
+use crate::workspace::Document;
 use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use regex::{Match, Regex};
@@ -10,6 +9,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::str;
 use std::time::SystemTime;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct LogFile {

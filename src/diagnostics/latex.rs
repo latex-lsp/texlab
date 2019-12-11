@@ -1,11 +1,10 @@
-use texlab_protocol::RangeExt;
-use crate::workspace::{Document, Uri};
-use texlab_protocol::*;
+use crate::workspace::Document;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexDiagnosticsProvider {

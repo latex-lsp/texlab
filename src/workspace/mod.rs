@@ -1,16 +1,13 @@
 mod feature;
 mod outline;
-mod uri;
 
 pub use self::feature::*;
 pub use self::outline::*;
-pub use self::uri::*;
 
 use crate::completion::DATABASE;
 use crate::syntax::*;
 use futures::executor::block_on;
 use log::*;
-use texlab_protocol::*;
 use std::env;
 use std::ffi::OsStr;
 use std::fs;
@@ -18,6 +15,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 use texlab_distro::{Distribution, Language, Resolver};
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {

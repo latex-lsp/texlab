@@ -3,12 +3,14 @@ mod client;
 mod codec;
 mod options;
 mod range;
+mod uri;
 
 pub use self::capabilities::ClientCapabilitiesExt;
 pub use self::client::{LatexLspClient, LspClient};
 pub use self::codec::LspCodec;
 pub use self::options::*;
 pub use self::range::RangeExt;
+pub use self::uri::{AsUri, Uri};
 pub use lsp_types::*;
 
 use serde::{Deserialize, Serialize};

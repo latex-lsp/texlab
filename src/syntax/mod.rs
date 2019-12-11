@@ -8,8 +8,8 @@ pub use self::language::*;
 pub use self::latex::*;
 pub use self::text::*;
 
-use crate::workspace::Uri;
 use texlab_distro::{Language, Resolver};
+use texlab_protocol::Uri;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SyntaxTree {

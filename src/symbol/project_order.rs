@@ -4,6 +4,7 @@ use petgraph::algo::tarjan_scc;
 use petgraph::{Directed, Graph};
 use std::collections::HashSet;
 use std::sync::Arc;
+use texlab_protocol::Uri;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering {
