@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -80,7 +80,7 @@ fn find_environment(tree: &SyntaxTree, position: Position) -> Option<&LatexEnvir
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_environment() {

@@ -3,7 +3,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryTypeCompletionProvider;
@@ -59,7 +59,7 @@ fn make_items(request: &FeatureRequest<CompletionParams>, mut range: Range) -> V
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::Position;
+    use texlab_protocol::Position;
 
     #[test]
     fn test_before_at_sign() {

@@ -5,7 +5,7 @@ use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
 use log::*;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::io;
 use std::io::Cursor;
 use std::process::Stdio;

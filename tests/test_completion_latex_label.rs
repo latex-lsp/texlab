@@ -1,6 +1,6 @@
 pub mod support;
 
-use lsp_types::Documentation;
+use texlab_protocol::Documentation;
 use support::completion::*;
 
 const SCENARIO: &str = "latex/label";

@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -99,7 +99,7 @@ fn find_key(tree: &SyntaxTree, position: Position) -> Option<&Span> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::Position;
+    use texlab_protocol::Position;
 
     #[test]
     fn test_entry() {

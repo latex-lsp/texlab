@@ -1,4 +1,4 @@
-use lsp_types::*;
+use texlab_protocol::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::hash::{Hash, Hasher};

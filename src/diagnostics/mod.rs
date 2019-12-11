@@ -8,7 +8,7 @@ use self::bibtex::BibtexDiagnosticsProvider;
 use self::build::BuildDiagnosticsProvider;
 use self::latex::LatexDiagnosticsProvider;
 use crate::workspace::Document;
-use lsp_types::Diagnostic;
+use texlab_protocol::Diagnostic;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct DiagnosticsManager {

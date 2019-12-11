@@ -1,5 +1,5 @@
 use crate::workspace::{Document, Uri};
-use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
 use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use regex::{Match, Regex};

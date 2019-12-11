@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::Document;
 use itertools::Itertools;
-use lsp_types::{MarkupContent, MarkupKind};
+use texlab_protocol::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

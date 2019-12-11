@@ -17,7 +17,7 @@ use self::latex_label::LatexLabelHoverProvider;
 use self::latex_preview::LatexPreviewHoverProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Hover, TextDocumentPositionParams};
+use texlab_protocol::{Hover, TextDocumentPositionParams};
 
 pub struct HoverProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Hover>,

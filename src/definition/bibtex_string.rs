@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{LocationLink, Position, TextDocumentPositionParams};
+use texlab_protocol::{LocationLink, Position, TextDocumentPositionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexStringDefinitionProvider;
@@ -58,7 +58,7 @@ impl BibtexStringDefinitionProvider {
 mod tests {
     use super::*;
     use texlab_protocol::RangeExt;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_simple() {

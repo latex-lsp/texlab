@@ -9,7 +9,7 @@ use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{LocationLink, TextDocumentPositionParams};
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 
 pub struct DefinitionProvider {
     provider: ConcatProvider<TextDocumentPositionParams, LocationLink>,

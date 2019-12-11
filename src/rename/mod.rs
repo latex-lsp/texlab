@@ -9,7 +9,7 @@ use self::latex_environment::*;
 use self::latex_label::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 
 pub struct PrepareRenameProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Range>,

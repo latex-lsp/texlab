@@ -2,7 +2,7 @@ use super::{Document, DocumentView};
 use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::Uri;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

@@ -1,6 +1,6 @@
 use super::{Document, DocumentView, Workspace, WorkspaceBuilder};
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::sync::Arc;
 use texlab_distro::{Distribution, UnknownDistribution};
 

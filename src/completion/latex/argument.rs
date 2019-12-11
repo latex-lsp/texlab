@@ -2,7 +2,7 @@ use super::combinators::{self, Parameter};
 use crate::completion::{factory, DATABASE};
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::iter;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -52,7 +52,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
     use texlab_protocol::RangeExt;
 
     #[test]

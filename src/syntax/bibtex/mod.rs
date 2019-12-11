@@ -8,7 +8,7 @@ use self::parser::BibtexParser;
 
 pub use self::ast::*;
 pub use self::finder::*;
-use lsp_types::Position;
+use texlab_protocol::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexSyntaxTree {

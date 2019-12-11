@@ -3,7 +3,7 @@ use crate::symbol::build_section_tree;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{LocationLink, TextDocumentPositionParams};
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -80,7 +80,7 @@ impl LatexLabelDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_has_definition() {

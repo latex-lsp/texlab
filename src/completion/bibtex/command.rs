@@ -3,7 +3,7 @@ use crate::completion::DATABASE;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use texlab_protocol::RangeExt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -48,7 +48,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_inside_command() {

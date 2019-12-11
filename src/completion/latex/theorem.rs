@@ -3,7 +3,7 @@ use crate::completion::factory::{self, LatexComponentId};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, TextEdit};
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexTheoremEnvironmentCompletionProvider;
@@ -43,7 +43,7 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 mod tests {
     use super::*;
     use texlab_protocol::RangeExt;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
     use std::borrow::Cow;
 
     #[test]

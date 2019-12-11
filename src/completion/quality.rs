@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, Position};
+use texlab_protocol::{CompletionItem, CompletionParams, Position};
 use std::borrow::Cow;
 
 pub struct OrderByQualityCompletionProvider<F> {

@@ -7,7 +7,7 @@ use self::latex_environment::LatexEnvironmentFoldingProvider;
 use self::latex_section::LatexSectionFoldingProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{FoldingRange, FoldingRangeParams};
+use texlab_protocol::{FoldingRange, FoldingRangeParams};
 
 pub struct FoldingProvider {
     provider: ConcatProvider<FoldingRangeParams, FoldingRange>,

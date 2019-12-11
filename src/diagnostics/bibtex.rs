@@ -1,6 +1,6 @@
 use crate::syntax::*;
 use crate::workspace::Document;
-use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexErrorCode {

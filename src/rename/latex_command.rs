@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -68,7 +68,7 @@ fn find_command(tree: &SyntaxTree, position: Position) -> Option<Arc<LatexComman
 mod tests {
     use super::*;
     use texlab_protocol::RangeExt;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test() {

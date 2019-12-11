@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{DocumentLink, DocumentLinkParams};
+use texlab_protocol::{DocumentLink, DocumentLinkParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexIncludeLinkProvider;
@@ -55,7 +55,7 @@ impl LatexIncludeLinkProvider {
 mod tests {
     use super::*;
     use texlab_protocol::RangeExt;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_has_links() {

@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFieldHoverProvider;
@@ -39,7 +39,7 @@ impl FeatureProvider for BibtexFieldHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::Position;
+    use texlab_protocol::Position;
 
     #[test]
     fn test_known_field() {

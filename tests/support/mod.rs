@@ -2,7 +2,7 @@ use copy_dir::copy_dir;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::client::Result;
-use lsp_types::*;
+use texlab_protocol::*;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::remove_dir;
@@ -12,7 +12,6 @@ use tempfile::{tempdir, TempDir};
 use texlab::server::LatexLspServer;
 use texlab::workspace::Uri;
 use texlab_distro::Distribution;
-use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct MockLspClientOptions {
@@ -184,7 +183,7 @@ impl Scenario {
 }
 
 pub mod capabilities {
-    use lsp_types::*;
+    use texlab_protocol::*;
 
     pub static CLIENT_FULL_CAPABILITIES: ClientCapabilities = ClientCapabilities {
         workspace: Some(WorkspaceClientCapabilities {
@@ -279,6 +278,7 @@ pub mod capabilities {
 
 pub mod build {
     use super::*;
+    use texlab_distro::with_distro;
     use texlab_distro::DistributionKind::*;
 
     async fn create_scenario(
@@ -304,7 +304,7 @@ pub mod build {
     }
 
     pub async fn run(executable: &'static str, file: &'static str) -> Option<BuildResult> {
-        texlab_distro::with_distro(&[Texlive, Miktex], |distro| {
+        with_distro(&[Texlive, Miktex], |distro| {
             async move {
                 let scenario = create_scenario(distro, executable, false, file).await;
                 let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
@@ -320,7 +320,7 @@ pub mod build {
     }
 
     pub async fn run_on_save(executable: &'static str, file: &'static str) -> Option<Scenario> {
-        texlab_distro::with_distro(&[Texlive, Miktex], |distro| {
+        with_distro(&[Texlive, Miktex], |distro| {
             async move {
                 let scenario = create_scenario(distro, executable, true, file).await;
                 let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
@@ -402,7 +402,7 @@ pub mod completion {
     }
 
     pub mod verify {
-        use lsp_types::*;
+        use texlab_protocol::*;
         use texlab_protocol::RangeExt;
 
         pub fn text_edit(
@@ -624,7 +624,7 @@ pub mod hover {
 
 pub mod symbol {
     use super::*;
-    use lsp_types::DocumentSymbolResponse;
+    use texlab_protocol::DocumentSymbolResponse;
     use texlab_distro::UnknownDistribution;
 
     pub async fn run_hierarchical(file: &'static str) -> Vec<DocumentSymbol> {

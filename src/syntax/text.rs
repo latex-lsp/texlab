@@ -1,4 +1,4 @@
-use lsp_types::{Position, Range};
+use texlab_protocol::{Position, Range};
 use std::iter::Peekable;
 use std::str::CharIndices;
 

@@ -9,8 +9,8 @@ pub use self::client::{LatexLspClient, LspClient};
 pub use self::codec::LspCodec;
 pub use self::options::*;
 pub use self::range::RangeExt;
+pub use lsp_types::*;
 
-use lsp_types::{Location, LocationLink, TextDocumentIdentifier};
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
 

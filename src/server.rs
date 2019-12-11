@@ -20,7 +20,7 @@ use futures_boxed::boxed;
 use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
-use lsp_types::*;
+use texlab_protocol::*;
 use once_cell::sync::{Lazy, OnceCell};
 use serde::de::DeserializeOwned;
 use std::ffi::OsStr;
@@ -28,7 +28,6 @@ use std::fs;
 use std::future::Future;
 use std::sync::Arc;
 use texlab_distro::{Distribution, DistributionKind, Language};
-use texlab_protocol::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {

@@ -3,7 +3,7 @@ mod latex_label;
 use self::latex_label::LatexLabelHighlightProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{DocumentHighlight, TextDocumentPositionParams};
+use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
 
 pub struct HighlightProvider {
     provider: ConcatProvider<TextDocumentPositionParams, DocumentHighlight>,

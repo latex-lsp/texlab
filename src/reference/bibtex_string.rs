@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Location, Position, ReferenceParams, Url};
+use texlab_protocol::{Location, Position, ReferenceParams, Url};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexStringReferenceProvider;
@@ -120,7 +120,7 @@ impl<'a> BibtexVisitor<'a> for BibtexStringReferenceVisitor<'a> {
 mod tests {
     use super::*;
     use texlab_protocol::RangeExt;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_definition() {

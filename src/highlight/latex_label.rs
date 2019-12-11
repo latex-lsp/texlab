@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{DocumentHighlight, DocumentHighlightKind, TextDocumentPositionParams};
+use texlab_protocol::{DocumentHighlight, DocumentHighlightKind, TextDocumentPositionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelHighlightProvider;
@@ -49,7 +49,7 @@ impl FeatureProvider for LatexLabelHighlightProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_has_label() {

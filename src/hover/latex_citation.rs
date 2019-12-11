@@ -4,7 +4,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use log::warn;
-use lsp_types::*;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;

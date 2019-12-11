@@ -1,7 +1,7 @@
 use super::ast::*;
 use crate::syntax::language::*;
 use crate::syntax::text::SyntaxNode;
-use lsp_types::Range;
+use texlab_protocol::Range;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

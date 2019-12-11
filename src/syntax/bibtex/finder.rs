@@ -1,7 +1,7 @@
 use super::ast::*;
 use texlab_protocol::RangeExt;
 use crate::syntax::text::SyntaxNode;
-use lsp_types::Position;
+use texlab_protocol::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexNode<'a> {

@@ -3,7 +3,7 @@ mod latex_include;
 use crate::link::latex_include::LatexIncludeLinkProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{DocumentLink, DocumentLinkParams};
+use texlab_protocol::{DocumentLink, DocumentLinkParams};
 
 pub struct LinkProvider {
     provider: ConcatProvider<DocumentLinkParams, DocumentLink>,

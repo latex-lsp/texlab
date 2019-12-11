@@ -2,7 +2,7 @@ use super::combinators;
 use crate::completion::factory::{self, LatexComponentId};
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams};
+use texlab_protocol::{CompletionItem, CompletionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexBeginCommandCompletionProvider;

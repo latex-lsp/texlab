@@ -1,6 +1,6 @@
 pub mod support;
 
-use lsp_types::*;
+use texlab_protocol::*;
 use std::sync::Arc;
 use support::capabilities::CLIENT_FULL_CAPABILITIES;
 use support::*;

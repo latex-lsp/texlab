@@ -23,7 +23,7 @@ use super::language::*;
 use super::text::SyntaxNode;
 use super::SyntaxTreeContext;
 use crate::workspace::Uri;
-use lsp_types::{Position, Range};
+use texlab_protocol::{Position, Range};
 use path_clean::PathClean;
 use std::path::PathBuf;
 use std::sync::Arc;

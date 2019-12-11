@@ -3,7 +3,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Hover, HoverContents, TextDocumentPositionParams};
+use texlab_protocol::{Hover, HoverContents, TextDocumentPositionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexComponentHoverProvider;

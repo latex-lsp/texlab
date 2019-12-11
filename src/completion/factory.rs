@@ -2,7 +2,7 @@ use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::lsp_kind::Structure;
 use crate::syntax::*;
 use crate::workspace::*;
-use lsp_types::*;
+use texlab_protocol::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

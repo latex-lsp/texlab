@@ -7,7 +7,7 @@ use self::bibtex_string::BibtexStringReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Location, ReferenceParams};
+use texlab_protocol::{Location, ReferenceParams};
 
 pub struct ReferenceProvider {
     provider: ConcatProvider<ReferenceParams, Location>,

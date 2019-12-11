@@ -1,7 +1,7 @@
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
+use texlab_protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexEnvironmentFoldingProvider;

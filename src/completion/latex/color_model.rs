@@ -3,7 +3,7 @@ use crate::completion::factory;
 use crate::syntax::LANGUAGE_DATA;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, TextEdit};
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexColorModelCompletionProvider;
@@ -39,7 +39,7 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
     use texlab_protocol::RangeExt;
 
     #[test]

@@ -1,7 +1,7 @@
 use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::future::Future;
 use std::sync::Arc;
 

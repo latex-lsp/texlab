@@ -1,6 +1,6 @@
 pub mod support;
 
-use lsp_types::Range;
+use texlab_protocol::Range;
 use support::symbol::*;
 use texlab_protocol::RangeExt;
 

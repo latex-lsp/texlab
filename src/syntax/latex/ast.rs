@@ -1,7 +1,7 @@
 use texlab_protocol::RangeExt;
 use crate::syntax::text::{Span, SyntaxNode};
 use itertools::Itertools;
-use lsp_types::Range;
+use texlab_protocol::Range;
 use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

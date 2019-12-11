@@ -10,7 +10,7 @@ use citeproc_db::PredefinedLocales;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
-use lsp_types::{MarkupContent, MarkupKind};
+use texlab_protocol::{MarkupContent, MarkupKind};
 
 static APA_STYLE: &str = include_str!("apa.csl");
 

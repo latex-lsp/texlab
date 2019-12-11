@@ -4,7 +4,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
+use texlab_protocol::{CompletionItem, CompletionParams, Range, TextEdit};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 

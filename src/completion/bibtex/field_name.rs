@@ -3,7 +3,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{CompletionItem, CompletionParams, Range, TextEdit};
+use texlab_protocol::{CompletionItem, CompletionParams, Range, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexFieldNameCompletionProvider;
@@ -57,7 +57,7 @@ fn make_items(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::Position;
+    use texlab_protocol::Position;
 
     #[test]
     fn test_inside_first_field() {

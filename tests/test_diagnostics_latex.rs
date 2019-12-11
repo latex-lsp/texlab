@@ -1,6 +1,6 @@
 pub mod support;
 
-use lsp_types::*;
+use texlab_protocol::*;
 use support::*;
 use texlab_distro::with_distro;
 use texlab_distro::DistributionKind::{Miktex, Texlive};

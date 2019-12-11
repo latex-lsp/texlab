@@ -1,6 +1,6 @@
 pub mod support;
 
-use lsp_types::*;
+use texlab_protocol::*;
 use support::hover::*;
 use texlab::syntax::LANGUAGE_DATA;
 

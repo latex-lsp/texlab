@@ -11,7 +11,7 @@ use crate::lsp_kind::Structure;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::cmp::Reverse;
 use std::sync::Arc;
 use texlab_distro::Distribution;

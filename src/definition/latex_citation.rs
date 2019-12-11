@@ -2,7 +2,7 @@ use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{LocationLink, TextDocumentPositionParams};
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationDefinitionProvider;
@@ -61,7 +61,7 @@ impl LatexCitationDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_has_definition() {

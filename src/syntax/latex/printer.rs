@@ -1,6 +1,6 @@
 use super::ast::*;
 use crate::syntax::text::*;
-use lsp_types::Position;
+use texlab_protocol::Position;
 use std::sync::Arc;
 
 #[derive(Debug)]

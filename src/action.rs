@@ -1,5 +1,5 @@
 use crate::workspace::Uri;
-use lsp_types::ProgressToken;
+use texlab_protocol::ProgressToken;
 use std::mem;
 use std::sync::Mutex;
 

@@ -101,7 +101,7 @@ impl<'a> Iterator for BibtexLexer<'a> {
 mod tests {
     use super::*;
     use crate::syntax::text::Span;
-    use lsp_types::{Position, Range};
+    use texlab_protocol::{Position, Range};
 
     fn verify<'a>(
         lexer: &mut BibtexLexer<'a>,

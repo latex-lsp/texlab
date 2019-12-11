@@ -1,6 +1,6 @@
 use texlab_protocol::RangeExt;
 use crate::syntax::text::{Span, SyntaxNode};
-use lsp_types::Range;
+use texlab_protocol::Range;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexTokenKind {

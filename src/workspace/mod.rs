@@ -10,7 +10,7 @@ use crate::completion::DATABASE;
 use crate::syntax::*;
 use futures::executor::block_on;
 use log::*;
-use lsp_types::*;
+use texlab_protocol::*;
 use std::env;
 use std::ffi::OsStr;
 use std::fs;

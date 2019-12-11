@@ -4,7 +4,7 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
-use lsp_types::*;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexUserCommandCompletionProvider;
@@ -110,7 +110,7 @@ impl LatexUserEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lsp_types::Position;
+    use texlab_protocol::Position;
 
     #[test]
     fn test_command() {
