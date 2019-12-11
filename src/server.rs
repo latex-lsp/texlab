@@ -4,17 +4,18 @@ use crate::capabilities::ClientCapabilitiesExt;
 use crate::citeproc::render_citation;
 use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
-use crate::definition::{DefinitionProvider, DefinitionResponse};
-use crate::diagnostics::{DiagnosticsManager, LatexLintOptions};
+use crate::definition::DefinitionProvider;
+use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;
-use crate::formatting::bibtex::{self, BibtexFormattingOptions, BibtexFormattingParams};
-use crate::forward_search::{self, ForwardSearchOptions, ForwardSearchResult, ForwardSearchStatus};
+use crate::formatting::bibtex::{self, BibtexFormattingParams};
+use crate::forward_search;
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
+use crate::protocol_types::*;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
-use crate::symbol::{self, SymbolProvider, SymbolResponse};
+use crate::symbol::{self, SymbolProvider};
 use crate::syntax::*;
 use crate::workspace::*;
 use futures::lock::Mutex;
@@ -309,10 +310,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
-    pub async fn document_symbol(&self, params: DocumentSymbolParams) -> Result<SymbolResponse> {
+    pub async fn document_symbol(
+        &self,
+        params: DocumentSymbolParams,
+    ) -> Result<DocumentSymbolResponse> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let symbols = self.symbol_provider.execute(&request).await;
-        let response = SymbolResponse::new(
+        let response = symbol::document_symbols(
             &self.client_capabilities.get().unwrap(),
             &request.view.workspace,
             &request.document().uri,
@@ -383,7 +387,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/build", kind = "request")]
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
-        let options = self.configuration::<BuildOptions>("latex.build").await;
+        let options = self.configuration::<LatexBuildOptions>("latex.build").await;
         let result = self.build_manager.build(request, options).await;
         Ok(result)
     }
@@ -395,7 +399,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     ) -> Result<ForwardSearchResult> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let options = self
-            .configuration::<ForwardSearchOptions>("latex.forwardSearch")
+            .configuration::<LatexForwardSearchOptions>("latex.forwardSearch")
             .await;
 
         match request.document().uri.to_file_path() {
@@ -623,7 +627,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     }
                 }
                 Action::Build(uri) => {
-                    let config: BuildOptions = self.configuration("latex.build").await;
+                    let config: LatexBuildOptions = self.configuration("latex.build").await;
                     if config.on_save() {
                         let text_document = TextDocumentIdentifier::new(uri.into());
                         self.build(BuildParams { text_document }).await.unwrap();

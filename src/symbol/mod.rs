@@ -13,7 +13,6 @@ use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
-use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::sync::Arc;
 
@@ -151,34 +150,25 @@ impl FeatureProvider for SymbolProvider {
     }
 }
 
-#[serde(untagged)]
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SymbolResponse {
-    Flat(Vec<SymbolInformation>),
-    Hierarchical(Vec<DocumentSymbol>),
-}
-
-impl SymbolResponse {
-    pub fn new(
-        client_capabilities: &ClientCapabilities,
-        workspace: &Workspace,
-        uri: &Uri,
-        symbols: Vec<LatexSymbol>,
-    ) -> Self {
-        if client_capabilities.has_hierarchical_document_symbol_support() {
-            Self::Hierarchical(symbols.into_iter().map(Into::into).collect())
-        } else {
-            let mut buffer = Vec::new();
-            for symbol in symbols {
-                symbol.flatten(&mut buffer);
-            }
-            let mut buffer = buffer
-                .into_iter()
-                .map(|symbol| symbol.into_symbol_info(uri.clone()))
-                .collect();
-            sort_symbols(workspace, &mut buffer);
-            Self::Flat(buffer)
+pub fn document_symbols(
+    client_capabilities: &ClientCapabilities,
+    workspace: &Workspace,
+    uri: &Uri,
+    symbols: Vec<LatexSymbol>,
+) -> DocumentSymbolResponse {
+    if client_capabilities.has_hierarchical_document_symbol_support() {
+        DocumentSymbolResponse::Nested(symbols.into_iter().map(Into::into).collect())
+    } else {
+        let mut buffer = Vec::new();
+        for symbol in symbols {
+            symbol.flatten(&mut buffer);
         }
+        let mut buffer = buffer
+            .into_iter()
+            .map(|symbol| symbol.into_symbol_info(uri.clone()))
+            .collect();
+        sort_symbols(workspace, &mut buffer);
+        DocumentSymbolResponse::Flat(buffer)
     }
 }
 

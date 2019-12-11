@@ -1,7 +1,7 @@
 pub mod support;
 
 use support::build::*;
-use texlab::build::{BuildResult, BuildStatus};
+use texlab::protocol_types::{BuildResult, BuildStatus};
 
 #[tokio::test]
 async fn success_single_file() {

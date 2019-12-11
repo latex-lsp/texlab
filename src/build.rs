@@ -1,5 +1,6 @@
 use crate::capabilities::ClientCapabilitiesExt;
 use crate::client::LspClient;
+use crate::protocol_types::*;
 use crate::workspace::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
 use futures::lock::Mutex;
@@ -7,8 +8,6 @@ use futures::prelude::*;
 use futures::stream;
 use futures_boxed::boxed;
 use lsp_types::*;
-use serde::{Deserialize, Serialize};
-use serde_repr::*;
 use std::collections::HashMap;
 use std::io;
 use std::path::Path;
@@ -18,62 +17,10 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BuildParams {
-    pub text_document: TextDocumentIdentifier,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BuildOptions {
-    pub executable: Option<String>,
-    pub args: Option<Vec<String>>,
-    pub on_save: Option<bool>,
-}
-
-impl BuildOptions {
-    pub fn executable(&self) -> String {
-        self.executable
-            .as_ref()
-            .map(Clone::clone)
-            .unwrap_or_else(|| "latexmk".to_owned())
-    }
-
-    pub fn args(&self) -> Vec<String> {
-        self.args.as_ref().map(Clone::clone).unwrap_or_else(|| {
-            vec![
-                "-pdf".to_owned(),
-                "-interaction=nonstopmode".to_owned(),
-                "-synctex=1".to_owned(),
-            ]
-        })
-    }
-
-    pub fn on_save(&self) -> bool {
-        self.on_save.unwrap_or(false)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
-#[repr(i32)]
-pub enum BuildStatus {
-    Success = 0,
-    Error = 1,
-    Failure = 2,
-    Cancelled = 3,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BuildResult {
-    pub status: BuildStatus,
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BuildProvider<C> {
     pub client: Arc<C>,
-    pub options: BuildOptions,
+    pub options: LatexBuildOptions,
     pub token: ProgressToken,
 }
 
@@ -81,7 +28,7 @@ impl<C> BuildProvider<C>
 where
     C: LspClient + Send + Sync + 'static,
 {
-    pub fn new(client: Arc<C>, options: BuildOptions) -> Self {
+    pub fn new(client: Arc<C>, options: LatexBuildOptions) -> Self {
         Self {
             client,
             options,
@@ -191,7 +138,7 @@ where
     pub async fn build(
         &self,
         request: FeatureRequest<BuildParams>,
-        options: BuildOptions,
+        options: LatexBuildOptions,
     ) -> BuildResult {
         let provider = BuildProvider::new(Arc::clone(&self.client), options);
         let (handle, reg) = AbortHandle::new_pair();

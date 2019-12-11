@@ -2,11 +2,11 @@ mod bibtex;
 mod build;
 mod latex;
 
-use self::bibtex::BibtexDiagnosticsProvider;
 pub use self::bibtex::BibtexErrorCode;
+
+use self::bibtex::BibtexDiagnosticsProvider;
 use self::build::BuildDiagnosticsProvider;
 use self::latex::LatexDiagnosticsProvider;
-pub use self::latex::LatexLintOptions;
 use crate::workspace::Document;
 use lsp_types::Diagnostic;
 

@@ -1,36 +1,15 @@
+use crate::protocol_types::*;
 use log::*;
-use serde::{Deserialize, Serialize};
-use serde_repr::*;
 use std::io;
 use std::path::Path;
 use std::process::Stdio;
 use tokio::process::Command;
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
-pub struct ForwardSearchOptions {
-    pub executable: Option<String>,
-    pub args: Option<Vec<String>>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
-#[repr(i32)]
-pub enum ForwardSearchStatus {
-    Success = 0,
-    Error = 1,
-    Failure = 2,
-    Unconfigured = 3,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct ForwardSearchResult {
-    pub status: ForwardSearchStatus,
-}
-
 pub async fn search<'a>(
     tex_file: &'a Path,
     parent: &'a Path,
     line_number: u64,
-    options: ForwardSearchOptions,
+    options: LatexForwardSearchOptions,
 ) -> Option<ForwardSearchResult> {
     if options.executable.is_none() || options.args.is_none() {
         return Some(ForwardSearchResult {

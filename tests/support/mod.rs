@@ -9,10 +9,8 @@ use std::fs::remove_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::{tempdir, TempDir};
-use texlab::build::BuildOptions;
 use texlab::client::LspClient;
-use texlab::diagnostics::LatexLintOptions;
-use texlab::formatting::bibtex::BibtexFormattingOptions;
+use texlab::protocol_types::*;
 use texlab::server::LatexLspServer;
 use texlab::workspace::Uri;
 
@@ -20,7 +18,7 @@ use texlab::workspace::Uri;
 pub struct MockLspClientOptions {
     pub bibtex_formatting: Option<BibtexFormattingOptions>,
     pub latex_lint: Option<LatexLintOptions>,
-    pub latex_build: Option<BuildOptions>,
+    pub latex_build: Option<LatexBuildOptions>,
 }
 
 #[derive(Debug, Default)]
@@ -282,7 +280,6 @@ pub mod capabilities {
 pub mod build {
     use super::*;
     use tex::DistributionKind::*;
-    use texlab::build::{BuildParams, BuildResult};
 
     async fn create_scenario(
         distribution: Box<dyn tex::Distribution>,
@@ -295,7 +292,7 @@ pub mod build {
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
 
-        let options = BuildOptions {
+        let options = LatexBuildOptions {
             executable: Some(executable.into()),
             args: None,
             on_save: Some(build_on_save),
@@ -440,7 +437,7 @@ pub mod completion {
 pub mod definition {
     use super::capabilities::*;
     use super::*;
-    use texlab::definition::DefinitionResponse;
+    use texlab::protocol_types::DefinitionResponse;
 
     pub async fn run(
         scenario_short_name: &'static str,
@@ -563,7 +560,6 @@ pub mod folding {
 
 pub mod formatting {
     use super::*;
-    use texlab::formatting::bibtex::BibtexFormattingOptions;
 
     pub async fn run_bibtex(
         file: &'static str,
@@ -624,7 +620,7 @@ pub mod hover {
 
 pub mod symbol {
     use super::*;
-    use texlab::symbol::SymbolResponse;
+    use lsp_types::DocumentSymbolResponse;
 
     pub async fn run_hierarchical(file: &'static str) -> Vec<DocumentSymbol> {
         let scenario = Scenario::new("symbol/hierarchical", Arc::new(Box::new(tex::Unknown)));
@@ -643,8 +639,8 @@ pub mod symbol {
             .unwrap();
 
         match response {
-            SymbolResponse::Hierarchical(symbols) => symbols,
-            SymbolResponse::Flat(_) => unreachable!(),
+            DocumentSymbolResponse::Nested(symbols) => symbols,
+            DocumentSymbolResponse::Flat(_) => unreachable!(),
         }
     }
 

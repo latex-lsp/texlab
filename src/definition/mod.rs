@@ -9,8 +9,7 @@ use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use lsp_types::{Location, LocationLink, TextDocumentPositionParams};
-use serde::{Deserialize, Serialize};
+use lsp_types::{LocationLink, TextDocumentPositionParams};
 
 pub struct DefinitionProvider {
     provider: ConcatProvider<TextDocumentPositionParams, LocationLink>,
@@ -43,11 +42,4 @@ impl FeatureProvider for DefinitionProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(request).await
     }
-}
-
-#[serde(untagged)]
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub enum DefinitionResponse {
-    Locations(Vec<Location>),
-    LocationLinks(Vec<LocationLink>),
 }

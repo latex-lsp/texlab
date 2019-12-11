@@ -2,7 +2,7 @@ pub mod support;
 
 use lsp_types::*;
 use support::formatting::*;
-use texlab::formatting::bibtex::BibtexFormattingOptions;
+use texlab::protocol_types::BibtexFormattingOptions;
 use texlab::range::RangeExt;
 
 #[tokio::test]

@@ -1,14 +1,7 @@
+use crate::protocol_types::BibtexFormattingOptions;
 use crate::syntax::*;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BibtexFormattingOptions {
-    pub line_length: Option<i32>,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFormattingParams {
     pub tab_size: usize,
     pub insert_spaces: bool,

@@ -4,7 +4,7 @@ use lsp_types::*;
 use std::sync::Arc;
 use support::*;
 use tex::DistributionKind::{Miktex, Texlive};
-use texlab::diagnostics::LatexLintOptions;
+use texlab::protocol_types::LatexLintOptions;
 
 #[tokio::test]
 async fn disabled() {

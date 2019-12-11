@@ -3,27 +3,9 @@ use crate::workspace::{Document, Uri};
 use lsp_types::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct LatexLintOptions {
-    pub on_change: Option<bool>,
-    pub on_save: Option<bool>,
-}
-
-impl LatexLintOptions {
-    pub fn on_change(&self) -> bool {
-        self.on_change.unwrap_or(false)
-    }
-
-    pub fn on_save(&self) -> bool {
-        self.on_save.unwrap_or(false)
-    }
-}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct LatexDiagnosticsProvider {
