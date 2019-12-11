@@ -100,7 +100,7 @@ impl<'a> Iterator for BibtexLexer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::text::Span;
+    use crate::text::Span;
     use texlab_protocol::{Position, Range};
 
     fn verify<'a>(
