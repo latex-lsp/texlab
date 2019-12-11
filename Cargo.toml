@@ -22,11 +22,11 @@ members = [
 base64 = "0.11.0"
 bibutils = { path = "crates/bibutils" }
 bytes = "0.5"
-citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
-citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
-citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
+citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
+citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
+citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
 clap = "2.33"
-csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "796ea0382392ae1befdc39f21162ed83b640ac29" }
+csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
 fnv = "1.0.3"
 futures-boxed = { path = "crates/futures_boxed" }
 futures = "0.3"

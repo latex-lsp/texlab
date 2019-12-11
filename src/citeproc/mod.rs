@@ -76,13 +76,18 @@ fn generate_bibliography(reference: Reference) -> Option<String> {
     let locales = Arc::new(PredefinedLocales::bundled_en_us());
     let mut processor = Processor::new(APA_STYLE, locales, false, SupportedFormat::Html).unwrap();
     let cite = Cite::basic(&reference.id);
-    let cluster = Cluster2::Note {
+    let cluster = Cluster {
         id: 1,
-        note: IntraNote::Single(1),
         cites: vec![cite],
     };
     processor.insert_reference(reference);
     processor.init_clusters(vec![cluster]);
+    processor
+        .set_cluster_order(&[ClusterPosition {
+            id: 1,
+            note: Some(1),
+        }])
+        .unwrap();
     processor.get_bibliography().pop()
 }
 
