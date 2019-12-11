@@ -1,10 +1,10 @@
 pub mod support;
 
-use texlab_protocol::*;
 use std::sync::Arc;
 use support::*;
 use texlab::diagnostics::BibtexErrorCode;
 use texlab_distro::UnknownDistribution;
+use texlab_protocol::*;
 
 #[tokio::test]
 async fn did_change_update() {

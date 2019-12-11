@@ -1,8 +1,8 @@
 use super::{Document, DocumentView, Workspace, WorkspaceBuilder};
 use futures_boxed::boxed;
-use texlab_protocol::*;
 use std::sync::Arc;
 use texlab_distro::{Distribution, UnknownDistribution};
+use texlab_protocol::*;
 
 pub struct FeatureRequest<P> {
     pub params: P,

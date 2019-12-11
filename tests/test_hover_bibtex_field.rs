@@ -1,8 +1,8 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::hover::*;
-use texlab::syntax::LANGUAGE_DATA;
+use texlab_syntax::LANGUAGE_DATA;
+use texlab_protocol::*;
 
 const SCENARIO: &str = "bibtex/field";
 

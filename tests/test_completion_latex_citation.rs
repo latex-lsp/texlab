@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::completion::*;
+use texlab_protocol::*;
 
 const SCENARIO: &str = "latex/citation";
 

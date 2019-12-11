@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::folding::*;
+use texlab_protocol::*;
 
 #[tokio::test]
 async fn bibtex() {

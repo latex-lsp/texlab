@@ -1,9 +1,9 @@
 use super::{Document, DocumentView};
-use texlab_protocol::RangeExt;
-use crate::syntax::*;
 use crate::workspace::Uri;
-use texlab_protocol::*;
 use std::collections::HashSet;
+use texlab_protocol::RangeExt;
+use texlab_protocol::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Outline<'a> {

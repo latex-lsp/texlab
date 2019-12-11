@@ -3,7 +3,6 @@ mod ris;
 
 use self::ris::*;
 use crate::formatting::bibtex::{format_entry, format_string, BibtexFormattingParams};
-use crate::syntax::*;
 use bibutils::{InputFormat, OutputFormat};
 use citeproc::prelude::*;
 use citeproc_db::PredefinedLocales;
@@ -11,6 +10,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
 use texlab_protocol::{MarkupContent, MarkupKind};
+use texlab_syntax::*;
 
 static APA_STYLE: &str = include_str!("apa.csl");
 

@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::Range;
 use support::definition::*;
+use texlab_protocol::Range;
 use texlab_protocol::RangeExt;
 
 const SCENARIO: &str = "latex/citation";

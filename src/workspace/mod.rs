@@ -5,7 +5,6 @@ pub use self::feature::*;
 pub use self::outline::*;
 
 use crate::completion::DATABASE;
-use crate::syntax::*;
 use futures::executor::block_on;
 use log::*;
 use std::env;
@@ -16,6 +15,7 @@ use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 use texlab_distro::{Distribution, Language, Resolver};
 use texlab_protocol::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {

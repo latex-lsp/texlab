@@ -1,5 +1,5 @@
 use super::ast::{LatexToken, LatexTokenKind};
-use crate::syntax::text::CharStream;
+use crate::text::CharStream;
 
 pub struct LatexLexer<'a> {
     stream: CharStream<'a>,

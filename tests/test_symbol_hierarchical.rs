@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::Range;
 use support::symbol::*;
+use texlab_protocol::Range;
 use texlab_protocol::RangeExt;
 
 #[tokio::test]

@@ -17,5 +17,4 @@ pub mod reference;
 pub mod rename;
 pub mod server;
 pub mod symbol;
-pub mod syntax;
 pub mod workspace;

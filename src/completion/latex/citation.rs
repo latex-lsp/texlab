@@ -1,9 +1,9 @@
 use super::combinators::{self, Parameter};
 use crate::completion::factory;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexCitationCompletionProvider;
@@ -52,8 +52,8 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
     use texlab_protocol::RangeExt;
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_empty() {

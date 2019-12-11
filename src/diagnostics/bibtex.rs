@@ -1,6 +1,6 @@
-use crate::syntax::*;
 use crate::workspace::Document;
 use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexErrorCode {

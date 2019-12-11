@@ -1,5 +1,5 @@
 use super::ast::{BibtexToken, BibtexTokenKind};
-use crate::syntax::text::CharStream;
+use crate::text::CharStream;
 
 pub struct BibtexLexer<'a> {
     stream: CharStream<'a>,

@@ -28,8 +28,8 @@ use self::quality::OrderByQualityCompletionProvider;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
-use texlab_protocol::{CompletionItem, CompletionParams};
 use std::hash::{Hash, Hasher};
+use texlab_protocol::{CompletionItem, CompletionParams};
 
 pub const COMPLETION_LIMIT: usize = 50;
 

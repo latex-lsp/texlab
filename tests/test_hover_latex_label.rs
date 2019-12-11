@@ -1,10 +1,10 @@
 pub mod support;
 
-use texlab_protocol::*;
 use std::sync::Arc;
 use support::capabilities::CLIENT_FULL_CAPABILITIES;
 use support::*;
 use texlab_distro::UnknownDistribution;
+use texlab_protocol::*;
 use tokio::fs;
 
 const SCENARIO: &str = "hover/latex/label";

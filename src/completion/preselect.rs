@@ -1,8 +1,8 @@
-use texlab_protocol::RangeExt;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
+use texlab_protocol::RangeExt;
 use texlab_protocol::{CompletionItem, CompletionParams};
+use texlab_syntax::*;
 
 #[derive(Debug)]
 pub struct PreselectCompletionProvider<F> {

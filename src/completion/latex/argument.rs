@@ -2,8 +2,8 @@ use super::combinators::{self, Parameter};
 use crate::completion::{factory, DATABASE};
 use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::*;
 use std::iter;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexArgumentCompletionProvider;
@@ -52,8 +52,8 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
     use texlab_protocol::RangeExt;
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_inside_mathbb_empty() {

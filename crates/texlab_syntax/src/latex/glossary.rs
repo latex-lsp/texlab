@@ -1,8 +1,8 @@
 use super::ast::*;
-use crate::syntax::language::*;
-use crate::syntax::text::SyntaxNode;
-use texlab_protocol::Range;
+use crate::language::*;
+use crate::text::SyntaxNode;
 use std::sync::Arc;
+use texlab_protocol::Range;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexGlossaryEntry {

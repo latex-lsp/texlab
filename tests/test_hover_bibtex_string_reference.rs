@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::hover::*;
+use texlab_protocol::*;
 
 const SCENARIO: &str = "bibtex/string_reference";
 

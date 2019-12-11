@@ -1,18 +1,18 @@
 use crate::completion::DATABASE;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
 use log::*;
-use texlab_protocol::*;
 use std::io;
 use std::io::Cursor;
 use std::process::Stdio;
 use std::time::Duration;
 use tempfile::TempDir;
 use texlab_distro::*;
+use texlab_protocol::*;
 use texlab_protocol::{ClientCapabilitiesExt, RangeExt};
+use texlab_syntax::*;
 use tokio::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[

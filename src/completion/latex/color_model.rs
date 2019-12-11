@@ -1,9 +1,9 @@
 use super::combinators::{self, Parameter};
 use crate::completion::factory;
-use crate::syntax::LANGUAGE_DATA;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::LANGUAGE_DATA;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexColorModelCompletionProvider;
@@ -39,8 +39,8 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
     use texlab_protocol::RangeExt;
+    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_inside_define_color() {

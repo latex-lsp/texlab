@@ -1,10 +1,10 @@
 use crate::citeproc::render_citation;
-use texlab_protocol::RangeExt;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use log::warn;
+use texlab_protocol::RangeExt;
 use texlab_protocol::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;

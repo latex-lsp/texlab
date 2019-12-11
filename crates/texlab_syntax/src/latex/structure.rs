@@ -1,10 +1,9 @@
 use super::ast::*;
-use texlab_protocol::RangeExt;
-use crate::syntax::language::*;
-use crate::syntax::text::{CharStream, SyntaxNode};
+use crate::language::*;
+use crate::text::{CharStream, SyntaxNode};
 use itertools::Itertools;
-use texlab_protocol::Range;
 use std::sync::Arc;
+use texlab_protocol::{Range, RangeExt};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexSection {

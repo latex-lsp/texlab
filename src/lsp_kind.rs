@@ -1,5 +1,5 @@
-use crate::syntax::*;
 use texlab_protocol::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Structure {

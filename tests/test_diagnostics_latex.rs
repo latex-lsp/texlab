@@ -1,10 +1,10 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::*;
 use texlab_distro::with_distro;
 use texlab_distro::DistributionKind::{Miktex, Texlive};
 use texlab_protocol::LatexLintOptions;
+use texlab_protocol::*;
 
 #[tokio::test]
 async fn disabled() {

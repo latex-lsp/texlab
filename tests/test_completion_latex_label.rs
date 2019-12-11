@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::Documentation;
 use support::completion::*;
+use texlab_protocol::Documentation;
 
 const SCENARIO: &str = "latex/label";
 

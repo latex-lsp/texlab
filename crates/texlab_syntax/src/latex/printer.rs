@@ -1,7 +1,7 @@
 use super::ast::*;
-use crate::syntax::text::*;
-use texlab_protocol::Position;
+use crate::text::*;
 use std::sync::Arc;
+use texlab_protocol::Position;
 
 #[derive(Debug)]
 pub struct LatexPrinter {

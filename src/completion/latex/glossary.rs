@@ -1,10 +1,10 @@
 use super::combinators::{self, Parameter};
 use crate::completion::factory;
-use crate::syntax::LatexGlossaryEntryKind::*;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::LatexGlossaryEntryKind::*;
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexGlossaryCompletionProvider;

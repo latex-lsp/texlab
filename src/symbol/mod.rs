@@ -8,14 +8,14 @@ use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use self::project_order::ProjectOrdering;
 use crate::lsp_kind::Structure;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::*;
 use std::cmp::Reverse;
 use std::sync::Arc;
 use texlab_distro::Distribution;
 use texlab_protocol::ClientCapabilitiesExt;
+use texlab_protocol::*;
+use texlab_syntax::*;
 
 pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
 

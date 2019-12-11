@@ -3,11 +3,11 @@ mod finder;
 mod lexer;
 mod parser;
 
-use self::lexer::BibtexLexer;
-use self::parser::BibtexParser;
-
 pub use self::ast::*;
 pub use self::finder::*;
+
+use self::lexer::BibtexLexer;
+use self::parser::BibtexParser;
 use texlab_protocol::Position;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

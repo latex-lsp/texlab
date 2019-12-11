@@ -1,6 +1,6 @@
-use texlab_protocol::{Position, Range};
 use std::iter::Peekable;
 use std::str::CharIndices;
+use texlab_protocol::{Position, Range};
 
 pub trait SyntaxNode {
     fn range(&self) -> Range;

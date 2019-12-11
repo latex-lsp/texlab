@@ -1,10 +1,10 @@
-use texlab_protocol::RangeExt;
 use crate::symbol::build_section_tree;
-use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 use std::sync::Arc;
+use texlab_protocol::RangeExt;
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
+use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexLabelDefinitionProvider;

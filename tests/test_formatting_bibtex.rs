@@ -1,7 +1,7 @@
 pub mod support;
 
-use texlab_protocol::*;
 use support::formatting::*;
+use texlab_protocol::*;
 use texlab_protocol::{BibtexFormattingOptions, RangeExt};
 
 #[tokio::test]
