@@ -6,6 +6,7 @@ use std::error::Error;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
 use texlab::server::LatexLspServer;
+use texlab_distro::Distribution;
 use texlab_protocol::{LatexLspClient, LspCodec};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
@@ -43,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(
         Arc::clone(&client),
-        Arc::new(tex::Distribution::detect().await),
+        Arc::new(Distribution::detect().await),
     ));
     let mut handler = MessageHandler {
         server,

@@ -11,8 +11,8 @@ use std::io::Cursor;
 use std::process::Stdio;
 use std::time::Duration;
 use tempfile::TempDir;
-use texlab_protocol::ClientCapabilitiesExt;
-use texlab_protocol::RangeExt;
+use texlab_distro::*;
+use texlab_protocol::{ClientCapabilitiesExt, RangeExt};
 use tokio::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
@@ -62,7 +62,7 @@ impl<'a> SyntaxNode for MathElement<'a> {
 #[derive(Debug)]
 enum RenderError {
     IO(io::Error),
-    Compile(tex::CompileError),
+    Compile(CompileError),
     DviNotFound,
     DviPngNotInstalled,
     DviPngFaulty,
@@ -75,8 +75,8 @@ impl From<io::Error> for RenderError {
     }
 }
 
-impl From<tex::CompileError> for RenderError {
-    fn from(error: tex::CompileError) -> Self {
+impl From<CompileError> for RenderError {
+    fn from(error: CompileError) -> Self {
         RenderError::Compile(error)
     }
 }
@@ -118,10 +118,10 @@ impl LatexPreviewHoverProvider {
         range: Range,
     ) -> Result<Hover, RenderError> {
         let code = Self::generate_code(request, range);
-        let params = tex::CompileParams {
+        let params = CompileParams {
             file_name: "preview.tex",
             code: &code,
-            format: tex::Format::Latex,
+            format: Format::Latex,
             timeout: Duration::from_secs(10),
         };
         let directory = request.distribution.compile(params).await?.directory;
@@ -300,8 +300,8 @@ impl FeatureProvider for LatexPreviewHoverProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if !request.client_capabilities.has_hover_markdown_support()
-            || !request.distribution.supports_format(tex::Format::Latex)
-            || request.distribution.output_kind(tex::Format::Latex) != tex::OutputKind::Dvi
+            || !request.distribution.supports_format(Format::Latex)
+            || request.distribution.output_kind(Format::Latex) != OutputKind::Dvi
         {
             return None;
         }
@@ -338,9 +338,9 @@ impl FeatureProvider for LatexPreviewHoverProvider {
                     let message = match why {
                         RenderError::IO(why) => format!("I/O error: {}", why),
                         RenderError::Compile(why) => match why {
-                            tex::CompileError::NotInstalled => "latex not installed".into(),
-                            tex::CompileError::Timeout => "compilation timed out".into(),
-                            tex::CompileError::IO(_) => "an I/O error occurred".into(),
+                            CompileError::NotInstalled => "latex not installed".into(),
+                            CompileError::Timeout => "compilation timed out".into(),
+                            CompileError::IO(_) => "an I/O error occurred".into(),
                         },
                         RenderError::DviNotFound => "compilation failed".to_owned(),
                         RenderError::DviPngNotInstalled => "dvipng is not installed".to_owned(),

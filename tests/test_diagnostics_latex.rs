@@ -2,12 +2,13 @@ pub mod support;
 
 use lsp_types::*;
 use support::*;
-use tex::DistributionKind::{Miktex, Texlive};
+use texlab_distro::with_distro;
+use texlab_distro::DistributionKind::{Miktex, Texlive};
 use texlab_protocol::LatexLintOptions;
 
 #[tokio::test]
 async fn disabled() {
-    let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
+    let _ = with_distro(&[Texlive, Miktex], |distro| {
         async move {
             let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
@@ -30,7 +31,7 @@ async fn disabled() {
 
 #[tokio::test]
 async fn on_open() {
-    let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
+    let _ = with_distro(&[Texlive, Miktex], |distro| {
         async move {
             let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
@@ -55,7 +56,7 @@ async fn on_open() {
 
 #[tokio::test]
 async fn on_save() {
-    let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
+    let _ = with_distro(&[Texlive, Miktex], |distro| {
         async move {
             let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
@@ -105,7 +106,7 @@ async fn on_save() {
 
 #[tokio::test]
 async fn on_change() {
-    let _ = tex::with_distro(&[Texlive, Miktex], |distro| {
+    let _ = with_distro(&[Texlive, Miktex], |distro| {
         async move {
             let scenario = Scenario::new("diagnostics/latex", distro);
             scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {

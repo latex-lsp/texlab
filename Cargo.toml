@@ -16,7 +16,7 @@ members = [
     "crates/futures_boxed",
     "crates/jsonrpc", 
     "crates/jsonrpc_derive",
-    "crates/tex",
+    "crates/texlab_distro",
     "crates/texlab_protocol"]
 
 [dependencies]
@@ -48,7 +48,7 @@ serde_json = "1.0.44"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
-tex = { path = "crates/tex" }
+texlab-distro = { path = "crates/texlab_distro" }
 texlab-protocol = { path = "crates/texlab_protocol" }
 tokio = { version = "0.2", features = ["fs", "process"] }
 tokio-util = { version = "0.2", features = ["codec"] }

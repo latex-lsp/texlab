@@ -9,7 +9,7 @@ pub use self::latex::*;
 pub use self::text::*;
 
 use crate::workspace::Uri;
-use tex::Language;
+use texlab_distro::{Language, Resolver};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SyntaxTree {
@@ -19,7 +19,7 @@ pub enum SyntaxTree {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct SyntaxTreeContext<'a> {
-    pub resolver: &'a tex::Resolver,
+    pub resolver: &'a Resolver,
     pub uri: &'a Uri,
 }
 

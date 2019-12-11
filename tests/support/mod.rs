@@ -11,6 +11,7 @@ use std::sync::Arc;
 use tempfile::{tempdir, TempDir};
 use texlab::server::LatexLspServer;
 use texlab::workspace::Uri;
+use texlab_distro::Distribution;
 use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
@@ -106,7 +107,7 @@ pub struct Scenario {
 }
 
 impl Scenario {
-    pub fn new(name: &str, distribution: Arc<Box<dyn tex::Distribution>>) -> Self {
+    pub fn new(name: &str, distribution: Arc<Box<dyn Distribution>>) -> Self {
         let directory = tempdir().unwrap();
         remove_dir(directory.path()).unwrap();
         let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -278,10 +279,10 @@ pub mod capabilities {
 
 pub mod build {
     use super::*;
-    use tex::DistributionKind::*;
+    use texlab_distro::DistributionKind::*;
 
     async fn create_scenario(
-        distribution: Arc<Box<dyn tex::Distribution>>,
+        distribution: Arc<Box<dyn Distribution>>,
         executable: &'static str,
         build_on_save: bool,
         file: &'static str,
@@ -303,7 +304,7 @@ pub mod build {
     }
 
     pub async fn run(executable: &'static str, file: &'static str) -> Option<BuildResult> {
-        tex::with_distro(&[Texlive, Miktex], |distro| {
+        texlab_distro::with_distro(&[Texlive, Miktex], |distro| {
             async move {
                 let scenario = create_scenario(distro, executable, false, file).await;
                 let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
@@ -319,7 +320,7 @@ pub mod build {
     }
 
     pub async fn run_on_save(executable: &'static str, file: &'static str) -> Option<Scenario> {
-        tex::with_distro(&[Texlive, Miktex], |distro| {
+        texlab_distro::with_distro(&[Texlive, Miktex], |distro| {
             async move {
                 let scenario = create_scenario(distro, executable, true, file).await;
                 let text_document = TextDocumentIdentifier::new(scenario.uri(file).into());
@@ -334,6 +335,7 @@ pub mod build {
 
 pub mod completion {
     use super::*;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run_list(
         scenario_short_name: &'static str,
@@ -342,7 +344,7 @@ pub mod completion {
         character: u64,
     ) -> (Scenario, Vec<CompletionItem>) {
         let scenario_name = format!("completion/{}", scenario_short_name);
-        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(UnknownDistribution)));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
@@ -436,6 +438,7 @@ pub mod completion {
 pub mod definition {
     use super::capabilities::*;
     use super::*;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run(
         scenario_short_name: &'static str,
@@ -445,7 +448,7 @@ pub mod definition {
         capabilities: &ClientCapabilities,
     ) -> (Scenario, DefinitionResponse) {
         let scenario_name = format!("definition/{}", scenario_short_name);
-        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(UnknownDistribution)));
         scenario.initialize(capabilities).await;
         scenario.open(file).await;
 
@@ -530,9 +533,10 @@ pub mod definition {
 pub mod folding {
     use super::*;
     use std::cmp::Reverse;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run(file: &'static str) -> Vec<FoldingRange> {
-        let scenario = Scenario::new("folding", Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new("folding", Arc::new(Box::new(UnknownDistribution)));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
@@ -558,12 +562,13 @@ pub mod folding {
 
 pub mod formatting {
     use super::*;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run_bibtex(
         file: &'static str,
         options: Option<BibtexFormattingOptions>,
     ) -> (Scenario, Vec<TextEdit>) {
-        let scenario = Scenario::new("formatting/bibtex", Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new("formatting/bibtex", Arc::new(Box::new(UnknownDistribution)));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
@@ -592,6 +597,7 @@ pub mod formatting {
 
 pub mod hover {
     use super::*;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run(
         scenario_short_name: &'static str,
@@ -600,7 +606,7 @@ pub mod hover {
         character: u64,
     ) -> Option<HoverContents> {
         let scenario_name = format!("hover/{}", scenario_short_name);
-        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new(&scenario_name, Arc::new(Box::new(UnknownDistribution)));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
@@ -619,9 +625,13 @@ pub mod hover {
 pub mod symbol {
     use super::*;
     use lsp_types::DocumentSymbolResponse;
+    use texlab_distro::UnknownDistribution;
 
     pub async fn run_hierarchical(file: &'static str) -> Vec<DocumentSymbol> {
-        let scenario = Scenario::new("symbol/hierarchical", Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new(
+            "symbol/hierarchical",
+            Arc::new(Box::new(UnknownDistribution)),
+        );
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;
@@ -643,7 +653,7 @@ pub mod symbol {
     }
 
     pub async fn run_workspace(query: &'static str) -> (Scenario, Vec<SymbolInformation>) {
-        let scenario = Scenario::new("symbol/workspace", Arc::new(Box::new(tex::Unknown)));
+        let scenario = Scenario::new("symbol/workspace", Arc::new(Box::new(UnknownDistribution)));
         scenario
             .initialize(&capabilities::CLIENT_FULL_CAPABILITIES)
             .await;

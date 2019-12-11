@@ -14,6 +14,7 @@ use futures_boxed::boxed;
 use lsp_types::*;
 use std::cmp::Reverse;
 use std::sync::Arc;
+use texlab_distro::Distribution;
 use texlab_protocol::ClientCapabilitiesExt;
 
 pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
@@ -178,7 +179,7 @@ struct WorkspaceSymbol {
 }
 
 pub async fn workspace_symbols(
-    distribution: Arc<Box<dyn tex::Distribution>>,
+    distribution: Arc<Box<dyn Distribution>>,
     client_capabilities: Arc<ClientCapabilities>,
     workspace: Arc<Workspace>,
     params: &WorkspaceSymbolParams,

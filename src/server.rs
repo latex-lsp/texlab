@@ -1,6 +1,5 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
-use texlab_protocol::ClientCapabilitiesExt;
 use crate::citeproc::render_citation;
 use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
 use crate::definition::DefinitionProvider;
@@ -28,14 +27,14 @@ use std::ffi::OsStr;
 use std::fs;
 use std::future::Future;
 use std::sync::Arc;
-use tex::Language;
+use texlab_distro::{Distribution, DistributionKind, Language};
 use texlab_protocol::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
-    distribution: Arc<Box<dyn tex::Distribution>>,
+    distribution: Arc<Box<dyn Distribution>>,
     build_manager: BuildManager<C>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionManager,
@@ -54,7 +53,7 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>, distribution: Arc<Box<dyn tex::Distribution>>) -> Self {
+    pub fn new(client: Arc<C>, distribution: Arc<Box<dyn Distribution>>) -> Self {
         Self {
             client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
@@ -550,7 +549,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
             match action {
                 Action::LoadDistribution => {
                     info!("Detected TeX distribution: {:?}", self.distribution.kind());
-                    if self.distribution.kind() == tex::DistributionKind::Unknown {
+                    if self.distribution.kind() == DistributionKind::Unknown {
                         let params = ShowMessageParams {
                             message: "Your TeX distribution could not be detected. \
                                       Please make sure that your distribution is in your PATH."
@@ -562,12 +561,12 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
 
                     if let Err(why) = self.distribution.load().await {
                         let message = match why {
-                            tex::LoadError::KpsewhichNotFound => {
+                            texlab_distro::LoadError::KpsewhichNotFound => {
                                 "An error occurred while executing `kpsewhich`.\
                                  Please make sure that your distribution is in your PATH \
                                  environment variable and provides the `kpsewhich` tool."
                             }
-                            tex::LoadError::CorruptFileDatabase => {
+                            texlab_distro::LoadError::CorruptFileDatabase => {
                                 "The file database of your TeX distribution seems \
                                  to be corrupt. Please rebuild it and try again."
                             }

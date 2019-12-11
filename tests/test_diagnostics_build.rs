@@ -2,11 +2,12 @@ pub mod support;
 
 use std::sync::Arc;
 use support::*;
+use texlab_distro::UnknownDistribution;
 use tokio::fs;
 
 #[tokio::test]
 async fn did_change_update() {
-    let scenario = Scenario::new("diagnostics/build", Arc::new(Box::new(tex::Unknown)));
+    let scenario = Scenario::new("diagnostics/build", Arc::new(Box::new(UnknownDistribution)));
     scenario.open("foo.tex").await;
     {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;

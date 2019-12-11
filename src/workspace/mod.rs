@@ -17,7 +17,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
-use tex::Language;
+use texlab_distro::{Distribution, Language, Resolver};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {
@@ -37,7 +37,7 @@ impl Document {
         }
     }
 
-    pub fn parse(resolver: &tex::Resolver, uri: Uri, text: String, language: Language) -> Self {
+    pub fn parse(resolver: &Resolver, uri: Uri, text: String, language: Language) -> Self {
         let context = SyntaxTreeContext {
             resolver,
             uri: &uri,
@@ -211,12 +211,12 @@ pub enum LoadError {
 }
 
 pub struct WorkspaceManager {
-    distribution: Arc<Box<dyn tex::Distribution>>,
+    distribution: Arc<Box<dyn Distribution>>,
     workspace: Mutex<Arc<Workspace>>,
 }
 
 impl WorkspaceManager {
-    pub fn new(distribution: Arc<Box<dyn tex::Distribution>>) -> Self {
+    pub fn new(distribution: Arc<Box<dyn Distribution>>) -> Self {
         Self {
             distribution,
             workspace: Mutex::default(),
@@ -326,7 +326,7 @@ impl WorkspaceBuilder {
     }
 
     pub fn document(&mut self, name: &str, text: &str) -> Uri {
-        let resolver = tex::Resolver::default();
+        let resolver = Resolver::default();
         let path = env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Uri::from_file_path(path).unwrap();

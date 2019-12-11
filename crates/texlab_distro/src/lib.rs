@@ -108,22 +108,22 @@ impl dyn Distribution {
             DistributionKind::Texlive => Box::new(Texlive::new()),
             DistributionKind::Miktex => Box::new(Miktex::new()),
             DistributionKind::Tectonic => Box::new(Tectonic::new()),
-            DistributionKind::Unknown => Box::new(Unknown::new()),
+            DistributionKind::Unknown => Box::new(UnknownDistribution::new()),
         };
         distro
     }
 }
 
 #[derive(Debug, Default)]
-pub struct Unknown;
+pub struct UnknownDistribution;
 
-impl Unknown {
+impl UnknownDistribution {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Distribution for Unknown {
+impl Distribution for UnknownDistribution {
     fn kind(&self) -> DistributionKind {
         DistributionKind::Unknown
     }

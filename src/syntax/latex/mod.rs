@@ -22,12 +22,13 @@ use self::parser::LatexParser;
 use super::language::*;
 use super::text::SyntaxNode;
 use super::SyntaxTreeContext;
-use texlab_protocol::RangeExt;
 use crate::workspace::Uri;
 use lsp_types::{Position, Range};
 use path_clean::PathClean;
 use std::path::PathBuf;
 use std::sync::Arc;
+use texlab_distro::Resolver;
+use texlab_protocol::RangeExt;
 
 #[derive(Debug, Default)]
 struct LatexCommandAnalyzer {
@@ -195,7 +196,7 @@ impl LatexInclude {
     }
 
     fn resolve_distro_file(
-        resolver: &tex::Resolver,
+        resolver: &Resolver,
         description: &LatexIncludeCommand,
         name: &LatexToken,
     ) -> Option<Uri> {

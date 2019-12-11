@@ -4,13 +4,14 @@ use lsp_types::*;
 use std::sync::Arc;
 use support::capabilities::CLIENT_FULL_CAPABILITIES;
 use support::*;
+use texlab_distro::UnknownDistribution;
 use tokio::fs;
 
 const SCENARIO: &str = "hover/latex/label";
 
 #[tokio::test]
 async fn reload_aux() {
-    let scenario = Scenario::new(SCENARIO, Arc::new(Box::new(tex::Unknown)));
+    let scenario = Scenario::new(SCENARIO, Arc::new(Box::new(UnknownDistribution)));
     scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
     scenario.open("section.tex").await;
     let position = Position::new(3, 10);

@@ -2,12 +2,13 @@ use super::{Document, DocumentView, Workspace, WorkspaceBuilder};
 use futures_boxed::boxed;
 use lsp_types::*;
 use std::sync::Arc;
+use texlab_distro::{Distribution, UnknownDistribution};
 
 pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
     pub client_capabilities: Arc<ClientCapabilities>,
-    pub distribution: Arc<Box<dyn tex::Distribution>>,
+    pub distribution: Arc<Box<dyn Distribution>>,
 }
 
 impl<P> FeatureRequest<P> {
@@ -109,7 +110,7 @@ pub struct FeatureSpec {
     pub new_name: &'static str,
     pub include_declaration: bool,
     pub client_capabilities: ClientCapabilities,
-    pub distribution: Box<dyn tex::Distribution>,
+    pub distribution: Box<dyn Distribution>,
 }
 
 impl Default for FeatureSpec {
@@ -121,7 +122,7 @@ impl Default for FeatureSpec {
             new_name: "",
             include_declaration: false,
             client_capabilities: ClientCapabilities::default(),
-            distribution: Box::new(tex::Unknown::default()),
+            distribution: Box::new(UnknownDistribution::default()),
         }
     }
 }
