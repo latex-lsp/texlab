@@ -3,7 +3,7 @@ pub mod support;
 use lsp_types::*;
 use support::*;
 use tex::DistributionKind::{Miktex, Texlive};
-use texlab::protocol_types::LatexLintOptions;
+use texlab_protocol::LatexLintOptions;
 
 #[tokio::test]
 async fn disabled() {

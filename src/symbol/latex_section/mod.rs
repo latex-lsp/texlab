@@ -4,7 +4,7 @@ mod float;
 mod theorem;
 
 use super::{LatexSymbol, LatexSymbolKind};
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -290,7 +290,7 @@ pub fn selection_range(full_range: Range, label: Option<&LatexLabel>) -> Range {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
+    use texlab_protocol::RangeExt;
 
     #[test]
     fn test_subsection() {

@@ -1,8 +1,7 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
-use crate::capabilities::ClientCapabilitiesExt;
+use texlab_protocol::ClientCapabilitiesExt;
 use crate::citeproc::render_citation;
-use crate::client::LspClient;
 use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
@@ -12,7 +11,6 @@ use crate::forward_search;
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
 use crate::link::LinkProvider;
-use crate::protocol_types::*;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::symbol::{self, SymbolProvider};
@@ -31,6 +29,7 @@ use std::fs;
 use std::future::Future;
 use std::sync::Arc;
 use tex::Language;
+use texlab_protocol::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {

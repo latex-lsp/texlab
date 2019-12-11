@@ -2,7 +2,7 @@ pub mod support;
 
 use lsp_types::Range;
 use support::symbol::*;
-use texlab::range::RangeExt;
+use texlab_protocol::RangeExt;
 
 #[tokio::test]
 async fn enumerate() {

@@ -1,5 +1,5 @@
 use crate::citeproc::render_citation;
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;

@@ -1,4 +1,4 @@
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::workspace::{Document, Uri};
 use lsp_types::*;
 use once_cell::sync::Lazy;

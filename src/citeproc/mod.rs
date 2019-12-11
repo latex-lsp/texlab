@@ -7,10 +7,10 @@ use crate::syntax::*;
 use bibutils::{InputFormat, OutputFormat};
 use citeproc::prelude::*;
 use citeproc_db::PredefinedLocales;
-use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
+use lsp_types::{MarkupContent, MarkupKind};
 
 static APA_STYLE: &str = include_str!("apa.csl");
 

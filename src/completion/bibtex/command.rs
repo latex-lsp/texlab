@@ -1,10 +1,10 @@
 use crate::completion::factory::{self, LatexComponentId};
 use crate::completion::DATABASE;
-use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
+use texlab_protocol::RangeExt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexCommandCompletionProvider;

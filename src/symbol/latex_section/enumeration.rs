@@ -1,5 +1,5 @@
 use super::{label_name, selection_range};
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
 use crate::syntax::*;
 use crate::workspace::*;

@@ -1,6 +1,3 @@
-use crate::capabilities::ClientCapabilitiesExt;
-use crate::client::LspClient;
-use crate::protocol_types::*;
 use crate::workspace::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
 use futures::lock::Mutex;
@@ -13,6 +10,8 @@ use std::io;
 use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
+use texlab_protocol::ClientCapabilitiesExt;
+use texlab_protocol::*;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use uuid::Uuid;

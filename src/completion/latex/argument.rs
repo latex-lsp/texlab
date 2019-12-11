@@ -1,6 +1,5 @@
 use super::combinators::{self, Parameter};
-use crate::completion::factory;
-use crate::completion::DATABASE;
+use crate::completion::{factory, DATABASE};
 use crate::workspace::*;
 use futures_boxed::boxed;
 use lsp_types::*;
@@ -53,8 +52,8 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
+    use texlab_protocol::RangeExt;
 
     #[test]
     fn test_inside_mathbb_empty() {

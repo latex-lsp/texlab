@@ -1,4 +1,4 @@
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::syntax::text::{Span, SyntaxNode};
 use lsp_types::Range;
 

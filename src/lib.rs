@@ -2,10 +2,7 @@
 
 pub mod action;
 pub mod build;
-pub mod capabilities;
 pub mod citeproc;
-pub mod client;
-pub mod codec;
 pub mod completion;
 pub mod definition;
 pub mod diagnostics;
@@ -16,8 +13,6 @@ pub mod highlight;
 pub mod hover;
 pub mod link;
 pub mod lsp_kind;
-pub mod protocol_types;
-pub mod range;
 pub mod reference;
 pub mod rename;
 pub mod server;

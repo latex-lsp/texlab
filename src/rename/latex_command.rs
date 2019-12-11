@@ -67,7 +67,7 @@ fn find_command(tree: &SyntaxTree, position: Position) -> Option<Arc<LatexComman
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
+    use texlab_protocol::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

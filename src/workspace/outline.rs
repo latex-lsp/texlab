@@ -1,5 +1,5 @@
 use super::{Document, DocumentView};
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::syntax::*;
 use crate::workspace::Uri;
 use lsp_types::*;

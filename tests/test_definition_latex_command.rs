@@ -2,7 +2,7 @@ pub mod support;
 
 use lsp_types::Range;
 use support::definition::*;
-use texlab::range::RangeExt;
+use texlab_protocol::RangeExt;
 
 const SCENARIO: &str = "latex/command";
 

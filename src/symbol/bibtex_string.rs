@@ -38,7 +38,7 @@ impl FeatureProvider for BibtexStringSymbolProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
+    use texlab_protocol::RangeExt;
 
     #[test]
     fn test_valid() {

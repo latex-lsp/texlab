@@ -16,7 +16,8 @@ members = [
     "crates/futures_boxed",
     "crates/jsonrpc", 
     "crates/jsonrpc_derive",
-    "crates/tex"]
+    "crates/tex",
+    "crates/texlab_protocol"]
 
 [dependencies]
 base64 = "0.11.0"
@@ -28,8 +29,8 @@ citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "890867
 clap = "2.33"
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
 fnv = "1.0.3"
-futures-boxed = { path = "crates/futures_boxed" }
 futures = "0.3"
+futures-boxed = { path = "crates/futures_boxed" }
 html2md = "0.2.9"
 image = "0.22.3"
 itertools = "0.8.2"
@@ -38,7 +39,6 @@ jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 lalrpop-util = "0.17.2"
 log = "0.4.6"
 lsp-types = { version = "0.61.0", features = ["proposed"] }
-nom = "5.0.1"
 once_cell = "1.2.0"
 path-clean = "0.1.0"
 petgraph = "0.4.13"
@@ -49,6 +49,7 @@ serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
 tex = { path = "crates/tex" }
+texlab-protocol = { path = "crates/texlab_protocol" }
 tokio = { version = "0.2", features = ["fs", "process"] }
 tokio-util = { version = "0.2", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }

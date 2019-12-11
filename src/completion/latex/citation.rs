@@ -52,8 +52,8 @@ impl FeatureProvider for LatexCitationCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
     use lsp_types::{Position, Range};
+    use texlab_protocol::RangeExt;
 
     #[test]
     fn test_empty() {

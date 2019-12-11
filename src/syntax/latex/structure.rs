@@ -1,5 +1,5 @@
 use super::ast::*;
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::syntax::language::*;
 use crate::syntax::text::{CharStream, SyntaxNode};
 use itertools::Itertools;

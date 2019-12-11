@@ -1,8 +1,8 @@
-use crate::protocol_types::*;
 use log::*;
 use std::io;
 use std::path::Path;
 use std::process::Stdio;
+use texlab_protocol::*;
 use tokio::process::Command;
 
 pub async fn search<'a>(

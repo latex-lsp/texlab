@@ -5,9 +5,8 @@ use jsonrpc::MessageHandler;
 use std::error::Error;
 use std::sync::Arc;
 use stderrlog::{ColorChoice, Timestamp};
-use texlab::client::LatexLspClient;
-use texlab::codec::LspCodec;
 use texlab::server::LatexLspServer;
+use texlab_protocol::{LatexLspClient, LspCodec};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]
@@ -61,7 +60,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     while let Some(json) = stdin.next().await {
-        handler.handle(&json.unwrap()).await;  
+        handler.handle(&json.unwrap()).await;
     }
 
     Ok(())

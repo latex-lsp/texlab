@@ -1,5 +1,5 @@
-use crate::protocol_types::BibtexFormattingOptions;
 use crate::syntax::*;
+use texlab_protocol::BibtexFormattingOptions;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFormattingParams {

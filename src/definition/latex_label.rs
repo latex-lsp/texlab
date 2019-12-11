@@ -1,4 +1,4 @@
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::symbol::build_section_tree;
 use crate::syntax::*;
 use crate::workspace::*;

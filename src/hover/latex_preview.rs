@@ -1,6 +1,4 @@
-use crate::capabilities::ClientCapabilitiesExt;
 use crate::completion::DATABASE;
-use crate::range::RangeExt;
 use crate::syntax::*;
 use crate::workspace::*;
 use futures_boxed::boxed;
@@ -13,6 +11,8 @@ use std::io::Cursor;
 use std::process::Stdio;
 use std::time::Duration;
 use tempfile::TempDir;
+use texlab_protocol::ClientCapabilitiesExt;
+use texlab_protocol::RangeExt;
 use tokio::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[

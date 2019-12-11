@@ -9,10 +9,9 @@ use std::fs::remove_dir;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::{tempdir, TempDir};
-use texlab::client::LspClient;
-use texlab::protocol_types::*;
 use texlab::server::LatexLspServer;
 use texlab::workspace::Uri;
+use texlab_protocol::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct MockLspClientOptions {
@@ -402,7 +401,7 @@ pub mod completion {
 
     pub mod verify {
         use lsp_types::*;
-        use texlab::range::RangeExt;
+        use texlab_protocol::RangeExt;
 
         pub fn text_edit(
             item: &CompletionItem,
@@ -437,7 +436,6 @@ pub mod completion {
 pub mod definition {
     use super::capabilities::*;
     use super::*;
-    use texlab::protocol_types::DefinitionResponse;
 
     pub async fn run(
         scenario_short_name: &'static str,
@@ -507,7 +505,7 @@ pub mod definition {
 
     pub mod verify {
         use super::*;
-        use texlab::range::RangeExt;
+        use texlab_protocol::RangeExt;
 
         pub fn origin_selection_range(
             link: &LocationLink,
@@ -665,7 +663,7 @@ pub mod symbol {
 
     pub mod verify {
         use super::*;
-        use texlab::range::RangeExt;
+        use texlab_protocol::RangeExt;
 
         pub fn symbol(
             symbol: &DocumentSymbol,

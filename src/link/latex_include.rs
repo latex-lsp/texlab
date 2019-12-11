@@ -54,7 +54,7 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::range::RangeExt;
+    use texlab_protocol::RangeExt;
     use lsp_types::{Position, Range};
 
     #[test]

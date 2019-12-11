@@ -22,7 +22,7 @@ use self::parser::LatexParser;
 use super::language::*;
 use super::text::SyntaxNode;
 use super::SyntaxTreeContext;
-use crate::range::RangeExt;
+use texlab_protocol::RangeExt;
 use crate::workspace::Uri;
 use lsp_types::{Position, Range};
 use path_clean::PathClean;
