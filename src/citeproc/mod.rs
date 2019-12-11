@@ -63,6 +63,7 @@ fn convert_to_ris(tree: &BibtexSyntaxTree, key: &str) -> Option<RisReference> {
 
     bib_code.push_str(&format_entry(entry, &bib_params));
     bib_code.push('\n');
+    bib_code = bib_code.replace("\\hyphen ", "-");
 
     let ris_code = bibutils::convert(bib_code, InputFormat::Biblatex, OutputFormat::Ris)?;
     let ris_lib = RisLibrary::parse(ris_code.lines());
@@ -147,7 +148,7 @@ mod tests {
             }"#,
         );
         let markdown = render_citation(&tree, "kastenholz").unwrap().value;
-        assert_eq!(markdown, "Kastenholz, M. A., & Hünenberger, P. H. Computation of methodology\\\\hyphen independent ionic solvation free energies from molecular simulations: I. The electrostatic potential in molecular liquids. *jchph*, *124*. [doi:10.1063/1.2172593](https://doi.org/10.1063/1.2172593)");
+        assert_eq!(markdown, "Kastenholz, M. A., & Hünenberger, P. H. Computation of methodology\\-independent ionic solvation free energies from molecular simulations: I. The electrostatic potential in molecular liquids. *jchph*, *124*. [doi:10.1063/1.2172593](https://doi.org/10.1063/1.2172593)");
     }
 
     #[test]
