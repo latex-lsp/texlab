@@ -1,10 +1,8 @@
 use crate::completion::factory::{self, LatexComponentId};
-use crate::completion::DATABASE;
-use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexCommandCompletionProvider;
@@ -26,7 +24,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
                     range.start.character += 1;
 
                     let component = LatexComponentId::kernel();
-                    for command in &DATABASE.kernel().commands {
+                    for command in &COMPLETION_DATABASE.kernel().commands {
                         let text_edit = TextEdit::new(range, (&command.name).into());
                         let item = factory::command(
                             request,

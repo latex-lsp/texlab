@@ -1,4 +1,4 @@
-use crate::workspace::Document;
+use texlab_workspace::Document;
 use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
 use texlab_syntax::*;
 

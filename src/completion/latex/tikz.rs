@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::completion::factory;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 use texlab_syntax::LANGUAGE_DATA;

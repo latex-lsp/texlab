@@ -1,4 +1,4 @@
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 use texlab_syntax::*;

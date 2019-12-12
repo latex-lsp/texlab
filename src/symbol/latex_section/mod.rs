@@ -4,7 +4,7 @@ mod float;
 mod theorem;
 
 use super::{LatexSymbol, LatexSymbolKind};
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::RangeExt;
 use texlab_protocol::*;

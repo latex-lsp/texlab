@@ -1,15 +1,14 @@
 mod bibtex;
-mod data;
 mod factory;
 mod latex;
 mod preselect;
 mod quality;
 
+pub use self::factory::CompletionItemData;
+
 use self::bibtex::command::BibtexCommandCompletionProvider;
 use self::bibtex::entry_type::BibtexEntryTypeCompletionProvider;
 use self::bibtex::field_name::BibtexFieldNameCompletionProvider;
-pub use self::data::DATABASE;
-pub use self::factory::CompletionItemData;
 use self::latex::argument::LatexArgumentCompletionProvider;
 use self::latex::begin_command::LatexBeginCommandCompletionProvider;
 use self::latex::citation::LatexCitationCompletionProvider;
@@ -25,7 +24,7 @@ use self::latex::tikz::*;
 use self::latex::user::*;
 use self::preselect::PreselectCompletionProvider;
 use self::quality::OrderByQualityCompletionProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
 use std::hash::{Hash, Hasher};

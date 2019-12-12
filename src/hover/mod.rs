@@ -15,7 +15,7 @@ use self::latex_component::LatexComponentHoverProvider;
 use self::latex_include::LatexIncludeHoverProvider;
 use self::latex_label::LatexLabelHoverProvider;
 use self::latex_preview::LatexPreviewHoverProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{Hover, TextDocumentPositionParams};
 

@@ -1,5 +1,5 @@
 use crate::symbol::build_section_tree;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::sync::Arc;
 use texlab_protocol::RangeExt;

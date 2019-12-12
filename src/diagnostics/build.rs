@@ -1,4 +1,4 @@
-use crate::workspace::Document;
+use texlab_workspace::Document;
 use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use regex::{Match, Regex};

@@ -1,10 +1,5 @@
-mod feature;
-mod outline;
-
-pub use self::feature::*;
-pub use self::outline::*;
-
-use crate::completion::DATABASE;
+use super::completion::COMPLETION_DATABASE;
+use super::document::Document;
 use futures::executor::block_on;
 use log::*;
 use std::env;
@@ -12,42 +7,9 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::time::SystemTime;
 use texlab_distro::{Distribution, Language, Resolver};
 use texlab_protocol::*;
 use texlab_syntax::*;
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Document {
-    pub uri: Uri,
-    pub text: String,
-    pub tree: SyntaxTree,
-    pub modified: SystemTime,
-}
-
-impl Document {
-    pub fn new(uri: Uri, text: String, tree: SyntaxTree) -> Self {
-        Self {
-            uri,
-            text,
-            tree,
-            modified: SystemTime::now(),
-        }
-    }
-
-    pub fn parse(resolver: &Resolver, uri: Uri, text: String, language: Language) -> Self {
-        let context = SyntaxTreeContext {
-            resolver,
-            uri: &uri,
-        };
-        let tree = SyntaxTree::parse(context, &text, language);
-        Self::new(uri, text, tree)
-    }
-
-    pub fn is_file(&self) -> bool {
-        self.uri.scheme() == "file"
-    }
-}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Workspace {
@@ -143,7 +105,7 @@ impl Workspace {
                             if include
                                 .paths()
                                 .iter()
-                                .all(|name| DATABASE.contains(name.text()))
+                                .all(|name| COMPLETION_DATABASE.contains(name.text()))
                             {
                                 continue;
                             }
@@ -180,24 +142,6 @@ impl Workspace {
             }
         }
         includes
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct DocumentView {
-    pub workspace: Arc<Workspace>,
-    pub document: Arc<Document>,
-    pub related_documents: Vec<Arc<Document>>,
-}
-
-impl DocumentView {
-    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
-        let related_documents = workspace.related_documents(&document.uri);
-        Self {
-            workspace,
-            document,
-            related_documents,
-        }
     }
 }
 

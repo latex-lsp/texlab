@@ -5,7 +5,7 @@ mod latex_section;
 use self::bibtex_declaration::BibtexDeclarationFoldingProvider;
 use self::latex_environment::LatexEnvironmentFoldingProvider;
 use self::latex_section::LatexSectionFoldingProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{FoldingRange, FoldingRangeParams};
 

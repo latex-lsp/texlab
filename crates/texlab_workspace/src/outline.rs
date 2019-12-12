@@ -1,7 +1,6 @@
-use super::{Document, DocumentView};
-use crate::workspace::Uri;
+use super::document::Document;
+use super::feature::DocumentView;
 use std::collections::HashSet;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
 

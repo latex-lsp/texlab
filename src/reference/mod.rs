@@ -5,7 +5,7 @@ mod latex_label;
 use self::bibtex_entry::BibtexEntryReferenceProvider;
 use self::bibtex_string::BibtexStringReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{Location, ReferenceParams};
 

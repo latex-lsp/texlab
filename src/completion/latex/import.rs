@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
-use crate::completion::{factory, DATABASE};
-use crate::workspace::*;
+use crate::completion::factory;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 use texlab_syntax::*;
@@ -54,7 +54,7 @@ where
     combinators::argument(request, parameters, |context| {
         async move {
             let resolver = request.distribution.resolver().await;
-            DATABASE
+            COMPLETION_DATABASE
                 .components
                 .iter()
                 .flat_map(|comp| comp.file_names.iter())

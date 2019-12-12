@@ -1,6 +1,6 @@
 use super::{label_name, selection_range};
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
-use crate::workspace::*;
+use texlab_workspace::*;
 use texlab_syntax::*;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {

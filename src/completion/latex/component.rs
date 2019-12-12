@@ -1,9 +1,8 @@
 use super::combinators;
 use crate::completion::factory::{self, LatexComponentId};
-use crate::completion::DATABASE;
-use crate::workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexComponentCommandCompletionProvider;
@@ -18,7 +17,8 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
             async move {
                 let range = command.short_name_range();
                 let mut items = Vec::new();
-                for component in DATABASE.related_components(request.related_documents()) {
+                for component in COMPLETION_DATABASE.related_components(request.related_documents())
+                {
                     let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
                     let id = LatexComponentId::Component(file_names);
                     for command in &component.commands {
@@ -53,7 +53,7 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
         combinators::environment(request, |context| {
             async move {
                 let mut items = Vec::new();
-                for component in DATABASE.related_components(request.related_documents()) {
+                for component in COMPLETION_DATABASE.related_components(request.related_documents()) {
                     let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
                     let id = LatexComponentId::Component(file_names);
                     for environment in &component.environments {

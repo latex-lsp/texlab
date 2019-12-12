@@ -1,4 +1,4 @@
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 use texlab_syntax::*;

@@ -8,7 +8,7 @@ use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use self::project_order::ProjectOrdering;
 use crate::lsp_kind::Structure;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::cmp::Reverse;
 use std::sync::Arc;

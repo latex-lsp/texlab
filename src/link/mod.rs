@@ -1,7 +1,7 @@
 mod latex_include;
 
 use crate::link::latex_include::LatexIncludeLinkProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 

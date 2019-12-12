@@ -1,4 +1,4 @@
-use crate::workspace::Document;
+use super::document::Document;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -120,6 +120,6 @@ pub struct Metadata {
     pub description: Option<String>,
 }
 
-const JSON: &str = include_str!("data.json");
+const JSON: &str = include_str!("completion.json");
 
-pub static DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());
+pub static COMPLETION_DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());

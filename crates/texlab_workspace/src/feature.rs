@@ -1,8 +1,27 @@
-use super::{Document, DocumentView, Workspace, WorkspaceBuilder};
+use super::document::Document;
+use super::workspace::{Workspace, WorkspaceBuilder};
 use futures_boxed::boxed;
 use std::sync::Arc;
 use texlab_distro::{Distribution, UnknownDistribution};
 use texlab_protocol::*;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct DocumentView {
+    pub workspace: Arc<Workspace>,
+    pub document: Arc<Document>,
+    pub related_documents: Vec<Arc<Document>>,
+}
+
+impl DocumentView {
+    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
+        let related_documents = workspace.related_documents(&document.uri);
+        Self {
+            workspace,
+            document,
+            related_documents,
+        }
+    }
+}
 
 pub struct FeatureRequest<P> {
     pub params: P,

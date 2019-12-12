@@ -1,7 +1,6 @@
 use crate::completion::factory;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
 

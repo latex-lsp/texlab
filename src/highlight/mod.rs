@@ -1,7 +1,7 @@
 mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
 

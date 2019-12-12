@@ -7,7 +7,7 @@ use self::bibtex_string::BibtexStringDefinitionProvider;
 use self::latex_citation::LatexCitationDefinitionProvider;
 use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 

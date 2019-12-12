@@ -18,7 +18,8 @@ members = [
     "crates/jsonrpc_derive",
     "crates/texlab_distro",
     "crates/texlab_protocol",
-    "crates/texlab_syntax"]
+    "crates/texlab_syntax",
+    "crates/texlab_workspace"]
 
 [dependencies]
 base64 = "0.11.0"
@@ -51,6 +52,7 @@ tempfile = "3"
 texlab-distro = { path = "crates/texlab_distro" }
 texlab-protocol = { path = "crates/texlab_protocol" }
 texlab-syntax = { path = "crates/texlab_syntax" }
+texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = { version = "0.2", features = ["fs", "process"] }
 tokio-util = { version = "0.2", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }

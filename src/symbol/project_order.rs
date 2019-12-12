@@ -1,4 +1,4 @@
-use crate::workspace::*;
+use texlab_workspace::*;
 use petgraph::algo::tarjan_scc;
 use petgraph::{Directed, Graph};
 use std::collections::HashSet;

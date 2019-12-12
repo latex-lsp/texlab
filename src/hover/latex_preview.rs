@@ -1,5 +1,3 @@
-use crate::completion::DATABASE;
-use crate::workspace::*;
 use futures_boxed::boxed;
 use image::png::PNGEncoder;
 use image::{DynamicImage, GenericImage, GenericImageView};
@@ -13,6 +11,7 @@ use texlab_distro::*;
 use texlab_protocol::*;
 use texlab_protocol::{ClientCapabilitiesExt, RangeExt};
 use texlab_syntax::*;
+use texlab_workspace::*;
 use tokio::process::Command;
 
 const PREVIEW_ENVIRONMENTS: &[&str] = &[
@@ -176,7 +175,7 @@ impl LatexPreviewHoverProvider {
                             .paths()
                             .iter()
                             .map(|path| format!("{}.sty", path.text()))
-                            .any(|name| !DATABASE.exists(&name))
+                            .any(|name| !COMPLETION_DATABASE.exists(&name))
                         {
                             continue;
                         }

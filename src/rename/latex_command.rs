@@ -1,4 +1,4 @@
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::collections::HashMap;
 use std::sync::Arc;

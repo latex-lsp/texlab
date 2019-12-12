@@ -1,9 +1,7 @@
-use crate::completion::DATABASE;
-use crate::workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::RangeExt;
-use texlab_protocol::{Hover, HoverContents, TextDocumentPositionParams};
+use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexComponentHoverProvider;
@@ -24,7 +22,7 @@ impl FeatureProvider for LatexComponentHoverProvider {
                 {
                     for path in include.paths() {
                         if path.range().contains(request.params.position) {
-                            let documentation = DATABASE.documentation(path.text())?;
+                            let documentation = COMPLETION_DATABASE.documentation(path.text())?;
                             return Some(Hover {
                                 contents: HoverContents::Markup(documentation),
                                 range: Some(path.range()),

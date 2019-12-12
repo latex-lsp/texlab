@@ -1,6 +1,6 @@
 use super::{label_name, selection_range};
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
-use crate::workspace::*;
+use texlab_workspace::*;
 use texlab_protocol::Range;
 use texlab_protocol::RangeExt;
 use texlab_syntax::*;

@@ -1,4 +1,4 @@
-use crate::workspace::*;
+use texlab_workspace::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
 use futures::lock::Mutex;
 use futures::prelude::*;

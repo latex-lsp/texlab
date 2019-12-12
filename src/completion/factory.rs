@@ -1,6 +1,6 @@
 use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::lsp_kind::Structure;
-use crate::workspace::*;
+use texlab_workspace::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

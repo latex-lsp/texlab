@@ -1,7 +1,7 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
 use crate::citeproc::render_citation;
-use crate::completion::{CompletionItemData, CompletionProvider, DATABASE};
+use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;
@@ -13,7 +13,6 @@ use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
 use crate::symbol::{self, SymbolProvider};
-use crate::workspace::*;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::{Middleware, Result};
@@ -28,6 +27,7 @@ use std::sync::Arc;
 use texlab_distro::{Distribution, DistributionKind, Language};
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 use walkdir::WalkDir;
 
 pub struct LatexLspServer<C> {
@@ -150,7 +150,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             selection_range_provider: None,
         };
 
-        Lazy::force(&DATABASE);
+        Lazy::force(&COMPLETION_DATABASE);
         Ok(InitializeResult { capabilities })
     }
 
@@ -229,7 +229,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
         match data {
             CompletionItemData::Package | CompletionItemData::Class => {
-                item.documentation = DATABASE
+                item.documentation = COMPLETION_DATABASE
                     .documentation(&item.label)
                     .map(Documentation::MarkupContent);
             }

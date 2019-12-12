@@ -1,9 +1,9 @@
 use super::combinators::{self, Parameter};
-use crate::completion::{factory, DATABASE};
-use crate::workspace::*;
+use crate::completion::factory;
 use futures_boxed::boxed;
 use std::iter;
 use texlab_protocol::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexArgumentCompletionProvider;
@@ -15,7 +15,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut all_items = Vec::new();
-        for component in DATABASE.related_components(request.related_documents()) {
+        for component in COMPLETION_DATABASE.related_components(request.related_documents()) {
             for command in &component.commands {
                 let name = format!("\\{}", command.name);
                 for (i, parameter) in command.parameters.iter().enumerate() {
@@ -52,8 +52,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::RangeExt;
-    use texlab_protocol::{Position, Range};
+    use texlab_protocol::{Position, Range, RangeExt};
 
     #[test]
     fn test_inside_mathbb_empty() {
