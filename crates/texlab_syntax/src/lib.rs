@@ -1,11 +1,13 @@
 mod bibtex;
 mod language;
 mod latex;
+mod lsp_kind;
 mod text;
 
 pub use self::bibtex::*;
 pub use self::language::*;
 pub use self::latex::*;
+pub use self::lsp_kind::*;
 pub use self::text::*;
 
 use texlab_distro::{Language, Resolver};

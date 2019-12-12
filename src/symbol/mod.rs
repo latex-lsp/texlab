@@ -7,8 +7,6 @@ use self::bibtex_entry::BibtexEntrySymbolProvider;
 use self::bibtex_string::BibtexStringSymbolProvider;
 use self::latex_section::LatexSectionSymbolProvider;
 use self::project_order::ProjectOrdering;
-use crate::lsp_kind::Structure;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::cmp::Reverse;
 use std::sync::Arc;
@@ -16,6 +14,7 @@ use texlab_distro::Distribution;
 use texlab_protocol::ClientCapabilitiesExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub use self::latex_section::{build_section_tree, LatexSectionNode, LatexSectionTree};
 

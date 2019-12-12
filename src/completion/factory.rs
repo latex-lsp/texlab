@@ -1,4 +1,3 @@
-use crate::lsp_kind::Structure;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

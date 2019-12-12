@@ -1,5 +1,5 @@
-use texlab_protocol::*;
-use texlab_syntax::*;
+use super::language::BibtexEntryTypeCategory;
+use texlab_protocol::{CompletionItemKind, SymbolKind};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Structure {
