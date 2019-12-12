@@ -26,11 +26,9 @@ members = [
     "crates/texlab_workspace"]
 
 [dependencies]
-bytes = "0.5"
 clap = "2.33"
 futures = "0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-itertools = "0.8.2"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4.6"
@@ -42,7 +40,6 @@ serde = { version = "1.0.103", features = ["derive", "rc"] }
 serde_json = "1.0.44"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
-tempfile = "3"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
 texlab-completion = { path = "crates/texlab_completion" }
 texlab-distro = { path = "crates/texlab_distro" }
