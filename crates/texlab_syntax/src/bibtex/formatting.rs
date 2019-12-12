@@ -1,5 +1,6 @@
+use super::ast::*;
+use crate::text::SyntaxNode;
 use texlab_protocol::BibtexFormattingOptions;
-use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BibtexFormattingParams {
@@ -21,7 +22,7 @@ impl BibtexFormattingParams {
 
 impl Default for BibtexFormattingParams {
     fn default() -> Self {
-        BibtexFormattingParams {
+        Self {
             tab_size: 4,
             insert_spaces: true,
             options: BibtexFormattingOptions::default(),

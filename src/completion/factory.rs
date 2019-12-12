@@ -1,12 +1,11 @@
-use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::lsp_kind::Structure;
-use texlab_workspace::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 
@@ -298,7 +297,7 @@ pub fn citation(
     text_edit: TextEdit,
 ) -> CompletionItem {
     let params = BibtexFormattingParams::default();
-    let entry_code = bibtex::format_entry(&entry, &params);
+    let entry_code = format_entry(&entry, &params);
     let filter_text = format!(
         "{} {}",
         &key,

@@ -2,7 +2,6 @@ mod name;
 mod ris;
 
 use self::ris::*;
-use crate::formatting::bibtex::{format_entry, format_string, BibtexFormattingParams};
 use bibutils::{InputFormat, OutputFormat};
 use citeproc::prelude::*;
 use citeproc_db::PredefinedLocales;

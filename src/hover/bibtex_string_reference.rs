@@ -1,8 +1,7 @@
-use crate::formatting::bibtex::{self, BibtexFormattingParams};
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexStringReferenceHoverProvider;
@@ -44,8 +43,7 @@ impl BibtexStringReferenceHoverProvider {
             return None;
         }
 
-        let text =
-            bibtex::format_content(string.value.as_ref()?, &BibtexFormattingParams::default());
+        let text = format_content(string.value.as_ref()?, &BibtexFormattingParams::default());
         Some(Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::PlainText,

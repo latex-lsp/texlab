@@ -5,7 +5,6 @@ use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;
-use crate::formatting::bibtex::{self, BibtexFormattingParams};
 use crate::forward_search;
 use crate::highlight::HighlightProvider;
 use crate::hover::HoverProvider;
@@ -348,7 +347,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     BibtexDeclaration::Entry(entry) => !entry.is_comment(),
                 };
                 if should_format {
-                    let text = bibtex::format_declaration(&declaration, &params);
+                    let text = format_declaration(&declaration, &params);
                     edits.push(TextEdit::new(declaration.range(), text));
                 }
             }

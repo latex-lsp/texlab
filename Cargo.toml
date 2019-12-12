@@ -62,7 +62,6 @@ walkdir = "2"
 
 [dev-dependencies]
 copy_dir = "0.1.2"
-indoc = "0.3.4"
 
 [build-dependencies]
 lalrpop = "0.17.2"

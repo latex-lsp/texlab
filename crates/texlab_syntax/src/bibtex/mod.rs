@@ -1,10 +1,12 @@
 mod ast;
 mod finder;
+mod formatting;
 mod lexer;
 mod parser;
 
 pub use self::ast::*;
 pub use self::finder::*;
+pub use self::formatting::*;
 
 use self::lexer::BibtexLexer;
 use self::parser::BibtexParser;

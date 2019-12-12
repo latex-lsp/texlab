@@ -7,7 +7,6 @@ pub mod completion;
 pub mod definition;
 pub mod diagnostics;
 pub mod folding;
-pub mod formatting;
 pub mod forward_search;
 pub mod highlight;
 pub mod hover;
