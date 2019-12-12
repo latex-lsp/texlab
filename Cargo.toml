@@ -19,17 +19,16 @@ members = [
     "crates/texlab_citeproc",
     "crates/texlab_completion",
     "crates/texlab_distro",
+    "crates/texlab_hover",
     "crates/texlab_protocol",
     "crates/texlab_syntax",
     "crates/texlab_workspace"]
 
 [dependencies]
-base64 = "0.11.0"
 bytes = "0.5"
 clap = "2.33"
 futures = "0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-image = "0.22.3"
 itertools = "0.8.2"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
@@ -46,6 +45,7 @@ tempfile = "3"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
 texlab-completion = { path = "crates/texlab_completion" }
 texlab-distro = { path = "crates/texlab_distro" }
+texlab-hover = { path = "crates/texlab_hover" }
 texlab-protocol = { path = "crates/texlab_protocol" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-workspace = { path = "crates/texlab_workspace" }
