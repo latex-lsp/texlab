@@ -1,7 +1,6 @@
 use texlab_workspace::*;
 use std::future::Future;
 use std::sync::Arc;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
 

@@ -1,10 +1,9 @@
 use super::combinators::{self, Parameter};
-use crate::completion::factory;
+use crate::factory;
 use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::path::{Path, PathBuf};
-use texlab_protocol::RangeExt;
-use texlab_protocol::{CompletionItem, CompletionParams, Range, TextEdit};
+use texlab_protocol::*;
 use texlab_syntax::*;
 use walkdir::WalkDir;
 

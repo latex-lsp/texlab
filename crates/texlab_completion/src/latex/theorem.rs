@@ -1,8 +1,8 @@
 use super::combinators;
-use crate::completion::factory::{self, LatexComponentId};
+use crate::factory::{self, LatexComponentId};
 use texlab_workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_protocol::*;
 use texlab_syntax::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -42,9 +42,6 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::borrow::Cow;
-    use texlab_protocol::RangeExt;
-    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test() {
@@ -61,7 +58,7 @@ mod tests {
             },
         );
         assert_eq!(items.len(), 1);
-        assert_eq!(items[0].label, Cow::from("theorem"));
+        assert_eq!(items[0].label, "theorem");
         assert_eq!(
             items[0].text_edit.as_ref().map(|edit| edit.range),
             Some(Range::new_simple(1, 7, 1, 9))

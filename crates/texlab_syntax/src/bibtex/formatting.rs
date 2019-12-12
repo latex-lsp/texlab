@@ -250,6 +250,7 @@ pub fn format_content(content: &BibtexContent, params: &BibtexFormattingParams) 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bibtex::BibtexSyntaxTree;
     use indoc::indoc;
 
     fn verify(source: &str, expected: &str, line_length: i32) {

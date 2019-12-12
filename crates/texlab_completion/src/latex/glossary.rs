@@ -1,8 +1,8 @@
 use super::combinators::{self, Parameter};
-use crate::completion::factory;
+use crate::factory;
 use texlab_workspace::*;
 use futures_boxed::boxed;
-use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_protocol::*;
 use texlab_syntax::LatexGlossaryEntryKind::*;
 use texlab_syntax::*;
 

@@ -1,5 +1,5 @@
 use super::combinators::{self, Parameter};
-use crate::completion::factory;
+use crate::factory;
 use futures_boxed::boxed;
 use std::iter;
 use texlab_protocol::*;
@@ -52,7 +52,6 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range, RangeExt};
 
     #[test]
     fn test_inside_mathbb_empty() {

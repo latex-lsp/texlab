@@ -1,4 +1,4 @@
-use crate::completion::factory;
+use crate::factory;
 use futures_boxed::boxed;
 use texlab_protocol::*;
 use texlab_syntax::*;
@@ -56,7 +56,6 @@ fn make_items(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::Position;
 
     #[test]
     fn test_inside_first_field() {

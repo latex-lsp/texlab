@@ -1,9 +1,8 @@
 use super::combinators::{self, ArgumentContext, Parameter};
-use crate::completion::factory;
+use crate::factory;
 use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::sync::Arc;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
 
@@ -95,7 +94,6 @@ impl LatexLabelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::Position;
 
     #[test]
     fn test_inside_of_ref() {

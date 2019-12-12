@@ -1,7 +1,6 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
 use crate::citeproc::render_citation;
-use crate::completion::{CompletionItemData, CompletionProvider};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;
@@ -23,6 +22,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::future::Future;
 use std::sync::Arc;
+use texlab_completion::{CompletionItemData, CompletionProvider};
 use texlab_distro::{Distribution, DistributionKind, Language};
 use texlab_protocol::*;
 use texlab_syntax::*;

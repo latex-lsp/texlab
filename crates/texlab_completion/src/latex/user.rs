@@ -1,5 +1,5 @@
 use super::combinators;
-use crate::completion::factory::{self, LatexComponentId};
+use crate::factory::{self, LatexComponentId};
 use texlab_workspace::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
@@ -110,7 +110,6 @@ impl LatexUserEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::Position;
 
     #[test]
     fn test_command() {

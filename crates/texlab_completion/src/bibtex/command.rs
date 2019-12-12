@@ -1,4 +1,4 @@
-use crate::completion::factory::{self, LatexComponentId};
+use crate::factory::{self, LatexComponentId};
 use futures_boxed::boxed;
 use texlab_protocol::*;
 use texlab_syntax::*;
@@ -46,7 +46,6 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
 
     #[test]
     fn test_inside_command() {
