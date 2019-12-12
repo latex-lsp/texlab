@@ -8,7 +8,6 @@ use crate::highlight::HighlightProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
-use crate::symbol::{self, SymbolProvider};
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::{Middleware, Result};
@@ -25,6 +24,7 @@ use texlab_completion::{CompletionItemData, CompletionProvider};
 use texlab_distro::{Distribution, DistributionKind, Language};
 use texlab_hover::HoverProvider;
 use texlab_protocol::*;
+use texlab_symbol::SymbolProvider;
 use texlab_syntax::*;
 use texlab_workspace::*;
 use walkdir::WalkDir;
@@ -300,7 +300,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let client_capabilities = Arc::clone(&self.client_capabilities.get().unwrap());
         let workspace = self.workspace_manager.get();
         let symbols =
-            symbol::workspace_symbols(distribution, client_capabilities, workspace, &params).await;
+            texlab_symbol::workspace_symbols(distribution, client_capabilities, workspace, &params)
+                .await;
         Ok(symbols)
     }
 
@@ -311,7 +312,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     ) -> Result<DocumentSymbolResponse> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let symbols = self.symbol_provider.execute(&request).await;
-        let response = symbol::document_symbols(
+        let response = texlab_symbol::document_symbols(
             &self.client_capabilities.get().unwrap(),
             &request.view.workspace,
             &request.document().uri,

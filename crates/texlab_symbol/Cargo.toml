@@ -1,0 +1,17 @@
+[package]
+name = "texlab-symbol"
+version = "0.1.0"
+authors = [
+    "Eric Förster <efoerster@users.noreply.github.com>",
+    "Patrick Förster <pfoerster@users.noreply.github.com>"]
+edition = "2018"
+
+[dependencies]
+futures = "0.3"
+futures-boxed = { path = "../futures_boxed" }
+log = "0.4.6"
+petgraph = "0.4.13"
+texlab-distro = { path = "../texlab_distro" }
+texlab-protocol = { path = "../texlab_protocol" }
+texlab-syntax = { path = "../texlab_syntax" }
+texlab-workspace = { path = "../texlab_workspace" }

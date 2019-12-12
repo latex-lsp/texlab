@@ -1,8 +1,7 @@
-use crate::symbol::build_section_tree;
 use futures_boxed::boxed;
 use std::sync::Arc;
-use texlab_protocol::RangeExt;
-use texlab_protocol::{LocationLink, TextDocumentPositionParams};
+use texlab_protocol::{LocationLink, RangeExt, TextDocumentPositionParams};
+use texlab_symbol::build_section_tree;
 use texlab_syntax::*;
 use texlab_workspace::*;
 

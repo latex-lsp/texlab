@@ -36,6 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .module("texlab-distro")
         .module("texlab-hover")
         .module("texlab-protocol")
+        .module("texlab-symbol")
         .module("texlab-syntax")
         .module("texlab-workspace")
         .verbosity(matches.occurrences_of("verbosity") as usize)
