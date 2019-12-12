@@ -16,6 +16,7 @@ members = [
     "crates/futures_boxed",
     "crates/jsonrpc", 
     "crates/jsonrpc_derive",
+    "crates/texlab_citeproc",
     "crates/texlab_completion",
     "crates/texlab_distro",
     "crates/texlab_protocol",
@@ -24,22 +25,14 @@ members = [
 
 [dependencies]
 base64 = "0.11.0"
-bibutils = { path = "crates/bibutils" }
 bytes = "0.5"
-citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
-citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
-citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
 clap = "2.33"
-csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "8908674c2ae55332290e873de16f0e78989287ba" }
-fnv = "1.0.3"
 futures = "0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-html2md = "0.2.9"
 image = "0.22.3"
 itertools = "0.8.2"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
-lalrpop-util = "0.17.2"
 log = "0.4.6"
 once_cell = "1.2.0"
 path-clean = "0.1.0"
@@ -50,6 +43,7 @@ serde_json = "1.0.44"
 serde_repr = "0.1"
 stderrlog = "0.4.1"
 tempfile = "3"
+texlab-citeproc = { path = "crates/texlab_citeproc" }
 texlab-completion = { path = "crates/texlab_completion" }
 texlab-distro = { path = "crates/texlab_distro" }
 texlab-protocol = { path = "crates/texlab_protocol" }
@@ -64,9 +58,6 @@ walkdir = "2"
 
 [dev-dependencies]
 copy_dir = "0.1.2"
-
-[build-dependencies]
-lalrpop = "0.17.2"
 
 [profile.release]
 lto = true

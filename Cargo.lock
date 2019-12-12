@@ -968,7 +968,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "lock_api"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "scopeguard 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1249,7 +1249,7 @@ name = "parking_lot"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "lock_api 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lock_api 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "parking_lot_core 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1993,24 +1993,15 @@ name = "texlab"
 version = "1.8.0"
 dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bibutils 0.1.0",
  "bytes 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "copy_dir 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-boxed 0.1.0",
- "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.22.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc 0.1.0",
  "jsonrpc-derive 0.1.0",
- "lalrpop 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-util 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "once_cell 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "path-clean 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2021,6 +2012,7 @@ dependencies = [
  "serde_repr 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "stderrlog 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "texlab-citeproc 0.1.0",
  "texlab-completion 0.1.0",
  "texlab-distro 0.1.0",
  "texlab-protocol 0.1.0",
@@ -2032,6 +2024,28 @@ dependencies = [
  "url_serde 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 2.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "texlab-citeproc"
+version = "0.1.0"
+dependencies = [
+ "bibutils 0.1.0",
+ "citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-util 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "once_cell 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.103 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
+ "texlab-protocol 0.1.0",
+ "texlab-syntax 0.1.0",
 ]
 
 [[package]]
@@ -2549,7 +2563,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum lexical-core 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2304bccb228c4b020f3a4835d247df0a02a7c4686098d4167762cfbbe4c5cb14"
 "checksum libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)" = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
-"checksum lock_api 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f8912e782533a93a167888781b836336a6ca5da6175c05944c86cf28c31104dc"
+"checksum lock_api 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e57b3997725d2b60dbec1297f6c2e2957cc383db1cebd6be812163f969c7d586"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 "checksum lsp-types 0.61.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fa3268fbe8beb2795c2fb327bf44f4f3d24f5fe9ebc18d7e2980afd444d72bcf"
 "checksum lzw 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7d947cbb889ed21c2a84be6ffbaebf5b4e0f4340638cba0444907e38b56be084"

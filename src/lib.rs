@@ -2,7 +2,6 @@
 
 pub mod action;
 pub mod build;
-pub mod citeproc;
 pub mod definition;
 pub mod diagnostics;
 pub mod folding;

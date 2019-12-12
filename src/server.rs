@@ -1,6 +1,6 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
-use crate::citeproc::render_citation;
+use texlab_citeproc::render_citation;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;

@@ -9,7 +9,6 @@ use std::time::Duration;
 use tempfile::TempDir;
 use texlab_distro::*;
 use texlab_protocol::*;
-use texlab_protocol::{ClientCapabilitiesExt, RangeExt};
 use texlab_syntax::*;
 use texlab_workspace::*;
 use tokio::process::Command;

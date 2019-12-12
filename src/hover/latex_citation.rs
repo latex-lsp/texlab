@@ -1,8 +1,7 @@
-use crate::citeproc::render_citation;
+use texlab_citeproc::render_citation;
 use texlab_workspace::*;
 use futures_boxed::boxed;
 use log::warn;
-use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
 
