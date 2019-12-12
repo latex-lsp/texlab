@@ -1,9 +1,9 @@
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::sync::Arc;
 use texlab_protocol::RangeExt;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub struct LatexLabelHoverProvider;
 

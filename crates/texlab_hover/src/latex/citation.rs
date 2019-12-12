@@ -1,9 +1,9 @@
-use texlab_citeproc::render_citation;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use log::warn;
+use texlab_citeproc::render_citation;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationHoverProvider;

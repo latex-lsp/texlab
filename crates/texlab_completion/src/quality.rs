@@ -1,9 +1,9 @@
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::borrow::Cow;
 use texlab_protocol::RangeExt;
 use texlab_protocol::{CompletionItem, CompletionParams, Position};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub struct OrderByQualityCompletionProvider<F> {
     pub provider: F,

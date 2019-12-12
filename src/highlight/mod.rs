@@ -1,9 +1,9 @@
 mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
+use texlab_workspace::*;
 
 pub struct HighlightProvider {
     provider: ConcatProvider<TextDocumentPositionParams, DocumentHighlight>,

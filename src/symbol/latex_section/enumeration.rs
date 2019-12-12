@@ -1,9 +1,9 @@
 use super::{label_name, selection_range};
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
-use texlab_workspace::*;
 use texlab_protocol::Range;
 use texlab_protocol::RangeExt;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
     let mut symbols = Vec::new();

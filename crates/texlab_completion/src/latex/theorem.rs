@@ -1,9 +1,9 @@
 use super::combinators;
 use crate::factory::{self, LatexComponentId};
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LatexTheoremEnvironmentCompletionProvider;

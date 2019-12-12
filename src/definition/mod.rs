@@ -7,9 +7,9 @@ use self::bibtex_string::BibtexStringDefinitionProvider;
 use self::latex_citation::LatexCitationDefinitionProvider;
 use self::latex_command::LatexCommandDefinitionProvider;
 use self::latex_label::LatexLabelDefinitionProvider;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
+use texlab_workspace::*;
 
 pub struct DefinitionProvider {
     provider: ConcatProvider<TextDocumentPositionParams, LocationLink>,

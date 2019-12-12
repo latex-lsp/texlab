@@ -24,11 +24,11 @@ use self::latex::tikz::*;
 use self::latex::user::*;
 use self::preselect::PreselectCompletionProvider;
 use self::quality::OrderByQualityCompletionProvider;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use itertools::Itertools;
 use std::hash::{Hash, Hasher};
 use texlab_protocol::{CompletionItem, CompletionParams};
+use texlab_workspace::*;
 
 pub const COMPLETION_LIMIT: usize = 50;
 

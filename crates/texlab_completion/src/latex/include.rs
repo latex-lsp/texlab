@@ -1,10 +1,10 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use std::path::{Path, PathBuf};
 use texlab_protocol::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 use walkdir::WalkDir;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

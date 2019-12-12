@@ -1,7 +1,7 @@
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub struct LatexCommandDefinitionProvider;
 

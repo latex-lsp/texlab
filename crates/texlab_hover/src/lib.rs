@@ -9,9 +9,9 @@ use self::latex::component::LatexComponentHoverProvider;
 use self::latex::include::LatexIncludeHoverProvider;
 use self::latex::label::LatexLabelHoverProvider;
 use self::latex::preview::LatexPreviewHoverProvider;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{Hover, TextDocumentPositionParams};
+use texlab_workspace::*;
 
 pub struct HoverProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Hover>,

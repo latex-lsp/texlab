@@ -1,4 +1,3 @@
-use texlab_workspace::*;
 use futures::future::{AbortHandle, Abortable, Aborted};
 use futures::lock::Mutex;
 use futures::prelude::*;
@@ -10,6 +9,7 @@ use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
 use texlab_protocol::*;
+use texlab_workspace::*;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use uuid::Uuid;

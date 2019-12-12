@@ -1,7 +1,7 @@
 use super::{label_name, selection_range};
 use crate::symbol::{LatexSymbol, LatexSymbolKind};
-use texlab_workspace::*;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 pub fn symbols(view: &DocumentView, tree: &LatexSyntaxTree) -> Vec<LatexSymbol> {
     tree.env

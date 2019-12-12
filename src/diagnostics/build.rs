@@ -1,4 +1,3 @@
-use texlab_workspace::Document;
 use once_cell::sync::Lazy;
 use path_clean::PathClean;
 use regex::{Match, Regex};
@@ -10,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::str;
 use std::time::SystemTime;
 use texlab_protocol::*;
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct LogFile {

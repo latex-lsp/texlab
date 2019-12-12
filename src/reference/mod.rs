@@ -5,9 +5,9 @@ mod latex_label;
 use self::bibtex_entry::BibtexEntryReferenceProvider;
 use self::bibtex_string::BibtexStringReferenceProvider;
 use self::latex_label::LatexLabelReferenceProvider;
-use texlab_workspace::*;
 use futures_boxed::boxed;
 use texlab_protocol::{Location, ReferenceParams};
+use texlab_workspace::*;
 
 pub struct ReferenceProvider {
     provider: ConcatProvider<ReferenceParams, Location>,

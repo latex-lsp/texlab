@@ -1,10 +1,10 @@
-use texlab_workspace::*;
 use petgraph::algo::tarjan_scc;
 use petgraph::{Directed, Graph};
 use std::collections::HashSet;
 use std::sync::Arc;
 use texlab_protocol::Uri;
 use texlab_syntax::*;
+use texlab_workspace::*;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering {

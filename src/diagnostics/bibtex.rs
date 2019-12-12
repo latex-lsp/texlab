@@ -1,6 +1,6 @@
-use texlab_workspace::Document;
 use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
 use texlab_syntax::*;
+use texlab_workspace::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexErrorCode {
