@@ -11,7 +11,7 @@ base64 = "0.11.0"
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
 image = "0.22.3"
-log = "0.4.6"
+log = "0.4.10"
 tempfile = "3"
 texlab-citeproc = { path = "../texlab_citeproc" }
 texlab-distro = { path = "../texlab_distro" }

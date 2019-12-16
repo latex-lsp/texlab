@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
-log = "0.4.6"
+log = "0.4.10"
 petgraph = "0.4.13"
 texlab-distro = { path = "../texlab_distro" }
 texlab-protocol = { path = "../texlab_protocol" }
