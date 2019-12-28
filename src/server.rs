@@ -528,6 +528,40 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             }
         }
     }
+
+    async fn detect_root(&self, uri: Uri) {
+        if uri.scheme() == "file" {
+            let mut path = uri.to_file_path().unwrap();
+            while path.pop() {
+                let workspace = self.workspace_manager.get();
+                if workspace.find_parent(&uri).is_some() {
+                    break;
+                }
+
+                for entry in WalkDir::new(&path)
+                    .min_depth(1)
+                    .max_depth(1)
+                    .into_iter()
+                    .filter_map(std::result::Result::ok)
+                    .filter(|entry| entry.file_type().is_file())
+                    .filter(|entry| {
+                        entry
+                            .path()
+                            .extension()
+                            .and_then(OsStr::to_str)
+                            .and_then(Language::by_extension)
+                            .is_some()
+                    })
+                {
+                    if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
+                        if workspace.find(&parent_uri).is_none() {
+                            let _ = self.workspace_manager.load(entry.path());
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
@@ -578,37 +612,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     };
                 }
                 Action::DetectRoot(uri) => {
-                    if uri.scheme() == "file" {
-                        let mut path = uri.to_file_path().unwrap();
-                        while path.pop() {
-                            let workspace = self.workspace_manager.get();
-                            if workspace.find_parent(&uri).is_some() {
-                                break;
-                            }
-
-                            for entry in WalkDir::new(&path)
-                                .min_depth(1)
-                                .max_depth(1)
-                                .into_iter()
-                                .filter_map(std::result::Result::ok)
-                                .filter(|entry| entry.file_type().is_file())
-                                .filter(|entry| {
-                                    entry
-                                        .path()
-                                        .extension()
-                                        .and_then(OsStr::to_str)
-                                        .and_then(Language::by_extension)
-                                        .is_some()
-                                })
-                            {
-                                if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
-                                    if workspace.find(&parent_uri).is_none() {
-                                        let _ = self.workspace_manager.load(entry.path());
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    self.detect_root(uri).await;
                 }
                 Action::PublishDiagnostics => {
                     let workspace = self.workspace_manager.get();
