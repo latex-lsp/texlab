@@ -3,4 +3,3 @@ target/
 /.idea
 tarpaulin-report.html
 crates/**/Cargo.lock
-crates/texlab_citeproc/src/name/parser.rs

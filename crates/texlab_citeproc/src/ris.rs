@@ -226,8 +226,8 @@ impl RisLibrary {
                 continue;
             }
 
-            let key: String = (&chars[..2]).into_iter().collect();
-            let value: String = (&chars[6..]).into_iter().collect();
+            let key: String = (&chars[..2]).iter().collect();
+            let value: String = (&chars[6..]).iter().collect();
             match key.to_uppercase().as_str() {
                 "TY" => reference.ty = RisType::parse(&value),
                 "A2" => reference.editors.push(value),

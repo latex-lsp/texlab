@@ -1,7 +1,10 @@
 // Ported from: https://github.com/michel-kraemer/citeproc-java/blob/master/citeproc-java/grammars/InternalName.g4
 // Michel Kraemer
 // Apache License 2.0
-mod parser;
+mod parser {
+    #![allow(warnings)]
+    include!(concat!(env!("OUT_DIR"), "/name/parser.rs"));
+}
 
 use self::parser::NamesParser;
 use citeproc_io::Name;
