@@ -80,7 +80,7 @@ where
 
         match document.uri.to_file_path() {
             Ok(path) => {
-                if request.client_capabilities.has_work_done_progress() {
+                if request.client_capabilities.has_work_done_progress_support() {
                     let params = WorkDoneProgressCreateParams {
                         token: self.token.clone(),
                     };
@@ -151,7 +151,7 @@ where
             },
         };
 
-        if request.client_capabilities.has_work_done_progress() {
+        if request.client_capabilities.has_work_done_progress_support() {
             let params = ProgressParams {
                 token: provider.token.clone(),
                 value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(

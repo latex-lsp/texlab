@@ -85,26 +85,26 @@ mod parser {
         use super::*;
 
         #[test]
-        fn test_parse_content_type() {
+        fn parse_content_type() {
             let result =
                 content_type(b"Content-Type: application/vscode-jsonrpc;charset=utf-8\r\n");
             assert!(result.is_ok());
         }
 
         #[test]
-        fn test_parse_content_type_utf8() {
+        fn parse_content_type_utf8() {
             let result = content_type(b"Content-Type: application/vscode-jsonrpc;charset=utf8\r\n");
             assert!(result.is_ok());
         }
 
         #[test]
-        fn test_parse_content_length() {
+        fn parse_content_length() {
             let result = content_length(b"Content-Length: 42\r\n");
             assert_eq!(result.unwrap().1, 42usize);
         }
 
         #[test]
-        fn test_parse_message_full() {
+        fn parse_message_full() {
             let result = parse(
                 b"Content-Length: 2\r\nContent-Type: application/vscode-jsonrpc;charset=utf8\r\n\r\n{}",
             );
@@ -112,7 +112,7 @@ mod parser {
         }
 
         #[test]
-        fn test_parse_message_type_first() {
+        fn parse_message_type_first() {
             let result = parse(
                 b"Content-Type: application/vscode-jsonrpc;charset=utf8\r\nContent-Length: 2\r\n\r\n{}",
             );
@@ -120,25 +120,25 @@ mod parser {
         }
 
         #[test]
-        fn test_parse_message_without_type() {
+        fn parse_message_without_type() {
             let result = parse(b"Content-Length: 2\r\n\r\n{}");
             assert_eq!(result.unwrap().1, "{}");
         }
 
         #[test]
-        fn test_parse_message_incomplete() {
+        fn parse_message_incomplete() {
             let result = parse(b"Content-Length:");
             assert!(result.unwrap_err().is_incomplete());
         }
 
         #[test]
-        fn test_parse_message_invalid() {
+        fn parse_message_invalid() {
             let error = parse(b"foo").unwrap_err();
             assert!(!error.is_incomplete());
         }
 
         #[test]
-        fn test_parse_message_overflow() {
+        fn parse_message_overflow() {
             let result = parse(b"Content-Length: 4\r\n\r\n{}");
             assert!(result.unwrap_err().is_incomplete());
         }
