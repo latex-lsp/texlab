@@ -14,6 +14,7 @@ use self::texlive::Texlive;
 use futures_boxed::boxed;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::process::Stdio;
 use std::sync::Arc;
 use tokio::process::Command;
 
@@ -29,6 +30,8 @@ impl DistributionKind {
     pub async fn detect() -> Self {
         if Command::new("tectonic")
             .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .status()
             .await
             .is_ok()
