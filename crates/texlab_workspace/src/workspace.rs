@@ -244,7 +244,7 @@ impl WorkspaceManager {
         language: Language,
     ) -> Arc<Workspace> {
         let resolver = block_on(self.distribution.resolver());
-        let document = Document::parse(&resolver, uri, text, language);
+        let document = Document::parse(uri, text, language, &resolver);
         let mut documents: Vec<Arc<Document>> = workspace
             .documents
             .iter()
@@ -272,7 +272,7 @@ impl WorkspaceBuilder {
         let path = env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Uri::from_file_path(path).unwrap();
-        let document = Document::parse(&resolver, uri.clone(), text.to_owned(), language);
+        let document = Document::parse(uri.clone(), text.to_owned(), language, &resolver);
         self.workspace.documents.push(Arc::new(document));
         uri
     }

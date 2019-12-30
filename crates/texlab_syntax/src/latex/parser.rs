@@ -15,7 +15,7 @@ pub struct LatexParser<I: Iterator<Item = LatexToken>> {
 
 impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
     pub fn new(tokens: I) -> Self {
-        LatexParser {
+        Self {
             tokens: tokens.peekable(),
         }
     }

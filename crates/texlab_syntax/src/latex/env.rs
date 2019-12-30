@@ -15,24 +15,17 @@ impl LatexEnvironmentDelimiter {
     }
 
     pub fn is_math(&self) -> bool {
-        if let Some(name) = self.name() {
-            LANGUAGE_DATA
-                .math_environments
-                .iter()
-                .any(|env| env == name.text())
-        } else {
-            false
-        }
+        self.is_special(LANGUAGE_DATA.math_environments.iter())
     }
 
     pub fn is_enum(&self) -> bool {
-        if let Some(name) = self.name() {
-            LANGUAGE_DATA
-                .enum_environments
-                .iter()
-                .any(|env| env == name.text())
-        } else {
-            false
+        self.is_special(LANGUAGE_DATA.enum_environments.iter())
+    }
+
+    fn is_special<'a, I: Iterator<Item = &'a String>>(&self, mut values: I) -> bool {
+        match self.name() {
+            Some(name) => values.any(|env| env == name.text()),
+            None => false,
         }
     }
 }

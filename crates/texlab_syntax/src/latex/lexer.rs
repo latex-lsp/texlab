@@ -7,7 +7,7 @@ pub struct LatexLexer<'a> {
 
 impl<'a> LatexLexer<'a> {
     pub fn new(text: &'a str) -> Self {
-        LatexLexer {
+        Self {
             stream: CharStream::new(text),
         }
     }
@@ -125,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn test_word() {
+    fn word() {
         let mut lexer = LatexLexer::new("foo bar baz");
         verify(&mut lexer, 0, 0, "foo", LatexTokenKind::Word);
         verify(&mut lexer, 0, 4, "bar", LatexTokenKind::Word);
@@ -134,7 +134,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command() {
+    fn command() {
         let mut lexer = LatexLexer::new("\\foo\\bar@baz\n\\foo*");
         verify(&mut lexer, 0, 0, "\\foo", LatexTokenKind::Command);
         verify(&mut lexer, 0, 4, "\\bar@baz", LatexTokenKind::Command);
@@ -143,7 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn test_escape_sequence() {
+    fn escape_sequence() {
         let mut lexer = LatexLexer::new("\\%\\**");
         verify(&mut lexer, 0, 0, "\\%", LatexTokenKind::Command);
         verify(&mut lexer, 0, 2, "\\*", LatexTokenKind::Command);
@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn test_group_delimiter() {
+    fn group_delimiter() {
         let mut lexer = LatexLexer::new("{}[]");
         verify(&mut lexer, 0, 0, "{", LatexTokenKind::BeginGroup);
         verify(&mut lexer, 0, 1, "}", LatexTokenKind::EndGroup);
@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_math() {
+    fn math() {
         let mut lexer = LatexLexer::new("$$ $ $");
         verify(&mut lexer, 0, 0, "$$", LatexTokenKind::Math);
         verify(&mut lexer, 0, 3, "$", LatexTokenKind::Math);
@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn test_line_comment() {
+    fn line_comment() {
         let mut lexer = LatexLexer::new(" %foo \nfoo");
         verify(&mut lexer, 1, 0, "foo", LatexTokenKind::Word);
         assert_eq!(None, lexer.next());

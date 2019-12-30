@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use texlab_distro::{Language, Resolver};
 use texlab_protocol::*;
-use texlab_syntax::{SyntaxTree, SyntaxTreeContext};
+use texlab_syntax::{SyntaxTree, SyntaxTreeInput};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Document {
@@ -12,22 +12,20 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn new(uri: Uri, text: String, tree: SyntaxTree) -> Self {
+    pub fn parse(uri: Uri, text: String, language: Language, resolver: &Resolver) -> Self {
+        let input = SyntaxTreeInput {
+            resolver,
+            uri: &uri,
+            text: &text,
+            language,
+        };
+        let tree = SyntaxTree::parse(input);
         Self {
             uri,
             text,
             tree,
             modified: SystemTime::now(),
         }
-    }
-
-    pub fn parse(resolver: &Resolver, uri: Uri, text: String, language: Language) -> Self {
-        let context = SyntaxTreeContext {
-            resolver,
-            uri: &uri,
-        };
-        let tree = SyntaxTree::parse(context, &text, language);
-        Self::new(uri, text, tree)
     }
 
     pub fn is_file(&self) -> bool {

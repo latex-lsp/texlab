@@ -21,7 +21,7 @@ use self::lexer::LatexLexer;
 use self::parser::LatexParser;
 use super::language::*;
 use super::text::SyntaxNode;
-use super::SyntaxTreeContext;
+use super::SyntaxTreeInput;
 use path_clean::PathClean;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -132,11 +132,11 @@ impl LatexInclude {
         components
     }
 
-    fn parse(context: SyntaxTreeContext, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
+    fn parse(input: SyntaxTreeInput, commands: &[Arc<LatexCommand>]) -> Vec<Self> {
         let mut includes = Vec::new();
         for command in commands {
             for description in &LANGUAGE_DATA.include_commands {
-                if let Some(include) = Self::parse_single(context, &command, &description) {
+                if let Some(include) = Self::parse_single(input, &command, &description) {
                     includes.push(include);
                 }
             }
@@ -145,7 +145,7 @@ impl LatexInclude {
     }
 
     fn parse_single(
-        context: SyntaxTreeContext,
+        input: SyntaxTreeInput,
         command: &Arc<LatexCommand>,
         description: &LatexIncludeCommand,
     ) -> Option<Self> {
@@ -159,7 +159,7 @@ impl LatexInclude {
 
         let mut all_targets = Vec::new();
         for relative_path in command.extract_comma_separated_words(description.index) {
-            let mut path = context.uri.to_file_path().ok()?;
+            let mut path = input.uri.to_file_path().ok()?;
             path.pop();
             path.push(relative_path.text());
             path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
@@ -175,8 +175,7 @@ impl LatexInclude {
                 }
             }
 
-            if let Some(uri) =
-                Self::resolve_distro_file(&context.resolver, description, relative_path)
+            if let Some(uri) = Self::resolve_distro_file(input.resolver, description, relative_path)
             {
                 targets.push(uri);
             }
@@ -281,12 +280,12 @@ pub struct LatexSyntaxTree {
 }
 
 impl LatexSyntaxTree {
-    pub fn parse(context: SyntaxTreeContext, text: &str) -> Self {
-        let lexer = LatexLexer::new(text);
+    pub fn parse(input: SyntaxTreeInput) -> Self {
+        let lexer = LatexLexer::new(input.text);
         let mut parser = LatexParser::new(lexer);
         let root = Arc::new(parser.root());
         let commands = LatexCommandAnalyzer::parse(Arc::clone(&root));
-        let includes = LatexInclude::parse(context, &commands);
+        let includes = LatexInclude::parse(input, &commands);
         let components = includes.iter().flat_map(LatexInclude::components).collect();
         let env = LatexEnvironmentInfo::parse(&commands);
         let structure = LatexStructureInfo::parse(&commands);

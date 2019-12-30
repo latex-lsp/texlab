@@ -20,16 +20,18 @@ pub enum SyntaxTree {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct SyntaxTreeContext<'a> {
+pub struct SyntaxTreeInput<'a> {
     pub resolver: &'a Resolver,
     pub uri: &'a Uri,
+    pub text: &'a str,
+    pub language: Language,
 }
 
 impl SyntaxTree {
-    pub fn parse(context: SyntaxTreeContext, text: &str, language: Language) -> Self {
-        match language {
-            Language::Latex => SyntaxTree::Latex(Box::new(LatexSyntaxTree::parse(context, text))),
-            Language::Bibtex => SyntaxTree::Bibtex(Box::new(text.into())),
+    pub fn parse(input: SyntaxTreeInput) -> Self {
+        match input.language {
+            Language::Latex => SyntaxTree::Latex(Box::new(LatexSyntaxTree::parse(input))),
+            Language::Bibtex => SyntaxTree::Bibtex(Box::new(input.text.into())),
         }
     }
 }
