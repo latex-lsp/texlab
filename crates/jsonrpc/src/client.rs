@@ -22,7 +22,7 @@ pub struct Client {
 
 impl Client {
     pub fn new(output: mpsc::Sender<String>) -> Self {
-        Client {
+        Self {
             output,
             request_id: AtomicU64::new(0),
             senders_by_id: CHashMap::new(),

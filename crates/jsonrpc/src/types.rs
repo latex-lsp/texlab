@@ -76,7 +76,7 @@ pub struct Request {
 
 impl Request {
     pub fn new(method: String, params: serde_json::Value, id: Id) -> Self {
-        Request {
+        Self {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             method,
             params,
@@ -100,7 +100,7 @@ pub struct Response {
 
 impl Response {
     pub fn result(result: serde_json::Value, id: Id) -> Self {
-        Response {
+        Self {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             result: Some(result),
             error: None,
@@ -109,7 +109,7 @@ impl Response {
     }
 
     pub fn error(error: Error, id: Option<Id>) -> Self {
-        Response {
+        Self {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             result: None,
             error: Some(error),
@@ -127,7 +127,7 @@ pub struct Notification {
 
 impl Notification {
     pub fn new(method: String, params: serde_json::Value) -> Self {
-        Notification {
+        Self {
             jsonrpc: PROTOCOL_VERSION.to_owned(),
             method,
             params,

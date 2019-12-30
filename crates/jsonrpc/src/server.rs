@@ -56,7 +56,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use futures::executor::block_on;
 
     const METHOD_NAME: &str = "foo";
 
@@ -85,15 +84,15 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_request_valid() {
+    #[tokio::test]
+    async fn request_valid() {
         let value = 42;
         let request = setup_request(value);
 
-        let response = block_on(handle_request(request.clone(), increment));
+        let response = handle_request(request.clone(), increment).await;
         let expected = Response {
             jsonrpc: request.jsonrpc,
-            result: Some(json!(block_on(increment(value)).unwrap())),
+            result: Some(json!(increment(value).await.unwrap())),
             error: None,
             id: Some(request.id),
         };
@@ -101,11 +100,11 @@ mod tests {
         assert_eq!(response, expected);
     }
 
-    #[test]
-    fn test_request_invalid_params() {
+    #[tokio::test]
+    async fn request_invalid_params() {
         let request = setup_request((0, 0));
 
-        let response = block_on(handle_request(request.clone(), increment));
+        let response = handle_request(request.clone(), increment).await;
         let expected = Response {
             jsonrpc: request.jsonrpc.clone(),
             result: None,
@@ -118,14 +117,14 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "success")]
-    fn test_notification_valid() {
+    fn notification_valid() {
         let notification = setup_notification();
         handle_notification(notification, panic);
     }
 
     #[test]
     #[should_panic]
-    fn test_notification_invalid_params() {
+    fn notification_invalid_params() {
         let notification = setup_notification();
         let notification = Notification {
             params: json!(0),
