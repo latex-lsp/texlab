@@ -1980,7 +1980,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "1.8.0"
+version = "1.9.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2142,7 +2142,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.44 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "texlab 1.8.0",
+ "texlab 1.9.0",
  "texlab-distro 0.1.0",
  "texlab-protocol 0.1.0",
  "tokio 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",

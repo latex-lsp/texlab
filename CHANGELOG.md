@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 30.12.2019
+
+### Added
+
+- Provide completion for local packages if `kpsewhich` is installed
+- Add `.def` and `.bibtex` to the list of supported extensions
+- Add basic support for `tectonic`
+
+### Fixed
+
+- Fix rendering of citations with DOIs ([#117](https://github.com/latex-lsp/texlab/issues/117))
+- Fix building of LaTeX files without `\begin{document}` ([#122](https://github.com/latex-lsp/texlab/issues/122))
+- Do not crash when editing remote files
+- Run LaTeX linter when opening a file if enabled
+- Handle `\hyphen` when rendering citations
+
 ## [1.8.0] - 01.12.2019
 
 ### Added
