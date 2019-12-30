@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::iter::Peekable;
 use std::str::CharIndices;
 use texlab_protocol::{Position, Range};
@@ -14,7 +15,8 @@ pub trait SyntaxNode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Span {
     pub range: Range,
     pub text: String,
@@ -22,7 +24,7 @@ pub struct Span {
 
 impl Span {
     pub fn new(range: Range, text: String) -> Self {
-        Span { range, text }
+        Self { range, text }
     }
 }
 
@@ -43,7 +45,7 @@ pub struct CharStream<'a> {
 
 impl<'a> CharStream<'a> {
     pub fn new(text: &'a str) -> Self {
-        CharStream {
+        Self {
             text,
             chars: text.char_indices().peekable(),
             current_position: Position::new(0, 0),
@@ -163,7 +165,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_peek() {
+    fn peek() {
         let mut stream = CharStream::new("ab\nc");
         assert_eq!(Some('a'), stream.peek());
         assert_eq!(Some('a'), stream.next());
@@ -178,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn test_span() {
+    fn span() {
         let mut stream = CharStream::new("abc\ndef");
         stream.next();
         stream.start_span();
@@ -194,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn test_span_unicode() {
+    fn span_unicode() {
         let mut stream = CharStream::new("😀😃😄😁");
         stream.next();
         stream.start_span();
@@ -208,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn test_satifies() {
+    fn satifies() {
         let mut stream = CharStream::new("aBc");
         assert_eq!(true, stream.satifies(|c| c.is_lowercase()));
         stream.next();
@@ -216,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn test_skip_rest_of_line() {
+    fn skip_rest_of_line() {
         let mut stream = CharStream::new("abc\ndef");
         stream.skip_rest_of_line();
         assert_eq!(Some('d'), stream.next());
@@ -227,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn test_seek() {
+    fn seek() {
         let mut stream = CharStream::new("abc\ndefghi");
         let pos = Position::new(1, 2);
         stream.seek(pos);
@@ -235,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_basic() {
+    fn command_basic() {
         let mut stream = CharStream::new("\\foo@bar");
         let span = stream.command();
         assert_eq!(
@@ -245,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_star() {
+    fn command_star() {
         let mut stream = CharStream::new("\\foo*");
         let span = stream.command();
         assert_eq!(
@@ -255,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_escape() {
+    fn command_escape() {
         let mut stream = CharStream::new("\\**");
         let span = stream.command();
         assert_eq!(

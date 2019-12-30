@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn test_wrap_long_lines() {
+    fn wrap_long_lines() {
         let source =
             "@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}";
         let expected = indoc!(
@@ -285,7 +285,7 @@ mod tests {
     }
 
     #[test]
-    fn test_line_length_zero() {
+    fn line_length_zero() {
         let source =
             "@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}";
         let expected = indoc!(
@@ -298,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trailing_commas() {
+    fn trailing_commas() {
         let source = "@article{foo, bar = baz}";
         let expected = indoc!(
             "
@@ -310,7 +310,7 @@ mod tests {
     }
 
     #[test]
-    fn test_insert_braces() {
+    fn insert_braces() {
         let source = "@article{foo, bar = baz,";
         let expected = indoc!(
             "
@@ -322,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn test_commands() {
+    fn commands() {
         let source = "@article{foo, bar = \"\\baz\",}";
         let expected = indoc!(
             "@article{foo,
@@ -333,7 +333,7 @@ mod tests {
     }
 
     #[test]
-    fn test_concatenation() {
+    fn concatenation() {
         let source = "@article{foo, bar = \"baz\" # \"qux\"}";
         let expected = indoc!(
             "
@@ -345,7 +345,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parentheses() {
+    fn parentheses() {
         let source = "@article(foo,)";
         let expected = indoc!(
             "
@@ -356,14 +356,14 @@ mod tests {
     }
 
     #[test]
-    fn test_string() {
+    fn string() {
         let source = "@string{foo=\"bar\"}";
         let expected = "@string{foo = \"bar\"}";
         verify(source, expected, 30);
     }
 
     #[test]
-    fn test_preamble() {
+    fn preamble() {
         let source = "@preamble{\n\"foo bar baz\"}";
         let expected = "@preamble{\"foo bar baz\"}";
         verify(source, expected, 30);

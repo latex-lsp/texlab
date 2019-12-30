@@ -25,7 +25,7 @@ pub struct BibtexFinder<'a> {
 
 impl<'a> BibtexFinder<'a> {
     pub fn new(position: Position) -> Self {
-        BibtexFinder {
+        Self {
             position,
             results: Vec::new(),
         }

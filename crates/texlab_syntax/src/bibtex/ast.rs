@@ -26,7 +26,7 @@ pub struct BibtexToken {
 
 impl BibtexToken {
     pub fn new(span: Span, kind: BibtexTokenKind) -> Self {
-        BibtexToken { span, kind }
+        Self { span, kind }
     }
 
     pub fn text(&self) -> &str {
@@ -47,7 +47,7 @@ pub struct BibtexRoot {
 
 impl BibtexRoot {
     pub fn new(children: Vec<BibtexDeclaration>) -> Self {
-        BibtexRoot { children }
+        Self { children }
     }
 }
 
@@ -102,7 +102,7 @@ pub struct BibtexComment {
 
 impl BibtexComment {
     pub fn new(token: BibtexToken) -> Self {
-        BibtexComment {
+        Self {
             range: token.range(),
             token,
         }
@@ -140,7 +140,7 @@ impl BibtexPreamble {
         } else {
             ty.end()
         };
-        BibtexPreamble {
+        Self {
             range: Range::new(ty.start(), end),
             ty,
             left,
@@ -190,7 +190,7 @@ impl BibtexString {
             ty.end()
         };
 
-        BibtexString {
+        Self {
             range: Range::new(ty.start(), end),
             ty,
             left,
@@ -242,7 +242,7 @@ impl BibtexEntry {
             ty.end()
         };
 
-        BibtexEntry {
+        Self {
             range: Range::new(ty.start(), end),
             ty,
             left,
@@ -257,7 +257,7 @@ impl BibtexEntry {
         self.ty.text().to_lowercase() == "@comment"
     }
 
-    pub fn find_field(&self, name: &str) -> Option<&BibtexField> {
+    pub fn field(&self, name: &str) -> Option<&BibtexField> {
         self.fields
             .iter()
             .find(|field| field.name.text().to_lowercase() == name)
@@ -296,7 +296,7 @@ impl BibtexField {
             name.end()
         };
 
-        BibtexField {
+        Self {
             range: Range::new(name.start(), end),
             name,
             assign,
@@ -353,7 +353,7 @@ pub struct BibtexWord {
 
 impl BibtexWord {
     pub fn new(token: BibtexToken) -> Self {
-        BibtexWord {
+        Self {
             range: token.range(),
             token,
         }
@@ -374,7 +374,7 @@ pub struct BibtexCommand {
 
 impl BibtexCommand {
     pub fn new(token: BibtexToken) -> Self {
-        BibtexCommand {
+        Self {
             range: token.range(),
             token,
         }
@@ -409,7 +409,7 @@ impl BibtexQuotedContent {
             left.end()
         };
 
-        BibtexQuotedContent {
+        Self {
             range: Range::new(left.start(), end),
             left,
             children,
@@ -446,7 +446,7 @@ impl BibtexBracedContent {
             left.end()
         };
 
-        BibtexBracedContent {
+        Self {
             range: Range::new(left.start(), end),
             left,
             children,
@@ -477,7 +477,7 @@ impl BibtexConcat {
             operator.end()
         };
 
-        BibtexConcat {
+        Self {
             range: Range::new(left.start(), end),
             left,
             operator,

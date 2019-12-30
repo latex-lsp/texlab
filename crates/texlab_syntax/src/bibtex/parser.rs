@@ -7,7 +7,7 @@ pub struct BibtexParser<I: Iterator<Item = BibtexToken>> {
 
 impl<I: Iterator<Item = BibtexToken>> BibtexParser<I> {
     pub fn new(tokens: I) -> Self {
-        BibtexParser {
+        Self {
             tokens: tokens.peekable(),
         }
     }

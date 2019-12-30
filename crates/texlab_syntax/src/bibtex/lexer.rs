@@ -7,7 +7,7 @@ pub struct BibtexLexer<'a> {
 
 impl<'a> BibtexLexer<'a> {
     pub fn new(text: &'a str) -> Self {
-        BibtexLexer {
+        Self {
             stream: CharStream::new(text),
         }
     }
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn test_word() {
+    fn word() {
         let mut lexer = BibtexLexer::new("foo bar baz");
         verify(&mut lexer, 0, 0, "foo", BibtexTokenKind::Word);
         verify(&mut lexer, 0, 4, "bar", BibtexTokenKind::Word);
@@ -128,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command() {
+    fn command() {
         let mut lexer = BibtexLexer::new("\\foo\\bar@baz");
         verify(&mut lexer, 0, 0, "\\foo", BibtexTokenKind::Command);
         verify(&mut lexer, 0, 4, "\\bar@baz", BibtexTokenKind::Command);
@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn test_escape_sequence() {
+    fn escape_sequence() {
         let mut lexer = BibtexLexer::new("\\foo*\n\\%\\**");
         verify(&mut lexer, 0, 0, "\\foo*", BibtexTokenKind::Command);
         verify(&mut lexer, 1, 0, "\\%", BibtexTokenKind::Command);
@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_delimiter() {
+    fn delimiter() {
         let mut lexer = BibtexLexer::new("{}()\"");
         verify(&mut lexer, 0, 0, "{", BibtexTokenKind::BeginBrace);
         verify(&mut lexer, 0, 1, "}", BibtexTokenKind::EndBrace);
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn test_kind() {
+    fn kind() {
         let mut lexer = BibtexLexer::new("@pReAmBlE\n@article\n@string");
         verify(&mut lexer, 0, 0, "@pReAmBlE", BibtexTokenKind::PreambleKind);
         verify(&mut lexer, 1, 0, "@article", BibtexTokenKind::EntryKind);
@@ -166,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn test_operator() {
+    fn operator() {
         let mut lexer = BibtexLexer::new("=,#");
         verify(&mut lexer, 0, 0, "=", BibtexTokenKind::Assign);
         verify(&mut lexer, 0, 1, ",", BibtexTokenKind::Comma);

@@ -53,8 +53,8 @@ fn convert_to_ris(tree: &BibtexSyntaxTree, key: &str) -> Option<RisReference> {
         bib_code.push('\n');
     }
 
-    let entry = tree.find_entry(key)?;
-    if let Some(crossref) = tree.resolve_crossref(entry) {
+    let entry = tree.entry(key)?;
+    if let Some(crossref) = tree.crossref(entry) {
         bib_code.push_str(&format_entry(crossref, &bib_params));
         bib_code.push('\n');
     }
