@@ -24,7 +24,7 @@ mod tests {
     use citeproc_io::PersonName;
 
     #[test]
-    fn test_family_only() {
+    fn family_only() {
         let name = Name::Person(PersonName {
             family: Some("Thompson".into()),
             given: None,
@@ -36,7 +36,7 @@ mod tests {
     }
 
     #[test]
-    fn test_simple() {
+    fn simple() {
         let name = Name::Person(PersonName {
             family: Some("Thompson".into()),
             given: Some("Ken".into()),
@@ -48,7 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn test_middle_name() {
+    fn middle_name() {
         let name = Name::Person(PersonName {
             family: Some("Ritchie".into()),
             given: Some("Dennis M.".into()),
@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn test_initials() {
+    fn initials() {
         let name = Name::Person(PersonName {
             family: Some("Johnson".into()),
             given: Some("S. C.".into()),
@@ -72,7 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn test_non_dropping_particle() {
+    fn non_dropping_particle() {
         let name = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -84,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn test_non_dropping_particle_family_only() {
+    fn non_dropping_particle_family_only() {
         let name = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: None,
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma() {
+    fn comma() {
         let name = Name::Person(PersonName {
             family: Some("Thompson".into()),
             given: Some("Ken".into()),
@@ -108,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma_junior() {
+    fn comma_junior() {
         let name = Name::Person(PersonName {
             family: Some("Friedman".into()),
             given: Some("George".into()),
@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma_no_junior() {
+    fn comma_no_junior() {
         let name = Name::Person(PersonName {
             family: Some("Familya Familyb".into()),
             given: Some("Given".into()),
@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma_initials() {
+    fn comma_initials() {
         let name = Name::Person(PersonName {
             family: Some("Ritchie".into()),
             given: Some("Dennis M.".into()),
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma_non_dropping_particle() {
+    fn comma_non_dropping_particle() {
         let name = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comma_non_dropping_particles() {
+    fn comma_non_dropping_particles() {
         let name = Name::Person(PersonName {
             family: Some("Voort".into()),
             given: Some("Vincent".into()),
@@ -168,7 +168,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and() {
+    fn and() {
         let name1 = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -190,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_comma1() {
+    fn and_comma1() {
         let name1 = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_comma2() {
+    fn and_comma2() {
         let name1 = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -234,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn test_and_comma_mix() {
+    fn and_comma_mix() {
         let name1 = Name::Person(PersonName {
             family: Some("Gerwen".into()),
             given: Some("Michael".into()),
@@ -256,7 +256,7 @@ mod tests {
     }
 
     #[test]
-    fn test_junior() {
+    fn junior() {
         let name = Name::Person(PersonName {
             family: Some("Friedman".into()),
             given: Some("George".into()),
@@ -268,7 +268,7 @@ mod tests {
     }
 
     #[test]
-    fn test_non_parseable() {
+    fn non_parseable() {
         let literal = "Jerry Peek and Tim O'Reilly and Mike Loukides and other authors of the Nutshell handbooks";
         let name = Name::Literal {
             literal: literal.into(),

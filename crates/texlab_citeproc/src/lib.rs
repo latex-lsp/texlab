@@ -13,16 +13,13 @@ use texlab_syntax::*;
 
 static APA_STYLE: &str = include_str!("apa.csl");
 
-static DOI_URL_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"https://doi.org/\[.*\]\(.*\)"#).unwrap());
+static DOI_URL_PATTERN: &str = r#"https://doi.org/\[.*\]\(.*\)"#;
+
+static DOI_URL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(DOI_URL_PATTERN).unwrap());
 
 pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupContent> {
     let ris_reference = convert_to_ris(tree, key)?;
-    let doi_url = ris_reference
-        .doi
-        .as_ref()
-        .map(|doi| format!("[doi:{}](https://doi.org/{})", doi, doi));
-
+    let doi_url = get_doi_url_markdown(&ris_reference);
     let csl_reference: Reference = ris_reference.into();
     let html = generate_bibliography(csl_reference)?;
 
@@ -74,6 +71,13 @@ fn convert_to_ris(tree: &BibtexSyntaxTree, key: &str) -> Option<RisReference> {
         .find(|reference| reference.id.as_ref().map(AsRef::as_ref) == Some(key))
 }
 
+fn get_doi_url_markdown(ris_reference: &RisReference) -> Option<String> {
+    ris_reference
+        .doi
+        .as_ref()
+        .map(|doi| format!("[doi:{}](https://doi.org/{})", doi, doi))
+}
+
 fn generate_bibliography(reference: Reference) -> Option<String> {
     let locales = Arc::new(PredefinedLocales::bundled_en_us());
     let mut processor = Processor::new(APA_STYLE, locales, false, SupportedFormat::Html).unwrap();
@@ -102,7 +106,7 @@ mod tests {
     // $ kpsewhich biblatex-examples.bib
 
     #[test]
-    fn test_article() {
+    fn article() {
         let tree = BibtexSyntaxTree::from(
             r#"
             @article{angenendt,
@@ -126,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_article_doi() {
+    fn article_doi() {
         let tree = BibtexSyntaxTree::from(
             r#"
             @string{jchph   = {J.~Chem. Phys.}}
@@ -154,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn test_book() {
+    fn book() {
         let tree = BibtexSyntaxTree::from(
             r#"
             @book{aristotle:physics,
@@ -176,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn test_book_string() {
+    fn book_string() {
         let tree = BibtexSyntaxTree::from(
             r#"
             @string{cup = {Cambridge University Press}}
@@ -202,7 +206,7 @@ mod tests {
     }
 
     #[test]
-    fn test_crossref() {
+    fn crossref() {
         let tree = BibtexSyntaxTree::from(
             r#"
             @collection{westfahl:frontier,
