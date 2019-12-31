@@ -17,7 +17,7 @@ impl Decoder for LspCodec {
                 trace!("Received message:\n{}\n", content);
 
                 let offset = src.len() - remaining.len();
-                src.split_to(offset);
+                let _ = src.split_to(offset);
                 Ok(Some(content))
             }
             Err(error) => {
