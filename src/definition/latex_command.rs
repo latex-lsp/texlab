@@ -53,7 +53,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_command_definition() {
+    fn command_definition() {
         let links = test_feature(
             LatexCommandDefinitionProvider,
             FeatureSpec {
@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_math_operator() {
+    fn math_operator() {
         let links = test_feature(
             LatexCommandDefinitionProvider,
             FeatureSpec {

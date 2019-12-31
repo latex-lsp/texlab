@@ -74,7 +74,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_label() {
+    fn label() {
         let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {
@@ -102,7 +102,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_args() {
+    fn command_args() {
         let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {
@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bibtex() {
+    fn bibtex() {
         let edit = test_feature(
             LatexLabelRenameProvider,
             FeatureSpec {

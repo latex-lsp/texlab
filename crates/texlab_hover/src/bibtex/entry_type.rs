@@ -42,7 +42,7 @@ mod tests {
     use texlab_protocol::Position;
 
     #[test]
-    fn test_known_entry_type() {
+    fn known_entry_type() {
         let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
@@ -68,7 +68,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unknown_entry_type() {
+    fn unknown_entry_type() {
         let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_key() {
+    fn entry_key() {
         let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let hover = test_feature(
             BibtexEntryTypeHoverProvider,
             FeatureSpec {

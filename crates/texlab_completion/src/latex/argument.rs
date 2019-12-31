@@ -54,7 +54,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inside_mathbb_empty() {
+    fn inside_mathbb_empty() {
         let items = test_feature(
             LatexArgumentCompletionProvider,
             FeatureSpec {
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_mathbb_non_empty() {
+    fn inside_mathbb_non_empty() {
         let items = test_feature(
             LatexArgumentCompletionProvider,
             FeatureSpec {
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn test_outside_mathbb() {
+    fn outside_mathbb() {
         let items = test_feature(
             LatexArgumentCompletionProvider,
             FeatureSpec {

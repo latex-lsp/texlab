@@ -102,7 +102,7 @@ mod tests {
     use texlab_protocol::Position;
 
     #[test]
-    fn test_entry() {
+    fn entry() {
         let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {
@@ -129,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn test_citation() {
+    fn citation() {
         let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn test_field_name() {
+    fn field_name() {
         let edit = test_feature(
             BibtexEntryRenameProvider,
             FeatureSpec {

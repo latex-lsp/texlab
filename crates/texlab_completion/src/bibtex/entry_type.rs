@@ -60,7 +60,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_before_at_sign() {
+    fn before_at_sign() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn test_after_at_sign() {
+    fn after_at_sign() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {
@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_entry_type() {
+    fn inside_entry_type() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {
@@ -110,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_entry_key() {
+    fn inside_entry_key() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_comments() {
+    fn inside_comments() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {
@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let items = test_feature(
             BibtexEntryTypeCompletionProvider,
             FeatureSpec {

@@ -54,7 +54,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_preamble() {
+    fn preamble() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn test_string() {
+    fn string() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry() {
+    fn entry() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comment() {
+    fn comment() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_invalid() {
+    fn entry_invalid() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {
@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let foldings = test_feature(
             BibtexDeclarationFoldingProvider,
             FeatureSpec {

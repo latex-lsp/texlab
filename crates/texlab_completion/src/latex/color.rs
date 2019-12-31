@@ -39,7 +39,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inside_color() {
+    fn inside_color() {
         let items = test_feature(
             LatexColorCompletionProvider,
             FeatureSpec {
@@ -57,7 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn test_outside_color() {
+    fn outside_color() {
         let items = test_feature(
             LatexColorCompletionProvider,
             FeatureSpec {

@@ -71,7 +71,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test() {
+    fn latex() {
         let edit = test_feature(
             LatexCommandRenameProvider,
             FeatureSpec {
@@ -98,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bibtex() {
+    fn bibtex() {
         let edit = test_feature(
             LatexCommandRenameProvider,
             FeatureSpec {

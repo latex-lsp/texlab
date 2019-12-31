@@ -60,7 +60,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_pgf_library() {
+    fn pgf_library() {
         let items = test_feature(
             LatexPgfLibraryCompletionProvider,
             FeatureSpec {
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tikz_library() {
+    fn tikz_library() {
         let items = test_feature(
             LatexTikzLibraryCompletionProvider,
             FeatureSpec {

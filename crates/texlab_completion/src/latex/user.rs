@@ -112,7 +112,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_command() {
+    fn command() {
         let items = test_feature(
             LatexUserCommandCompletionProvider,
             FeatureSpec {
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment() {
+    fn environment() {
         let items = test_feature(
             LatexUserEnvironmentCompletionProvider,
             FeatureSpec {

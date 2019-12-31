@@ -65,7 +65,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_definition() {
+    fn definition() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_definition_include_declaration() {
+    fn definition_include_declaration() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reference() {
+    fn reference() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_reference_include_declaration() {
+    fn reference_include_declaration() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {
@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bibtex() {
+    fn bibtex() {
         let references = test_feature(
             LatexLabelReferenceProvider,
             FeatureSpec {

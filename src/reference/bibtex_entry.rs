@@ -82,7 +82,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_entry() {
+    fn entry() {
         let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_include_declaration() {
+    fn entry_include_declaration() {
         let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn test_citation() {
+    fn citation() {
         let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn test_citation_include_declaration() {
+    fn citation_include_declaration() {
         let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn test_empty() {
+    fn empty() {
         let references = test_feature(
             BibtexEntryReferenceProvider,
             FeatureSpec {

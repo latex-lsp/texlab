@@ -48,7 +48,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inside_command() {
+    fn inside_command() {
         let items = test_feature(
             BibtexCommandCompletionProvider,
             FeatureSpec {
@@ -66,7 +66,7 @@ mod tests {
     }
 
     #[test]
-    fn test_start_of_command() {
+    fn start_of_command() {
         let items = test_feature(
             BibtexCommandCompletionProvider,
             FeatureSpec {
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_text() {
+    fn inside_text() {
         let items = test_feature(
             BibtexCommandCompletionProvider,
             FeatureSpec {
@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let items = test_feature(
             BibtexCommandCompletionProvider,
             FeatureSpec {

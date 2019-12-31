@@ -96,7 +96,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inside_of_ref() {
+    fn inside_of_ref() {
         let items = test_feature(
             LatexLabelCompletionProvider,
             FeatureSpec {
@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn test_outside_of_ref() {
+    fn outside_of_ref() {
         let items = test_feature(
             LatexLabelCompletionProvider,
             FeatureSpec {
@@ -135,7 +135,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eqref() {
+    fn eqref() {
         let items = test_feature(
             LatexLabelCompletionProvider,
             FeatureSpec {

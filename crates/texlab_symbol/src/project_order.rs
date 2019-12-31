@@ -98,7 +98,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_no_cycles() {
+    fn no_cycles() {
         let mut builder = TestWorkspaceBuilder::new();
         let a = builder.add_document("a.tex", "");
         let b = builder.add_document("b.tex", "");
@@ -112,7 +112,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cycles() {
+    fn cycles() {
         let mut builder = TestWorkspaceBuilder::new();
         let a = builder.add_document("a.tex", "\\include{b}");
         let b = builder.add_document("b.tex", "\\include{a}");
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn test_multiple_roots() {
+    fn multiple_roots() {
         let mut builder = TestWorkspaceBuilder::new();
         let a = builder.add_document("a.tex", "\\include{b}");
         let b = builder.add_document("b.tex", "");

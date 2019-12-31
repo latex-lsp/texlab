@@ -54,7 +54,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_empty() {
+    fn empty() {
         let items = test_feature(
             LatexCitationCompletionProvider,
             FeatureSpec {
@@ -77,7 +77,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_key() {
+    fn single_key() {
         let items = test_feature(
             LatexCitationCompletionProvider,
             FeatureSpec {
@@ -100,7 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn test_second_key() {
+    fn second_key() {
         let items = test_feature(
             LatexCitationCompletionProvider,
             FeatureSpec {
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_outside_cite() {
+    fn outside_cite() {
         let items = test_feature(
             LatexCitationCompletionProvider,
             FeatureSpec {

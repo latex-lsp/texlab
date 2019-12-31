@@ -60,7 +60,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_inside_reference() {
+    fn inside_reference() {
         let hover = test_feature(
             BibtexStringReferenceHoverProvider,
             FeatureSpec {
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn test_outside_reference() {
+    fn outside_reference() {
         let hover = test_feature(
             BibtexStringReferenceHoverProvider,
             FeatureSpec {

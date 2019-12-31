@@ -58,7 +58,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_inside_first_field() {
+    fn inside_first_field() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {
@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_second_field() {
+    fn inside_second_field() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {
@@ -97,7 +97,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_entry() {
+    fn inside_entry() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_content() {
+    fn inside_content() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {
@@ -129,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inside_entry_type() {
+    fn inside_entry_type() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {
@@ -145,7 +145,7 @@ mod tests {
     // TODO: Improve behavior of this provider
     //
     //    #[test]
-    //    fn test_after_equals_sign() {
+    //    fn after_equals_sign() {
     //        let items = test_feature(
     //            BibtexFieldNameCompletionProvider,
     //            FeatureSpec {
@@ -159,7 +159,7 @@ mod tests {
     //    }
 
     #[test]
-    fn test_inside_latex() {
+    fn inside_latex() {
         let items = test_feature(
             BibtexFieldNameCompletionProvider,
             FeatureSpec {

@@ -293,7 +293,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_subsection() {
+    fn subsection() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -356,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn test_section_inside_document_environment() {
+    fn section_inside_document_environment() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -383,7 +383,7 @@ mod tests {
     }
 
     #[test]
-    fn test_enumeration() {
+    fn enumeration() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -418,7 +418,7 @@ mod tests {
     }
 
     #[test]
-    fn test_equation() {
+    fn equation() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -456,7 +456,7 @@ mod tests {
     }
 
     #[test]
-    fn test_equation_number() {
+    fn equation_number() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -486,7 +486,7 @@ mod tests {
     }
 
     #[test]
-    fn test_table() {
+    fn table() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -513,7 +513,7 @@ mod tests {
     }
 
     #[test]
-    fn test_figure_number() {
+    fn figure_number() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -546,7 +546,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lemma() {
+    fn lemma() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -573,7 +573,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lemma_number() {
+    fn lemma_number() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {
@@ -606,7 +606,7 @@ mod tests {
     }
 
     #[test]
-    fn test_lemma_description() {
+    fn lemma_description() {
         let symbols = test_feature(
             LatexSectionSymbolProvider,
             FeatureSpec {

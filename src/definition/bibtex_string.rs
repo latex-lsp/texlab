@@ -61,7 +61,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_simple() {
+    fn simple() {
         let links = test_feature(
             BibtexStringDefinitionProvider,
             FeatureSpec {
@@ -87,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn test_concat() {
+    fn concat() {
         let links = test_feature(
             BibtexStringDefinitionProvider,
             FeatureSpec {
@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn test_field() {
+    fn field() {
         let links = test_feature(
             BibtexStringDefinitionProvider,
             FeatureSpec {

@@ -82,7 +82,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_has_definition() {
+    fn has_definition() {
         let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_definition_latex() {
+    fn no_definition_latex() {
         let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {
@@ -125,7 +125,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_definition_bibtex() {
+    fn no_definition_bibtex() {
         let links = test_feature(
             LatexLabelDefinitionProvider,
             FeatureSpec {

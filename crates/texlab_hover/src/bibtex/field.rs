@@ -42,7 +42,7 @@ mod tests {
     use texlab_protocol::Position;
 
     #[test]
-    fn test_known_field() {
+    fn known_field() {
         let hover = test_feature(
             BibtexFieldHoverProvider,
             FeatureSpec {
@@ -65,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unknown_field() {
+    fn unknown_field() {
         let hover = test_feature(
             BibtexFieldHoverProvider,
             FeatureSpec {
@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_key() {
+    fn entry_key() {
         let hover = test_feature(
             BibtexFieldHoverProvider,
             FeatureSpec {
@@ -93,7 +93,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let hover = test_feature(
             BibtexFieldHoverProvider,
             FeatureSpec {

@@ -68,7 +68,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_entry() {
+    fn entry() {
         let symbols = test_feature(
             BibtexEntrySymbolProvider,
             FeatureSpec {
@@ -114,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn test_comment() {
+    fn comment() {
         let symbols = test_feature(
             BibtexEntrySymbolProvider,
             FeatureSpec {
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_latex() {
+    fn latex() {
         let symbols = test_feature(
             BibtexEntrySymbolProvider,
             FeatureSpec {

@@ -188,7 +188,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_begin_brace() {
+    fn begin_brace() {
         let errors = BibtexError::analyze(&"@article".into());
         assert_eq!(
             errors,
@@ -200,7 +200,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_key() {
+    fn entry_key() {
         let errors = BibtexError::analyze(&"@article{".into());
         assert_eq!(
             errors,
@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_comma() {
+    fn entry_comma() {
         let errors = BibtexError::analyze(&"@article{foo".into());
         assert_eq!(
             errors,
@@ -224,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_end_brace() {
+    fn entry_end_brace() {
         let errors = BibtexError::analyze(&"@article{foo,".into());
         assert_eq!(
             errors,
@@ -236,7 +236,7 @@ mod tests {
     }
 
     #[test]
-    fn test_field_equals() {
+    fn field_equals() {
         let errors = BibtexError::analyze(&"@article{foo, bar}".into());
         assert_eq!(
             errors,
@@ -248,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn test_field_content() {
+    fn field_content() {
         let errors = BibtexError::analyze(&"@article{foo,\nbar = }".into());
         assert_eq!(
             errors,
@@ -260,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn test_field_comma() {
+    fn field_comma() {
         let text = "@article{foo,\nfoo = bar\nbaz = qux}";
         let errors = BibtexError::analyze(&text.into());
         assert_eq!(
@@ -273,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn test_content_quote() {
+    fn content_quote() {
         let text = "@article{foo, bar =\n\"}";
         let errors = BibtexError::analyze(&text.into());
         assert_eq!(
@@ -286,7 +286,7 @@ mod tests {
     }
 
     #[test]
-    fn test_content_brace() {
+    fn content_brace() {
         let text = "@article{foo, bar =\n{";
         let errors = BibtexError::analyze(&text.into());
         assert_eq!(
@@ -299,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_content_concat() {
+    fn content_concat() {
         let text = "@article{foo, bar = baz \n# }";
         let errors = BibtexError::analyze(&text.into());
         assert_eq!(
@@ -312,7 +312,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_valid() {
+    fn entry_valid() {
         let text = "@article{foo, bar = \"baz {qux}\" # quux}";
         let errors = BibtexError::analyze(&text.into());
         assert_eq!(errors, Vec::new());

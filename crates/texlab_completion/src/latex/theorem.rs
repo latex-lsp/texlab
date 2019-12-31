@@ -44,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
+    fn inside_begin() {
         let items = test_feature(
             LatexTheoremEnvironmentCompletionProvider,
             FeatureSpec {

@@ -57,7 +57,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_multiple_paths() {
+    fn multiple_paths() {
         let hover = test_feature(
             LatexIncludeHoverProvider,
             FeatureSpec {
@@ -89,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn test_empty() {
+    fn empty() {
         let hover = test_feature(
             LatexIncludeHoverProvider,
             FeatureSpec {

@@ -38,7 +38,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_multiline() {
+    fn multiline() {
         let foldings = test_feature(
             LatexEnvironmentFoldingProvider,
             FeatureSpec {
@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bibtex() {
+    fn bibtex() {
         let foldings = test_feature(
             LatexEnvironmentFoldingProvider,
             FeatureSpec {

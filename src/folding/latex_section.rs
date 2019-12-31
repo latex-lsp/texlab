@@ -48,7 +48,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_nesting() {
+    fn nesting() {
         let foldings = test_feature(
             LatexSectionFoldingProvider,
             FeatureSpec {
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bibtex() {
+    fn bibtex() {
         let foldings = test_feature(
             LatexSectionFoldingProvider,
             FeatureSpec {

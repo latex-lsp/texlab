@@ -41,7 +41,7 @@ mod tests {
     use texlab_protocol::RangeExt;
 
     #[test]
-    fn test_valid() {
+    fn valid() {
         let symbols = test_feature(
             BibtexStringSymbolProvider,
             FeatureSpec {
@@ -65,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid() {
+    fn invalid() {
         let symbols = test_feature(
             BibtexStringSymbolProvider,
             FeatureSpec {

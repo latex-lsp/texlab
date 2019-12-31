@@ -52,7 +52,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_has_label() {
+    fn has_label() {
         let highlights = test_feature(
             LatexLabelHighlightProvider,
             FeatureSpec {
@@ -78,7 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_label_latex() {
+    fn no_label_latex() {
         let highlights = test_feature(
             LatexLabelHighlightProvider,
             FeatureSpec {
@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_label_bibtex() {
+    fn no_label_bibtex() {
         let highlights = test_feature(
             LatexLabelHighlightProvider,
             FeatureSpec {

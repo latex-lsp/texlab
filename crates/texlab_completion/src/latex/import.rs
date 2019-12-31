@@ -76,7 +76,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_class() {
+    fn class() {
         let items = test_feature(
             LatexClassImportProvider,
             FeatureSpec {
@@ -92,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_package() {
+    fn package() {
         let items = test_feature(
             LatexPackageImportProvider,
             FeatureSpec {

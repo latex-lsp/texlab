@@ -309,7 +309,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bad_box() {
+    fn bad_box() {
         let error1 = BuildError::new(
             create_uri("parent.tex"),
             BuildErrorKind::Warning,
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[test]
-    fn test_related_documents() {
+    fn related_documents() {
         let error = BuildError::new(
             create_uri("child.tex"),
             BuildErrorKind::Error,
@@ -337,7 +337,7 @@ mod tests {
     }
 
     #[test]
-    fn test_citation_warning() {
+    fn citation_warning() {
         let error1 = BuildError::new(
             create_uri("parent.tex"),
             BuildErrorKind::Warning,
@@ -354,7 +354,7 @@ mod tests {
     }
 
     #[test]
-    fn test_package_error() {
+    fn package_error() {
         let error1 = BuildError::new(
             create_uri("parent.tex"),
             BuildErrorKind::Error,
@@ -372,7 +372,7 @@ mod tests {
     }
 
     #[test]
-    fn test_package_warning() {
+    fn package_warning() {
         let error1 = BuildError::new(
             create_uri("parent.tex"),
             BuildErrorKind::Warning,
@@ -396,7 +396,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tex_error() {
+    fn tex_error() {
         let error1 = BuildError::new(
             create_uri("parent.tex"),
             BuildErrorKind::Error,

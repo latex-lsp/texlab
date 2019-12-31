@@ -76,7 +76,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_command_start() {
+    fn command_start() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_end() {
+    fn command_end() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -108,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_word() {
+    fn command_word() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -122,7 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_package() {
+    fn command_package() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_package_comma_separated() {
+    fn command_package_comma_separated() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -153,7 +153,7 @@ mod tests {
     }
 
     #[test]
-    fn test_command_class() {
+    fn command_class() {
         let items = test_feature(
             LatexComponentCommandCompletionProvider,
             FeatureSpec {
@@ -170,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_inside_of_empty_begin() {
+    fn environment_inside_of_empty_begin() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -188,7 +188,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_inside_of_non_empty_end() {
+    fn environment_inside_of_non_empty_end() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -206,7 +206,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_outside_of_empty_begin() {
+    fn environment_outside_of_empty_begin() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -220,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_outside_of_empty_end() {
+    fn environment_outside_of_empty_end() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -234,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_inside_of_other_command() {
+    fn environment_inside_of_other_command() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -248,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_inside_second_argument() {
+    fn environment_inside_second_argument() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {
@@ -262,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    fn test_environment_unterminated() {
+    fn environment_unterminated() {
         let items = test_feature(
             LatexComponentEnvironmentCompletionProvider,
             FeatureSpec {

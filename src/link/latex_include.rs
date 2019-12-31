@@ -58,7 +58,7 @@ mod tests {
     use texlab_protocol::{Position, Range};
 
     #[test]
-    fn test_has_links() {
+    fn has_links() {
         let links = test_feature(
             LatexIncludeLinkProvider,
             FeatureSpec {
@@ -81,7 +81,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_links_latex() {
+    fn no_links_latex() {
         let links = test_feature(
             LatexIncludeLinkProvider,
             FeatureSpec {
@@ -95,7 +95,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_links_bibtex() {
+    fn no_links_bibtex() {
         let links = test_feature(
             LatexIncludeLinkProvider,
             FeatureSpec {
