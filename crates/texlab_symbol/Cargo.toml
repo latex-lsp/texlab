@@ -10,7 +10,7 @@ edition = "2018"
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
 log = "0.4.6"
-petgraph = "0.4.13"
+petgraph = "0.5.0"
 texlab-distro = { path = "../texlab_distro" }
 texlab-protocol = { path = "../texlab_protocol" }
 texlab-syntax = { path = "../texlab_syntax" }
