@@ -227,13 +227,13 @@ dependencies = [
 [[package]]
 name = "citeproc"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba#8908674c2ae55332290e873de16f0e78989287ba"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221#68c7a7c16088b5d7751641ab37299ad064cdb221"
 dependencies = [
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-proc 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "citeproc-proc 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -246,11 +246,11 @@ dependencies = [
 [[package]]
 name = "citeproc-db"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba#8908674c2ae55332290e873de16f0e78989287ba"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221#68c7a7c16088b5d7751641ab37299ad064cdb221"
 dependencies = [
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "salsa 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -259,30 +259,34 @@ dependencies = [
 [[package]]
 name = "citeproc-io"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba#8908674c2ae55332290e873de16f0e78989287ba"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221#68c7a7c16088b5d7751641ab37299ad064cdb221"
 dependencies = [
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "html5ever 0.24.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "nom 5.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "once_cell 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "stringreader 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unic-segment 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "v_htmlescape 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "citeproc-proc"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba#8908674c2ae55332290e873de16f0e78989287ba"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221#68c7a7c16088b5d7751641ab37299ad064cdb221"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "generational-arena 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -432,7 +436,7 @@ dependencies = [
 [[package]]
 name = "csl"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba#8908674c2ae55332290e873de16f0e78989287ba"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221#68c7a7c16088b5d7751641ab37299ad064cdb221"
 dependencies = [
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1302,6 +1306,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "phf"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "phf_macros 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro-hack 0.5.11 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "phf_codegen"
 version = "0.7.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1320,11 +1334,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "phf_generator"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "phf_shared 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "phf_macros"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "phf_generator 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro-hack 0.5.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro2 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "phf_shared"
 version = "0.7.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "siphasher 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "phf_shared"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "siphasher 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1795,6 +1839,11 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "siphasher"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2015,10 +2064,10 @@ name = "texlab-citeproc"
 version = "0.1.0"
 dependencies = [
  "bibutils 0.1.0",
- "citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
- "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)",
+ "citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
+ "csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2274,6 +2323,50 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "unic-char-property"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "unic-char-range 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "unic-char-range"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "unic-common"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "unic-segment"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "unic-ucd-segment 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "unic-ucd-segment"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "unic-char-property 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unic-char-range 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unic-ucd-version 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "unic-ucd-version"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "unic-common 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2503,10 +2596,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 "checksum chashmap 2.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ff41a3c2c1e39921b9003de14bf0439c7b63a9039637c291e1a64925d8ddfa45"
 "checksum chrono 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)" = "31850b4a4d6bae316f7a09e691c944c28299298837edc0a03f755618c23cbc01"
-"checksum citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)" = "<none>"
-"checksum citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)" = "<none>"
-"checksum citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)" = "<none>"
-"checksum citeproc-proc 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)" = "<none>"
+"checksum citeproc 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)" = "<none>"
+"checksum citeproc-db 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)" = "<none>"
+"checksum citeproc-io 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)" = "<none>"
+"checksum citeproc-proc 0.1.0 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)" = "<none>"
 "checksum clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5067f5bb2d80ef5d68b4c87db81601f0b75bca627bc2ef76b141d7b846a3c6d9"
 "checksum cloudabi 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 "checksum color_quant 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0dbbb57365263e881e805dc77d94697c9118fd94d8da011240555aa7b23445bd"
@@ -2521,7 +2614,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum crossbeam-queue 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dfd6515864a82d2f877b42813d4553292c6659498c9a2aa31bab5a15243c2700"
 "checksum crossbeam-utils 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "04973fa96e96579258a5091af6003abde64af786b860f18622b82e026cca60e6"
 "checksum crossbeam-utils 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ce446db02cdc3165b94ae73111e570793400d0794e46125cc4056c81cbb039f4"
-"checksum csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=8908674c2ae55332290e873de16f0e78989287ba)" = "<none>"
+"checksum csl 0.0.1 (git+https://github.com/cormacrelf/citeproc-rs?rev=68c7a7c16088b5d7751641ab37299ad064cdb221)" = "<none>"
 "checksum deflate 0.7.20 (registry+https://github.com/rust-lang/crates.io-index)" = "707b6a7b384888a70c8d2e8650b3e60170dfc6a67bb4aa67b6dfca57af4bedb4"
 "checksum derive-new 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)" = "71f31892cd5c62e414316f2963c5689242c43d8e7bbcaaeca97e5e28c95d91d9"
 "checksum diff 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)" = "3c2b69f912779fbb121ceb775d74d51e915af17aaebc38d28a592843a2dd0a3a"
@@ -2616,9 +2709,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum percent-encoding 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 "checksum petgraph 0.4.13 (registry+https://github.com/rust-lang/crates.io-index)" = "9c3659d1ee90221741f65dd128d9998311b0e40c5d3c23a62445938214abce4f"
 "checksum phf 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)" = "b3da44b85f8e8dfaec21adae67f95d93244b2ecf6ad2a692320598dcc8e6dd18"
+"checksum phf 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3dfb61232e34fcb633f43d12c58f83c1df82962dcdfa565a4e866ffc17dafe12"
 "checksum phf_codegen 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)" = "b03e85129e324ad4166b06b2c7491ae27fe3ec353af72e72cd1654c7225d517e"
 "checksum phf_generator 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)" = "09364cc93c159b8b06b1f4dd8a4398984503483891b0c26b867cf431fb132662"
+"checksum phf_generator 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "17367f0cc86f2d25802b2c26ee58a7b23faeccf78a396094c13dced0d0182526"
+"checksum phf_macros 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7f6fde18ff429ffc8fe78e2bf7f8b7a5a5a6e2a8b58bc5a9ac69198bbda9189c"
 "checksum phf_shared 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)" = "234f71a15de2288bcb7e3b6515828d22af7ec8598ee6d24c3b526fa0a80b67a0"
+"checksum phf_shared 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c00cf8b9eafe68dde5e9eaa2cef8ee84a9336a47d566ec55ca16589633b65af7"
 "checksum pin-project-lite 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f0af6cbca0e6e3ce8692ee19fb8d734b641899e07b68eb73e9bbbd32f1703991"
 "checksum pin-utils 0.1.0-alpha.4 (registry+https://github.com/rust-lang/crates.io-index)" = "5894c618ce612a3fa23881b152b608bafb8c56cfc22f434a3ba3120b40f7b587"
 "checksum png 0.15.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1f00ec9242f8e01119e83117dbadf34c5228ac2f1c4ddcd92bffa340d52291de"
@@ -2674,6 +2771,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum sha2 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7b4d8bfd0e469f417657573d8451fb33d16cfe0989359b93baf3a1ffc639543d"
 "checksum signal-hook-registry 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "94f478ede9f64724c5d173d7bb56099ec3e2d9fc2774aac65d34b8b890405f41"
 "checksum siphasher 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "0b8de496cf83d4ed58b6be86c3a275b8602f6ffe98d3024a869e124147a9a3ac"
+"checksum siphasher 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "83da420ee8d1a89e640d0948c646c1c088758d3a3c538f943bfa97bdac17929d"
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum smallvec 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)" = "f7b0758c52e15a8b5e3691eae6cc559f08eee9406e548a4477ba4e67770a82b6"
 "checksum smallvec 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4ecf3b85f68e8abaa7555aa5abdb1153079387e60b718283d732f03897fcfc86"
@@ -2707,6 +2805,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum tokio-util 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "571da51182ec208780505a32528fc5512a8fe1443ab960b3f2f3ef093cd16930"
 "checksum typenum 1.11.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
 "checksum ucd-trie 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8f00ed7be0c1ff1e24f46c3d2af4859f7e863672ba3a6e92e7cff702bf9f06c2"
+"checksum unic-char-property 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a8c57a407d9b6fa02b4795eb81c5b6652060a15a7903ea981f3d723e6c0be221"
+"checksum unic-char-range 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0398022d5f700414f6b899e10b8348231abf9173fa93144cbc1a43b9793c1fbc"
+"checksum unic-common 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "80d7ff825a6a654ee85a63e80f92f054f904f21e7d12da4e22f9834a4aaa35bc"
+"checksum unic-segment 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e4ed5d26be57f84f176157270c112ef57b86debac9cd21daaabbe56db0f88f23"
+"checksum unic-ucd-segment 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2079c122a62205b421f499da10f3ee0f7697f012f55b675e002483c73ea34700"
+"checksum unic-ucd-version 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "96bd2f2237fe450fcd0a1d2f5f4e91711124f7857ba2e964247776ebeeb7b0c4"
 "checksum unicode-bidi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "49f2bd0c6468a8230e1db229cff8029217cf623c767ea5d60bfbd42729ea54d5"
 "checksum unicode-normalization 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)" = "b561e267b2326bb4cebfc0ef9e68355c7abe6c6f522aeac2f5bf95d56c59bdcf"
 "checksum unicode-segmentation 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e83e153d1053cbb5a118eeff7fd5be06ed99153f00dbcd8ae310c5fb2b22edc0"
