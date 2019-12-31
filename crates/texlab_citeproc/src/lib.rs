@@ -38,6 +38,8 @@ pub fn render_citation(tree: &BibtexSyntaxTree, key: &str) -> Option<MarkupConte
     }
 
     markdown = markdown.replace("..", ".");
+    markdown = markdown.replace("\\\'", "'");
+    markdown = markdown.replace("\\-", "-");
     let content = MarkupContent {
         kind: MarkupKind::Markdown,
         value: markdown,
@@ -120,13 +122,14 @@ mod tests {
             }"#,
         );
         let markdown = render_citation(&tree, "angenendt").unwrap().value;
-        assert_eq!(markdown, "Angenendt, A. In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde. *Revue d’Histoire Ecclésiastique*, *97*, 431\\-456,.");
+        assert_eq!(markdown, "Angenendt, A. In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde. *Revue D\'Histoire Ecclésiastique*, *97*, 431–456,.");
     }
 
     #[test]
     fn test_article_doi() {
         let tree = BibtexSyntaxTree::from(
             r#"
+            @string{jchph   = {J.~Chem. Phys.}}
             @article{kastenholz,
                 author       = {Kastenholz, M. A. and H{\"u}nenberger, Philippe H.},
                 title        = {Computation of methodology\hyphen independent ionic solvation
@@ -147,7 +150,7 @@ mod tests {
             }"#,
         );
         let markdown = render_citation(&tree, "kastenholz").unwrap().value;
-        assert_eq!(markdown, "Kastenholz, M. A., & Hünenberger, P. H. Computation of methodology\\-independent ionic solvation free energies from molecular simulations: I. The electrostatic potential in molecular liquids. *jchph*, *124*. [doi:10.1063/1.2172593](https://doi.org/10.1063/1.2172593)");
+        assert_eq!(markdown, "Kastenholz, M. A., & Hünenberger, P. H. Computation of methodology-independent ionic solvation free energies from molecular simulations: I. The electrostatic potential in molecular liquids. *J. Chem. Phys.*, *124*. [doi:10.1063/1.2172593](https://doi.org/10.1063/1.2172593)");
     }
 
     #[test]
@@ -235,6 +238,6 @@ mod tests {
             }"#,
         );
         let markdown = render_citation(&tree, "westfahl:space").unwrap().value;
-        assert_eq!(markdown, "Westfahl, G. The True Frontier: Confronting and Avoiding the Realities of Space in American Science Fiction Films The Frontier Theme in Science Fiction. in G. Westfahl (ed.), *Space and Beyond: The Frontier Theme in Science Fiction* (p. 55\\-65). Westport, Conn. and London: Greenwood.");
+        assert_eq!(markdown, "Westfahl, G. The True Frontier: Confronting and Avoiding the Realities of Space in American Science Fiction Films The Frontier Theme in Science Fiction. In G. Westfahl (ed.), *Space and Beyond: The Frontier Theme in Science Fiction* (p. 55–65). Westport, Conn. and London: Greenwood.");
     }
 }
