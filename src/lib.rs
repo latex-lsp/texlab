@@ -11,3 +11,4 @@ pub mod link;
 pub mod reference;
 pub mod rename;
 pub mod server;
+pub mod workspace_manager;

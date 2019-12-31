@@ -17,7 +17,7 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
             async move {
                 let range = command.short_name_range();
                 let mut items = Vec::new();
-                for component in COMPLETION_DATABASE.related_components(request.related_documents())
+                for component in COMPONENT_DATABASE.related_components(request.related_documents())
                 {
                     let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
                     let id = LatexComponentId::Component(file_names);
@@ -53,7 +53,7 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
         combinators::environment(request, |context| {
             async move {
                 let mut items = Vec::new();
-                for component in COMPLETION_DATABASE.related_components(request.related_documents())
+                for component in COMPONENT_DATABASE.related_components(request.related_documents())
                 {
                     let file_names = component.file_names.iter().map(AsRef::as_ref).collect();
                     let id = LatexComponentId::Component(file_names);

@@ -1,13 +1,12 @@
-use super::completion::COMPLETION_DATABASE;
+use super::components::COMPONENT_DATABASE;
 use super::document::Document;
-use futures::executor::block_on;
-use log::*;
+use petgraph::visit::Dfs;
+use petgraph::Graph;
+use std::collections::HashMap;
 use std::env;
-use std::ffi::OsStr;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
-use texlab_distro::{Distribution, Language, Resolver};
+use std::path::PathBuf;
+use std::sync::Arc;
+use texlab_distro::{Language, Resolver};
 use texlab_protocol::*;
 use texlab_syntax::*;
 
@@ -31,38 +30,23 @@ impl Workspace {
     }
 
     pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
-        let edges = self.build_dependency_graph();
-        let mut results = Vec::new();
-        if let Some(start) = self.find(uri) {
-            let mut visited: Vec<Arc<Document>> = Vec::new();
-            let mut stack = vec![start];
-            while let Some(current) = stack.pop() {
-                if visited.contains(&current) {
-                    continue;
-                }
-                visited.push(Arc::clone(&current));
-
-                results.push(Arc::clone(&current));
-                for edge in &edges {
-                    if edge.0 == current {
-                        stack.push(Arc::clone(&edge.1));
-                    }
-                }
-            }
+        let mut graph = Graph::new_undirected();
+        let mut indices_by_uri = HashMap::new();
+        for document in &self.documents {
+            indices_by_uri.insert(&document.uri, graph.add_node(document));
         }
-        results
-    }
 
-    fn build_dependency_graph(&self) -> Vec<(Arc<Document>, Arc<Document>)> {
-        let mut edges: Vec<(Arc<Document>, Arc<Document>)> = Vec::new();
-        for parent in self.documents.iter().filter(|document| document.is_file()) {
+        for parent in self.documents.iter().filter(|doc| doc.is_file()) {
             if let SyntaxTree::Latex(tree) = &parent.tree {
                 for include in &tree.includes {
                     for targets in &include.all_targets {
                         for target in targets {
                             if let Some(ref child) = self.find(target) {
-                                edges.push((Arc::clone(&parent), Arc::clone(&child)));
-                                edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                                graph.add_edge(
+                                    indices_by_uri[&parent.uri],
+                                    indices_by_uri[&child.uri],
+                                    (),
+                                );
                             }
                         }
                     }
@@ -71,12 +55,19 @@ impl Workspace {
                 let tex_path = parent.uri.to_file_path().unwrap();
                 let aux_path = tex_path.with_extension("aux");
                 if let Some(child) = self.find(&Uri::from_file_path(aux_path).unwrap()) {
-                    edges.push((Arc::clone(&parent), Arc::clone(&child)));
-                    edges.push((Arc::clone(&child), Arc::clone(&parent)));
+                    graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
                 }
             }
         }
-        edges
+
+        let mut documents = Vec::new();
+        if self.find(uri).is_some() {
+            let mut dfs = Dfs::new(&graph, indices_by_uri[uri]);
+            while let Some(index) = dfs.next(&graph) {
+                documents.push(Arc::clone(&graph.node_weight(index).unwrap()));
+            }
+        }
+        documents
     }
 
     pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
@@ -105,7 +96,7 @@ impl Workspace {
                             if include
                                 .paths()
                                 .iter()
-                                .all(|name| COMPLETION_DATABASE.contains(name.text()))
+                                .all(|name| COMPONENT_DATABASE.contains(name.text()))
                             {
                                 continue;
                             }
@@ -145,129 +136,17 @@ impl Workspace {
     }
 }
 
-#[derive(Debug)]
-pub enum LoadError {
-    UnknownLanguage,
-    InvalidPath,
-    IO(std::io::Error),
-}
-
-pub struct WorkspaceManager {
-    distribution: Arc<Box<dyn Distribution>>,
-    workspace: Mutex<Arc<Workspace>>,
-}
-
-impl WorkspaceManager {
-    pub fn new(distribution: Arc<Box<dyn Distribution>>) -> Self {
-        Self {
-            distribution,
-            workspace: Mutex::default(),
-        }
-    }
-
-    pub fn get(&self) -> Arc<Workspace> {
-        let workspace = self.workspace.lock().unwrap();
-        Arc::clone(&workspace)
-    }
-
-    pub fn add(&self, document: TextDocumentItem) {
-        let language = match Language::by_language_id(&document.language_id) {
-            Some(language) => language,
-            None => {
-                error!("Invalid language id: {}", &document.language_id);
-                return;
-            }
-        };
-
-        let mut workspace = self.workspace.lock().unwrap();
-        *workspace = self.add_or_update(&workspace, document.uri.into(), document.text, language);
-    }
-
-    pub fn load(&self, path: &Path) -> Result<(), LoadError> {
-        let language = match path
-            .extension()
-            .and_then(OsStr::to_str)
-            .and_then(Language::by_extension)
-        {
-            Some(language) => language,
-            None => {
-                warn!("Could not determine language: {}", path.to_string_lossy());
-                return Err(LoadError::UnknownLanguage);
-            }
-        };
-
-        let uri = match Uri::from_file_path(path) {
-            Ok(uri) => uri,
-            Err(_) => {
-                error!("Invalid path: {}", path.to_string_lossy());
-                return Err(LoadError::InvalidPath);
-            }
-        };
-
-        let text = match fs::read_to_string(path) {
-            Ok(text) => text,
-            Err(why) => {
-                warn!("Could not open file: {}", path.to_string_lossy());
-                return Err(LoadError::IO(why));
-            }
-        };
-
-        let mut workspace = self.workspace.lock().unwrap();
-        *workspace = self.add_or_update(&workspace, uri, text, language);
-        Ok(())
-    }
-
-    pub fn update(&self, uri: Uri, text: String) {
-        let mut workspace = self.workspace.lock().unwrap();
-
-        let old_document = match workspace.documents.iter().find(|x| x.uri == uri) {
-            Some(document) => document,
-            None => {
-                warn!("Document not found: {}", uri);
-                return;
-            }
-        };
-
-        let language = match old_document.tree {
-            SyntaxTree::Latex(_) => Language::Latex,
-            SyntaxTree::Bibtex(_) => Language::Bibtex,
-        };
-
-        *workspace = self.add_or_update(&workspace, uri, text, language);
-    }
-
-    fn add_or_update(
-        &self,
-        workspace: &Workspace,
-        uri: Uri,
-        text: String,
-        language: Language,
-    ) -> Arc<Workspace> {
-        let resolver = block_on(self.distribution.resolver());
-        let document = Document::parse(uri, text, language, &resolver);
-        let mut documents: Vec<Arc<Document>> = workspace
-            .documents
-            .iter()
-            .filter(|x| x.uri != document.uri)
-            .cloned()
-            .collect();
-
-        documents.push(Arc::new(document));
-        Arc::new(Workspace { documents })
-    }
-}
-
 #[derive(Debug, Default)]
-pub struct WorkspaceBuilder {
+pub struct TestWorkspaceBuilder {
     pub workspace: Workspace,
 }
 
-impl WorkspaceBuilder {
+impl TestWorkspaceBuilder {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn document(&mut self, name: &str, text: &str) -> Uri {
+    pub fn add_document(&mut self, name: &str, text: &str) -> Uri {
         let resolver = Resolver::default();
         let path = env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
@@ -290,92 +169,93 @@ mod tests {
     }
 
     #[test]
-    fn test_related_documents_append_extensions() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\include{bar/baz}");
-        let uri2 = builder.document("bar/baz.tex", "");
+    fn related_documents_append_extensions() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "\\include{bar/baz}");
+        let uri2 = builder.add_document("bar/baz.tex", "");
         let documents = builder.workspace.related_documents(&uri1);
         verify_documents(vec![uri1, uri2], documents);
     }
 
     #[test]
-    fn test_related_documents_relative_path() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "");
-        let uri2 = builder.document("bar/baz.tex", "\\input{../foo.tex}");
+    fn related_documents_relative_path() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "");
+        let uri2 = builder.add_document("bar/baz.tex", "\\input{../foo.tex}");
         let documents = builder.workspace.related_documents(&uri1);
         verify_documents(vec![uri1, uri2], documents);
     }
 
     #[test]
-    fn test_related_documents_invalid_includes() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\include{<foo>?|bar|:}\n\\include{}");
+    fn related_documents_invalid_includes() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri = builder.add_document("foo.tex", "\\include{<foo>?|bar|:}\n\\include{}");
         let documents = builder.workspace.related_documents(&uri);
         verify_documents(vec![uri], documents);
     }
 
     #[test]
-    fn test_related_documents_bibliographies() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\addbibresource{bar.bib}");
-        let uri2 = builder.document("bar.bib", "");
+    fn related_documents_bibliographies() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "\\addbibresource{bar.bib}");
+        let uri2 = builder.add_document("bar.bib", "");
         let documents = builder.workspace.related_documents(&uri2);
         verify_documents(vec![uri2, uri1], documents);
     }
 
     #[test]
-    fn test_related_documents_unresolvable_include() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "\\include{bar.tex}");
-        builder.document("baz.tex", "");
+    fn related_documents_unresolvable_include() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri = builder.add_document("foo.tex", "\\include{bar.tex}");
+        builder.add_document("baz.tex", "");
         let documents = builder.workspace.related_documents(&uri);
         verify_documents(vec![uri], documents);
     }
 
     #[test]
-    fn test_related_documents_include_cycles() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\input{bar.tex}");
-        let uri2 = builder.document("bar.tex", "\\input{foo.tex}");
+    fn related_documents_include_cycles() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "\\input{bar.tex}");
+        let uri2 = builder.add_document("bar.tex", "\\input{foo.tex}");
         let documents = builder.workspace.related_documents(&uri1);
         verify_documents(vec![uri1, uri2], documents);
     }
 
     #[test]
-    fn test_related_documents_same_parent() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("test.tex", "\\include{test1}\\include{test2}");
-        let uri2 = builder.document("test1.tex", "\\label{foo}");
-        let uri3 = builder.document("test2.tex", "\\ref{foo}");
+    fn related_documents_same_parent() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("test.tex", "\\include{test1}\\include{test2}");
+        let uri2 = builder.add_document("test1.tex", "\\label{foo}");
+        let uri3 = builder.add_document("test2.tex", "\\ref{foo}");
         let documents = builder.workspace.related_documents(&uri3);
         verify_documents(vec![uri3, uri1, uri2], documents);
     }
 
     #[test]
-    fn test_related_documents_aux_file() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "\\include{bar}");
-        let uri2 = builder.document("bar.tex", "");
-        let uri3 = builder.document("foo.aux", "");
+    fn related_documents_aux_file() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "\\include{bar}");
+        let uri2 = builder.add_document("bar.tex", "");
+        let uri3 = builder.add_document("foo.aux", "");
         let documents = builder.workspace.related_documents(&uri2);
         verify_documents(vec![uri2, uri1, uri3], documents);
     }
 
     #[test]
-    fn test_find_parent() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri1 = builder.document("foo.tex", "");
-        let uri2 = builder.document("bar.tex", "\\begin{document}\\include{foo}\\end{document}");
+    fn find_parent() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "");
+        let uri2 =
+            builder.add_document("bar.tex", "\\begin{document}\\include{foo}\\end{document}");
         let document = builder.workspace.find_parent(&uri1).unwrap();
         assert_eq!(uri2, document.uri);
     }
 
     #[test]
-    fn test_find_parent_no_parent() {
-        let mut builder = WorkspaceBuilder::new();
-        let uri = builder.document("foo.tex", "");
-        builder.document("bar.tex", "\\begin{document}\\end{document}");
+    fn find_parent_no_parent() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri = builder.add_document("foo.tex", "");
+        builder.add_document("bar.tex", "\\begin{document}\\end{document}");
         let document = builder.workspace.find_parent(&uri);
         assert_eq!(None, document);
     }

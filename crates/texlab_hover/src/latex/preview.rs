@@ -174,7 +174,7 @@ impl LatexPreviewHoverProvider {
                             .paths()
                             .iter()
                             .map(|path| format!("{}.sty", path.text()))
-                            .any(|name| !COMPLETION_DATABASE.exists(&name))
+                            .any(|name| !COMPONENT_DATABASE.exists(&name))
                         {
                             continue;
                         }

@@ -120,6 +120,6 @@ pub struct Metadata {
     pub description: Option<String>,
 }
 
-const JSON: &str = include_str!("completion.json");
+const JSON: &str = include_str!("components.json");
 
-pub static COMPLETION_DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());
+pub static COMPONENT_DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());

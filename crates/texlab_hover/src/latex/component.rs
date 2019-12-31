@@ -22,7 +22,7 @@ impl FeatureProvider for LatexComponentHoverProvider {
                 {
                     for path in include.paths() {
                         if path.range().contains(request.params.position) {
-                            let documentation = COMPLETION_DATABASE.documentation(path.text())?;
+                            let documentation = COMPONENT_DATABASE.documentation(path.text())?;
                             return Some(Hover {
                                 contents: HoverContents::Markup(documentation),
                                 range: Some(path.range()),

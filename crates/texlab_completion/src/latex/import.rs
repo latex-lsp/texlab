@@ -54,7 +54,7 @@ where
     combinators::argument(request, parameters, |context| {
         async move {
             let resolver = request.distribution.resolver().await;
-            COMPLETION_DATABASE
+            COMPONENT_DATABASE
                 .components
                 .iter()
                 .flat_map(|comp| comp.file_names.iter())

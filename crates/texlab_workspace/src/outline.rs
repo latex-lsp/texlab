@@ -158,6 +158,8 @@ pub enum OutlineContextItem {
     Item,
 }
 
+use OutlineContextItem::*;
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct OutlineContext {
     pub range: Range,
@@ -167,79 +169,59 @@ pub struct OutlineContext {
 
 impl OutlineContext {
     pub fn reference(&self) -> String {
-        match (&self.number, &self.item) {
-            (Some(number), OutlineContextItem::Section { prefix, text }) => {
-                format!("{} {} ({})", prefix, number, text)
-            }
-            (Some(number), OutlineContextItem::Caption { kind: None, text }) => {
-                format!("{} {}", number, text)
-            }
-            (
-                Some(number),
-                OutlineContextItem::Caption {
+        match &self.number {
+            Some(number) => match &self.item {
+                Section { prefix, text } => format!("{} {} ({})", prefix, number, text),
+                Caption { kind: None, text } => format!("{} {}", number, text),
+                Caption {
                     kind: Some(kind),
                     text,
-                },
-            ) => format!("{} {}: {}", kind.as_str(), number, text),
-            (
-                Some(number),
-                OutlineContextItem::Theorem {
+                } => format!("{} {}: {}", kind.as_str(), number, text),
+                Theorem {
                     kind,
                     description: None,
-                },
-            ) => format!("{} {}", kind, number),
-            (
-                Some(number),
-                OutlineContextItem::Theorem {
+                } => format!("{} {}", kind, number),
+                Theorem {
                     kind,
                     description: Some(description),
-                },
-            ) => format!("{} {} ({})", kind, number, description),
-            (Some(number), OutlineContextItem::Equation) => format!("Equation ({})", number),
-            (Some(number), OutlineContextItem::Item) => format!("Item {}", number),
-            (None, OutlineContextItem::Section { prefix, text }) => {
-                format!("{} ({})", prefix, text)
-            }
-            (None, OutlineContextItem::Caption { kind: None, text }) => text.clone(),
-            (
-                None,
-                OutlineContextItem::Caption {
+                } => format!("{} {} ({})", kind, number, description),
+                Equation => format!("Equation ({})", number),
+                Item => format!("Item {}", number),
+            },
+            None => match &self.item {
+                Section { prefix, text } => format!("{} ({})", prefix, text),
+                Caption { kind: None, text } => text.clone(),
+                Caption {
                     kind: Some(kind),
                     text,
-                },
-            ) => format!("{}: {}", kind.as_str(), text),
-            (
-                None,
-                OutlineContextItem::Theorem {
+                } => format!("{}: {}", kind.as_str(), text),
+                Theorem {
                     kind,
                     description: None,
-                },
-            ) => kind.to_owned(),
-            (
-                None,
-                OutlineContextItem::Theorem {
+                } => kind.into(),
+                Theorem {
                     kind,
                     description: Some(description),
-                },
-            ) => format!("{} ({})", kind, description),
-            (None, OutlineContextItem::Equation) => "Equation".to_owned(),
-            (None, OutlineContextItem::Item) => "Item".to_owned(),
+                } => format!("{} ({})", kind, description),
+                Equation => "Equation".into(),
+                Item => "Item".into(),
+            },
         }
     }
 
     pub fn detail(&self) -> Option<String> {
         match &self.item {
-            OutlineContextItem::Section { .. }
-            | OutlineContextItem::Theorem { .. }
-            | OutlineContextItem::Equation
-            | OutlineContextItem::Item => Some(self.reference()),
-            OutlineContextItem::Caption {
+            Section { .. } | Theorem { .. } | Equation | Item => Some(self.reference()),
+            Caption {
                 kind: Some(kind), ..
-            } => Some(match &self.number {
-                Some(number) => format!("{} {}", kind.as_str(), number),
-                None => kind.as_str().to_owned(),
-            }),
-            OutlineContextItem::Caption { .. } => None,
+            } => {
+                let result = match &self.number {
+                    Some(number) => format!("{} {}", kind.as_str(), number),
+                    None => kind.as_str().to_owned(),
+                };
+                Some(result)
+            }
+            Caption { .. } => None,
         }
     }
 
@@ -291,7 +273,7 @@ impl OutlineContext {
         Some(Self {
             range: caption_env.range(),
             number: Self::find_number(view, label),
-            item: OutlineContextItem::Caption {
+            item: Caption {
                 kind: caption_kind,
                 text: caption_text,
             },
@@ -332,7 +314,7 @@ impl OutlineContext {
                         return Some(Self {
                             range: env.range(),
                             number: Self::find_number(view, label),
-                            item: OutlineContextItem::Theorem { kind, description },
+                            item: Theorem { kind, description },
                         });
                     }
                 }
@@ -355,7 +337,7 @@ impl OutlineContext {
             .map(|range| Self {
                 range,
                 number: Self::find_number(view, label),
-                item: OutlineContextItem::Equation,
+                item: Equation,
             })
     }
 
@@ -400,7 +382,7 @@ impl OutlineContext {
         Some(Self {
             range: enumeration.range(),
             number,
-            item: OutlineContextItem::Item,
+            item: Item,
         })
     }
 
@@ -410,7 +392,7 @@ impl OutlineContext {
         Some(Self {
             range: section.range(),
             number: Self::find_number(view, label),
-            item: OutlineContextItem::Section {
+            item: Section {
                 prefix: section.prefix,
                 text: extract_group(content),
             },

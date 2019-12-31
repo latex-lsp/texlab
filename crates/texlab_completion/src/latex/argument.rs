@@ -15,7 +15,7 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
     #[boxed]
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut all_items = Vec::new();
-        for component in COMPLETION_DATABASE.related_components(request.related_documents()) {
+        for component in COMPONENT_DATABASE.related_components(request.related_documents()) {
             for command in &component.commands {
                 let name = format!("\\{}", command.name);
                 for (i, parameter) in command.parameters.iter().enumerate() {

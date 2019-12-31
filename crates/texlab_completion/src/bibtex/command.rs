@@ -24,7 +24,7 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
                     range.start.character += 1;
 
                     let component = LatexComponentId::kernel();
-                    for command in &COMPLETION_DATABASE.kernel().commands {
+                    for command in &COMPONENT_DATABASE.kernel().commands {
                         let text_edit = TextEdit::new(range, (&command.name).into());
                         let item = factory::command(
                             request,

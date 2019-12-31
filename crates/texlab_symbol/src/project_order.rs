@@ -99,10 +99,10 @@ mod tests {
 
     #[test]
     fn test_no_cycles() {
-        let mut builder = WorkspaceBuilder::new();
-        let a = builder.document("a.tex", "");
-        let b = builder.document("b.tex", "");
-        let c = builder.document("c.tex", "\\include{b}\\include{a}");
+        let mut builder = TestWorkspaceBuilder::new();
+        let a = builder.add_document("a.tex", "");
+        let b = builder.add_document("b.tex", "");
+        let c = builder.add_document("c.tex", "\\include{b}\\include{a}");
 
         let project_ordering = ProjectOrdering::new(&builder.workspace);
 
@@ -113,10 +113,10 @@ mod tests {
 
     #[test]
     fn test_cycles() {
-        let mut builder = WorkspaceBuilder::new();
-        let a = builder.document("a.tex", "\\include{b}");
-        let b = builder.document("b.tex", "\\include{a}");
-        let c = builder.document("c.tex", "\\include{a}");
+        let mut builder = TestWorkspaceBuilder::new();
+        let a = builder.add_document("a.tex", "\\include{b}");
+        let b = builder.add_document("b.tex", "\\include{a}");
+        let c = builder.add_document("c.tex", "\\include{a}");
 
         let project_ordering = ProjectOrdering::new(&builder.workspace);
 
@@ -127,11 +127,11 @@ mod tests {
 
     #[test]
     fn test_multiple_roots() {
-        let mut builder = WorkspaceBuilder::new();
-        let a = builder.document("a.tex", "\\include{b}");
-        let b = builder.document("b.tex", "");
-        let c = builder.document("c.tex", "");
-        let d = builder.document("d.tex", "\\include{c}");
+        let mut builder = TestWorkspaceBuilder::new();
+        let a = builder.add_document("a.tex", "\\include{b}");
+        let b = builder.add_document("b.tex", "");
+        let c = builder.add_document("c.tex", "");
+        let d = builder.add_document("d.tex", "\\include{c}");
 
         let project_ordering = ProjectOrdering::new(&builder.workspace);
 

@@ -1,5 +1,6 @@
 use super::document::Document;
-use super::workspace::{Workspace, WorkspaceBuilder};
+use super::workspace::{TestWorkspaceBuilder, Workspace};
+use futures::executor::block_on;
 use futures_boxed::boxed;
 use std::sync::Arc;
 use texlab_distro::{Distribution, UnknownDistribution};
@@ -162,9 +163,9 @@ impl FeatureSpec {
     }
 
     fn view(&self) -> DocumentView {
-        let mut builder = WorkspaceBuilder::new();
+        let mut builder = TestWorkspaceBuilder::new();
         for file in &self.files {
-            builder.document(file.name, file.text);
+            builder.add_document(file.name, file.text);
         }
         let workspace = builder.workspace;
         let main_uri = Self::uri(self.main_file);
@@ -262,5 +263,5 @@ where
     F: FeatureProvider<Params = P, Output = O>,
     S: Into<FeatureRequest<P>>,
 {
-    futures::executor::block_on(provider.execute(&spec.into()))
+    block_on(provider.execute(&spec.into()))
 }

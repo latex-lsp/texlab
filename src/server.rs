@@ -8,6 +8,7 @@ use crate::highlight::HighlightProvider;
 use crate::link::LinkProvider;
 use crate::reference::ReferenceProvider;
 use crate::rename::{PrepareRenameProvider, RenameProvider};
+use crate::workspace_manager::{WorkspaceLoadError, WorkspaceManager};
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc::server::{Middleware, Result};
@@ -149,7 +150,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             selection_range_provider: None,
         };
 
-        Lazy::force(&COMPLETION_DATABASE);
+        Lazy::force(&COMPONENT_DATABASE);
         Ok(InitializeResult { capabilities })
     }
 
@@ -228,7 +229,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
         match data {
             CompletionItemData::Package | CompletionItemData::Class => {
-                item.documentation = COMPLETION_DATABASE
+                item.documentation = COMPONENT_DATABASE
                     .documentation(&item.label)
                     .map(Documentation::MarkupContent);
             }
@@ -491,14 +492,14 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    fn update_document(&self, document: &Document) -> std::result::Result<(), LoadError> {
+    fn update_document(&self, document: &Document) -> std::result::Result<(), WorkspaceLoadError> {
         if document.uri.scheme() != "file" {
             return Ok(());
         }
 
         let path = document.uri.to_file_path().unwrap();
-        let data = fs::metadata(&path).map_err(LoadError::IO)?;
-        if data.modified().map_err(LoadError::IO)? > document.modified {
+        let data = fs::metadata(&path).map_err(WorkspaceLoadError::IO)?;
+        if data.modified().map_err(WorkspaceLoadError::IO)? > document.modified {
             self.workspace_manager.load(&path)
         } else {
             Ok(())
