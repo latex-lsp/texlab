@@ -2,6 +2,7 @@
 
 pub mod action;
 pub mod build;
+pub mod config;
 pub mod definition;
 pub mod diagnostics;
 pub mod folding;

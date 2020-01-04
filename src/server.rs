@@ -1,5 +1,6 @@
 use crate::action::{Action, ActionManager, LintReason};
 use crate::build::*;
+use crate::config::ConfigStrategy;
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsManager;
 use crate::folding::FoldingProvider;
@@ -15,7 +16,6 @@ use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::*;
 use once_cell::sync::{Lazy, OnceCell};
-use serde::de::DeserializeOwned;
 use std::ffi::OsStr;
 use std::fs;
 use std::future::Future;
@@ -34,6 +34,7 @@ pub struct LatexLspServer<C> {
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     distribution: Arc<Box<dyn Distribution>>,
+    config_strategy: OnceCell<Box<dyn ConfigStrategy>>,
     build_manager: BuildManager<C>,
     workspace_manager: WorkspaceManager,
     action_manager: ActionManager,
@@ -57,6 +58,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
             distribution: Arc::clone(&distribution),
+            config_strategy: OnceCell::new(),
             build_manager: BuildManager::new(client),
             workspace_manager: WorkspaceManager::new(distribution),
             action_manager: ActionManager::default(),
@@ -97,6 +99,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        let client = Arc::clone(&self.client);
+        let config_strategy = ConfigStrategy::select(&params.capabilities, client);
+        let _ = self.config_strategy.set(config_strategy);
+
         self.client_capabilities
             .set(Arc::new(params.capabilities))
             .unwrap();
@@ -156,6 +162,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub fn initialized(&self, _params: InitializedParams) {
+        self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager.push(Action::LoadDistribution);
     }
@@ -208,6 +215,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub fn did_close(&self, _params: DidCloseTextDocumentParams) {}
+
+    #[jsonrpc_method("workspace/didChangeConfiguration", kind = "notification")]
+    pub fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+        self.action_manager
+            .push(Action::UpdateConfiguration(params.settings));
+    }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
     pub fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
@@ -334,12 +347,17 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let mut edits = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
+            let options = self
+                .configuration()
+                .await
+                .bibtex
+                .and_then(|opts| opts.formatting)
+                .unwrap_or_default();
+
             let params = BibtexFormattingParams {
                 tab_size: request.params.options.tab_size as usize,
                 insert_spaces: request.params.options.insert_spaces,
-                options: self
-                    .configuration::<BibtexFormattingOptions>("bibtex.formatting")
-                    .await,
+                options,
             };
 
             for declaration in &tree.root.children {
@@ -384,7 +402,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/build", kind = "request")]
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
-        let options = self.configuration::<LatexBuildOptions>("latex.build").await;
+        let options = self
+            .configuration()
+            .await
+            .latex
+            .and_then(|opts| opts.build)
+            .unwrap_or_default();
         let result = self.build_manager.build(request, options).await;
         Ok(result)
     }
@@ -396,8 +419,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     ) -> Result<ForwardSearchResult> {
         let request = self.make_feature_request(params.text_document.as_uri(), params)?;
         let options = self
-            .configuration::<LatexForwardSearchOptions>("latex.forwardSearch")
-            .await;
+            .configuration()
+            .await
+            .latex
+            .and_then(|opts| opts.forward_search)
+            .unwrap_or_default();
 
         match request.document().uri.to_file_path() {
             Ok(tex_file) => {
@@ -416,43 +442,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    async fn configuration<T>(&self, section: &'static str) -> T
-    where
-        T: DeserializeOwned + Default,
-    {
-        if !self
-            .client_capabilities
+    async fn configuration(&self) -> Options {
+        self.config_strategy
             .get()
-            .and_then(|cap| cap.workspace.as_ref())
-            .and_then(|cap| cap.configuration)
-            .unwrap_or(false)
-        {
-            return T::default();
-        }
-
-        let params = ConfigurationParams {
-            items: vec![ConfigurationItem {
-                section: Some(section.into()),
-                scope_uri: None,
-            }],
-        };
-
-        match self.client.configuration(params).await {
-            Ok(json) => match serde_json::from_value::<Vec<T>>(json) {
-                Ok(config) => config.into_iter().next().unwrap(),
-                Err(_) => {
-                    warn!("Invalid configuration: {}", section);
-                    T::default()
-                }
-            },
-            Err(why) => {
-                error!(
-                    "Retrieving configuration for {} failed: {}",
-                    section, why.message
-                );
-                T::default()
-            }
-        }
+            .expect("initialize needs to be called before using the server")
+            .get()
+            .await
     }
 
     fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
@@ -581,6 +576,25 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
         self.update_build_diagnostics().await;
         for action in self.action_manager.take() {
             match action {
+                Action::RegisterCapabilities => {
+                    let capabilities = self.client_capabilities.get().unwrap();
+                    if !capabilities.has_pull_configuration_support()
+                        && capabilities.has_push_configuration_support()
+                    {
+                        let registration = Registration {
+                            id: "pull-config".into(),
+                            method: "workspace/didChangeConfiguration".into(),
+                            register_options: None,
+                        };
+                        let params = RegistrationParams {
+                            registrations: vec![registration],
+                        };
+                        self.client
+                            .register_capability(params)
+                            .await
+                            .expect("failed to register \"workspace/didChangeConfiguration\"");
+                    }
+                }
                 Action::LoadDistribution => {
                     info!("Detected TeX distribution: {:?}", self.distribution.kind());
                     if self.distribution.kind() == DistributionKind::Unknown {
@@ -612,6 +626,9 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         self.client.show_message(params).await;
                     };
                 }
+                Action::UpdateConfiguration(settings) => {
+                    self.config_strategy.get().unwrap().set(settings).await;
+                }
                 Action::DetectRoot(uri) => {
                     self.detect_root(uri).await;
                 }
@@ -631,10 +648,16 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     }
                 }
                 Action::RunLinter(uri, reason) => {
-                    let config: LatexLintOptions = self.configuration("latex.lint").await;
+                    let options = self
+                        .configuration()
+                        .await
+                        .latex
+                        .and_then(|opts| opts.lint)
+                        .unwrap_or_default();
+
                     let should_lint = match reason {
-                        LintReason::Change => config.on_change(),
-                        LintReason::Save => config.on_save(),
+                        LintReason::Change => options.on_change(),
+                        LintReason::Save => options.on_save(),
                     };
                     if should_lint {
                         let workspace = self.workspace_manager.get();
@@ -647,8 +670,14 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     }
                 }
                 Action::Build(uri) => {
-                    let config: LatexBuildOptions = self.configuration("latex.build").await;
-                    if config.on_save() {
+                    let options = self
+                        .configuration()
+                        .await
+                        .latex
+                        .and_then(|opts| opts.build)
+                        .unwrap_or_default();
+
+                    if options.on_save() {
                         let text_document = TextDocumentIdentifier::new(uri.into());
                         self.build(BuildParams { text_document }).await.unwrap();
                     }

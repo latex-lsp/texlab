@@ -11,12 +11,18 @@ async fn create_scenario(
     let scenario = Scenario::new("build", true).await;
     scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
 
-    let options = LatexBuildOptions {
-        executable: Some(executable.into()),
-        args: None,
-        on_save: Some(build_on_save),
+    *scenario.client.options.lock().await = Options {
+        latex: Some(LatexOptions {
+            forward_search: None,
+            lint: None,
+            build: Some(LatexBuildOptions {
+                executable: Some(executable.into()),
+                args: None,
+                on_save: Some(build_on_save),
+            }),
+        }),
+        bibtex: None,
     };
-    scenario.client.options.lock().await.latex_build = Some(options);
 
     scenario.open(file).await;
     scenario

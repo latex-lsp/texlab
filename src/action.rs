@@ -8,9 +8,11 @@ pub enum LintReason {
     Save,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Action {
+    RegisterCapabilities,
     LoadDistribution,
+    UpdateConfiguration(serde_json::Value),
     DetectRoot(Uri),
     PublishDiagnostics,
     RunLinter(Uri, LintReason),

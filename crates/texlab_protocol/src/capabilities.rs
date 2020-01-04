@@ -8,6 +8,10 @@ pub trait ClientCapabilitiesExt {
     fn has_work_done_progress_support(&self) -> bool;
 
     fn has_hover_markdown_support(&self) -> bool;
+
+    fn has_pull_configuration_support(&self) -> bool;
+
+    fn has_push_configuration_support(&self) -> bool;
 }
 
 impl ClientCapabilitiesExt for ClientCapabilities {
@@ -38,6 +42,18 @@ impl ClientCapabilitiesExt for ClientCapabilities {
             .and_then(|cap| cap.content_format.as_ref())
             .filter(|formats| formats.contains(&MarkupKind::Markdown))
             .is_some()
+    }
+
+    fn has_pull_configuration_support(&self) -> bool {
+        self.workspace.as_ref().and_then(|cap| cap.configuration) == Some(true)
+    }
+
+    fn has_push_configuration_support(&self) -> bool {
+        self.workspace
+            .as_ref()
+            .and_then(|cap| cap.did_change_configuration)
+            .and_then(|cap| cap.dynamic_registration)
+            == Some(true)
     }
 }
 

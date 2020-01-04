@@ -59,3 +59,24 @@ impl LatexBuildOptions {
         self.on_save.unwrap_or(false)
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatexOptions {
+    pub forward_search: Option<LatexForwardSearchOptions>,
+    pub lint: Option<LatexLintOptions>,
+    pub build: Option<LatexBuildOptions>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BibtexOptions {
+    pub formatting: Option<BibtexFormattingOptions>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Options {
+    pub latex: Option<LatexOptions>,
+    pub bibtex: Option<BibtexOptions>,
+}

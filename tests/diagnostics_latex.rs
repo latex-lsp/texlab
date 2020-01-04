@@ -7,10 +7,17 @@ async fn disabled() {
     let scenario = Scenario::new("diagnostics/latex", true).await;
     match scenario.distribution.kind() {
         Texlive | Miktex => {
-            scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
-                on_change: Some(false),
-                on_save: Some(false),
-            });
+            *scenario.client.options.lock().await = Options {
+                latex: Some(LatexOptions {
+                    forward_search: None,
+                    lint: Some(LatexLintOptions {
+                        on_change: Some(false),
+                        on_save: Some(false),
+                    }),
+                    build: None,
+                }),
+                bibtex: None,
+            };
 
             scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
             scenario.open("disabled.tex").await;
@@ -28,10 +35,17 @@ async fn on_open() {
     let scenario = Scenario::new("diagnostics/latex", true).await;
     match scenario.distribution.kind() {
         Texlive | Miktex => {
-            scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
-                on_change: Some(false),
-                on_save: Some(true),
-            });
+            *scenario.client.options.lock().await = Options {
+                latex: Some(LatexOptions {
+                    forward_search: None,
+                    lint: Some(LatexLintOptions {
+                        on_change: Some(false),
+                        on_save: Some(true),
+                    }),
+                    build: None,
+                }),
+                bibtex: None,
+            };
 
             scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
             scenario.open("on_open.tex").await;
@@ -51,10 +65,17 @@ async fn on_save() {
     let scenario = Scenario::new("diagnostics/latex", true).await;
     match scenario.distribution.kind() {
         Texlive | Miktex => {
-            scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
-                on_change: Some(false),
-                on_save: Some(true),
-            });
+            *scenario.client.options.lock().await = Options {
+                latex: Some(LatexOptions {
+                    forward_search: None,
+                    lint: Some(LatexLintOptions {
+                        on_change: Some(false),
+                        on_save: Some(true),
+                    }),
+                    build: None,
+                }),
+                bibtex: None,
+            };
 
             scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
             scenario.open("on_save.tex").await;
@@ -99,11 +120,17 @@ async fn on_change() {
     let scenario = Scenario::new("diagnostics/latex", true).await;
     match scenario.distribution.kind() {
         Texlive | Miktex => {
-            scenario.client.options.lock().await.latex_lint = Some(LatexLintOptions {
-                on_change: Some(true),
-                on_save: Some(true),
-            });
-
+            *scenario.client.options.lock().await = Options {
+                latex: Some(LatexOptions {
+                    forward_search: None,
+                    lint: Some(LatexLintOptions {
+                        on_change: Some(true),
+                        on_save: Some(true),
+                    }),
+                    build: None,
+                }),
+                bibtex: None,
+            };
             scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
             scenario.open("on_change.tex").await;
             let uri = scenario.uri("on_change.tex");

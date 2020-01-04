@@ -5,17 +5,10 @@ use serde::Serialize;
 use std::collections::HashMap;
 use texlab_protocol::*;
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
-pub struct MockLspClientOptions {
-    pub bibtex_formatting: Option<BibtexFormattingOptions>,
-    pub latex_lint: Option<LatexLintOptions>,
-    pub latex_build: Option<LatexBuildOptions>,
-}
-
 #[derive(Debug, Default)]
 pub struct MockLspClient {
     pub messages: Mutex<Vec<ShowMessageParams>>,
-    pub options: Mutex<MockLspClientOptions>,
+    pub options: Mutex<Options>,
     pub diagnostics_by_uri: Mutex<HashMap<Uri, Vec<Diagnostic>>>,
     pub log_messages: Mutex<Vec<LogMessageParams>>,
 }
@@ -52,10 +45,9 @@ impl LspClient for MockLspClient {
 
         let options = self.options.lock().await;
         match params.items[0].section.as_ref().unwrap().as_ref() {
-            "bibtex.formatting" => serialize(&options.bibtex_formatting),
-            "latex.lint" => serialize(&options.latex_lint),
-            "latex.build" => serialize(&options.latex_build),
-            _ => panic!("Invalid language configuration!"),
+            "latex" => serialize(&options.latex),
+            "bibtex" => serialize(&options.bibtex),
+            _ => panic!("invalid language configuration"),
         }
     }
 

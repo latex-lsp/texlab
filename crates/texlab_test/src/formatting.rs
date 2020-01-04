@@ -11,7 +11,12 @@ pub async fn run_bibtex(
     scenario.initialize(&CLIENT_FULL_CAPABILITIES).await;
     scenario.open(file).await;
     {
-        scenario.client.options.lock().await.bibtex_formatting = options;
+        *scenario.client.options.lock().await = Options {
+            bibtex: Some(BibtexOptions {
+                formatting: options,
+            }),
+            latex: None,
+        };
     }
 
     let params = DocumentFormattingParams {
