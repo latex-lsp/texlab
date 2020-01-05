@@ -229,7 +229,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
-        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document_position.as_uri(), params)
+            .await?;
         let items = self.completion_provider.execute(&request).await;
         Ok(CompletionList {
             is_incomplete: true,
@@ -262,7 +264,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let hover = self.hover_provider.execute(&request).await;
         Ok(hover)
     }
@@ -272,7 +276,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<DefinitionResponse> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let results = self.definition_provider.execute(&request).await;
         let response = if request.client_capabilities.has_definition_link_support() {
             DefinitionResponse::LocationLinks(results)
@@ -290,7 +296,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
-        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document_position.as_uri(), params)
+            .await?;
         let results = self.reference_provider.execute(&request).await;
         Ok(results)
     }
@@ -300,7 +308,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let results = self.highlight_provider.execute(&request).await;
         Ok(results)
     }
@@ -324,7 +334,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: DocumentSymbolParams,
     ) -> Result<DocumentSymbolResponse> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let symbols = self.symbol_provider.execute(&request).await;
         let response = texlab_symbol::document_symbols(
             &self.client_capabilities.get().unwrap(),
@@ -337,14 +349,18 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let links = self.link_provider.execute(&request).await;
         Ok(links)
     }
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
     pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let mut edits = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             let options = self
@@ -380,28 +396,34 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Option<Range>> {
-        let request = self.make_feature_request(params.as_uri(), params)?;
+        let request = self.make_feature_request(params.as_uri(), params).await?;
         let range = self.prepare_rename_provider.execute(&request).await;
         Ok(range)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
-        let request = self.make_feature_request(params.text_document_position.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document_position.as_uri(), params)
+            .await?;
         let edit = self.rename_provider.execute(&request).await;
         Ok(edit)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let foldings = self.folding_provider.execute(&request).await;
         Ok(foldings)
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let options = self
             .configuration()
             .await
@@ -417,7 +439,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<ForwardSearchResult> {
-        let request = self.make_feature_request(params.text_document.as_uri(), params)?;
+        let request = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
         let options = self
             .configuration()
             .await
@@ -450,7 +474,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .await
     }
 
-    fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
+    async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
         let workspace = self.workspace_manager.get();
         let client_capabilities = self
             .client_capabilities
@@ -463,6 +487,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 view: DocumentView::new(workspace, document),
                 client_capabilities: Arc::clone(&client_capabilities),
                 distribution: Arc::clone(&self.distribution),
+                options: self.configuration().await,
             })
         } else {
             let msg = format!("Unknown document: {}", uri);

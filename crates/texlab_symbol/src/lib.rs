@@ -195,6 +195,7 @@ pub async fn workspace_symbols(
                 text_document: TextDocumentIdentifier::new(uri.clone().into()),
             },
             distribution: Arc::clone(&distribution),
+            options: Options::default(),
         };
 
         let mut buffer = Vec::new();
