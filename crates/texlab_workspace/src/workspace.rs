@@ -17,7 +17,7 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn new() -> Self {
-        Workspace {
+        Self {
             documents: Vec::new(),
         }
     }

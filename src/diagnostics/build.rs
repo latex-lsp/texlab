@@ -92,7 +92,7 @@ pub struct BuildError {
 
 impl BuildError {
     pub fn new(uri: Uri, kind: BuildErrorKind, message: String, line: Option<u64>) -> Self {
-        BuildError {
+        Self {
             uri,
             kind,
             message,
@@ -264,7 +264,7 @@ struct FileRange {
 
 impl FileRange {
     fn new(uri: Option<Uri>, start: usize, end: usize) -> Self {
-        FileRange { uri, start, end }
+        Self { uri, start, end }
     }
 
     fn length(&self) -> usize {

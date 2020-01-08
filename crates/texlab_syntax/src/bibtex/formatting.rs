@@ -155,7 +155,7 @@ struct BibtexContentAnalyzer<'a> {
 
 impl<'a> BibtexContentAnalyzer<'a> {
     pub fn new() -> Self {
-        BibtexContentAnalyzer { tokens: Vec::new() }
+        Self { tokens: Vec::new() }
     }
 }
 
