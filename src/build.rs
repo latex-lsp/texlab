@@ -46,8 +46,8 @@ where
             .current_dir(path.parent().unwrap())
             .spawn()?;
 
-        let stdout = BufReader::new(process.stdout().take().unwrap()).lines();
-        let stderr = BufReader::new(process.stderr().take().unwrap()).lines();
+        let stdout = BufReader::new(process.stdout.take().unwrap()).lines();
+        let stderr = BufReader::new(process.stderr.take().unwrap()).lines();
         let mut output = stream::select(stdout, stderr);
 
         while let Some(Ok(line)) = output.next().await {
