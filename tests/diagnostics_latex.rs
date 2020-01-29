@@ -9,12 +9,11 @@ async fn disabled() {
         Texlive | Miktex => {
             *scenario.client.options.lock().await = Options {
                 latex: Some(LatexOptions {
-                    forward_search: None,
                     lint: Some(LatexLintOptions {
                         on_change: Some(false),
                         on_save: Some(false),
                     }),
-                    build: None,
+                    ..LatexOptions::default()
                 }),
                 bibtex: None,
             };
@@ -37,12 +36,11 @@ async fn on_open() {
         Texlive | Miktex => {
             *scenario.client.options.lock().await = Options {
                 latex: Some(LatexOptions {
-                    forward_search: None,
                     lint: Some(LatexLintOptions {
                         on_change: Some(false),
                         on_save: Some(true),
                     }),
-                    build: None,
+                    ..LatexOptions::default()
                 }),
                 bibtex: None,
             };
@@ -67,12 +65,11 @@ async fn on_save() {
         Texlive | Miktex => {
             *scenario.client.options.lock().await = Options {
                 latex: Some(LatexOptions {
-                    forward_search: None,
                     lint: Some(LatexLintOptions {
                         on_change: Some(false),
                         on_save: Some(true),
                     }),
-                    build: None,
+                    ..LatexOptions::default()
                 }),
                 bibtex: None,
             };
@@ -122,12 +119,11 @@ async fn on_change() {
         Texlive | Miktex => {
             *scenario.client.options.lock().await = Options {
                 latex: Some(LatexOptions {
-                    forward_search: None,
                     lint: Some(LatexLintOptions {
                         on_change: Some(true),
                         on_save: Some(true),
                     }),
-                    build: None,
+                    ..LatexOptions::default()
                 }),
                 bibtex: None,
             };

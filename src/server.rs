@@ -442,12 +442,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let request = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let options = self
-            .configuration()
-            .await
-            .latex
-            .and_then(|opts| opts.forward_search)
-            .unwrap_or_default();
+        let options = self.configuration().await.latex.unwrap_or_default();
 
         match request.document().uri.to_file_path() {
             Ok(tex_file) => {

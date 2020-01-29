@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,6 +36,7 @@ pub struct LatexBuildOptions {
     pub executable: Option<String>,
     pub args: Option<Vec<String>>,
     pub on_save: Option<bool>,
+    pub output_directory: Option<PathBuf>,
 }
 
 impl LatexBuildOptions {
@@ -66,6 +68,19 @@ pub struct LatexOptions {
     pub forward_search: Option<LatexForwardSearchOptions>,
     pub lint: Option<LatexLintOptions>,
     pub build: Option<LatexBuildOptions>,
+}
+
+impl LatexOptions {
+    pub fn resolve_output_file(&self, tex_file: &Path, extension: &str) -> Option<PathBuf> {
+        let stem = tex_file.file_stem()?.to_str()?;
+        let name = format!("{}.{}", stem, extension);
+        let output_directory = self
+            .build
+            .as_ref()
+            .and_then(|build| build.output_directory.clone())
+            .unwrap_or_else(|| PathBuf::from("."));
+        Some(tex_file.parent()?.join(output_directory).join(name))
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

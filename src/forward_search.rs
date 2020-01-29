@@ -9,26 +9,25 @@ pub async fn search<'a>(
     tex_file: &'a Path,
     parent: &'a Path,
     line_number: u64,
-    options: LatexForwardSearchOptions,
+    options: LatexOptions,
 ) -> Option<ForwardSearchResult> {
-    if options.executable.is_none() || options.args.is_none() {
+    let pdf_file = options.resolve_output_file(parent, "pdf").unwrap();
+
+    let search_options = options.forward_search.unwrap_or_default();
+    if search_options.executable.is_none() || search_options.args.is_none() {
         return Some(ForwardSearchResult {
             status: ForwardSearchStatus::Unconfigured,
         });
     }
 
-    let pdf_file = parent
-        .parent()?
-        .join(format!("{}.pdf", parent.file_stem()?.to_str()?));
-
-    let args: Vec<String> = options
+    let args: Vec<String> = search_options
         .args
         .unwrap()
         .into_iter()
         .flat_map(|arg| replace_placeholder(&tex_file, &pdf_file, line_number, arg))
         .collect();
 
-    let status = match spawn_process(options.executable.unwrap(), args).await {
+    let status = match spawn_process(search_options.executable.unwrap(), args).await {
         Ok(()) => ForwardSearchStatus::Success,
         Err(why) => {
             error!("Unable to execute forward search: {}", why);

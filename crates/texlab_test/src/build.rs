@@ -13,13 +13,13 @@ async fn create_scenario(
 
     *scenario.client.options.lock().await = Options {
         latex: Some(LatexOptions {
-            forward_search: None,
-            lint: None,
             build: Some(LatexBuildOptions {
                 executable: Some(executable.into()),
                 args: None,
                 on_save: Some(build_on_save),
+                output_directory: None,
             }),
+            ..LatexOptions::default()
         }),
         bibtex: None,
     };
