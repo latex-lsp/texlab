@@ -524,6 +524,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     async fn update_build_diagnostics(&self) {
         let workspace = self.workspace_manager.get();
         let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+        let options = self.configuration().await.latex.unwrap_or_default();
+
         for document in &workspace.documents {
             if document.uri.scheme() != "file" {
                 continue;
@@ -531,7 +533,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
             if let SyntaxTree::Latex(tree) = &document.tree {
                 if tree.env.is_standalone {
-                    match diagnostics_manager.build.update(&document.uri) {
+                    match diagnostics_manager.build.update(&document.uri, &options) {
                         Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
                         Ok(false) => (),
                         Err(why) => warn!(

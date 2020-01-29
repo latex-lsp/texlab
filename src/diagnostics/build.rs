@@ -31,12 +31,13 @@ impl BuildDiagnosticsProvider {
         }
     }
 
-    pub fn update(&mut self, tex_uri: &Uri) -> io::Result<bool> {
+    pub fn update(&mut self, tex_uri: &Uri, options: &LatexOptions) -> io::Result<bool> {
         if tex_uri.scheme() != "file" {
             return Ok(false);
         }
 
-        let log_path = tex_uri.to_file_path().unwrap().with_extension("log");
+        let tex_path = tex_uri.to_file_path().unwrap();
+        let log_path = options.resolve_output_file(&tex_path, "log").unwrap();
         if !log_path.exists() {
             return Ok(false);
         }
