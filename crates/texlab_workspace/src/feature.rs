@@ -14,8 +14,8 @@ pub struct DocumentView {
 }
 
 impl DocumentView {
-    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>) -> Self {
-        let related_documents = workspace.related_documents(&document.uri);
+    pub fn new(workspace: Arc<Workspace>, document: Arc<Document>, options: &Options) -> Self {
+        let related_documents = workspace.related_documents(&document.uri, options);
         Self {
             workspace,
             document,
@@ -173,7 +173,7 @@ impl FeatureSpec {
         let workspace = builder.workspace;
         let main_uri = Self::uri(self.main_file);
         let main_document = workspace.find(&main_uri.into()).unwrap();
-        DocumentView::new(Arc::new(workspace), main_document)
+        DocumentView::new(Arc::new(workspace), main_document, &self.options)
     }
 
     fn request<T>(self, params: T) -> FeatureRequest<T> {

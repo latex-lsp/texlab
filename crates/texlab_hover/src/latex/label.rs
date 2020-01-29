@@ -18,8 +18,8 @@ impl FeatureProvider for LatexLabelHoverProvider {
             let (document, definition) = Self::find_definition(&request.view, reference)?;
 
             let workspace = Arc::clone(&request.view.workspace);
-            let view = DocumentView::new(workspace, document);
-            let outline = Outline::from(&view);
+            let view = DocumentView::new(workspace, document, &request.options);
+            let outline = Outline::analyze(&view, &request.options);
             let outline_context = OutlineContext::parse(&view, &definition, &outline)?;
             let markup = outline_context.documentation();
             Some(Hover {

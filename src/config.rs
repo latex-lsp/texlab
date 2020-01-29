@@ -7,7 +7,7 @@ use texlab_protocol::*;
 
 pub trait ConfigStrategy: Send + Sync {
     #[boxed]
-    async fn get(&self) -> Options;
+    async fn get(&self, fetch: bool) -> Options;
 
     #[boxed()]
     async fn set(&self, settings: serde_json::Value);
@@ -31,11 +31,15 @@ impl dyn ConfigStrategy {
 #[derive(Debug)]
 struct PullConfigStrategy<C> {
     client: Arc<C>,
+    options: Mutex<Options>,
 }
 
 impl<C: LspClient> PullConfigStrategy<C> {
     pub fn new(client: Arc<C>) -> Self {
-        Self { client }
+        Self {
+            client,
+            options: Mutex::default(),
+        }
     }
 
     async fn configuration<T>(&self, section: &'static str) -> T
@@ -70,11 +74,16 @@ impl<C: LspClient> PullConfigStrategy<C> {
 
 impl<C: LspClient + Send + Sync> ConfigStrategy for PullConfigStrategy<C> {
     #[boxed]
-    async fn get(&self) -> Options {
-        Options {
-            latex: Some(self.configuration("latex").await),
-            bibtex: Some(self.configuration("bibtex").await),
+    async fn get(&self, fetch: bool) -> Options {
+        if fetch {
+            let options = Options {
+                latex: Some(self.configuration("latex").await),
+                bibtex: Some(self.configuration("bibtex").await),
+            };
+            let mut options_guard = self.options.lock().await;
+            *options_guard = options;
         }
+        self.options.lock().await.clone()
     }
 
     #[boxed]
@@ -94,7 +103,7 @@ impl PushConfigStrategy {
 
 impl ConfigStrategy for PushConfigStrategy {
     #[boxed]
-    async fn get(&self) -> Options {
+    async fn get(&self, _fetch: bool) -> Options {
         let options = self.options.lock().await;
         options.clone()
     }
@@ -120,7 +129,7 @@ impl NoConfigStrategy {
 
 impl ConfigStrategy for NoConfigStrategy {
     #[boxed]
-    async fn get(&self) -> Options {
+    async fn get(&self, _fetch: bool) -> Options {
         Options::default()
     }
 

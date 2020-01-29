@@ -1,6 +1,6 @@
 use futures_boxed::boxed;
 use std::sync::Arc;
-use texlab_protocol::{LocationLink, RangeExt, TextDocumentPositionParams};
+use texlab_protocol::*;
 use texlab_symbol::build_section_tree;
 use texlab_syntax::*;
 use texlab_workspace::*;
@@ -18,8 +18,8 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
         if let Some(reference) = Self::find_reference(&request) {
             for document in request.related_documents() {
                 let workspace = Arc::clone(&request.view.workspace);
-                let view = DocumentView::new(workspace, Arc::clone(&document));
-                Self::find_definitions(&view, &reference, &mut links);
+                let view = DocumentView::new(workspace, Arc::clone(&document), &request.options);
+                Self::find_definitions(&view, &request.options, &reference, &mut links);
             }
         }
         links
@@ -29,12 +29,13 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
 impl LatexLabelDefinitionProvider {
     fn find_definitions(
         view: &DocumentView,
+        options: &Options,
         reference: &LatexToken,
         links: &mut Vec<LocationLink>,
     ) {
         if let SyntaxTree::Latex(tree) = &view.document.tree {
-            let outline = Outline::from(view);
-            let section_tree = build_section_tree(view, tree);
+            let outline = Outline::analyze(view, options);
+            let section_tree = build_section_tree(view, tree, options);
             for label in &tree.structure.labels {
                 if label.kind == LatexLabelKind::Definition {
                     let context = OutlineContext::parse(view, label, &outline);

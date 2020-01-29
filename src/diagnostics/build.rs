@@ -31,7 +31,7 @@ impl BuildDiagnosticsProvider {
         }
     }
 
-    pub fn update(&mut self, tex_uri: &Uri, options: &LatexOptions) -> io::Result<bool> {
+    pub fn update(&mut self, tex_uri: &Uri, options: &Options) -> io::Result<bool> {
         if tex_uri.scheme() != "file" {
             return Ok(false);
         }

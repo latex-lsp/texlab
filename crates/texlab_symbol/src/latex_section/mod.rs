@@ -21,7 +21,7 @@ impl FeatureProvider for LatexSectionSymbolProvider {
     async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut symbols = Vec::new();
         if let SyntaxTree::Latex(tree) = &request.document().tree {
-            let mut section_tree = build_section_tree(&request.view, tree);
+            let mut section_tree = build_section_tree(&request.view, tree, &request.options);
             for symbol in enumeration::symbols(&request.view, tree) {
                 section_tree.insert_symbol(&symbol);
             }
@@ -53,12 +53,13 @@ impl FeatureProvider for LatexSectionSymbolProvider {
 pub fn build_section_tree<'a>(
     view: &'a DocumentView,
     tree: &'a LatexSyntaxTree,
+    options: &'a Options,
 ) -> LatexSectionTree<'a> {
     let mut section_tree = LatexSectionTree::from(tree);
     section_tree.set_full_text(&view.document.text);
     let end_position = compute_end_position(tree, &view.document.text);
     LatexSectionNode::set_full_range(&mut section_tree.children, end_position);
-    let outline = Outline::from(view);
+    let outline = Outline::analyze(view, options);
     for child in &mut section_tree.children {
         child.set_label(tree, view, &outline);
     }

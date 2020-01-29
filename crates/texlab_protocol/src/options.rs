@@ -70,19 +70,6 @@ pub struct LatexOptions {
     pub build: Option<LatexBuildOptions>,
 }
 
-impl LatexOptions {
-    pub fn resolve_output_file(&self, tex_file: &Path, extension: &str) -> Option<PathBuf> {
-        let stem = tex_file.file_stem()?.to_str()?;
-        let name = format!("{}.{}", stem, extension);
-        let output_directory = self
-            .build
-            .as_ref()
-            .and_then(|build| build.output_directory.clone())
-            .unwrap_or_else(|| PathBuf::from("."));
-        Some(tex_file.parent()?.join(output_directory).join(name))
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BibtexOptions {
@@ -94,4 +81,18 @@ pub struct BibtexOptions {
 pub struct Options {
     pub latex: Option<LatexOptions>,
     pub bibtex: Option<BibtexOptions>,
+}
+
+impl Options {
+    pub fn resolve_output_file(&self, tex_path: &Path, extension: &str) -> Option<PathBuf> {
+        let stem = tex_path.file_stem()?.to_str()?;
+        let name = format!("{}.{}", stem, extension);
+        let output_directory = self
+            .latex
+            .as_ref()
+            .and_then(|latex| latex.build.as_ref())
+            .and_then(|build| build.output_directory.clone())
+            .unwrap_or_else(|| PathBuf::from("."));
+        Some(tex_path.parent()?.join(output_directory).join(name))
+    }
 }

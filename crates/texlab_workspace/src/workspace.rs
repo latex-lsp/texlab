@@ -1,5 +1,6 @@
 use super::components::COMPONENT_DATABASE;
 use super::document::Document;
+use path_clean::PathClean;
 use petgraph::visit::Dfs;
 use petgraph::Graph;
 use std::collections::HashMap;
@@ -29,7 +30,7 @@ impl Workspace {
             .map(|document| Arc::clone(&document))
     }
 
-    pub fn related_documents(&self, uri: &Uri) -> Vec<Arc<Document>> {
+    pub fn related_documents(&self, uri: &Uri, options: &Options) -> Vec<Arc<Document>> {
         let mut graph = Graph::new_undirected();
         let mut indices_by_uri = HashMap::new();
         for document in &self.documents {
@@ -52,9 +53,10 @@ impl Workspace {
                     }
                 }
 
-                let tex_path = parent.uri.to_file_path().unwrap();
-                let aux_path = tex_path.with_extension("aux");
-                if let Some(child) = self.find(&Uri::from_file_path(aux_path).unwrap()) {
+                if let Some(child) = Self::aux_path(&parent.uri, options)
+                    .and_then(|aux_path| Uri::from_file_path(aux_path).ok())
+                    .and_then(|aux_uri| self.find(&aux_uri))
+                {
                     graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
                 }
             }
@@ -70,8 +72,8 @@ impl Workspace {
         documents
     }
 
-    pub fn find_parent(&self, uri: &Uri) -> Option<Arc<Document>> {
-        for document in self.related_documents(uri) {
+    pub fn find_parent(&self, uri: &Uri, options: &Options) -> Option<Arc<Document>> {
+        for document in self.related_documents(uri, options) {
             if let SyntaxTree::Latex(tree) = &document.tree {
                 if tree.env.is_standalone {
                     return Some(document);
@@ -81,7 +83,7 @@ impl Workspace {
         None
     }
 
-    pub fn unresolved_includes(&self) -> Vec<PathBuf> {
+    pub fn unresolved_includes(&self, options: &Options) -> Vec<PathBuf> {
         let mut includes = Vec::new();
         for document in &self.documents {
             if let SyntaxTree::Latex(tree) = &document.tree {
@@ -118,11 +120,7 @@ impl Workspace {
                     }
                 }
 
-                if let Ok(aux_path) = document
-                    .uri
-                    .to_file_path()
-                    .map(|path| path.with_extension("aux"))
-                {
+                if let Some(aux_path) = Self::aux_path(&document.uri, options) {
                     if self
                         .find(&Uri::from_file_path(&aux_path).unwrap())
                         .is_none()
@@ -133,6 +131,18 @@ impl Workspace {
             }
         }
         includes
+    }
+
+    fn aux_path(tex_uri: &Uri, options: &Options) -> Option<PathBuf> {
+        let tex_path = tex_uri.to_file_path().ok()?;
+        let aux_path = PathBuf::from(
+            options
+                .resolve_output_file(&tex_path, "aux")?
+                .to_str()?
+                .replace('\\', "/"),
+        )
+        .clean();
+        Some(aux_path)
     }
 }
 
@@ -173,7 +183,9 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri1 = builder.add_document("foo.tex", "\\include{bar/baz}");
         let uri2 = builder.add_document("bar/baz.tex", "");
-        let documents = builder.workspace.related_documents(&uri1);
+        let documents = builder
+            .workspace
+            .related_documents(&uri1, &Options::default());
         verify_documents(vec![uri1, uri2], documents);
     }
 
@@ -182,7 +194,9 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri1 = builder.add_document("foo.tex", "");
         let uri2 = builder.add_document("bar/baz.tex", "\\input{../foo.tex}");
-        let documents = builder.workspace.related_documents(&uri1);
+        let documents = builder
+            .workspace
+            .related_documents(&uri1, &Options::default());
         verify_documents(vec![uri1, uri2], documents);
     }
 
@@ -190,7 +204,9 @@ mod tests {
     fn related_documents_invalid_includes() {
         let mut builder = TestWorkspaceBuilder::new();
         let uri = builder.add_document("foo.tex", "\\include{<foo>?|bar|:}\n\\include{}");
-        let documents = builder.workspace.related_documents(&uri);
+        let documents = builder
+            .workspace
+            .related_documents(&uri, &Options::default());
         verify_documents(vec![uri], documents);
     }
 
@@ -199,7 +215,9 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri1 = builder.add_document("foo.tex", "\\addbibresource{bar.bib}");
         let uri2 = builder.add_document("bar.bib", "");
-        let documents = builder.workspace.related_documents(&uri2);
+        let documents = builder
+            .workspace
+            .related_documents(&uri2, &Options::default());
         verify_documents(vec![uri2, uri1], documents);
     }
 
@@ -208,7 +226,9 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri = builder.add_document("foo.tex", "\\include{bar.tex}");
         builder.add_document("baz.tex", "");
-        let documents = builder.workspace.related_documents(&uri);
+        let documents = builder
+            .workspace
+            .related_documents(&uri, &Options::default());
         verify_documents(vec![uri], documents);
     }
 
@@ -217,7 +237,9 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri1 = builder.add_document("foo.tex", "\\input{bar.tex}");
         let uri2 = builder.add_document("bar.tex", "\\input{foo.tex}");
-        let documents = builder.workspace.related_documents(&uri1);
+        let documents = builder
+            .workspace
+            .related_documents(&uri1, &Options::default());
         verify_documents(vec![uri1, uri2], documents);
     }
 
@@ -227,7 +249,9 @@ mod tests {
         let uri1 = builder.add_document("test.tex", "\\include{test1}\\include{test2}");
         let uri2 = builder.add_document("test1.tex", "\\label{foo}");
         let uri3 = builder.add_document("test2.tex", "\\ref{foo}");
-        let documents = builder.workspace.related_documents(&uri3);
+        let documents = builder
+            .workspace
+            .related_documents(&uri3, &Options::default());
         verify_documents(vec![uri3, uri1, uri2], documents);
     }
 
@@ -237,8 +261,29 @@ mod tests {
         let uri1 = builder.add_document("foo.tex", "\\include{bar}");
         let uri2 = builder.add_document("bar.tex", "");
         let uri3 = builder.add_document("foo.aux", "");
-        let documents = builder.workspace.related_documents(&uri2);
+        let documents = builder
+            .workspace
+            .related_documents(&uri2, &Options::default());
         verify_documents(vec![uri2, uri1, uri3], documents);
+    }
+
+    #[test]
+    fn related_documents_aux_file_sub_directory() {
+        let mut builder = TestWorkspaceBuilder::new();
+        let uri1 = builder.add_document("foo.tex", "");
+        let uri2 = builder.add_document("bar/baz/foo.aux", "");
+        let options = Options {
+            latex: Some(LatexOptions {
+                build: Some(LatexBuildOptions {
+                    output_directory: Some(PathBuf::from("bar/baz")),
+                    ..LatexBuildOptions::default()
+                }),
+                ..LatexOptions::default()
+            }),
+            bibtex: None,
+        };
+        let documents = builder.workspace.related_documents(&uri1, &options);
+        verify_documents(vec![uri1, uri2], documents);
     }
 
     #[test]
@@ -247,7 +292,10 @@ mod tests {
         let uri1 = builder.add_document("foo.tex", "");
         let uri2 =
             builder.add_document("bar.tex", "\\begin{document}\\include{foo}\\end{document}");
-        let document = builder.workspace.find_parent(&uri1).unwrap();
+        let document = builder
+            .workspace
+            .find_parent(&uri1, &Options::default())
+            .unwrap();
         assert_eq!(uri2, document.uri);
     }
 
@@ -256,7 +304,7 @@ mod tests {
         let mut builder = TestWorkspaceBuilder::new();
         let uri = builder.add_document("foo.tex", "");
         builder.add_document("bar.tex", "\\begin{document}\\end{document}");
-        let document = builder.workspace.find_parent(&uri);
+        let document = builder.workspace.find_parent(&uri, &Options::default());
         assert_eq!(None, document);
     }
 }

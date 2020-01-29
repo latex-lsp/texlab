@@ -10,10 +10,6 @@ pub struct Outline<'a> {
 }
 
 impl<'a> Outline<'a> {
-    fn new(sections: Vec<OutlineSection<'a>>) -> Self {
-        Self { sections }
-    }
-
     pub fn find(&self, uri: &Uri, position: Position) -> Option<&'a LatexSection> {
         self.sections
             .iter()
@@ -22,12 +18,11 @@ impl<'a> Outline<'a> {
             .find(|sec| sec.item.end() <= position)
             .map(|sec| sec.item)
     }
-}
 
-impl<'a> From<&'a DocumentView> for Outline<'a> {
-    fn from(view: &'a DocumentView) -> Self {
+    pub fn analyze(view: &'a DocumentView, options: &Options) -> Self {
         let mut finder = OutlineSectionFinder::default();
-        let document = if let Some(parent) = view.workspace.find_parent(&view.document.uri) {
+        let parent = view.workspace.find_parent(&view.document.uri, options);
+        let document = if let Some(parent) = parent {
             view.related_documents
                 .iter()
                 .find(|doc| doc.uri == parent.uri)
@@ -35,8 +30,11 @@ impl<'a> From<&'a DocumentView> for Outline<'a> {
         } else {
             &view.document
         };
+
         finder.analyze(view, &document);
-        Outline::new(finder.sections)
+        Self {
+            sections: finder.sections,
+        }
     }
 }
 

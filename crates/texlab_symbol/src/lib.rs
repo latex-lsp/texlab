@@ -154,6 +154,7 @@ pub fn document_symbols(
     client_capabilities: &ClientCapabilities,
     workspace: &Workspace,
     uri: &Uri,
+    options: &Options,
     symbols: Vec<LatexSymbol>,
 ) -> DocumentSymbolResponse {
     if client_capabilities.has_hierarchical_document_symbol_support() {
@@ -167,7 +168,7 @@ pub fn document_symbols(
             .into_iter()
             .map(|symbol| symbol.into_symbol_info(uri.clone()))
             .collect();
-        sort_symbols(workspace, &mut buffer);
+        sort_symbols(workspace, options, &mut buffer);
         DocumentSymbolResponse::Flat(buffer)
     }
 }
@@ -177,11 +178,12 @@ struct WorkspaceSymbol {
     search_text: String,
 }
 
-pub async fn workspace_symbols(
+pub async fn workspace_symbols<'a>(
     distribution: Arc<Box<dyn Distribution>>,
     client_capabilities: Arc<ClientCapabilities>,
     workspace: Arc<Workspace>,
-    params: &WorkspaceSymbolParams,
+    options: &'a Options,
+    params: &'a WorkspaceSymbolParams,
 ) -> Vec<SymbolInformation> {
     let provider = SymbolProvider::new();
     let mut symbols = Vec::new();
@@ -190,7 +192,7 @@ pub async fn workspace_symbols(
         let uri: Uri = document.uri.clone();
         let request = FeatureRequest {
             client_capabilities: Arc::clone(&client_capabilities),
-            view: DocumentView::new(Arc::clone(&workspace), Arc::clone(&document)),
+            view: DocumentView::new(Arc::clone(&workspace), Arc::clone(&document), options),
             params: DocumentSymbolParams {
                 text_document: TextDocumentIdentifier::new(uri.clone().into()),
             },
@@ -230,12 +232,12 @@ pub async fn workspace_symbols(
             filtered.push(symbol.info);
         }
     }
-    sort_symbols(&workspace, &mut filtered);
+    sort_symbols(&workspace, options, &mut filtered);
     filtered
 }
 
-fn sort_symbols(workspace: &Workspace, symbols: &mut Vec<SymbolInformation>) {
-    let ordering = ProjectOrdering::new(workspace);
+fn sort_symbols(workspace: &Workspace, options: &Options, symbols: &mut Vec<SymbolInformation>) {
+    let ordering = ProjectOrdering::new(workspace, options);
     symbols.sort_by(|left, right| {
         let left_key = (
             ordering.get(&Uri::from(left.location.uri.clone())),

@@ -323,9 +323,15 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let distribution = Arc::clone(&self.distribution);
         let client_capabilities = Arc::clone(&self.client_capabilities.get().unwrap());
         let workspace = self.workspace_manager.get();
-        let symbols =
-            texlab_symbol::workspace_symbols(distribution, client_capabilities, workspace, &params)
-                .await;
+        let options = self.configuration(true).await;
+        let symbols = texlab_symbol::workspace_symbols(
+            distribution,
+            client_capabilities,
+            workspace,
+            &options,
+            &params,
+        )
+        .await;
         Ok(symbols)
     }
 
@@ -342,6 +348,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             &self.client_capabilities.get().unwrap(),
             &request.view.workspace,
             &request.document().uri,
+            &request.options,
             symbols.into_iter().map(Into::into).collect(),
         );
         Ok(response)
@@ -364,7 +371,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let mut edits = Vec::new();
         if let SyntaxTree::Bibtex(tree) = &request.document().tree {
             let options = self
-                .configuration()
+                .configuration(true)
                 .await
                 .bibtex
                 .and_then(|opts| opts.formatting)
@@ -425,7 +432,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
         let options = self
-            .configuration()
+            .configuration(true)
             .await
             .latex
             .and_then(|opts| opts.build)
@@ -442,13 +449,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let request = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let options = self.configuration().await.latex.unwrap_or_default();
+        let options = self.configuration(true).await;
 
         match request.document().uri.to_file_path() {
             Ok(tex_file) => {
                 let parent = request
                     .workspace()
-                    .find_parent(&request.document().uri)
+                    .find_parent(&request.document().uri, &options)
                     .unwrap_or(request.view.document);
                 let parent = parent.uri.to_file_path().unwrap();
                 forward_search::search(&tex_file, &parent, request.params.position.line, options)
@@ -461,12 +468,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    async fn configuration(&self) -> Options {
-        self.config_strategy
-            .get()
-            .expect("initialize needs to be called before using the server")
-            .get()
-            .await
+    async fn configuration(&self, fetch: bool) -> Options {
+        if let Some(strategy) = self.config_strategy.get() {
+            strategy.get(fetch).await
+        } else {
+            Options::default()
+        }
     }
 
     async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
@@ -477,12 +484,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .expect("Failed to retrieve client capabilities");
 
         if let Some(document) = workspace.find(&uri) {
+            let options = self.configuration(true).await;
             Ok(FeatureRequest {
                 params,
-                view: DocumentView::new(workspace, document),
+                view: DocumentView::new(workspace, document, &options),
                 client_capabilities: Arc::clone(&client_capabilities),
                 distribution: Arc::clone(&self.distribution),
-                options: self.configuration().await,
+                options,
             })
         } else {
             let msg = format!("Unknown document: {}", uri);
@@ -491,11 +499,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     async fn detect_children(&self) {
+        let options = self.configuration(false).await;
         loop {
             let mut changed = false;
 
             let workspace = self.workspace_manager.get();
-            for path in workspace.unresolved_includes() {
+            for path in workspace.unresolved_includes(&options) {
                 if path.exists() {
                     changed |= self.workspace_manager.load(&path).is_ok();
                 }
@@ -524,7 +533,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     async fn update_build_diagnostics(&self) {
         let workspace = self.workspace_manager.get();
         let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-        let options = self.configuration().await.latex.unwrap_or_default();
+        let options = self.configuration(false).await;
 
         for document in &workspace.documents {
             if document.uri.scheme() != "file" {
@@ -550,9 +559,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     async fn detect_root(&self, uri: Uri) {
         if uri.scheme() == "file" {
             let mut path = uri.to_file_path().unwrap();
+            let options = self.configuration(false).await;
             while path.pop() {
                 let workspace = self.workspace_manager.get();
-                if workspace.find_parent(&uri).is_some() {
+                if workspace.find_parent(&uri, &options).is_some() {
                     break;
                 }
 
@@ -671,7 +681,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                 }
                 Action::RunLinter(uri, reason) => {
                     let options = self
-                        .configuration()
+                        .configuration(true)
                         .await
                         .latex
                         .and_then(|opts| opts.lint)
@@ -693,7 +703,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                 }
                 Action::Build(uri) => {
                     let options = self
-                        .configuration()
+                        .configuration(true)
                         .await
                         .latex
                         .and_then(|opts| opts.build)

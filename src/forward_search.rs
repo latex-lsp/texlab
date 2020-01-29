@@ -9,11 +9,16 @@ pub async fn search<'a>(
     tex_file: &'a Path,
     parent: &'a Path,
     line_number: u64,
-    options: LatexOptions,
+    options: Options,
 ) -> Option<ForwardSearchResult> {
     let pdf_file = options.resolve_output_file(parent, "pdf").unwrap();
 
-    let search_options = options.forward_search.unwrap_or_default();
+    let search_options = options
+        .latex
+        .as_ref()
+        .and_then(|opts| opts.forward_search.as_ref())
+        .map(Clone::clone)
+        .unwrap_or_default();
     if search_options.executable.is_none() || search_options.args.is_none() {
         return Some(ForwardSearchResult {
             status: ForwardSearchStatus::Unconfigured,

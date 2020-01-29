@@ -23,12 +23,13 @@ impl FeatureProvider for LatexLabelCompletionProvider {
 
         combinators::argument(request, parameters, |context| {
             async move {
+                let options = &request.options;
                 let source = Self::find_source(&context);
                 let mut items = Vec::new();
                 for document in request.related_documents() {
                     let workspace = Arc::clone(&request.view.workspace);
-                    let view = DocumentView::new(workspace, Arc::clone(&document));
-                    let outline = Outline::from(&view);
+                    let view = DocumentView::new(workspace, Arc::clone(&document), options);
+                    let outline = Outline::analyze(&view, options);
 
                     if let SyntaxTree::Latex(tree) = &document.tree {
                         for label in tree

@@ -2,7 +2,7 @@ use petgraph::algo::tarjan_scc;
 use petgraph::{Directed, Graph};
 use std::collections::HashSet;
 use std::sync::Arc;
-use texlab_protocol::Uri;
+use texlab_protocol::{Options, Uri};
 use texlab_syntax::*;
 use texlab_workspace::*;
 
@@ -12,9 +12,9 @@ pub struct ProjectOrdering {
 }
 
 impl ProjectOrdering {
-    pub fn new(workspace: &Workspace) -> Self {
+    pub fn new(workspace: &Workspace, options: &Options) -> Self {
         let mut ordering = Vec::new();
-        let connected_components = Self::connected_components(workspace);
+        let connected_components = Self::connected_components(workspace, options);
         for connected_component in connected_components {
             let graph = Self::build_dependency_graph(&connected_component);
 
@@ -45,7 +45,7 @@ impl ProjectOrdering {
         Self { ordering }
     }
 
-    fn connected_components(workspace: &Workspace) -> Vec<Vec<Arc<Document>>> {
+    fn connected_components(workspace: &Workspace, options: &Options) -> Vec<Vec<Arc<Document>>> {
         let mut components = Vec::new();
         let mut visited = HashSet::new();
         for root in &workspace.documents {
@@ -53,7 +53,7 @@ impl ProjectOrdering {
                 continue;
             }
 
-            let component = workspace.related_documents(&root.uri);
+            let component = workspace.related_documents(&root.uri, options);
             for document in &component {
                 visited.insert(document.uri.clone());
             }
@@ -104,7 +104,7 @@ mod tests {
         let b = builder.add_document("b.tex", "");
         let c = builder.add_document("c.tex", "\\include{b}\\include{a}");
 
-        let project_ordering = ProjectOrdering::new(&builder.workspace);
+        let project_ordering = ProjectOrdering::new(&builder.workspace, &Options::default());
 
         assert_eq!(project_ordering.get(&a), 2);
         assert_eq!(project_ordering.get(&b), 1);
@@ -118,7 +118,7 @@ mod tests {
         let b = builder.add_document("b.tex", "\\include{a}");
         let c = builder.add_document("c.tex", "\\include{a}");
 
-        let project_ordering = ProjectOrdering::new(&builder.workspace);
+        let project_ordering = ProjectOrdering::new(&builder.workspace, &Options::default());
 
         assert_eq!(project_ordering.get(&a), 1);
         assert_eq!(project_ordering.get(&b), 2);
@@ -133,7 +133,7 @@ mod tests {
         let c = builder.add_document("c.tex", "");
         let d = builder.add_document("d.tex", "\\include{c}");
 
-        let project_ordering = ProjectOrdering::new(&builder.workspace);
+        let project_ordering = ProjectOrdering::new(&builder.workspace, &Options::default());
 
         assert_eq!(project_ordering.get(&a), 0);
         assert_eq!(project_ordering.get(&b), 1);
