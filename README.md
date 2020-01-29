@@ -31,6 +31,13 @@ Then run the following command in the project folder:
 cargo build --release
 ```
 
+Alternatively, Rust users can run the following command
+without having to clone this repository:
+
+```shell
+cargo install --git https://github.com/latex-lsp/texlab.git
+```
+
 ## Development
 
 You can create a debug build by building the server without the `--release` flag.
