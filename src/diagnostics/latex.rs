@@ -30,7 +30,7 @@ impl LatexDiagnosticsProvider {
 }
 
 pub static LINE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w)+:(.*)").unwrap());
+    Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
 
 fn lint(text: &str) -> Option<Vec<Diagnostic>> {
     let mut process = Command::new("chktex")
