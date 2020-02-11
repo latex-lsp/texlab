@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 11.02.2020
+
+### Added
+
+- Add a new setting `latex.build.outputDirectory` to specify the directory containing the build artifacts.
+  This setting can be used in combination with the `-outdir` flag of `latexmk`
+  ([#147](https://github.com/latex-lsp/texlab/issues/147))
+- Add basic support for push-based configuration via `workspace/didChangeConfiguration` ([#123](https://github.com/latex-lsp/texlab/issues/123))
+
+### Fixed
+
+- Show all digits of chktex warning number ([#160](https://github.com/latex-lsp/texlab/issues/160))
+
 ## [1.9.0] - 30.12.2019
 
 ### Added
