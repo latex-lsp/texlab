@@ -17,7 +17,7 @@ use uuid::Uuid;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BuildProvider<C> {
     pub client: Arc<C>,
-    pub options: LatexBuildOptions,
+    pub options: LatexOptions,
     pub token: ProgressToken,
 }
 
@@ -25,7 +25,7 @@ impl<C> BuildProvider<C>
 where
     C: LspClient + Send + Sync + 'static,
 {
-    pub fn new(client: Arc<C>, options: LatexBuildOptions) -> Self {
+    pub fn new(client: Arc<C>, options: LatexOptions) -> Self {
         Self {
             client,
             options,
@@ -34,16 +34,31 @@ where
     }
 
     async fn build<'a>(&'a self, path: &'a Path) -> io::Result<bool> {
-        let mut args = Vec::new();
-        args.append(&mut self.options.args());
-        args.push(path.file_name().unwrap().to_string_lossy().into_owned());
+        let build_options = self
+            .options
+            .build
+            .as_ref()
+            .map(Clone::clone)
+            .unwrap_or_default();
 
-        let mut process = Command::new(self.options.executable())
+        let build_dir = self
+            .options
+            .root_directory
+            .as_ref()
+            .map(AsRef::as_ref)
+            .or_else(|| path.parent())
+            .unwrap();
+
+        let mut args = Vec::new();
+        args.append(&mut build_options.args());
+        args.push(path.to_string_lossy().into_owned());
+
+        let mut process = Command::new(build_options.executable())
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(path.parent().unwrap())
+            .current_dir(build_dir)
             .spawn()?;
 
         let stdout = BufReader::new(process.stdout.take().unwrap()).lines();
@@ -135,7 +150,7 @@ where
     pub async fn build(
         &self,
         request: FeatureRequest<BuildParams>,
-        options: LatexBuildOptions,
+        options: LatexOptions,
     ) -> BuildResult {
         let provider = BuildProvider::new(Arc::clone(&self.client), options);
         let (handle, reg) = AbortHandle::new_pair();

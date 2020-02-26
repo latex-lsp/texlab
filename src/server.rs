@@ -424,12 +424,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let request = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let options = self
-            .configuration(true)
-            .await
-            .latex
-            .and_then(|opts| opts.build)
-            .unwrap_or_default();
+        let options = self.configuration(true).await.latex.unwrap_or_default();
         let result = self.build_manager.build(request, options).await;
         Ok(result)
     }
