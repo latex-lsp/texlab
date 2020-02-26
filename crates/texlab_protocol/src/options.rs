@@ -103,10 +103,16 @@ impl Options {
                     .and_then(|path| dunce::canonicalize(path).ok())
             })
             .or_else(|| {
-                tex_path
-                    .parent()
-                    .map(|path| path.join(&name))
-                    .and_then(|path| dunce::canonicalize(path).ok())
+                self.latex
+                    .as_ref()
+                    .and_then(|latex| latex.build.as_ref())
+                    .and_then(|build| build.output_directory.as_ref())
+                    .and_then(|path| {
+                        tex_path
+                            .parent()
+                            .map(|parent| parent.join(path).join(&name))
+                    })
             })
+            .or_else(|| tex_path.parent().map(|path| path.join(&name)))
     }
 }
