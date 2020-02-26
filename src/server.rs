@@ -153,6 +153,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("initialized", kind = "notification")]
     pub async fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
+        self.action_manager.push(Action::LoadConfiguration);
         self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager.push(Action::LoadDistribution);
     }
@@ -650,6 +651,9 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         };
                         self.client.show_message(params).await;
                     };
+                }
+                Action::LoadConfiguration => {
+                    self.configuration(true).await;
                 }
                 Action::UpdateConfiguration(settings) => {
                     self.config_strategy.get().unwrap().set(settings).await;

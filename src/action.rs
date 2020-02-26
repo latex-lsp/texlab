@@ -12,6 +12,7 @@ pub enum LintReason {
 pub enum Action {
     RegisterCapabilities,
     LoadDistribution,
+    LoadConfiguration,
     UpdateConfiguration(serde_json::Value),
     DetectRoot(Uri),
     PublishDiagnostics,
