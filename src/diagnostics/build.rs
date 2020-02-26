@@ -37,7 +37,11 @@ impl BuildDiagnosticsProvider {
         }
 
         let tex_path = tex_uri.to_file_path().unwrap();
-        let log_path = options.resolve_output_file(&tex_path, "log").unwrap();
+        let log_path = match options.resolve_output_file(&tex_path, "log") {
+            Some(log_path) => log_path,
+            None => return Ok(false),
+        };
+
         if !log_path.exists() {
             return Ok(false);
         }
