@@ -68,6 +68,7 @@ pub struct LatexOptions {
     pub forward_search: Option<LatexForwardSearchOptions>,
     pub lint: Option<LatexLintOptions>,
     pub build: Option<LatexBuildOptions>,
+    pub root_directory: Option<PathBuf>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

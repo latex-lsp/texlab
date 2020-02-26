@@ -159,8 +159,7 @@ impl LatexInclude {
 
         let mut all_targets = Vec::new();
         for relative_path in command.extract_comma_separated_words(description.index) {
-            let mut path = input.uri.to_file_path().ok()?;
-            path.pop();
+            let mut path = input.base_path()?;
             path.push(relative_path.text());
             path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
             path = path.clean();
