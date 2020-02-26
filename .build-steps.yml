@@ -19,9 +19,10 @@ steps:
         displayName: "Run tests"
   - ${{ if eq(parameters.linux, 'true') }}:
       - bash: |
+          export RUSTUP_TOOLCHAIN="nightly"
+          rustup update nightly
           cargo install grcov
           export CARGO_INCREMENTAL=0
-          export RUSTUP_TOOLCHAIN="nightly"
           export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads"
           export RUST_BACKTRACE=1
           cargo test --all --locked
