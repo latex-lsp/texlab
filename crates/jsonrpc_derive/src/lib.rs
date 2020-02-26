@@ -80,7 +80,8 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            fn handle_notification(&self, notification: jsonrpc::Notification) {
+            #[boxed]
+            async fn handle_notification(&self, notification: jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
                     _ => log::warn!("{}: {}", "Method not found", notification.method),
@@ -163,11 +164,11 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
             MethodKind::Notification => {
                 notifications.push(quote!(
                     #name => {
-                        let handler = move |param: #param_ty| {
-                           self.#ident(param);
+                        let handler = |param: #param_ty| async move {
+                           self.#ident(param).await;
                         };
 
-                        jsonrpc::handle_notification(notification, handler);
+                        jsonrpc::handle_notification(notification, handler).await;
                     }
                 ));
             }

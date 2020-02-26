@@ -62,7 +62,7 @@ impl Scenario {
         };
 
         self.server
-            .execute_async(|svr| svr.initialize(params))
+            .execute(|svr| svr.initialize(params))
             .await
             .unwrap();
 

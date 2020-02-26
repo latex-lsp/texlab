@@ -36,7 +36,7 @@ pub async fn run_command(executable: &'static str, file: &'static str) -> Option
             let params = BuildParams { text_document };
             let result = scenario
                 .server
-                .execute_async(|svr| svr.build(params))
+                .execute(|svr| svr.build(params))
                 .await
                 .unwrap();
             Some(result)

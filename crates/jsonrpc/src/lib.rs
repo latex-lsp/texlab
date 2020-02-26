@@ -42,7 +42,7 @@ where
                 });
             }
             Ok(Message::Notification(notification)) => {
-                self.server.handle_notification(notification);
+                self.server.handle_notification(notification).await;
                 self.after_message();
             }
             Ok(Message::Response(response)) => {

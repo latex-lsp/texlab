@@ -14,7 +14,7 @@ async fn reload_aux() {
     let params = TextDocumentPositionParams::new(identifier, position);
     let contents = scenario
         .server
-        .execute_async(|svr| svr.hover(params.clone()))
+        .execute(|svr| svr.hover(params.clone()))
         .await
         .unwrap()
         .unwrap()
@@ -39,7 +39,7 @@ async fn reload_aux() {
 
     let contents = scenario
         .server
-        .execute_async(|svr| svr.hover(params))
+        .execute(|svr| svr.hover(params))
         .await
         .unwrap()
         .unwrap()

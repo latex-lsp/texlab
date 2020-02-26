@@ -12,7 +12,7 @@ pub async fn run_hierarchical(file: &'static str) -> Vec<DocumentSymbol> {
 
     let response = scenario
         .server
-        .execute_async(|svr| svr.document_symbol(params))
+        .execute(|svr| svr.document_symbol(params))
         .await
         .unwrap();
 
@@ -32,7 +32,7 @@ pub async fn run_workspace(query: &'static str) -> (Scenario, Vec<SymbolInformat
     };
     let symbols = scenario
         .server
-        .execute_async(|svr| svr.workspace_symbol(params))
+        .execute(|svr| svr.workspace_symbol(params))
         .await
         .unwrap();
 

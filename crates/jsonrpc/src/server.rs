@@ -11,7 +11,8 @@ pub trait RequestHandler {
     #[boxed]
     async fn handle_request(&self, request: Request) -> Response;
 
-    fn handle_notification(&self, notification: Notification);
+    #[boxed]
+    async fn handle_notification(&self, notification: Notification);
 }
 
 pub trait Middleware {
@@ -43,14 +44,15 @@ where
     }
 }
 
-pub fn handle_notification<'a, H, I>(notification: Notification, handler: H)
+pub async fn handle_notification<'a, H, F, I>(notification: Notification, handler: H)
 where
-    H: Fn(I) -> () + Send + Sync + 'a,
+    H: Fn(I) -> F + Send + Sync + 'a,
+    F: Future<Output = ()> + Send,
     I: DeserializeOwned + Send,
 {
     let params =
         serde_json::from_value(notification.params).expect(&Error::deserialize_error().message);
-    handler(params);
+    handler(params).await;
 }
 
 #[cfg(test)]
@@ -63,7 +65,7 @@ mod tests {
         Ok(i + 1)
     }
 
-    fn panic(_params: ()) {
+    async fn panic(_params: ()) {
         panic!("success");
     }
 
@@ -115,22 +117,22 @@ mod tests {
         assert_eq!(response, expected);
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic(expected = "success")]
-    fn notification_valid() {
+    async fn notification_valid() {
         let notification = setup_notification();
-        handle_notification(notification, panic);
+        handle_notification(notification, panic).await;
     }
 
-    #[test]
+    #[tokio::test]
     #[should_panic]
-    fn notification_invalid_params() {
+    async fn notification_invalid_params() {
         let notification = setup_notification();
         let notification = Notification {
             params: json!(0),
             ..notification
         };
 
-        handle_notification(notification, panic);
+        handle_notification(notification, panic).await;
     }
 }

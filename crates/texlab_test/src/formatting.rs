@@ -30,7 +30,7 @@ pub async fn run_bibtex(
 
     let edits = scenario
         .server
-        .execute_async(|svr| svr.formatting(params))
+        .execute(|svr| svr.formatting(params))
         .await
         .unwrap();
     (scenario, edits)

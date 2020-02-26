@@ -76,17 +76,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    pub async fn execute<'a, T, A>(&'a self, action: A) -> T
-    where
-        A: FnOnce(&'a Self) -> T,
-    {
-        self.before_message().await;
-        let result = action(&self);
-        self.after_message().await;
-        result
-    }
-
-    pub async fn execute_async<'a, T, F, A>(&'a self, action: A) -> T
+    pub async fn execute<'a, T, F, A>(&'a self, action: A) -> T
     where
         F: Future<Output = T>,
         A: FnOnce(&'a Self) -> F,
@@ -161,7 +151,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("initialized", kind = "notification")]
-    pub fn initialized(&self, _params: InitializedParams) {
+    pub async fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
         self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager.push(Action::LoadDistribution);
@@ -173,13 +163,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("exit", kind = "notification")]
-    pub fn exit(&self, _params: ()) {}
+    pub async fn exit(&self, _params: ()) {}
 
     #[jsonrpc_method("$/cancelRequest", kind = "notification")]
-    pub fn cancel_request(&self, _params: CancelParams) {}
+    pub async fn cancel_request(&self, _params: CancelParams) {}
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
-    pub fn did_open(&self, params: DidOpenTextDocumentParams) {
+    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
         self.workspace_manager.add(params.text_document);
         self.action_manager
@@ -190,7 +180,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
-    pub fn did_change(&self, params: DidChangeTextDocumentParams) {
+    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
             self.workspace_manager.update(uri.into(), change.text);
@@ -203,7 +193,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub fn did_save(&self, params: DidSaveTextDocumentParams) {
+    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {
         self.action_manager.push(Action::RunLinter(
             params.text_document.uri.clone().into(),
             LintReason::Save,
@@ -214,16 +204,16 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
-    pub fn did_close(&self, _params: DidCloseTextDocumentParams) {}
+    pub async fn did_close(&self, _params: DidCloseTextDocumentParams) {}
 
     #[jsonrpc_method("workspace/didChangeConfiguration", kind = "notification")]
-    pub fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+    pub async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         self.action_manager
             .push(Action::UpdateConfiguration(params.settings));
     }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
-    pub fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
+    pub async fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
         self.action_manager.push(Action::CancelBuild(params.token));
     }
 

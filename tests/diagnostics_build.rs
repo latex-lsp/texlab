@@ -14,7 +14,7 @@ async fn did_change_update() {
     }
     let log_path = scenario.uri("foo.log").to_file_path().unwrap();
     fs::write(log_path, "").await.unwrap();
-    scenario.server.execute(|_| ()).await;
+    scenario.server.execute(|_| async move { () }).await;
     {
         let diagnostics_by_uri = scenario.client.diagnostics_by_uri.lock().await;
         let diagnostics = &diagnostics_by_uri[&scenario.uri("foo.tex")];

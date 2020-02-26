@@ -21,7 +21,7 @@ pub async fn run(
 
     let response = scenario
         .server
-        .execute_async(|svr| svr.definition(params))
+        .execute(|svr| svr.definition(params))
         .await
         .unwrap();
 

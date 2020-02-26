@@ -23,7 +23,7 @@ pub async fn run_list(
 
     let items = scenario
         .server
-        .execute_async(|svr| svr.completion(params))
+        .execute(|svr| svr.completion(params))
         .await
         .unwrap()
         .items;
@@ -59,7 +59,7 @@ pub async fn run_item(
 
     scenario
         .server
-        .execute_async(|svr| svr.completion_resolve(item))
+        .execute(|svr| svr.completion_resolve(item))
         .await
         .unwrap()
 }

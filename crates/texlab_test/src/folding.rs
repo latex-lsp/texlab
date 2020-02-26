@@ -13,7 +13,7 @@ pub async fn run(file: &'static str) -> Vec<FoldingRange> {
 
     let mut foldings = scenario
         .server
-        .execute_async(|svr| svr.folding_range(params))
+        .execute(|svr| svr.folding_range(params))
         .await
         .unwrap();
 

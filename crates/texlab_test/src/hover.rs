@@ -16,7 +16,7 @@ pub async fn run(
     let params = TextDocumentPositionParams::new(identifier, Position::new(line, character));
     scenario
         .server
-        .execute_async(|svr| svr.hover(params))
+        .execute(|svr| svr.hover(params))
         .await
         .unwrap()
         .map(|hover| hover.contents)
