@@ -153,9 +153,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("initialized", kind = "notification")]
     pub async fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::RegisterCapabilities);
-        self.action_manager.push(Action::LoadConfiguration);
         self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager.push(Action::LoadDistribution);
+        self.action_manager.push(Action::LoadConfiguration);
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -653,7 +653,13 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     };
                 }
                 Action::LoadConfiguration => {
-                    self.configuration(true).await;
+                    let options = self.configuration(true).await;
+                    let workspace = self.workspace_manager.get();
+                    for document in &workspace.documents {
+                        if let Ok(path) = document.uri.to_file_path() {
+                            let _ = self.workspace_manager.load(&path, &options);
+                        }
+                    }
                 }
                 Action::UpdateConfiguration(settings) => {
                     self.config_strategy.get().unwrap().set(settings).await;
