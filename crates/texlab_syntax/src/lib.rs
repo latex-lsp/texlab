@@ -11,7 +11,7 @@ pub use self::lsp_kind::*;
 pub use self::text::*;
 
 use texlab_distro::{Language, Resolver};
-use texlab_protocol::Uri;
+use texlab_protocol::{Options, Uri};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum SyntaxTree {
@@ -21,6 +21,7 @@ pub enum SyntaxTree {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct SyntaxTreeInput<'a> {
+    pub options: &'a Options,
     pub resolver: &'a Resolver,
     pub uri: &'a Uri,
     pub text: &'a str,

@@ -158,10 +158,11 @@ impl TestWorkspaceBuilder {
 
     pub fn add_document(&mut self, name: &str, text: &str) -> Uri {
         let resolver = Resolver::default();
+        let options = Options::default();
         let path = env::temp_dir().join(name);
         let language = Language::by_extension(path.extension().unwrap().to_str().unwrap()).unwrap();
         let uri = Uri::from_file_path(path).unwrap();
-        let document = Document::parse(uri.clone(), text.to_owned(), language, &resolver);
+        let document = Document::parse(uri.clone(), text.to_owned(), language, &options, &resolver);
         self.workspace.documents.push(Arc::new(document));
         uri
     }

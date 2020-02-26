@@ -171,7 +171,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
-        self.workspace_manager.add(params.text_document);
+        let options = self.configuration(false).await;
+        self.workspace_manager.add(params.text_document, &options);
         self.action_manager
             .push(Action::DetectRoot(uri.clone().into()));
         self.action_manager
@@ -181,9 +182,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
     pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let options = self.configuration(false).await;
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
-            self.workspace_manager.update(uri.into(), change.text);
+            self.workspace_manager
+                .update(uri.into(), change.text, &options);
         }
         self.action_manager.push(Action::RunLinter(
             params.text_document.uri.into(),
@@ -496,7 +499,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             let workspace = self.workspace_manager.get();
             for path in workspace.unresolved_includes(&options) {
                 if path.exists() {
-                    changed |= self.workspace_manager.load(&path).is_ok();
+                    changed |= self.workspace_manager.load(&path, &options).is_ok();
                 }
             }
 
@@ -506,7 +509,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         }
     }
 
-    fn update_document(&self, document: &Document) -> std::result::Result<(), WorkspaceLoadError> {
+    fn update_document(
+        &self,
+        document: &Document,
+        options: &Options,
+    ) -> std::result::Result<(), WorkspaceLoadError> {
         if document.uri.scheme() != "file" {
             return Ok(());
         }
@@ -514,7 +521,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let path = document.uri.to_file_path().unwrap();
         let data = fs::metadata(&path).map_err(WorkspaceLoadError::IO)?;
         if data.modified().map_err(WorkspaceLoadError::IO)? > document.modified {
-            self.workspace_manager.load(&path)
+            self.workspace_manager.load(&path, &options)
         } else {
             Ok(())
         }
@@ -573,7 +580,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 {
                     if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
                         if workspace.find(&parent_uri).is_none() {
-                            let _ = self.workspace_manager.load(entry.path());
+                            let _ = self.workspace_manager.load(entry.path(), &options);
                         }
                     }
                 }
@@ -587,9 +594,10 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
     async fn before_message(&self) {
         self.detect_children().await;
 
+        let options = self.configuration(false).await;
         let workspace = self.workspace_manager.get();
         for document in &workspace.documents {
-            let _ = self.update_document(document);
+            let _ = self.update_document(document, &options);
         }
     }
 

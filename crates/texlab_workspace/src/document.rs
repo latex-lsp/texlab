@@ -12,8 +12,15 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn parse(uri: Uri, text: String, language: Language, resolver: &Resolver) -> Self {
+    pub fn parse(
+        uri: Uri,
+        text: String,
+        language: Language,
+        options: &Options,
+        resolver: &Resolver,
+    ) -> Self {
         let input = SyntaxTreeInput {
+            options,
             resolver,
             uri: &uri,
             text: &text,
