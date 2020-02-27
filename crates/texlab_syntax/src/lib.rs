@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use texlab_distro::{Language, Resolver};
 use texlab_protocol::{Options, Uri};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct SyntaxTreeInput<'a> {
     pub options: &'a Options,
     pub resolver: &'a Resolver,
@@ -28,7 +28,7 @@ impl<'a> SyntaxTreeInput<'a> {
         self.options
             .latex
             .as_ref()
-            .and_then(|opts| opts.root_directory())
+            .and_then(|opts| opts.root_directory.as_ref())
             .and_then(|path| dunce::canonicalize(path).ok())
             .or_else(|| {
                 self.uri.to_file_path().ok().map(|mut path| {

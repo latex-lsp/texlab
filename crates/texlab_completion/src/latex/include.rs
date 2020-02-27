@@ -84,12 +84,15 @@ fn current_directory(
         .options
         .latex
         .as_ref()
-        .and_then(|latex| latex.root_directory())
-        .unwrap_or_else(|| {
-            let mut path = request.document().uri.to_file_path().unwrap();
-            path.pop();
-            path
-        });
+        .and_then(|latex| latex.root_directory.as_ref())
+        .map_or_else(
+            || {
+                let mut path = request.document().uri.to_file_path().unwrap();
+                path.pop();
+                path
+            },
+            Clone::clone,
+        );
 
     path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
 
