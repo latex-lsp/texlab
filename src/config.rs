@@ -20,10 +20,8 @@ impl dyn ConfigStrategy {
     ) -> Box<Self> {
         if capabilities.has_pull_configuration_support() {
             Box::new(PullConfigStrategy::new(client))
-        } else if capabilities.has_push_configuration_support() {
-            Box::new(PushConfigStrategy::new())
         } else {
-            Box::new(NoConfigStrategy::new())
+            Box::new(PushConfigStrategy::new())
         }
     }
 }
@@ -116,23 +114,4 @@ impl ConfigStrategy for PushConfigStrategy {
             Err(why) => warn!("Invalid configuration: {}", why),
         }
     }
-}
-
-#[derive(Debug, Default)]
-struct NoConfigStrategy;
-
-impl NoConfigStrategy {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl ConfigStrategy for NoConfigStrategy {
-    #[boxed]
-    async fn get(&self, _fetch: bool) -> Options {
-        Options::default()
-    }
-
-    #[boxed()]
-    async fn set(&self, _settings: serde_json::Value) {}
 }
