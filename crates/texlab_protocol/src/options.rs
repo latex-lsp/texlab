@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -68,7 +68,24 @@ pub struct LatexOptions {
     pub forward_search: Option<LatexForwardSearchOptions>,
     pub lint: Option<LatexLintOptions>,
     pub build: Option<LatexBuildOptions>,
-    pub root_directory: Option<PathBuf>,
+    #[serde(default, deserialize_with = "deserialize_some")]
+    pub root_directory: Option<Option<PathBuf>>,
+}
+
+fn deserialize_some<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(Some)
+}
+
+impl LatexOptions {
+    pub fn root_directory(&self) -> Option<PathBuf> {
+        self.root_directory
+            .clone()
+            .unwrap_or_else(|| Some(PathBuf::from(".")))
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -98,7 +115,7 @@ impl Options {
             .or_else(|| {
                 self.latex
                     .as_ref()
-                    .and_then(|latex| latex.root_directory.as_ref())
+                    .and_then(|latex| latex.root_directory())
                     .map(|path| path.join(&name))
                     .and_then(|path| dunce::canonicalize(path).ok())
             })

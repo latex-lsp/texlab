@@ -41,9 +41,8 @@ where
             .map(Clone::clone)
             .unwrap_or_default();
 
-        let build_dir = self
-            .options
-            .root_directory
+        let root_directory = self.options.root_directory();
+        let build_dir = root_directory
             .as_ref()
             .map(AsRef::as_ref)
             .or_else(|| path.parent())
