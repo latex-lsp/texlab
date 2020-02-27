@@ -80,10 +80,22 @@ fn current_directory(
     request: &FeatureRequest<CompletionParams>,
     command: &LatexCommand,
 ) -> PathBuf {
-    let mut path = request.document().uri.to_file_path().unwrap();
+    let mut path = request
+        .options
+        .latex
+        .as_ref()
+        .and_then(|latex| latex.root_directory.as_ref())
+        .map_or_else(
+            || {
+                let mut path = request.document().uri.to_file_path().unwrap();
+                path.pop();
+                path
+            },
+            Clone::clone,
+        );
+
     path = PathBuf::from(path.to_string_lossy().into_owned().replace('\\', "/"));
 
-    path.pop();
     if let Some(include) = command.extract_word(0) {
         path.push(include.text());
         if !include.text().ends_with('/') {
