@@ -4,13 +4,12 @@ mod miktex;
 mod tectonic;
 mod texlive;
 
-pub use self::compile::{Artifacts, CompileError, CompileParams, Format};
-pub use self::kpsewhich::{KpsewhichError, Resolver};
+pub use self::{
+    compile::{Artifacts, CompileError, CompileParams, Format},
+    kpsewhich::{KpsewhichError, Resolver},
+};
 
-use self::compile::Compiler;
-use self::miktex::Miktex;
-use self::tectonic::Tectonic;
-use self::texlive::Texlive;
+use self::{compile::Compiler, miktex::Miktex, tectonic::Tectonic, texlive::Texlive};
 use futures_boxed::boxed;
 use std::{fmt, process::Stdio, sync::Arc};
 use tokio::process::Command;
