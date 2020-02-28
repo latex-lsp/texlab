@@ -1,9 +1,12 @@
 use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 use std::error;
 use stderrlog::{ColorChoice, Timestamp};
+use texlab::Distribution;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn error::Error>> {
+    let _ = Distribution::detect().await;
+
     let matches = app_from_crate!()
         .author("")
         .arg(
