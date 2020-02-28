@@ -1,7 +1,7 @@
 use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 use std::error;
 use stderrlog::{ColorChoice, Timestamp};
-use texlab::Distribution;
+use texlab::tex::Distribution;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn error::Error>> {

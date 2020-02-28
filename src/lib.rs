@@ -1,3 +1,2 @@
+pub mod protocol;
 pub mod tex;
-
-pub use self::tex::*;
