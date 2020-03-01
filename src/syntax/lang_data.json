@@ -580,19 +580,19 @@
     {
       "name": "\\newcommand",
       "definitionIndex": 0,
-      "argumentCountIndex": 0,
+      "argCountIndex": 0,
       "implementationIndex": 1
     },
     {
       "name": "\\renewcommand",
       "definitionIndex": 0,
-      "argumentCountIndex": 0,
+      "argCountIndex": 0,
       "implementationIndex": 1
     },
     {
       "name": "\\DeclareRobustCommand",
       "definitionIndex": 0,
-      "argumentCountIndex": 0,
+      "argCountIndex": 0,
       "implementationIndex": 1
     }
   ],

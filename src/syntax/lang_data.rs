@@ -97,7 +97,7 @@ pub struct LatexIncludeCommand {
 pub struct LatexCommandDefinitionCommand {
     pub name: String,
     pub definition_index: usize,
-    pub argument_count_index: usize,
+    pub arg_count_index: usize,
     pub implementation_index: usize,
 }
 

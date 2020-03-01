@@ -216,6 +216,14 @@ impl Tree {
         }
     }
 
+    pub fn as_math(&self, node: NodeIndex) -> Option<&Math> {
+        if let Node::Math(math) = self.graph.node_weight(node)? {
+            Some(math)
+        } else {
+            None
+        }
+    }
+
     pub fn extract_group(
         &self,
         parent: NodeIndex,
