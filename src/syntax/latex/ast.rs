@@ -7,7 +7,7 @@ use petgraph::graph::{Graph, NodeIndex};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub enum LatexTokenKind {
+pub enum TokenKind {
     Word,
     Command,
     Math,
@@ -19,13 +19,13 @@ pub enum LatexTokenKind {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexToken {
+pub struct Token {
     pub span: Span,
-    pub kind: LatexTokenKind,
+    pub kind: TokenKind,
 }
 
-impl LatexToken {
-    pub fn new(span: Span, kind: LatexTokenKind) -> Self {
+impl Token {
+    pub fn new(span: Span, kind: TokenKind) -> Self {
         Self { span, kind }
     }
 
@@ -34,50 +34,50 @@ impl LatexToken {
     }
 }
 
-impl SyntaxNode for LatexToken {
+impl SyntaxNode for Token {
     fn range(&self) -> Range {
         self.span.range()
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub struct LatexRoot {
+pub struct Root {
     pub range: Range,
 }
 
-impl SyntaxNode for LatexRoot {
+impl SyntaxNode for Root {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub enum LatexGroupKind {
+pub enum GroupKind {
     Group,
     Options,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexGroup {
+pub struct Group {
     pub range: Range,
-    pub left: LatexToken,
-    pub right: Option<LatexToken>,
-    pub kind: LatexGroupKind,
+    pub left: Token,
+    pub right: Option<Token>,
+    pub kind: GroupKind,
 }
 
-impl SyntaxNode for LatexGroup {
+impl SyntaxNode for Group {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexCommand {
+pub struct Command {
     pub range: Range,
-    pub name: LatexToken,
+    pub name: Token,
 }
 
-impl LatexCommand {
+impl Command {
     pub fn short_name_range(&self) -> Range {
         Range::new_simple(
             self.name.start().line,
@@ -88,69 +88,59 @@ impl LatexCommand {
     }
 }
 
-impl SyntaxNode for LatexCommand {
+impl SyntaxNode for Command {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexText {
+pub struct Text {
     pub range: Range,
-    pub words: Vec<LatexToken>,
+    pub words: Vec<Token>,
 }
 
-impl SyntaxNode for LatexText {
+impl SyntaxNode for Text {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexComma {
+pub struct Comma {
     pub range: Range,
-    pub token: LatexToken,
+    pub token: Token,
 }
 
-impl SyntaxNode for LatexComma {
+impl SyntaxNode for Comma {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct LatexMath {
+pub struct Math {
     pub range: Range,
-    pub token: LatexToken,
+    pub token: Token,
 }
 
-impl SyntaxNode for LatexMath {
+impl SyntaxNode for Math {
     fn range(&self) -> Range {
         self.range
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub enum LatexNode {
-    Root(LatexRoot),
-    Group(LatexGroup),
-    Command(LatexCommand),
-    Text(LatexText),
-    Comma(LatexComma),
-    Math(LatexMath),
+pub enum Node {
+    Root(Root),
+    Group(Group),
+    Command(Command),
+    Text(Text),
+    Comma(Comma),
+    Math(Math),
 }
 
-impl LatexNode {
-    pub fn as_command(&self) -> Option<&LatexCommand> {
-        if let Self::Command(cmd) = self {
-            Some(cmd)
-        } else {
-            None
-        }
-    }
-}
-
-impl SyntaxNode for LatexNode {
+impl SyntaxNode for Node {
     fn range(&self) -> Range {
         match self {
             Self::Root(root) => root.range(),
@@ -164,49 +154,147 @@ impl SyntaxNode for LatexNode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LatexTree {
-    pub graph: Graph<LatexNode, ()>,
+pub struct Tree {
+    pub graph: Graph<Node, ()>,
     pub root: NodeIndex,
 }
 
-impl LatexTree {
+impl Tree {
     pub fn children(&self, parent: NodeIndex) -> impl Iterator<Item = NodeIndex> {
         self.graph
             .neighbors(parent)
             .sorted_by_key(|child| self.graph.node_weight(*child).unwrap().start())
     }
 
-    pub fn walk<V: LatexVisitor>(&self, visitor: &mut V, parent: NodeIndex) {
+    pub fn walk<V: Visitor>(&self, visitor: &mut V, parent: NodeIndex) {
         for child in self.children(parent) {
             visitor.visit(self, child);
         }
     }
 
     pub fn find(&self, positon: Position) -> Vec<NodeIndex> {
-        let mut finder = LatexFinder::new(positon);
+        let mut finder = Finder::new(positon);
         finder.visit(self, self.root);
         finder.results
     }
 
     pub fn print(&self, node: NodeIndex) -> String {
         let start_position = self.graph.node_weight(node).unwrap().start();
-        let mut printer = LatexPrinter::new(start_position);
+        let mut printer = Printer::new(start_position);
         printer.visit(self, node);
         printer.output
     }
+
+    pub fn commands(&self) -> impl Iterator<Item = NodeIndex> {
+        self.graph
+            .node_indices()
+            .filter(|node| self.as_command(*node).is_some())
+            .sorted_by_key(|node| self.as_command(*node).unwrap().start())
+    }
+
+    pub fn as_group(&self, node: NodeIndex) -> Option<&Group> {
+        if let Node::Group(group) = self.graph.node_weight(node)? {
+            Some(group)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_command(&self, node: NodeIndex) -> Option<&Command> {
+        if let Node::Command(cmd) = self.graph.node_weight(node)? {
+            Some(cmd)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_text(&self, node: NodeIndex) -> Option<&Text> {
+        if let Node::Text(text) = self.graph.node_weight(node)? {
+            Some(text)
+        } else {
+            None
+        }
+    }
+
+    pub fn extract_group(
+        &self,
+        parent: NodeIndex,
+        group_kind: GroupKind,
+        index: usize,
+    ) -> Option<NodeIndex> {
+        self.children(parent)
+            .filter(|child| {
+                self.as_group(*child)
+                    .filter(|group| group.kind == group_kind)
+                    .is_some()
+            })
+            .nth(index)
+    }
+
+    pub fn extract_text(
+        &self,
+        parent: NodeIndex,
+        group_kind: GroupKind,
+        index: usize,
+    ) -> Option<&Text> {
+        let group = self.extract_group(parent, group_kind, index)?;
+        let mut contents = self.children(group);
+        let text = self.as_text(contents.next()?);
+        if contents.next().is_none() {
+            text
+        } else {
+            None
+        }
+    }
+
+    pub fn extract_word(
+        &self,
+        parent: NodeIndex,
+        group_kind: GroupKind,
+        index: usize,
+    ) -> Option<&Token> {
+        let text = self.extract_text(parent, group_kind, index)?;
+        if text.words.len() == 1 {
+            Some(&text.words[0])
+        } else {
+            None
+        }
+    }
+
+    pub fn extract_comma_separated_words(
+        &self,
+        parent: NodeIndex,
+        group_kind: GroupKind,
+        index: usize,
+    ) -> Option<Vec<&Token>> {
+        let group = self.extract_group(parent, group_kind, index)?;
+        let mut words = Vec::new();
+        for child in self.children(group) {
+            match self.graph.node_weight(child)? {
+                Node::Root(_) | Node::Group(_) | Node::Command(_) | Node::Math(_) => return None,
+                Node::Text(text) => {
+                    for word in &text.words {
+                        words.push(word);
+                    }
+                }
+                Node::Comma(_) => (),
+            }
+        }
+        Some(words)
+    }
 }
 
-pub trait LatexVisitor {
-    fn visit(&mut self, tree: &LatexTree, node: NodeIndex);
+pub trait Visitor {
+    fn visit(&mut self, tree: &Tree, node: NodeIndex);
 }
 
 #[derive(Debug)]
-struct LatexFinder {
+struct Finder {
     position: Position,
     results: Vec<NodeIndex>,
 }
 
-impl LatexFinder {
+impl Finder {
     fn new(position: Position) -> Self {
         Self {
             position,
@@ -215,8 +303,8 @@ impl LatexFinder {
     }
 }
 
-impl LatexVisitor for LatexFinder {
-    fn visit(&mut self, tree: &LatexTree, node: NodeIndex) {
+impl Visitor for Finder {
+    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
         if tree
             .graph
             .node_weight(node)
@@ -231,12 +319,12 @@ impl LatexVisitor for LatexFinder {
 }
 
 #[derive(Debug)]
-struct LatexPrinter {
+struct Printer {
     output: String,
     position: Position,
 }
 
-impl LatexPrinter {
+impl Printer {
     fn new(start_position: Position) -> Self {
         Self {
             output: String::new(),
@@ -259,7 +347,7 @@ impl LatexPrinter {
         assert_eq!(self.position, position);
     }
 
-    fn print_token(&mut self, token: &LatexToken) {
+    fn print_token(&mut self, token: &Token) {
         self.synchronize(token.start());
         self.output.push_str(token.text());
         self.position.character += token.end().character - token.start().character;
@@ -267,30 +355,30 @@ impl LatexPrinter {
     }
 }
 
-impl LatexVisitor for LatexPrinter {
-    fn visit(&mut self, tree: &LatexTree, node: NodeIndex) {
+impl Visitor for Printer {
+    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
         match tree.graph.node_weight(node).unwrap() {
-            LatexNode::Root(_) => tree.walk(self, node),
-            LatexNode::Group(group) => {
+            Node::Root(_) => tree.walk(self, node),
+            Node::Group(group) => {
                 self.print_token(&group.left);
                 tree.walk(self, node);
                 if let Some(right) = &group.right {
                     self.print_token(right);
                 }
             }
-            LatexNode::Command(cmd) => {
+            Node::Command(cmd) => {
                 self.print_token(&cmd.name);
                 tree.walk(self, node);
             }
-            LatexNode::Text(text) => {
+            Node::Text(text) => {
                 for word in &text.words {
                     self.print_token(word);
                 }
             }
-            LatexNode::Comma(comma) => {
+            Node::Comma(comma) => {
                 self.print_token(&comma.token);
             }
-            LatexNode::Math(math) => {
+            Node::Math(math) => {
                 self.print_token(&math.token);
             }
         }

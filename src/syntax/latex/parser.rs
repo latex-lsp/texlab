@@ -7,19 +7,19 @@ use petgraph::graph::{Graph, NodeIndex};
 use std::iter::Peekable;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum LatexScope {
+enum Scope {
     Root,
     Group,
     Options,
 }
 
 #[derive(Debug)]
-pub struct LatexParser<I: Iterator<Item = LatexToken>> {
-    graph: Graph<LatexNode, ()>,
+pub struct Parser<I: Iterator<Item = Token>> {
+    graph: Graph<Node, ()>,
     tokens: Peekable<I>,
 }
 
-impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
+impl<I: Iterator<Item = Token>> Parser<I> {
     pub fn new(tokens: I) -> Self {
         Self {
             tokens: tokens.peekable(),
@@ -27,8 +27,8 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         }
     }
 
-    pub fn parse(mut self) -> LatexTree {
-        let children = self.content(LatexScope::Root);
+    pub fn parse(mut self) -> Tree {
+        let children = self.content(Scope::Root);
 
         let range = if children.is_empty() {
             Range::new_simple(0, 0, 0, 0)
@@ -42,42 +42,42 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             Range::new(start, end)
         };
 
-        let root = self.graph.add_node(LatexNode::Root(LatexRoot { range }));
+        let root = self.graph.add_node(Node::Root(Root { range }));
         self.connect(root, &children);
-        LatexTree {
+        Tree {
             graph: self.graph,
             root,
         }
     }
 
-    fn content(&mut self, scope: LatexScope) -> Vec<NodeIndex> {
+    fn content(&mut self, scope: Scope) -> Vec<NodeIndex> {
         let mut children = Vec::new();
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
-                LatexTokenKind::Word | LatexTokenKind::BeginOptions => {
+                TokenKind::Word | TokenKind::BeginOptions => {
                     children.push(self.text(scope));
                 }
-                LatexTokenKind::Command => {
+                TokenKind::Command => {
                     children.push(self.command());
                 }
-                LatexTokenKind::Comma => {
+                TokenKind::Comma => {
                     children.push(self.comma());
                 }
-                LatexTokenKind::Math => {
+                TokenKind::Math => {
                     children.push(self.math());
                 }
-                LatexTokenKind::BeginGroup => {
-                    children.push(self.group(LatexGroupKind::Group));
+                TokenKind::BeginGroup => {
+                    children.push(self.group(GroupKind::Group));
                 }
-                LatexTokenKind::EndGroup => {
-                    if scope == LatexScope::Root {
+                TokenKind::EndGroup => {
+                    if scope == Scope::Root {
                         self.tokens.next();
                     } else {
                         return children;
                     }
                 }
-                LatexTokenKind::EndOptions => {
-                    if scope == LatexScope::Options {
+                TokenKind::EndOptions => {
+                    if scope == Scope::Options {
                         return children;
                     } else {
                         children.push(self.text(scope));
@@ -88,17 +88,17 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         children
     }
 
-    fn group(&mut self, kind: LatexGroupKind) -> NodeIndex {
+    fn group(&mut self, kind: GroupKind) -> NodeIndex {
         let left = self.tokens.next().unwrap();
         let scope = match kind {
-            LatexGroupKind::Group => LatexScope::Group,
-            LatexGroupKind::Options => LatexScope::Options,
+            GroupKind::Group => Scope::Group,
+            GroupKind::Options => Scope::Options,
         };
 
         let children = self.content(scope);
         let right_kind = match kind {
-            LatexGroupKind::Group => LatexTokenKind::EndGroup,
-            LatexGroupKind::Options => LatexTokenKind::EndOptions,
+            GroupKind::Group => TokenKind::EndGroup,
+            GroupKind::Options => TokenKind::EndOptions,
         };
 
         let right = if self.next_of_kind(right_kind) {
@@ -118,7 +118,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             .unwrap_or_else(|| left.end());
         let range = Range::new(left.start(), end);
 
-        let node = self.graph.add_node(LatexNode::Group(LatexGroup {
+        let node = self.graph.add_node(Node::Group(Group {
             range,
             left,
             kind,
@@ -133,8 +133,8 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         let mut children = Vec::new();
         while let Some(token) = self.tokens.peek() {
             match token.kind {
-                LatexTokenKind::BeginGroup => children.push(self.group(LatexGroupKind::Group)),
-                LatexTokenKind::BeginOptions => children.push(self.group(LatexGroupKind::Options)),
+                TokenKind::BeginGroup => children.push(self.group(GroupKind::Group)),
+                TokenKind::BeginOptions => children.push(self.group(GroupKind::Options)),
                 _ => break,
             }
         }
@@ -145,41 +145,36 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
             .unwrap_or_else(|| name.end());
         let range = Range::new(name.start(), end);
 
-        let node = self
-            .graph
-            .add_node(LatexNode::Command(LatexCommand { range, name }));
+        let node = self.graph.add_node(Node::Command(Command { range, name }));
         self.connect(node, &children);
         node
     }
 
-    fn text(&mut self, scope: LatexScope) -> NodeIndex {
+    fn text(&mut self, scope: Scope) -> NodeIndex {
         let mut words = Vec::new();
         while let Some(ref token) = self.tokens.peek() {
             let kind = token.kind;
-            let opts = kind == LatexTokenKind::EndOptions && scope != LatexScope::Options;
-            if kind == LatexTokenKind::Word || kind == LatexTokenKind::BeginOptions || opts {
+            let opts = kind == TokenKind::EndOptions && scope != Scope::Options;
+            if kind == TokenKind::Word || kind == TokenKind::BeginOptions || opts {
                 words.push(self.tokens.next().unwrap());
             } else {
                 break;
             }
         }
         let range = Range::new(words[0].start(), words[words.len() - 1].end());
-        self.graph
-            .add_node(LatexNode::Text(LatexText { range, words }))
+        self.graph.add_node(Node::Text(Text { range, words }))
     }
 
     fn comma(&mut self) -> NodeIndex {
         let token = self.tokens.next().unwrap();
         let range = token.range();
-        self.graph
-            .add_node(LatexNode::Comma(LatexComma { range, token }))
+        self.graph.add_node(Node::Comma(Comma { range, token }))
     }
 
     fn math(&mut self) -> NodeIndex {
         let token = self.tokens.next().unwrap();
         let range = token.range();
-        self.graph
-            .add_node(LatexNode::Math(LatexMath { range, token }))
+        self.graph.add_node(Node::Math(Math { range, token }))
     }
 
     fn connect(&mut self, parent: NodeIndex, children: &[NodeIndex]) {
@@ -188,7 +183,7 @@ impl<I: Iterator<Item = LatexToken>> LatexParser<I> {
         }
     }
 
-    fn next_of_kind(&mut self, kind: LatexTokenKind) -> bool {
+    fn next_of_kind(&mut self, kind: TokenKind) -> bool {
         self.tokens
             .peek()
             .filter(|token| token.kind == kind)

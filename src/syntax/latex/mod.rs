@@ -1,5 +1,6 @@
+mod analysis;
 mod ast;
 mod lexer;
 mod parser;
 
-pub use self::{ast::*, lexer::*, parser::*};
+pub use self::{analysis::*, ast::*, lexer::*, parser::*};
