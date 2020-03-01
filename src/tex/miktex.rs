@@ -44,7 +44,7 @@ impl Distribution for Miktex {
 }
 
 const DATABASE_PATH: &str = "miktex/data/le";
-const FNDB_SIGNATURE: u32 = 0x42444e46;
+const FNDB_SIGNATURE: u32 = 0x42_44_4e_46;
 const FNDB_WORD_SIZE: usize = 4;
 const FNDB_TABLE_POINTER_OFFSET: usize = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: usize = 6 * FNDB_WORD_SIZE;

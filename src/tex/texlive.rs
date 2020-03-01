@@ -41,7 +41,7 @@ impl Distribution for Texlive {
     }
 }
 
-const DATABASE_PATH: &'static str = "ls-R";
+const DATABASE_PATH: &str = "ls-R";
 
 async fn read_database(directory: &Path) -> Result<Vec<PathBuf>, KpsewhichError> {
     let file = directory.join(DATABASE_PATH);
