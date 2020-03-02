@@ -3,11 +3,14 @@ use crate::{
     syntax::{lang_data::*, latex::ast::*, text::SyntaxNode},
     tex::Resolver,
 };
-use itertools::Itertools;
+use itertools::{iproduct, Itertools};
 use petgraph::graph::NodeIndex;
 use relative_path::RelativePath;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTableParams<'a> {
@@ -33,10 +36,15 @@ pub struct SymbolTable {
     pub inlines: Vec<Inline>,
     pub math_operators: Vec<MathOperator>,
     pub theorem_definitions: Vec<TheoremDefinition>,
+    pub sections: Vec<Section>,
+    pub labels: Vec<Label>,
+    pub label_numberings: Vec<LabelNumbering>,
+    pub captions: Vec<Caption>,
+    pub items: Vec<Item>,
 }
 
 impl SymbolTable {
-    pub fn new(params: SymbolTableParams) -> Self {
+    pub fn analyze(params: SymbolTableParams) -> Self {
         let SymbolTableParams {
             tree,
             uri,
@@ -73,6 +81,12 @@ impl SymbolTable {
         let math_operators = MathOperator::parse(ctx);
         let theorem_definitions = TheoremDefinition::parse(ctx);
 
+        let sections = Section::parse(ctx);
+        let labels = Label::parse(ctx);
+        let label_numberings = LabelNumbering::parse(ctx);
+        let captions = Caption::parse(ctx);
+        let items = Item::parse(ctx);
+
         Self {
             tree,
             commands,
@@ -87,6 +101,11 @@ impl SymbolTable {
             inlines,
             math_operators,
             theorem_definitions,
+            sections,
+            labels,
+            label_numberings,
+            captions,
+            items,
         }
     }
 }
@@ -103,12 +122,12 @@ pub struct SymbolContext<'a> {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct EnvironmentDelimiter {
-    pub node: NodeIndex,
+    pub parent: NodeIndex,
 }
 
 impl EnvironmentDelimiter {
     pub fn name(self, tree: &Tree) -> Option<&Token> {
-        tree.extract_word(self.node, GroupKind::Group, 0)
+        tree.extract_word(self.parent, GroupKind::Group, 0)
     }
 
     pub fn is_math(self, tree: &Tree) -> bool {
@@ -145,8 +164,8 @@ impl Environment {
     fn parse(ctx: SymbolContext) -> Vec<Self> {
         let mut stack = Vec::new();
         let mut envs = Vec::new();
-        for cmd in ctx.commands {
-            if let Some((delim, delim_cmd)) = Self::parse_delimiter(ctx.tree, *cmd) {
+        for parent in ctx.commands {
+            if let Some((delim, delim_cmd)) = Self::parse_delimiter(ctx.tree, *parent) {
                 if delim_cmd.name.text() == "\\begin" {
                     stack.push(delim);
                 } else if let Some(left) = stack.pop() {
@@ -157,18 +176,18 @@ impl Environment {
         envs
     }
 
-    fn parse_delimiter(tree: &Tree, node: NodeIndex) -> Option<(EnvironmentDelimiter, &Command)> {
-        let cmd = tree.as_command(node)?;
+    fn parse_delimiter(tree: &Tree, parent: NodeIndex) -> Option<(EnvironmentDelimiter, &Command)> {
+        let cmd = tree.as_command(parent)?;
         if cmd.name.text() != "\\begin" && cmd.name.text() != "\\end" {
             return None;
         }
 
-        let group = tree.extract_group(node, GroupKind::Group, 0)?;
-        if tree.extract_word(node, GroupKind::Group, 0).is_some()
+        let group = tree.extract_group(parent, GroupKind::Group, 0)?;
+        if tree.extract_word(parent, GroupKind::Group, 0).is_some()
             || tree.children(group).next().is_none()
             || tree.as_group(group)?.right.is_none()
         {
-            Some((EnvironmentDelimiter { node }, cmd))
+            Some((EnvironmentDelimiter { parent }, cmd))
         } else {
             None
         }
@@ -177,7 +196,7 @@ impl Environment {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Include {
-    pub node: NodeIndex,
+    pub parent: NodeIndex,
     pub arg_index: usize,
     pub kind: LatexIncludeKind,
     pub all_targets: Vec<Vec<Uri>>,
@@ -186,7 +205,7 @@ pub struct Include {
 
 impl Include {
     pub fn paths<'a>(&self, tree: &'a Tree) -> Vec<&'a Token> {
-        tree.extract_comma_separated_words(self.node, GroupKind::Group, self.arg_index)
+        tree.extract_comma_separated_words(self.parent, GroupKind::Group, self.arg_index)
             .unwrap()
     }
 
@@ -207,23 +226,17 @@ impl Include {
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut includes = Vec::new();
-        for cmd in ctx.commands {
-            for desc in &LANGUAGE_DATA.include_commands {
-                if let Some(include) = Self::parse_single(ctx, *cmd, desc) {
-                    includes.push(include);
-                }
-            }
-        }
-        includes
+        iproduct!(ctx.commands, LANGUAGE_DATA.include_commands.iter())
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
-        node: NodeIndex,
+        parent: NodeIndex,
         desc: &LatexIncludeCommand,
     ) -> Option<Self> {
-        let cmd = ctx.tree.as_command(node)?;
+        let cmd = ctx.tree.as_command(parent)?;
         if cmd.name.text() != desc.name {
             return None;
         }
@@ -231,7 +244,7 @@ impl Include {
         let mut all_targets = Vec::new();
         let paths = ctx
             .tree
-            .extract_comma_separated_words(node, GroupKind::Group, desc.index)?;
+            .extract_comma_separated_words(parent, GroupKind::Group, desc.index)?;
         for path in paths {
             let mut targets = Vec::new();
             let base_path = Self::base_path(ctx)?;
@@ -256,7 +269,7 @@ impl Include {
         }
 
         let include = Self {
-            node,
+            parent,
             arg_index: desc.index,
             kind: desc.kind,
             all_targets,
@@ -301,43 +314,39 @@ impl Include {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Citation {
-    node: NodeIndex,
+    parent: NodeIndex,
     arg_index: usize,
 }
 
 impl Citation {
     pub fn keys(self, tree: &Tree) -> Vec<&Token> {
-        tree.extract_comma_separated_words(self.node, GroupKind::Group, self.arg_index)
+        tree.extract_comma_separated_words(self.parent, GroupKind::Group, self.arg_index)
             .unwrap()
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut citations = Vec::new();
-        for cmd in ctx.commands {
-            for LatexCitationCommand { name, index } in &LANGUAGE_DATA.citation_commands {
-                if let Some(citation) = Self::parse_single(ctx, *cmd, name, *index) {
-                    citations.push(citation);
-                }
-            }
-        }
-        citations
+        iproduct!(ctx.commands, LANGUAGE_DATA.citation_commands.iter())
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
-        node: NodeIndex,
-        name: &str,
-        arg_index: usize,
+        parent: NodeIndex,
+        desc: &LatexCitationCommand,
     ) -> Option<Self> {
-        let cmd = ctx.tree.as_command(node)?;
-        if cmd.name.text() != name {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != desc.name {
             return None;
         }
 
         ctx.tree
-            .extract_comma_separated_words(node, GroupKind::Group, arg_index)?;
+            .extract_comma_separated_words(parent, GroupKind::Group, desc.index)?;
 
-        Some(Self { node, arg_index })
+        Some(Self {
+            parent,
+            arg_index: desc.index,
+        })
     }
 }
 
@@ -357,113 +366,82 @@ impl CommandDefinition {
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut defs = Vec::new();
-        for parent in ctx.commands {
-            for LatexCommandDefinitionCommand {
-                name,
-                definition_index,
-                implementation_index,
-                arg_count_index,
-            } in &LANGUAGE_DATA.command_definition_commands
-            {
-                if let Some(def) = Self::parse_single(
-                    ctx,
-                    *parent,
-                    name,
-                    *definition_index,
-                    *implementation_index,
-                    *arg_count_index,
-                ) {
-                    defs.push(def);
-                }
-            }
-        }
-        defs
+        let def = LANGUAGE_DATA.command_definition_commands.iter();
+        iproduct!(ctx.commands, def)
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
         parent: NodeIndex,
-        name: &str,
-        definition_index: usize,
-        implementation_index: usize,
-        arg_count_index: usize,
+        desc: &LatexCommandDefinitionCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
-        if cmd.name.text() != name {
+        if cmd.name.text() != desc.name {
             return None;
         }
 
         let group_kind = GroupKind::Group;
-        let imp = ctx
-            .tree
-            .extract_group(parent, group_kind, implementation_index)?;
+        let implementation =
+            ctx.tree
+                .extract_group(parent, group_kind, desc.implementation_index)?;
 
         let def_group = ctx
             .tree
-            .extract_group(parent, group_kind, definition_index)?;
+            .extract_group(parent, group_kind, desc.definition_index)?;
 
         let mut def_children = ctx.tree.children(def_group);
-        let def = def_children.next()?;
-        ctx.tree.as_command(def)?;
+        let definition = def_children.next()?;
+        ctx.tree.as_command(definition)?;
         Some(Self {
             parent,
-            definition: def,
-            definition_index,
-            implementation: imp,
-            implementation_index,
-            arg_count_index,
+            definition,
+            definition_index: desc.definition_index,
+            implementation,
+            implementation_index: desc.implementation_index,
+            arg_count_index: desc.arg_count_index,
         })
     }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct GlossaryEntry {
-    pub node: NodeIndex,
+    pub parent: NodeIndex,
     pub label_index: usize,
     pub kind: LatexGlossaryEntryKind,
 }
 
 impl GlossaryEntry {
     pub fn label(self, tree: &Tree) -> &Token {
-        tree.extract_word(self.node, GroupKind::Group, self.label_index)
+        tree.extract_word(self.parent, GroupKind::Group, self.label_index)
             .unwrap()
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut entries = Vec::new();
-        for cmd in ctx.commands {
-            for LatexGlossaryEntryDefinitionCommand {
-                name,
-                label_index,
-                kind,
-            } in &LANGUAGE_DATA.glossary_entry_definition_commands
-            {
-                if let Some(entry) = Self::parse_single(ctx, *cmd, name, *label_index, *kind) {
-                    entries.push(entry);
-                }
-            }
-        }
-        entries
+        let entry = LANGUAGE_DATA.glossary_entry_definition_commands.iter();
+        iproduct!(ctx.commands, entry)
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
-        node: NodeIndex,
-        name: &str,
-        label_index: usize,
-        kind: LatexGlossaryEntryKind,
+        parent: NodeIndex,
+        desc: &LatexGlossaryEntryDefinitionCommand,
     ) -> Option<Self> {
-        let cmd = ctx.tree.as_command(node)?;
-        if cmd.name.text() != name {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != desc.name {
             return None;
         }
 
-        ctx.tree.extract_word(node, GroupKind::Group, label_index)?;
+        ctx.tree
+            .extract_word(parent, GroupKind::Group, desc.label_index)?;
+
         Some(Self {
-            node,
-            label_index,
-            kind,
+            parent,
+            label_index: desc.label_index,
+            kind: desc.kind,
         })
     }
 }
@@ -543,94 +521,269 @@ impl MathOperator {
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut operators = Vec::new();
-        for parent in ctx.commands {
-            for LatexMathOperatorCommand {
-                name,
-                definition_index,
-                implementation_index,
-            } in &LANGUAGE_DATA.math_operator_commands
-            {
-                if let Some(operator) =
-                    Self::parse_single(ctx, *parent, name, *definition_index, *implementation_index)
-                {
-                    operators.push(operator);
-                }
-            }
-        }
-        operators
+        iproduct!(ctx.commands, LANGUAGE_DATA.math_operator_commands.iter())
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
         parent: NodeIndex,
-        name: &str,
-        definition_index: usize,
-        implementation_index: usize,
+        desc: &LatexMathOperatorCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
-        if cmd.name.text() != name {
+        if cmd.name.text() != desc.name {
             return None;
         }
 
         let group_kind = GroupKind::Group;
         let def_group = ctx
             .tree
-            .extract_group(parent, group_kind, definition_index)?;
-        let implementation = ctx
-            .tree
-            .extract_group(parent, group_kind, implementation_index)?;
+            .extract_group(parent, group_kind, desc.definition_index)?;
+        let implementation =
+            ctx.tree
+                .extract_group(parent, group_kind, desc.implementation_index)?;
 
         let mut def_children = ctx.tree.children(def_group);
         let definition = def_children.next()?;
         Some(Self {
             parent,
             definition,
-            definition_index,
+            definition_index: desc.definition_index,
             implementation,
-            implementation_index,
+            implementation_index: desc.implementation_index,
         })
     }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TheoremDefinition {
-    node: NodeIndex,
+    parent: NodeIndex,
     arg_index: usize,
 }
 
 impl TheoremDefinition {
     pub fn name(self, tree: &Tree) -> &Token {
-        tree.extract_word(self.node, GroupKind::Group, self.arg_index)
+        tree.extract_word(self.parent, GroupKind::Group, self.arg_index)
             .unwrap()
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
-        let mut defs = Vec::new();
-        for cmd in ctx.commands {
-            for LatexTheoremDefinitionCommand { name, index } in
-                &LANGUAGE_DATA.theorem_definition_commands
-            {
-                if let Some(def) = Self::parse_single(ctx, *cmd, name, *index) {
-                    defs.push(def);
-                }
-            }
-        }
-        defs
+        let thm = LANGUAGE_DATA.theorem_definition_commands.iter();
+        iproduct!(ctx.commands, thm)
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
     }
 
     fn parse_single(
         ctx: SymbolContext,
-        node: NodeIndex,
-        name: &str,
-        arg_index: usize,
+        parent: NodeIndex,
+        desc: &LatexTheoremDefinitionCommand,
     ) -> Option<Self> {
-        let cmd = ctx.tree.as_command(node)?;
-        if cmd.name.text() != name {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != desc.name {
             return None;
         }
 
-        ctx.tree.extract_word(node, GroupKind::Group, arg_index)?;
-        Some(Self { node, arg_index })
+        let group_kind = GroupKind::Group;
+        ctx.tree.extract_word(parent, group_kind, desc.index)?;
+
+        Some(Self {
+            parent,
+            arg_index: desc.index,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Section {
+    pub parent: NodeIndex,
+    pub arg_index: usize,
+    pub level: i32,
+    pub prefix: Cow<'static, str>,
+}
+
+impl Section {
+    pub fn print(&self, tree: &Tree) -> Option<String> {
+        let arg = tree.extract_group(self.parent, GroupKind::Group, self.arg_index)?;
+        let text = tree.print(arg);
+        tree.as_group(arg)?.right.as_ref()?;
+        Some(text[1..text.len() - 1].trim().into())
+    }
+
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        iproduct!(ctx.commands, LANGUAGE_DATA.section_commands.iter())
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
+    }
+
+    fn parse_single(
+        ctx: SymbolContext,
+        parent: NodeIndex,
+        desc: &'static LatexSectionCommand,
+    ) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != desc.name {
+            return None;
+        }
+
+        let group_kind = GroupKind::Group;
+        ctx.tree.extract_group(parent, group_kind, desc.index)?;
+
+        Some(Self {
+            parent,
+            arg_index: desc.index,
+            level: desc.level,
+            prefix: Cow::from(&desc.prefix),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Label {
+    pub parent: NodeIndex,
+    pub arg_index: usize,
+    pub kind: LatexLabelKind,
+}
+
+impl Label {
+    pub fn names(self, tree: &Tree) -> Vec<&Token> {
+        tree.extract_comma_separated_words(self.parent, GroupKind::Group, self.arg_index)
+            .unwrap()
+    }
+
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        iproduct!(ctx.commands, LANGUAGE_DATA.label_commands.iter())
+            .filter_map(|(parent, desc)| Self::parse_single(ctx, *parent, desc))
+            .collect()
+    }
+
+    fn parse_single(
+        ctx: SymbolContext,
+        parent: NodeIndex,
+        desc: &LatexLabelCommand,
+    ) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != desc.name {
+            return None;
+        }
+
+        ctx.tree
+            .extract_comma_separated_words(parent, GroupKind::Group, desc.index)?;
+
+        Some(Self {
+            parent,
+            arg_index: desc.index,
+            kind: desc.kind,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LabelNumbering {
+    parent: NodeIndex,
+    number: String,
+}
+
+impl LabelNumbering {
+    pub fn name<'a>(&self, tree: &'a Tree) -> &'a Token {
+        tree.extract_word(self.parent, GroupKind::Group, 0).unwrap()
+    }
+
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        ctx.commands
+            .iter()
+            .filter_map(|parent| Self::parse_single(ctx, *parent))
+            .collect()
+    }
+
+    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != "\\newlabel" {
+            return None;
+        }
+
+        ctx.tree.extract_word(parent, GroupKind::Group, 0)?;
+
+        let arg = ctx.tree.extract_group(parent, GroupKind::Group, 1)?;
+        let mut analyzer = FirstText::default();
+        analyzer.visit(ctx.tree, arg);
+        Some(Self {
+            parent,
+            number: analyzer.text?,
+        })
+    }
+}
+
+#[derive(Debug, Default)]
+struct FirstText {
+    text: Option<String>,
+}
+
+impl Visitor for FirstText {
+    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
+        if let Some(text) = tree.as_text(node) {
+            self.text = Some(text.words.iter().map(Token::text).join(" "));
+        }
+
+        if self.text.is_none() {
+            tree.walk(self, node);
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Caption {
+    pub parent: NodeIndex,
+    pub arg_index: usize,
+}
+
+impl Caption {
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        ctx.commands
+            .iter()
+            .flat_map(|parent| Self::parse_single(ctx, *parent))
+            .collect()
+    }
+
+    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != "\\caption" {
+            return None;
+        }
+
+        ctx.tree.extract_group(parent, GroupKind::Group, 0)?;
+        Some(Self {
+            parent,
+            arg_index: 0,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Item {
+    pub parent: NodeIndex,
+}
+
+impl Item {
+    pub fn name(self, tree: &Tree) -> Option<String> {
+        tree.extract_text(self.parent, GroupKind::Options, 0)
+            .map(|text| text.words.iter().map(Token::text).join(" "))
+    }
+
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        ctx.commands
+            .iter()
+            .filter_map(|parent| Self::parse_single(ctx, *parent))
+            .collect()
+    }
+
+    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != "\\item" {
+            return None;
+        }
+
+        Some(Self { parent })
     }
 }
