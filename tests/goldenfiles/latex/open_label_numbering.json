@@ -1,0 +1,566 @@
+{
+  "tree": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 11
+              },
+              "end": {
+                "line": 0,
+                "character": 14
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 11
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 14
+                    }
+                  },
+                  "text": "foo"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 10
+              },
+              "end": {
+                "line": 0,
+                "character": 15
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 10
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 11
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 14
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 15
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 18
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 17
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 18
+                    }
+                  },
+                  "text": "1"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 16
+              },
+              "end": {
+                "line": 0,
+                "character": 19
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 16
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 17
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 18
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 19
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 20
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 20
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 21
+                    }
+                  },
+                  "text": "1"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 19
+              },
+              "end": {
+                "line": 0,
+                "character": 22
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 19
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 20
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 21
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 22
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 15
+              },
+              "end": {
+                "line": 0,
+                "character": 23
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 15
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 16
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 22
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 23
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 0,
+                "character": 23
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 1
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 10
+                  }
+                },
+                "text": "\\newlabel"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 10
+              },
+              "end": {
+                "line": 1,
+                "character": 13
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 10
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 13
+                    }
+                  },
+                  "text": "foo"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 9
+              },
+              "end": {
+                "line": 1,
+                "character": 14
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 9
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 10
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 13
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 14
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 14
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 9
+                  }
+                },
+                "text": "\\newlabel"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 0
+              },
+              "end": {
+                "line": 2,
+                "character": 9
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 9
+                  }
+                },
+                "text": "\\newlabel"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Root": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 2,
+                "character": 9
+              }
+            }
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          1,
+          0,
+          null
+        ],
+        [
+          3,
+          2,
+          null
+        ],
+        [
+          5,
+          4,
+          null
+        ],
+        [
+          6,
+          3,
+          null
+        ],
+        [
+          6,
+          5,
+          null
+        ],
+        [
+          7,
+          1,
+          null
+        ],
+        [
+          7,
+          6,
+          null
+        ],
+        [
+          9,
+          8,
+          null
+        ],
+        [
+          10,
+          9,
+          null
+        ],
+        [
+          12,
+          7,
+          null
+        ],
+        [
+          12,
+          10,
+          null
+        ],
+        [
+          12,
+          11,
+          null
+        ]
+      ]
+    },
+    "root": 12
+  },
+  "commands": [
+    7,
+    10,
+    11
+  ],
+  "environments": [],
+  "is_standalone": false,
+  "includes": [],
+  "components": [],
+  "citations": [],
+  "command_definitions": [],
+  "glossary_entries": [],
+  "equations": [],
+  "inlines": [],
+  "math_operators": [],
+  "theorem_definitions": [],
+  "sections": [],
+  "labels": [],
+  "label_numberings": [
+    {
+      "parent": 7,
+      "number": "1"
+    }
+  ],
+  "captions": [],
+  "items": []
+}

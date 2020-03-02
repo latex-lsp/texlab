@@ -1,0 +1,376 @@
+{
+  "tree": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 10
+              },
+              "end": {
+                "line": 0,
+                "character": 13
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 10
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 13
+                    }
+                  },
+                  "text": "Foo"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 14
+              },
+              "end": {
+                "line": 0,
+                "character": 20
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 14
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 20
+                  }
+                },
+                "text": "\\LaTeX"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 24
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 21
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 24
+                    }
+                  },
+                  "text": "Bar"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 9
+              },
+              "end": {
+                "line": 0,
+                "character": 25
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 9
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 10
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 24
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 25
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 0,
+                "character": 25
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 1
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 9
+                  }
+                },
+                "text": "\\caption"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 8
+              },
+              "end": {
+                "line": 1,
+                "character": 10
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 8
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 9
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 9
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 10
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 10
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 8
+                  }
+                },
+                "text": "\\caption"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 0
+              },
+              "end": {
+                "line": 2,
+                "character": 8
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 8
+                  }
+                },
+                "text": "\\caption"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Root": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 2,
+                "character": 8
+              }
+            }
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          3,
+          0,
+          null
+        ],
+        [
+          3,
+          1,
+          null
+        ],
+        [
+          3,
+          2,
+          null
+        ],
+        [
+          4,
+          3,
+          null
+        ],
+        [
+          6,
+          5,
+          null
+        ],
+        [
+          8,
+          4,
+          null
+        ],
+        [
+          8,
+          6,
+          null
+        ],
+        [
+          8,
+          7,
+          null
+        ]
+      ]
+    },
+    "root": 8
+  },
+  "commands": [
+    4,
+    1,
+    6,
+    7
+  ],
+  "environments": [],
+  "is_standalone": false,
+  "includes": [],
+  "components": [],
+  "citations": [],
+  "command_definitions": [],
+  "glossary_entries": [],
+  "equations": [],
+  "inlines": [],
+  "math_operators": [],
+  "theorem_definitions": [],
+  "sections": [],
+  "labels": [],
+  "label_numberings": [],
+  "captions": [
+    {
+      "parent": 4,
+      "arg_index": 0
+    },
+    {
+      "parent": 6,
+      "arg_index": 0
+    }
+  ],
+  "items": []
+}

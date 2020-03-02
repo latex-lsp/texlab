@@ -53,7 +53,7 @@ impl SymbolTable {
             cwd,
         } = params;
 
-        let commands: Vec<_> = tree.commands().collect_vec();
+        let commands: Vec<_> = tree.commands().collect();
         let ctx = SymbolContext {
             tree: &tree,
             commands: &commands,

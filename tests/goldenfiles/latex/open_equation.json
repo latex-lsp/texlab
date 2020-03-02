@@ -1,0 +1,586 @@
+{
+  "tree": {
+    "graph": {
+      "nodes": [
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 0,
+                "character": 3
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 1
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 3
+                  }
+                },
+                "text": "\\["
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 4
+              },
+              "end": {
+                "line": 0,
+                "character": 15
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 4
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 7
+                    }
+                  },
+                  "text": "foo"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 8
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 11
+                    }
+                  },
+                  "text": "bar"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 12
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 15
+                    }
+                  },
+                  "text": "baz"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 16
+              },
+              "end": {
+                "line": 0,
+                "character": 18
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 16
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 18
+                  }
+                },
+                "text": "\\]"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 2
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 2
+                  }
+                },
+                "text": "\\["
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 3
+              },
+              "end": {
+                "line": 1,
+                "character": 5
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 3
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 5
+                    }
+                  },
+                  "text": "e^"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 6
+              },
+              "end": {
+                "line": 1,
+                "character": 7
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 6
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 7
+                    }
+                  },
+                  "text": "i"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 8
+              },
+              "end": {
+                "line": 1,
+                "character": 11
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 8
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 11
+                  }
+                },
+                "text": "\\pi"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 5
+              },
+              "end": {
+                "line": 1,
+                "character": 12
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 5
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 6
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 11
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 12
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 13
+              },
+              "end": {
+                "line": 1,
+                "character": 20
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 13
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 14
+                    }
+                  },
+                  "text": "+"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 15
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 16
+                    }
+                  },
+                  "text": "1"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 17
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 18
+                    }
+                  },
+                  "text": "="
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 19
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 20
+                    }
+                  },
+                  "text": "0"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 21
+              },
+              "end": {
+                "line": 1,
+                "character": 23
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 21
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 23
+                  }
+                },
+                "text": "\\]"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 0
+              },
+              "end": {
+                "line": 2,
+                "character": 2
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 2
+                  }
+                },
+                "text": "\\]"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 3
+              },
+              "end": {
+                "line": 2,
+                "character": 5
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 3
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 5
+                  }
+                },
+                "text": "\\["
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Root": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 2,
+                "character": 5
+              }
+            }
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          7,
+          5,
+          null
+        ],
+        [
+          7,
+          6,
+          null
+        ],
+        [
+          12,
+          0,
+          null
+        ],
+        [
+          12,
+          1,
+          null
+        ],
+        [
+          12,
+          2,
+          null
+        ],
+        [
+          12,
+          3,
+          null
+        ],
+        [
+          12,
+          4,
+          null
+        ],
+        [
+          12,
+          7,
+          null
+        ],
+        [
+          12,
+          8,
+          null
+        ],
+        [
+          12,
+          9,
+          null
+        ],
+        [
+          12,
+          10,
+          null
+        ],
+        [
+          12,
+          11,
+          null
+        ]
+      ]
+    },
+    "root": 12
+  },
+  "commands": [
+    0,
+    2,
+    3,
+    6,
+    9,
+    10,
+    11
+  ],
+  "environments": [],
+  "is_standalone": false,
+  "includes": [],
+  "components": [],
+  "citations": [],
+  "command_definitions": [],
+  "glossary_entries": [],
+  "equations": [
+    {
+      "left": 0,
+      "right": 2
+    },
+    {
+      "left": 3,
+      "right": 9
+    }
+  ],
+  "inlines": [],
+  "math_operators": [],
+  "theorem_definitions": [],
+  "sections": [],
+  "labels": [],
+  "label_numberings": [],
+  "captions": [],
+  "items": []
+}

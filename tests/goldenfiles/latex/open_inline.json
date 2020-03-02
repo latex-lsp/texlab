@@ -1,0 +1,792 @@
+{
+  "tree": {
+    "graph": {
+      "nodes": [
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 0,
+                "character": 2
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 1
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 2
+                  }
+                },
+                "text": "$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 3
+              },
+              "end": {
+                "line": 0,
+                "character": 5
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 3
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 5
+                    }
+                  },
+                  "text": "e^"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 6
+              },
+              "end": {
+                "line": 0,
+                "character": 7
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 6
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 7
+                    }
+                  },
+                  "text": "i"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Command": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 8
+              },
+              "end": {
+                "line": 0,
+                "character": 11
+              }
+            },
+            "name": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 8
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 11
+                  }
+                },
+                "text": "\\pi"
+              },
+              "kind": "Command"
+            }
+          }
+        },
+        {
+          "Group": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 5
+              },
+              "end": {
+                "line": 0,
+                "character": 12
+              }
+            },
+            "left": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 5
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 6
+                  }
+                },
+                "text": "{"
+              },
+              "kind": "BeginGroup"
+            },
+            "right": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 11
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 12
+                  }
+                },
+                "text": "}"
+              },
+              "kind": "EndGroup"
+            },
+            "kind": "Group"
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 13
+              },
+              "end": {
+                "line": 0,
+                "character": 20
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 13
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 14
+                    }
+                  },
+                  "text": "+"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 15
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 16
+                    }
+                  },
+                  "text": "1"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 17
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 18
+                    }
+                  },
+                  "text": "="
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 19
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 20
+                    }
+                  },
+                  "text": "0"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 21
+              },
+              "end": {
+                "line": 0,
+                "character": 22
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 0,
+                    "character": 21
+                  },
+                  "end": {
+                    "line": 0,
+                    "character": 22
+                  }
+                },
+                "text": "$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 0
+              },
+              "end": {
+                "line": 1,
+                "character": 2
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 2
+                  }
+                },
+                "text": "$$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 3
+              },
+              "end": {
+                "line": 1,
+                "character": 6
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 3
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 6
+                    }
+                  },
+                  "text": "f(x"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Comma": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 6
+              },
+              "end": {
+                "line": 1,
+                "character": 7
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 6
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 7
+                  }
+                },
+                "text": ","
+              },
+              "kind": "Comma"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 8
+              },
+              "end": {
+                "line": 1,
+                "character": 26
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 8
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 10
+                    }
+                  },
+                  "text": "y)"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 11
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 12
+                    }
+                  },
+                  "text": "="
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 13
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 16
+                    }
+                  },
+                  "text": "x^2"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 17
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 18
+                    }
+                  },
+                  "text": "+"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 19
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 20
+                    }
+                  },
+                  "text": "1"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 21
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 22
+                    }
+                  },
+                  "text": "-"
+                },
+                "kind": "Word"
+              },
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 1,
+                      "character": 23
+                    },
+                    "end": {
+                      "line": 1,
+                      "character": 26
+                    }
+                  },
+                  "text": "y^2"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 1,
+                "character": 27
+              },
+              "end": {
+                "line": 1,
+                "character": 29
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 1,
+                    "character": 27
+                  },
+                  "end": {
+                    "line": 1,
+                    "character": 29
+                  }
+                },
+                "text": "$$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 0
+              },
+              "end": {
+                "line": 2,
+                "character": 1
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 1
+                  }
+                },
+                "text": "$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Text": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 2
+              },
+              "end": {
+                "line": 2,
+                "character": 3
+              }
+            },
+            "words": [
+              {
+                "span": {
+                  "range": {
+                    "start": {
+                      "line": 2,
+                      "character": 2
+                    },
+                    "end": {
+                      "line": 2,
+                      "character": 3
+                    }
+                  },
+                  "text": "x"
+                },
+                "kind": "Word"
+              }
+            ]
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 2,
+                "character": 4
+              },
+              "end": {
+                "line": 2,
+                "character": 6
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 2,
+                    "character": 4
+                  },
+                  "end": {
+                    "line": 2,
+                    "character": 6
+                  }
+                },
+                "text": "$$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Math": {
+            "range": {
+              "start": {
+                "line": 3,
+                "character": 0
+              },
+              "end": {
+                "line": 3,
+                "character": 1
+              }
+            },
+            "token": {
+              "span": {
+                "range": {
+                  "start": {
+                    "line": 3,
+                    "character": 0
+                  },
+                  "end": {
+                    "line": 3,
+                    "character": 1
+                  }
+                },
+                "text": "$"
+              },
+              "kind": "Math"
+            }
+          }
+        },
+        {
+          "Root": {
+            "range": {
+              "start": {
+                "line": 0,
+                "character": 1
+              },
+              "end": {
+                "line": 3,
+                "character": 1
+              }
+            }
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          4,
+          2,
+          null
+        ],
+        [
+          4,
+          3,
+          null
+        ],
+        [
+          16,
+          0,
+          null
+        ],
+        [
+          16,
+          1,
+          null
+        ],
+        [
+          16,
+          4,
+          null
+        ],
+        [
+          16,
+          5,
+          null
+        ],
+        [
+          16,
+          6,
+          null
+        ],
+        [
+          16,
+          7,
+          null
+        ],
+        [
+          16,
+          8,
+          null
+        ],
+        [
+          16,
+          9,
+          null
+        ],
+        [
+          16,
+          10,
+          null
+        ],
+        [
+          16,
+          11,
+          null
+        ],
+        [
+          16,
+          12,
+          null
+        ],
+        [
+          16,
+          13,
+          null
+        ],
+        [
+          16,
+          14,
+          null
+        ],
+        [
+          16,
+          15,
+          null
+        ]
+      ]
+    },
+    "root": 16
+  },
+  "commands": [
+    3
+  ],
+  "environments": [],
+  "is_standalone": false,
+  "includes": [],
+  "components": [],
+  "citations": [],
+  "command_definitions": [],
+  "glossary_entries": [],
+  "equations": [],
+  "inlines": [
+    {
+      "left": 0,
+      "right": 6
+    },
+    {
+      "left": 7,
+      "right": 11
+    },
+    {
+      "left": 12,
+      "right": 14
+    }
+  ],
+  "math_operators": [],
+  "theorem_definitions": [],
+  "sections": [],
+  "labels": [],
+  "label_numberings": [],
+  "captions": [],
+  "items": []
+}

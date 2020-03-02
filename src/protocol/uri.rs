@@ -1,4 +1,4 @@
-use lsp_types::{TextDocumentIdentifier, TextDocumentPositionParams, Url};
+use lsp_types::{TextDocumentIdentifier, TextDocumentPositionParams};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt,
@@ -6,11 +6,16 @@ use std::{
     ops::Deref,
     path::Path,
 };
+use url::{ParseError, Url};
 
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 pub struct Uri(Url);
 
 impl Uri {
+    pub fn parse(input: &str) -> Result<Self, ParseError> {
+        Url::parse(input).map(|url| url.into())
+    }
+
     pub fn from_file_path<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
         Url::from_file_path(path).map(|url| url.into())
     }
