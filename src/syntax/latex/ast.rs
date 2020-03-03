@@ -163,7 +163,7 @@ impl Tree {
     pub fn children(&self, parent: NodeIndex) -> impl Iterator<Item = NodeIndex> {
         self.graph
             .neighbors(parent)
-            .sorted_by_key(|child| self.graph.node_weight(*child).unwrap().start())
+            .sorted_by_key(|child| self.graph[*child].start())
     }
 
     pub fn walk<V: Visitor>(&self, visitor: &mut V, parent: NodeIndex) {
@@ -179,7 +179,7 @@ impl Tree {
     }
 
     pub fn print(&self, node: NodeIndex) -> String {
-        let start_position = self.graph.node_weight(node).unwrap().start();
+        let start_position = self.graph[node].start();
         let mut printer = Printer::new(start_position);
         printer.visit(self, node);
         printer.output
@@ -193,7 +193,7 @@ impl Tree {
     }
 
     pub fn as_group(&self, node: NodeIndex) -> Option<&Group> {
-        if let Node::Group(group) = self.graph.node_weight(node)? {
+        if let Node::Group(group) = &self.graph[node] {
             Some(group)
         } else {
             None
@@ -201,7 +201,7 @@ impl Tree {
     }
 
     pub fn as_command(&self, node: NodeIndex) -> Option<&Command> {
-        if let Node::Command(cmd) = self.graph.node_weight(node)? {
+        if let Node::Command(cmd) = &self.graph[node] {
             Some(cmd)
         } else {
             None
@@ -209,7 +209,7 @@ impl Tree {
     }
 
     pub fn as_text(&self, node: NodeIndex) -> Option<&Text> {
-        if let Node::Text(text) = self.graph.node_weight(node)? {
+        if let Node::Text(text) = &self.graph[node] {
             Some(text)
         } else {
             None
@@ -217,7 +217,7 @@ impl Tree {
     }
 
     pub fn as_math(&self, node: NodeIndex) -> Option<&Math> {
-        if let Node::Math(math) = self.graph.node_weight(node)? {
+        if let Node::Math(math) = &self.graph[node] {
             Some(math)
         } else {
             None
@@ -278,7 +278,7 @@ impl Tree {
         let group = self.extract_group(parent, group_kind, index)?;
         let mut words = Vec::new();
         for child in self.children(group) {
-            match self.graph.node_weight(child)? {
+            match &self.graph[child] {
                 Node::Root(_) | Node::Group(_) | Node::Command(_) | Node::Math(_) => return None,
                 Node::Text(text) => {
                     for word in &text.words {
@@ -313,13 +313,7 @@ impl Finder {
 
 impl Visitor for Finder {
     fn visit(&mut self, tree: &Tree, node: NodeIndex) {
-        if tree
-            .graph
-            .node_weight(node)
-            .unwrap()
-            .range()
-            .contains(self.position)
-        {
+        if tree.graph[node].range().contains(self.position) {
             self.results.push(node);
             tree.walk(self, node);
         }
@@ -365,7 +359,7 @@ impl Printer {
 
 impl Visitor for Printer {
     fn visit(&mut self, tree: &Tree, node: NodeIndex) {
-        match tree.graph.node_weight(node).unwrap() {
+        match &tree.graph[node] {
             Node::Root(_) => tree.walk(self, node),
             Node::Group(group) => {
                 self.print_token(&group.left);

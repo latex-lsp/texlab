@@ -63,49 +63,70 @@ impl SymbolTable {
             cwd,
         };
 
-        let environments = Environment::parse(ctx);
-        let is_standalone = environments.iter().any(|env| env.is_root(&tree));
+        let mut environments = None;
+        let mut includes = None;
+        let mut citations = None;
+        let mut command_definitions = None;
+        let mut glossary_entries = None;
+        let mut equations = None;
+        let mut inlines = None;
+        let mut math_operators = None;
+        let mut theorem_definitions = None;
+        let mut sections = None;
+        let mut labels = None;
+        let mut label_numberings = None;
+        let mut captions = None;
+        let mut items = None;
 
-        let includes = Include::parse(ctx);
+        rayon::scope(|s| {
+            s.spawn(|_| environments = Some(Environment::parse(ctx)));
+            s.spawn(|_| includes = Some(Include::parse(ctx)));
+            s.spawn(|_| citations = Some(Citation::parse(ctx)));
+            s.spawn(|_| command_definitions = Some(CommandDefinition::parse(ctx)));
+            s.spawn(|_| glossary_entries = Some(GlossaryEntry::parse(ctx)));
+            s.spawn(|_| equations = Some(Equation::parse(ctx)));
+            s.spawn(|_| inlines = Some(Inline::parse(ctx)));
+            s.spawn(|_| math_operators = Some(MathOperator::parse(ctx)));
+            s.spawn(|_| theorem_definitions = Some(TheoremDefinition::parse(ctx)));
+            s.spawn(|_| sections = Some(Section::parse(ctx)));
+            s.spawn(|_| labels = Some(Label::parse(ctx)));
+            s.spawn(|_| label_numberings = Some(LabelNumbering::parse(ctx)));
+            s.spawn(|_| captions = Some(Caption::parse(ctx)));
+            s.spawn(|_| items = Some(Item::parse(ctx)));
+        });
+
+        let is_standalone = environments
+            .as_ref()
+            .unwrap()
+            .iter()
+            .any(|env| env.is_root(&tree));
+
         let components = includes
+            .as_ref()
+            .unwrap()
             .iter()
             .flat_map(|include| include.components(&tree))
             .collect();
 
-        let citations = Citation::parse(ctx);
-        let command_definitions = CommandDefinition::parse(ctx);
-        let glossary_entries = GlossaryEntry::parse(ctx);
-
-        let equations = Equation::parse(ctx);
-        let inlines = Inline::parse(ctx);
-        let math_operators = MathOperator::parse(ctx);
-        let theorem_definitions = TheoremDefinition::parse(ctx);
-
-        let sections = Section::parse(ctx);
-        let labels = Label::parse(ctx);
-        let label_numberings = LabelNumbering::parse(ctx);
-        let captions = Caption::parse(ctx);
-        let items = Item::parse(ctx);
-
         Self {
             tree,
             commands,
-            environments,
+            environments: environments.unwrap(),
             is_standalone,
-            includes,
+            includes: includes.unwrap(),
             components,
-            citations,
-            command_definitions,
-            glossary_entries,
-            equations,
-            inlines,
-            math_operators,
-            theorem_definitions,
-            sections,
-            labels,
-            label_numberings,
-            captions,
-            items,
+            citations: citations.unwrap(),
+            command_definitions: command_definitions.unwrap(),
+            glossary_entries: glossary_entries.unwrap(),
+            equations: equations.unwrap(),
+            inlines: inlines.unwrap(),
+            math_operators: math_operators.unwrap(),
+            theorem_definitions: theorem_definitions.unwrap(),
+            sections: sections.unwrap(),
+            labels: labels.unwrap(),
+            label_numberings: label_numberings.unwrap(),
+            captions: captions.unwrap(),
+            items: items.unwrap(),
         }
     }
 }
