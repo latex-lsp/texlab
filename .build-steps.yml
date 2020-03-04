@@ -2,7 +2,7 @@ parameters:
   executableName: ""
   archiveFile: ""
   archiveType: ""
-  linux: false
+  coverage: false
 steps:
   - task: UsePythonVersion@0
     inputs:
@@ -12,12 +12,12 @@ steps:
   - bash: |
       rustup update
     displayName: "Install latest Rust version"
-  - ${{ if eq(parameters.linux, 'false') }}:
+  - ${{ if eq(parameters.coverage, 'false') }}:
       - bash: |
           export RUST_BACKTRACE=1
           cargo test --all --locked
         displayName: "Run tests"
-  - ${{ if eq(parameters.linux, 'true') }}:
+  - ${{ if eq(parameters.coverage, 'true') }}:
       - bash: |
           export RUSTUP_TOOLCHAIN="nightly-2020-02-06"
           cargo install grcov
