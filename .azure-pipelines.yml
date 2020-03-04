@@ -8,7 +8,7 @@ trigger:
 jobs:
   - job: Linux
     pool:
-      vmImage: "ubuntu-16.04"
+      vmImage: "ubuntu-latest"
     steps:
       - script: |
           sudo apt-get update
@@ -22,7 +22,7 @@ jobs:
           linux: true
   - job: Windows
     pool:
-      vmImage: "vs2017-win2016"
+      vmImage: "windows-latest"
     steps:
       - template: .build-steps.yml
         parameters:
@@ -31,12 +31,8 @@ jobs:
           archiveType: "zip"
   - job: macOS
     pool:
-      vmImage: "macos-10.14"
+      vmImage: "macOS-latest"
     steps:
-      - bash: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --default-toolchain none
-          echo "##vso[task.prependpath]$HOME/.cargo/bin"
-        displayName: "Install rustup"
       - template: .build-steps.yml
         parameters:
           executableName: "texlab"
@@ -44,7 +40,7 @@ jobs:
           archiveType: "tar"
   - job: Publish
     pool:
-      vmImage: "ubuntu-16.04"
+      vmImage: "ubuntu-latest"
     dependsOn:
       - Linux
       - Windows
