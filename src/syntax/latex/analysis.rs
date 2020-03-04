@@ -5,12 +5,8 @@ use crate::{
 };
 use itertools::{iproduct, Itertools};
 use petgraph::graph::NodeIndex;
-use relative_path::RelativePath;
 use serde::{Deserialize, Serialize};
-use std::{
-    borrow::Cow,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, path::Path};
 
 #[derive(Debug, Clone)]
 pub struct SymbolTableParams<'a> {
@@ -268,18 +264,13 @@ impl Include {
             .extract_comma_separated_words(parent, GroupKind::Group, desc.index)?;
         for path in paths {
             let mut targets = Vec::new();
-            let base_path = Self::base_path(ctx)?;
-            let mut relative_path = RelativePath::new(path.text()).to_relative_path_buf();
-
-            let full_path = relative_path.to_path(&base_path);
-            targets.push(Uri::from_file_path(full_path).ok()?);
+            let base_url = Self::base_url(ctx)?;
+            targets.push(base_url.join(path.text()).ok()?.into());
 
             if let Some(extensions) = desc.kind.extensions() {
                 for extension in extensions {
-                    let file_name = format!("{}.{}", relative_path.file_stem()?, extension);
-                    relative_path.set_file_name(file_name);
-                    let full_path = relative_path.to_path(&base_path);
-                    targets.push(Uri::from_file_path(full_path).ok()?);
+                    let path = format!("{}.{}", path.text(), extension);
+                    targets.push(base_url.join(&path).ok()?.into());
                 }
             }
 
@@ -299,20 +290,19 @@ impl Include {
         Some(include)
     }
 
-    fn base_path(ctx: SymbolContext) -> Option<PathBuf> {
-        let path = if let Some(root_directory) = ctx
+    fn base_url(ctx: SymbolContext) -> Option<Uri> {
+        if let Some(root_directory) = ctx
             .options
             .latex
             .as_ref()
             .and_then(|opts| opts.root_directory.as_ref())
         {
-            root_directory.to_path(ctx.cwd)
+            let file_name = ctx.uri.path_segments()?.last()?;
+            let path = ctx.cwd.join(root_directory).join(file_name);
+            Uri::from_file_path(path).ok()
         } else {
-            let mut path = ctx.uri.to_file_path().ok()?;
-            path.pop();
-            path
-        };
-        Some(path)
+            Some(ctx.uri.clone())
+        }
     }
 
     fn resolve_distro_file(

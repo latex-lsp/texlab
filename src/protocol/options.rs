@@ -1,5 +1,5 @@
-use relative_path::RelativePathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,7 +36,7 @@ pub struct LatexBuildOptions {
     pub executable: Option<String>,
     pub args: Option<Vec<String>>,
     pub on_save: Option<bool>,
-    pub output_directory: Option<RelativePathBuf>,
+    pub output_directory: Option<PathBuf>,
 }
 
 impl LatexBuildOptions {
@@ -68,7 +68,7 @@ pub struct LatexOptions {
     pub forward_search: Option<LatexForwardSearchOptions>,
     pub lint: Option<LatexLintOptions>,
     pub build: Option<LatexBuildOptions>,
-    pub root_directory: Option<RelativePathBuf>,
+    pub root_directory: Option<PathBuf>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

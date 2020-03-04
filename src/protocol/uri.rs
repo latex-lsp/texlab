@@ -8,7 +8,7 @@ use std::{
 };
 use url::{ParseError, Url};
 
-#[derive(Debug, Eq, Clone, Serialize, Deserialize)]
+#[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Uri(Url);
 
 impl Uri {
@@ -54,6 +54,12 @@ impl From<Url> for Uri {
 impl Into<Url> for Uri {
     fn into(self) -> Url {
         self.0
+    }
+}
+
+impl fmt::Debug for Uri {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
     }
 }
 
