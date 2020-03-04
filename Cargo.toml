@@ -42,9 +42,7 @@ url = "2.1"
 
 [dev-dependencies]
 criterion = "0.3"
-goldenfile = "1.1"
 indoc = "0.3"
-surf = "1.0"
 
 [profile.release]
 lto = true
