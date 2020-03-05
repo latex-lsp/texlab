@@ -290,6 +290,18 @@ impl Tree {
         }
         Some(words)
     }
+
+    pub fn print_group_content(
+        &self,
+        parent: NodeIndex,
+        group_kind: GroupKind,
+        index: usize,
+    ) -> Option<String> {
+        let arg = self.extract_group(parent, group_kind, index)?;
+        let text = self.print(arg);
+        self.as_group(arg)?.right.as_ref()?;
+        Some(text[1..text.len() - 1].trim().into())
+    }
 }
 
 pub trait Visitor {

@@ -616,10 +616,7 @@ pub struct Section {
 
 impl Section {
     pub fn print(&self, tree: &Tree) -> Option<String> {
-        let arg = tree.extract_group(self.parent, GroupKind::Group, self.arg_index)?;
-        let text = tree.print(arg);
-        tree.as_group(arg)?.right.as_ref()?;
-        Some(text[1..text.len() - 1].trim().into())
+        tree.print_group_content(self.parent, GroupKind::Group, self.arg_index)
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
@@ -692,8 +689,8 @@ impl Label {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabelNumbering {
-    parent: NodeIndex,
-    number: String,
+    pub parent: NodeIndex,
+    pub number: String,
 }
 
 impl LabelNumbering {
@@ -750,6 +747,10 @@ pub struct Caption {
 }
 
 impl Caption {
+    pub fn print(self, tree: &Tree) -> Option<String> {
+        tree.print_group_content(self.parent, GroupKind::Group, self.arg_index)
+    }
+
     fn parse(ctx: SymbolContext) -> Vec<Self> {
         ctx.commands
             .iter()
@@ -778,8 +779,7 @@ pub struct Item {
 
 impl Item {
     pub fn name(self, tree: &Tree) -> Option<String> {
-        tree.extract_text(self.parent, GroupKind::Options, 0)
-            .map(|text| text.words.iter().map(Token::text).join(" "))
+        tree.print_group_content(self.parent, GroupKind::Options, 0)
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
