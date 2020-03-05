@@ -1,3 +1,4 @@
+pub mod bibtex;
 mod lang_data;
 pub mod latex;
 mod lsp_kind;

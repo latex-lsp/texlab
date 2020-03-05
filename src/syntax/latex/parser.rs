@@ -33,12 +33,8 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         let range = if children.is_empty() {
             Range::new_simple(0, 0, 0, 0)
         } else {
-            let start = self.graph.node_weight(children[0]).unwrap().start();
-            let end = self
-                .graph
-                .node_weight(children[children.len() - 1])
-                .unwrap()
-                .end();
+            let start = self.graph[children[0]].start();
+            let end = self.graph[children[children.len() - 1]].end();
             Range::new(start, end)
         };
 
