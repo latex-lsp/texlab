@@ -28,7 +28,7 @@ async fn criterion_benchmark(criterion: &mut Criterion) {
         uri: &uri,
         resolver: &resolver,
         options: &options,
-        cwd: &cwd,
+        current_dir: &cwd,
     };
 
     criterion.bench_function("symbols.tex", |b| b.iter(|| latex::open(params)));

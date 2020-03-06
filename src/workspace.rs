@@ -5,7 +5,7 @@ use crate::{
     tex::{Distribution, Language, Resolver},
 };
 use futures::lock::Mutex;
-use log::{error, warn};
+use log::{debug, error, warn};
 use petgraph::{graph::Graph, visit::Dfs};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -28,7 +28,7 @@ pub struct DocumentParams<'a> {
     language: Language,
     resolver: &'a Resolver,
     options: &'a Options,
-    cwd: &'a Path,
+    current_dir: &'a Path,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ impl Document {
             language,
             resolver,
             options,
-            cwd,
+            current_dir,
         } = params;
 
         let content = match language {
@@ -67,7 +67,7 @@ impl Document {
                     text: &text,
                     resolver,
                     options,
-                    cwd,
+                    current_dir,
                 });
                 DocumentContent::Latex(Box::new(table))
             }
@@ -269,15 +269,15 @@ impl error::Error for WorkspaceLoadError {
 
 pub struct Workspace {
     distro: Arc<Box<dyn Distribution + Send + Sync>>,
-    cwd: PathBuf,
+    current_dir: PathBuf,
     snapshot: Mutex<Arc<Snapshot>>,
 }
 
 impl Workspace {
-    pub fn new(distro: Arc<Box<dyn Distribution + Send + Sync>>, cwd: PathBuf) -> Self {
+    pub fn new(distro: Arc<Box<dyn Distribution + Send + Sync>>, current_dir: PathBuf) -> Self {
         Self {
             distro,
-            cwd,
+            current_dir,
             snapshot: Mutex::default(),
         }
     }
@@ -299,6 +299,7 @@ impl Workspace {
             }
         };
 
+        debug!("Adding document: {}", document.uri);
         let mut snapshot = self.snapshot.lock().await;
         *snapshot = self
             .add_or_update(
@@ -340,6 +341,7 @@ impl Workspace {
             }
         };
 
+        debug!("Loading document: {}", uri);
         let mut snapshot = self.snapshot.lock().await;
         *snapshot = self
             .add_or_update(&snapshot, uri, text, language, options)
@@ -363,9 +365,32 @@ impl Workspace {
             DocumentContent::Bibtex(_) => Language::Bibtex,
         };
 
+        debug!("Updating document: {}", uri);
         *snapshot = self
             .add_or_update(&snapshot, uri, text, language, options)
             .await;
+    }
+
+    pub async fn reparse(&self, options: &Options) {
+        let snapshot = self.get().await;
+        for doc in &snapshot.0 {
+            let language = match doc.content {
+                DocumentContent::Latex(_) => Language::Latex,
+                DocumentContent::Bibtex(_) => Language::Bibtex,
+            };
+
+            let mut snapshot = self.snapshot.lock().await;
+            debug!("Reparsing document: {}", doc.uri);
+            *snapshot = self
+                .add_or_update(
+                    &snapshot,
+                    doc.uri.clone(),
+                    doc.text.clone(),
+                    language,
+                    options,
+                )
+                .await;
+        }
     }
 
     async fn add_or_update(
@@ -383,7 +408,7 @@ impl Workspace {
             language,
             resolver: &resolver,
             options,
-            cwd: &self.cwd,
+            current_dir: &self.current_dir,
         });
 
         let mut documents: Vec<Arc<Document>> = snapshot
@@ -412,7 +437,7 @@ mod tests {
             language,
             resolver: &Resolver::default(),
             options: &Options::default(),
-            cwd: &env::current_dir().unwrap(),
+            current_dir: &env::current_dir().unwrap(),
         }))
     }
 
@@ -586,7 +611,7 @@ mod tests {
                 language: Language::Latex,
                 resolver: &Resolver::default(),
                 options: &options,
-                cwd: &cwd,
+                current_dir: &cwd,
             })),
             Arc::new(Document::open(DocumentParams {
                 uri: uri2.clone(),
@@ -594,7 +619,7 @@ mod tests {
                 language: Language::Latex,
                 resolver: &Resolver::default(),
                 options: &options,
-                cwd: &cwd,
+                current_dir: &cwd,
             })),
         ];
         let actual_uris: Vec<_> = snapshot
@@ -627,7 +652,7 @@ mod tests {
                 language: Language::Latex,
                 resolver: &Resolver::default(),
                 options: &options,
-                cwd: &cwd,
+                current_dir: &cwd,
             })),
             Arc::new(Document::open(DocumentParams {
                 uri: uri2.clone(),
@@ -635,7 +660,7 @@ mod tests {
                 language: Language::Latex,
                 resolver: &Resolver::default(),
                 options: &options,
-                cwd: &cwd,
+                current_dir: &cwd,
             })),
         ];
         let actual_uris: Vec<_> = snapshot

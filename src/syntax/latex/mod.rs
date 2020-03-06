@@ -18,7 +18,7 @@ pub struct OpenParams<'a> {
     pub uri: &'a Uri,
     pub resolver: &'a Resolver,
     pub options: &'a Options,
-    pub cwd: &'a Path,
+    pub current_dir: &'a Path,
 }
 
 pub fn open(params: OpenParams) -> SymbolTable {
@@ -27,7 +27,7 @@ pub fn open(params: OpenParams) -> SymbolTable {
         uri,
         resolver,
         options,
-        cwd,
+        current_dir,
     } = params;
 
     let lexer = Lexer::new(text);
@@ -39,7 +39,7 @@ pub fn open(params: OpenParams) -> SymbolTable {
         uri,
         resolver,
         options,
-        cwd,
+        current_dir,
     };
     SymbolTable::analyze(params)
 }
@@ -62,7 +62,7 @@ mod tests {
             uri: &Uri::parse("http://www.foo.com/bar.tex").unwrap(),
             resolver: &Resolver::default(),
             options: &Options::default(),
-            cwd: &env::current_dir().unwrap(),
+            current_dir: &env::current_dir().unwrap(),
         })
     }
 
@@ -222,7 +222,7 @@ mod tests {
                 uri: &Uri::parse("http://www.foo.com/bar.tex").unwrap(),
                 resolver: &Resolver::default(),
                 options: &Options::default(),
-                cwd: &env::current_dir().unwrap(),
+                current_dir: &env::current_dir().unwrap(),
             });
 
             let actual_names: Vec<_> = table
@@ -364,7 +364,7 @@ mod tests {
                 uri: &Uri::parse("http://www.foo.com/dir1/dir2/foo.tex").unwrap(),
                 resolver: &resolver,
                 options: &Options::default(),
-                cwd: &env::current_dir().unwrap(),
+                current_dir: &env::current_dir().unwrap(),
             });
 
             assert_eq!(table.includes.len(), 1);
@@ -463,7 +463,7 @@ mod tests {
                 uri: &Uri::parse("http://www.foo.com/bar.tex").unwrap(),
                 resolver: &Resolver::default(),
                 options: &Options::default(),
-                cwd: &env::current_dir().unwrap(),
+                current_dir: &env::current_dir().unwrap(),
             });
             assert_eq!(
                 table.components,

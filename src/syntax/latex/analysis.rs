@@ -14,7 +14,7 @@ pub struct SymbolTableParams<'a> {
     pub uri: &'a Uri,
     pub resolver: &'a Resolver,
     pub options: &'a Options,
-    pub cwd: &'a Path,
+    pub current_dir: &'a Path,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,7 +46,7 @@ impl SymbolTable {
             uri,
             resolver,
             options,
-            cwd,
+            current_dir,
         } = params;
 
         let commands: Vec<_> = tree.commands().collect();
@@ -56,7 +56,7 @@ impl SymbolTable {
             uri,
             resolver,
             options,
-            cwd,
+            current_dir,
         };
 
         let mut environments = None;
@@ -134,7 +134,7 @@ pub struct SymbolContext<'a> {
     uri: &'a Uri,
     resolver: &'a Resolver,
     options: &'a Options,
-    cwd: &'a Path,
+    current_dir: &'a Path,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -298,7 +298,7 @@ impl Include {
             .and_then(|opts| opts.root_directory.as_ref())
         {
             let file_name = ctx.uri.path_segments()?.last()?;
-            let path = ctx.cwd.join(root_directory).join(file_name);
+            let path = ctx.current_dir.join(root_directory).join(file_name);
             Uri::from_file_path(path).ok()
         } else {
             Some(ctx.uri.clone())
