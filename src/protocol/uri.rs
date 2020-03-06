@@ -12,6 +12,17 @@ use url::{ParseError, Url};
 pub struct Uri(Url);
 
 impl Uri {
+    pub fn with_extension(&self, extension: &str) -> Option<Self> {
+        let file_name = self.path_segments()?.last()?;
+        let file_stem = match file_name.rfind(".") {
+            Some(index) => &file_name[..index],
+            None => file_name,
+        };
+        self.join(&format!("{}.{}", file_stem, extension))
+            .ok()
+            .map(Into::into)
+    }
+
     pub fn parse(input: &str) -> Result<Self, ParseError> {
         Url::parse(input).map(|url| url.into())
     }

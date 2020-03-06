@@ -48,8 +48,9 @@ pub fn open(params: OpenParams) -> SymbolTable {
 mod tests {
     use super::*;
     use crate::{
-        protocol::{Range, RangeExt},
+        protocol::{Options, Range, RangeExt, Uri},
         syntax::text::SyntaxNode,
+        tex::Resolver,
     };
     use indoc::indoc;
     use petgraph::graph::NodeIndex;
