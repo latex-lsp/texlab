@@ -5,6 +5,7 @@ use crate::{
 use itertools::Itertools;
 use petgraph::graph::{Graph, NodeIndex};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenKind {
@@ -45,7 +46,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Root {
     pub range: Range,
 }
@@ -56,7 +57,13 @@ impl SyntaxNode for Root {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Root {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Root")
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Comment {
     pub token: Token,
 }
@@ -67,7 +74,13 @@ impl SyntaxNode for Comment {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Comment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Comment({})", self.token.text())
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Preamble {
     pub range: Range,
     pub ty: Token,
@@ -81,7 +94,13 @@ impl SyntaxNode for Preamble {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Preamble {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Preamble")
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct String {
     pub range: Range,
     pub ty: Token,
@@ -97,7 +116,13 @@ impl SyntaxNode for String {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "String({:?})", self.name.as_ref().map(Token::text))
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Entry {
     pub range: Range,
     pub ty: Token,
@@ -113,13 +138,19 @@ impl SyntaxNode for Entry {
     }
 }
 
+impl fmt::Debug for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Entry({:?})", self.key.as_ref().map(Token::text))
+    }
+}
+
 impl Entry {
     pub fn is_comment(&self) -> bool {
         self.ty.text().to_lowercase() == "@comment"
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Field {
     pub range: Range,
     pub name: Token,
@@ -133,7 +164,13 @@ impl SyntaxNode for Field {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Field {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Field({})", self.name.text())
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Word {
     pub token: Token,
 }
@@ -144,7 +181,13 @@ impl SyntaxNode for Word {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Word {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Word({})", self.token.text())
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Command {
     pub token: Token,
 }
@@ -155,7 +198,13 @@ impl SyntaxNode for Command {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Command({})", self.token.text())
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct QuotedContent {
     pub range: Range,
     pub left: Token,
@@ -168,7 +217,13 @@ impl SyntaxNode for QuotedContent {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for QuotedContent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "QuotedContent")
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct BracedContent {
     pub range: Range,
     pub left: Token,
@@ -181,7 +236,13 @@ impl SyntaxNode for BracedContent {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+impl fmt::Debug for BracedContent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "BracedContent")
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct Concat {
     pub range: Range,
     pub operator: Token,
@@ -190,6 +251,12 @@ pub struct Concat {
 impl SyntaxNode for Concat {
     fn range(&self) -> Range {
         self.range
+    }
+}
+
+impl fmt::Debug for Concat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Concat")
     }
 }
 
@@ -239,7 +306,11 @@ impl Tree {
             .sorted_by_key(|child| self.graph[*child].start())
     }
 
-    pub fn walk<V: Visitor>(&self, visitor: &mut V, parent: NodeIndex) {
+    pub fn has_children(&self, parent: NodeIndex) -> bool {
+        self.children(parent).next().is_some()
+    }
+
+    pub fn walk<'a, V: Visitor<'a>>(&'a self, visitor: &mut V, parent: NodeIndex) {
         for child in self.children(parent) {
             visitor.visit(self, child);
         }
@@ -297,8 +368,8 @@ impl Tree {
     }
 }
 
-pub trait Visitor {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex);
+pub trait Visitor<'a> {
+    fn visit(&mut self, tree: &'a Tree, node: NodeIndex);
 }
 
 #[derive(Debug)]
@@ -316,8 +387,8 @@ impl Finder {
     }
 }
 
-impl Visitor for Finder {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
+impl<'a> Visitor<'a> for Finder {
+    fn visit(&mut self, tree: &'a Tree, node: NodeIndex) {
         if tree.graph[node].range().contains(self.position) {
             self.results.push(node);
             tree.walk(self, node);

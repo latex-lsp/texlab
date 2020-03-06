@@ -1,8 +1,9 @@
 mod ast;
+mod formatter;
 mod lexer;
 mod parser;
 
-pub use self::ast::*;
+pub use self::{ast::*, formatter::*};
 
 use self::{lexer::Lexer, parser::Parser};
 
