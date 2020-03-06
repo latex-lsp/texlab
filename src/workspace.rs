@@ -112,7 +112,12 @@ impl Snapshot {
         self.0.iter().find(|doc| doc.uri == *uri).map(Arc::clone)
     }
 
-    pub fn relations(&self, uri: &Uri, options: &Options, cwd: &Path) -> Vec<Arc<Document>> {
+    pub fn relations(
+        &self,
+        uri: &Uri,
+        options: &Options,
+        current_dir: &Path,
+    ) -> Vec<Arc<Document>> {
         let mut graph = Graph::new_undirected();
         let mut indices_by_uri = HashMap::new();
         for document in &self.0 {
@@ -130,7 +135,7 @@ impl Snapshot {
                         graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
                     });
 
-                self.resolve_aux_targets(&parent.uri, options, cwd)
+                self.resolve_aux_targets(&parent.uri, options, current_dir)
                     .into_iter()
                     .flatten()
                     .find_map(|target| self.find(&target))
@@ -151,8 +156,13 @@ impl Snapshot {
         documents
     }
 
-    pub fn parent(&self, uri: &Uri, options: &Options, cwd: &Path) -> Option<Arc<Document>> {
-        for document in self.relations(uri, options, cwd) {
+    pub fn parent(
+        &self,
+        uri: &Uri,
+        options: &Options,
+        current_dir: &Path,
+    ) -> Option<Arc<Document>> {
+        for document in self.relations(uri, options, current_dir) {
             if let DocumentContent::Latex(table) = &document.content {
                 if table.is_standalone {
                     return Some(document);
@@ -162,7 +172,7 @@ impl Snapshot {
         None
     }
 
-    pub fn expand(&self, options: &Options, cwd: &Path) -> Vec<Uri> {
+    pub fn expand(&self, options: &Options, current_dir: &Path) -> Vec<Uri> {
         let mut unknown_targets = Vec::new();
         for parent in &self.0 {
             if let DocumentContent::Latex(table) = &parent.content {
@@ -175,7 +185,7 @@ impl Snapshot {
                     .flatten()
                     .for_each(|target| unknown_targets.push(target.clone()));
 
-                self.resolve_aux_targets(&parent.uri, options, cwd)
+                self.resolve_aux_targets(&parent.uri, options, current_dir)
                     .into_iter()
                     .filter(|targets| targets.iter().all(|target| self.find(target).is_none()))
                     .flatten()
@@ -365,7 +375,6 @@ impl Workspace {
             DocumentContent::Bibtex(_) => Language::Bibtex,
         };
 
-        debug!("Updating document: {}", uri);
         *snapshot = self
             .add_or_update(&snapshot, uri, text, language, options)
             .await;
@@ -391,6 +400,93 @@ impl Workspace {
                 )
                 .await;
         }
+    }
+
+    pub async fn detect_root(&self, uri: &Uri, options: &Options) -> io::Result<()> {
+        if uri.scheme() != "file" {
+            return Ok(());
+        }
+
+        if let Ok(mut path) = uri.to_file_path() {
+            while path.pop() {
+                let snapshot = self.get().await;
+                if snapshot.parent(&uri, &options, &self.current_dir).is_some() {
+                    break;
+                }
+
+                let mut entries = fs::read_dir(&path).await?;
+                while let Some(entry) = entries.next_entry().await? {
+                    if entry.file_type().await?.is_file() {
+                        let path = entry.path();
+                        if path
+                            .extension()
+                            .and_then(OsStr::to_str)
+                            .and_then(Language::by_extension)
+                            .is_some()
+                        {
+                            if let Ok(parent_uri) = Uri::from_file_path(&path) {
+                                if snapshot.find(&parent_uri).is_none() {
+                                    let _ = self.load(&path, options).await;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn detect_children(&self, options: &Options) {
+        loop {
+            let mut changed = false;
+
+            let snapshot = self.get().await;
+            for path in snapshot
+                .expand(&options, &self.current_dir)
+                .into_iter()
+                .filter(|uri| uri.scheme() == "file")
+                .filter_map(|uri| uri.to_file_path().ok())
+            {
+                if path.exists() {
+                    changed |= self.load(&path, &options).await.is_ok();
+                }
+            }
+
+            if !changed {
+                break;
+            }
+        }
+    }
+
+    pub async fn reparse_all_if_newer(&self, options: &Options) {
+        let snapshot = self.get().await;
+        for doc in &snapshot.0 {
+            match self.reparse_if_newer(doc, options).await {
+                Err(WorkspaceLoadError::IO(why)) => {
+                    warn!("Reparsing document {} failed: {}", doc.uri, why);
+                }
+                _ => (),
+            }
+        }
+    }
+
+    async fn reparse_if_newer(
+        &self,
+        doc: &Document,
+        options: &Options,
+    ) -> Result<(), WorkspaceLoadError> {
+        if !doc.is_file() {
+            return Ok(());
+        }
+
+        if let Ok(path) = doc.uri.to_file_path() {
+            let data = fs::metadata(&path).await?;
+            if data.modified()? > doc.modified {
+                self.load(&path, options).await?;
+            }
+        }
+        Ok(())
     }
 
     async fn add_or_update(

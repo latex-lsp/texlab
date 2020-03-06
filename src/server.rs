@@ -3,12 +3,13 @@ use crate::{
     config::ConfigManager,
     jsonrpc::{server::Result, Middleware},
     protocol::*,
-    tex::Distribution,
+    tex::{Distribution, DistributionKind, KpsewhichError},
     workspace::Workspace,
 };
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
+use log::{error, info};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 
@@ -122,6 +123,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn initialized(&self, _params: InitializedParams) {
         self.action_manager.push(Action::PullConfiguration).await;
         self.action_manager.push(Action::RegisterCapabilities).await;
+        self.action_manager.push(Action::LoadDistribution).await;
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -136,10 +138,25 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn cancel_request(&self, _params: CancelParams) {}
 
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
-    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {}
+    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let uri = params.text_document.uri.clone();
+        let options = self.config_manager().get().await;
+        self.workspace.add(params.text_document, &options).await;
+        self.action_manager
+            .push(Action::DetectRoot(uri.clone().into()))
+            .await;
+    }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
-    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {}
+    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let options = self.config_manager().get().await;
+        for change in params.content_changes {
+            let uri = params.text_document.uri.clone();
+            self.workspace
+                .update(uri.into(), change.text, &options)
+                .await;
+        }
+    }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub async fn did_save(&self, params: DidSaveTextDocumentParams) {}
@@ -254,16 +271,68 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             status: ForwardSearchStatus::Failure,
         })
     }
+
+    async fn load_distribution(&self) {
+        info!("Detected TeX distribution: {:?}", self.distro.kind());
+        if self.distro.kind() == DistributionKind::Unknown {
+            let params = ShowMessageParams {
+                message: "Your TeX distribution could not be detected. \
+                          Please make sure that your distribution is in your PATH."
+                    .into(),
+                typ: MessageType::Error,
+            };
+            self.client.show_message(params).await;
+        }
+
+        if let Err(why) = self.distro.load().await {
+            let message = match why {
+                KpsewhichError::NotInstalled | KpsewhichError::InvalidOutput => {
+                    "An error occurred while executing `kpsewhich`.\
+                     Please make sure that your distribution is in your PATH \
+                     environment variable and provides the `kpsewhich` tool."
+                }
+                KpsewhichError::CorruptDatabase | KpsewhichError::NoDatabase => {
+                    "The file database of your TeX distribution seems \
+                     to be corrupt. Please rebuild it and try again."
+                }
+                KpsewhichError::Decode(_) => {
+                    "An error occurred while decoding the output of `kpsewhich`."
+                }
+                KpsewhichError::IO(why) => {
+                    error!("An I/O error occurred while executing 'kpsewhich': {}", why);
+                    "An I/O error occurred while executing 'kpsewhich'"
+                }
+            };
+            let params = ShowMessageParams {
+                message: message.into(),
+                typ: MessageType::Error,
+            };
+            self.client.show_message(params).await;
+        };
+    }
 }
 
 impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
     #[boxed]
-    async fn before_message(&self) {}
+    async fn before_message(&self) {
+        if let Some(config_manager) = self.config_manager.get() {
+            let options = config_manager.get().await;
+            self.workspace.detect_children(&options).await;
+            self.workspace.reparse_all_if_newer(&options).await;
+        }
+    }
 
     #[boxed]
     async fn after_message(&self) {
         for action in self.action_manager.take().await {
             match action {
+                Action::LoadDistribution => {
+                    self.load_distribution().await;
+                }
+                Action::RegisterCapabilities => {
+                    let config_manager = self.config_manager();
+                    config_manager.register().await;
+                }
                 Action::PullConfiguration => {
                     let config_manager = self.config_manager();
                     if config_manager.pull().await {
@@ -271,7 +340,10 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         self.workspace.reparse(&options).await;
                     }
                 }
-                Action::RegisterCapabilities => self.config_manager().register().await,
+                Action::DetectRoot(uri) => {
+                    let options = self.config_manager().get().await;
+                    let _ = self.workspace.detect_root(&uri, &options).await;
+                }
             };
         }
     }
@@ -279,8 +351,10 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
 
 #[derive(Debug, PartialEq, Clone)]
 enum Action {
-    PullConfiguration,
+    LoadDistribution,
     RegisterCapabilities,
+    PullConfiguration,
+    DetectRoot(Uri),
 }
 
 #[derive(Debug, Default)]
