@@ -1,9 +1,11 @@
 use crate::{
     components::COMPONENT_DATABASE,
     config::ConfigManager,
+    feature::{DocumentView, FeatureProvider, FeatureRequest},
     jsonrpc::{server::Result, Middleware},
+    link::LinkProvider,
     protocol::*,
-    tex::{Distribution, DistributionKind, KpsewhichError},
+    tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::Workspace,
 };
 use futures::lock::Mutex;
@@ -14,29 +16,29 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 
 pub struct LatexLspServer<C> {
-    distro: Arc<Box<dyn Distribution + Send + Sync>>,
+    distro: DynamicDistribution,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
+    pub current_dir: Arc<PathBuf>,
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
+    link_provider: LinkProvider,
 }
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(
-        distro: Arc<Box<dyn Distribution + Send + Sync>>,
-        client: Arc<C>,
-        current_dir: PathBuf,
-    ) -> Self {
-        let workspace = Workspace::new(Arc::clone(&distro), current_dir);
+    pub fn new(distro: DynamicDistribution, client: Arc<C>, current_dir: Arc<PathBuf>) -> Self {
+        let workspace = Workspace::new(distro.clone(), Arc::clone(&current_dir));
         Self {
             distro,
             client,
             client_capabilities: OnceCell::new(),
+            current_dir,
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
             workspace,
+            link_provider: LinkProvider::new(),
         }
     }
 
@@ -159,7 +161,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {}
+    pub async fn did_save(&self, _params: DidSaveTextDocumentParams) {}
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub async fn did_close(&self, _params: DidCloseTextDocumentParams) {}
@@ -170,10 +172,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
-    pub async fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {}
+    pub async fn work_done_progress_cancel(&self, _params: WorkDoneProgressCancelParams) {}
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
-    pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
+    pub async fn completion(&self, _params: CompletionParams) -> Result<CompletionList> {
         Ok(CompletionList {
             is_incomplete: true,
             items: Vec::new(),
@@ -181,32 +183,32 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("completionItem/resolve", kind = "request")]
-    pub async fn completion_resolve(&self, mut item: CompletionItem) -> Result<CompletionItem> {
+    pub async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem> {
         Ok(item)
     }
 
     #[jsonrpc_method("textDocument/hover", kind = "request")]
-    pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
+    pub async fn hover(&self, _params: TextDocumentPositionParams) -> Result<Option<Hover>> {
         Ok(None)
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]
     pub async fn definition(
         &self,
-        params: TextDocumentPositionParams,
+        _params: TextDocumentPositionParams,
     ) -> Result<DefinitionResponse> {
         Ok(DefinitionResponse::Locations(Vec::new()))
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
-    pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
+    pub async fn references(&self, _params: ReferenceParams) -> Result<Vec<Location>> {
         Ok(Vec::new())
     }
 
     #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
     pub async fn document_highlight(
         &self,
-        params: TextDocumentPositionParams,
+        _params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
         Ok(Vec::new())
     }
@@ -214,7 +216,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("workspace/symbol", kind = "request")]
     pub async fn workspace_symbol(
         &self,
-        params: WorkspaceSymbolParams,
+        _params: WorkspaceSymbolParams,
     ) -> Result<Vec<SymbolInformation>> {
         Ok(Vec::new())
     }
@@ -222,41 +224,44 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(
         &self,
-        params: DocumentSymbolParams,
+        _params: DocumentSymbolParams,
     ) -> Result<DocumentSymbolResponse> {
         Ok(DocumentSymbolResponse::Flat(Vec::new()))
     }
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
-        Ok(Vec::new())
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.link_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
-    pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
+    pub async fn formatting(&self, _params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
         Ok(Vec::new())
     }
 
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
     pub async fn prepare_rename(
         &self,
-        params: TextDocumentPositionParams,
+        _params: TextDocumentPositionParams,
     ) -> Result<Option<Range>> {
         Ok(None)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
-    pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
+    pub async fn rename(&self, _params: RenameParams) -> Result<Option<WorkspaceEdit>> {
         Ok(None)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
-    pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
+    pub async fn folding_range(&self, _params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
         Ok(Vec::new())
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]
-    pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
+    pub async fn build(&self, _params: BuildParams) -> Result<BuildResult> {
         Ok(BuildResult {
             status: BuildStatus::Failure,
         })
@@ -265,16 +270,67 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
     pub async fn forward_search(
         &self,
-        params: TextDocumentPositionParams,
+        _params: TextDocumentPositionParams,
     ) -> Result<ForwardSearchResult> {
         Ok(ForwardSearchResult {
             status: ForwardSearchStatus::Failure,
         })
     }
 
+    async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
+        let options = self.pull_configuration().await;
+        let snapshot = self.workspace.get().await;
+        let client_capabilities = self.client_capabilities();
+        match snapshot.find(&uri) {
+            Some(current) => Ok(FeatureRequest {
+                params,
+                view: DocumentView::analyze(snapshot, current, &options, &self.current_dir),
+                distro: self.distro.clone(),
+                client_capabilities,
+                options,
+                current_dir: Arc::clone(&self.current_dir),
+            }),
+            None => {
+                let msg = format!("Unknown document: {}", uri);
+                Err(msg)
+            }
+        }
+        /*
+          let workspace = self.workspace_manager.get();
+        let client_capabilities = self
+            .client_capabilities
+            .get()
+            .expect("Failed to retrieve client capabilities");
+
+        if let Some(document) = workspace.find(&uri) {
+            let options = self.configuration(true).await;
+            Ok(FeatureRequest {
+                params,
+                view: DocumentView::new(workspace, document, &options),
+                client_capabilities: Arc::clone(&client_capabilities),
+                distribution: Arc::clone(&self.distribution),
+                options,
+            })
+        } else {
+            let msg = format!("Unknown document: {}", uri);
+            Err(msg)
+        }
+        */
+    }
+
+    async fn pull_configuration(&self) -> Options {
+        let config_manager = self.config_manager();
+        let has_changed = config_manager.pull().await;
+        let options = config_manager.get().await;
+        if has_changed {
+            self.workspace.reparse(&options).await;
+        }
+        options
+    }
+
     async fn load_distribution(&self) {
-        info!("Detected TeX distribution: {:?}", self.distro.kind());
-        if self.distro.kind() == DistributionKind::Unknown {
+        info!("Detected TeX distribution: {}", self.distro.0.kind());
+        if self.distro.0.kind() == DistributionKind::Unknown {
             let params = ShowMessageParams {
                 message: "Your TeX distribution could not be detected. \
                           Please make sure that your distribution is in your PATH."
@@ -284,7 +340,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             self.client.show_message(params).await;
         }
 
-        if let Err(why) = self.distro.load().await {
+        if let Err(why) = self.distro.0.load().await {
             let message = match why {
                 KpsewhichError::NotInstalled | KpsewhichError::InvalidOutput => {
                     "An error occurred while executing `kpsewhich`.\
@@ -334,11 +390,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     config_manager.register().await;
                 }
                 Action::PullConfiguration => {
-                    let config_manager = self.config_manager();
-                    if config_manager.pull().await {
-                        let options = config_manager.get().await;
-                        self.workspace.reparse(&options).await;
-                    }
+                    self.pull_configuration().await;
                 }
                 Action::DetectRoot(uri) => {
                     let options = self.config_manager().get().await;

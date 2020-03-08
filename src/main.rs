@@ -6,7 +6,7 @@ use texlab::{
     jsonrpc::MessageHandler,
     protocol::{LatexLspClient, LspCodec},
     server::LatexLspServer,
-    tex::Distribution,
+    tex::DynamicDistribution,
 };
 use tokio_util::codec::{FramedRead, FramedWrite};
 
@@ -40,12 +40,11 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     let mut stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
     let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
 
-    let distro = Distribution::detect().await;
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(
-        Arc::new(distro),
+        DynamicDistribution::detect().await,
         Arc::clone(&client),
-        env::current_dir().expect("failed to get working directory"),
+        Arc::new(env::current_dir().expect("failed to get working directory")),
     ));
     let mut handler = MessageHandler {
         server,

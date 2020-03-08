@@ -2,7 +2,7 @@ use crate::{
     components::COMPONENT_DATABASE,
     protocol::{Options, TextDocumentItem, Uri},
     syntax::{bibtex, latex, LatexIncludeKind},
-    tex::{Distribution, Language, Resolver},
+    tex::{DynamicDistribution, Language, Resolver},
 };
 use futures::lock::Mutex;
 use log::{debug, error, warn};
@@ -23,12 +23,12 @@ use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DocumentParams<'a> {
-    uri: Uri,
-    text: String,
-    language: Language,
-    resolver: &'a Resolver,
-    options: &'a Options,
-    current_dir: &'a Path,
+    pub uri: Uri,
+    pub text: String,
+    pub language: Language,
+    pub resolver: &'a Resolver,
+    pub options: &'a Options,
+    pub current_dir: &'a Path,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -106,6 +106,10 @@ pub struct Snapshot(pub Vec<Arc<Document>>);
 impl Snapshot {
     pub fn new() -> Self {
         Self(Vec::new())
+    }
+
+    pub fn push(&mut self, doc: Document) {
+        self.0.push(Arc::new(doc));
     }
 
     pub fn find(&self, uri: &Uri) -> Option<Arc<Document>> {
@@ -278,13 +282,13 @@ impl error::Error for WorkspaceLoadError {
 }
 
 pub struct Workspace {
-    distro: Arc<Box<dyn Distribution + Send + Sync>>,
-    current_dir: PathBuf,
+    distro: DynamicDistribution,
+    current_dir: Arc<PathBuf>,
     snapshot: Mutex<Arc<Snapshot>>,
 }
 
 impl Workspace {
-    pub fn new(distro: Arc<Box<dyn Distribution + Send + Sync>>, current_dir: PathBuf) -> Self {
+    pub fn new(distro: DynamicDistribution, current_dir: Arc<PathBuf>) -> Self {
         Self {
             distro,
             current_dir,
@@ -497,7 +501,7 @@ impl Workspace {
         language: Language,
         options: &Options,
     ) -> Arc<Snapshot> {
-        let resolver = self.distro.resolver().await;
+        let resolver = self.distro.0.resolver().await;
         let document = Document::open(DocumentParams {
             uri,
             text,

@@ -1,6 +1,8 @@
 pub mod components;
 pub mod config;
+pub mod feature;
 pub mod jsonrpc;
+pub mod link;
 pub mod protocol;
 pub mod server;
 pub mod syntax;

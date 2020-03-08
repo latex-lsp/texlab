@@ -111,13 +111,13 @@ pub trait Distribution {
 }
 
 impl dyn Distribution {
-    pub async fn detect() -> Box<dyn Distribution + Send + Sync> {
+    pub async fn detect() -> Arc<dyn Distribution + Send + Sync> {
         let kind = DistributionKind::detect().await;
-        let distro: Box<dyn Distribution + Send + Sync> = match kind {
-            DistributionKind::Texlive => Box::new(Texlive::new()),
-            DistributionKind::Miktex => Box::new(Miktex::new()),
-            DistributionKind::Tectonic => Box::new(Tectonic::new()),
-            DistributionKind::Unknown => Box::new(UnknownDistribution::new()),
+        let distro: Arc<dyn Distribution + Send + Sync> = match kind {
+            DistributionKind::Texlive => Arc::new(Texlive::new()),
+            DistributionKind::Miktex => Arc::new(Miktex::new()),
+            DistributionKind::Tectonic => Arc::new(Tectonic::new()),
+            DistributionKind::Unknown => Arc::new(UnknownDistribution::new()),
         };
         distro
     }
@@ -154,5 +154,26 @@ impl Distribution for UnknownDistribution {
     #[boxed]
     async fn resolver(&self) -> Arc<Resolver> {
         Arc::clone(&self.resolver)
+    }
+}
+
+#[derive(Clone)]
+pub struct DynamicDistribution(pub Arc<dyn Distribution + Send + Sync>);
+
+impl DynamicDistribution {
+    pub async fn detect() -> Self {
+        Self(Distribution::detect().await)
+    }
+}
+
+impl Default for DynamicDistribution {
+    fn default() -> Self {
+        Self(Arc::new(UnknownDistribution::new()))
+    }
+}
+
+impl fmt::Debug for DynamicDistribution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0.kind())
     }
 }
