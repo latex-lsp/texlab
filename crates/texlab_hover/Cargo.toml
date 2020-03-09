@@ -7,7 +7,7 @@ authors = [
 edition = "2018"
 
 [dependencies]
-base64 = "0.11.0"
+base64 = "0.12.0"
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
 image = "0.22.4"
