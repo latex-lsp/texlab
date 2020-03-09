@@ -49,7 +49,7 @@ texlab-symbol = { path = "crates/texlab_symbol" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-workspace = { path = "crates/texlab_workspace" }
 tokio = { version = "0.2", features = ["fs", "process"] }
-tokio-util = { version = "0.2", features = ["codec"] }
+tokio-util = { version = "0.3", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }
 walkdir = "2"
 
