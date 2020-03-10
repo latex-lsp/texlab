@@ -6,5 +6,6 @@ pub mod link;
 pub mod protocol;
 pub mod server;
 pub mod syntax;
+pub mod test;
 pub mod tex;
 pub mod workspace;

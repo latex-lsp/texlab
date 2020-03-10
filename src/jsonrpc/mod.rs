@@ -12,6 +12,7 @@ use futures::{channel::mpsc, prelude::*};
 use log::error;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct MessageHandler<S, C> {
     pub server: Arc<S>,
     pub client: Arc<C>,

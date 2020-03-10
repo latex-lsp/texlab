@@ -67,7 +67,7 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #impl_
 
         impl #generics crate::jsonrpc::RequestHandler for #self_ty {
-            #[boxed]
+            #[futures_boxed::boxed]
             async fn handle_request(&self, request: crate::jsonrpc::Request) -> crate::jsonrpc::Response {
                 use crate::jsonrpc::*;
 
@@ -79,7 +79,7 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            #[boxed]
+            #[futures_boxed::boxed]
             async fn handle_notification(&self, notification: crate::jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
@@ -124,7 +124,7 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
 
         impl crate::jsonrpc::ResponseHandler for #struct_ident
         {
-            #[boxed]
+            #[futures_boxed::boxed]
             async fn handle(&self, response: crate::jsonrpc::Response) -> () {
                 self.client.handle(response).await
             }
@@ -189,14 +189,14 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
 
         let stub = match meta.kind {
             MethodKind::Request => quote!(
-                #[boxed]
+                #[futures_boxed::boxed]
                 #sig {
                     let result = self.client.send_request(#name.to_owned(), #param).await?;
                     serde_json::from_value(result).map_err(|_| crate::jsonrpc::Error::deserialize_error())
                 }
             ),
             MethodKind::Notification => quote!(
-                #[boxed]
+                #[futures_boxed::boxed]
                 #sig {
                     self.client.send_notification(#name.to_owned(), #param).await
                 }
