@@ -28,8 +28,8 @@ pub struct Error {
     pub code: ErrorCode,
     pub message: String,
 
-    #[serde(skip_serializing_if = "serde_json::Value::is_null")]
-    pub data: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
 }
 
 impl Error {
@@ -37,7 +37,7 @@ impl Error {
         Self {
             code: ErrorCode::ParseError,
             message: "Could not parse the input".to_owned(),
-            data: serde_json::Value::Null,
+            data: None,
         }
     }
 
@@ -45,7 +45,7 @@ impl Error {
         Self {
             code: ErrorCode::MethodNotFound,
             message: "Method not found".to_owned(),
-            data: serde_json::Value::Null,
+            data: None,
         }
     }
 
@@ -53,7 +53,7 @@ impl Error {
         Self {
             code: ErrorCode::InvalidParams,
             message: "Could not deserialize parameter object".to_owned(),
-            data: serde_json::Value::Null,
+            data: None,
         }
     }
 
@@ -61,7 +61,7 @@ impl Error {
         Self {
             code: ErrorCode::InternalError,
             message,
-            data: serde_json::Value::Null,
+            data: None,
         }
     }
 }
