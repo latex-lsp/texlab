@@ -295,27 +295,6 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 Err(msg)
             }
         }
-        /*
-          let workspace = self.workspace_manager.get();
-        let client_capabilities = self
-            .client_capabilities
-            .get()
-            .expect("Failed to retrieve client capabilities");
-
-        if let Some(document) = workspace.find(&uri) {
-            let options = self.configuration(true).await;
-            Ok(FeatureRequest {
-                params,
-                view: DocumentView::new(workspace, document, &options),
-                client_capabilities: Arc::clone(&client_capabilities),
-                distribution: Arc::clone(&self.distribution),
-                options,
-            })
-        } else {
-            let msg = format!("Unknown document: {}", uri);
-            Err(msg)
-        }
-        */
     }
 
     async fn pull_configuration(&self) -> Options {

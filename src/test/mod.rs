@@ -74,12 +74,8 @@ impl TestBedBuilder {
         Self::default()
     }
 
-    pub fn file<P, S>(&mut self, path: P, text: S) -> &mut Self
-    where
-        P: Into<PathBuf>,
-        S: Into<String>,
-    {
-        self.files.push((path.into(), text.into()));
+    pub fn file<P: Into<PathBuf>>(&mut self, path: P, text: &str) -> &mut Self {
+        self.files.push((path.into(), text.trim().into()));
         self
     }
 
@@ -117,6 +113,9 @@ impl TestBedBuilder {
         let dir = tempdir().expect("failed to create temporary directory");
         for (path, text) in &self.files {
             let full_path = dir.path().join(path);
+            fs::create_dir_all(full_path.parent().unwrap())
+                .await
+                .unwrap();
             fs::write(&full_path, text).await.unwrap();
         }
 
@@ -260,6 +259,10 @@ impl TestBed {
         Uri::from_file_path(self.path(relative_path)).unwrap()
     }
 
+    pub fn identifier(&self, relative_path: &str) -> TextDocumentIdentifier {
+        TextDocumentIdentifier::new(self.uri(relative_path).into())
+    }
+
     pub async fn open(&self, relative_path: &str) {
         let full_path = self.path(relative_path);
         let params = DidOpenTextDocumentParams {
@@ -275,6 +278,26 @@ impl TestBed {
             },
         };
         self.client.did_open(params).await;
+    }
+
+    pub async fn edit<S: Into<String>>(&self, relative_path: &str, text: S) {
+        let uri = self.uri(relative_path).into();
+        let params = DidChangeTextDocumentParams {
+            text_document: VersionedTextDocumentIdentifier::new(uri, 0),
+            content_changes: vec![TextDocumentContentChangeEvent {
+                range: None,
+                range_length: None,
+                text: text.into(),
+            }],
+        };
+        self.client.did_change(params).await;
+    }
+
+    pub async fn document_link(&self, relative_path: &str) -> Option<Vec<DocumentLink>> {
+        let params = DocumentLinkParams {
+            text_document: self.identifier(relative_path),
+        };
+        self.client.document_link(params).await.ok()
     }
 
     pub async fn shutdown(&self) {
