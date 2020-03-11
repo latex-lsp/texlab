@@ -14,7 +14,7 @@ pub struct Uri(Url);
 impl Uri {
     pub fn with_extension(&self, extension: &str) -> Option<Self> {
         let file_name = self.path_segments()?.last()?;
-        let file_stem = match file_name.rfind(".") {
+        let file_stem = match file_name.rfind('.') {
             Some(index) => &file_name[..index],
             None => file_name,
         };

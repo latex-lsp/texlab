@@ -52,21 +52,21 @@ impl<I: Iterator<Item = Token>> Parser<I> {
 
         let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
         if left.is_none() {
-            return self.graph.add_node(Node::Preamble(Preamble {
+            return self.graph.add_node(Node::Preamble(Box::new(Preamble {
                 range: ty.range(),
                 ty,
                 left: None,
                 right: None,
-            }));
+            })));
         }
 
         if !self.can_match_content() {
-            return self.graph.add_node(Node::Preamble(Preamble {
+            return self.graph.add_node(Node::Preamble(Box::new(Preamble {
                 range: Range::new(ty.start(), left.as_ref().unwrap().end()),
                 ty,
                 left,
                 right: None,
-            }));
+            })));
         }
 
         let content = self.content();
@@ -77,12 +77,12 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             .map(Token::end)
             .unwrap_or_else(|| self.graph[content].end());
 
-        let parent = self.graph.add_node(Node::Preamble(Preamble {
+        let parent = self.graph.add_node(Node::Preamble(Box::new(Preamble {
             range: Range::new(ty.start(), end),
             ty,
             left,
             right,
-        }));
+        })));
         self.graph.add_edge(parent, content, ());
         parent
     }
@@ -92,49 +92,49 @@ impl<I: Iterator<Item = Token>> Parser<I> {
 
         let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
         if left.is_none() {
-            return self.graph.add_node(Node::String(String {
+            return self.graph.add_node(Node::String(Box::new(String {
                 range: ty.range(),
                 ty,
                 left: None,
                 name: None,
                 assign: None,
                 right: None,
-            }));
+            })));
         }
 
         let name = self.expect1(TokenKind::Word);
         if name.is_none() {
-            return self.graph.add_node(Node::String(String {
+            return self.graph.add_node(Node::String(Box::new(String {
                 range: Range::new(ty.start(), left.as_ref().unwrap().end()),
                 ty,
                 left,
                 name: None,
                 assign: None,
                 right: None,
-            }));
+            })));
         }
 
         let assign = self.expect1(TokenKind::Assign);
         if assign.is_none() {
-            return self.graph.add_node(Node::String(String {
+            return self.graph.add_node(Node::String(Box::new(String {
                 range: Range::new(ty.start(), name.as_ref().unwrap().end()),
                 ty,
                 left,
                 name,
                 assign: None,
                 right: None,
-            }));
+            })));
         }
 
         if !self.can_match_content() {
-            return self.graph.add_node(Node::String(String {
+            return self.graph.add_node(Node::String(Box::new(String {
                 range: Range::new(ty.start(), assign.as_ref().unwrap().end()),
                 ty,
                 left,
                 name,
                 assign,
                 right: None,
-            }));
+            })));
         }
         let value = self.content();
 
@@ -144,14 +144,14 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             .map(Token::end)
             .unwrap_or_else(|| self.graph[value].end());
 
-        let parent = self.graph.add_node(Node::String(String {
+        let parent = self.graph.add_node(Node::String(Box::new(String {
             range: Range::new(ty.start(), end),
             ty,
             left,
             name,
             assign,
             right,
-        }));
+        })));
         self.graph.add_edge(parent, value, ());
         parent
     }
@@ -161,38 +161,38 @@ impl<I: Iterator<Item = Token>> Parser<I> {
 
         let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
         if left.is_none() {
-            return self.graph.add_node(Node::Entry(Entry {
+            return self.graph.add_node(Node::Entry(Box::new(Entry {
                 range: ty.range(),
                 ty,
                 left: None,
                 key: None,
                 comma: None,
                 right: None,
-            }));
+            })));
         }
 
         let key = self.expect1(TokenKind::Word);
         if key.is_none() {
-            return self.graph.add_node(Node::Entry(Entry {
+            return self.graph.add_node(Node::Entry(Box::new(Entry {
                 range: Range::new(ty.start(), left.as_ref().unwrap().end()),
                 ty,
                 left,
                 key: None,
                 comma: None,
                 right: None,
-            }));
+            })));
         }
 
         let comma = self.expect1(TokenKind::Comma);
         if comma.is_none() {
-            return self.graph.add_node(Node::Entry(Entry {
+            return self.graph.add_node(Node::Entry(Box::new(Entry {
                 range: Range::new(ty.start(), key.as_ref().unwrap().end()),
                 ty,
                 left,
                 key,
                 comma: None,
                 right: None,
-            }));
+            })));
         }
 
         let mut fields = Vec::new();
@@ -207,14 +207,14 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             .map(Token::end)
             .or_else(|| fields.last().map(|field| self.graph[*field].end()))
             .unwrap_or_else(|| comma.as_ref().unwrap().end());
-        let parent = self.graph.add_node(Node::Entry(Entry {
+        let parent = self.graph.add_node(Node::Entry(Box::new(Entry {
             range: Range::new(ty.start(), end),
             ty,
             left,
             key,
             comma,
             right,
-        }));
+        })));
         self.connect(parent, &fields);
         parent
     }
@@ -229,21 +229,21 @@ impl<I: Iterator<Item = Token>> Parser<I> {
 
         let assign = self.expect1(TokenKind::Assign);
         if assign.is_none() {
-            return self.graph.add_node(Node::Field(Field {
+            return self.graph.add_node(Node::Field(Box::new(Field {
                 range: name.range(),
                 name,
                 assign: None,
                 comma: None,
-            }));
+            })));
         }
 
         if !self.can_match_content() {
-            return self.graph.add_node(Node::Field(Field {
+            return self.graph.add_node(Node::Field(Box::new(Field {
                 range: Range::new(name.start(), assign.as_ref().unwrap().end()),
                 name,
                 assign,
                 comma: None,
-            }));
+            })));
         }
 
         let content = self.content();
@@ -254,12 +254,12 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             .as_ref()
             .map(Token::end)
             .unwrap_or_else(|| self.graph[content].end());
-        let parent = self.graph.add_node(Node::Field(Field {
+        let parent = self.graph.add_node(Node::Field(Box::new(Field {
             range: Range::new(name.start(), end),
             name,
             assign,
             comma,
-        }));
+        })));
         self.graph.add_edge(parent, content, ());
         parent
     }

@@ -466,11 +466,8 @@ impl Workspace {
     pub async fn reparse_all_if_newer(&self, options: &Options) {
         let snapshot = self.get().await;
         for doc in &snapshot.0 {
-            match self.reparse_if_newer(doc, options).await {
-                Err(WorkspaceLoadError::IO(why)) => {
-                    warn!("Reparsing document {} failed: {}", doc.uri, why);
-                }
-                _ => (),
+            if let Err(WorkspaceLoadError::IO(why)) = self.reparse_if_newer(doc, options).await {
+                warn!("Reparsing document {} failed: {}", doc.uri, why);
             }
         }
     }

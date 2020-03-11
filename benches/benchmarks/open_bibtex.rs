@@ -1,4 +1,5 @@
 use criterion::Criterion;
+use std::time::Duration;
 use texlab::{syntax::bibtex, tex::Distribution};
 use tokio::fs;
 
@@ -19,6 +20,8 @@ async fn criterion_benchmark(criterion: &mut Criterion) {
 }
 
 pub async fn benches() {
-    let mut criterion = Criterion::default().configure_from_args();
+    let mut criterion = Criterion::default()
+        .measurement_time(Duration::from_secs(20))
+        .configure_from_args();
     criterion_benchmark(&mut criterion).await;
 }

@@ -129,7 +129,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FeatureTester {
     main: String,
     files: Vec<(String, String)>,

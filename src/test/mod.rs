@@ -48,7 +48,7 @@ impl GlobalDistribution {
     }
 }
 
-static DISTRO: Lazy<GlobalDistribution> = Lazy::new(|| GlobalDistribution::new());
+static DISTRO: Lazy<GlobalDistribution> = Lazy::new(GlobalDistribution::new);
 
 #[derive(Debug)]
 struct Endpoint<S, C> {
