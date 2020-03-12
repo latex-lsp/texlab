@@ -293,6 +293,27 @@ impl TestBed {
         self.client.did_change(params).await;
     }
 
+    pub async fn push_options(&self) {
+        let options = self.server.options.lock().await.clone();
+        let params = DidChangeConfigurationParams {
+            settings: serde_json::to_value::<Options>(options).unwrap(),
+        };
+        self.client.did_change_configuration(params).await
+    }
+
+    pub async fn document_highlight(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Vec<DocumentHighlight>> {
+        let params = TextDocumentPositionParams {
+            text_document: self.identifier(relative_path),
+            position: Position::new(line, character),
+        };
+        self.client.document_highlight(params).await.ok()
+    }
+
     pub async fn document_link(&self, relative_path: &str) -> Option<Vec<DocumentLink>> {
         let params = DocumentLinkParams {
             text_document: self.identifier(relative_path),
@@ -314,7 +335,7 @@ impl Drop for TestBed {
     }
 }
 
-pub static FULL_CAPABILITIES: ClientCapabilities = {
+pub static PULL_CAPABILITIES: ClientCapabilities = {
     ClientCapabilities {
         experimental: None,
         text_document: None,
@@ -323,6 +344,26 @@ pub static FULL_CAPABILITIES: ClientCapabilities = {
             apply_edit: None,
             configuration: Some(true),
             did_change_configuration: None,
+            did_change_watched_files: None,
+            execute_command: None,
+            symbol: None,
+            workspace_edit: None,
+            workspace_folders: None,
+        }),
+    }
+};
+
+pub static PUSH_CAPABILITIES: ClientCapabilities = {
+    ClientCapabilities {
+        experimental: None,
+        text_document: None,
+        window: None,
+        workspace: Some(WorkspaceClientCapabilities {
+            apply_edit: None,
+            configuration: None,
+            did_change_configuration: Some(GenericCapability {
+                dynamic_registration: Some(true),
+            }),
             did_change_watched_files: None,
             execute_command: None,
             symbol: None,

@@ -236,7 +236,7 @@ impl FeatureTester {
                 .unwrap();
             let doc = Document::open(DocumentParams {
                 uri,
-                text: text.clone(),
+                text: text.trim().into(),
                 language,
                 resolver: &resolver,
                 options: &options,

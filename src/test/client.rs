@@ -32,6 +32,13 @@ pub trait TestLspClient {
     #[boxed]
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams);
 
+    #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
+    #[boxed]
+    async fn document_highlight(
+        &self,
+        params: TextDocumentPositionParams,
+    ) -> Result<Vec<DocumentHighlight>>;
+
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     #[boxed]
     async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>>;

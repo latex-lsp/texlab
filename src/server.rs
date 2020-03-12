@@ -2,6 +2,7 @@ use crate::{
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
+    highlight::HighlightProvider,
     jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
     protocol::*,
@@ -23,6 +24,7 @@ pub struct LatexLspServer<C> {
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
+    highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
 }
 
@@ -38,6 +40,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
             workspace,
+            highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
         }
     }
@@ -168,7 +171,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("workspace/didChangeConfiguration", kind = "notification")]
     pub async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        self.config_manager().push(params.settings).await;
+        let config_manager = self.config_manager();
+        config_manager.push(params.settings).await;
+        let options = config_manager.get().await;
+        self.workspace.reparse(&options).await;
     }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
@@ -208,9 +214,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
     pub async fn document_highlight(
         &self,
-        _params: TextDocumentPositionParams,
+        params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
-        Ok(Vec::new())
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.highlight_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("workspace/symbol", kind = "request")]
