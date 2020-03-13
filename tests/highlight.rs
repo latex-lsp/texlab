@@ -5,7 +5,7 @@ use texlab::{
 };
 
 #[tokio::test]
-async fn empty_document() {
+async fn empty_latex_document() {
     let mut test_bed = TestBedBuilder::new().file("main.tex", "").build().await;
     test_bed.spawn();
     test_bed.initialize(PULL_CAPABILITIES.clone()).await;

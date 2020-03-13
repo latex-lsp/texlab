@@ -301,6 +301,13 @@ impl TestBed {
         self.client.did_change_configuration(params).await
     }
 
+    pub async fn folding_range(&self, relative_path: &str) -> Option<Vec<FoldingRange>> {
+        let params = FoldingRangeParams {
+            text_document: self.identifier(relative_path),
+        };
+        self.client.folding_range(params).await.ok()
+    }
+
     pub async fn document_highlight(
         &self,
         relative_path: &str,

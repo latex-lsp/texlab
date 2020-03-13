@@ -2,6 +2,7 @@ use crate::{
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
+    folding::FoldingProvider,
     highlight::HighlightProvider,
     jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
@@ -24,6 +25,7 @@ pub struct LatexLspServer<C> {
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
+    folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
 }
@@ -40,6 +42,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
             workspace,
+            folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
         }
@@ -265,8 +268,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
-    pub async fn folding_range(&self, _params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
-        Ok(Vec::new())
+    pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.folding_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]

@@ -32,6 +32,10 @@ pub trait TestLspClient {
     #[boxed]
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams);
 
+    #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
+    #[boxed]
+    async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>>;
+
     #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
     #[boxed]
     async fn document_highlight(
