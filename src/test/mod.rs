@@ -328,6 +328,26 @@ impl TestBed {
         self.client.document_link(params).await.ok()
     }
 
+    pub async fn references(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+        include_declaration: bool,
+    ) -> Option<Vec<Location>> {
+        let pos = Position::new(line, character);
+        let params = ReferenceParams {
+            text_document_position: TextDocumentPositionParams::new(
+                self.identifier(relative_path),
+                pos,
+            ),
+            context: ReferenceContext {
+                include_declaration,
+            },
+        };
+        self.client.references(params).await.ok()
+    }
+
     pub async fn shutdown(&self) {
         self.client.shutdown(()).await.unwrap();
         self.client.exit(()).await;

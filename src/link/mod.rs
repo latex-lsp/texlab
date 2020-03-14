@@ -30,10 +30,7 @@ impl FeatureProvider for LinkProvider {
     type Output = Vec<DocumentLink>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<DocumentLinkParams>,
-    ) -> Vec<DocumentLink> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

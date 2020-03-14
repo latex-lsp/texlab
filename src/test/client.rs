@@ -46,4 +46,8 @@ pub trait TestLspClient {
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     #[boxed]
     async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>>;
+    
+    #[jsonrpc_method("textDocument/references", kind = "request")]
+    #[boxed]
+    async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>>;
 }

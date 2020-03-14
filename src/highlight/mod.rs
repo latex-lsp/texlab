@@ -30,10 +30,7 @@ impl FeatureProvider for HighlightProvider {
     type Output = Vec<DocumentHighlight>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-    ) -> Vec<DocumentHighlight> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

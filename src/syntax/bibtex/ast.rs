@@ -316,8 +316,8 @@ impl Tree {
         }
     }
 
-    pub fn find(&self, positon: Position) -> Vec<NodeIndex> {
-        let mut finder = Finder::new(positon);
+    pub fn find(&self, pos: Position) -> Vec<NodeIndex> {
+        let mut finder = Finder::new(pos);
         finder.visit(self, self.root);
         finder.results
     }
@@ -349,6 +349,14 @@ impl Tree {
     pub fn as_field(&self, node: NodeIndex) -> Option<&Field> {
         if let Node::Field(field) = &self.graph[node] {
             Some(field)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_word(&self, node: NodeIndex) -> Option<&Word> {
+        if let Node::Word(word) = &self.graph[node] {
+            Some(word)
         } else {
             None
         }

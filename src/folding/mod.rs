@@ -39,10 +39,7 @@ impl FeatureProvider for FoldingProvider {
     type Output = Vec<FoldingRange>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<FoldingRangeParams>,
-    ) -> Vec<FoldingRange> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

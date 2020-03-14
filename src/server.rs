@@ -7,6 +7,7 @@ use crate::{
     jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
     protocol::*,
+    reference::ReferenceProvider,
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::Workspace,
 };
@@ -28,6 +29,7 @@ pub struct LatexLspServer<C> {
     folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
+    reference_provider: ReferenceProvider,
 }
 
 #[jsonrpc_server]
@@ -45,6 +47,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
+            reference_provider: ReferenceProvider::new(),
         }
     }
 
@@ -210,8 +213,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
-    pub async fn references(&self, _params: ReferenceParams) -> Result<Vec<Location>> {
-        Ok(Vec::new())
+    pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
+        let req = self
+            .make_feature_request(params.text_document_position.as_uri(), params)
+            .await?;
+        Ok(self.reference_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
