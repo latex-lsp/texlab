@@ -7,6 +7,7 @@ pub mod jsonrpc;
 pub mod link;
 pub mod protocol;
 pub mod reference;
+pub mod rename;
 pub mod server;
 pub mod syntax;
 pub mod test;

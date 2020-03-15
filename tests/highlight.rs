@@ -1,6 +1,6 @@
 use indoc::indoc;
 use texlab::{
-    protocol::*,
+    protocol::{DocumentHighlight, DocumentHighlightKind, Range, RangeExt},
     test::{TestBedBuilder, PULL_CAPABILITIES},
 };
 
@@ -12,6 +12,20 @@ async fn empty_latex_document() {
     test_bed.open("main.tex").await;
 
     let actual_highlights = test_bed.document_highlight("main.tex", 0, 0).await.unwrap();
+
+    test_bed.shutdown().await;
+
+    assert!(actual_highlights.is_empty());
+}
+
+#[tokio::test]
+async fn empty_bibtex_document() {
+    let mut test_bed = TestBedBuilder::new().file("main.bib", "").build().await;
+    test_bed.spawn();
+    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
+    test_bed.open("main.bib").await;
+
+    let actual_highlights = test_bed.document_highlight("main.bib", 0, 0).await.unwrap();
 
     test_bed.shutdown().await;
 

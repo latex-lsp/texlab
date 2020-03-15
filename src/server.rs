@@ -8,6 +8,7 @@ use crate::{
     link::LinkProvider,
     protocol::*,
     reference::ReferenceProvider,
+    rename::{PrepareRenameProvider, RenameProvider},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::Workspace,
 };
@@ -22,7 +23,7 @@ pub struct LatexLspServer<C> {
     distro: DynamicDistribution,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
-    pub current_dir: Arc<PathBuf>,
+    current_dir: Arc<PathBuf>,
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
@@ -30,6 +31,8 @@ pub struct LatexLspServer<C> {
     highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
     reference_provider: ReferenceProvider,
+    prepare_rename_provider: PrepareRenameProvider,
+    rename_provider: RenameProvider,
 }
 
 #[jsonrpc_server]
@@ -48,6 +51,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
             reference_provider: ReferenceProvider::new(),
+            prepare_rename_provider: PrepareRenameProvider::new(),
+            rename_provider: RenameProvider::new(),
         }
     }
 
@@ -263,14 +268,20 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
     pub async fn prepare_rename(
         &self,
-        _params: TextDocumentPositionParams,
+        params: TextDocumentPositionParams,
     ) -> Result<Option<Range>> {
-        Ok(None)
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.prepare_rename_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
-    pub async fn rename(&self, _params: RenameParams) -> Result<Option<WorkspaceEdit>> {
-        Ok(None)
+    pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
+        let req = self
+            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
+            .await?;
+        Ok(self.rename_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]

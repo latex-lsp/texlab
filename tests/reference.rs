@@ -1,6 +1,6 @@
 use indoc::indoc;
 use texlab::{
-    protocol::*,
+    protocol::{Location, Range, RangeExt},
     test::{TestBedBuilder, PULL_CAPABILITIES},
 };
 

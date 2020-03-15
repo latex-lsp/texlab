@@ -1,6 +1,6 @@
 use indoc::indoc;
 use texlab::{
-    protocol::*,
+    protocol::{FoldingRange, FoldingRangeKind},
     test::{TestBedBuilder, PULL_CAPABILITIES},
 };
 

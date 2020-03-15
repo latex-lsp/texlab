@@ -4,9 +4,9 @@ pub trait RangeExt {
     fn new_simple(start_line: u64, start_character: u64, end_line: u64, end_character: u64)
         -> Self;
 
-    fn contains(&self, position: Position) -> bool;
+    fn contains(&self, pos: Position) -> bool;
 
-    fn contains_exclusive(&self, position: Position) -> bool;
+    fn contains_exclusive(&self, pos: Position) -> bool;
 }
 
 impl RangeExt for Range {
@@ -22,12 +22,12 @@ impl RangeExt for Range {
         }
     }
 
-    fn contains(&self, position: Position) -> bool {
-        position >= self.start && position <= self.end
+    fn contains(&self, pos: Position) -> bool {
+        pos >= self.start && pos <= self.end
     }
 
-    fn contains_exclusive(&self, position: Position) -> bool {
-        position > self.start && position < self.end
+    fn contains_exclusive(&self, pos: Position) -> bool {
+        pos > self.start && pos < self.end
     }
 }
 

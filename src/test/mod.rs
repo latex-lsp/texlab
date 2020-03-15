@@ -335,17 +335,44 @@ impl TestBed {
         character: u64,
         include_declaration: bool,
     ) -> Option<Vec<Location>> {
-        let pos = Position::new(line, character);
         let params = ReferenceParams {
             text_document_position: TextDocumentPositionParams::new(
                 self.identifier(relative_path),
-                pos,
+                Position::new(line, character),
             ),
             context: ReferenceContext {
                 include_declaration,
             },
         };
         self.client.references(params).await.ok()
+    }
+
+    pub async fn prepare_rename(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Option<Range>> {
+        let pos = Position::new(line, character);
+        let params = TextDocumentPositionParams::new(self.identifier(relative_path), pos);
+        self.client.prepare_rename(params).await.ok()
+    }
+
+    pub async fn rename<S: Into<String>>(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+        new_name: S,
+    ) -> Option<Option<WorkspaceEdit>> {
+        let params = RenameParams {
+            text_document_position: TextDocumentPositionParams::new(
+                self.identifier(relative_path),
+                Position::new(line, character),
+            ),
+            new_name: new_name.into(),
+        };
+        self.client.rename(params).await.ok()
     }
 
     pub async fn shutdown(&self) {
