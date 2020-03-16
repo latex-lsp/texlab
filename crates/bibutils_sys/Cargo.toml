@@ -1,5 +1,5 @@
 [package]
-name = "jsonrpc-derive"
+name = "bibutils-sys"
 version = "0.1.0"
 authors = [
     "Eric Förster <efoerster@users.noreply.github.com>",
@@ -7,10 +7,7 @@ authors = [
 edition = "2018"
 
 [lib]
-proc-macro = true
 doctest = false
 
-[dependencies]
-futures-boxed = { path = "../futures_boxed" }
-syn = "1.0"
-quote = "1.0"
+[build-dependencies]
+cc = "1.0"

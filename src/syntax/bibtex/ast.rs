@@ -362,6 +362,17 @@ impl Tree {
         }
     }
 
+    pub fn entry_by_key(&self, key: &str) -> Option<NodeIndex> {
+        for node in self.children(self.root) {
+            if let Some(entry) = self.as_entry(node) {
+                if entry.key.as_ref().map(Token::text) == Some(key) {
+                    return Some(node);
+                }
+            }
+        }
+        None
+    }
+
     pub fn field_by_name(&self, parent: NodeIndex, name: &str) -> Option<NodeIndex> {
         let name = name.to_lowercase();
         self.as_entry(parent)?;
@@ -373,6 +384,13 @@ impl Tree {
             }
         }
         None
+    }
+
+    pub fn crossref(&self, entry: NodeIndex) -> Option<NodeIndex> {
+        let field = self.field_by_name(entry, "crossref")?;
+        let content = self.children(field).next()?;
+        let key = self.as_word(self.children(content).next()?)?;
+        self.entry_by_key(key.token.text())
     }
 }
 
