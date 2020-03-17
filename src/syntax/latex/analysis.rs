@@ -1,5 +1,5 @@
 use crate::{
-    protocol::{Options, Uri},
+    protocol::{Options, Position, Range, RangeExt, Uri},
     syntax::{lang_data::*, latex::ast::*, text::SyntaxNode},
     tex::Resolver,
 };
@@ -125,6 +125,32 @@ impl SymbolTable {
             items: items.unwrap(),
         }
     }
+
+    pub fn is_direct_child(&self, env: &Environment, pos: Position) -> bool {
+        env.range(&self.tree).contains(pos)
+            && !self
+                .environments
+                .iter()
+                .filter(|e| e.left.parent != env.left.parent)
+                .filter(|e| env.range(&self.tree).contains(e.range(&self.tree).start))
+                .any(|e| e.range(&self.tree).contains(pos))
+    }
+
+    pub fn is_enum_item(&self, enumeration: &Environment, item: Item) -> bool {
+        let item_range = self.tree.range(item.parent);
+        enumeration.range(&self.tree).contains(item_range.start)
+            && !self
+                .environments
+                .iter()
+                .filter(|env| env.left.parent != enumeration.left.parent)
+                .filter(|env| env.left.is_enum(&self.tree))
+                .filter(|env| {
+                    enumeration
+                        .range(&self.tree)
+                        .contains(env.range(&self.tree).start)
+                })
+                .any(|env| env.range(&self.tree).contains(item_range.start))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -176,6 +202,12 @@ impl Environment {
             .iter()
             .chain(self.right.name(tree).iter())
             .any(|name| name.text() == "document")
+    }
+
+    pub fn range(self, tree: &Tree) -> Range {
+        let start = tree.graph[self.left.parent].start();
+        let end = tree.graph[self.right.parent].end();
+        Range::new(start, end)
     }
 
     fn parse(ctx: SymbolContext) -> Vec<Self> {
@@ -569,8 +601,8 @@ impl MathOperator {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TheoremDefinition {
-    parent: NodeIndex,
-    arg_index: usize,
+    pub parent: NodeIndex,
+    pub arg_index: usize,
 }
 
 impl TheoremDefinition {

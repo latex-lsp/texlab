@@ -160,6 +160,10 @@ pub struct Tree {
 }
 
 impl Tree {
+    pub fn range(&self, node: NodeIndex) -> Range {
+        self.graph[node].range()
+    }
+
     pub fn children(&self, parent: NodeIndex) -> impl Iterator<Item = NodeIndex> {
         self.graph
             .neighbors(parent)

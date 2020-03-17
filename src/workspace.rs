@@ -37,6 +37,16 @@ pub enum DocumentContent {
     Bibtex(Box<bibtex::Tree>),
 }
 
+impl DocumentContent {
+    pub fn as_latex(&self) -> Option<&latex::SymbolTable> {
+        if let Self::Latex(table) = self {
+            Some(&table)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
     pub uri: Uri,

@@ -6,6 +6,7 @@ pub mod folding;
 pub mod highlight;
 pub mod jsonrpc;
 pub mod link;
+pub mod outline;
 pub mod protocol;
 pub mod reference;
 pub mod rename;
