@@ -15,3 +15,4 @@ pub mod syntax;
 pub mod test;
 pub mod tex;
 pub mod workspace;
+pub mod completion;

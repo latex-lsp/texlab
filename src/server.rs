@@ -1,4 +1,6 @@
 use crate::{
+    citeproc::render_citation,
+    completion::{CompletionItemData, CompletionProvider},
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
@@ -10,7 +12,7 @@ use crate::{
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
-    workspace::Workspace,
+    workspace::{DocumentContent, Workspace},
 };
 use futures::lock::Mutex;
 use futures_boxed::boxed;
@@ -27,6 +29,7 @@ pub struct LatexLspServer<C> {
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
+    completion_provider: CompletionProvider,
     folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
@@ -47,6 +50,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
             workspace,
+            completion_provider: CompletionProvider::new(),
             folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
@@ -192,15 +196,36 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn work_done_progress_cancel(&self, _params: WorkDoneProgressCancelParams) {}
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
-    pub async fn completion(&self, _params: CompletionParams) -> Result<CompletionList> {
+    pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
+        let req = self
+            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
+            .await?;
         Ok(CompletionList {
             is_incomplete: true,
-            items: Vec::new(),
+            items: self.completion_provider.execute(&req).await,
         })
     }
 
     #[jsonrpc_method("completionItem/resolve", kind = "request")]
-    pub async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem> {
+    pub async fn completion_resolve(&self, mut item: CompletionItem) -> Result<CompletionItem> {
+        let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
+        match data {
+            CompletionItemData::Package | CompletionItemData::Class => {
+                item.documentation = COMPONENT_DATABASE
+                    .documentation(&item.label)
+                    .map(Documentation::MarkupContent);
+            }
+            CompletionItemData::Citation { uri, key } => {
+                let snapshot = self.workspace.get().await;
+                if let Some(doc) = snapshot.find(&uri) {
+                    if let DocumentContent::Bibtex(tree) = &doc.content {
+                        let markup = render_citation(&tree, &key);
+                        item.documentation = markup.map(Documentation::MarkupContent);
+                    }
+                }
+            }
+            _ => {}
+        };
         Ok(item)
     }
 

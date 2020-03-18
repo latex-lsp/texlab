@@ -301,6 +301,26 @@ impl TestBed {
         self.client.did_change_configuration(params).await
     }
 
+    pub async fn completion(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Vec<CompletionItem>> {
+        let params = CompletionParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: self.identifier(relative_path),
+                position: Position::new(line, character),
+            },
+            context: None,
+        };
+        self.client
+            .completion(params)
+            .await
+            .ok()
+            .map(|list| list.items)
+    }
+
     pub async fn folding_range(&self, relative_path: &str) -> Option<Vec<FoldingRange>> {
         let params = FoldingRangeParams {
             text_document: self.identifier(relative_path),

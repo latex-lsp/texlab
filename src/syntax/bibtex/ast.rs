@@ -354,6 +354,14 @@ impl Tree {
         }
     }
 
+    pub fn as_command(&self, node: NodeIndex) -> Option<&Command> {
+        if let Node::Command(cmd) = &self.graph[node] {
+            Some(cmd)
+        } else {
+            None
+        }
+    }
+
     pub fn as_word(&self, node: NodeIndex) -> Option<&Word> {
         if let Node::Word(word) = &self.graph[node] {
             Some(word)

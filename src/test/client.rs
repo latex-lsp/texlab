@@ -32,6 +32,14 @@ pub trait TestLspClient {
     #[boxed]
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams);
 
+    #[jsonrpc_method("textDocument/completion", kind = "request")]
+    #[boxed]
+    async fn completion(&self, params: CompletionParams) -> Result<CompletionList>;
+
+    #[jsonrpc_method("completionItem/resolve", kind = "request")]
+    #[boxed]
+    async fn completion_resolve(&self, item: CompletionItem) -> Result<CompletionItem>;
+
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     #[boxed]
     async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>>;
