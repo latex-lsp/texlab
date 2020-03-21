@@ -49,7 +49,6 @@ mod tests {
                 .map(|node| tree.graph[node].range())
                 .collect();
 
-            println!("{:#?}", actual_ranges);
             assert_eq!(actual_ranges, expected_ranges);
         }
 

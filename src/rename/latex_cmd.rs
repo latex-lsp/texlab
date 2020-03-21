@@ -55,7 +55,9 @@ impl FeatureProvider for LatexCommandRenameProvider {
 
 fn find_command(content: &DocumentContent, pos: Position) -> Option<&latex::Command> {
     if let DocumentContent::Latex(table) = &content {
-        table.tree.find_command_by_short_name_range(pos)
+        table
+            .tree
+            .as_command(table.tree.find_command_by_short_name_range(pos)?)
     } else {
         None
     }

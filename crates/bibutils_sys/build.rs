@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-changed=vendor");
     cc::Build::new()
         .warnings(false)
         .extra_warnings(false)

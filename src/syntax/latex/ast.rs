@@ -182,13 +182,14 @@ impl Tree {
         finder.results
     }
 
-    pub fn find_command_by_short_name_range(&self, pos: Position) -> Option<&Command> {
-        self.find(pos)
-            .into_iter()
-            .filter_map(|node| self.as_command(node))
-            .find(|cmd| {
-                cmd.name.range().contains(pos) && cmd.name.start().character != pos.character
-            })
+    pub fn find_command_by_short_name_range(&self, pos: Position) -> Option<NodeIndex> {
+        self.find(pos).into_iter().find(|node| {
+            self.as_command(*node)
+                .filter(|cmd| {
+                    cmd.name.range().contains(pos) && cmd.name.start().character != pos.character
+                })
+                .is_some()
+        })
     }
 
     pub fn print(&self, node: NodeIndex) -> String {

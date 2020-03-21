@@ -182,11 +182,6 @@ mod tests {
             ),
         ];
 
-        println!(
-            "Actual = {:#?}\nExpected = {:#?}",
-            actual_refs, expected_refs
-        );
-
         assert_eq!(actual_refs, expected_refs);
     }
 

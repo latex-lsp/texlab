@@ -45,6 +45,14 @@ impl DocumentContent {
             None
         }
     }
+
+    pub fn as_bibtex(&self) -> Option<&bibtex::Tree> {
+        if let Self::Bibtex(tree) = self {
+            Some(&tree)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

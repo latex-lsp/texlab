@@ -126,12 +126,10 @@ mod tests {
     #[tokio::test]
     #[should_panic]
     async fn notification_invalid_params() {
-        let notification = setup_notification();
         let notification = Notification {
             params: json!(0),
-            ..notification
+            ..setup_notification()
         };
-
         handle_notification(notification, panic).await;
     }
 }

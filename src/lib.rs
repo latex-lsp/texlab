@@ -1,4 +1,5 @@
 pub mod citeproc;
+pub mod completion;
 pub mod components;
 pub mod config;
 pub mod feature;
@@ -15,4 +16,3 @@ pub mod syntax;
 pub mod test;
 pub mod tex;
 pub mod workspace;
-pub mod completion;

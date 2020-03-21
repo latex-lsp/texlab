@@ -1,5 +1,6 @@
 mod bibtex;
 mod factory;
+mod latex;
 mod preselect;
 mod quality;
 
@@ -9,6 +10,23 @@ use self::{
     bibtex::{
         cmd::BibtexCommandCompletionProvider, entry_type::BibtexEntryTypeCompletionProvider,
         field_name::BibtexFieldNameCompletionProvider,
+    },
+    latex::{
+        argument::LatexArgumentCompletionProvider,
+        begin_command::LatexBeginCommandCompletionProvider,
+        citation::LatexCitationCompletionProvider,
+        color::LatexColorCompletionProvider,
+        color_model::LatexColorModelCompletionProvider,
+        component::{
+            LatexComponentCommandCompletionProvider, LatexComponentEnvironmentCompletionProvider,
+        },
+        glossary::LatexGlossaryCompletionProvider,
+        import::{LatexClassImportProvider, LatexPackageImportProvider},
+        include::LatexIncludeCompletionProvider,
+        label::LatexLabelCompletionProvider,
+        theorem::LatexTheoremEnvironmentCompletionProvider,
+        tikz_lib::{LatexPgfLibraryCompletionProvider, LatexTikzLibraryCompletionProvider},
+        user::{LatexUserCommandCompletionProvider, LatexUserEnvironmentCompletionProvider},
     },
     preselect::PreselectCompletionProvider,
     quality::OrderByQualityCompletionProvider,
@@ -37,6 +55,23 @@ impl CompletionProvider {
                     Box::new(BibtexEntryTypeCompletionProvider),
                     Box::new(BibtexFieldNameCompletionProvider),
                     Box::new(BibtexCommandCompletionProvider),
+                    Box::new(LatexPgfLibraryCompletionProvider),
+                    Box::new(LatexTikzLibraryCompletionProvider),
+                    Box::new(LatexColorCompletionProvider),
+                    Box::new(LatexColorModelCompletionProvider),
+                    Box::new(LatexArgumentCompletionProvider),
+                    Box::new(LatexComponentEnvironmentCompletionProvider),
+                    Box::new(LatexTheoremEnvironmentCompletionProvider),
+                    Box::new(LatexLabelCompletionProvider),
+                    Box::new(LatexCitationCompletionProvider),
+                    Box::new(LatexGlossaryCompletionProvider),
+                    Box::new(LatexIncludeCompletionProvider),
+                    Box::new(LatexClassImportProvider),
+                    Box::new(LatexPackageImportProvider),
+                    Box::new(LatexBeginCommandCompletionProvider),
+                    Box::new(LatexComponentCommandCompletionProvider),
+                    Box::new(LatexUserCommandCompletionProvider),
+                    Box::new(LatexUserEnvironmentCompletionProvider),
                 ]),
             )),
         }

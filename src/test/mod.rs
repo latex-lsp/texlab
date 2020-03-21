@@ -123,7 +123,7 @@ impl TestBedBuilder {
         let (tx2, rx2) = mpsc::channel(0);
 
         let endpoint1 = self.build_endpoint1(&dir, tx2, rx1).await;
-        let endpoint2 = self.build_endpoint2(tx1, rx2).await;
+        let endpoint2 = self.build_endpoint2(&dir, tx1, rx2).await;
         let server = Arc::clone(&endpoint2.server);
         let client = Arc::clone(&endpoint2.client);
         TestBed {
@@ -163,12 +163,13 @@ impl TestBedBuilder {
 
     async fn build_endpoint2(
         &self,
+        dir: &TempDir,
         tx1: mpsc::Sender<String>,
         rx2: mpsc::Receiver<String>,
     ) -> Endpoint<TestLatexLspServer, TestLatexLspClient> {
         let options = Options {
             latex: Some(LatexOptions {
-                root_directory: self.root_dir.clone(),
+                root_directory: self.root_dir.as_ref().map(|path| dir.path().join(path)),
                 build: self.latex_build.clone(),
                 forward_search: self.latex_forward_search.clone(),
                 lint: self.latex_lint.clone(),

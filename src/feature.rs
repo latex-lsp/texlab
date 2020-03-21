@@ -1,9 +1,11 @@
 use crate::{
+    components::{Component, COMPONENT_DATABASE},
     protocol::*,
     tex::{DynamicDistribution, Language},
-    workspace::{Document, DocumentParams, Snapshot},
+    workspace::{Document, DocumentContent, DocumentParams, Snapshot},
 };
 use futures_boxed::boxed;
+use itertools::Itertools;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -30,6 +32,34 @@ impl DocumentView {
             current,
             related,
         }
+    }
+
+    pub fn components(&self) -> Vec<&'static Component> {
+        let mut start_components = vec![COMPONENT_DATABASE.kernel()];
+        for doc in &self.related {
+            if let DocumentContent::Latex(table) = &doc.content {
+                table
+                    .components
+                    .iter()
+                    .flat_map(|file| COMPONENT_DATABASE.find(file))
+                    .for_each(|component| start_components.push(component))
+            }
+        }
+
+        let mut all_components = Vec::new();
+        for component in start_components {
+            all_components.push(component);
+            component
+                .references
+                .iter()
+                .flat_map(|file| COMPONENT_DATABASE.find(&file))
+                .for_each(|component| all_components.push(component))
+        }
+
+        all_components
+            .into_iter()
+            .unique_by(|component| &component.file_names)
+            .collect()
     }
 }
 

@@ -34,8 +34,8 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     cmd.name.text()[1..].to_owned().into()
                 }
 
-                if let Some(cmd) = table.tree.find_command_by_short_name_range(pos) {
-                    return Some(command_query(cmd));
+                if let Some(node) = table.tree.find_command_by_short_name_range(pos) {
+                    return Some(command_query(table.tree.as_command(node).unwrap()));
                 }
 
                 match &table.tree.graph[table.tree.find(pos).into_iter().last()?] {
