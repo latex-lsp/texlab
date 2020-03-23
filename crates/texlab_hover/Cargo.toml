@@ -10,7 +10,7 @@ edition = "2018"
 base64 = "0.11.0"
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
-image = "0.22.4"
+image = "0.23.2"
 log = "0.4.6"
 tempfile = "3"
 texlab-citeproc = { path = "../texlab_citeproc" }
