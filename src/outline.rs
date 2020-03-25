@@ -125,8 +125,8 @@ impl OutlineCaptionKind {
         }
     }
 
-    pub fn parse(environment_name: &str) -> Option<Self> {
-        match environment_name {
+    pub fn parse(env_name: &str) -> Option<Self> {
+        match env_name {
             "figure" | "subfigure" => Some(Self::Figure),
             "table" | "subtable" => Some(Self::Table),
             "listing" | "lstlisting" => Some(Self::Listing),

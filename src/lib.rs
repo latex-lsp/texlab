@@ -12,6 +12,7 @@ pub mod protocol;
 pub mod reference;
 pub mod rename;
 pub mod server;
+pub mod symbol;
 pub mod syntax;
 pub mod test;
 pub mod tex;

@@ -66,4 +66,16 @@ pub trait TestLspClient {
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     #[boxed]
     async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>>;
+
+    #[jsonrpc_method("workspace/symbol", kind = "request")]
+    #[boxed]
+    async fn workspace_symbol(
+        &self,
+        params: WorkspaceSymbolParams,
+    ) -> Result<Vec<SymbolInformation>>;
+
+    #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
+    #[boxed]
+    async fn document_symbol(&self, params: DocumentSymbolParams)
+        -> Result<DocumentSymbolResponse>;
 }

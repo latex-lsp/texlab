@@ -11,6 +11,7 @@ use crate::{
     protocol::*,
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
+    symbol::{document_symbols, workspace_symbols, SymbolProvider},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
@@ -36,6 +37,7 @@ pub struct LatexLspServer<C> {
     reference_provider: ReferenceProvider,
     prepare_rename_provider: PrepareRenameProvider,
     rename_provider: RenameProvider,
+    symbol_provider: SymbolProvider,
 }
 
 #[jsonrpc_server]
@@ -57,6 +59,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             reference_provider: ReferenceProvider::new(),
             prepare_rename_provider: PrepareRenameProvider::new(),
             rename_provider: RenameProvider::new(),
+            symbol_provider: SymbolProvider::new(),
         }
     }
 
@@ -264,17 +267,43 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("workspace/symbol", kind = "request")]
     pub async fn workspace_symbol(
         &self,
-        _params: WorkspaceSymbolParams,
+        params: WorkspaceSymbolParams,
     ) -> Result<Vec<SymbolInformation>> {
-        Ok(Vec::new())
+        let distro = self.distro.clone();
+        let client_capabilities = self.client_capabilities();
+        let snapshot = self.workspace.get().await;
+        let options = self.config_manager().get().await;
+        let symbols = workspace_symbols(
+            distro,
+            client_capabilities,
+            snapshot,
+            &options,
+            Arc::clone(&self.current_dir),
+            &params,
+        )
+        .await;
+        Ok(symbols)
     }
 
     #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
     pub async fn document_symbol(
         &self,
-        _params: DocumentSymbolParams,
+        params: DocumentSymbolParams,
     ) -> Result<DocumentSymbolResponse> {
-        Ok(DocumentSymbolResponse::Flat(Vec::new()))
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+
+        let symbols = self.symbol_provider.execute(&req).await;
+        let response = document_symbols(
+            &req.client_capabilities,
+            req.snapshot(),
+            &req.current().uri,
+            &req.options,
+            &req.current_dir,
+            symbols.into_iter().map(Into::into).collect(),
+        );
+        Ok(response)
     }
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]

@@ -151,6 +151,22 @@ impl SymbolTable {
                 })
                 .any(|env| env.range(&self.tree).contains(item_range.start))
     }
+
+    pub fn find_label_by_range(&self, range: Range) -> Option<&Label> {
+        self.labels
+            .iter()
+            .filter(|label| label.kind == LatexLabelKind::Definition)
+            .filter(|label| label.names(&self.tree).len() == 1)
+            .find(|label| range.contains(self.tree.range(label.parent).start))
+    }
+
+    pub fn find_label_by_environment(&self, env: &Environment) -> Option<&Label> {
+        self.labels
+            .iter()
+            .filter(|label| label.kind == LatexLabelKind::Definition)
+            .filter(|label| label.names(&self.tree).len() == 1)
+            .find(|label| self.is_direct_child(env, self.tree.range(label.parent).start))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -496,6 +512,12 @@ pub struct Equation {
 }
 
 impl Equation {
+    pub fn range(self, tree: &Tree) -> Range {
+        let start = tree.range(self.left).start;
+        let end = tree.range(self.right).end;
+        Range::new(start, end)
+    }
+
     fn parse(ctx: SymbolContext) -> Vec<Self> {
         let mut equations = Vec::new();
         let mut left = None;
