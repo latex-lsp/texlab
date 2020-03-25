@@ -226,7 +226,7 @@ impl OutlineContext {
         }
     }
 
-    pub fn parse(view: &DocumentView, outline: &Outline, label: &latex::Label) -> Option<Self> {
+    pub fn parse(view: &DocumentView, outline: &Outline, label: latex::Label) -> Option<Self> {
         if let DocumentContent::Latex(table) = &view.current.content {
             Self::find_caption(view, table, label)
                 .or_else(|| Self::find_theorem(view, table, label))
@@ -241,7 +241,7 @@ impl OutlineContext {
     fn find_caption(
         view: &DocumentView,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<Self> {
         let label_range = table.tree.graph[label.parent].range();
         let caption_env = table
@@ -280,7 +280,7 @@ impl OutlineContext {
     fn find_theorem(
         view: &DocumentView,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<Self> {
         let label_range = table.tree.range(label.parent);
         let env = table
@@ -324,7 +324,7 @@ impl OutlineContext {
     fn find_equation(
         view: &DocumentView,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<Self> {
         let label_range = table.tree.range(label.parent);
         table
@@ -343,7 +343,7 @@ impl OutlineContext {
     fn find_item(
         view: &DocumentView,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<Self> {
         let label_range = table.tree.range(label.parent);
         struct LatexItemNode {
@@ -396,7 +396,7 @@ impl OutlineContext {
         view: &DocumentView,
         outline: &Outline,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<Self> {
         let label_range = table.tree.range(label.parent);
         let section = outline.find(&view.current.uri, label_range.start)?;
@@ -417,7 +417,7 @@ impl OutlineContext {
     pub fn find_number(
         view: &DocumentView,
         table: &latex::SymbolTable,
-        label: &latex::Label,
+        label: latex::Label,
     ) -> Option<String> {
         let label_names = label.names(&table.tree);
         if label_names.len() != 1 {

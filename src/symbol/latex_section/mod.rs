@@ -170,7 +170,7 @@ impl<'a> LatexSectionNode<'a> {
                     .contains(self.table.tree.range(label.parent).start)
             })
         {
-            if let Some(ctx) = OutlineContext::parse(view, outline, label) {
+            if let Some(ctx) = OutlineContext::parse(view, outline, *label) {
                 let mut is_section = false;
                 if let OutlineContextItem::Section { text, .. } = &ctx.item {
                     if self.name() == *text {

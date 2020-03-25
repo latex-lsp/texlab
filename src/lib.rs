@@ -2,6 +2,7 @@ pub mod citeproc;
 pub mod completion;
 pub mod components;
 pub mod config;
+pub mod definition;
 pub mod feature;
 pub mod folding;
 pub mod highlight;

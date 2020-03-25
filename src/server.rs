@@ -3,6 +3,7 @@ use crate::{
     completion::{CompletionItemData, CompletionProvider},
     components::COMPONENT_DATABASE,
     config::ConfigManager,
+    definition::DefinitionProvider,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     folding::FoldingProvider,
     highlight::HighlightProvider,
@@ -31,6 +32,7 @@ pub struct LatexLspServer<C> {
     action_manager: ActionManager,
     workspace: Workspace,
     completion_provider: CompletionProvider,
+    definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
     link_provider: LinkProvider,
@@ -53,6 +55,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             action_manager: ActionManager::default(),
             workspace,
             completion_provider: CompletionProvider::new(),
+            definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
             link_provider: LinkProvider::new(),
@@ -240,9 +243,24 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/definition", kind = "request")]
     pub async fn definition(
         &self,
-        _params: TextDocumentPositionParams,
+        params: TextDocumentPositionParams,
     ) -> Result<DefinitionResponse> {
-        Ok(DefinitionResponse::Locations(Vec::new()))
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        let results = self.definition_provider.execute(&req).await;
+        let response = if req.client_capabilities.has_definition_link_support() {
+            DefinitionResponse::LocationLinks(results)
+        } else {
+            DefinitionResponse::Locations(
+                results
+                    .into_iter()
+                    .map(|link| Location::new(link.target_uri, link.target_selection_range))
+                    .collect(),
+            )
+        };
+
+        Ok(response)
     }
 
     #[jsonrpc_method("textDocument/references", kind = "request")]

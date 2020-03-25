@@ -302,6 +302,40 @@ impl TestBed {
         self.client.did_change_configuration(params).await
     }
 
+    pub async fn definition_link(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Vec<LocationLink>> {
+        let params = TextDocumentPositionParams {
+            text_document: self.identifier(relative_path),
+            position: Position::new(line, character),
+        };
+        let response = self.client.definition(params).await.ok()?;
+        match response {
+            DefinitionResponse::LocationLinks(links) => Some(links),
+            DefinitionResponse::Locations(_) => unreachable!(),
+        }
+    }
+
+    pub async fn definition_location(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Vec<Location>> {
+        let params = TextDocumentPositionParams {
+            text_document: self.identifier(relative_path),
+            position: Position::new(line, character),
+        };
+        let response = self.client.definition(params).await.ok()?;
+        match response {
+            DefinitionResponse::LocationLinks(_) => unreachable!(),
+            DefinitionResponse::Locations(locations) => Some(locations),
+        }
+    }
+
     pub async fn completion(
         &self,
         relative_path: &str,
@@ -488,6 +522,49 @@ pub static NESTED_SYMBOL_CAPABILITIES: ClientCapabilities = {
                 dynamic_registration: None,
                 symbol_kind: None,
             }),
+            folding_range: None,
+            formatting: None,
+            hover: None,
+            implementation: None,
+            on_type_formatting: None,
+            publish_diagnostics: None,
+            range_formatting: None,
+            references: None,
+            rename: None,
+            signature_help: None,
+            synchronization: None,
+            type_definition: None,
+        }),
+        window: None,
+        workspace: Some(WorkspaceClientCapabilities {
+            apply_edit: None,
+            configuration: Some(true),
+            did_change_configuration: None,
+            did_change_watched_files: None,
+            execute_command: None,
+            symbol: None,
+            workspace_edit: None,
+            workspace_folders: None,
+        }),
+    }
+};
+
+pub static LOCATION_LINK_CAPABILITIES: ClientCapabilities = {
+    ClientCapabilities {
+        experimental: None,
+        text_document: Some(TextDocumentClientCapabilities {
+            code_action: None,
+            code_lens: None,
+            color_provider: None,
+            completion: None,
+            declaration: None,
+            definition: Some(GotoCapability {
+                dynamic_registration: None,
+                link_support: Some(true),
+            }),
+            document_highlight: None,
+            document_link: None,
+            document_symbol: None,
             folding_range: None,
             formatting: None,
             hover: None,

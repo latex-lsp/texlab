@@ -32,6 +32,10 @@ pub trait TestLspClient {
     #[boxed]
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams);
 
+    #[jsonrpc_method("textDocument/definition", kind = "request")]
+    #[boxed]
+    async fn definition(&self, params: TextDocumentPositionParams) -> Result<DefinitionResponse>;
+
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     #[boxed]
     async fn completion(&self, params: CompletionParams) -> Result<CompletionList>;

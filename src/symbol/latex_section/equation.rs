@@ -24,10 +24,7 @@ pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymb
 fn make_symbol(view: &DocumentView, table: &latex::SymbolTable, full_range: Range) -> LatexSymbol {
     let label = table.find_label_by_range(full_range);
 
-    let name = match label
-        .as_ref()
-        .and_then(|label| OutlineContext::find_number(view, table, label))
-    {
+    let name = match label.and_then(|label| OutlineContext::find_number(view, table, *label)) {
         Some(num) => format!("Equation ({})", num),
         None => "Equation".to_owned(),
     };

@@ -44,8 +44,7 @@ fn make_symbol(
 
                     let label = main_table.find_label_by_environment(env);
                     let number = label
-                        .as_ref()
-                        .and_then(|label| OutlineContext::find_number(view, &main_table, label));
+                        .and_then(|label| OutlineContext::find_number(view, &main_table, *label));
 
                     let name = match (desc, number) {
                         (Some(desc), Some(num)) => format!("{} {} ({})", kind, num, desc),

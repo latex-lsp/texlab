@@ -49,7 +49,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                             .filter(|label| label.kind == LatexLabelKind::Definition)
                             .filter(|label| Self::is_included(&table, label, source))
                         {
-                            let outline_context = OutlineContext::parse(&view, &outline, &label);
+                            let outline_context = OutlineContext::parse(&view, &outline, *label);
                             for name in label.names(&table.tree) {
                                 let text = name.text().to_owned();
                                 let text_edit = TextEdit::new(ctx.range, text.clone());

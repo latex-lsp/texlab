@@ -573,11 +573,11 @@ impl Inline {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct MathOperator {
-    parent: NodeIndex,
-    definition: NodeIndex,
-    definition_index: usize,
-    implementation: NodeIndex,
-    implementation_index: usize,
+    pub parent: NodeIndex,
+    pub definition: NodeIndex,
+    pub definition_index: usize,
+    pub implementation: NodeIndex,
+    pub implementation_index: usize,
 }
 
 impl MathOperator {

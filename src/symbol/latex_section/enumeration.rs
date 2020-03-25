@@ -41,11 +41,9 @@ fn make_symbol(
 
         let label = find_item_label(table, range);
 
-        let number = items[i].name(&table.tree).or_else(|| {
-            label
-                .as_ref()
-                .and_then(|label| OutlineContext::find_number(view, table, label))
-        });
+        let number = items[i]
+            .name(&table.tree)
+            .or_else(|| label.and_then(|label| OutlineContext::find_number(view, table, *label)));
 
         let name = number.unwrap_or_else(|| "Item".into());
         children.push(LatexSymbol {

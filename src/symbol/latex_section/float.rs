@@ -37,9 +37,7 @@ fn make_symbol(
         .and_then(OutlineCaptionKind::parse)?;
 
     let label = table.find_label_by_environment(env);
-    let number = label
-        .as_ref()
-        .and_then(|label| OutlineContext::find_number(view, table, label));
+    let number = label.and_then(|label| OutlineContext::find_number(view, table, *label));
 
     let name = match &number {
         Some(number) => format!("{} {}: {}", kind.as_str(), number, text),
