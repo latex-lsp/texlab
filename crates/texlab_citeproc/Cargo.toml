@@ -15,7 +15,7 @@ csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "68c7a7c16088b5
 fnv = "1.0.3"
 html2md = "0.2.9"
 itertools = "0.8.2"
-lalrpop-util = "0.17.2"
+lalrpop-util = "0.18.1"
 once_cell = "1.3.1"
 regex = "1.3.6"
 serde = { version = "1.0.104", features = ["derive", "rc"] }
