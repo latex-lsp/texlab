@@ -24,4 +24,4 @@ texlab-protocol = { path = "../texlab_protocol" }
 texlab-syntax = { path = "../texlab_syntax" }
 
 [build-dependencies]
-lalrpop = "0.17.2"
+lalrpop = "0.18.1"
