@@ -8,6 +8,7 @@ use crate::{
     folding::FoldingProvider,
     forward_search,
     highlight::HighlightProvider,
+    hover::HoverProvider,
     jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
     protocol::*,
@@ -41,6 +42,7 @@ pub struct LatexLspServer<C> {
     prepare_rename_provider: PrepareRenameProvider,
     rename_provider: RenameProvider,
     symbol_provider: SymbolProvider,
+    hover_provider: HoverProvider,
 }
 
 #[jsonrpc_server]
@@ -64,6 +66,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             prepare_rename_provider: PrepareRenameProvider::new(),
             rename_provider: RenameProvider::new(),
             symbol_provider: SymbolProvider::new(),
+            hover_provider: HoverProvider::new(),
         }
     }
 
@@ -237,8 +240,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/hover", kind = "request")]
-    pub async fn hover(&self, _params: TextDocumentPositionParams) -> Result<Option<Hover>> {
-        Ok(None)
+    pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.hover_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]

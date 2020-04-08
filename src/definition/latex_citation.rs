@@ -65,26 +65,26 @@ mod tests {
 
     #[tokio::test]
     async fn empty_latex_document() {
-        let actual_items = FeatureTester::new()
+        let actual_links = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
             .test_position(LatexCitationDefinitionProvider)
             .await;
 
-        assert!(actual_items.is_empty());
+        assert!(actual_links.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document() {
-        let actual_items = FeatureTester::new()
+        let actual_links = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
             .test_position(LatexCitationDefinitionProvider)
             .await;
 
-        assert!(actual_items.is_empty());
+        assert!(actual_links.is_empty());
     }
 
     #[tokio::test]
