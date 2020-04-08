@@ -157,7 +157,7 @@ impl Snapshot {
                         graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
                     });
 
-                self.resolve_aux_targets(&parent.uri, options, current_dir)
+                self.resolve_aux_targets(&parent.uri, options, current_dir, "aux")
                     .into_iter()
                     .flatten()
                     .find_map(|target| self.find(&target))
@@ -207,7 +207,7 @@ impl Snapshot {
                     .flatten()
                     .for_each(|target| unknown_targets.push(target.clone()));
 
-                self.resolve_aux_targets(&parent.uri, options, current_dir)
+                self.resolve_aux_targets(&parent.uri, options, current_dir, "aux")
                     .into_iter()
                     .filter(|targets| targets.iter().all(|target| self.find(target).is_none()))
                     .flatten()
@@ -231,25 +231,26 @@ impl Snapshot {
         }
     }
 
-    fn resolve_aux_targets(
+    pub fn resolve_aux_targets(
         &self,
         tex_uri: &Uri,
         options: &Options,
-        cwd: &Path,
+        current_dir: &Path,
+        extension: &str,
     ) -> Option<Vec<Uri>> {
         let mut targets = Vec::new();
-        targets.push(tex_uri.with_extension("aux")?);
+        targets.push(tex_uri.with_extension(extension)?);
         if tex_uri.scheme() == "file" {
             let tex_path = tex_uri.to_file_path().ok()?;
             let file_stem = tex_path.file_stem()?;
-            let aux_name = format!("{}.aux", file_stem.to_str()?);
+            let aux_name = format!("{}.{}", file_stem.to_str()?, extension);
 
             if let Some(root_dir) = options
                 .latex
                 .as_ref()
                 .and_then(|opts| opts.root_directory.as_ref())
             {
-                let path = cwd.join(root_dir).join(&aux_name);
+                let path = current_dir.join(root_dir).join(&aux_name);
                 targets.push(Uri::from_file_path(path).ok()?);
             }
 
@@ -259,7 +260,7 @@ impl Snapshot {
                 .and_then(|opts| opts.build.as_ref())
                 .and_then(|opts| opts.output_directory.as_ref())
             {
-                let path = cwd.join(build_dir).join(&aux_name);
+                let path = current_dir.join(build_dir).join(&aux_name);
                 targets.push(Uri::from_file_path(path).ok()?);
             }
         }

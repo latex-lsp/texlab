@@ -6,6 +6,7 @@ use crate::{
     definition::DefinitionProvider,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     folding::FoldingProvider,
+    forward_search,
     highlight::HighlightProvider,
     jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
@@ -374,11 +375,21 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
     pub async fn forward_search(
         &self,
-        _params: TextDocumentPositionParams,
+        params: TextDocumentPositionParams,
     ) -> Result<ForwardSearchResult> {
-        Ok(ForwardSearchResult {
-            status: ForwardSearchStatus::Failure,
-        })
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+
+        forward_search::search(
+            &req.view.snapshot,
+            &req.current().uri,
+            req.params.position.line,
+            &req.options,
+            &self.current_dir,
+        )
+        .await
+        .ok_or_else(|| "Unable to execute forward search".into())
     }
 
     async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
