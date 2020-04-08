@@ -1,9 +1,15 @@
 mod bibtex;
 mod latex;
 
-use self::bibtex::{
-    entry_type::BibtexEntryTypeHoverProvider, field::BibtexFieldHoverProvider,
-    string_reference::BibtexStringReferenceHoverProvider,
+use self::{
+    bibtex::{
+        entry_type::BibtexEntryTypeHoverProvider, field::BibtexFieldHoverProvider,
+        string_reference::BibtexStringReferenceHoverProvider,
+    },
+    latex::{
+        citation::LatexCitationHoverProvider, component::LatexComponentHoverProvider,
+        label::LatexLabelHoverProvider,
+    },
 };
 use crate::{
     feature::{ChoiceProvider, FeatureProvider, FeatureRequest},
@@ -22,6 +28,9 @@ impl HoverProvider {
                 Box::new(BibtexEntryTypeHoverProvider),
                 Box::new(BibtexStringReferenceHoverProvider),
                 Box::new(BibtexFieldHoverProvider),
+                Box::new(LatexCitationHoverProvider),
+                Box::new(LatexComponentHoverProvider),
+                Box::new(LatexLabelHoverProvider),
             ]),
         }
     }
