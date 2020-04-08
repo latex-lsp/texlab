@@ -309,6 +309,8 @@ impl FeatureTester {
                 self.position,
             ),
             context: None,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         let req = self.request(params).await;
         provider.execute(&req).await
@@ -319,7 +321,11 @@ impl FeatureTester {
         F: FeatureProvider<Params = FoldingRangeParams, Output = O>,
     {
         let text_document = self.identifier();
-        let params = FoldingRangeParams { text_document };
+        let params = FoldingRangeParams {
+            text_document,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
         let req = self.request(params).await;
         provider.execute(&req).await
     }
@@ -346,6 +352,7 @@ impl FeatureTester {
             context: ReferenceContext {
                 include_declaration: self.include_declaration,
             },
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         let req = self.request(params).await;
         provider.execute(&req).await
@@ -361,6 +368,7 @@ impl FeatureTester {
                 self.position,
             ),
             new_name: self.new_name.clone(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         let req = self.request(params).await;
         provider.execute(&req).await

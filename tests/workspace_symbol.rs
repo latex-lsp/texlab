@@ -113,6 +113,7 @@ async fn run(query: &str) -> (TestBed, Vec<SymbolInformation>) {
 
     let params = WorkspaceSymbolParams {
         query: query.into(),
+        ..WorkspaceSymbolParams::default()
     };
     let actual_symbols = test_bed.client.workspace_symbol(params).await.unwrap();
 

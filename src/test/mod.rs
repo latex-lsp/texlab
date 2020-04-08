@@ -246,6 +246,7 @@ impl TestBed {
                 root_uri: None,
                 trace: None,
                 workspace_folders: None,
+                client_info: None,
             })
             .await
             .unwrap();
@@ -348,6 +349,8 @@ impl TestBed {
                 position: Position::new(line, character),
             },
             context: None,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.client
             .completion(params)
@@ -359,6 +362,8 @@ impl TestBed {
     pub async fn folding_range(&self, relative_path: &str) -> Option<Vec<FoldingRange>> {
         let params = FoldingRangeParams {
             text_document: self.identifier(relative_path),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.client.folding_range(params).await.ok()
     }
@@ -398,6 +403,7 @@ impl TestBed {
             context: ReferenceContext {
                 include_declaration,
             },
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         self.client.references(params).await.ok()
     }
@@ -426,6 +432,7 @@ impl TestBed {
                 Position::new(line, character),
             ),
             new_name: new_name.into(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         self.client.rename(params).await.ok()
     }

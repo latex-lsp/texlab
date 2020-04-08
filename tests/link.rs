@@ -47,10 +47,12 @@ async fn default_settings() {
         DocumentLink {
             range: Range::new_simple(0, 9, 0, 16),
             target: test_bed.uri("foo/bar.tex").into(),
+            tooltip: None,
         },
         DocumentLink {
             range: Range::new_simple(1, 7, 1, 14),
             target: test_bed.uri("qux.tex").into(),
+            tooltip: None,
         },
     ];
     assert_eq!(actual_links, expected_links);
@@ -76,6 +78,7 @@ async fn root_directory() {
     let expected_links = vec![DocumentLink {
         range: Range::new_simple(0, 9, 0, 16),
         target: test_bed.uri("src/foo.tex").into(),
+        tooltip: None,
     }];
     assert_eq!(actual_links, expected_links);
 }
@@ -99,6 +102,7 @@ async fn parent_directory() {
     let expected_links = vec![DocumentLink {
         range: Range::new_simple(0, 16, 0, 26),
         target: test_bed.uri("foo.bib").into(),
+        tooltip: None,
     }];
     assert_eq!(actual_links, expected_links);
 }
@@ -137,6 +141,7 @@ async fn edit_file() {
     let expected_links = vec![DocumentLink {
         range: Range::new_simple(0, 9, 0, 12),
         target: test_bed.uri("foo.tex").into(),
+        tooltip: None,
     }];
     assert_eq!(actual_links, expected_links);
 }
@@ -162,6 +167,7 @@ async fn did_change_configuration() {
     let expected_links = vec![DocumentLink {
         range: Range::new_simple(0, 9, 0, 16),
         target: test_bed.uri("src/foo.tex").into(),
+        tooltip: None,
     }];
     assert_eq!(actual_links, expected_links);
 }

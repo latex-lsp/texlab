@@ -40,6 +40,7 @@ impl LatexIncludeLinkProvider {
                 if let Some(link) = req.snapshot().find(target).map(|doc| DocumentLink {
                     range: paths[i].range(),
                     target: doc.uri.clone().into(),
+                    tooltip: None,
                 }) {
                     links.push(link);
                     break;
@@ -70,6 +71,7 @@ mod tests {
         let expected_links = vec![DocumentLink {
             range: Range::new_simple(0, 7, 0, 14),
             target: FeatureTester::uri("bar.tex").into(),
+            tooltip: None,
         }];
 
         assert_eq!(actual_links, expected_links);
