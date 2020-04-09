@@ -8,7 +8,7 @@ use self::{
     },
     latex::{
         citation::LatexCitationHoverProvider, component::LatexComponentHoverProvider,
-        label::LatexLabelHoverProvider,
+        label::LatexLabelHoverProvider, preview::LatexPreviewHoverProvider,
     },
 };
 use crate::{
@@ -31,6 +31,7 @@ impl HoverProvider {
                 Box::new(LatexCitationHoverProvider),
                 Box::new(LatexComponentHoverProvider),
                 Box::new(LatexLabelHoverProvider),
+                Box::new(LatexPreviewHoverProvider),
             ]),
         }
     }

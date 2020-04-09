@@ -547,6 +547,12 @@ pub struct Inline {
 }
 
 impl Inline {
+    pub fn range(self, tree: &Tree) -> Range {
+        let start = tree.range(self.left).start;
+        let end = tree.range(self.right).end;
+        Range::new(start, end)
+    }
+
     fn parse(ctx: SymbolContext) -> Vec<Self> {
         let mut inlines = Vec::new();
         let mut left = None;

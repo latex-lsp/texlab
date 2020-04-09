@@ -1,5 +1,6 @@
-use std::{error, fmt, io, process::Stdio, time::Duration};
+use std::{io, process::Stdio, time::Duration};
 use tempfile::{tempdir, TempDir};
+use thiserror::Error;
 use tokio::{
     fs,
     process::Command,
@@ -27,47 +28,18 @@ impl Format {
 
 #[derive(Debug)]
 pub struct Artifacts {
-    pub directory: TempDir,
+    pub dir: TempDir,
     pub log: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CompileError {
-    IO(io::Error),
+    #[error("an I/O error occurred: `{0}`")]
+    IO(#[from] io::Error),
+    #[error("TeX engine is not installed")]
     NotInstalled,
-    Timeout(Elapsed),
-}
-
-impl From<io::Error> for CompileError {
-    fn from(why: io::Error) -> Self {
-        Self::IO(why)
-    }
-}
-
-impl From<Elapsed> for CompileError {
-    fn from(why: Elapsed) -> Self {
-        Self::Timeout(why)
-    }
-}
-
-impl fmt::Display for CompileError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::IO(why) => write!(f, "{}", why),
-            Self::NotInstalled => write!(f, "TeX compiler not installed"),
-            Self::Timeout(why) => write!(f, "{}", why),
-        }
-    }
-}
-
-impl error::Error for CompileError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Self::IO(why) => why.source(),
-            Self::NotInstalled => None,
-            Self::Timeout(why) => why.source(),
-        }
-    }
+    #[error("build timeout: `{0}`")]
+    Timeout(#[from] Elapsed),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -117,6 +89,9 @@ impl<'a> Compiler<'a> {
         let log_file = tex_file.with_extension("log");
         let log_bytes = fs::read(log_file).await?;
         let log = String::from_utf8_lossy(&log_bytes).into_owned();
-        Ok(Artifacts { directory, log })
+        Ok(Artifacts {
+            dir: directory,
+            log,
+        })
     }
 }
