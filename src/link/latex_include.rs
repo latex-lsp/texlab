@@ -41,6 +41,7 @@ impl LatexIncludeLinkProvider {
                     .map(|document| DocumentLink {
                         range: paths[i].range(),
                         target: document.uri.clone().into(),
+                        tooltip: None,
                     })
                 {
                     links.push(link);

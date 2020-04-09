@@ -79,6 +79,7 @@ fn lint(text: &str) -> Option<Vec<Diagnostic>> {
                 severity: Some(severity),
                 range,
                 related_information: None,
+                tags: None,
             })
         }
     }

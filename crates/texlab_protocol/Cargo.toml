@@ -14,7 +14,7 @@ futures-boxed = { path = "../futures_boxed" }
 jsonrpc = { path = "../jsonrpc" }
 jsonrpc-derive = { path = "../jsonrpc_derive" }
 log = "0.4.6"
-lsp-types = { version = "0.61.0", features = ["proposed"] }
+lsp-types = { version = "0.73.0", features = ["proposed"] }
 nom = "5.1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

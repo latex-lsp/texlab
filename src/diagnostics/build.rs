@@ -121,6 +121,7 @@ impl Into<Diagnostic> for BuildError {
             Some("latex".into()),
             self.message,
             None,
+            None,
         )
     }
 }

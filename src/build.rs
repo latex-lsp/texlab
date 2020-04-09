@@ -169,9 +169,9 @@ where
         if request.client_capabilities.has_work_done_progress_support() {
             let params = ProgressParams {
                 token: provider.token.clone(),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(
-                    WorkDoneProgressDone { message: None },
-                )),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
+                    message: None,
+                })),
             };
             self.client.progress(params).await;
         }
