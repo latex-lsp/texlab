@@ -1,3 +1,4 @@
+pub mod build;
 pub mod citeproc;
 pub mod completion;
 pub mod components;

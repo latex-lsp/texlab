@@ -1,4 +1,5 @@
 use crate::{
+    build::BuildProvider,
     citeproc::render_citation,
     completion::{CompletionItemData, CompletionProvider},
     components::COMPONENT_DATABASE,
@@ -34,6 +35,7 @@ pub struct LatexLspServer<C> {
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
     workspace: Workspace,
+    build_provider: BuildProvider<C>,
     completion_provider: CompletionProvider,
     definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
@@ -53,12 +55,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let workspace = Workspace::new(distro.clone(), Arc::clone(&current_dir));
         Self {
             distro,
-            client,
+            client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
             current_dir,
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
             workspace,
+            build_provider: BuildProvider::new(client),
             completion_provider: CompletionProvider::new(),
             definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
@@ -194,7 +197,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub async fn did_save(&self, _params: DidSaveTextDocumentParams) {}
+    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.action_manager
+            .push(Action::Build(params.text_document.uri.into()))
+            .await;
+    }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
     pub async fn did_close(&self, _params: DidCloseTextDocumentParams) {}
@@ -208,7 +215,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
-    pub async fn work_done_progress_cancel(&self, _params: WorkDoneProgressCancelParams) {}
+    pub async fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
+        self.build_provider.cancel(params.token).await;
+    }
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
@@ -377,10 +386,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]
-    pub async fn build(&self, _params: BuildParams) -> Result<BuildResult> {
-        Ok(BuildResult {
-            status: BuildStatus::Failure,
-        })
+    pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.build_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
@@ -542,6 +552,20 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         self.client.publish_diagnostics(params).await;
                     }
                 }
+                Action::Build(uri) => {
+                    let options = self
+                        .config_manager()
+                        .get()
+                        .await
+                        .latex
+                        .and_then(|opts| opts.build)
+                        .unwrap_or_default();
+
+                    if options.on_save() {
+                        let text_document = TextDocumentIdentifier::new(uri.into());
+                        self.build(BuildParams { text_document }).await.unwrap();
+                    }
+                }
             };
         }
     }
@@ -554,6 +578,7 @@ enum Action {
     PullConfiguration,
     DetectRoot(Uri),
     PublishDiagnostics,
+    Build(Uri),
 }
 
 #[derive(Debug, Default)]

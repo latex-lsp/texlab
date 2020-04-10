@@ -53,9 +53,10 @@ stderrlog = "0.4"
 tempfile = "3.1"
 thiserror = "1.0"
 titlecase = "1.1"
-tokio = { version = "0.2", features = ["blocking", "fs", "io-std", "macros", "process", "time"] }
+tokio = { version = "0.2", features = ["blocking", "fs", "io-std", "io-util", "macros", "process", "stream", "time"] }
 tokio-util = { version = "0.2", features = ["codec"] }
 url = "2.1"
+uuid = { version = "0.8", features = ["v4"] }
 
 [dev-dependencies]
 criterion = "0.3"
