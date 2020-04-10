@@ -1,10 +1,16 @@
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{Location, Position, RangeExt, ReferenceParams, Url},
+    syntax::{
+        bibtex::{self, Visitor},
+        SyntaxNode,
+    },
+    workspace::DocumentContent,
+};
 use futures_boxed::boxed;
-use texlab_protocol::RangeExt;
-use texlab_protocol::{Location, Position, ReferenceParams, Url};
-use texlab_syntax::*;
-use texlab_workspace::*;
+use petgraph::graph::NodeIndex;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringReferenceProvider;
 
 impl FeatureProvider for BibtexStringReferenceProvider {
@@ -12,224 +18,236 @@ impl FeatureProvider for BibtexStringReferenceProvider {
     type Output = Vec<Location>;
 
     #[boxed]
-    async fn execute<'a>(&'a self, request: &'a FeatureRequest<ReferenceParams>) -> Vec<Location> {
-        let mut references = Vec::new();
-        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
-            if let Some(name) =
-                Self::find_name(tree, request.params.text_document_position.position)
-            {
-                let uri: Url = request.document().uri.clone().into();
-                if request.params.context.include_declaration {
-                    for string in tree.strings() {
-                        if let Some(string_name) = &string.name {
-                            if string_name.text() == name.text() {
-                                references.push(Location::new(uri.clone(), string_name.range()));
-                            }
-                        }
-                    }
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let mut refs = Vec::new();
+        if let DocumentContent::Bibtex(tree) = &req.current().content {
+            if let Some(name) = Self::find_name(tree, req.params.text_document_position.position) {
+                let uri: Url = req.current().uri.clone().into();
+                if req.params.context.include_declaration {
+                    tree.children(tree.root)
+                        .filter_map(|node| tree.as_string(node))
+                        .filter_map(|string| string.name.as_ref())
+                        .filter(|string| string.text() == name.text())
+                        .for_each(|string| refs.push(Location::new(uri.clone(), string.range())));
                 }
 
                 let mut visitor = BibtexStringReferenceVisitor::default();
-                visitor.visit_root(&tree.root);
+                visitor.visit(tree, tree.root);
                 visitor
-                    .references
+                    .refs
                     .into_iter()
                     .filter(|reference| reference.text() == name.text())
-                    .map(|reference| Location::new(uri.clone(), reference.range()))
-                    .for_each(|reference| references.push(reference));
+                    .for_each(|reference| refs.push(Location::new(uri.clone(), reference.range())));
             }
         }
-        references
+        refs
     }
 }
 
 impl BibtexStringReferenceProvider {
-    fn find_name(tree: &BibtexSyntaxTree, position: Position) -> Option<&BibtexToken> {
-        let mut nodes = tree.find(position);
+    fn find_name(tree: &bibtex::Tree, pos: Position) -> Option<&bibtex::Token> {
+        let mut nodes = tree.find(pos);
         nodes.reverse();
-        match (&nodes[0], nodes.get(1)) {
-            (BibtexNode::Word(word), Some(BibtexNode::Field(_)))
-            | (BibtexNode::Word(word), Some(BibtexNode::Concat(_))) => Some(&word.token),
-            (BibtexNode::String(string), _) => string
+        let node0 = &tree.graph[nodes[0]];
+        let node1 = nodes.get(1).map(|node| &tree.graph[*node]);
+        match (node0, node1) {
+            (bibtex::Node::Word(word), Some(bibtex::Node::Field(_)))
+            | (bibtex::Node::Word(word), Some(bibtex::Node::Concat(_))) => Some(&word.token),
+            (bibtex::Node::String(string), _) => string
                 .name
                 .as_ref()
-                .filter(|name| name.range().contains(position)),
+                .filter(|name| name.range().contains(pos)),
             _ => None,
         }
     }
 }
 
 #[derive(Debug, Default)]
-struct BibtexStringReferenceVisitor<'a> {
-    references: Vec<&'a BibtexToken>,
+pub struct BibtexStringReferenceVisitor<'a> {
+    refs: Vec<&'a bibtex::Token>,
 }
 
-impl<'a> BibtexVisitor<'a> for BibtexStringReferenceVisitor<'a> {
-    fn visit_root(&mut self, root: &'a BibtexRoot) {
-        BibtexWalker::walk_root(self, root);
-    }
+impl<'a> bibtex::Visitor<'a> for BibtexStringReferenceVisitor<'a> {
+    fn visit(&mut self, tree: &'a bibtex::Tree, node: NodeIndex) {
+        match &tree.graph[node] {
+            bibtex::Node::Root(_)
+            | bibtex::Node::Comment(_)
+            | bibtex::Node::Preamble(_)
+            | bibtex::Node::String(_)
+            | bibtex::Node::Entry(_)
+            | bibtex::Node::Word(_)
+            | bibtex::Node::Command(_)
+            | bibtex::Node::QuotedContent(_)
+            | bibtex::Node::BracedContent(_) => (),
+            bibtex::Node::Field(_) => {
+                if let Some(word) = tree
+                    .children(node)
+                    .next()
+                    .and_then(|content| tree.as_word(content))
+                {
+                    self.refs.push(&word.token);
+                }
+            }
+            bibtex::Node::Concat(_) => {
+                let mut children = tree.children(node);
+                if let Some(word) = children.next().and_then(|left| tree.as_word(left)) {
+                    self.refs.push(&word.token);
+                }
 
-    fn visit_comment(&mut self, _comment: &'a BibtexComment) {}
-
-    fn visit_preamble(&mut self, preamble: &'a BibtexPreamble) {
-        BibtexWalker::walk_preamble(self, preamble);
-    }
-
-    fn visit_string(&mut self, string: &'a BibtexString) {
-        BibtexWalker::walk_string(self, string);
-    }
-
-    fn visit_entry(&mut self, entry: &'a BibtexEntry) {
-        BibtexWalker::walk_entry(self, entry);
-    }
-
-    fn visit_field(&mut self, field: &'a BibtexField) {
-        if let Some(BibtexContent::Word(word)) = &field.content {
-            self.references.push(&word.token);
+                if let Some(word) = children.next().and_then(|right| tree.as_word(right)) {
+                    self.refs.push(&word.token);
+                }
+            }
         }
-
-        BibtexWalker::walk_field(self, field);
-    }
-
-    fn visit_word(&mut self, _word: &'a BibtexWord) {}
-
-    fn visit_command(&mut self, _command: &'a BibtexCommand) {}
-
-    fn visit_quoted_content(&mut self, content: &'a BibtexQuotedContent) {
-        BibtexWalker::walk_quoted_content(self, content);
-    }
-
-    fn visit_braced_content(&mut self, content: &'a BibtexBracedContent) {
-        BibtexWalker::walk_braced_content(self, content);
-    }
-
-    fn visit_concat(&mut self, concat: &'a BibtexConcat) {
-        if let BibtexContent::Word(word) = &concat.left {
-            self.references.push(&word.token);
-        }
-
-        if let Some(BibtexContent::Word(word)) = &concat.right {
-            self.references.push(&word.token);
-        }
-
-        BibtexWalker::walk_concat(self, concat);
+        tree.walk(self, node);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::RangeExt;
-    use texlab_protocol::{Position, Range};
+    use crate::{feature::FeatureTester, protocol::Range};
+    use indoc::indoc;
 
-    #[test]
-    fn definition() {
-        let references = test_feature(
-            BibtexStringReferenceProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file(
-                    "foo.bib",
-                    "@string{foo = {Foo}}\n@string{bar = {Bar}}\n@article{baz, author = foo}",
-                )],
-                main_file: "foo.bib",
-                position: Position::new(2, 24),
-                include_declaration: false,
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(
-            references,
-            vec![Location::new(
-                FeatureSpec::uri("foo.bib"),
-                Range::new_simple(2, 23, 2, 26)
-            )]
-        );
+    #[tokio::test]
+    async fn definition() {
+        let actual_refs = FeatureTester::new()
+            .file(
+                "main.bib",
+                indoc!(
+                    r#"
+                        @string{foo = {Foo}}
+                        @string{bar = {Bar}}
+                        @article{baz, author = foo}
+                    "#
+                ),
+            )
+            .main("main.bib")
+            .position(2, 24)
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        let expected_refs = vec![Location::new(
+            FeatureTester::uri("main.bib").into(),
+            Range::new_simple(2, 23, 2, 26),
+        )];
+
+        assert_eq!(actual_refs, expected_refs);
     }
 
-    #[test]
-    fn definition_include_declaration() {
-        let references = test_feature(
-            BibtexStringReferenceProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file(
-                    "foo.bib",
-                    "@string{foo = {Foo}}\n@string{bar = {Bar}}\n@article{baz, author = foo}",
-                )],
-                main_file: "foo.bib",
-                position: Position::new(2, 24),
-                include_declaration: true,
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(
-            references,
-            vec![
-                Location::new(FeatureSpec::uri("foo.bib"), Range::new_simple(0, 8, 0, 11)),
-                Location::new(FeatureSpec::uri("foo.bib"), Range::new_simple(2, 23, 2, 26))
-            ]
-        );
+    #[tokio::test]
+    async fn definition_include_declaration() {
+        let actual_refs = FeatureTester::new()
+            .file(
+                "main.bib",
+                indoc!(
+                    r#"
+                        @string{foo = {Foo}}
+                        @string{bar = {Bar}}
+                        @article{baz, author = foo}
+                    "#
+                ),
+            )
+            .main("main.bib")
+            .position(2, 24)
+            .include_declaration()
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        let expected_refs = vec![
+            Location::new(
+                FeatureTester::uri("main.bib").into(),
+                Range::new_simple(0, 8, 0, 11),
+            ),
+            Location::new(
+                FeatureTester::uri("main.bib").into(),
+                Range::new_simple(2, 23, 2, 26),
+            ),
+        ];
+
+        assert_eq!(actual_refs, expected_refs);
     }
 
-    #[test]
-    fn reference() {
-        let references = test_feature(
-            BibtexStringReferenceProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file(
-                    "foo.bib",
-                    "@string{foo = {Foo}}\n@string{bar = {Bar}}\n@article{baz, author = foo}",
-                )],
-                main_file: "foo.bib",
-                position: Position::new(0, 10),
-                include_declaration: false,
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(
-            references,
-            vec![Location::new(
-                FeatureSpec::uri("foo.bib"),
-                Range::new_simple(2, 23, 2, 26)
-            )]
-        );
+    #[tokio::test]
+    async fn reference() {
+        let actual_refs = FeatureTester::new()
+            .file(
+                "main.bib",
+                indoc!(
+                    r#"
+                        @string{foo = {Foo}}
+                        @string{bar = {Bar}}
+                        @article{baz, author = foo}
+                    "#
+                ),
+            )
+            .main("main.bib")
+            .position(0, 10)
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        let expected_refs = vec![Location::new(
+            FeatureTester::uri("main.bib").into(),
+            Range::new_simple(2, 23, 2, 26),
+        )];
+
+        assert_eq!(actual_refs, expected_refs);
     }
 
-    #[test]
-    fn reference_include_declaration() {
-        let references = test_feature(
-            BibtexStringReferenceProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file(
-                    "foo.bib",
-                    "@string{foo = {Foo}}\n@string{bar = {Bar}}\n@article{baz, author = foo}",
-                )],
-                main_file: "foo.bib",
-                position: Position::new(0, 10),
-                include_declaration: true,
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(
-            references,
-            vec![
-                Location::new(FeatureSpec::uri("foo.bib"), Range::new_simple(0, 8, 0, 11)),
-                Location::new(FeatureSpec::uri("foo.bib"), Range::new_simple(2, 23, 2, 26))
-            ]
-        );
+    #[tokio::test]
+    async fn reference_include_declaration() {
+        let actual_refs = FeatureTester::new()
+            .file(
+                "main.bib",
+                indoc!(
+                    r#"
+                        @string{foo = {Foo}}
+                        @string{bar = {Bar}}
+                        @article{baz, author = foo}
+                    "#
+                ),
+            )
+            .main("main.bib")
+            .position(0, 10)
+            .include_declaration()
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        let expected_refs = vec![
+            Location::new(
+                FeatureTester::uri("main.bib").into(),
+                Range::new_simple(0, 8, 0, 11),
+            ),
+            Location::new(
+                FeatureTester::uri("main.bib").into(),
+                Range::new_simple(2, 23, 2, 26),
+            ),
+        ];
+
+        assert_eq!(actual_refs, expected_refs);
     }
 
-    #[test]
-    fn empty() {
-        let references = test_feature(
-            BibtexStringReferenceProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.bib", "")],
-                main_file: "foo.bib",
-                position: Position::new(0, 0),
-                include_declaration: false,
-                ..FeatureSpec::default()
-            },
-        );
-        assert!(references.is_empty());
+    #[tokio::test]
+    async fn empty_latex_document() {
+        let actual_refs = FeatureTester::new()
+            .file("main.tex", "")
+            .main("main.tex")
+            .position(0, 0)
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        assert!(actual_refs.is_empty());
+    }
+
+    #[tokio::test]
+    async fn empty_bibtex_document() {
+        let actual_refs = FeatureTester::new()
+            .file("main.bib", "")
+            .main("main.bib")
+            .position(0, 0)
+            .test_reference(BibtexStringReferenceProvider)
+            .await;
+
+        assert!(actual_refs.is_empty());
     }
 }

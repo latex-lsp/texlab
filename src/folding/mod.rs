@@ -1,13 +1,16 @@
-mod bibtex_declaration;
-mod latex_environment;
+mod bibtex_decl;
+mod latex_env;
 mod latex_section;
 
-use self::bibtex_declaration::BibtexDeclarationFoldingProvider;
-use self::latex_environment::LatexEnvironmentFoldingProvider;
-use self::latex_section::LatexSectionFoldingProvider;
+use self::{
+    bibtex_decl::BibtexDeclarationFoldingProvider, latex_env::LatexEnvironmentFoldingProvider,
+    latex_section::LatexSectionFoldingProvider,
+};
+use crate::{
+    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
+    protocol::{FoldingRange, FoldingRangeParams},
+};
 use futures_boxed::boxed;
-use texlab_protocol::{FoldingRange, FoldingRangeParams};
-use texlab_workspace::*;
 
 pub struct FoldingProvider {
     provider: ConcatProvider<FoldingRangeParams, FoldingRange>,
@@ -36,10 +39,7 @@ impl FeatureProvider for FoldingProvider {
     type Output = Vec<FoldingRange>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<FoldingRangeParams>,
-    ) -> Vec<FoldingRange> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

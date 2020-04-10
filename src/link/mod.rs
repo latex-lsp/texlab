@@ -1,9 +1,11 @@
 mod latex_include;
 
-use crate::link::latex_include::LatexIncludeLinkProvider;
+use self::latex_include::LatexIncludeLinkProvider;
+use crate::{
+    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
+    protocol::{DocumentLink, DocumentLinkParams},
+};
 use futures_boxed::boxed;
-use texlab_protocol::{DocumentLink, DocumentLinkParams};
-use texlab_workspace::*;
 
 pub struct LinkProvider {
     provider: ConcatProvider<DocumentLinkParams, DocumentLink>,
@@ -28,10 +30,7 @@ impl FeatureProvider for LinkProvider {
     type Output = Vec<DocumentLink>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<DocumentLinkParams>,
-    ) -> Vec<DocumentLink> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

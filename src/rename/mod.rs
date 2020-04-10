@@ -1,15 +1,19 @@
 mod bibtex_entry;
-mod latex_command;
-mod latex_environment;
+mod latex_cmd;
+mod latex_env;
 mod latex_label;
 
-use self::bibtex_entry::*;
-use self::latex_command::*;
-use self::latex_environment::*;
-use self::latex_label::*;
+use self::{
+    bibtex_entry::{BibtexEntryPrepareRenameProvider, BibtexEntryRenameProvider},
+    latex_cmd::{LatexCommandPrepareRenameProvider, LatexCommandRenameProvider},
+    latex_env::{LatexEnvironmentPrepareRenameProvider, LatexEnvironmentRenameProvider},
+    latex_label::{LatexLabelPrepareRenameProvider, LatexLabelRenameProvider},
+};
+use crate::{
+    feature::{ChoiceProvider, FeatureProvider, FeatureRequest},
+    protocol::{Range, RenameParams, TextDocumentPositionParams, WorkspaceEdit},
+};
 use futures_boxed::boxed;
-use texlab_protocol::*;
-use texlab_workspace::*;
 
 pub struct PrepareRenameProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Range>,
@@ -41,9 +45,9 @@ impl FeatureProvider for PrepareRenameProvider {
     #[boxed]
     async fn execute<'a>(
         &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
+        req: &'a FeatureRequest<TextDocumentPositionParams>,
     ) -> Option<Range> {
-        self.provider.execute(request).await
+        self.provider.execute(req).await
     }
 }
 

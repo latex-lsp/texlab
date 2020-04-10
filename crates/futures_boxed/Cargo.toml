@@ -8,6 +8,7 @@ edition = "2018"
 
 [lib]
 proc-macro = true
+doctest = false
 
 [dependencies]
 syn = "1.0"

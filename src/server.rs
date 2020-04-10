@@ -1,101 +1,106 @@
-use crate::action::{Action, ActionManager, LintReason};
-use crate::build::*;
-use crate::config::ConfigStrategy;
-use crate::definition::DefinitionProvider;
-use crate::diagnostics::DiagnosticsManager;
-use crate::folding::FoldingProvider;
-use crate::forward_search;
-use crate::highlight::HighlightProvider;
-use crate::link::LinkProvider;
-use crate::reference::ReferenceProvider;
-use crate::rename::{PrepareRenameProvider, RenameProvider};
-use crate::workspace_manager::{WorkspaceLoadError, WorkspaceManager};
+use crate::{
+    build::BuildProvider,
+    citeproc::render_citation,
+    completion::{CompletionItemData, CompletionProvider},
+    components::COMPONENT_DATABASE,
+    config::ConfigManager,
+    definition::DefinitionProvider,
+    diagnostics::DiagnosticsManager,
+    feature::{DocumentView, FeatureProvider, FeatureRequest},
+    folding::FoldingProvider,
+    forward_search,
+    highlight::HighlightProvider,
+    hover::HoverProvider,
+    jsonrpc::{server::Result, Middleware},
+    link::LinkProvider,
+    protocol::*,
+    reference::ReferenceProvider,
+    rename::{PrepareRenameProvider, RenameProvider},
+    symbol::{document_symbols, workspace_symbols, SymbolProvider},
+    tex::{DistributionKind, DynamicDistribution, KpsewhichError},
+    workspace::{DocumentContent, Workspace},
+};
 use futures::lock::Mutex;
 use futures_boxed::boxed;
-use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
-use log::*;
+use log::{error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
-use std::ffi::OsStr;
-use std::fs;
-use std::future::Future;
-use std::sync::Arc;
-use texlab_citeproc::render_citation;
-use texlab_completion::{CompletionItemData, CompletionProvider};
-use texlab_distro::{Distribution, DistributionKind, Language};
-use texlab_hover::HoverProvider;
-use texlab_protocol::*;
-use texlab_symbol::SymbolProvider;
-use texlab_syntax::*;
-use texlab_workspace::*;
-use walkdir::WalkDir;
+use std::{mem, path::PathBuf, sync::Arc};
 
 pub struct LatexLspServer<C> {
+    distro: DynamicDistribution,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
-    distribution: Arc<Box<dyn Distribution>>,
-    config_strategy: OnceCell<Box<dyn ConfigStrategy>>,
-    build_manager: BuildManager<C>,
-    workspace_manager: WorkspaceManager,
+    current_dir: Arc<PathBuf>,
+    config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
-    diagnostics_manager: Mutex<DiagnosticsManager>,
+    workspace: Workspace,
+    build_provider: BuildProvider<C>,
     completion_provider: CompletionProvider,
     definition_provider: DefinitionProvider,
     folding_provider: FoldingProvider,
     highlight_provider: HighlightProvider,
-    symbol_provider: SymbolProvider,
-    hover_provider: HoverProvider,
     link_provider: LinkProvider,
     reference_provider: ReferenceProvider,
     prepare_rename_provider: PrepareRenameProvider,
     rename_provider: RenameProvider,
+    symbol_provider: SymbolProvider,
+    hover_provider: HoverProvider,
+    diagnostics_manager: DiagnosticsManager,
 }
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(client: Arc<C>, distribution: Arc<Box<dyn Distribution>>) -> Self {
+    pub fn new(distro: DynamicDistribution, client: Arc<C>, current_dir: Arc<PathBuf>) -> Self {
+        let workspace = Workspace::new(distro.clone(), Arc::clone(&current_dir));
         Self {
+            distro,
             client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
-            distribution: Arc::clone(&distribution),
-            config_strategy: OnceCell::new(),
-            build_manager: BuildManager::new(client),
-            workspace_manager: WorkspaceManager::new(distribution),
+            current_dir,
+            config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
-            diagnostics_manager: Mutex::new(DiagnosticsManager::default()),
+            workspace,
+            build_provider: BuildProvider::new(client),
             completion_provider: CompletionProvider::new(),
             definition_provider: DefinitionProvider::new(),
             folding_provider: FoldingProvider::new(),
             highlight_provider: HighlightProvider::new(),
-            symbol_provider: SymbolProvider::new(),
-            hover_provider: HoverProvider::new(),
             link_provider: LinkProvider::new(),
             reference_provider: ReferenceProvider::new(),
             prepare_rename_provider: PrepareRenameProvider::new(),
             rename_provider: RenameProvider::new(),
+            symbol_provider: SymbolProvider::new(),
+            hover_provider: HoverProvider::new(),
+            diagnostics_manager: DiagnosticsManager::default(),
         }
     }
 
-    pub async fn execute<'a, T, F, A>(&'a self, action: A) -> T
-    where
-        F: Future<Output = T>,
-        A: FnOnce(&'a Self) -> F,
-    {
-        self.before_message().await;
-        let result = action(&self).await;
-        self.after_message().await;
-        result
+    fn client_capabilities(&self) -> Arc<ClientCapabilities> {
+        Arc::clone(
+            self.client_capabilities
+                .get()
+                .expect("initialize has not been called"),
+        )
+    }
+
+    fn config_manager(&self) -> &ConfigManager<C> {
+        self.config_manager
+            .get()
+            .expect("initialize has not been called")
     }
 
     #[jsonrpc_method("initialize", kind = "request")]
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        let client = Arc::clone(&self.client);
-        let config_strategy = ConfigStrategy::select(&params.capabilities, client);
-        let _ = self.config_strategy.set(config_strategy);
-
         self.client_capabilities
             .set(Arc::new(params.capabilities))
-            .unwrap();
+            .expect("initialize was called two times");
+
+        let _ = self.config_manager.set(ConfigManager::new(
+            Arc::clone(&self.client),
+            self.client_capabilities(),
+        ));
+
         let capabilities = ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
@@ -112,50 +117,49 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
                 trigger_characters: Some(vec![
-                    "\\".to_owned(),
-                    "{".to_owned(),
-                    "}".to_owned(),
-                    "@".to_owned(),
-                    "/".to_owned(),
-                    " ".to_owned(),
+                    "\\".into(),
+                    "{".into(),
+                    "}".into(),
+                    "@".into(),
+                    "/".into(),
+                    " ".into(),
                 ]),
+                ..CompletionOptions::default()
             }),
-            signature_help_provider: None,
             definition_provider: Some(true),
-            type_definition_provider: None,
-            implementation_provider: None,
             references_provider: Some(true),
             document_highlight_provider: Some(true),
             document_symbol_provider: Some(true),
             workspace_symbol_provider: Some(true),
-            code_action_provider: None,
-            code_lens_provider: None,
             document_formatting_provider: Some(true),
-            document_range_formatting_provider: None,
-            document_on_type_formatting_provider: None,
             rename_provider: Some(RenameProviderCapability::Options(RenameOptions {
                 prepare_provider: Some(true),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
             })),
             document_link_provider: Some(DocumentLinkOptions {
                 resolve_provider: Some(false),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
             }),
-            color_provider: None,
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
-            execute_command_provider: None,
-            workspace: None,
-            selection_range_provider: None,
+            ..ServerCapabilities::default()
         };
 
         Lazy::force(&COMPONENT_DATABASE);
-        Ok(InitializeResult { capabilities })
+        Ok(InitializeResult {
+            capabilities,
+            server_info: Some(ServerInfo {
+                name: "TexLab".to_owned(),
+                version: Some(env!("CARGO_PKG_VERSION").to_owned()),
+            }),
+        })
     }
 
     #[jsonrpc_method("initialized", kind = "notification")]
     pub async fn initialized(&self, _params: InitializedParams) {
-        self.action_manager.push(Action::RegisterCapabilities);
-        self.action_manager.push(Action::PublishDiagnostics);
-        self.action_manager.push(Action::LoadDistribution);
-        self.action_manager.push(Action::LoadConfiguration);
+        self.action_manager.push(Action::PullConfiguration).await;
+        self.action_manager.push(Action::RegisterCapabilities).await;
+        self.action_manager.push(Action::LoadDistribution).await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -172,39 +176,48 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
     pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri.clone();
-        let options = self.configuration(false).await;
-        self.workspace_manager.add(params.text_document, &options);
+        let options = self.config_manager().get().await;
+        self.workspace.add(params.text_document, &options).await;
         self.action_manager
-            .push(Action::DetectRoot(uri.clone().into()));
+            .push(Action::DetectRoot(uri.clone().into()))
+            .await;
         self.action_manager
-            .push(Action::RunLinter(Uri::from(uri), LintReason::Save));
-        self.action_manager.push(Action::PublishDiagnostics);
+            .push(Action::RunLinter(uri.into(), LintReason::Save))
+            .await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
     pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let options = self.configuration(false).await;
+        let options = self.config_manager().get().await;
         for change in params.content_changes {
             let uri = params.text_document.uri.clone();
-            self.workspace_manager
-                .update(uri.into(), change.text, &options);
+            self.workspace
+                .update(uri.into(), change.text, &options)
+                .await;
         }
-        self.action_manager.push(Action::RunLinter(
-            params.text_document.uri.into(),
-            LintReason::Change,
-        ));
-        self.action_manager.push(Action::PublishDiagnostics);
+        self.action_manager
+            .push(Action::RunLinter(
+                params.text_document.uri.clone().into(),
+                LintReason::Change,
+            ))
+            .await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.action_manager.push(Action::RunLinter(
-            params.text_document.uri.clone().into(),
-            LintReason::Save,
-        ));
-        self.action_manager.push(Action::PublishDiagnostics);
         self.action_manager
-            .push(Action::Build(params.text_document.uri.into()));
+            .push(Action::Build(params.text_document.uri.clone().into()))
+            .await;
+
+        self.action_manager
+            .push(Action::RunLinter(
+                params.text_document.uri.into(),
+                LintReason::Save,
+            ))
+            .await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
@@ -212,24 +225,25 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("workspace/didChangeConfiguration", kind = "notification")]
     pub async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        self.action_manager
-            .push(Action::UpdateConfiguration(params.settings));
+        let config_manager = self.config_manager();
+        config_manager.push(params.settings).await;
+        let options = config_manager.get().await;
+        self.workspace.reparse(&options).await;
     }
 
     #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
     pub async fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
-        self.action_manager.push(Action::CancelBuild(params.token));
+        self.build_provider.cancel(params.token).await;
     }
 
     #[jsonrpc_method("textDocument/completion", kind = "request")]
     pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
-        let request = self
-            .make_feature_request(params.text_document_position.as_uri(), params)
+        let req = self
+            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
             .await?;
-        let items = self.completion_provider.execute(&request).await;
         Ok(CompletionList {
             is_incomplete: true,
-            items,
+            items: self.completion_provider.execute(&req).await,
         })
     }
 
@@ -243,9 +257,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .map(Documentation::MarkupContent);
             }
             CompletionItemData::Citation { uri, key } => {
-                let workspace = self.workspace_manager.get();
-                if let Some(document) = workspace.find(&uri) {
-                    if let SyntaxTree::Bibtex(tree) = &document.tree {
+                let snapshot = self.workspace.get().await;
+                if let Some(doc) = snapshot.find(&uri) {
+                    if let DocumentContent::Bibtex(tree) = &doc.content {
                         let markup = render_citation(&tree, &key);
                         item.documentation = markup.map(Documentation::MarkupContent);
                     }
@@ -258,11 +272,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/hover", kind = "request")]
     pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let hover = self.hover_provider.execute(&request).await;
-        Ok(hover)
+        Ok(self.hover_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/definition", kind = "request")]
@@ -270,11 +283,11 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<DefinitionResponse> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let results = self.definition_provider.execute(&request).await;
-        let response = if request.client_capabilities.has_definition_link_support() {
+        let results = self.definition_provider.execute(&req).await;
+        let response = if req.client_capabilities.has_definition_link_support() {
             DefinitionResponse::LocationLinks(results)
         } else {
             DefinitionResponse::Locations(
@@ -290,11 +303,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/references", kind = "request")]
     pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document_position.as_uri(), params)
             .await?;
-        let results = self.reference_provider.execute(&request).await;
-        Ok(results)
+        Ok(self.reference_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
@@ -302,11 +314,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Vec<DocumentHighlight>> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let results = self.highlight_provider.execute(&request).await;
-        Ok(results)
+        Ok(self.highlight_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("workspace/symbol", kind = "request")]
@@ -314,15 +325,16 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: WorkspaceSymbolParams,
     ) -> Result<Vec<SymbolInformation>> {
-        let distribution = Arc::clone(&self.distribution);
-        let client_capabilities = Arc::clone(&self.client_capabilities.get().unwrap());
-        let workspace = self.workspace_manager.get();
-        let options = self.configuration(true).await;
-        let symbols = texlab_symbol::workspace_symbols(
-            distribution,
+        let distro = self.distro.clone();
+        let client_capabilities = self.client_capabilities();
+        let snapshot = self.workspace.get().await;
+        let options = self.config_manager().get().await;
+        let symbols = workspace_symbols(
+            distro,
             client_capabilities,
-            workspace,
+            snapshot,
             &options,
+            Arc::clone(&self.current_dir),
             &params,
         )
         .await;
@@ -334,15 +346,17 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: DocumentSymbolParams,
     ) -> Result<DocumentSymbolResponse> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let symbols = self.symbol_provider.execute(&request).await;
-        let response = texlab_symbol::document_symbols(
-            &self.client_capabilities.get().unwrap(),
-            &request.view.workspace,
-            &request.document().uri,
-            &request.options,
+
+        let symbols = self.symbol_provider.execute(&req).await;
+        let response = document_symbols(
+            &req.client_capabilities,
+            req.snapshot(),
+            &req.current().uri,
+            &req.options,
+            &req.current_dir,
             symbols.into_iter().map(Into::into).collect(),
         );
         Ok(response)
@@ -350,46 +364,15 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     #[jsonrpc_method("textDocument/documentLink", kind = "request")]
     pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let links = self.link_provider.execute(&request).await;
-        Ok(links)
+        Ok(self.link_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
-    pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        let request = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        let mut edits = Vec::new();
-        if let SyntaxTree::Bibtex(tree) = &request.document().tree {
-            let options = self
-                .configuration(true)
-                .await
-                .bibtex
-                .and_then(|opts| opts.formatting)
-                .unwrap_or_default();
-
-            let params = BibtexFormattingParams {
-                tab_size: request.params.options.tab_size as usize,
-                insert_spaces: request.params.options.insert_spaces,
-                options,
-            };
-
-            for declaration in &tree.root.children {
-                let should_format = match declaration {
-                    BibtexDeclaration::Comment(_) => false,
-                    BibtexDeclaration::Preamble(_) | BibtexDeclaration::String(_) => true,
-                    BibtexDeclaration::Entry(entry) => !entry.is_comment(),
-                };
-                if should_format {
-                    let text = format_declaration(&declaration, &params);
-                    edits.push(TextEdit::new(declaration.range(), text));
-                }
-            }
-        }
-        Ok(edits)
+    pub async fn formatting(&self, _params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
+        Ok(Vec::new())
     }
 
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
@@ -397,37 +380,34 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<Option<Range>> {
-        let request = self.make_feature_request(params.as_uri(), params).await?;
-        let range = self.prepare_rename_provider.execute(&request).await;
-        Ok(range)
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        Ok(self.prepare_rename_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/rename", kind = "request")]
     pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
-        let request = self
-            .make_feature_request(params.text_document_position.as_uri(), params)
+        let req = self
+            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
             .await?;
-        let edit = self.rename_provider.execute(&request).await;
-        Ok(edit)
+        Ok(self.rename_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
     pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let foldings = self.folding_provider.execute(&request).await;
-        Ok(foldings)
+        Ok(self.folding_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/build", kind = "request")]
     pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let options = self.configuration(true).await.latex.unwrap_or_default();
-        let result = self.build_manager.build(request, options).await;
-        Ok(result)
+        Ok(self.build_provider.execute(&req).await)
     }
 
     #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
@@ -435,278 +415,160 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         &self,
         params: TextDocumentPositionParams,
     ) -> Result<ForwardSearchResult> {
-        let request = self
+        let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        let options = self.configuration(true).await;
 
-        match request.document().uri.to_file_path() {
-            Ok(tex_file) => {
-                let parent = request
-                    .workspace()
-                    .find_parent(&request.document().uri, &options)
-                    .unwrap_or(request.view.document);
-                let parent = parent.uri.to_file_path().unwrap();
-                forward_search::search(&tex_file, &parent, request.params.position.line, options)
-                    .await
-                    .ok_or_else(|| "Unable to execute forward search".into())
-            }
-            Err(()) => Ok(ForwardSearchResult {
-                status: ForwardSearchStatus::Failure,
-            }),
-        }
-    }
-
-    async fn configuration(&self, fetch: bool) -> Options {
-        if let Some(strategy) = self.config_strategy.get() {
-            strategy.get(fetch).await
-        } else {
-            Options::default()
-        }
+        forward_search::search(
+            &req.view.snapshot,
+            &req.current().uri,
+            req.params.position.line,
+            &req.options,
+            &self.current_dir,
+        )
+        .await
+        .ok_or_else(|| "Unable to execute forward search".into())
     }
 
     async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
-        let workspace = self.workspace_manager.get();
-        let client_capabilities = self
-            .client_capabilities
-            .get()
-            .expect("Failed to retrieve client capabilities");
-
-        if let Some(document) = workspace.find(&uri) {
-            let options = self.configuration(true).await;
-            Ok(FeatureRequest {
+        let options = self.pull_configuration().await;
+        let snapshot = self.workspace.get().await;
+        let client_capabilities = self.client_capabilities();
+        match snapshot.find(&uri) {
+            Some(current) => Ok(FeatureRequest {
                 params,
-                view: DocumentView::new(workspace, document, &options),
-                client_capabilities: Arc::clone(&client_capabilities),
-                distribution: Arc::clone(&self.distribution),
+                view: DocumentView::analyze(snapshot, current, &options, &self.current_dir),
+                distro: self.distro.clone(),
+                client_capabilities,
                 options,
-            })
-        } else {
-            let msg = format!("Unknown document: {}", uri);
-            Err(msg)
-        }
-    }
-
-    async fn detect_children(&self) {
-        let options = self.configuration(false).await;
-        loop {
-            let mut changed = false;
-
-            let workspace = self.workspace_manager.get();
-            for path in workspace.unresolved_includes(&options) {
-                if path.exists() {
-                    changed |= self.workspace_manager.load(&path, &options).is_ok();
-                }
-            }
-
-            if !changed {
-                break;
+                current_dir: Arc::clone(&self.current_dir),
+            }),
+            None => {
+                let msg = format!("Unknown document: {}", uri);
+                Err(msg)
             }
         }
     }
 
-    fn update_document(
-        &self,
-        document: &Document,
-        options: &Options,
-    ) -> std::result::Result<(), WorkspaceLoadError> {
-        if document.uri.scheme() != "file" {
-            return Ok(());
+    async fn pull_configuration(&self) -> Options {
+        let config_manager = self.config_manager();
+        let has_changed = config_manager.pull().await;
+        let options = config_manager.get().await;
+        if has_changed {
+            self.workspace.reparse(&options).await;
         }
-
-        let path = document.uri.to_file_path().unwrap();
-        let data = fs::metadata(&path).map_err(WorkspaceLoadError::IO)?;
-        if data.modified().map_err(WorkspaceLoadError::IO)? > document.modified {
-            self.workspace_manager.load(&path, &options)
-        } else {
-            Ok(())
-        }
+        options
     }
 
     async fn update_build_diagnostics(&self) {
-        let workspace = self.workspace_manager.get();
-        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-        let options = self.configuration(false).await;
+        let snapshot = self.workspace.get().await;
+        let options = self.config_manager().get().await;
 
-        for document in &workspace.documents {
-            if document.uri.scheme() != "file" {
-                continue;
-            }
-
-            if let SyntaxTree::Latex(tree) = &document.tree {
-                if tree.env.is_standalone {
-                    match diagnostics_manager.build.update(&document.uri, &options) {
-                        Ok(true) => self.action_manager.push(Action::PublishDiagnostics),
+        for doc in snapshot.0.iter().filter(|doc| doc.uri.scheme() == "file") {
+            if let DocumentContent::Latex(table) = &doc.content {
+                if table.is_standalone {
+                    match self
+                        .diagnostics_manager
+                        .build
+                        .update(&snapshot, &doc.uri, &options, &self.current_dir)
+                        .await
+                    {
+                        Ok(true) => self.action_manager.push(Action::PublishDiagnostics).await,
                         Ok(false) => (),
-                        Err(why) => warn!(
-                            "Unable to read log file ({}): {}",
-                            why,
-                            document.uri.as_str()
-                        ),
-                    }
-                }
-            }
-        }
-    }
-
-    async fn detect_root(&self, uri: Uri) {
-        if uri.scheme() == "file" {
-            let mut path = uri.to_file_path().unwrap();
-            let options = self.configuration(false).await;
-            while path.pop() {
-                let workspace = self.workspace_manager.get();
-                if workspace.find_parent(&uri, &options).is_some() {
-                    break;
-                }
-
-                for entry in WalkDir::new(&path)
-                    .min_depth(1)
-                    .max_depth(1)
-                    .into_iter()
-                    .filter_map(std::result::Result::ok)
-                    .filter(|entry| entry.file_type().is_file())
-                    .filter(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .and_then(OsStr::to_str)
-                            .and_then(Language::by_extension)
-                            .is_some()
-                    })
-                {
-                    if let Ok(parent_uri) = Uri::from_file_path(entry.path()) {
-                        if workspace.find(&parent_uri).is_none() {
-                            let _ = self.workspace_manager.load(entry.path(), &options);
+                        Err(why) => {
+                            warn!("Unable to read log file ({}): {}", why, doc.uri.as_str())
                         }
                     }
                 }
             }
         }
+    }
+
+    async fn load_distribution(&self) {
+        info!("Detected TeX distribution: {}", self.distro.0.kind());
+        if self.distro.0.kind() == DistributionKind::Unknown {
+            let params = ShowMessageParams {
+                message: "Your TeX distribution could not be detected. \
+                          Please make sure that your distribution is in your PATH."
+                    .into(),
+                typ: MessageType::Error,
+            };
+            self.client.show_message(params).await;
+        }
+
+        if let Err(why) = self.distro.0.load().await {
+            let message = match why {
+                KpsewhichError::NotInstalled | KpsewhichError::InvalidOutput => {
+                    "An error occurred while executing `kpsewhich`.\
+                     Please make sure that your distribution is in your PATH \
+                     environment variable and provides the `kpsewhich` tool."
+                }
+                KpsewhichError::CorruptDatabase | KpsewhichError::NoDatabase => {
+                    "The file database of your TeX distribution seems \
+                     to be corrupt. Please rebuild it and try again."
+                }
+                KpsewhichError::Decode(_) => {
+                    "An error occurred while decoding the output of `kpsewhich`."
+                }
+                KpsewhichError::IO(why) => {
+                    error!("An I/O error occurred while executing 'kpsewhich': {}", why);
+                    "An I/O error occurred while executing 'kpsewhich'"
+                }
+            };
+            let params = ShowMessageParams {
+                message: message.into(),
+                typ: MessageType::Error,
+            };
+            self.client.show_message(params).await;
+        };
     }
 }
 
 impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
     #[boxed]
     async fn before_message(&self) {
-        self.detect_children().await;
-
-        let options = self.configuration(false).await;
-        let workspace = self.workspace_manager.get();
-        for document in &workspace.documents {
-            let _ = self.update_document(document, &options);
+        if let Some(config_manager) = self.config_manager.get() {
+            let options = config_manager.get().await;
+            self.workspace.detect_children(&options).await;
+            self.workspace.reparse_all_if_newer(&options).await;
         }
     }
 
     #[boxed]
     async fn after_message(&self) {
         self.update_build_diagnostics().await;
-        for action in self.action_manager.take() {
+        for action in self.action_manager.take().await {
             match action {
-                Action::RegisterCapabilities => {
-                    let capabilities = self.client_capabilities.get().unwrap();
-                    if !capabilities.has_pull_configuration_support()
-                        && capabilities.has_push_configuration_support()
-                    {
-                        let registration = Registration {
-                            id: "pull-config".into(),
-                            method: "workspace/didChangeConfiguration".into(),
-                            register_options: None,
-                        };
-                        let params = RegistrationParams {
-                            registrations: vec![registration],
-                        };
-                        self.client
-                            .register_capability(params)
-                            .await
-                            .expect("failed to register \"workspace/didChangeConfiguration\"");
-                    }
-                }
                 Action::LoadDistribution => {
-                    info!("Detected TeX distribution: {:?}", self.distribution.kind());
-                    if self.distribution.kind() == DistributionKind::Unknown {
-                        let params = ShowMessageParams {
-                            message: "Your TeX distribution could not be detected. \
-                                      Please make sure that your distribution is in your PATH."
-                                .into(),
-                            typ: MessageType::Error,
-                        };
-                        self.client.show_message(params).await;
-                    }
-
-                    if let Err(why) = self.distribution.load().await {
-                        let message = match why {
-                            texlab_distro::LoadError::KpsewhichNotFound => {
-                                "An error occurred while executing `kpsewhich`.\
-                                 Please make sure that your distribution is in your PATH \
-                                 environment variable and provides the `kpsewhich` tool."
-                            }
-                            texlab_distro::LoadError::CorruptFileDatabase => {
-                                "The file database of your TeX distribution seems \
-                                 to be corrupt. Please rebuild it and try again."
-                            }
-                        };
-                        let params = ShowMessageParams {
-                            message: message.into(),
-                            typ: MessageType::Error,
-                        };
-                        self.client.show_message(params).await;
-                    };
+                    self.load_distribution().await;
                 }
-                Action::LoadConfiguration => {
-                    let options = self.configuration(true).await;
-                    let workspace = self.workspace_manager.get();
-                    for document in &workspace.documents {
-                        if let Ok(path) = document.uri.to_file_path() {
-                            let _ = self.workspace_manager.load(&path, &options);
-                        }
-                    }
+                Action::RegisterCapabilities => {
+                    let config_manager = self.config_manager();
+                    config_manager.register().await;
                 }
-                Action::UpdateConfiguration(settings) => {
-                    self.config_strategy.get().unwrap().set(settings).await;
+                Action::PullConfiguration => {
+                    self.pull_configuration().await;
                 }
                 Action::DetectRoot(uri) => {
-                    self.detect_root(uri).await;
+                    let options = self.config_manager().get().await;
+                    let _ = self.workspace.detect_root(&uri, &options).await;
                 }
                 Action::PublishDiagnostics => {
-                    let workspace = self.workspace_manager.get();
-                    for document in &workspace.documents {
-                        let diagnostics = {
-                            let manager = self.diagnostics_manager.lock().await;
-                            manager.get(&document)
-                        };
-
+                    let snapshot = self.workspace.get().await;
+                    for doc in &snapshot.0 {
+                        let diagnostics = self.diagnostics_manager.get(doc).await;
                         let params = PublishDiagnosticsParams {
-                            uri: document.uri.clone().into(),
+                            uri: doc.uri.clone().into(),
                             diagnostics,
+                            version: None,
                         };
                         self.client.publish_diagnostics(params).await;
                     }
                 }
-                Action::RunLinter(uri, reason) => {
-                    let options = self
-                        .configuration(true)
-                        .await
-                        .latex
-                        .and_then(|opts| opts.lint)
-                        .unwrap_or_default();
-
-                    let should_lint = match reason {
-                        LintReason::Change => options.on_change(),
-                        LintReason::Save => options.on_save(),
-                    };
-                    if should_lint {
-                        let workspace = self.workspace_manager.get();
-                        if let Some(document) = workspace.find(&uri) {
-                            if let SyntaxTree::Latex(_) = &document.tree {
-                                let mut diagnostics_manager = self.diagnostics_manager.lock().await;
-                                diagnostics_manager.latex.update(&uri, &document.text);
-                            }
-                        }
-                    }
-                }
                 Action::Build(uri) => {
                     let options = self
-                        .configuration(true)
+                        .config_manager()
+                        .get()
                         .await
                         .latex
                         .and_then(|opts| opts.build)
@@ -717,10 +579,64 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
                 }
-                Action::CancelBuild(token) => {
-                    self.build_manager.cancel(token).await;
+                Action::RunLinter(uri, reason) => {
+                    let options = self
+                        .config_manager()
+                        .get()
+                        .await
+                        .latex
+                        .and_then(|opts| opts.lint)
+                        .unwrap_or_default();
+
+                    let should_lint = match reason {
+                        LintReason::Change => options.on_change(),
+                        LintReason::Save => options.on_save() || options.on_change(),
+                    };
+
+                    if should_lint {
+                        let snapshot = self.workspace.get().await;
+                        if let Some(doc) = snapshot.find(&uri) {
+                            if let DocumentContent::Latex(_) = &doc.content {
+                                self.diagnostics_manager.latex.update(&uri, &doc.text).await;
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum LintReason {
+    Change,
+    Save,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+enum Action {
+    LoadDistribution,
+    RegisterCapabilities,
+    PullConfiguration,
+    DetectRoot(Uri),
+    PublishDiagnostics,
+    Build(Uri),
+    RunLinter(Uri, LintReason),
+}
+
+#[derive(Debug, Default)]
+struct ActionManager {
+    actions: Mutex<Vec<Action>>,
+}
+
+impl ActionManager {
+    pub async fn push(&self, action: Action) {
+        let mut actions = self.actions.lock().await;
+        actions.push(action);
+    }
+
+    pub async fn take(&self) -> Vec<Action> {
+        let mut actions = self.actions.lock().await;
+        mem::replace(&mut *actions, Vec::new())
     }
 }

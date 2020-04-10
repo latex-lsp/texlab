@@ -1,14 +1,22 @@
+use crate::{
+    protocol::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, RangeExt, Uri},
+    workspace::Document,
+};
+use chashmap::CHashMap;
+use futures::{
+    future::{AbortHandle, Abortable, Aborted},
+    lock::Mutex,
+};
+use log::trace;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashMap;
-use std::io::{Read, Write};
-use std::process::{Command, Stdio};
-use texlab_protocol::*;
-use texlab_workspace::Document;
+use std::process::Stdio;
+use tokio::{prelude::*, process::Command};
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct LatexDiagnosticsProvider {
-    diagnostics_by_uri: HashMap<Uri, Vec<Diagnostic>>,
+    diagnostics_by_uri: CHashMap<Uri, Vec<Diagnostic>>,
+    handle: Mutex<Option<AbortHandle>>,
 }
 
 impl LatexDiagnosticsProvider {
@@ -19,34 +27,52 @@ impl LatexDiagnosticsProvider {
         }
     }
 
-    pub fn update(&mut self, uri: &Uri, text: &str) {
+    pub async fn update(&self, uri: &Uri, text: &str) {
         if uri.scheme() != "file" {
             return;
         }
 
-        self.diagnostics_by_uri
-            .insert(uri.clone(), lint(text).unwrap_or_default());
+        let mut handle_guard = self.handle.lock().await;
+        if let Some(handle) = &*handle_guard {
+            handle.abort();
+        }
+
+        let (handle, registration) = AbortHandle::new_pair();
+        *handle_guard = Some(handle);
+        drop(handle_guard);
+
+        let future = Abortable::new(
+            async move {
+                self.diagnostics_by_uri
+                    .insert(uri.clone(), lint(text.into()).await.unwrap_or_default());
+            },
+            registration,
+        );
+
+        if let Err(Aborted) = future.await {
+            trace!("Killed ChkTeX because it took too long to execute")
+        }
     }
 }
 
 pub static LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
 
-fn lint(text: &str) -> Option<Vec<Diagnostic>> {
-    let mut process = Command::new("chktex")
+async fn lint(text: String) -> io::Result<Vec<Diagnostic>> {
+    let mut process: tokio::process::Child = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
-        .spawn()
-        .ok()?;
+        .kill_on_drop(true)
+        .spawn()?;
 
     process
         .stdin
         .take()
         .unwrap()
         .write_all(text.as_bytes())
-        .ok()?;
+        .await?;
 
     let mut stdout = String::new();
     process
@@ -54,7 +80,7 @@ fn lint(text: &str) -> Option<Vec<Diagnostic>> {
         .take()
         .unwrap()
         .read_to_string(&mut stdout)
-        .ok()?;
+        .await?;
 
     let mut diagnostics = Vec::new();
     for line in stdout.lines() {
@@ -64,7 +90,7 @@ fn lint(text: &str) -> Option<Vec<Diagnostic>> {
             let digit = captures[3].parse::<u64>().unwrap();
             let kind = &captures[4];
             let code = &captures[5];
-            let message = captures[6].to_owned();
+            let message = captures[6].into();
             let range = Range::new_simple(line, character, line, character + digit);
             let severity = match kind {
                 "Message" => DiagnosticSeverity::Information,
@@ -74,13 +100,14 @@ fn lint(text: &str) -> Option<Vec<Diagnostic>> {
 
             diagnostics.push(Diagnostic {
                 source: Some("chktex".into()),
-                code: Some(NumberOrString::String(code.to_owned())),
+                code: Some(NumberOrString::String(code.into())),
                 message,
                 severity: Some(severity),
                 range,
                 related_information: None,
+                tags: None,
             })
         }
     }
-    Some(diagnostics)
+    Ok(diagnostics)
 }

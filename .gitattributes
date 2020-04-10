@@ -1,4 +1,4 @@
-crates/bibutils_sys/src/* linguist-vendored
+crates/bibutils_sys/vendor/* linguist-vendored
 .gitattributes export-ignore
 .gitignore export-ignore
 .azure-pipelines.yml export-ignore

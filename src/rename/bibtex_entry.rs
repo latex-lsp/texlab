@@ -1,11 +1,16 @@
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{
+        Position, Range, RangeExt, RenameParams, TextDocumentPositionParams, TextEdit,
+        WorkspaceEdit,
+    },
+    syntax::{Span, SyntaxNode},
+    workspace::DocumentContent,
+};
 use futures_boxed::boxed;
 use std::collections::HashMap;
-use texlab_protocol::RangeExt;
-use texlab_protocol::*;
-use texlab_syntax::*;
-use texlab_workspace::*;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryPrepareRenameProvider;
 
 impl FeatureProvider for BibtexEntryPrepareRenameProvider {
@@ -13,15 +18,12 @@ impl FeatureProvider for BibtexEntryPrepareRenameProvider {
     type Output = Option<Range>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-    ) -> Option<Range> {
-        find_key(&request.document().tree, request.params.position).map(Span::range)
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        find_key(&req.current().content, req.params.position).map(Span::range)
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryRenameProvider;
 
 impl FeatureProvider for BibtexEntryRenameProvider {
@@ -29,144 +31,162 @@ impl FeatureProvider for BibtexEntryRenameProvider {
     type Output = Option<WorkspaceEdit>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<RenameParams>,
-    ) -> Option<WorkspaceEdit> {
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let key_name = find_key(
-            &request.document().tree,
-            request.params.text_document_position.position,
+            &req.current().content,
+            req.params.text_document_position.position,
         )?;
         let mut changes = HashMap::new();
-        for document in request.related_documents() {
-            let mut edits = Vec::new();
-            match &document.tree {
-                SyntaxTree::Latex(tree) => {
-                    tree.citations
-                        .iter()
-                        .flat_map(LatexCitation::keys)
-                        .filter(|citation| citation.text() == key_name.text)
-                        .map(|citation| {
-                            TextEdit::new(citation.range(), request.params.new_name.clone())
-                        })
-                        .for_each(|edit| edits.push(edit));
-                }
-                SyntaxTree::Bibtex(tree) => {
-                    for entry in tree.entries() {
-                        if let Some(key) = &entry.key {
-                            if key.text() == key_name.text {
-                                edits.push(TextEdit::new(
-                                    key.range(),
-                                    request.params.new_name.clone(),
-                                ));
-                            }
-                        }
-                    }
-                }
+        for doc in req.related() {
+            let edits = match &doc.content {
+                DocumentContent::Latex(table) => table
+                    .citations
+                    .iter()
+                    .flat_map(|citation| citation.keys(&table.tree))
+                    .filter(|citation| citation.text() == key_name.text)
+                    .map(|citation| TextEdit::new(citation.range(), req.params.new_name.clone()))
+                    .collect(),
+                DocumentContent::Bibtex(tree) => tree
+                    .children(tree.root)
+                    .filter_map(|node| tree.as_entry(node))
+                    .filter_map(|entry| entry.key.as_ref())
+                    .filter(|entry_key| entry_key.text() == key_name.text)
+                    .map(|entry_key| TextEdit::new(entry_key.range(), req.params.new_name.clone()))
+                    .collect(),
             };
-            changes.insert(document.uri.clone().into(), edits);
+            changes.insert(doc.uri.clone().into(), edits);
         }
         Some(WorkspaceEdit::new(changes))
     }
 }
 
-fn find_key(tree: &SyntaxTree, position: Position) -> Option<&Span> {
-    match tree {
-        SyntaxTree::Latex(tree) => {
-            for citation in &tree.citations {
-                let keys = citation.keys();
-                for key in keys {
-                    if key.range().contains(position) {
-                        return Some(&key.span);
-                    }
-                }
-            }
-            None
-        }
-        SyntaxTree::Bibtex(tree) => {
-            for entry in tree.entries() {
-                if let Some(key) = &entry.key {
-                    if key.range().contains(position) {
-                        return Some(&key.span);
-                    }
-                }
-            }
-            None
-        }
+fn find_key(content: &DocumentContent, pos: Position) -> Option<&Span> {
+    match content {
+        DocumentContent::Latex(table) => table
+            .citations
+            .iter()
+            .flat_map(|citation| citation.keys(&table.tree))
+            .find(|key| key.range().contains(pos))
+            .map(|key| &key.span),
+        DocumentContent::Bibtex(tree) => tree
+            .children(tree.root)
+            .filter_map(|node| tree.as_entry(node))
+            .filter_map(|entry| entry.key.as_ref())
+            .find(|key| key.range().contains(pos))
+            .map(|key| &key.span),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::Position;
+    use crate::feature::FeatureTester;
+    use indoc::indoc;
 
-    #[test]
-    fn entry() {
-        let edit = test_feature(
-            BibtexEntryRenameProvider,
-            FeatureSpec {
-                files: vec![
-                    FeatureSpec::file("foo.bib", "@article{foo, bar = baz}"),
-                    FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
-                ],
-                main_file: "foo.bib",
-                position: Position::new(0, 9),
-                new_name: "qux",
-                ..FeatureSpec::default()
-            },
-        );
-        let mut changes = HashMap::new();
-        changes.insert(
-            FeatureSpec::uri("foo.bib"),
+    #[tokio::test]
+    async fn entry() {
+        let actual_edit = FeatureTester::new()
+            .file("main.bib", r#"@article{foo, bar = baz}"#)
+            .file(
+                "main.tex",
+                indoc!(
+                    r#"
+                        \addbibresource{main.bib}
+                        \cite{foo}
+                    "#
+                ),
+            )
+            .main("main.bib")
+            .position(0, 9)
+            .new_name("qux")
+            .test_rename(BibtexEntryRenameProvider)
+            .await
+            .unwrap();
+
+        let mut expected_changes = HashMap::new();
+        expected_changes.insert(
+            FeatureTester::uri("main.bib").into(),
             vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
-        changes.insert(
-            FeatureSpec::uri("bar.tex"),
+        expected_changes.insert(
+            FeatureTester::uri("main.tex").into(),
             vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
-        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
+        let expected_edit = WorkspaceEdit::new(expected_changes);
+
+        assert_eq!(actual_edit, expected_edit);
     }
 
-    #[test]
-    fn citation() {
-        let edit = test_feature(
-            BibtexEntryRenameProvider,
-            FeatureSpec {
-                files: vec![
-                    FeatureSpec::file("foo.bib", "@article{foo, bar = baz}"),
-                    FeatureSpec::file("bar.tex", "\\addbibresource{foo.bib}\n\\cite{foo}"),
-                ],
-                main_file: "bar.tex",
-                position: Position::new(1, 6),
-                new_name: "qux",
-                ..FeatureSpec::default()
-            },
-        );
-        let mut changes = HashMap::new();
-        changes.insert(
-            FeatureSpec::uri("foo.bib"),
+    #[tokio::test]
+    async fn citation() {
+        let actual_edit = FeatureTester::new()
+            .file("main.bib", r#"@article{foo, bar = baz}"#)
+            .file(
+                "main.tex",
+                indoc!(
+                    r#"
+                    \addbibresource{main.bib}
+                    \cite{foo}
+                "#
+                ),
+            )
+            .main("main.tex")
+            .position(1, 6)
+            .new_name("qux")
+            .test_rename(BibtexEntryRenameProvider)
+            .await
+            .unwrap();
+
+        let mut expected_changes = HashMap::new();
+        expected_changes.insert(
+            FeatureTester::uri("main.bib").into(),
             vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
-        changes.insert(
-            FeatureSpec::uri("bar.tex"),
+        expected_changes.insert(
+            FeatureTester::uri("main.tex").into(),
             vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
-        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
+        let expected_edit = WorkspaceEdit::new(expected_changes);
+
+        assert_eq!(actual_edit, expected_edit);
     }
 
-    #[test]
-    fn field_name() {
-        let edit = test_feature(
-            BibtexEntryRenameProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.bib", "@article{foo, bar = baz}")],
-                main_file: "foo.bib",
-                position: Position::new(0, 14),
-                new_name: "qux",
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(edit, None);
+    #[tokio::test]
+    async fn field_name() {
+        let actual_edit = FeatureTester::new()
+            .file("main.bib", r#"@article{foo, bar = baz}"#)
+            .main("main.bib")
+            .position(0, 14)
+            .new_name("qux")
+            .test_rename(BibtexEntryRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
+    }
+
+    #[tokio::test]
+    async fn empty_latex_document() {
+        let actual_edit = FeatureTester::new()
+            .file("main.tex", "")
+            .main("main.tex")
+            .position(0, 0)
+            .new_name("")
+            .test_rename(BibtexEntryRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
+    }
+
+    #[tokio::test]
+    async fn empty_bibtex_document() {
+        let actual_edit = FeatureTester::new()
+            .file("main.bib", "")
+            .main("main.bib")
+            .position(0, 0)
+            .new_name("")
+            .test_rename(BibtexEntryRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
     }
 }

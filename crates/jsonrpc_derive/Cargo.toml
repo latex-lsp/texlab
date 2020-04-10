@@ -8,6 +8,7 @@ edition = "2018"
 
 [lib]
 proc-macro = true
+doctest = false
 
 [dependencies]
 futures-boxed = { path = "../futures_boxed" }

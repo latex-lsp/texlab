@@ -1,11 +1,15 @@
+use crate::{
+    feature::{DocumentView, FeatureProvider, FeatureRequest},
+    outline::{Outline, OutlineContext, OutlineContextItem},
+    protocol::{LocationLink, Options, RangeExt, TextDocumentPositionParams},
+    symbol::build_section_tree,
+    syntax::{latex, LatexLabelKind, SyntaxNode},
+    workspace::DocumentContent,
+};
 use futures_boxed::boxed;
-use std::sync::Arc;
-use texlab_protocol::*;
-use texlab_symbol::build_section_tree;
-use texlab_syntax::*;
-use texlab_workspace::*;
+use std::{path::Path, sync::Arc};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelDefinitionProvider;
 
 impl FeatureProvider for LatexLabelDefinitionProvider {
@@ -13,13 +17,24 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
     type Output = Vec<LocationLink>;
 
     #[boxed]
-    async fn execute<'a>(&'a self, request: &'a FeatureRequest<Self::Params>) -> Self::Output {
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut links = Vec::new();
-        if let Some(reference) = Self::find_reference(&request) {
-            for document in request.related_documents() {
-                let workspace = Arc::clone(&request.view.workspace);
-                let view = DocumentView::new(workspace, Arc::clone(&document), &request.options);
-                Self::find_definitions(&view, &request.options, &reference, &mut links);
+        if let Some(reference) = Self::find_reference(req) {
+            for doc in req.related() {
+                let snapshot = Arc::clone(&req.view.snapshot);
+                let view = DocumentView::analyze(
+                    snapshot,
+                    Arc::clone(&doc),
+                    &req.options,
+                    &req.current_dir,
+                );
+                Self::find_definitions(
+                    &view,
+                    &req.options,
+                    &req.current_dir,
+                    &reference,
+                    &mut links,
+                );
             }
         }
         links
@@ -27,19 +42,32 @@ impl FeatureProvider for LatexLabelDefinitionProvider {
 }
 
 impl LatexLabelDefinitionProvider {
+    fn find_reference(req: &FeatureRequest<TextDocumentPositionParams>) -> Option<&latex::Token> {
+        if let DocumentContent::Latex(table) = &req.current().content {
+            table
+                .labels
+                .iter()
+                .flat_map(|label| label.names(&table.tree))
+                .find(|label| label.range().contains(req.params.position))
+        } else {
+            None
+        }
+    }
+
     fn find_definitions(
         view: &DocumentView,
         options: &Options,
-        reference: &LatexToken,
+        current_dir: &Path,
+        reference: &latex::Token,
         links: &mut Vec<LocationLink>,
     ) {
-        if let SyntaxTree::Latex(tree) = &view.document.tree {
-            let outline = Outline::analyze(view, options);
-            let section_tree = build_section_tree(view, tree, options);
-            for label in &tree.structure.labels {
+        if let DocumentContent::Latex(table) = &view.current.content {
+            let outline = Outline::analyze(view, options, current_dir);
+            let section_tree = build_section_tree(view, table, options, current_dir);
+            for label in &table.labels {
                 if label.kind == LatexLabelKind::Definition {
-                    let context = OutlineContext::parse(view, label, &outline);
-                    for name in label.names() {
+                    let context = OutlineContext::parse(view, &outline, *label);
+                    for name in label.names(&table.tree) {
                         if name.text() == reference.text() {
                             let target_range = if let Some(OutlineContextItem::Section { .. }) =
                                 context.as_ref().map(|ctx| &ctx.item)
@@ -53,9 +81,10 @@ impl LatexLabelDefinitionProvider {
 
                             links.push(LocationLink {
                                 origin_selection_range: Some(reference.range()),
-                                target_uri: view.document.uri.clone().into(),
-                                target_range: target_range.unwrap_or_else(|| label.range()),
-                                target_selection_range: label.range(),
+                                target_uri: view.current.uri.clone().into(),
+                                target_range: target_range
+                                    .unwrap_or_else(|| table.tree.range(label.parent)),
+                                target_selection_range: table.tree.range(label.parent),
                             });
                         }
                     }
@@ -63,79 +92,64 @@ impl LatexLabelDefinitionProvider {
             }
         }
     }
-
-    fn find_reference(request: &FeatureRequest<TextDocumentPositionParams>) -> Option<&LatexToken> {
-        if let SyntaxTree::Latex(tree) = &request.document().tree {
-            tree.structure
-                .labels
-                .iter()
-                .flat_map(LatexLabel::names)
-                .find(|label| label.range().contains(request.params.position))
-        } else {
-            None
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
+    use crate::{feature::FeatureTester, protocol::Range};
+    use indoc::indoc;
 
-    #[test]
-    fn has_definition() {
-        let links = test_feature(
-            LatexLabelDefinitionProvider,
-            FeatureSpec {
-                files: vec![
-                    FeatureSpec::file("foo.tex", "\\label{foo}"),
-                    FeatureSpec::file(
-                        "bar.tex",
-                        "\\begin{a}\\begin{b}\\label{foo}\\end{b}\\end{a}\n\\input{baz.tex}",
-                    ),
-                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
-                ],
-                main_file: "baz.tex",
-                position: Position::new(0, 5),
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(
-            links,
-            vec![LocationLink {
-                origin_selection_range: Some(Range::new_simple(0, 5, 0, 8)),
-                target_uri: FeatureSpec::uri("bar.tex"),
-                target_range: Range::new_simple(0, 18, 0, 29),
-                target_selection_range: Range::new_simple(0, 18, 0, 29)
-            }]
-        );
+    #[tokio::test]
+    async fn empty_latex_document() {
+        let actual_links = FeatureTester::new()
+            .file("main.tex", "")
+            .main("main.tex")
+            .position(0, 0)
+            .test_position(LatexLabelDefinitionProvider)
+            .await;
+
+        assert!(actual_links.is_empty());
     }
 
-    #[test]
-    fn no_definition_latex() {
-        let links = test_feature(
-            LatexLabelDefinitionProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.tex", "")],
-                main_file: "foo.tex",
-                position: Position::new(0, 0),
-                ..FeatureSpec::default()
-            },
-        );
-        assert!(links.is_empty());
+    #[tokio::test]
+    async fn empty_bibtex_document() {
+        let actual_links = FeatureTester::new()
+            .file("main.bib", "")
+            .main("main.bib")
+            .position(0, 0)
+            .test_position(LatexLabelDefinitionProvider)
+            .await;
+
+        assert!(actual_links.is_empty());
     }
 
-    #[test]
-    fn no_definition_bibtex() {
-        let links = test_feature(
-            LatexLabelDefinitionProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.bib", "")],
-                main_file: "foo.bib",
-                position: Position::new(0, 0),
-                ..FeatureSpec::default()
-            },
-        );
-        assert!(links.is_empty());
+    #[tokio::test]
+    async fn unknown_context() {
+        let actual_links = FeatureTester::new()
+            .file("foo.tex", r#"\label{foo}"#)
+            .file(
+                "bar.tex",
+                indoc!(
+                    r#"
+                        \begin{a}\begin{b}\label{foo}\end{b}\end{a}
+                        \input{baz.tex}
+                    "#
+                ),
+            )
+            .file("baz.tex", r#"\ref{foo}"#)
+            .main("baz.tex")
+            .position(0, 5)
+            .test_position(LatexLabelDefinitionProvider)
+            .await;
+
+        let expected_links = vec![LocationLink {
+            origin_selection_range: Some(Range::new_simple(0, 5, 0, 8)),
+            target_uri: FeatureTester::uri("bar.tex").into(),
+            target_range: Range::new_simple(0, 18, 0, 29),
+            target_selection_range: Range::new_simple(0, 18, 0, 29),
+        }];
+
+        assert_eq!(actual_links, expected_links);
     }
 }

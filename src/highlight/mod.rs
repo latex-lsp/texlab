@@ -1,9 +1,11 @@
 mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
+use crate::{
+    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
+    protocol::{DocumentHighlight, TextDocumentPositionParams},
+};
 use futures_boxed::boxed;
-use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
-use texlab_workspace::*;
 
 pub struct HighlightProvider {
     provider: ConcatProvider<TextDocumentPositionParams, DocumentHighlight>,
@@ -28,10 +30,7 @@ impl FeatureProvider for HighlightProvider {
     type Output = Vec<DocumentHighlight>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-    ) -> Vec<DocumentHighlight> {
-        self.provider.execute(request).await
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        self.provider.execute(req).await
     }
 }

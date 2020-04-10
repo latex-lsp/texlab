@@ -5,8 +5,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use std::str::FromStr;
-use syn::export::TokenStream2;
-use syn::*;
+use syn::{export::TokenStream2, *};
 
 macro_rules! unwrap {
     ($input:expr, $arm:pat => $value:expr) => {{
@@ -67,10 +66,10 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let tokens = quote! {
         #impl_
 
-        impl #generics jsonrpc::RequestHandler for #self_ty {
-            #[boxed]
-            async fn handle_request(&self, request: jsonrpc::Request) -> jsonrpc::Response {
-                use jsonrpc::*;
+        impl #generics crate::jsonrpc::RequestHandler for #self_ty {
+            #[futures_boxed::boxed]
+            async fn handle_request(&self, request: crate::jsonrpc::Request) -> crate::jsonrpc::Response {
+                use crate::jsonrpc::*;
 
                 match request.method.as_str() {
                     #(#requests),*,
@@ -80,8 +79,8 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            #[boxed]
-            async fn handle_notification(&self, notification: jsonrpc::Notification) {
+            #[futures_boxed::boxed]
+            async fn handle_notification(&self, notification: crate::jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
                     _ => log::warn!("{}: {}", "Method not found", notification.method),
@@ -106,14 +105,14 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
         #trait_
 
         pub struct #struct_ident {
-            client: jsonrpc::Client
+            client: crate::jsonrpc::Client
         }
 
         impl #struct_ident
         {
             pub fn new(output: futures::channel::mpsc::Sender<String>) -> Self {
                 Self {
-                    client: jsonrpc::Client::new(output),
+                    client: crate::jsonrpc::Client::new(output),
                 }
             }
         }
@@ -123,10 +122,10 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#stubs)*
         }
 
-        impl jsonrpc::ResponseHandler for #struct_ident
+        impl crate::jsonrpc::ResponseHandler for #struct_ident
         {
-            #[boxed]
-            async fn handle(&self, response: jsonrpc::Response) -> () {
+            #[futures_boxed::boxed]
+            async fn handle(&self, response: crate::jsonrpc::Response) -> () {
                 self.client.handle(response).await
             }
         }
@@ -157,7 +156,7 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
                            self.#ident(param).await
                         };
 
-                        jsonrpc::handle_request(request, handler).await
+                        crate::jsonrpc::handle_request(request, handler).await
                     }
                 ));
             }
@@ -168,7 +167,7 @@ fn generate_server_skeletons(items: &Vec<ImplItem>) -> (Vec<TokenStream2>, Vec<T
                            self.#ident(param).await;
                         };
 
-                        jsonrpc::handle_notification(notification, handler).await;
+                        crate::jsonrpc::handle_notification(notification, handler).await;
                     }
                 ));
             }
@@ -190,14 +189,14 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
 
         let stub = match meta.kind {
             MethodKind::Request => quote!(
-                #[boxed]
+                #[futures_boxed::boxed]
                 #sig {
                     let result = self.client.send_request(#name.to_owned(), #param).await?;
-                    serde_json::from_value(result).map_err(|_| jsonrpc::Error::deserialize_error())
+                    serde_json::from_value(result).map_err(|_| crate::jsonrpc::Error::deserialize_error())
                 }
             ),
             MethodKind::Notification => quote!(
-                #[boxed]
+                #[futures_boxed::boxed]
                 #sig {
                     self.client.send_notification(#name.to_owned(), #param).await
                 }

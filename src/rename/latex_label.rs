@@ -1,11 +1,16 @@
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{
+        Position, Range, RangeExt, RenameParams, TextDocumentPositionParams, TextEdit,
+        WorkspaceEdit,
+    },
+    syntax::{Span, SyntaxNode},
+    workspace::DocumentContent,
+};
 use futures_boxed::boxed;
 use std::collections::HashMap;
-use texlab_protocol::RangeExt;
-use texlab_protocol::*;
-use texlab_syntax::*;
-use texlab_workspace::*;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelPrepareRenameProvider;
 
 impl FeatureProvider for LatexLabelPrepareRenameProvider {
@@ -13,15 +18,13 @@ impl FeatureProvider for LatexLabelPrepareRenameProvider {
     type Output = Option<Range>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<TextDocumentPositionParams>,
-    ) -> Option<Range> {
-        find_label(&request.document().tree, request.params.position).map(Span::range)
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let pos = req.params.position;
+        find_label(&req.current().content, pos).map(Span::range)
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelRenameProvider;
 
 impl FeatureProvider for LatexLabelRenameProvider {
@@ -29,39 +32,33 @@ impl FeatureProvider for LatexLabelRenameProvider {
     type Output = Option<WorkspaceEdit>;
 
     #[boxed]
-    async fn execute<'a>(
-        &'a self,
-        request: &'a FeatureRequest<RenameParams>,
-    ) -> Option<WorkspaceEdit> {
-        let name = find_label(
-            &request.document().tree,
-            request.params.text_document_position.position,
-        )?;
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let pos = req.params.text_document_position.position;
+        let name = find_label(&req.current().content, pos)?;
         let mut changes = HashMap::new();
-        for document in request.related_documents() {
-            if let SyntaxTree::Latex(tree) = &document.tree {
-                let edits = tree
-                    .structure
+        for doc in req.related() {
+            if let DocumentContent::Latex(table) = &doc.content {
+                let edits = table
                     .labels
                     .iter()
-                    .flat_map(LatexLabel::names)
+                    .flat_map(|label| label.names(&table.tree))
                     .filter(|label| label.text() == name.text)
-                    .map(|label| TextEdit::new(label.range(), request.params.new_name.clone()))
+                    .map(|label| TextEdit::new(label.range(), req.params.new_name.clone()))
                     .collect();
-                changes.insert(document.uri.clone().into(), edits);
+                changes.insert(doc.uri.clone().into(), edits);
             }
         }
         Some(WorkspaceEdit::new(changes))
     }
 }
 
-fn find_label(tree: &SyntaxTree, position: Position) -> Option<&Span> {
-    if let SyntaxTree::Latex(tree) = tree {
-        tree.structure
+fn find_label(content: &DocumentContent, pos: Position) -> Option<&Span> {
+    if let DocumentContent::Latex(table) = content {
+        table
             .labels
             .iter()
-            .flat_map(LatexLabel::names)
-            .find(|label| label.range().contains(position))
+            .flat_map(|label| label.names(&table.tree))
+            .find(|label| label.range().contains(pos))
             .map(|label| &label.span)
     } else {
         None
@@ -71,63 +68,79 @@ fn find_label(tree: &SyntaxTree, position: Position) -> Option<&Span> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_protocol::{Position, Range};
+    use crate::feature::FeatureTester;
+    use indoc::indoc;
 
-    #[test]
-    fn label() {
-        let edit = test_feature(
-            LatexLabelRenameProvider,
-            FeatureSpec {
-                files: vec![
-                    FeatureSpec::file("foo.tex", "\\label{foo}\n\\include{bar}"),
-                    FeatureSpec::file("bar.tex", "\\ref{foo}"),
-                    FeatureSpec::file("baz.tex", "\\ref{foo}"),
-                ],
-                main_file: "foo.tex",
-                position: Position::new(0, 7),
-                new_name: "bar",
-                ..FeatureSpec::default()
-            },
-        );
-        let mut changes = HashMap::new();
-        changes.insert(
-            FeatureSpec::uri("foo.tex"),
+    #[tokio::test]
+    async fn label() {
+        let actual_edit = FeatureTester::new()
+            .file(
+                "foo.tex",
+                indoc!(
+                    r#"
+                        \label{foo}
+                        \include{bar}
+                    "#
+                ),
+            )
+            .file("bar.tex", r#"\ref{foo}"#)
+            .file("baz.tex", r#"\ref{foo}"#)
+            .main("foo.tex")
+            .position(0, 7)
+            .new_name("bar")
+            .test_rename(LatexLabelRenameProvider)
+            .await
+            .unwrap();
+
+        let mut expected_changes = HashMap::new();
+        expected_changes.insert(
+            FeatureTester::uri("foo.tex").into(),
             vec![TextEdit::new(Range::new_simple(0, 7, 0, 10), "bar".into())],
         );
-        changes.insert(
-            FeatureSpec::uri("bar.tex"),
+        expected_changes.insert(
+            FeatureTester::uri("bar.tex").into(),
             vec![TextEdit::new(Range::new_simple(0, 5, 0, 8), "bar".into())],
         );
-        assert_eq!(edit, Some(WorkspaceEdit::new(changes)));
+
+        assert_eq!(actual_edit, WorkspaceEdit::new(expected_changes));
     }
 
-    #[test]
-    fn command_args() {
-        let edit = test_feature(
-            LatexLabelRenameProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.tex", "\\foo{bar}")],
-                main_file: "foo.tex",
-                position: Position::new(0, 5),
-                new_name: "baz",
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(edit, None);
+    #[tokio::test]
+    async fn command_args() {
+        let actual_edit = FeatureTester::new()
+            .file("main.tex", r#"\foo{bar}"#)
+            .main("main.tex")
+            .position(0, 5)
+            .new_name("baz")
+            .test_rename(LatexLabelRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
     }
 
-    #[test]
-    fn bibtex() {
-        let edit = test_feature(
-            LatexLabelRenameProvider,
-            FeatureSpec {
-                files: vec![FeatureSpec::file("foo.bib", "")],
-                main_file: "foo.bib",
-                position: Position::new(0, 0),
-                new_name: "baz",
-                ..FeatureSpec::default()
-            },
-        );
-        assert_eq!(edit, None);
+    #[tokio::test]
+    async fn empty_latex_document() {
+        let actual_edit = FeatureTester::new()
+            .file("main.tex", "")
+            .main("main.tex")
+            .position(0, 0)
+            .new_name("")
+            .test_rename(LatexLabelRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
+    }
+
+    #[tokio::test]
+    async fn empty_bibtex_document() {
+        let actual_edit = FeatureTester::new()
+            .file("main.bib", "")
+            .main("main.bib")
+            .position(0, 0)
+            .new_name("")
+            .test_rename(LatexLabelRenameProvider)
+            .await;
+
+        assert_eq!(actual_edit, None);
     }
 }

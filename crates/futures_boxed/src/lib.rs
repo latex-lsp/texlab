@@ -3,11 +3,9 @@
 extern crate proc_macro;
 
 use proc_macro::{TokenStream, TokenTree};
-use quote::quote;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::iter::FromIterator;
-use syn::export::TokenStream2;
-use syn::*;
+use syn::{export::TokenStream2, *};
 
 #[proc_macro_attribute]
 pub fn boxed(_attr: TokenStream, item: TokenStream) -> TokenStream {

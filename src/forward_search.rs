@@ -1,17 +1,35 @@
-use log::*;
-use std::io;
-use std::path::Path;
-use std::process::Stdio;
-use texlab_protocol::*;
+use crate::{
+    protocol::{ForwardSearchResult, ForwardSearchStatus, Options, Uri},
+    workspace::Snapshot,
+};
+use log::error;
+use std::{io, path::Path, process::Stdio};
 use tokio::process::Command;
 
 pub async fn search<'a>(
-    tex_file: &'a Path,
-    parent: &'a Path,
+    snapshot: &'a Snapshot,
+    tex_uri: &'a Uri,
     line_number: u64,
-    options: Options,
+    options: &Options,
+    current_dir: &'a Path,
 ) -> Option<ForwardSearchResult> {
-    let pdf_file = options.resolve_output_file(parent, "pdf").unwrap();
+    let pdf_path = snapshot
+        .resolve_aux_targets(
+            &snapshot.parent(tex_uri, options, current_dir)?.uri,
+            options,
+            current_dir,
+            "pdf",
+        )?
+        .into_iter()
+        .filter(|uri| uri.scheme() == "file")
+        .filter_map(|uri| uri.to_file_path().ok())
+        .find(|path| path.exists())?;
+
+    if tex_uri.scheme() != "file" {
+        return Some(ForwardSearchResult {
+            status: ForwardSearchStatus::Failure,
+        });
+    }
 
     let search_options = options
         .latex
@@ -19,17 +37,19 @@ pub async fn search<'a>(
         .and_then(|opts| opts.forward_search.as_ref())
         .map(Clone::clone)
         .unwrap_or_default();
+
     if search_options.executable.is_none() || search_options.args.is_none() {
         return Some(ForwardSearchResult {
             status: ForwardSearchStatus::Unconfigured,
         });
     }
 
+    let tex_path = tex_uri.to_file_path().ok()?;
     let args: Vec<String> = search_options
         .args
         .unwrap()
         .into_iter()
-        .flat_map(|arg| replace_placeholder(&tex_file, &pdf_file, line_number, arg))
+        .flat_map(|arg| replace_placeholder(&tex_path, &pdf_path, line_number, arg))
         .collect();
 
     let status = match spawn_process(search_options.executable.unwrap(), args).await {

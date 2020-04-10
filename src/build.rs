@@ -1,187 +1,39 @@
-use futures::future::{AbortHandle, Abortable, Aborted};
-use futures::lock::Mutex;
-use futures::prelude::*;
-use futures::stream;
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{
+        BuildParams, BuildResult, BuildStatus, ClientCapabilitiesExt, LatexOptions, LspClient,
+        ProgressToken,
+    },
+};
+use futures::{
+    future::{AbortHandle, Abortable, Aborted},
+    lock::Mutex,
+    prelude::*,
+    stream,
+};
 use futures_boxed::boxed;
-use std::collections::HashMap;
-use std::io;
-use std::path::Path;
-use std::process::Stdio;
-use std::sync::Arc;
-use texlab_protocol::*;
-use texlab_workspace::*;
-use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
+use lsp_types::{
+    LogMessageParams, MessageType, ProgressParams, ProgressParamsValue, WorkDoneProgress,
+    WorkDoneProgressBegin, WorkDoneProgressCreateParams, WorkDoneProgressEnd,
+};
+use std::{collections::HashMap, io, path::Path, process::Stdio, sync::Arc};
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
+    process::Command,
+};
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct BuildProvider<C> {
-    pub client: Arc<C>,
-    pub options: LatexOptions,
-    pub token: ProgressToken,
-}
-
-impl<C> BuildProvider<C>
-where
-    C: LspClient + Send + Sync + 'static,
-{
-    pub fn new(client: Arc<C>, options: LatexOptions) -> Self {
-        Self {
-            client,
-            options,
-            token: ProgressToken::String(format!("texlab-build-{}", Uuid::new_v4())),
-        }
-    }
-
-    async fn build<'a>(&'a self, path: &'a Path) -> io::Result<bool> {
-        let build_options = self
-            .options
-            .build
-            .as_ref()
-            .map(Clone::clone)
-            .unwrap_or_default();
-
-        let build_dir = self
-            .options
-            .root_directory
-            .as_ref()
-            .map(AsRef::as_ref)
-            .or_else(|| path.parent())
-            .unwrap();
-
-        let mut args = Vec::new();
-        args.append(&mut build_options.args());
-        args.push(path.to_string_lossy().into_owned());
-
-        let mut process = Command::new(build_options.executable())
-            .args(args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(build_dir)
-            .spawn()?;
-
-        let stdout = BufReader::new(process.stdout.take().unwrap()).lines();
-        let stderr = BufReader::new(process.stderr.take().unwrap()).lines();
-        let mut output = stream::select(stdout, stderr);
-
-        while let Some(Ok(line)) = output.next().await {
-            let params = LogMessageParams {
-                typ: MessageType::Log,
-                message: line,
-            };
-
-            self.client.log_message(params).await;
-        }
-
-        Ok(process.await?.success())
-    }
-}
-
-impl<C> FeatureProvider for BuildProvider<C>
-where
-    C: LspClient + Send + Sync + 'static,
-{
-    type Params = BuildParams;
-    type Output = BuildResult;
-
-    #[boxed]
-    async fn execute<'a>(&'a self, request: &'a FeatureRequest<BuildParams>) -> BuildResult {
-        let document = request
-            .workspace()
-            .find_parent(&request.document().uri, &request.options)
-            .or_else(|| request.workspace().find(&request.document().uri))
-            .unwrap();
-
-        match document.uri.to_file_path() {
-            Ok(path) => {
-                if request.client_capabilities.has_work_done_progress_support() {
-                    let params = WorkDoneProgressCreateParams {
-                        token: self.token.clone(),
-                    };
-                    self.client.work_done_progress_create(params).await.unwrap();
-
-                    let title = path.file_name().unwrap().to_string_lossy().into_owned();
-                    let params = ProgressParams {
-                        token: self.token.clone(),
-                        value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                            WorkDoneProgressBegin {
-                                title,
-                                cancellable: Some(true),
-                                message: Some("Building".into()),
-                                percentage: None,
-                            },
-                        )),
-                    };
-                    self.client.progress(params).await;
-                }
-
-                let status = match self.build(&path).await {
-                    Ok(true) => BuildStatus::Success,
-                    Ok(false) => BuildStatus::Error,
-                    Err(_) => BuildStatus::Failure,
-                };
-
-                BuildResult { status }
-            }
-            Err(()) => BuildResult {
-                status: BuildStatus::Failure,
-            },
-        }
-    }
-}
-
-pub struct BuildManager<C> {
-    handles_by_token: Mutex<HashMap<ProgressToken, AbortHandle>>,
     client: Arc<C>,
+    handles_by_token: Mutex<HashMap<ProgressToken, AbortHandle>>,
 }
 
-impl<C> BuildManager<C>
-where
-    C: LspClient + Send + Sync + 'static,
-{
+impl<C> BuildProvider<C> {
     pub fn new(client: Arc<C>) -> Self {
         Self {
-            handles_by_token: Mutex::new(HashMap::new()),
             client,
+            handles_by_token: Mutex::new(HashMap::new()),
         }
-    }
-
-    pub async fn build(
-        &self,
-        request: FeatureRequest<BuildParams>,
-        options: LatexOptions,
-    ) -> BuildResult {
-        let provider = BuildProvider::new(Arc::clone(&self.client), options);
-        let (handle, reg) = AbortHandle::new_pair();
-        {
-            let mut handles_by_token = self.handles_by_token.lock().await;
-            handles_by_token.insert(provider.token.clone(), handle);
-        }
-
-        let result = match Abortable::new(provider.execute(&request), reg).await {
-            Ok(result) => result,
-            Err(Aborted) => BuildResult {
-                status: BuildStatus::Cancelled,
-            },
-        };
-
-        if request.client_capabilities.has_work_done_progress_support() {
-            let params = ProgressParams {
-                token: provider.token.clone(),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Done(
-                    WorkDoneProgressDone { message: None },
-                )),
-            };
-            self.client.progress(params).await;
-        }
-
-        {
-            let mut handles_by_token = self.handles_by_token.lock().await;
-            handles_by_token.remove(&provider.token);
-        }
-
-        result
     }
 
     pub async fn cancel(&self, token: ProgressToken) {
@@ -194,4 +46,125 @@ where
             }
         }
     }
+}
+
+impl<C> FeatureProvider for BuildProvider<C>
+where
+    C: LspClient + Send + Sync + 'static,
+{
+    type Params = BuildParams;
+    type Output = BuildResult;
+
+    #[boxed]
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<BuildParams>) -> BuildResult {
+        let token = ProgressToken::String(format!("texlab-build-{}", Uuid::new_v4()));
+        let (handle, reg) = AbortHandle::new_pair();
+        {
+            let mut handles_by_token = self.handles_by_token.lock().await;
+            handles_by_token.insert(token.clone(), handle);
+        }
+
+        let doc = req
+            .snapshot()
+            .parent(&req.current().uri, &req.options, &req.current_dir)
+            .unwrap_or_else(|| Arc::clone(&req.view.current));
+
+        if !doc.is_file() {
+            return BuildResult {
+                status: BuildStatus::Failure,
+            };
+        }
+
+        let status = match doc.uri.to_file_path() {
+            Ok(path) => {
+                if req.client_capabilities.has_work_done_progress_support() {
+                    let params = WorkDoneProgressCreateParams {
+                        token: token.clone(),
+                    };
+                    self.client.work_done_progress_create(params).await.unwrap();
+
+                    let title = path.file_name().unwrap().to_string_lossy().into_owned();
+                    let params = ProgressParams {
+                        token: token.clone(),
+                        value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                            WorkDoneProgressBegin {
+                                title,
+                                cancellable: Some(true),
+                                message: Some("Building".into()),
+                                percentage: None,
+                            },
+                        )),
+                    };
+                    self.client.progress(params).await;
+                }
+
+                let latex_options = req.options.latex.clone().unwrap_or_default();
+                let client = Arc::clone(&self.client);
+                match Abortable::new(build(&path, &latex_options, client), reg).await {
+                    Ok(Ok(true)) => BuildStatus::Success,
+                    Ok(Ok(false)) => BuildStatus::Error,
+                    Ok(Err(_)) => BuildStatus::Failure,
+                    Err(Aborted) => BuildStatus::Cancelled,
+                }
+            }
+            Err(()) => BuildStatus::Failure,
+        };
+
+        if req.client_capabilities.has_work_done_progress_support() {
+            let params = ProgressParams {
+                token: token.clone(),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
+                    message: None,
+                })),
+            };
+            self.client.progress(params).await;
+        }
+        {
+            let mut handles_by_token = self.handles_by_token.lock().await;
+            handles_by_token.remove(&token);
+        }
+
+        BuildResult { status }
+    }
+}
+
+async fn build<C>(path: &Path, options: &LatexOptions, client: Arc<C>) -> io::Result<bool>
+where
+    C: LspClient + Send + Sync,
+{
+    let build_options = options.build.as_ref().cloned().unwrap_or_default();
+    let build_dir = options
+        .root_directory
+        .as_ref()
+        .map(AsRef::as_ref)
+        .or_else(|| path.parent())
+        .unwrap();
+
+    let mut args = Vec::new();
+    args.append(&mut build_options.args());
+    args.push(path.to_string_lossy().into_owned());
+
+    let mut process = Command::new(build_options.executable())
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .current_dir(build_dir)
+        .kill_on_drop(true)
+        .spawn()?;
+
+    let stdout = BufReader::new(process.stdout.take().unwrap()).lines();
+    let stderr = BufReader::new(process.stderr.take().unwrap()).lines();
+    let mut output = stream::select(stdout, stderr);
+
+    while let Some(Ok(line)) = output.next().await {
+        let params = LogMessageParams {
+            typ: MessageType::Log,
+            message: line,
+        };
+
+        client.log_message(params).await;
+    }
+
+    Ok(process.await?.success())
 }

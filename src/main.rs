@@ -1,17 +1,17 @@
 use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
-use futures::channel::mpsc;
-use futures::prelude::*;
-use jsonrpc::MessageHandler;
-use std::error::Error;
-use std::sync::Arc;
+use futures::{channel::mpsc, prelude::*};
+use std::{env, error, sync::Arc};
 use stderrlog::{ColorChoice, Timestamp};
-use texlab::server::LatexLspServer;
-use texlab_distro::Distribution;
-use texlab_protocol::{LatexLspClient, LspCodec};
+use texlab::{
+    jsonrpc::MessageHandler,
+    protocol::{LatexLspClient, LspCodec},
+    server::LatexLspServer,
+    tex::DynamicDistribution,
+};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn error::Error>> {
     let matches = app_from_crate!()
         .author("")
         .arg(
@@ -30,29 +30,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     stderrlog::new()
         .module(module_path!())
-        .module("jsonrpc")
-        .module("texlab_citeproc")
-        .module("texlab_completion")
-        .module("texlab_distro")
-        .module("texlab_hover")
-        .module("texlab_protocol")
-        .module("texlab_symbol")
-        .module("texlab_syntax")
-        .module("texlab_workspace")
         .verbosity(matches.occurrences_of("verbosity") as usize)
         .quiet(matches.is_present("quiet"))
         .timestamp(Timestamp::Off)
         .color(ColorChoice::Never)
         .init()
-        .unwrap();
+        .expect("failed to initialize logger");
 
     let mut stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
     let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(
+        DynamicDistribution::detect().await,
         Arc::clone(&client),
-        Arc::new(Distribution::detect().await),
+        Arc::new(env::current_dir().expect("failed to get working directory")),
     ));
     let mut handler = MessageHandler {
         server,
