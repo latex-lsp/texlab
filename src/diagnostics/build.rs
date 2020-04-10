@@ -2,6 +2,7 @@ use crate::{
     protocol::{Diagnostic, DiagnosticSeverity, Options, Position, Range, Uri},
     workspace::{Document, Snapshot},
 };
+use futures::lock::Mutex;
 use once_cell::sync::Lazy;
 use regex::{Match, Regex};
 use std::{
@@ -20,22 +21,22 @@ struct LogFile {
     modified: SystemTime,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct BuildDiagnosticsProvider {
-    diagnostics_by_uri: HashMap<Uri, Vec<Diagnostic>>,
-    log_files: Vec<LogFile>,
+    diagnostics_by_uri: Mutex<HashMap<Uri, Vec<Diagnostic>>>,
+    log_files: Mutex<Vec<LogFile>>,
 }
 
 impl BuildDiagnosticsProvider {
-    pub fn get(&self, doc: &Document) -> Vec<Diagnostic> {
-        match self.diagnostics_by_uri.get(&doc.uri) {
+    pub async fn get(&self, doc: &Document) -> Vec<Diagnostic> {
+        match self.diagnostics_by_uri.lock().await.get(&doc.uri) {
             Some(diagnostics) => diagnostics.to_owned(),
             None => Vec::new(),
         }
     }
 
     pub async fn update(
-        &mut self,
+        &self,
         snapshot: &Snapshot,
         tex_uri: &Uri,
         options: &Options,
@@ -52,7 +53,8 @@ impl BuildDiagnosticsProvider {
             .next()
         {
             let modified = fs::metadata(&log_path).await?.modified()?;
-            for log_file in &mut self.log_files {
+            let mut log_files = self.log_files.lock().await;
+            for log_file in log_files.iter_mut() {
                 if log_file.path == log_path {
                     return if modified > log_file.modified {
                         log_file.modified = modified;
@@ -64,7 +66,7 @@ impl BuildDiagnosticsProvider {
             }
 
             self.update_diagnostics(tex_uri, &log_path).await?;
-            self.log_files.push(LogFile {
+            log_files.push(LogFile {
                 path: log_path,
                 modified,
             });
@@ -73,12 +75,12 @@ impl BuildDiagnosticsProvider {
         Ok(true)
     }
 
-    async fn update_diagnostics(&mut self, tex_uri: &Uri, log_path: &Path) -> io::Result<bool> {
+    async fn update_diagnostics(&self, tex_uri: &Uri, log_path: &Path) -> io::Result<bool> {
         let log = String::from_utf8_lossy(&fs::read(log_path).await?).into_owned();
-        self.diagnostics_by_uri.clear();
+        let mut diagnostics_by_uri = self.diagnostics_by_uri.lock().await;
+        diagnostics_by_uri.clear();
         for error in parse_build_log(tex_uri, &log) {
-            let diagnostics = self
-                .diagnostics_by_uri
+            let diagnostics = diagnostics_by_uri
                 .entry(error.uri.clone())
                 .or_insert_with(Vec::new);
             diagnostics.push(error.into());

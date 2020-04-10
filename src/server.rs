@@ -46,7 +46,7 @@ pub struct LatexLspServer<C> {
     rename_provider: RenameProvider,
     symbol_provider: SymbolProvider,
     hover_provider: HoverProvider,
-    diagnostics_manager: Mutex<DiagnosticsManager>,
+    diagnostics_manager: DiagnosticsManager,
 }
 
 #[jsonrpc_server]
@@ -72,7 +72,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             rename_provider: RenameProvider::new(),
             symbol_provider: SymbolProvider::new(),
             hover_provider: HoverProvider::new(),
-            diagnostics_manager: Mutex::default(),
+            diagnostics_manager: DiagnosticsManager::default(),
         }
     }
 
@@ -462,13 +462,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
 
     async fn update_build_diagnostics(&self) {
         let snapshot = self.workspace.get().await;
-        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
         let options = self.config_manager().get().await;
 
         for doc in snapshot.0.iter().filter(|doc| doc.uri.scheme() == "file") {
             if let DocumentContent::Latex(table) = &doc.content {
                 if table.is_standalone {
-                    match diagnostics_manager
+                    match self
+                        .diagnostics_manager
                         .build
                         .update(&snapshot, &doc.uri, &options, &self.current_dir)
                         .await
@@ -555,14 +555,10 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                 }
                 Action::PublishDiagnostics => {
                     let snapshot = self.workspace.get().await;
-                    for document in &snapshot.0 {
-                        let diagnostics = {
-                            let manager = self.diagnostics_manager.lock().await;
-                            manager.get(&document)
-                        };
-
+                    for doc in &snapshot.0 {
+                        let diagnostics = self.diagnostics_manager.get(doc).await;
                         let params = PublishDiagnosticsParams {
-                            uri: document.uri.clone().into(),
+                            uri: doc.uri.clone().into(),
                             diagnostics,
                             version: None,
                         };
@@ -591,20 +587,17 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         .latex
                         .and_then(|opts| opts.lint)
                         .unwrap_or_default();
-                    if options.on_save() {
-                        let should_lint = match reason {
-                            LintReason::Change => options.on_change(),
-                            LintReason::Save => options.on_save() || options.on_change(),
-                        };
 
-                        if should_lint {
-                            let snapshot = self.workspace.get().await;
-                            if let Some(doc) = snapshot.find(&uri) {
-                                if let DocumentContent::Latex(_) = &doc.content {
-                                    let mut diagnostics_manager =
-                                        self.diagnostics_manager.lock().await;
-                                    diagnostics_manager.latex.update(&uri, &doc.text).await;
-                                }
+                    let should_lint = match reason {
+                        LintReason::Change => options.on_change(),
+                        LintReason::Save => options.on_save() || options.on_change(),
+                    };
+
+                    if should_lint {
+                        let snapshot = self.workspace.get().await;
+                        if let Some(doc) = snapshot.find(&uri) {
+                            if let DocumentContent::Latex(_) = &doc.content {
+                                self.diagnostics_manager.latex.update(&uri, &doc.text).await;
                             }
                         }
                     }

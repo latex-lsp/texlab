@@ -2,14 +2,21 @@ use crate::{
     protocol::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, RangeExt, Uri},
     workspace::Document,
 };
+use chashmap::CHashMap;
+use futures::{
+    future::{AbortHandle, Abortable, Aborted},
+    lock::Mutex,
+};
+use log::trace;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{collections::HashMap, process::Stdio};
+use std::process::Stdio;
 use tokio::{prelude::*, process::Command};
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct LatexDiagnosticsProvider {
-    diagnostics_by_uri: HashMap<Uri, Vec<Diagnostic>>,
+    diagnostics_by_uri: CHashMap<Uri, Vec<Diagnostic>>,
+    handle: Mutex<Option<AbortHandle>>,
 }
 
 impl LatexDiagnosticsProvider {
@@ -20,20 +27,38 @@ impl LatexDiagnosticsProvider {
         }
     }
 
-    pub async fn update(&mut self, uri: &Uri, text: &str) {
+    pub async fn update(&self, uri: &Uri, text: &str) {
         if uri.scheme() != "file" {
             return;
         }
 
-        self.diagnostics_by_uri
-            .insert(uri.clone(), lint(text).await.unwrap_or_default());
+        let mut handle_guard = self.handle.lock().await;
+        if let Some(handle) = &*handle_guard {
+            handle.abort();
+        }
+
+        let (handle, registration) = AbortHandle::new_pair();
+        *handle_guard = Some(handle);
+        drop(handle_guard);
+
+        let future = Abortable::new(
+            async move {
+                self.diagnostics_by_uri
+                    .insert(uri.clone(), lint(text.into()).await.unwrap_or_default());
+            },
+            registration,
+        );
+
+        if let Err(Aborted) = future.await {
+            trace!("Killed ChkTeX because it took too long to execute")
+        }
     }
 }
 
 pub static LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
 
-async fn lint(text: &str) -> io::Result<Vec<Diagnostic>> {
+async fn lint(text: String) -> io::Result<Vec<Diagnostic>> {
     let mut process: tokio::process::Child = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
         .stdin(Stdio::piped())
