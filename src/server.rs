@@ -181,6 +181,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.action_manager
             .push(Action::DetectRoot(uri.clone().into()))
             .await;
+        self.action_manager
+            .push(Action::RunLinter(uri.into(), LintReason::Save))
+            .await;
         self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
@@ -193,14 +196,28 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 .update(uri.into(), change.text, &options)
                 .await;
         }
+        self.action_manager
+            .push(Action::RunLinter(
+                params.text_document.uri.clone().into(),
+                LintReason::Change,
+            ))
+            .await;
         self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
     pub async fn did_save(&self, params: DidSaveTextDocumentParams) {
         self.action_manager
-            .push(Action::Build(params.text_document.uri.into()))
+            .push(Action::Build(params.text_document.uri.clone().into()))
             .await;
+
+        self.action_manager
+            .push(Action::RunLinter(
+                params.text_document.uri.into(),
+                LintReason::Save,
+            ))
+            .await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didClose", kind = "notification")]
@@ -566,9 +583,41 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         self.build(BuildParams { text_document }).await.unwrap();
                     }
                 }
-            };
+                Action::RunLinter(uri, reason) => {
+                    let options = self
+                        .config_manager()
+                        .get()
+                        .await
+                        .latex
+                        .and_then(|opts| opts.lint)
+                        .unwrap_or_default();
+                    if options.on_save() {
+                        let should_lint = match reason {
+                            LintReason::Change => options.on_change(),
+                            LintReason::Save => options.on_save() || options.on_change(),
+                        };
+
+                        if should_lint {
+                            let snapshot = self.workspace.get().await;
+                            if let Some(doc) = snapshot.find(&uri) {
+                                if let DocumentContent::Latex(_) = &doc.content {
+                                    let mut diagnostics_manager =
+                                        self.diagnostics_manager.lock().await;
+                                    diagnostics_manager.latex.update(&uri, &doc.text).await;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum LintReason {
+    Change,
+    Save,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -579,6 +628,7 @@ enum Action {
     DetectRoot(Uri),
     PublishDiagnostics,
     Build(Uri),
+    RunLinter(Uri, LintReason),
 }
 
 #[derive(Debug, Default)]
