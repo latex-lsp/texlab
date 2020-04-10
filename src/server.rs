@@ -119,7 +119,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     "/".to_owned(),
                     " ".to_owned(),
                 ]),
-                work_done_progress_options: Default::default(),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
             }),
             signature_help_provider: None,
             definition_provider: Some(true),
@@ -136,28 +136,31 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             document_on_type_formatting_provider: None,
             rename_provider: Some(RenameProviderCapability::Options(RenameOptions {
                 prepare_provider: Some(true),
-                work_done_progress_options: Default::default(),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
             })),
             document_link_provider: Some(DocumentLinkOptions {
                 resolve_provider: Some(false),
-                work_done_progress_options: Default::default(),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
             }),
             color_provider: None,
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             execute_command_provider: None,
             workspace: None,
             selection_range_provider: None,
-            declaration_provider: Default::default(),
-            semantic_highlighting: Default::default(),
-            call_hierarchy_provider: Default::default(),
-            semantic_tokens_provider: Default::default(),
-            experimental: Default::default(),
+            declaration_provider: None,
+            semantic_highlighting: None,
+            call_hierarchy_provider: None,
+            semantic_tokens_provider: None,
+            experimental: None,
         };
 
         Lazy::force(&COMPONENT_DATABASE);
         Ok(InitializeResult {
             capabilities,
-            server_info: Default::default(),
+            server_info: Some(ServerInfo {
+                name: "texlab".to_owned(),
+                version: Some("1.10.0".to_owned()),
+            }),
         })
     }
 
@@ -689,7 +692,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                         let params = PublishDiagnosticsParams {
                             uri: document.uri.clone().into(),
                             diagnostics,
-                            version: Default::default(),
+                            version: None,
                         };
                         self.client.publish_diagnostics(params).await;
                     }

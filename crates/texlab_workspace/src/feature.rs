@@ -202,8 +202,8 @@ impl Into<FeatureRequest<CompletionParams>> for FeatureSpec {
                 self.position,
             ),
             context: None,
-            work_done_progress_params: Default::default(),
-            partial_result_params: Default::default(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.request(params)
     }
@@ -213,8 +213,8 @@ impl Into<FeatureRequest<FoldingRangeParams>> for FeatureSpec {
     fn into(self) -> FeatureRequest<FoldingRangeParams> {
         let params = FoldingRangeParams {
             text_document: self.identifier(),
-            work_done_progress_params: Default::default(),
-            partial_result_params: Default::default(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.request(params)
     }
@@ -239,7 +239,7 @@ impl Into<FeatureRequest<ReferenceParams>> for FeatureSpec {
             context: ReferenceContext {
                 include_declaration: self.include_declaration,
             },
-            work_done_progress_params: Default::default(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         self.request(params)
     }
@@ -253,7 +253,7 @@ impl Into<FeatureRequest<RenameParams>> for FeatureSpec {
                 self.position,
             ),
             new_name: self.new_name.to_owned(),
-            work_done_progress_params: Default::default(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
         };
         self.request(params)
     }

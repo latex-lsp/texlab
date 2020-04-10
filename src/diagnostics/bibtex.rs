@@ -163,7 +163,7 @@ impl Into<Diagnostic> for BibtexError {
             severity: Some(DiagnosticSeverity::Error),
             code: None,
             related_information: None,
-            tags: Default::default(),
+            tags: None,
         }
     }
 }
