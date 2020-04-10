@@ -4,6 +4,7 @@ use crate::{
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     definition::DefinitionProvider,
+    diagnostics::DiagnosticsManager,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     folding::FoldingProvider,
     forward_search,
@@ -21,7 +22,7 @@ use crate::{
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
-use log::{error, info};
+use log::{error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 
@@ -43,6 +44,7 @@ pub struct LatexLspServer<C> {
     rename_provider: RenameProvider,
     symbol_provider: SymbolProvider,
     hover_provider: HoverProvider,
+    diagnostics_manager: Mutex<DiagnosticsManager>,
 }
 
 #[jsonrpc_server]
@@ -67,6 +69,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             rename_provider: RenameProvider::new(),
             symbol_provider: SymbolProvider::new(),
             hover_provider: HoverProvider::new(),
+            diagnostics_manager: Mutex::default(),
         }
     }
 
@@ -153,6 +156,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.action_manager.push(Action::PullConfiguration).await;
         self.action_manager.push(Action::RegisterCapabilities).await;
         self.action_manager.push(Action::LoadDistribution).await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("shutdown", kind = "request")]
@@ -174,6 +178,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         self.action_manager
             .push(Action::DetectRoot(uri.clone().into()))
             .await;
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didChange", kind = "notification")]
@@ -185,6 +190,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 .update(uri.into(), change.text, &options)
                 .await;
         }
+        self.action_manager.push(Action::PublishDiagnostics).await;
     }
 
     #[jsonrpc_method("textDocument/didSave", kind = "notification")]
@@ -427,6 +433,30 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         options
     }
 
+    async fn update_build_diagnostics(&self) {
+        let snapshot = self.workspace.get().await;
+        let mut diagnostics_manager = self.diagnostics_manager.lock().await;
+        let options = self.config_manager().get().await;
+
+        for doc in snapshot.0.iter().filter(|doc| doc.uri.scheme() == "file") {
+            if let DocumentContent::Latex(table) = &doc.content {
+                if table.is_standalone {
+                    match diagnostics_manager
+                        .build
+                        .update(&snapshot, &doc.uri, &options, &self.current_dir)
+                        .await
+                    {
+                        Ok(true) => self.action_manager.push(Action::PublishDiagnostics).await,
+                        Ok(false) => (),
+                        Err(why) => {
+                            warn!("Unable to read log file ({}): {}", why, doc.uri.as_str())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     async fn load_distribution(&self) {
         info!("Detected TeX distribution: {}", self.distro.0.kind());
         if self.distro.0.kind() == DistributionKind::Unknown {
@@ -479,6 +509,7 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
 
     #[boxed]
     async fn after_message(&self) {
+        self.update_build_diagnostics().await;
         for action in self.action_manager.take().await {
             match action {
                 Action::LoadDistribution => {
@@ -495,6 +526,22 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
                     let options = self.config_manager().get().await;
                     let _ = self.workspace.detect_root(&uri, &options).await;
                 }
+                Action::PublishDiagnostics => {
+                    let snapshot = self.workspace.get().await;
+                    for document in &snapshot.0 {
+                        let diagnostics = {
+                            let manager = self.diagnostics_manager.lock().await;
+                            manager.get(&document)
+                        };
+
+                        let params = PublishDiagnosticsParams {
+                            uri: document.uri.clone().into(),
+                            diagnostics,
+                            version: None,
+                        };
+                        self.client.publish_diagnostics(params).await;
+                    }
+                }
             };
         }
     }
@@ -506,6 +553,7 @@ enum Action {
     RegisterCapabilities,
     PullConfiguration,
     DetectRoot(Uri),
+    PublishDiagnostics,
 }
 
 #[derive(Debug, Default)]
