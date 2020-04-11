@@ -21,16 +21,14 @@ impl FeatureProvider for LatexPgfLibraryCompletionProvider {
             name: "\\usepgflibrary",
             index: 0,
         };
-        combinators::argument(req, iter::once(param), |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for name in &LANGUAGE_DATA.pgf_libraries {
-                    let text_edit = TextEdit::new(ctx.range, name.into());
-                    let item = factory::pgf_library(req, name, text_edit);
-                    items.push(item);
-                }
-                items
+        combinators::argument(req, iter::once(param), |ctx| async move {
+            let mut items = Vec::new();
+            for name in &LANGUAGE_DATA.pgf_libraries {
+                let text_edit = TextEdit::new(ctx.range, name.into());
+                let item = factory::pgf_library(req, name, text_edit);
+                items.push(item);
             }
+            items
         })
         .await
     }
@@ -49,16 +47,14 @@ impl FeatureProvider for LatexTikzLibraryCompletionProvider {
             name: "\\usetikzlibrary",
             index: 0,
         };
-        combinators::argument(req, iter::once(param), |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for name in &LANGUAGE_DATA.tikz_libraries {
-                    let text_edit = TextEdit::new(ctx.range, name.into());
-                    let item = factory::tikz_library(req, name, text_edit);
-                    items.push(item);
-                }
-                items
+        combinators::argument(req, iter::once(param), |ctx| async move {
+            let mut items = Vec::new();
+            for name in &LANGUAGE_DATA.tikz_libraries {
+                let text_edit = TextEdit::new(ctx.range, name.into());
+                let item = factory::tikz_library(req, name, text_edit);
+                items.push(item);
             }
+            items
         })
         .await
     }

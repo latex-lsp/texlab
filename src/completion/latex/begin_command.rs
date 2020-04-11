@@ -15,17 +15,15 @@ impl FeatureProvider for LatexBeginCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(req, |_| {
-            async move {
-                let snippet = factory::command_snippet(
-                    req,
-                    "begin",
-                    None,
-                    "begin{$1}\n\t$0\n\\end{$1}",
-                    &LatexComponentId::kernel(),
-                );
-                vec![snippet]
-            }
+        combinators::command(req, |_| async move {
+            let snippet = factory::command_snippet(
+                req,
+                "begin",
+                None,
+                "begin{$1}\n\t$0\n\\end{$1}",
+                &LatexComponentId::kernel(),
+            );
+            vec![snippet]
         })
         .await
     }

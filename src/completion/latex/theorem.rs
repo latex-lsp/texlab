@@ -16,22 +16,20 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(req, |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    if let DocumentContent::Latex(table) = &doc.content {
-                        for theorem in &table.theorem_definitions {
-                            let name = theorem.name(&table.tree).text().to_owned();
-                            let text_edit = TextEdit::new(ctx.range, name.clone());
-                            let item =
-                                factory::environment(req, name, text_edit, &LatexComponentId::User);
-                            items.push(item);
-                        }
+        combinators::environment(req, |ctx| async move {
+            let mut items = Vec::new();
+            for doc in req.related() {
+                if let DocumentContent::Latex(table) = &doc.content {
+                    for theorem in &table.theorem_definitions {
+                        let name = theorem.name(&table.tree).text().to_owned();
+                        let text_edit = TextEdit::new(ctx.range, name.clone());
+                        let item =
+                            factory::environment(req, name, text_edit, &LatexComponentId::User);
+                        items.push(item);
                     }
                 }
-                items
             }
+            items
         })
         .await
     }

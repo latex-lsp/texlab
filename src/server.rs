@@ -17,14 +17,14 @@ use crate::{
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
     symbol::{document_symbols, workspace_symbols, SymbolProvider},
-    syntax::{bibtex, latex, SyntaxNode},
+    syntax::{bibtex, latex, CharStream, SyntaxNode},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
 use futures::lock::Mutex;
 use futures_boxed::boxed;
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 
@@ -378,7 +378,17 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .await?;
         let mut edits = Vec::new();
         match &req.current().content {
-            DocumentContent::Latex(_) => {}
+            DocumentContent::Latex(_) => match latex::format(&req.current().text).await {
+                Ok(text) => {
+                    let mut stream = CharStream::new(&text);
+                    while stream.next().is_some() {}
+                    let range = Range::new(Position::new(0, 0), stream.current_position);
+                    edits.push(TextEdit::new(range, text));
+                }
+                Err(why) => {
+                    debug!("Failed to run latexindent.pl: {}", why);
+                }
+            },
             DocumentContent::Bibtex(tree) => {
                 let options = req
                     .options

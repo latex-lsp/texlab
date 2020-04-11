@@ -57,22 +57,20 @@ where
             index: cmd.index,
         });
 
-    combinators::argument(req, parameters, |ctx| {
-        async move {
-            let resolver = req.distro.0.resolver().await;
-            COMPONENT_DATABASE
-                .components
-                .iter()
-                .flat_map(|comp| comp.file_names.iter())
-                .chain(resolver.files_by_name.keys())
-                .filter(|file_name| file_name.ends_with(extension))
-                .map(|file_name| {
-                    let stem = &file_name[0..file_name.len() - 4];
-                    let text_edit = TextEdit::new(ctx.range, stem.to_owned());
-                    factory(req, stem.into(), text_edit)
-                })
-                .collect()
-        }
+    combinators::argument(req, parameters, |ctx| async move {
+        let resolver = req.distro.0.resolver().await;
+        COMPONENT_DATABASE
+            .components
+            .iter()
+            .flat_map(|comp| comp.file_names.iter())
+            .chain(resolver.files_by_name.keys())
+            .filter(|file_name| file_name.ends_with(extension))
+            .map(|file_name| {
+                let stem = &file_name[0..file_name.len() - 4];
+                let text_edit = TextEdit::new(ctx.range, stem.to_owned());
+                factory(req, stem.into(), text_edit)
+            })
+            .collect()
     })
     .await
 }

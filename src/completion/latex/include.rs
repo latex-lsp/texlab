@@ -24,17 +24,15 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
             index: cmd.index,
         });
 
-        combinators::argument_word(req, parameters, |cmd_node, index| {
-            async move {
-                log::info!("Include!");
-                if !req.current().is_file() {
-                    return Vec::new();
-                }
-
-                Self::make_items(req, cmd_node, index)
-                    .await
-                    .unwrap_or_default()
+        combinators::argument_word(req, parameters, |cmd_node, index| async move {
+            log::info!("Include!");
+            if !req.current().is_file() {
+                return Vec::new();
             }
+
+            Self::make_items(req, cmd_node, index)
+                .await
+                .unwrap_or_default()
         })
         .await
     }

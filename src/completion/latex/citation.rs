@@ -23,20 +23,18 @@ impl FeatureProvider for LatexCitationCompletionProvider {
             index: cmd.index,
         });
 
-        combinators::argument(req, parameters, |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    if let DocumentContent::Bibtex(tree) = &doc.content {
-                        for entry_node in tree.children(tree.root) {
-                            if let Some(item) = Self::make_item(req, ctx, doc, tree, entry_node) {
-                                items.push(item);
-                            }
+        combinators::argument(req, parameters, |ctx| async move {
+            let mut items = Vec::new();
+            for doc in req.related() {
+                if let DocumentContent::Bibtex(tree) = &doc.content {
+                    for entry_node in tree.children(tree.root) {
+                        if let Some(item) = Self::make_item(req, ctx, doc, tree, entry_node) {
+                            items.push(item);
                         }
                     }
                 }
-                items
             }
+            items
         })
         .await
     }

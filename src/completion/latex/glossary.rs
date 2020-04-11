@@ -28,33 +28,31 @@ impl FeatureProvider for LatexGlossaryCompletionProvider {
                 index: cmd.index,
             });
 
-        combinators::argument(req, parameters, |ctx| {
-            async move {
-                let cmd_kind = LANGUAGE_DATA
-                    .glossary_entry_reference_commands
-                    .iter()
-                    .find(|cmd| cmd.name == ctx.parameter.name)
-                    .unwrap()
-                    .kind;
+        combinators::argument(req, parameters, |ctx| async move {
+            let cmd_kind = LANGUAGE_DATA
+                .glossary_entry_reference_commands
+                .iter()
+                .find(|cmd| cmd.name == ctx.parameter.name)
+                .unwrap()
+                .kind;
 
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    if let DocumentContent::Latex(table) = &doc.content {
-                        for entry in &table.glossary_entries {
-                            match (cmd_kind, entry.kind) {
-                                (Acronym, Acronym) | (General, General) | (General, Acronym) => {
-                                    let label = entry.label(&table.tree).text().to_owned();
-                                    let text_edit = TextEdit::new(ctx.range, label.clone());
-                                    let item = factory::glossary_entry(req, label, text_edit);
-                                    items.push(item);
-                                }
-                                (Acronym, General) => {}
+            let mut items = Vec::new();
+            for doc in req.related() {
+                if let DocumentContent::Latex(table) = &doc.content {
+                    for entry in &table.glossary_entries {
+                        match (cmd_kind, entry.kind) {
+                            (Acronym, Acronym) | (General, General) | (General, Acronym) => {
+                                let label = entry.label(&table.tree).text().to_owned();
+                                let text_edit = TextEdit::new(ctx.range, label.clone());
+                                let item = factory::glossary_entry(req, label, text_edit);
+                                items.push(item);
                             }
+                            (Acronym, General) => {}
                         }
                     }
                 }
-                items
             }
+            items
         })
         .await
     }

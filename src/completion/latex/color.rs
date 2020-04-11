@@ -21,16 +21,14 @@ impl FeatureProvider for LatexColorCompletionProvider {
             index: cmd.index,
         });
 
-        combinators::argument(req, parameters, |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for name in &LANGUAGE_DATA.colors {
-                    let text_edit = TextEdit::new(ctx.range, name.into());
-                    let item = factory::color(req, name, text_edit);
-                    items.push(item);
-                }
-                items
+        combinators::argument(req, parameters, |ctx| async move {
+            let mut items = Vec::new();
+            for name in &LANGUAGE_DATA.colors {
+                let text_edit = TextEdit::new(ctx.range, name.into());
+                let item = factory::color(req, name, text_edit);
+                items.push(item);
             }
+            items
         })
         .await
     }

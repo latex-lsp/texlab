@@ -28,40 +28,38 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                 index: cmd.index,
             });
 
-        combinators::argument(req, parameters, |ctx| {
-            async move {
-                let source = Self::find_source(ctx);
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    let snapshot = Arc::clone(&req.view.snapshot);
-                    let view = DocumentView::analyze(
-                        snapshot,
-                        Arc::clone(&doc),
-                        &req.options,
-                        &req.current_dir,
-                    );
-                    let outline = Outline::analyze(&view, &req.options, &req.current_dir);
+        combinators::argument(req, parameters, |ctx| async move {
+            let source = Self::find_source(ctx);
+            let mut items = Vec::new();
+            for doc in req.related() {
+                let snapshot = Arc::clone(&req.view.snapshot);
+                let view = DocumentView::analyze(
+                    snapshot,
+                    Arc::clone(&doc),
+                    &req.options,
+                    &req.current_dir,
+                );
+                let outline = Outline::analyze(&view, &req.options, &req.current_dir);
 
-                    if let DocumentContent::Latex(table) = &doc.content {
-                        for label in table
-                            .labels
-                            .iter()
-                            .filter(|label| label.kind == LatexLabelKind::Definition)
-                            .filter(|label| Self::is_included(&table, label, source))
-                        {
-                            let outline_context = OutlineContext::parse(&view, &outline, *label);
-                            for name in label.names(&table.tree) {
-                                let text = name.text().to_owned();
-                                let text_edit = TextEdit::new(ctx.range, text.clone());
-                                let item =
-                                    factory::label(req, text, text_edit, outline_context.as_ref());
-                                items.push(item);
-                            }
+                if let DocumentContent::Latex(table) = &doc.content {
+                    for label in table
+                        .labels
+                        .iter()
+                        .filter(|label| label.kind == LatexLabelKind::Definition)
+                        .filter(|label| Self::is_included(&table, label, source))
+                    {
+                        let outline_context = OutlineContext::parse(&view, &outline, *label);
+                        for name in label.names(&table.tree) {
+                            let text = name.text().to_owned();
+                            let text_edit = TextEdit::new(ctx.range, text.clone());
+                            let item =
+                                factory::label(req, text, text_edit, outline_context.as_ref());
+                            items.push(item);
                         }
                     }
                 }
-                items
             }
+            items
         })
         .await
     }

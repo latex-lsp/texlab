@@ -27,21 +27,19 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
                             name: &name,
                             index: i,
                         }),
-                        |ctx| {
-                            async move {
-                                let mut items = Vec::new();
-                                for arg in &param.0 {
-                                    let text_edit = TextEdit::new(ctx.range, (&arg.name).into());
-                                    let item = factory::argument(
-                                        req,
-                                        &arg.name,
-                                        text_edit,
-                                        arg.image.as_ref().map(AsRef::as_ref),
-                                    );
-                                    items.push(item);
-                                }
-                                items
+                        |ctx| async move {
+                            let mut items = Vec::new();
+                            for arg in &param.0 {
+                                let text_edit = TextEdit::new(ctx.range, (&arg.name).into());
+                                let item = factory::argument(
+                                    req,
+                                    &arg.name,
+                                    text_edit,
+                                    arg.image.as_ref().map(AsRef::as_ref),
+                                );
+                                items.push(item);
                             }
+                            items
                         },
                     )
                     .await;
