@@ -126,7 +126,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn is_direct_child(&self, env: &Environment, pos: Position) -> bool {
+    pub fn is_direct_child(&self, env: Environment, pos: Position) -> bool {
         env.range(&self.tree).contains(pos)
             && !self
                 .environments
@@ -136,7 +136,7 @@ impl SymbolTable {
                 .any(|e| e.range(&self.tree).contains(pos))
     }
 
-    pub fn is_enum_item(&self, enumeration: &Environment, item: Item) -> bool {
+    pub fn is_enum_item(&self, enumeration: Environment, item: Item) -> bool {
         let item_range = self.tree.range(item.parent);
         enumeration.range(&self.tree).contains(item_range.start)
             && !self
@@ -160,7 +160,7 @@ impl SymbolTable {
             .find(|label| range.contains(self.tree.range(label.parent).start))
     }
 
-    pub fn find_label_by_environment(&self, env: &Environment) -> Option<&Label> {
+    pub fn find_label_by_environment(&self, env: Environment) -> Option<&Label> {
         self.labels
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)

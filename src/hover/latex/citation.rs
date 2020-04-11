@@ -43,7 +43,7 @@ impl LatexCitationHoverProvider {
         let key = Self::get_key(req)?;
         for tree in req
             .related()
-            .into_iter()
+            .iter()
             .filter_map(|doc| doc.content.as_bibtex())
         {
             for entry in tree

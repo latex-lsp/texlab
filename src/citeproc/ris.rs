@@ -347,7 +347,7 @@ impl Into<Reference> for RisReference {
 
         if let Some(place) = self.place {
             ordinary.insert(Variable::EventPlace, place.clone());
-            ordinary.insert(Variable::PublisherPlace, place.clone());
+            ordinary.insert(Variable::PublisherPlace, place);
         }
 
         if let Some(abstrct) = self.abstrct {

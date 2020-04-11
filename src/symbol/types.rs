@@ -83,7 +83,7 @@ impl LatexSymbol {
             deprecated: Some(self.deprecated),
             kind: self.kind.into(),
             container_name: None,
-            location: Location::new(uri.clone().into(), self.full_range),
+            location: Location::new(uri.into(), self.full_range),
         }
     }
 }

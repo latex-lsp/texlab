@@ -13,14 +13,14 @@ pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymb
         .environments
         .iter()
         .filter(|env| env.left.is_enum(&table.tree))
-        .map(|enumeration| make_symbol(view, table, enumeration))
+        .map(|enumeration| make_symbol(view, table, *enumeration))
         .collect()
 }
 
 fn make_symbol(
     view: &DocumentView,
     table: &latex::SymbolTable,
-    enumeration: &latex::Environment,
+    enumeration: latex::Environment,
 ) -> LatexSymbol {
     let name = titlecase(enumeration.left.name(&table.tree).unwrap().text());
 

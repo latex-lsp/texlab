@@ -12,14 +12,14 @@ pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymb
     table
         .environments
         .iter()
-        .filter_map(|env| make_symbol(view, table, env))
+        .filter_map(|env| make_symbol(view, table, *env))
         .collect()
 }
 
 fn make_symbol(
     view: &DocumentView,
     main_table: &latex::SymbolTable,
-    env: &latex::Environment,
+    env: latex::Environment,
 ) -> Option<LatexSymbol> {
     let env_name = env.left.name(&main_table.tree).map(latex::Token::text)?;
 

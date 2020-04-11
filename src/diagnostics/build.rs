@@ -45,12 +45,11 @@ impl BuildDiagnosticsProvider {
         let log_uris = snapshot
             .resolve_aux_targets(tex_uri, options, current_dir, "log")
             .unwrap_or_default();
-        for log_path in log_uris
+        if let Some(log_path) = log_uris
             .into_iter()
             .filter(|uri| uri.scheme() == "file")
             .filter_map(|uri| uri.to_file_path().ok())
-            .filter(|path| path.exists())
-            .next()
+            .find(|path| path.exists())
         {
             let modified = fs::metadata(&log_path).await?.modified()?;
             let mut log_files = self.log_files.lock().await;

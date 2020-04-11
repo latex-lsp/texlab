@@ -18,46 +18,44 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(req, |current_cmd_node| {
-            async move {
-                let current_cmd = req
-                    .current()
-                    .content
-                    .as_latex()
-                    .unwrap()
-                    .tree
-                    .as_command(current_cmd_node)
-                    .unwrap();
+        combinators::command(req, |current_cmd_node| async move {
+            let current_cmd = req
+                .current()
+                .content
+                .as_latex()
+                .unwrap()
+                .tree
+                .as_command(current_cmd_node)
+                .unwrap();
 
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    if let DocumentContent::Latex(table) = &doc.content {
-                        table
-                            .commands
-                            .iter()
-                            .filter(|cmd_node| **cmd_node != current_cmd_node)
-                            .map(|cmd_node| {
-                                let cmd = table.tree.as_command(*cmd_node).unwrap();
-                                cmd.name.text()[1..].to_owned()
-                            })
-                            .unique()
-                            .map(|cmd| {
-                                let text_edit =
-                                    TextEdit::new(current_cmd.short_name_range(), cmd.clone());
-                                factory::command(
-                                    req,
-                                    cmd,
-                                    None,
-                                    None,
-                                    text_edit,
-                                    &LatexComponentId::User,
-                                )
-                            })
-                            .for_each(|item| items.push(item));
-                    }
+            let mut items = Vec::new();
+            for doc in req.related() {
+                if let DocumentContent::Latex(table) = &doc.content {
+                    table
+                        .commands
+                        .iter()
+                        .filter(|cmd_node| **cmd_node != current_cmd_node)
+                        .map(|cmd_node| {
+                            let cmd = table.tree.as_command(*cmd_node).unwrap();
+                            cmd.name.text()[1..].to_owned()
+                        })
+                        .unique()
+                        .map(|cmd| {
+                            let text_edit =
+                                TextEdit::new(current_cmd.short_name_range(), cmd.clone());
+                            factory::command(
+                                req,
+                                cmd,
+                                None,
+                                None,
+                                text_edit,
+                                &LatexComponentId::User,
+                            )
+                        })
+                        .for_each(|item| items.push(item));
                 }
-                items
             }
+            items
         })
         .await
     }
@@ -72,31 +70,28 @@ impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
 
     #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(req, |ctx| {
-            async move {
-                let mut items = Vec::new();
-                for doc in req.related() {
-                    if let DocumentContent::Latex(table) = &doc.content {
-                        for env in &table.environments {
-                            if (env.left.parent == ctx.node || env.right.parent == ctx.node)
-                                && doc.uri == req.current().uri
-                            {
-                                continue;
-                            }
+        combinators::environment(req, |ctx| async move {
+            let mut items = Vec::new();
+            for doc in req.related() {
+                if let DocumentContent::Latex(table) = &doc.content {
+                    for env in &table.environments {
+                        if (env.left.parent == ctx.node || env.right.parent == ctx.node)
+                            && doc.uri == req.current().uri
+                        {
+                            continue;
+                        }
 
-                            if let Some(item) = Self::make_item(req, &table, &env.left, ctx.range) {
-                                items.push(item);
-                            }
+                        if let Some(item) = Self::make_item(req, &table, env.left, ctx.range) {
+                            items.push(item);
+                        }
 
-                            if let Some(item) = Self::make_item(req, &table, &env.right, ctx.range)
-                            {
-                                items.push(item);
-                            }
+                        if let Some(item) = Self::make_item(req, &table, env.right, ctx.range) {
+                            items.push(item);
                         }
                     }
                 }
-                items
             }
+            items
         })
         .await
     }
@@ -106,7 +101,7 @@ impl LatexUserEnvironmentCompletionProvider {
     fn make_item(
         req: &FeatureRequest<CompletionParams>,
         table: &latex::SymbolTable,
-        delim: &latex::EnvironmentDelimiter,
+        delim: latex::EnvironmentDelimiter,
         name_range: Range,
     ) -> Option<CompletionItem> {
         delim.name(&table.tree).map(|name| {

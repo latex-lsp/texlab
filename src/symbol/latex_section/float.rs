@@ -22,7 +22,7 @@ fn make_symbol(
     let env = table
         .environments
         .iter()
-        .find(|env| table.is_direct_child(env, table.tree.range(caption.parent).start))?;
+        .find(|env| table.is_direct_child(**env, table.tree.range(caption.parent).start))?;
 
     let text = table.tree.print_group_content(
         caption.parent,
@@ -36,7 +36,7 @@ fn make_symbol(
         .map(latex::Token::text)
         .and_then(OutlineCaptionKind::parse)?;
 
-    let label = table.find_label_by_environment(env);
+    let label = table.find_label_by_environment(*env);
     let number = label.and_then(|label| OutlineContext::find_number(view, table, *label));
 
     let name = match &number {

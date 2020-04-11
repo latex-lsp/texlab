@@ -191,7 +191,7 @@ impl TestBedBuilder {
             handler: MessageHandler {
                 client: test_client,
                 server: test_server,
-                output: tx1.clone(),
+                output: tx1,
             },
         }
     }

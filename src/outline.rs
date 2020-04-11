@@ -253,7 +253,7 @@ impl OutlineContext {
         let caption = table
             .captions
             .iter()
-            .find(|cap| table.is_direct_child(caption_env, table.tree.range(cap.parent).start))?;
+            .find(|cap| table.is_direct_child(*caption_env, table.tree.range(cap.parent).start))?;
 
         let caption_text = table.tree.print_group_content(
             caption.parent,
@@ -360,7 +360,7 @@ impl OutlineContext {
         let mut item_nodes: Vec<_> = table
             .items
             .iter()
-            .filter(|item| table.is_enum_item(enumeration, **item))
+            .filter(|item| table.is_enum_item(*enumeration, **item))
             .map(|item| LatexItemNode {
                 item: *item,
                 range: Range::default(),
