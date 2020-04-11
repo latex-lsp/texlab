@@ -71,6 +71,10 @@ pub trait TestLspClient {
     #[boxed]
     async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>>;
 
+    #[jsonrpc_method("textDocument/hover", kind = "request")]
+    #[boxed]
+    async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>>;
+
     #[jsonrpc_method("workspace/symbol", kind = "request")]
     #[boxed]
     async fn workspace_symbol(
@@ -82,4 +86,8 @@ pub trait TestLspClient {
     #[boxed]
     async fn document_symbol(&self, params: DocumentSymbolParams)
         -> Result<DocumentSymbolResponse>;
+
+    #[jsonrpc_method("$/detectRoot", kind = "request")]
+    #[boxed]
+    async fn detect_root(&self, params: TextDocumentIdentifier) -> Result<()>;
 }

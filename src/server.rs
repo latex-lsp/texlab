@@ -487,6 +487,13 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         .ok_or_else(|| "Unable to execute forward search".into())
     }
 
+    #[jsonrpc_method("$/detectRoot", kind = "request")]
+    pub async fn detect_root(&self, params: TextDocumentIdentifier) -> Result<()> {
+        let options = self.config_manager().get().await;
+        let _ = self.workspace.detect_root(&params.as_uri(), &options).await;
+        Ok(())
+    }
+
     async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
         let options = self.pull_configuration().await;
         let snapshot = self.workspace.get().await;

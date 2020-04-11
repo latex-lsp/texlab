@@ -462,6 +462,26 @@ impl TestBed {
         }
     }
 
+    pub async fn hover(
+        &self,
+        relative_path: &str,
+        line: u64,
+        character: u64,
+    ) -> Option<Option<Hover>> {
+        let params = TextDocumentPositionParams {
+            text_document: self.identifier(relative_path),
+            position: Position::new(line, character),
+        };
+        self.client.hover(params).await.ok()
+    }
+
+    pub async fn detect_root(&self, relative_path: &str) {
+        self.client
+            .detect_root(self.identifier(relative_path))
+            .await
+            .unwrap();
+    }
+
     pub async fn shutdown(&self) {
         self.client.shutdown(()).await.unwrap();
         self.client.exit(()).await;
