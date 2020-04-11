@@ -2,9 +2,9 @@ mod benchmarks;
 
 use criterion::Criterion;
 
-#[tokio::main]
-async fn main() {
-    benchmarks::open_latex::benches().await;
-    benchmarks::open_bibtex::benches().await;
+fn main() {
+    benchmarks::completion::benches();
+    benchmarks::open_bibtex::benches();
+    benchmarks::open_latex::benches();
     Criterion::default().configure_from_args().final_summary();
 }
