@@ -17,6 +17,7 @@ use crate::{
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
     symbol::{document_symbols, workspace_symbols, SymbolProvider},
+    syntax::{bibtex, latex, SyntaxNode},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
@@ -371,8 +372,41 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("textDocument/formatting", kind = "request")]
-    pub async fn formatting(&self, _params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        Ok(Vec::new())
+    pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
+        let req = self
+            .make_feature_request(params.text_document.as_uri(), params)
+            .await?;
+        let mut edits = Vec::new();
+        match &req.current().content {
+            DocumentContent::Latex(_) => {}
+            DocumentContent::Bibtex(tree) => {
+                let options = req
+                    .options
+                    .bibtex
+                    .clone()
+                    .and_then(|opts| opts.formatting)
+                    .unwrap_or_default();
+
+                let params = bibtex::FormattingParams {
+                    tab_size: req.params.options.tab_size as usize,
+                    insert_spaces: req.params.options.insert_spaces,
+                    options: &options,
+                };
+
+                for node in tree.children(tree.root) {
+                    let should_format = match &tree.graph[node] {
+                        bibtex::Node::Preamble(_) | bibtex::Node::String(_) => true,
+                        bibtex::Node::Entry(entry) => !entry.is_comment(),
+                        _ => false,
+                    };
+                    if should_format {
+                        let text = bibtex::format(&tree, node, params);
+                        edits.push(TextEdit::new(tree.graph[node].range(), text));
+                    }
+                }
+            }
+        }
+        Ok(edits)
     }
 
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
