@@ -1,10 +1,24 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum BibtexFormatter {
+    Texlab,
+    Latexindent,
+}
+
+impl Default for BibtexFormatter {
+    fn default() -> Self {
+        Self::Texlab
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BibtexFormattingOptions {
     pub line_length: Option<i32>,
+    pub formatter: Option<BibtexFormatter>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

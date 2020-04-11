@@ -1,10 +1,9 @@
 mod analysis;
 mod ast;
-mod formatter;
 mod lexer;
 mod parser;
 
-pub use self::{analysis::*, ast::*, formatter::*};
+pub use self::{analysis::*, ast::*};
 
 use self::{lexer::Lexer, parser::Parser};
 use crate::{

@@ -207,6 +207,7 @@ mod tests {
         let tree = bibtex::open(source);
         let options = BibtexFormattingOptions {
             line_length: Some(line_length),
+            formatter: None,
         };
 
         let mut children = tree.children(tree.root);

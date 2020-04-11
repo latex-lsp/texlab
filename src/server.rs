@@ -17,7 +17,7 @@ use crate::{
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
     symbol::{document_symbols, workspace_symbols, SymbolProvider},
-    syntax::{bibtex, latex, CharStream, SyntaxNode},
+    syntax::{bibtex, latexindent, CharStream, SyntaxNode},
     tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
@@ -378,17 +378,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .await?;
         let mut edits = Vec::new();
         match &req.current().content {
-            DocumentContent::Latex(_) => match latex::format(&req.current().text).await {
-                Ok(text) => {
-                    let mut stream = CharStream::new(&text);
-                    while stream.next().is_some() {}
-                    let range = Range::new(Position::new(0, 0), stream.current_position);
-                    edits.push(TextEdit::new(range, text));
-                }
-                Err(why) => {
-                    debug!("Failed to run latexindent.pl: {}", why);
-                }
-            },
+            DocumentContent::Latex(_) => {
+                Self::run_latexindent(&req.current().text, "tex", &mut edits).await;
+            }
             DocumentContent::Bibtex(tree) => {
                 let options = req
                     .options
@@ -397,26 +389,47 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .and_then(|opts| opts.formatting)
                     .unwrap_or_default();
 
-                let params = bibtex::FormattingParams {
-                    tab_size: req.params.options.tab_size as usize,
-                    insert_spaces: req.params.options.insert_spaces,
-                    options: &options,
-                };
+                match options.formatter.unwrap_or_default() {
+                    BibtexFormatter::Texlab => {
+                        let params = bibtex::FormattingParams {
+                            tab_size: req.params.options.tab_size as usize,
+                            insert_spaces: req.params.options.insert_spaces,
+                            options: &options,
+                        };
 
-                for node in tree.children(tree.root) {
-                    let should_format = match &tree.graph[node] {
-                        bibtex::Node::Preamble(_) | bibtex::Node::String(_) => true,
-                        bibtex::Node::Entry(entry) => !entry.is_comment(),
-                        _ => false,
-                    };
-                    if should_format {
-                        let text = bibtex::format(&tree, node, params);
-                        edits.push(TextEdit::new(tree.graph[node].range(), text));
+                        for node in tree.children(tree.root) {
+                            let should_format = match &tree.graph[node] {
+                                bibtex::Node::Preamble(_) | bibtex::Node::String(_) => true,
+                                bibtex::Node::Entry(entry) => !entry.is_comment(),
+                                _ => false,
+                            };
+                            if should_format {
+                                let text = bibtex::format(&tree, node, params);
+                                edits.push(TextEdit::new(tree.graph[node].range(), text));
+                            }
+                        }
+                    }
+                    BibtexFormatter::Latexindent => {
+                        Self::run_latexindent(&req.current().text, "bib", &mut edits).await;
                     }
                 }
             }
         }
         Ok(edits)
+    }
+
+    async fn run_latexindent(old_text: &str, extension: &str, edits: &mut Vec<TextEdit>) {
+        match latexindent::format(old_text, extension).await {
+            Ok(new_text) => {
+                let mut stream = CharStream::new(&old_text);
+                while stream.next().is_some() {}
+                let range = Range::new(Position::new(0, 0), stream.current_position);
+                edits.push(TextEdit::new(range, new_text));
+            }
+            Err(why) => {
+                debug!("Failed to run latexindent.pl: {}", why);
+            }
+        }
     }
 
     #[jsonrpc_method("textDocument/prepareRename", kind = "request")]

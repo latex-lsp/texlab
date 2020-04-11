@@ -56,7 +56,7 @@ impl BibtexStringReferenceHoverProvider {
             return None;
         }
 
-        let options = BibtexFormattingOptions { line_length: None };
+        let options = BibtexFormattingOptions { line_length: None, formatter: None };
         let text = bibtex::format(
             tree,
             tree.children(string_node).next()?,

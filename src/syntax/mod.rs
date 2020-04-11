@@ -1,6 +1,7 @@
 pub mod bibtex;
 mod lang_data;
 pub mod latex;
+pub mod latexindent;
 mod lsp_kind;
 mod text;
 

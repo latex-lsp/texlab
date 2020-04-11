@@ -50,7 +50,10 @@ pub fn render_citation(tree: &bibtex::Tree, key: &str) -> Option<MarkupContent> 
 }
 
 fn convert_to_ris(tree: &bibtex::Tree, key: &str) -> Option<RisReference> {
-    let options = BibtexFormattingOptions { line_length: None };
+    let options = BibtexFormattingOptions {
+        line_length: None,
+        formatter: None,
+    };
     let params = bibtex::FormattingParams {
         insert_spaces: true,
         tab_size: 4,
