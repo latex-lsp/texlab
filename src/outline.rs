@@ -279,16 +279,16 @@ impl OutlineContext {
 
     fn find_theorem(
         view: &DocumentView,
-        table: &latex::SymbolTable,
+        main_table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = table.tree.range(label.parent);
-        let env = table
+        let label_range = main_table.tree.range(label.parent);
+        let env = main_table
             .environments
             .iter()
-            .find(|env| env.range(&table.tree).contains(label_range.start))?;
+            .find(|env| env.range(&main_table.tree).contains(label_range.start))?;
 
-        let env_name = env.left.name(&table.tree).map(latex::Token::text)?;
+        let env_name = env.left.name(&main_table.tree).map(latex::Token::text)?;
 
         for doc in &view.related {
             if let DocumentContent::Latex(table) = &doc.content {
@@ -303,15 +303,15 @@ impl OutlineContext {
                             )
                             .unwrap_or_else(|| titlecase(&env_name));
 
-                        let description = table.tree.print_group_content(
+                        let description = main_table.tree.print_group_content(
                             env.left.parent,
                             latex::GroupKind::Options,
                             0,
                         );
 
                         return Some(Self {
-                            range: env.range(&table.tree),
-                            number: Self::find_number(view, table, label),
+                            range: env.range(&main_table.tree),
+                            number: Self::find_number(view, main_table, label),
                             item: Theorem { kind, description },
                         });
                     }
