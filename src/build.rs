@@ -140,9 +140,11 @@ where
         .or_else(|| path.parent())
         .unwrap();
 
-    let mut args = Vec::new();
-    args.append(&mut build_options.args());
-    args.push(path.to_string_lossy().into_owned());
+    let args: Vec<_> = build_options
+        .args()
+        .into_iter()
+        .map(|arg| replace_placeholder(arg, path))
+        .collect();
 
     let mut process = Command::new(build_options.executable())
         .args(args)
@@ -169,4 +171,12 @@ where
     });
 
     Ok(process.await?.success())
+}
+
+fn replace_placeholder(arg: String, file: &Path) -> String {
+    if arg.starts_with('"') || arg.ends_with('"') {
+        arg
+    } else {
+        arg.replace("%f", &file.to_string_lossy())
+    }
 }
