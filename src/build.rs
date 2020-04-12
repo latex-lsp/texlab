@@ -130,7 +130,7 @@ where
 
 async fn build<C>(path: &Path, options: &LatexOptions, client: Arc<C>) -> io::Result<bool>
 where
-    C: LspClient + Send + Sync,
+    C: LspClient + Send + Sync + 'static,
 {
     let build_options = options.build.as_ref().cloned().unwrap_or_default();
     let build_dir = options
@@ -157,14 +157,16 @@ where
     let stderr = BufReader::new(process.stderr.take().unwrap()).lines();
     let mut output = stream::select(stdout, stderr);
 
-    while let Some(Ok(line)) = output.next().await {
-        let params = LogMessageParams {
-            typ: MessageType::Log,
-            message: line,
-        };
+    tokio::spawn(async move {
+        while let Some(Ok(line)) = output.next().await {
+            let params = LogMessageParams {
+                typ: MessageType::Log,
+                message: line,
+            };
 
-        client.log_message(params).await;
-    }
+            client.log_message(params).await;
+        }
+    });
 
     Ok(process.await?.success())
 }
