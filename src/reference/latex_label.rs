@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{Location, RangeExt, ReferenceParams},
-    syntax::{latex, LatexLabelKind, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{Location, RangeExt, ReferenceParams};
+use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelReferenceProvider;
@@ -60,8 +60,9 @@ impl LatexLabelReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn definition() {

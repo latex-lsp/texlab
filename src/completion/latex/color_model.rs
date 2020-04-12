@@ -2,10 +2,10 @@ use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::LANGUAGE_DATA,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::LANGUAGE_DATA;
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
@@ -42,10 +42,8 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

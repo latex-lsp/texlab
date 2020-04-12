@@ -2,14 +2,14 @@ use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::{
-        LatexGlossaryEntryKind::{Acronym, General},
-        LANGUAGE_DATA,
-    },
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::{
+    LatexGlossaryEntryKind::{Acronym, General},
+    LANGUAGE_DATA,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexGlossaryCompletionProvider;
@@ -61,11 +61,9 @@ impl FeatureProvider for LatexGlossaryCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

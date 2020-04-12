@@ -1,5 +1,5 @@
 use super::lang_data::BibtexEntryTypeCategory;
-use crate::protocol::{CompletionItemKind, SymbolKind};
+use texlab_protocol::{CompletionItemKind, SymbolKind};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Structure {

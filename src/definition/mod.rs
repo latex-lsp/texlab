@@ -7,11 +7,9 @@ use self::{
     bibtex_string::BibtexStringDefinitionProvider, latex_citation::LatexCitationDefinitionProvider,
     latex_cmd::LatexCommandDefinitionProvider, latex_label::LatexLabelDefinitionProvider,
 };
-use crate::{
-    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
-    protocol::{LocationLink, TextDocumentPositionParams},
-};
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 
 pub struct DefinitionProvider {
     provider: ConcatProvider<TextDocumentPositionParams, LocationLink>,

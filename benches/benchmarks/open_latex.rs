@@ -1,11 +1,9 @@
 use super::test_data::TEST_LATEX;
 use criterion::Criterion;
 use std::env;
-use texlab::{
-    protocol::{Options, Uri},
-    syntax::latex,
-    tex::Resolver,
-};
+use texlab_protocol::{Options, Uri};
+use texlab_syntax::latex;
+use texlab_tex::Resolver;
 
 fn criterion_benchmark(criterion: &mut Criterion) {
     let uri = Uri::parse("file:///home/user/main.tex").unwrap();

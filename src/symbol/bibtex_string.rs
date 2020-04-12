@@ -1,11 +1,11 @@
 use super::types::{LatexSymbol, LatexSymbolKind};
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::DocumentSymbolParams,
-    syntax::SyntaxNode,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::DocumentSymbolParams;
+use texlab_syntax::SyntaxNode;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringSymbolProvider;
@@ -41,10 +41,8 @@ impl FeatureProvider for BibtexStringSymbolProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

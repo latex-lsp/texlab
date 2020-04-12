@@ -1,11 +1,8 @@
-use crate::{
-    feature::FeatureRequest,
-    protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt},
-    syntax::{latex, SyntaxNode, LANGUAGE_DATA},
-    workspace::DocumentContent,
-};
+use crate::{feature::FeatureRequest, workspace::DocumentContent};
 use petgraph::graph::NodeIndex;
 use std::future::Future;
+use texlab_protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt};
+use texlab_syntax::{latex, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Parameter<'a> {

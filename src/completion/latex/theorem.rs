@@ -2,10 +2,10 @@ use super::combinators;
 use crate::{
     completion::factory::{self, LatexComponentId},
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexTheoremEnvironmentCompletionProvider;
@@ -38,11 +38,9 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

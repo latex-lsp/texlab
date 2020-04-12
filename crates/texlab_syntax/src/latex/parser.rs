@@ -1,10 +1,8 @@
 use super::ast::*;
-use crate::{
-    protocol::{Range, RangeExt},
-    syntax::text::SyntaxNode,
-};
+use crate::text::SyntaxNode;
 use petgraph::graph::{Graph, NodeIndex};
 use std::iter::Peekable;
+use texlab_protocol::{Range, RangeExt};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Scope {

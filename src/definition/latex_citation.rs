@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{LocationLink, RangeExt, TextDocumentPositionParams},
-    syntax::{latex, SyntaxNode},
     workspace::{Document, DocumentContent},
 };
 use futures_boxed::boxed;
+use texlab_protocol::{LocationLink, RangeExt, TextDocumentPositionParams};
+use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LatexCitationDefinitionProvider;
@@ -60,8 +60,9 @@ impl LatexCitationDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn empty_latex_document() {

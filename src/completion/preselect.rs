@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, RangeExt},
-    syntax::latex,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, RangeExt};
+use texlab_syntax::latex;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PreselectCompletionProvider<F>(pub F);

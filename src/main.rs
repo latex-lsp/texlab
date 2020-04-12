@@ -1,13 +1,11 @@
 use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg};
 use futures::{channel::mpsc, prelude::*};
+use jsonrpc::MessageHandler;
 use std::{env, error, sync::Arc};
 use stderrlog::{ColorChoice, Timestamp};
-use texlab::{
-    jsonrpc::MessageHandler,
-    protocol::{LatexLspClient, LspCodec},
-    server::LatexLspServer,
-    tex::DynamicDistribution,
-};
+use texlab::server::LatexLspServer;
+use texlab_protocol::{LatexLspClient, LspCodec};
+use texlab_tex::DynamicDistribution;
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]
@@ -30,6 +28,11 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
 
     stderrlog::new()
         .module(module_path!())
+        .module("jsonrpc")
+        .module("texlab-components")
+        .module("texlab-protocol")
+        .module("texlab-syntax")
+        .module("texlab-tex")
         .verbosity(matches.occurrences_of("verbosity") as usize)
         .quiet(matches.is_present("quiet"))
         .timestamp(Timestamp::Off)

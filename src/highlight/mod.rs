@@ -1,11 +1,9 @@
 mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
-use crate::{
-    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
-    protocol::{DocumentHighlight, TextDocumentPositionParams},
-};
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
 
 pub struct HighlightProvider {
     provider: ConcatProvider<TextDocumentPositionParams, DocumentHighlight>,

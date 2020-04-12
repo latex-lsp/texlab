@@ -1,13 +1,13 @@
 use crate::{
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     outline::{Outline, OutlineContext, OutlineContextItem},
-    protocol::{LocationLink, Options, RangeExt, TextDocumentPositionParams},
     symbol::build_section_tree,
-    syntax::{latex, LatexLabelKind, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use std::{path::Path, sync::Arc};
+use texlab_protocol::{LocationLink, Options, RangeExt, TextDocumentPositionParams};
+use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelDefinitionProvider;
@@ -97,8 +97,9 @@ impl LatexLabelDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn empty_latex_document() {

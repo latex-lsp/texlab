@@ -2,10 +2,10 @@ use super::{label_name, selection_range};
 use crate::{
     feature::DocumentView,
     outline::OutlineContext,
-    protocol::Range,
     symbol::types::{LatexSymbol, LatexSymbolKind},
-    syntax::latex,
 };
+use texlab_protocol::Range;
+use texlab_syntax::latex;
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {
     let mut symbols = Vec::new();

@@ -2,9 +2,9 @@ use super::combinators;
 use crate::{
     completion::factory::{self, LatexComponentId},
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams},
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexBeginCommandCompletionProvider;

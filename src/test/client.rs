@@ -1,6 +1,7 @@
-use crate::{jsonrpc::client::Result, protocol::*};
 use futures_boxed::boxed;
+use jsonrpc::client::Result;
 use jsonrpc_derive::{jsonrpc_client, jsonrpc_method};
+use texlab_protocol::*;
 
 #[jsonrpc_client(TestLatexLspClient)]
 pub trait TestLspClient {

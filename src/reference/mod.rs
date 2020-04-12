@@ -6,11 +6,9 @@ use self::{
     bibtex_entry::BibtexEntryReferenceProvider, bibtex_string::BibtexStringReferenceProvider,
     latex_label::LatexLabelReferenceProvider,
 };
-use crate::{
-    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
-    protocol::{Location, ReferenceParams},
-};
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{Location, ReferenceParams};
 
 pub struct ReferenceProvider {
     provider: ConcatProvider<ReferenceParams, Location>,

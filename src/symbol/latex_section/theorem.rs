@@ -3,9 +3,9 @@ use crate::{
     feature::DocumentView,
     outline::OutlineContext,
     symbol::types::{LatexSymbol, LatexSymbolKind},
-    syntax::latex,
     workspace::DocumentContent,
 };
+use texlab_syntax::latex;
 use titlecase::titlecase;
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {

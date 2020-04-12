@@ -1,14 +1,14 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{Location, Position, RangeExt, ReferenceParams, Url},
-    syntax::{
-        bibtex::{self, Visitor},
-        SyntaxNode,
-    },
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
+use texlab_protocol::{Location, Position, RangeExt, ReferenceParams, Url};
+use texlab_syntax::{
+    bibtex::{self, Visitor},
+    SyntaxNode,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringReferenceProvider;
@@ -106,8 +106,9 @@ impl<'a> bibtex::Visitor<'a> for BibtexStringReferenceVisitor<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn definition() {

@@ -6,11 +6,9 @@ mod parser;
 pub use self::{analysis::*, ast::*};
 
 use self::{lexer::Lexer, parser::Parser};
-use crate::{
-    protocol::{Options, Uri},
-    tex::Resolver,
-};
 use std::path::Path;
+use texlab_protocol::{Options, Uri};
+use texlab_tex::Resolver;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct OpenParams<'a> {
@@ -47,14 +45,12 @@ pub fn open(params: OpenParams) -> SymbolTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        protocol::{Options, Range, RangeExt, Uri},
-        syntax::text::SyntaxNode,
-        tex::Resolver,
-    };
+    use crate::text::SyntaxNode;
     use indoc::indoc;
     use petgraph::graph::NodeIndex;
     use std::env;
+    use texlab_protocol::{Options, Range, RangeExt, Uri};
+    use texlab_tex::Resolver;
 
     fn open_simple(text: &str) -> SymbolTable {
         open(OpenParams {

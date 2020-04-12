@@ -1,17 +1,16 @@
 use crate::{
     feature::FeatureRequest,
     outline::{OutlineContext, OutlineContextItem},
-    protocol::*,
-    syntax::{
-        bibtex, BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, Structure,
-        LANGUAGE_DATA,
-    },
 };
 use once_cell::sync::Lazy;
 use petgraph::graph::NodeIndex;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use texlab_protocol::*;
+use texlab_syntax::{
+    bibtex, BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, Structure, LANGUAGE_DATA,
+};
 
 static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 

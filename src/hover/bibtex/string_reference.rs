@@ -1,13 +1,11 @@
-use crate::{
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{
-        BibtexFormattingOptions, Hover, HoverContents, MarkupContent, MarkupKind, Position,
-        TextDocumentPositionParams,
-    },
-    syntax::{bibtex, SyntaxNode},
-};
+use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
+use texlab_protocol::{
+    BibtexFormattingOptions, Hover, HoverContents, MarkupContent, MarkupKind, Position,
+    TextDocumentPositionParams,
+};
+use texlab_syntax::{bibtex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringReferenceHoverProvider;
@@ -56,7 +54,10 @@ impl BibtexStringReferenceHoverProvider {
             return None;
         }
 
-        let options = BibtexFormattingOptions { line_length: None, formatter: None };
+        let options = BibtexFormattingOptions {
+            line_length: None,
+            formatter: None,
+        };
         let text = bibtex::format(
             tree,
             tree.children(string_node).next()?,
@@ -79,11 +80,9 @@ impl BibtexStringReferenceHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

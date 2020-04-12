@@ -8,18 +8,19 @@ pub use self::{
     server::TestLatexLspServer,
 };
 
-use crate::{
-    jsonrpc::MessageHandler, protocol::*, server::LatexLspServer, tex::DynamicDistribution,
-};
+use crate::server::LatexLspServer;
 use futures::{
     channel::mpsc,
     future::{join, AbortHandle, Abortable},
     lock::Mutex,
     prelude::*,
 };
+use jsonrpc::MessageHandler;
 use once_cell::sync::Lazy;
 use std::{path::PathBuf, sync::Arc};
 use tempfile::{tempdir, TempDir};
+use texlab_protocol::*;
+use texlab_tex::DynamicDistribution;
 use tokio::fs;
 
 struct GlobalDistribution {

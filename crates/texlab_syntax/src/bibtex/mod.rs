@@ -16,11 +16,9 @@ pub fn open(text: &str) -> Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        protocol::{Range, RangeExt},
-        syntax::text::SyntaxNode,
-    };
+    use crate::text::SyntaxNode;
     use petgraph::graph::NodeIndex;
+    use texlab_protocol::{Range, RangeExt};
 
     #[derive(Debug, Default)]
     struct TreeTraversal {

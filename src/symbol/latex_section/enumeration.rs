@@ -2,10 +2,10 @@ use super::{label_name, selection_range};
 use crate::{
     feature::DocumentView,
     outline::OutlineContext,
-    protocol::{Range, RangeExt},
     symbol::types::{LatexSymbol, LatexSymbolKind},
-    syntax::latex,
 };
+use texlab_protocol::{Range, RangeExt};
+use texlab_syntax::latex;
 use titlecase::titlecase;
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {

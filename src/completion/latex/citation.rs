@@ -2,12 +2,12 @@ use super::combinators::{self, ArgumentContext, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::{bibtex, LANGUAGE_DATA},
     workspace::{Document, DocumentContent},
 };
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::{bibtex, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCitationCompletionProvider;
@@ -63,11 +63,9 @@ impl LatexCitationCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

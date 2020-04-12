@@ -3,7 +3,7 @@
 // Apache License 2.0
 mod parser {
     #![allow(warnings)]
-    include!(concat!(env!("OUT_DIR"), "/citeproc/name/parser.rs"));
+    include!(concat!(env!("OUT_DIR"), "/name/parser.rs"));
 }
 
 use self::parser::NamesParser;

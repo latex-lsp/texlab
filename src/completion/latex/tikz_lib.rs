@@ -2,11 +2,11 @@ use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::LANGUAGE_DATA,
 };
 use futures_boxed::boxed;
 use std::iter;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::LANGUAGE_DATA;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexPgfLibraryCompletionProvider;

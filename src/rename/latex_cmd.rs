@@ -1,13 +1,13 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{
-        Position, Range, RenameParams, TextDocumentPositionParams, TextEdit, WorkspaceEdit,
-    },
-    syntax::{latex, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use std::collections::HashMap;
+use texlab_protocol::{
+    Position, Range, RenameParams, TextDocumentPositionParams, TextEdit, WorkspaceEdit,
+};
+use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCommandPrepareRenameProvider;
@@ -66,8 +66,9 @@ fn find_command(content: &DocumentContent, pos: Position) -> Option<&latex::Comm
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::RangeExt};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::RangeExt;
 
     #[tokio::test]
     async fn command() {

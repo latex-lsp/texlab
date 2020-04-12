@@ -1,12 +1,10 @@
-use crate::{
-    jsonrpc::server::{Middleware, Result},
-    protocol::*,
-};
 use aovec::Aovec;
 use chashmap::CHashMap;
 use futures::lock::Mutex;
 use futures_boxed::boxed;
+use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
+use texlab_protocol::*;
 
 pub struct TestLatexLspServer {
     pub options: Mutex<Options>,

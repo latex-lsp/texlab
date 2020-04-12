@@ -1,7 +1,8 @@
 use super::ast::*;
-use crate::{protocol::BibtexFormattingOptions, syntax::text::SyntaxNode};
+use crate::text::SyntaxNode;
 use petgraph::graph::NodeIndex;
 use std::{i32, string::String as StdString};
+use texlab_protocol::BibtexFormattingOptions;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FormattingParams<'a> {
@@ -200,7 +201,7 @@ pub fn format(tree: &Tree, node: NodeIndex, params: FormattingParams) -> StdStri
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::syntax::bibtex;
+    use crate::bibtex;
     use indoc::indoc;
 
     fn verify(source: &str, expected: &str, line_length: i32) {

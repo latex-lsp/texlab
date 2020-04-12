@@ -7,12 +7,12 @@ use super::types::{LatexSymbol, LatexSymbolKind};
 use crate::{
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     outline::{Outline, OutlineContext, OutlineContextItem},
-    protocol::{DocumentSymbolParams, Options, Position, Range, RangeExt},
-    syntax::{latex, CharStream, LatexLabelKind},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use std::path::Path;
+use texlab_protocol::{DocumentSymbolParams, Options, Position, Range, RangeExt};
+use texlab_syntax::{latex, CharStream, LatexLabelKind};
 
 fn label_name(table: &latex::SymbolTable, label: Option<&latex::Label>) -> Option<String> {
     label.map(|label| label.names(&table.tree)[0].text().to_owned())

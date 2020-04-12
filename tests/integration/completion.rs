@@ -1,10 +1,8 @@
 use indoc::indoc;
 use itertools::Itertools;
-use texlab::{
-    protocol::{
-        CompletionItem, Documentation, MarkupContent, MarkupKind, Range, RangeExt, TextEdit,
-    },
-    test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES},
+use texlab::test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES};
+use texlab_protocol::{
+    CompletionItem, Documentation, MarkupContent, MarkupKind, Range, RangeExt, TextEdit,
 };
 
 async fn run_item(

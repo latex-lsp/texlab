@@ -1,8 +1,6 @@
 use indoc::indoc;
-use texlab::{
-    protocol::{LocationLink, Range, RangeExt},
-    test::{TestBedBuilder, LOCATION_LINK_CAPABILITIES, PULL_CAPABILITIES},
-};
+use texlab::test::{TestBedBuilder, LOCATION_LINK_CAPABILITIES, PULL_CAPABILITIES};
+use texlab_protocol::{LocationLink, Range, RangeExt};
 
 fn verify_origin_selection_range(
     link: &LocationLink,

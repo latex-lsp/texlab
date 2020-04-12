@@ -1,11 +1,11 @@
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Range, RangeExt, TextEdit},
-    syntax::{bibtex, SyntaxNode, LANGUAGE_DATA},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, Range, RangeExt, TextEdit};
+use texlab_syntax::{bibtex, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexFieldNameCompletionProvider;
@@ -66,8 +66,9 @@ impl BibtexFieldNameCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn empty_latex_document() {

@@ -6,11 +6,9 @@ use self::{
     bibtex_decl::BibtexDeclarationFoldingProvider, latex_env::LatexEnvironmentFoldingProvider,
     latex_section::LatexSectionFoldingProvider,
 };
-use crate::{
-    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
-    protocol::{FoldingRange, FoldingRangeParams},
-};
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{FoldingRange, FoldingRangeParams};
 
 pub struct FoldingProvider {
     provider: ConcatProvider<FoldingRangeParams, FoldingRange>,

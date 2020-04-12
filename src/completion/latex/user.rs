@@ -2,12 +2,12 @@ use super::combinators;
 use crate::{
     completion::factory::{self, LatexComponentId},
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Range, TextEdit},
-    syntax::latex,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use itertools::Itertools;
+use texlab_protocol::{CompletionItem, CompletionParams, Range, TextEdit};
+use texlab_syntax::latex;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexUserCommandCompletionProvider;

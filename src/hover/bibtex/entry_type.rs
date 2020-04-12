@@ -1,11 +1,9 @@
-use crate::{
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{
-        Hover, HoverContents, MarkupContent, MarkupKind, RangeExt, TextDocumentPositionParams,
-    },
-    syntax::{SyntaxNode, LANGUAGE_DATA},
-};
+use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{
+    Hover, HoverContents, MarkupContent, MarkupKind, RangeExt, TextDocumentPositionParams,
+};
+use texlab_syntax::{SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryTypeHoverProvider;
@@ -40,7 +38,8 @@ impl FeatureProvider for BibtexEntryTypeHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn empty_latex_document() {

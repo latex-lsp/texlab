@@ -1,8 +1,8 @@
-use crate::protocol::*;
 use futures::lock::Mutex;
 use log::{error, warn};
 use serde::de::DeserializeOwned;
 use std::sync::Arc;
+use texlab_protocol::*;
 
 #[derive(Debug)]
 pub struct ConfigManager<C> {

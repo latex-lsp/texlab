@@ -1,9 +1,7 @@
-use crate::{
-    protocol::{Options, Uri},
-    workspace::{Document, DocumentContent, Snapshot},
-};
+use crate::workspace::{Document, DocumentContent, Snapshot};
 use petgraph::{algo::tarjan_scc, Directed, Graph};
 use std::{collections::HashSet, path::Path, sync::Arc, usize};
+use texlab_protocol::{Options, Uri};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering {
@@ -99,11 +97,9 @@ impl ProjectOrdering {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        tex::{Language, Resolver},
-        workspace::DocumentParams,
-    };
+    use crate::workspace::DocumentParams;
     use std::env;
+    use texlab_tex::{Language, Resolver};
 
     fn create_simple_document(uri: &Uri, language: Language, text: &str) -> Arc<Document> {
         Arc::new(Document::open(DocumentParams {

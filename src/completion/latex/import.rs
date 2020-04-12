@@ -1,12 +1,12 @@
 use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
-    components::COMPONENT_DATABASE,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::{LatexIncludeKind, LANGUAGE_DATA},
 };
 use futures_boxed::boxed;
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+use texlab_syntax::{LatexIncludeKind, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexClassImportProvider;

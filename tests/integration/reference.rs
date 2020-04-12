@@ -1,8 +1,6 @@
 use indoc::indoc;
-use texlab::{
-    protocol::{Location, Range, RangeExt},
-    test::{TestBedBuilder, PULL_CAPABILITIES},
-};
+use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
+use texlab_protocol::{Location, Range, RangeExt};
 
 #[tokio::test]
 async fn empty_latex_document() {

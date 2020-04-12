@@ -1,9 +1,7 @@
 use indoc::indoc;
 use std::collections::HashMap;
-use texlab::{
-    protocol::{Range, RangeExt, TextEdit, WorkspaceEdit},
-    test::{TestBedBuilder, PULL_CAPABILITIES},
-};
+use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
+use texlab_protocol::{Range, RangeExt, TextEdit, WorkspaceEdit};
 
 #[tokio::test]
 async fn empty_latex_document() {

@@ -1,7 +1,5 @@
-use crate::{
-    protocol::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, Uri},
-    syntax::{BibtexEntryTypeCategory, Structure},
-};
+use texlab_protocol::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, Uri};
+use texlab_syntax::{BibtexEntryTypeCategory, Structure};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LatexSymbolKind {

@@ -1,12 +1,10 @@
-use crate::{
-    protocol::{Options, Position, Range, RangeExt, Uri},
-    syntax::{lang_data::*, latex::ast::*, text::SyntaxNode},
-    tex::Resolver,
-};
+use crate::{lang_data::*, latex::ast::*, text::SyntaxNode};
 use itertools::{iproduct, Itertools};
 use petgraph::graph::NodeIndex;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, path::Path};
+use texlab_protocol::{Options, Position, Range, RangeExt, Uri};
+use texlab_tex::Resolver;
 
 #[derive(Debug, Clone)]
 pub struct SymbolTableParams<'a> {

@@ -1,14 +1,13 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{
-        Position, Range, RangeExt, RenameParams, TextDocumentPositionParams, TextEdit,
-        WorkspaceEdit,
-    },
-    syntax::{Span, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use std::collections::HashMap;
+use texlab_protocol::{
+    Position, Range, RangeExt, RenameParams, TextDocumentPositionParams, TextEdit, WorkspaceEdit,
+};
+use texlab_syntax::{Span, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelPrepareRenameProvider;

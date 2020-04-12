@@ -1,10 +1,8 @@
-use crate::{
-    components::COMPONENT_DATABASE,
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{Hover, HoverContents, RangeExt, TextDocumentPositionParams},
-    syntax::{LatexIncludeKind, SyntaxNode},
-};
+use crate::feature::{FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::{Hover, HoverContents, RangeExt, TextDocumentPositionParams};
+use texlab_syntax::{LatexIncludeKind, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexComponentHoverProvider;
@@ -39,10 +37,8 @@ impl FeatureProvider for LatexComponentHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

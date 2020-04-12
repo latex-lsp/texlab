@@ -1,6 +1,6 @@
-use crate::protocol::{Position, Range};
 use serde::{Deserialize, Serialize};
 use std::{iter::Peekable, str::CharIndices};
+use texlab_protocol::{Position, Range};
 
 pub trait SyntaxNode {
     fn range(&self) -> Range;
@@ -154,7 +154,7 @@ fn is_command_char(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::protocol::RangeExt;
+    use texlab_protocol::RangeExt;
 
     #[test]
     fn peek() {

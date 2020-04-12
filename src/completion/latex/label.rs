@@ -3,12 +3,12 @@ use crate::{
     completion::factory,
     feature::{DocumentView, FeatureProvider, FeatureRequest},
     outline::{Outline, OutlineContext},
-    protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit},
-    syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, LANGUAGE_DATA},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use std::sync::Arc;
+use texlab_protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit};
+use texlab_syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelCompletionProvider;

@@ -1,8 +1,6 @@
 use indoc::indoc;
-use texlab::{
-    protocol::{FoldingRange, FoldingRangeKind},
-    test::{TestBedBuilder, PULL_CAPABILITIES},
-};
+use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
+use texlab_protocol::{FoldingRange, FoldingRangeKind};
 
 #[tokio::test]
 async fn empty_latex_document() {

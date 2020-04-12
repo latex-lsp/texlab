@@ -1,11 +1,11 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams},
-    syntax::{bibtex, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
+use texlab_protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
+use texlab_syntax::{bibtex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexDeclarationFoldingProvider;

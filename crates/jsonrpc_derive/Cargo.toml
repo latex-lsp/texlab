@@ -11,6 +11,5 @@ proc-macro = true
 doctest = false
 
 [dependencies]
-futures-boxed = { path = "../futures_boxed" }
 syn = "1.0"
 quote = "1.0"

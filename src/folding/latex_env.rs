@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams},
-    syntax::SyntaxNode,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
+use texlab_syntax::SyntaxNode;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexEnvironmentFoldingProvider;

@@ -1,7 +1,4 @@
-use crate::{
-    protocol::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, RangeExt, Uri},
-    workspace::Document,
-};
+use crate::workspace::Document;
 use chashmap::CHashMap;
 use futures::{
     future::{AbortHandle, Abortable, Aborted},
@@ -11,6 +8,7 @@ use log::trace;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::process::Stdio;
+use texlab_protocol::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, RangeExt, Uri};
 use tokio::{prelude::*, process::Command};
 
 #[derive(Debug, Default)]

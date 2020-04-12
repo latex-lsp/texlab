@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{DocumentLink, DocumentLinkParams},
-    syntax::{latex, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{DocumentLink, DocumentLinkParams};
+use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexIncludeLinkProvider;
@@ -54,10 +54,8 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn has_links() {

@@ -1,10 +1,10 @@
 use crate::{
     feature::DocumentView,
-    protocol::{MarkupContent, MarkupKind, Options, Position, Range, RangeExt, Uri},
-    syntax::{latex, SyntaxNode},
     workspace::{Document, DocumentContent},
 };
+use texlab_syntax::{latex, SyntaxNode};
 use std::{borrow::Cow, collections::HashSet, path::Path};
+use texlab_protocol::{MarkupContent, MarkupKind, Options, Position, Range, RangeExt, Uri};
 use titlecase::titlecase;
 use OutlineContextItem::*;
 

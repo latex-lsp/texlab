@@ -31,13 +31,11 @@ use self::{
     preselect::PreselectCompletionProvider,
     quality::OrderByQualityCompletionProvider,
 };
-use crate::{
-    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams},
-};
+use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
 use itertools::Itertools;
 use std::hash::{Hash, Hasher};
+use texlab_protocol::{CompletionItem, CompletionParams};
 
 pub const COMPLETION_LIMIT: usize = 50;
 

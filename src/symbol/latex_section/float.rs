@@ -3,8 +3,8 @@ use crate::{
     feature::DocumentView,
     outline::{OutlineCaptionKind, OutlineContext},
     symbol::types::{LatexSymbol, LatexSymbolKind},
-    syntax::latex,
 };
+use texlab_syntax::latex;
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {
     table

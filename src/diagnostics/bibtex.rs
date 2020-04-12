@@ -1,9 +1,7 @@
-use crate::{
-    protocol::{Diagnostic, DiagnosticSeverity, Position, Range},
-    syntax::{bibtex, SyntaxNode},
-    workspace::{Document, DocumentContent},
-};
+use crate::workspace::{Document, DocumentContent};
 use petgraph::graph::NodeIndex;
+use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
+use texlab_syntax::{bibtex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BibtexErrorCode {

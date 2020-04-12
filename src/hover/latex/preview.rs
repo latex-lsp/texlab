@@ -1,12 +1,5 @@
 use crate::{
-    components::COMPONENT_DATABASE,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{
-        ClientCapabilitiesExt, Hover, HoverContents, MarkupContent, MarkupKind, Range, RangeExt,
-        TextDocumentPositionParams,
-    },
-    syntax::{latex, CharStream, LatexIncludeKind},
-    tex::{CompileError, CompileParams, DistributionKind, Format},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
@@ -15,6 +8,13 @@ use io::Cursor;
 use log::warn;
 use std::{io, process::Stdio, time::Duration};
 use tempfile::TempDir;
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::{
+    ClientCapabilitiesExt, Hover, HoverContents, MarkupContent, MarkupKind, Range, RangeExt,
+    TextDocumentPositionParams,
+};
+use texlab_syntax::{latex, CharStream, LatexIncludeKind};
+use texlab_tex::{CompileError, CompileParams, DistributionKind, Format};
 use thiserror::Error;
 use tokio::process::Command;
 

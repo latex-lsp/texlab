@@ -1,5 +1,5 @@
 use super::ast::{Token, TokenKind};
-use crate::syntax::text::CharStream;
+use crate::text::CharStream;
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
@@ -107,10 +107,8 @@ fn is_word_char(c: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        protocol::{Position, Range},
-        syntax::text::Span,
-    };
+    use crate::text::Span;
+    use texlab_protocol::{Position, Range};
 
     fn verify<'a>(lexer: &mut Lexer<'a>, line: u64, character: u64, text: &str, kind: TokenKind) {
         let start = Position::new(line, character);

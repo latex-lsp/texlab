@@ -1,6 +1,6 @@
-use crate::protocol::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use texlab_protocol::{MarkupContent, MarkupKind};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -89,6 +89,6 @@ pub struct Metadata {
     pub description: Option<String>,
 }
 
-const JSON: &str = include_str!("components.json");
+const JSON: &str = include_str!("../data/components.json");
 
 pub static COMPONENT_DATABASE: Lazy<Database> = Lazy::new(|| serde_json::from_str(JSON).unwrap());

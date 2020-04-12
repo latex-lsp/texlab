@@ -12,11 +12,6 @@ use self::{
 };
 use crate::{
     feature::{ConcatProvider, DocumentView, FeatureProvider, FeatureRequest},
-    protocol::{
-        ClientCapabilities, ClientCapabilitiesExt, DocumentSymbolParams, DocumentSymbolResponse,
-        Options, SymbolInformation, TextDocumentIdentifier, Uri, WorkspaceSymbolParams,
-    },
-    tex::DynamicDistribution,
     workspace::Snapshot,
 };
 use futures_boxed::boxed;
@@ -25,6 +20,11 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use texlab_protocol::{
+    ClientCapabilities, ClientCapabilitiesExt, DocumentSymbolParams, DocumentSymbolResponse,
+    Options, SymbolInformation, TextDocumentIdentifier, Uri, WorkspaceSymbolParams,
+};
+use texlab_tex::DynamicDistribution;
 
 pub struct SymbolProvider {
     provider: ConcatProvider<DocumentSymbolParams, LatexSymbol>,

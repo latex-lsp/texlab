@@ -9,11 +9,9 @@ use self::{
     latex_env::{LatexEnvironmentPrepareRenameProvider, LatexEnvironmentRenameProvider},
     latex_label::{LatexLabelPrepareRenameProvider, LatexLabelRenameProvider},
 };
-use crate::{
-    feature::{ChoiceProvider, FeatureProvider, FeatureRequest},
-    protocol::{Range, RenameParams, TextDocumentPositionParams, WorkspaceEdit},
-};
+use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{Range, RenameParams, TextDocumentPositionParams, WorkspaceEdit};
 
 pub struct PrepareRenameProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Range>,

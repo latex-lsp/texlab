@@ -1,7 +1,7 @@
 use crate::{
-    protocol::{Diagnostic, DiagnosticSeverity, Options, Position, Range, Uri},
     workspace::{Document, Snapshot},
 };
+use texlab_protocol::{Diagnostic, DiagnosticSeverity, Options, Position, Range, Uri};
 use futures::lock::Mutex;
 use once_cell::sync::Lazy;
 use regex::{Match, Regex};

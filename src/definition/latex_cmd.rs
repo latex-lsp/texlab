@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{LocationLink, TextDocumentPositionParams},
-    syntax::SyntaxNode,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{LocationLink, TextDocumentPositionParams};
+use texlab_syntax::SyntaxNode;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCommandDefinitionProvider;
@@ -65,11 +65,9 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

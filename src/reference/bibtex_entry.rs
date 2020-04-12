@@ -1,10 +1,10 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{Location, RangeExt, ReferenceParams, Url},
-    syntax::{bibtex, latex, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{Location, RangeExt, ReferenceParams, Url};
+use texlab_syntax::{bibtex, latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryReferenceProvider;
@@ -67,8 +67,9 @@ impl BibtexEntryReferenceProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn entry() {

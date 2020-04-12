@@ -11,11 +11,9 @@ use self::{
         label::LatexLabelHoverProvider, preview::LatexPreviewHoverProvider,
     },
 };
-use crate::{
-    feature::{ChoiceProvider, FeatureProvider, FeatureRequest},
-    protocol::{Hover, TextDocumentPositionParams},
-};
+use crate::feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_protocol::{Hover, TextDocumentPositionParams};
 
 pub struct HoverProvider {
     provider: ChoiceProvider<TextDocumentPositionParams, Hover>,

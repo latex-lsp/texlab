@@ -1,10 +1,8 @@
-use crate::{
-    protocol::{Position, Range, RangeExt},
-    syntax::text::{Span, SyntaxNode},
-};
+use crate::text::{Span, SyntaxNode};
 use itertools::Itertools;
 use petgraph::graph::{Graph, NodeIndex};
 use serde::{Deserialize, Serialize};
+use texlab_protocol::{Position, Range, RangeExt};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum TokenKind {

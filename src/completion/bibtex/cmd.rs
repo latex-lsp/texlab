@@ -1,12 +1,12 @@
 use crate::{
     completion::factory::{self, LatexComponentId},
-    components::COMPONENT_DATABASE,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit},
-    syntax::SyntaxNode,
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit};
+use texlab_syntax::SyntaxNode;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexCommandCompletionProvider;
@@ -53,8 +53,9 @@ impl FeatureProvider for BibtexCommandCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{feature::FeatureTester, protocol::Range};
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn empty_latex_document() {

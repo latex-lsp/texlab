@@ -1,5 +1,5 @@
-use crate::jsonrpc::client::Result;
 use futures_boxed::boxed;
+use jsonrpc::client::Result;
 use jsonrpc_derive::{jsonrpc_client, jsonrpc_method};
 use lsp_types::*;
 

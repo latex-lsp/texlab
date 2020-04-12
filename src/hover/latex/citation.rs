@@ -1,12 +1,12 @@
 use crate::{
-    citeproc::render_citation,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{Hover, HoverContents, RangeExt, TextDocumentPositionParams},
-    syntax::{bibtex, Span, SyntaxNode},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use log::warn;
+use texlab_citeproc::render_citation;
+use texlab_protocol::{Hover, HoverContents, RangeExt, TextDocumentPositionParams};
+use texlab_syntax::{bibtex, Span, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCitationHoverProvider;
@@ -81,11 +81,9 @@ impl LatexCitationHoverProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{MarkupContent, MarkupKind, Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{MarkupContent, MarkupKind, Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

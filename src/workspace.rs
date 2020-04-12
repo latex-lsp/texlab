@@ -1,9 +1,3 @@
-use crate::{
-    components::COMPONENT_DATABASE,
-    protocol::{Options, TextDocumentItem, Uri},
-    syntax::{bibtex, latex, LatexIncludeKind},
-    tex::{DynamicDistribution, Language, Resolver},
-};
 use futures::lock::Mutex;
 use log::{debug, error, warn};
 use petgraph::{graph::Graph, visit::Dfs};
@@ -19,6 +13,10 @@ use std::{
     sync::Arc,
     time::SystemTime,
 };
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::{Options, TextDocumentItem, Uri};
+use texlab_syntax::{bibtex, latex, LatexIncludeKind};
+use texlab_tex::{DynamicDistribution, Language, Resolver};
 use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -542,9 +540,9 @@ impl Workspace {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::protocol::{LatexBuildOptions, LatexOptions};
     use itertools::Itertools;
     use std::env;
+    use texlab_protocol::{LatexBuildOptions, LatexOptions};
 
     fn create_simple_document(uri: &Uri, language: Language, text: &str) -> Arc<Document> {
         Arc::new(Document::open(DocumentParams {

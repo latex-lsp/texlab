@@ -1,8 +1,6 @@
 use crate::{
     build::BuildProvider,
-    citeproc::render_citation,
     completion::{CompletionItemData, CompletionProvider},
-    components::COMPONENT_DATABASE,
     config::ConfigManager,
     definition::DefinitionProvider,
     diagnostics::DiagnosticsManager,
@@ -11,22 +9,24 @@ use crate::{
     forward_search,
     highlight::HighlightProvider,
     hover::HoverProvider,
-    jsonrpc::{server::Result, Middleware},
     link::LinkProvider,
-    protocol::*,
     reference::ReferenceProvider,
     rename::{PrepareRenameProvider, RenameProvider},
     symbol::{document_symbols, workspace_symbols, SymbolProvider},
-    syntax::{bibtex, latexindent, CharStream, SyntaxNode},
-    tex::{DistributionKind, DynamicDistribution, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
 use futures::lock::Mutex;
 use futures_boxed::boxed;
+use jsonrpc::{server::Result, Middleware};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::{debug, error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
+use texlab_citeproc::render_citation;
+use texlab_components::COMPONENT_DATABASE;
+use texlab_protocol::*;
+use texlab_syntax::{bibtex, latexindent, CharStream, SyntaxNode};
+use texlab_tex::{DistributionKind, DynamicDistribution, KpsewhichError};
 
 pub struct LatexLspServer<C> {
     distro: DynamicDistribution,

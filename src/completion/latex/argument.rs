@@ -2,10 +2,10 @@ use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
 };
 use futures_boxed::boxed;
 use std::iter;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexArgumentCompletionProvider;
@@ -54,11 +54,9 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {

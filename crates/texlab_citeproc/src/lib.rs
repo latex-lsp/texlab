@@ -6,15 +6,13 @@ use self::{
     bibutils::{InputFormat, OutputFormat},
     ris::{RisLibrary, RisReference},
 };
-use crate::{
-    protocol::{BibtexFormattingOptions, MarkupContent, MarkupKind},
-    syntax::bibtex,
-};
 use citeproc::prelude::*;
 use citeproc_db::PredefinedLocales;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
+use texlab_protocol::{BibtexFormattingOptions, MarkupContent, MarkupKind};
+use texlab_syntax::bibtex;
 
 static APA_STYLE: &str = include_str!("apa.csl");
 

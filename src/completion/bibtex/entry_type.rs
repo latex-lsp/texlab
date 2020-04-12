@@ -1,11 +1,11 @@
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt, TextEdit},
-    syntax::{bibtex, SyntaxNode, LANGUAGE_DATA},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt, TextEdit};
+use texlab_syntax::{bibtex, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryTypeCompletionProvider;

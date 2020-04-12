@@ -1,11 +1,11 @@
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Position, RangeExt},
-    syntax::{bibtex, latex, SyntaxNode},
     workspace::{Document, DocumentContent},
 };
 use futures_boxed::boxed;
 use std::borrow::Cow;
+use texlab_protocol::{CompletionItem, CompletionParams, Position, RangeExt};
+use texlab_syntax::{bibtex, latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct OrderByQualityCompletionProvider<F>(pub F);

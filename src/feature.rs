@@ -1,9 +1,4 @@
-use crate::{
-    components::{Component, COMPONENT_DATABASE},
-    protocol::*,
-    tex::{DynamicDistribution, Language},
-    workspace::{Document, DocumentContent, DocumentParams, Snapshot},
-};
+use crate::workspace::{Document, DocumentContent, DocumentParams, Snapshot};
 use futures_boxed::boxed;
 use itertools::Itertools;
 use std::{
@@ -11,6 +6,9 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use texlab_components::{Component, COMPONENT_DATABASE};
+use texlab_protocol::*;
+use texlab_tex::{DynamicDistribution, Language};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DocumentView {

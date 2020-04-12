@@ -2,9 +2,9 @@ use super::combinators;
 use crate::{
     completion::factory::{self, LatexComponentId},
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
 };
 use futures_boxed::boxed;
+use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexComponentCommandCompletionProvider;
@@ -20,6 +20,7 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
             let cmd = table.tree.as_command(cmd_node).unwrap();
             let range = cmd.short_name_range();
             let mut items = Vec::new();
+            req.view.components();
             for comp in req.view.components() {
                 let file_names = comp.file_names.iter().map(AsRef::as_ref).collect();
                 let id = LatexComponentId::Component(file_names);
@@ -70,11 +71,9 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document_command() {

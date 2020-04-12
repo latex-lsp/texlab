@@ -2,12 +2,12 @@ use super::combinators::{self, Parameter};
 use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Range, RangeExt, TextEdit},
-    syntax::{latex, SyntaxNode, LANGUAGE_DATA},
 };
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
 use std::path::{Path, PathBuf};
+use texlab_protocol::{CompletionItem, CompletionParams, Range, RangeExt, TextEdit};
+use texlab_syntax::{latex, SyntaxNode, LANGUAGE_DATA};
 use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]

@@ -1,12 +1,12 @@
 use super::types::{LatexSymbol, LatexSymbolKind};
 use crate::{
     feature::{FeatureProvider, FeatureRequest},
-    protocol::DocumentSymbolParams,
-    syntax::{bibtex, BibtexEntryTypeCategory, SyntaxNode, LANGUAGE_DATA},
     workspace::DocumentContent,
 };
 use futures_boxed::boxed;
 use petgraph::graph::NodeIndex;
+use texlab_protocol::DocumentSymbolParams;
+use texlab_syntax::{bibtex, BibtexEntryTypeCategory, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntrySymbolProvider;
@@ -73,10 +73,8 @@ impl BibtexEntrySymbolProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{Range, RangeExt},
-    };
+    use crate::feature::FeatureTester;
+    use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {
