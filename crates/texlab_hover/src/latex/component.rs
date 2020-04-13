@@ -17,7 +17,7 @@ impl FeatureProvider for LatexComponentHoverProvider {
         for include in &table.includes {
             match include.kind {
                 LatexIncludeKind::Package | LatexIncludeKind::Class => {
-                    for path in include.paths(&table.tree) {
+                    for path in include.paths(&table) {
                         if path.range().contains(req.params.position) {
                             let docs = COMPONENT_DATABASE.documentation(path.text())?;
                             return Some(Hover {

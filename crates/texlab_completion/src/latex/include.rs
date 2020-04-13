@@ -1,11 +1,10 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
 use futures_boxed::boxed;
-use petgraph::graph::NodeIndex;
 use std::path::{Path, PathBuf};
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, Range, RangeExt, TextEdit};
-use texlab_syntax::{latex, SyntaxNode, LANGUAGE_DATA};
+use texlab_syntax::{latex, AstNodeIndex, SyntaxNode, LANGUAGE_DATA};
 use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
@@ -23,7 +22,6 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
         });
 
         combinators::argument_word(req, parameters, |cmd_node, index| async move {
-            log::info!("Include!");
             if !req.current().is_file() {
                 return Vec::new();
             }
@@ -39,15 +37,13 @@ impl FeatureProvider for LatexIncludeCompletionProvider {
 impl LatexIncludeCompletionProvider {
     async fn make_items(
         req: &FeatureRequest<CompletionParams>,
-        cmd_node: NodeIndex,
+        cmd_node: AstNodeIndex,
         index: usize,
     ) -> Option<Vec<CompletionItem>> {
         let table = req.current().content.as_latex()?;
         let pos = req.params.text_document_position.position;
         let mut items = Vec::new();
-        let path_word = table
-            .tree
-            .extract_word(cmd_node, latex::GroupKind::Group, index);
+        let path_word = table.extract_word(cmd_node, latex::GroupKind::Group, index);
         let name_range = match path_word {
             Some(path_word) => Range::new_simple(
                 path_word.start().line,
@@ -59,9 +55,8 @@ impl LatexIncludeCompletionProvider {
             None => Range::new(pos, pos),
         };
 
-        let cmd = table.tree.as_command(cmd_node)?;
+        let cmd = table.as_command(cmd_node)?;
         let current_dir = Self::current_dir(req, table, cmd_node)?;
-        log::info!("Current Dir = {:?}", current_dir);
         let mut entries = fs::read_dir(current_dir).await.ok()?;
         while let Some(entry) = entries.next_entry().await.ok()? {
             let mut path = entry.path();
@@ -89,7 +84,7 @@ impl LatexIncludeCompletionProvider {
     fn current_dir(
         req: &FeatureRequest<CompletionParams>,
         table: &latex::SymbolTable,
-        cmd_node: NodeIndex,
+        cmd_node: AstNodeIndex,
     ) -> Option<PathBuf> {
         let mut path = req
             .options
@@ -106,10 +101,7 @@ impl LatexIncludeCompletionProvider {
             );
 
         path = PathBuf::from(path.to_str()?.replace('\\', "/"));
-        if let Some(include) = table
-            .tree
-            .extract_word(cmd_node, latex::GroupKind::Group, 0)
-        {
+        if let Some(include) = table.extract_word(cmd_node, latex::GroupKind::Group, 0) {
             path.push(include.text());
             if !include.text().ends_with('/') {
                 path.pop();

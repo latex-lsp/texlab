@@ -7,12 +7,12 @@ use texlab_syntax::latex;
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {
     let mut symbols = Vec::new();
     for equation in &table.equations {
-        symbols.push(make_symbol(view, table, equation.range(&table.tree)));
+        symbols.push(make_symbol(view, table, equation.range(&table)));
     }
 
     for equation in &table.environments {
-        if equation.left.is_math(&table.tree) {
-            symbols.push(make_symbol(view, table, equation.range(&table.tree)));
+        if equation.left.is_math(&table) {
+            symbols.push(make_symbol(view, table, equation.range(&table)));
         }
     }
     symbols

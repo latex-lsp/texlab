@@ -10,7 +10,7 @@ use texlab_protocol::{
     ClientCapabilitiesExt, Hover, HoverContents, MarkupContent, MarkupKind, Range, RangeExt,
     TextDocumentPositionParams,
 };
-use texlab_syntax::{latex, CharStream, LatexIncludeKind};
+use texlab_syntax::{latex, CharStream, LatexIncludeKind, SyntaxNode};
 use texlab_tex::{CompileError, CompileParams, DistributionKind, Format};
 use thiserror::Error;
 use tokio::process::Command;
@@ -86,7 +86,7 @@ impl LatexPreviewHoverProvider {
     ) -> bool {
         let canonical_name = environment
             .left
-            .name(&table.tree)
+            .name(&table)
             .map(latex::Token::text)
             .unwrap_or_default()
             .replace('*', "");
@@ -102,7 +102,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .theorem_definitions
                     .iter()
-                    .map(|thm| thm.name(&table.tree).text())
+                    .map(|thm| thm.name(&table).text())
                     .for_each(|thm| names.push(thm));
             }
         }
@@ -160,7 +160,7 @@ impl LatexPreviewHoverProvider {
                 for include in &table.includes {
                     if include.kind == LatexIncludeKind::Package {
                         if include
-                            .paths(&table.tree)
+                            .paths(&table)
                             .iter()
                             .all(|path| IGNORED_PACKAGES.contains(&path.text()))
                         {
@@ -168,7 +168,7 @@ impl LatexPreviewHoverProvider {
                         }
 
                         if include
-                            .paths(&table.tree)
+                            .paths(&table)
                             .iter()
                             .map(|path| format!("{}.sty", path.text()))
                             .any(|name| !COMPONENT_DATABASE.exists(&name))
@@ -176,10 +176,7 @@ impl LatexPreviewHoverProvider {
                             continue;
                         }
 
-                        code.push_str(&CharStream::extract(
-                            &text,
-                            table.tree.range(include.parent),
-                        ));
+                        code.push_str(&CharStream::extract(&text, table[include.parent].range()));
                         code.push('\n');
                     }
                 }
@@ -196,7 +193,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .command_definitions
                     .iter()
-                    .map(|def| CharStream::extract(&doc.text, table.tree.range(def.parent)))
+                    .map(|def| CharStream::extract(&doc.text, table[def.parent].range()))
                     .for_each(|def| {
                         code.push_str(&def);
                         code.push('\n');
@@ -214,7 +211,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .math_operators
                     .iter()
-                    .map(|op| CharStream::extract(&doc.text, table.tree.range(op.parent)))
+                    .map(|op| CharStream::extract(&doc.text, table[op.parent].range()))
                     .for_each(|op| {
                         code.push_str(&op);
                         code.push('\n');
@@ -232,7 +229,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .theorem_definitions
                     .iter()
-                    .map(|thm| CharStream::extract(&doc.text, table.tree.range(thm.parent)))
+                    .map(|thm| CharStream::extract(&doc.text, table[thm.parent].range()))
                     .for_each(|thm| {
                         code.push_str(&thm);
                         code.push('\n');
@@ -320,7 +317,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
             let range = elements
                 .iter()
-                .map(|elem| elem.range(&table.tree))
+                .map(|elem| elem.range(&table))
                 .find(|range| range.contains(req.params.position))?;
 
             return match Self::render(req, range).await {

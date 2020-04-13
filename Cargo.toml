@@ -53,6 +53,9 @@ uuid = { version = "0.8", features = ["v4"] }
 criterion = "0.3"
 indoc = "0.3"
 
+[profile.bench]
+lto = false
+
 [profile.release]
 lto = true
 

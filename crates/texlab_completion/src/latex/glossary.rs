@@ -39,7 +39,7 @@ impl FeatureProvider for LatexGlossaryCompletionProvider {
                     for entry in &table.glossary_entries {
                         match (cmd_kind, entry.kind) {
                             (Acronym, Acronym) | (General, General) | (General, Acronym) => {
-                                let label = entry.label(&table.tree).text().to_owned();
+                                let label = entry.label(&table).text().to_owned();
                                 let text_edit = TextEdit::new(ctx.range, label.clone());
                                 let item = factory::glossary_entry(req, label, text_edit);
                                 items.push(item);

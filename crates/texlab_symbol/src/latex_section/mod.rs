@@ -11,10 +11,10 @@ use texlab_feature::{
     OutlineContextItem,
 };
 use texlab_protocol::{DocumentSymbolParams, Options, Position, Range, RangeExt};
-use texlab_syntax::{latex, CharStream, LatexLabelKind};
+use texlab_syntax::{latex, CharStream, LatexLabelKind, SyntaxNode};
 
 fn label_name(table: &latex::SymbolTable, label: Option<&latex::Label>) -> Option<String> {
-    label.map(|label| label.names(&table.tree)[0].text().to_owned())
+    label.map(|label| label.names(&table)[0].text().to_owned())
 }
 
 fn selection_range(
@@ -23,7 +23,7 @@ fn selection_range(
     label: Option<&latex::Label>,
 ) -> Range {
     label
-        .map(|label| table.tree.range(label.parent))
+        .map(|label| table[label.parent].range())
         .unwrap_or(full_range)
 }
 
@@ -91,8 +91,8 @@ fn compute_end_position(table: &latex::SymbolTable, text: &str) -> Position {
     table
         .environments
         .iter()
-        .find(|env| env.left.name(&table.tree).map(latex::Token::text) == Some("document"))
-        .map(|env| table.tree.range(env.right.parent).start)
+        .find(|env| env.left.name(&table).map(latex::Token::text) == Some("document"))
+        .map(|env| table[env.right.parent].start())
         .unwrap_or(stream.current_position)
 }
 
@@ -131,7 +131,6 @@ impl<'a> LatexSectionNode<'a> {
 
     fn name(&self) -> String {
         self.table
-            .tree
             .print_group_content(
                 self.section.parent,
                 latex::GroupKind::Group,
@@ -148,12 +147,11 @@ impl<'a> LatexSectionNode<'a> {
         for i in 0..children.len() {
             let current_end = children
                 .get(i + 1)
-                .map(|next| table.tree.range(next.section.parent).start)
+                .map(|next| table[next.section.parent].start())
                 .unwrap_or(end_position);
 
             let mut current = &mut children[i];
-            current.full_range =
-                Range::new(table.tree.range(current.section.parent).start, current_end);
+            current.full_range = Range::new(table[current.section.parent].start(), current_end);
             Self::set_full_range(&mut current.children, table, current_end);
         }
     }
@@ -164,16 +162,13 @@ impl<'a> LatexSectionNode<'a> {
             .labels
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)
-            .find(|label| {
-                self.full_range
-                    .contains(self.table.tree.range(label.parent).start)
-            })
+            .find(|label| self.full_range.contains(self.table[label.parent].start()))
         {
             if let Some(ctx) = OutlineContext::parse(view, outline, *label) {
                 let mut is_section = false;
                 if let OutlineContextItem::Section { text, .. } = &ctx.item {
                     if self.name() == *text {
-                        for name in label.names(&self.table.tree) {
+                        for name in label.names(&self.table) {
                             self.label = Some(name.text().to_owned());
                         }
 
@@ -262,7 +257,7 @@ impl<'a> Into<LatexSymbol> for LatexSectionNode<'a> {
             kind: LatexSymbolKind::Section,
             deprecated: false,
             full_range: self.full_range,
-            selection_range: self.table.tree.range(self.section.parent),
+            selection_range: self.table[self.section.parent].range(),
             children,
         }
     }

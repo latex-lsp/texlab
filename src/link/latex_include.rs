@@ -31,7 +31,7 @@ impl LatexIncludeLinkProvider {
         include: &latex::Include,
     ) -> Vec<DocumentLink> {
         let mut links = Vec::new();
-        let paths = include.paths(&table.tree);
+        let paths = include.paths(&table);
         for (i, targets) in include.all_targets.iter().enumerate() {
             for target in targets {
                 if let Some(link) = req.snapshot().find(target).map(|doc| DocumentLink {

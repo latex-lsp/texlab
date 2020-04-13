@@ -21,7 +21,6 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                 .content
                 .as_latex()
                 .unwrap()
-                .tree
                 .as_command(current_cmd_node)
                 .unwrap();
 
@@ -33,7 +32,7 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
                         .iter()
                         .filter(|cmd_node| **cmd_node != current_cmd_node)
                         .map(|cmd_node| {
-                            let cmd = table.tree.as_command(*cmd_node).unwrap();
+                            let cmd = table.as_command(*cmd_node).unwrap();
                             cmd.name.text()[1..].to_owned()
                         })
                         .unique()
@@ -101,7 +100,7 @@ impl LatexUserEnvironmentCompletionProvider {
         delim: latex::EnvironmentDelimiter,
         name_range: Range,
     ) -> Option<CompletionItem> {
-        delim.name(&table.tree).map(|name| {
+        delim.name(&table).map(|name| {
             let text = name.text().to_owned();
             let text_edit = TextEdit::new(name_range, text.clone());
             factory::environment(req, text, text_edit, &LatexComponentId::User)

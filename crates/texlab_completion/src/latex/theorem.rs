@@ -18,7 +18,7 @@ impl FeatureProvider for LatexTheoremEnvironmentCompletionProvider {
             for doc in req.related() {
                 if let DocumentContent::Latex(table) = &doc.content {
                     for theorem in &table.theorem_definitions {
-                        let name = theorem.name(&table.tree).text().to_owned();
+                        let name = theorem.name(&table).text().to_owned();
                         let text_edit = TextEdit::new(ctx.range, name.clone());
                         let item =
                             factory::environment(req, name, text_edit, &LatexComponentId::User);

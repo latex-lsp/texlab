@@ -19,12 +19,12 @@ impl FeatureProvider for LatexLabelHighlightProvider {
             if let Some(name) = table
                 .labels
                 .iter()
-                .flat_map(|label| label.names(&table.tree))
+                .flat_map(|label| label.names(&table))
                 .find(|label| label.range().contains(req.params.position))
                 .map(latex::Token::text)
             {
                 for label_group in &table.labels {
-                    for label in label_group.names(&table.tree) {
+                    for label in label_group.names(&table) {
                         if label.text() == name {
                             let kind = match label_group.kind {
                                 LatexLabelKind::Definition => DocumentHighlightKind::Write,

@@ -15,7 +15,7 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::command(req, |cmd_node| async move {
             let table = req.current().content.as_latex().unwrap();
-            let cmd = table.tree.as_command(cmd_node).unwrap();
+            let cmd = table.as_command(cmd_node).unwrap();
             let range = cmd.short_name_range();
             let mut items = Vec::new();
             req.view.components();

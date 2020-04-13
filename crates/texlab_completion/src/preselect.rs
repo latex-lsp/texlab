@@ -1,7 +1,7 @@
 use futures_boxed::boxed;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, RangeExt};
-use texlab_syntax::latex;
+use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PreselectCompletionProvider<F>(pub F);
@@ -19,15 +19,13 @@ where
         let mut items = self.0.execute(req).await;
         if let DocumentContent::Latex(table) = &req.current().content {
             for env in &table.environments {
-                if let Some(name) = env.left.name(&table.tree) {
+                if let Some(name) = env.left.name(&table) {
                     let right_args = table
-                        .tree
                         .extract_group(env.right.parent, latex::GroupKind::Group, 0)
                         .unwrap();
-                    let right_args_range = table.tree.range(right_args);
+                    let right_args_range = table[right_args].range();
                     let cond1 = right_args_range.contains_exclusive(pos);
                     let cond2 = table
-                        .tree
                         .as_group(right_args)
                         .and_then(|group| group.right.as_ref())
                         .is_none()

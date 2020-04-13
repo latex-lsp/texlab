@@ -28,7 +28,7 @@ impl LatexCitationDefinitionProvider {
             table
                 .citations
                 .iter()
-                .flat_map(|citation| citation.keys(&table.tree))
+                .flat_map(|citation| citation.keys(&table))
                 .find(|key| key.range().contains(req.params.position))
         })
     }

@@ -1,8 +1,7 @@
-use crate::{lang_data::*, latex::ast::*, text::SyntaxNode};
+use crate::{generic_ast::AstNodeIndex, lang_data::*, latex::ast::*, text::SyntaxNode};
 use itertools::{iproduct, Itertools};
-use petgraph::graph::NodeIndex;
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, path::Path};
+use std::{borrow::Cow, ops::Deref, path::Path};
 use texlab_protocol::{Options, Position, Range, RangeExt, Uri};
 use texlab_tex::Resolver;
 
@@ -15,10 +14,10 @@ pub struct SymbolTableParams<'a> {
     pub current_dir: &'a Path,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct SymbolTable {
-    pub tree: Tree,
-    pub commands: Vec<NodeIndex>,
+    pub(crate) tree: Tree,
+    pub commands: Vec<AstNodeIndex>,
     pub environments: Vec<Environment>,
     pub is_standalone: bool,
     pub includes: Vec<Include>,
@@ -135,7 +134,7 @@ impl SymbolTable {
     }
 
     pub fn is_enum_item(&self, enumeration: Environment, item: Item) -> bool {
-        let item_range = self.tree.range(item.parent);
+        let item_range = self.tree[item.parent].range();
         enumeration.range(&self.tree).contains(item_range.start)
             && !self
                 .environments
@@ -154,8 +153,8 @@ impl SymbolTable {
         self.labels
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)
-            .filter(|label| label.names(&self.tree).len() == 1)
-            .find(|label| range.contains(self.tree.range(label.parent).start))
+            .filter(|label| label.names(&self).len() == 1)
+            .find(|label| range.contains(self[label.parent].range().start))
     }
 
     pub fn find_label_by_environment(&self, env: Environment) -> Option<&Label> {
@@ -163,14 +162,22 @@ impl SymbolTable {
             .iter()
             .filter(|label| label.kind == LatexLabelKind::Definition)
             .filter(|label| label.names(&self.tree).len() == 1)
-            .find(|label| self.is_direct_child(env, self.tree.range(label.parent).start))
+            .find(|label| self.is_direct_child(env, self.tree[label.parent].start()))
+    }
+}
+
+impl Deref for SymbolTable {
+    type Target = Tree;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tree
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct SymbolContext<'a> {
     tree: &'a Tree,
-    commands: &'a [NodeIndex],
+    commands: &'a [AstNodeIndex],
     uri: &'a Uri,
     resolver: &'a Resolver,
     options: &'a Options,
@@ -179,7 +186,7 @@ pub struct SymbolContext<'a> {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct EnvironmentDelimiter {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
 }
 
 impl EnvironmentDelimiter {
@@ -219,8 +226,8 @@ impl Environment {
     }
 
     pub fn range(self, tree: &Tree) -> Range {
-        let start = tree.graph[self.left.parent].start();
-        let end = tree.graph[self.right.parent].end();
+        let start = tree[self.left.parent].start();
+        let end = tree[self.right.parent].end();
         Range::new(start, end)
     }
 
@@ -239,7 +246,10 @@ impl Environment {
         envs
     }
 
-    fn parse_delimiter(tree: &Tree, parent: NodeIndex) -> Option<(EnvironmentDelimiter, &Command)> {
+    fn parse_delimiter(
+        tree: &Tree,
+        parent: AstNodeIndex,
+    ) -> Option<(EnvironmentDelimiter, &Command)> {
         let cmd = tree.as_command(parent)?;
         if cmd.name.text() != "\\begin" && cmd.name.text() != "\\end" {
             return None;
@@ -259,7 +269,7 @@ impl Environment {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Include {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub arg_index: usize,
     pub kind: LatexIncludeKind,
     pub all_targets: Vec<Vec<Uri>>,
@@ -296,7 +306,7 @@ impl Include {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexIncludeCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -371,7 +381,7 @@ impl Include {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Citation {
-    parent: NodeIndex,
+    parent: AstNodeIndex,
     arg_index: usize,
 }
 
@@ -389,7 +399,7 @@ impl Citation {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexCitationCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -409,10 +419,10 @@ impl Citation {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct CommandDefinition {
-    pub parent: NodeIndex,
-    pub definition: NodeIndex,
+    pub parent: AstNodeIndex,
+    pub definition: AstNodeIndex,
     pub definition_index: usize,
-    pub implementation: NodeIndex,
+    pub implementation: AstNodeIndex,
     pub implementation_index: usize,
     pub arg_count_index: usize,
 }
@@ -431,7 +441,7 @@ impl CommandDefinition {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexCommandDefinitionCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -464,7 +474,7 @@ impl CommandDefinition {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct GlossaryEntry {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub label_index: usize,
     pub kind: LatexGlossaryEntryKind,
 }
@@ -484,7 +494,7 @@ impl GlossaryEntry {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexGlossaryEntryDefinitionCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -505,14 +515,14 @@ impl GlossaryEntry {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Equation {
-    pub left: NodeIndex,
-    pub right: NodeIndex,
+    pub left: AstNodeIndex,
+    pub right: AstNodeIndex,
 }
 
 impl Equation {
     pub fn range(self, tree: &Tree) -> Range {
-        let start = tree.range(self.left).start;
-        let end = tree.range(self.right).end;
+        let start = tree[self.left].start();
+        let end = tree[self.right].end();
         Range::new(start, end)
     }
 
@@ -540,14 +550,14 @@ impl Equation {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Inline {
-    pub left: NodeIndex,
-    pub right: NodeIndex,
+    pub left: AstNodeIndex,
+    pub right: AstNodeIndex,
 }
 
 impl Inline {
     pub fn range(self, tree: &Tree) -> Range {
-        let start = tree.range(self.left).start;
-        let end = tree.range(self.right).end;
+        let start = tree[self.left].start();
+        let end = tree[self.right].end();
         Range::new(start, end)
     }
 
@@ -556,10 +566,10 @@ impl Inline {
         let mut left = None;
         for node in ctx
             .tree
-            .graph
-            .node_indices()
+            .nodes()
+            .into_iter()
             .filter(|node| ctx.tree.as_math(*node).is_some())
-            .sorted_by_key(|node| ctx.tree.graph.node_weight(*node).unwrap().start())
+            .sorted_by_key(|node| ctx.tree[*node].start())
         {
             if let Some(l) = left {
                 inlines.push(Inline {
@@ -577,10 +587,10 @@ impl Inline {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct MathOperator {
-    pub parent: NodeIndex,
-    pub definition: NodeIndex,
+    pub parent: AstNodeIndex,
+    pub definition: AstNodeIndex,
     pub definition_index: usize,
-    pub implementation: NodeIndex,
+    pub implementation: AstNodeIndex,
     pub implementation_index: usize,
 }
 
@@ -597,7 +607,7 @@ impl MathOperator {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexMathOperatorCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -627,7 +637,7 @@ impl MathOperator {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct TheoremDefinition {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub arg_index: usize,
 }
 
@@ -646,7 +656,7 @@ impl TheoremDefinition {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexTheoremDefinitionCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -666,7 +676,7 @@ impl TheoremDefinition {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Section {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub arg_index: usize,
     pub level: i32,
     pub prefix: Cow<'static, str>,
@@ -685,7 +695,7 @@ impl Section {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &'static LatexSectionCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -707,7 +717,7 @@ impl Section {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Label {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub arg_index: usize,
     pub kind: LatexLabelKind,
 }
@@ -726,7 +736,7 @@ impl Label {
 
     fn parse_single(
         ctx: SymbolContext,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         desc: &LatexLabelCommand,
     ) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
@@ -747,7 +757,7 @@ impl Label {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LabelNumbering {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub number: String,
 }
 
@@ -763,7 +773,7 @@ impl LabelNumbering {
             .collect()
     }
 
-    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+    fn parse_single(ctx: SymbolContext, parent: AstNodeIndex) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
         if cmd.name.text() != "\\newlabel" {
             return None;
@@ -787,7 +797,7 @@ struct FirstText {
 }
 
 impl Visitor for FirstText {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
+    fn visit(&mut self, tree: &Tree, node: AstNodeIndex) {
         if let Some(text) = tree.as_text(node) {
             self.text = Some(text.words.iter().map(Token::text).join(" "));
         }
@@ -800,7 +810,7 @@ impl Visitor for FirstText {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Caption {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
     pub arg_index: usize,
 }
 
@@ -816,7 +826,7 @@ impl Caption {
             .collect()
     }
 
-    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+    fn parse_single(ctx: SymbolContext, parent: AstNodeIndex) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
         if cmd.name.text() != "\\caption" {
             return None;
@@ -832,7 +842,7 @@ impl Caption {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Item {
-    pub parent: NodeIndex,
+    pub parent: AstNodeIndex,
 }
 
 impl Item {
@@ -847,7 +857,7 @@ impl Item {
             .collect()
     }
 
-    fn parse_single(ctx: SymbolContext, parent: NodeIndex) -> Option<Self> {
+    fn parse_single(ctx: SymbolContext, parent: AstNodeIndex) -> Option<Self> {
         let cmd = ctx.tree.as_command(parent)?;
         if cmd.name.text() != "\\item" {
             return None;

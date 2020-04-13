@@ -1,6 +1,8 @@
 use super::ast::*;
-use crate::text::SyntaxNode;
-use petgraph::graph::{Graph, NodeIndex};
+use crate::{
+    generic_ast::{Ast, AstNodeIndex},
+    text::SyntaxNode,
+};
 use std::iter::Peekable;
 use texlab_protocol::{Range, RangeExt};
 
@@ -13,15 +15,15 @@ enum Scope {
 
 #[derive(Debug)]
 pub struct Parser<I: Iterator<Item = Token>> {
-    graph: Graph<Node, ()>,
+    tree: Ast<Node>,
     tokens: Peekable<I>,
 }
 
 impl<I: Iterator<Item = Token>> Parser<I> {
     pub fn new(tokens: I) -> Self {
         Self {
+            tree: Ast::new(),
             tokens: tokens.peekable(),
-            graph: Graph::new(),
         }
     }
 
@@ -31,20 +33,20 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         let range = if children.is_empty() {
             Range::new_simple(0, 0, 0, 0)
         } else {
-            let start = self.graph[children[0]].start();
-            let end = self.graph[children[children.len() - 1]].end();
+            let start = self.tree[children[0]].start();
+            let end = self.tree[children[children.len() - 1]].end();
             Range::new(start, end)
         };
 
-        let root = self.graph.add_node(Node::Root(Root { range }));
+        let root = self.tree.add_node(Node::Root(Root { range }));
         self.connect(root, &children);
         Tree {
-            graph: self.graph,
+            inner: self.tree,
             root,
         }
     }
 
-    fn content(&mut self, scope: Scope) -> Vec<NodeIndex> {
+    fn content(&mut self, scope: Scope) -> Vec<AstNodeIndex> {
         let mut children = Vec::new();
         while let Some(ref token) = self.tokens.peek() {
             match token.kind {
@@ -82,7 +84,7 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         children
     }
 
-    fn group(&mut self, kind: GroupKind) -> NodeIndex {
+    fn group(&mut self, kind: GroupKind) -> AstNodeIndex {
         let left = self.tokens.next().unwrap();
         let scope = match kind {
             GroupKind::Group => Scope::Group,
@@ -104,15 +106,11 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         let end = right
             .as_ref()
             .map(SyntaxNode::end)
-            .or_else(|| {
-                children
-                    .last()
-                    .map(|child| self.graph.node_weight(*child).unwrap().end())
-            })
+            .or_else(|| children.last().map(|child| self.tree[*child].end()))
             .unwrap_or_else(|| left.end());
         let range = Range::new(left.start(), end);
 
-        let node = self.graph.add_node(Node::Group(Group {
+        let node = self.tree.add_node(Node::Group(Group {
             range,
             left,
             kind,
@@ -122,7 +120,7 @@ impl<I: Iterator<Item = Token>> Parser<I> {
         node
     }
 
-    fn command(&mut self) -> NodeIndex {
+    fn command(&mut self) -> AstNodeIndex {
         let name = self.tokens.next().unwrap();
         let mut children = Vec::new();
         while let Some(token) = self.tokens.peek() {
@@ -135,16 +133,16 @@ impl<I: Iterator<Item = Token>> Parser<I> {
 
         let end = children
             .last()
-            .map(|child| self.graph.node_weight(*child).unwrap().end())
+            .map(|child| self.tree[*child].end())
             .unwrap_or_else(|| name.end());
         let range = Range::new(name.start(), end);
 
-        let node = self.graph.add_node(Node::Command(Command { range, name }));
+        let node = self.tree.add_node(Node::Command(Command { range, name }));
         self.connect(node, &children);
         node
     }
 
-    fn text(&mut self, scope: Scope) -> NodeIndex {
+    fn text(&mut self, scope: Scope) -> AstNodeIndex {
         let mut words = Vec::new();
         while let Some(ref token) = self.tokens.peek() {
             let kind = token.kind;
@@ -156,24 +154,24 @@ impl<I: Iterator<Item = Token>> Parser<I> {
             }
         }
         let range = Range::new(words[0].start(), words[words.len() - 1].end());
-        self.graph.add_node(Node::Text(Text { range, words }))
+        self.tree.add_node(Node::Text(Text { range, words }))
     }
 
-    fn comma(&mut self) -> NodeIndex {
+    fn comma(&mut self) -> AstNodeIndex {
         let token = self.tokens.next().unwrap();
         let range = token.range();
-        self.graph.add_node(Node::Comma(Comma { range, token }))
+        self.tree.add_node(Node::Comma(Comma { range, token }))
     }
 
-    fn math(&mut self) -> NodeIndex {
+    fn math(&mut self) -> AstNodeIndex {
         let token = self.tokens.next().unwrap();
         let range = token.range();
-        self.graph.add_node(Node::Math(Math { range, token }))
+        self.tree.add_node(Node::Math(Math { range, token }))
     }
 
-    fn connect(&mut self, parent: NodeIndex, children: &[NodeIndex]) {
+    fn connect(&mut self, parent: AstNodeIndex, children: &[AstNodeIndex]) {
         for child in children {
-            self.graph.add_edge(parent, *child, ());
+            self.tree.add_edge(parent, *child);
         }
     }
 

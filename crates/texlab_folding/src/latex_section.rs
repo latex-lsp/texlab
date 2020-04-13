@@ -22,9 +22,9 @@ impl FeatureProvider for LatexSectionFoldingProvider {
                     .skip(i + 1)
                     .find(|sec| current.level >= sec.level)
                 {
-                    let next_node = &table.tree.graph[next.parent];
+                    let next_node = &table[next.parent];
                     if next_node.start().line > 0 {
-                        let current_node = &table.tree.graph[current.parent];
+                        let current_node = &table[current.parent];
                         let folding = FoldingRange {
                             start_line: current_node.end().line,
                             start_character: Some(current_node.end().character),

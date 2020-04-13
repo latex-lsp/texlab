@@ -37,7 +37,7 @@ impl FeatureProvider for LatexLabelRenameProvider {
                 let edits = table
                     .labels
                     .iter()
-                    .flat_map(|label| label.names(&table.tree))
+                    .flat_map(|label| label.names(&table))
                     .filter(|label| label.text() == name.text)
                     .map(|label| TextEdit::new(label.range(), req.params.new_name.clone()))
                     .collect();
@@ -53,7 +53,7 @@ fn find_label(content: &DocumentContent, pos: Position) -> Option<&Span> {
         table
             .labels
             .iter()
-            .flat_map(|label| label.names(&table.tree))
+            .flat_map(|label| label.names(&table))
             .find(|label| label.range().contains(pos))
             .map(|label| &label.span)
     } else {

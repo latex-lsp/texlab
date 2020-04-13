@@ -1,7 +1,7 @@
 use super::{label_name, selection_range};
 use crate::types::{LatexSymbol, LatexSymbolKind};
 use texlab_feature::{DocumentView, OutlineCaptionKind, OutlineContext};
-use texlab_syntax::latex;
+use texlab_syntax::{latex, SyntaxNode};
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {
     table
@@ -19,17 +19,14 @@ fn make_symbol(
     let env = table
         .environments
         .iter()
-        .find(|env| table.is_direct_child(**env, table.tree.range(caption.parent).start))?;
+        .find(|env| table.is_direct_child(**env, table[caption.parent].start()))?;
 
-    let text = table.tree.print_group_content(
-        caption.parent,
-        latex::GroupKind::Group,
-        caption.arg_index,
-    )?;
+    let text =
+        table.print_group_content(caption.parent, latex::GroupKind::Group, caption.arg_index)?;
 
     let kind = env
         .left
-        .name(&table.tree)
+        .name(&table)
         .map(latex::Token::text)
         .and_then(OutlineCaptionKind::parse)?;
 
@@ -51,8 +48,8 @@ fn make_symbol(
             OutlineCaptionKind::Algorithm => LatexSymbolKind::Algorithm,
         },
         deprecated: false,
-        full_range: env.range(&table.tree),
-        selection_range: selection_range(table, env.range(&table.tree), label),
+        full_range: env.range(&table),
+        selection_range: selection_range(table, env.range(&table), label),
         children: Vec::new(),
     };
     Some(symbol)

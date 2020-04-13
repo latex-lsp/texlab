@@ -45,9 +45,8 @@ pub fn open(params: OpenParams) -> SymbolTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::text::SyntaxNode;
+    use crate::{generic_ast::AstNodeIndex, text::SyntaxNode};
     use indoc::indoc;
-    use petgraph::graph::NodeIndex;
     use std::env;
     use texlab_protocol::{Options, Range, RangeExt, Uri};
     use texlab_tex::Resolver;
@@ -64,11 +63,11 @@ mod tests {
 
     #[derive(Debug, Default)]
     struct TreeTraversal {
-        nodes: Vec<NodeIndex>,
+        nodes: Vec<AstNodeIndex>,
     }
 
     impl Visitor for TreeTraversal {
-        fn visit(&mut self, tree: &Tree, node: NodeIndex) {
+        fn visit(&mut self, tree: &Tree, node: AstNodeIndex) {
             self.nodes.push(node);
             tree.walk(self, node);
         }
@@ -85,7 +84,7 @@ mod tests {
             let actual_ranges: Vec<_> = traversal
                 .nodes
                 .into_iter()
-                .map(|node| table.tree.graph[node].range())
+                .map(|node| table[node].range())
                 .collect();
             assert_eq!(actual_ranges, expected_ranges);
         }

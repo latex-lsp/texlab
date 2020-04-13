@@ -1,7 +1,6 @@
 use futures::lock::Mutex;
 use log::{debug, error, warn};
 use petgraph::{graph::Graph, visit::Dfs};
-use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     error,
@@ -29,7 +28,7 @@ pub struct DocumentParams<'a> {
     pub current_dir: &'a Path,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum DocumentContent {
     Latex(Box<latex::SymbolTable>),
     Bibtex(Box<bibtex::Tree>),
@@ -53,7 +52,7 @@ impl DocumentContent {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Document {
     pub uri: Uri,
     pub text: String,
@@ -116,7 +115,7 @@ impl Hash for Document {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Snapshot(pub Vec<Arc<Document>>);
 
 impl Snapshot {
@@ -199,7 +198,7 @@ impl Snapshot {
                 table
                     .includes
                     .iter()
-                    .filter(|include| Self::should_expand_include(&table.tree, include))
+                    .filter(|include| Self::should_expand_include(&table, include))
                     .flat_map(|include| include.all_targets.iter())
                     .filter(|targets| targets.iter().all(|target| self.find(target).is_none()))
                     .flatten()

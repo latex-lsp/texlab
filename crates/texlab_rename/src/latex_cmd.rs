@@ -37,7 +37,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
                 let edits = table
                     .commands
                     .iter()
-                    .filter_map(|node| table.tree.as_command(*node))
+                    .filter_map(|node| table.as_command(*node))
                     .filter(|cmd| cmd.name.text() == cmd_name)
                     .map(|cmd| {
                         TextEdit::new(cmd.name.range(), format!("\\{}", req.params.new_name))
@@ -52,9 +52,7 @@ impl FeatureProvider for LatexCommandRenameProvider {
 
 fn find_command(content: &DocumentContent, pos: Position) -> Option<&latex::Command> {
     if let DocumentContent::Latex(table) = &content {
-        table
-            .tree
-            .as_command(table.tree.find_command_by_short_name_range(pos)?)
+        table.as_command(table.find_command_by_short_name_range(pos)?)
     } else {
         None
     }

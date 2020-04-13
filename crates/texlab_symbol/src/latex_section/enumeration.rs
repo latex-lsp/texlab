@@ -2,14 +2,14 @@ use super::{label_name, selection_range};
 use crate::types::{LatexSymbol, LatexSymbolKind};
 use texlab_feature::{DocumentView, OutlineContext};
 use texlab_protocol::{Range, RangeExt};
-use texlab_syntax::latex;
+use texlab_syntax::{latex, SyntaxNode};
 use titlecase::titlecase;
 
 pub fn symbols(view: &DocumentView, table: &latex::SymbolTable) -> Vec<LatexSymbol> {
     table
         .environments
         .iter()
-        .filter(|env| env.left.is_enum(&table.tree))
+        .filter(|env| env.left.is_enum(&table))
         .map(|enumeration| make_symbol(view, table, *enumeration))
         .collect()
 }
@@ -19,7 +19,7 @@ fn make_symbol(
     table: &latex::SymbolTable,
     enumeration: latex::Environment,
 ) -> LatexSymbol {
-    let name = titlecase(enumeration.left.name(&table.tree).unwrap().text());
+    let name = titlecase(enumeration.left.name(&table).unwrap().text());
 
     let items: Vec<_> = table
         .items
@@ -29,17 +29,17 @@ fn make_symbol(
 
     let mut children = Vec::new();
     for i in 0..items.len() {
-        let start = table.tree.range(items[i].parent).start;
+        let start = table[items[i].parent].start();
         let end = items
             .get(i + 1)
-            .map(|item| table.tree.range(item.parent).start)
-            .unwrap_or_else(|| table.tree.range(enumeration.right.parent).start);
+            .map(|item| table[item.parent].start())
+            .unwrap_or_else(|| table[enumeration.right.parent].start());
         let range = Range::new(start, end);
 
         let label = find_item_label(table, range);
 
         let number = items[i]
-            .name(&table.tree)
+            .name(&table)
             .or_else(|| label.and_then(|label| OutlineContext::find_number(view, table, *label)));
 
         let name = number.unwrap_or_else(|| "Item".into());
@@ -49,7 +49,7 @@ fn make_symbol(
             kind: LatexSymbolKind::EnumerationItem,
             deprecated: false,
             full_range: range,
-            selection_range: selection_range(table, table.tree.range(items[i].parent), label),
+            selection_range: selection_range(table, table[items[i].parent].range(), label),
             children: Vec::new(),
         });
     }
@@ -59,8 +59,8 @@ fn make_symbol(
         label: None,
         kind: LatexSymbolKind::Enumeration,
         deprecated: false,
-        full_range: enumeration.range(&table.tree),
-        selection_range: enumeration.range(&table.tree),
+        full_range: enumeration.range(&table),
+        selection_range: enumeration.range(&table),
         children,
     }
 }
@@ -70,10 +70,7 @@ fn find_item_label(table: &latex::SymbolTable, item_range: Range) -> Option<&lat
         table
             .environments
             .iter()
-            .filter(|env| item_range.contains(env.range(&table.tree).start))
-            .all(|env| {
-                !env.range(&table.tree)
-                    .contains(table.tree.range(label.parent).start)
-            })
+            .filter(|env| item_range.contains(env.range(&table).start))
+            .all(|env| !env.range(&table).contains(table[label.parent].start()))
     })
 }

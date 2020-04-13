@@ -38,7 +38,7 @@ impl FeatureProvider for BibtexEntryRenameProvider {
                 DocumentContent::Latex(table) => table
                     .citations
                     .iter()
-                    .flat_map(|citation| citation.keys(&table.tree))
+                    .flat_map(|citation| citation.keys(&table))
                     .filter(|citation| citation.text() == key_name.text)
                     .map(|citation| TextEdit::new(citation.range(), req.params.new_name.clone()))
                     .collect(),
@@ -61,7 +61,7 @@ fn find_key(content: &DocumentContent, pos: Position) -> Option<&Span> {
         DocumentContent::Latex(table) => table
             .citations
             .iter()
-            .flat_map(|citation| citation.keys(&table.tree))
+            .flat_map(|citation| citation.keys(&table))
             .find(|key| key.range().contains(pos))
             .map(|key| &key.span),
         DocumentContent::Bibtex(tree) => tree

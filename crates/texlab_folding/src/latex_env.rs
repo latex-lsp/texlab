@@ -15,8 +15,8 @@ impl FeatureProvider for LatexEnvironmentFoldingProvider {
         let mut foldings = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {
             for env in &table.environments {
-                let left_node = &table.tree.graph[env.left.parent];
-                let right_node = &table.tree.graph[env.right.parent];
+                let left_node = &table[env.left.parent];
+                let right_node = &table[env.right.parent];
                 let folding = FoldingRange {
                     start_line: left_node.end().line,
                     start_character: Some(left_node.end().character),

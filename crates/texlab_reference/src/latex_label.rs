@@ -20,7 +20,7 @@ impl FeatureProvider for LatexLabelReferenceProvider {
                         .labels
                         .iter()
                         .filter(|label| Self::is_included(req, label))
-                        .flat_map(|label| label.names(&table.tree))
+                        .flat_map(|label| label.names(&table))
                         .filter(|label| label.text() == def)
                         .map(|label| Location::new(doc.uri.clone().into(), label.range()))
                         .for_each(|location| refs.push(location));
@@ -38,7 +38,7 @@ impl LatexLabelReferenceProvider {
             table
                 .labels
                 .iter()
-                .flat_map(|label| label.names(&table.tree))
+                .flat_map(|label| label.names(&table))
                 .find(|label| label.range().contains(pos))
                 .map(latex::Token::text)
         } else {

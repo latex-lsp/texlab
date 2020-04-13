@@ -31,11 +31,11 @@ impl<F> OrderByQualityCompletionProvider<F> {
                     cmd.name.text()[1..].to_owned().into()
                 }
 
-                if let Some(node) = table.tree.find_command_by_short_name_range(pos) {
-                    return Some(command_query(table.tree.as_command(node).unwrap()));
+                if let Some(node) = table.find_command_by_short_name_range(pos) {
+                    return Some(command_query(table.as_command(node).unwrap()));
                 }
 
-                match &table.tree.graph[table.tree.find(pos).into_iter().last()?] {
+                match &table[table.find(pos).into_iter().last()?] {
                     latex::Node::Root(_) | latex::Node::Group(_) => Some("".into()),
                     latex::Node::Command(cmd) => Some(command_query(cmd)),
                     latex::Node::Text(text) => text

@@ -15,19 +15,18 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
         let mut links = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {
             if let Some(cmd) = table
-                .tree
                 .find(req.params.position)
                 .last()
-                .and_then(|node| table.tree.as_command(*node))
+                .and_then(|node| table.as_command(*node))
             {
                 for doc in req.related() {
                     if let DocumentContent::Latex(table) = &doc.content {
                         table
                             .command_definitions
                             .iter()
-                            .filter(|def| def.definition_name(&table.tree) == cmd.name.text())
+                            .filter(|def| def.definition_name(&table) == cmd.name.text())
                             .map(|def| {
-                                let def_range = table.tree.range(def.parent);
+                                let def_range = table[def.parent].range();
                                 LocationLink {
                                     origin_selection_range: Some(cmd.range()),
                                     target_uri: doc.uri.clone().into(),
@@ -40,9 +39,9 @@ impl FeatureProvider for LatexCommandDefinitionProvider {
                         table
                             .math_operators
                             .iter()
-                            .filter(|op| op.definition_name(&table.tree) == cmd.name.text())
+                            .filter(|op| op.definition_name(&table) == cmd.name.text())
                             .map(|op| {
-                                let def_range = table.tree.range(op.parent);
+                                let def_range = table[op.parent].range();
                                 LocationLink {
                                     origin_selection_range: Some(cmd.range()),
                                     target_uri: doc.uri.clone().into(),

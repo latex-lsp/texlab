@@ -19,7 +19,7 @@ impl FeatureProvider for BibtexEntryReferenceProvider {
                     DocumentContent::Latex(table) => table
                         .citations
                         .iter()
-                        .flat_map(|citation| citation.keys(&table.tree))
+                        .flat_map(|citation| citation.keys(&table))
                         .filter(|citation| citation.text() == key)
                         .map(|citation| Location::new(doc.uri.clone().into(), citation.range()))
                         .for_each(|location| refs.push(location)),
@@ -48,7 +48,7 @@ impl BibtexEntryReferenceProvider {
             DocumentContent::Latex(table) => table
                 .citations
                 .iter()
-                .flat_map(|citation| citation.keys(&table.tree))
+                .flat_map(|citation| citation.keys(&table))
                 .find(|key| key.range().contains(pos))
                 .map(latex::Token::text),
             DocumentContent::Bibtex(tree) => tree

@@ -35,9 +35,9 @@ impl FeatureProvider for LatexLabelHoverProvider {
 impl LatexLabelHoverProvider {
     fn find_reference(table: &latex::SymbolTable, pos: Position) -> Option<&latex::Token> {
         for label in &table.labels {
-            let names = label.names(&table.tree);
-            if names.len() == 1 && table.tree.range(label.parent).contains(pos) {
-                return Some(&label.names(&table.tree)[0]);
+            let names = label.names(&table);
+            if names.len() == 1 && table[label.parent].range().contains(pos) {
+                return Some(&label.names(&table)[0]);
             }
 
             for name in &names {
@@ -57,7 +57,7 @@ impl LatexLabelHoverProvider {
             if let DocumentContent::Latex(table) = &doc.content {
                 for label in &table.labels {
                     if label.kind == LatexLabelKind::Definition {
-                        for name in label.names(&table.tree) {
+                        for name in label.names(&table) {
                             if name.text() == reference.text() {
                                 return Some((Arc::clone(&doc), *label));
                             }

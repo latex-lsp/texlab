@@ -1,7 +1,9 @@
-use crate::text::{Span, SyntaxNode};
-use itertools::Itertools;
-use petgraph::graph::{Graph, NodeIndex};
+use crate::{
+    generic_ast::{Ast, AstNodeIndex},
+    text::{Span, SyntaxNode},
+};
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use texlab_protocol::{Position, Range, RangeExt};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -151,36 +153,34 @@ impl SyntaxNode for Node {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Tree {
-    pub graph: Graph<Node, ()>,
-    pub root: NodeIndex,
+    pub inner: Ast<Node>,
+    pub root: AstNodeIndex,
+}
+
+impl Deref for Tree {
+    type Target = Ast<Node>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
 }
 
 impl Tree {
-    pub fn range(&self, node: NodeIndex) -> Range {
-        self.graph[node].range()
-    }
-
-    pub fn children(&self, parent: NodeIndex) -> impl Iterator<Item = NodeIndex> {
-        self.graph
-            .neighbors(parent)
-            .sorted_by_key(|child| self.graph[*child].start())
-    }
-
-    pub fn walk<V: Visitor>(&self, visitor: &mut V, parent: NodeIndex) {
+    pub fn walk<V: Visitor>(&self, visitor: &mut V, parent: AstNodeIndex) {
         for child in self.children(parent) {
             visitor.visit(self, child);
         }
     }
 
-    pub fn find(&self, pos: Position) -> Vec<NodeIndex> {
+    pub fn find(&self, pos: Position) -> Vec<AstNodeIndex> {
         let mut finder = Finder::new(pos);
         finder.visit(self, self.root);
         finder.results
     }
 
-    pub fn find_command_by_short_name_range(&self, pos: Position) -> Option<NodeIndex> {
+    pub fn find_command_by_short_name_range(&self, pos: Position) -> Option<AstNodeIndex> {
         self.find(pos).into_iter().find(|node| {
             self.as_command(*node)
                 .filter(|cmd| {
@@ -190,46 +190,46 @@ impl Tree {
         })
     }
 
-    pub fn print(&self, node: NodeIndex) -> String {
-        let start_position = self.graph[node].start();
+    pub fn print(&self, node: AstNodeIndex) -> String {
+        let start_position = self[node].start();
         let mut printer = Printer::new(start_position);
         printer.visit(self, node);
         printer.output
     }
 
-    pub fn commands(&self) -> impl Iterator<Item = NodeIndex> {
-        self.graph
-            .node_indices()
-            .filter(|node| self.as_command(*node).is_some())
-            .sorted_by_key(|node| self.as_command(*node).unwrap().start())
+    pub fn commands<'a>(&'a self) -> impl Iterator<Item = AstNodeIndex> + 'a {
+        self.inner
+            .nodes()
+            .into_iter()
+            .filter(move |node| self.as_command(*node).is_some())
     }
 
-    pub fn as_group(&self, node: NodeIndex) -> Option<&Group> {
-        if let Node::Group(group) = &self.graph[node] {
+    pub fn as_group(&self, node: AstNodeIndex) -> Option<&Group> {
+        if let Node::Group(group) = &self[node] {
             Some(group)
         } else {
             None
         }
     }
 
-    pub fn as_command(&self, node: NodeIndex) -> Option<&Command> {
-        if let Node::Command(cmd) = &self.graph[node] {
+    pub fn as_command(&self, node: AstNodeIndex) -> Option<&Command> {
+        if let Node::Command(cmd) = &self[node] {
             Some(cmd)
         } else {
             None
         }
     }
 
-    pub fn as_text(&self, node: NodeIndex) -> Option<&Text> {
-        if let Node::Text(text) = &self.graph[node] {
+    pub fn as_text(&self, node: AstNodeIndex) -> Option<&Text> {
+        if let Node::Text(text) = &self[node] {
             Some(text)
         } else {
             None
         }
     }
 
-    pub fn as_math(&self, node: NodeIndex) -> Option<&Math> {
-        if let Node::Math(math) = &self.graph[node] {
+    pub fn as_math(&self, node: AstNodeIndex) -> Option<&Math> {
+        if let Node::Math(math) = &self[node] {
             Some(math)
         } else {
             None
@@ -238,10 +238,10 @@ impl Tree {
 
     pub fn extract_group(
         &self,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         group_kind: GroupKind,
         index: usize,
-    ) -> Option<NodeIndex> {
+    ) -> Option<AstNodeIndex> {
         self.children(parent)
             .filter(|child| {
                 self.as_group(*child)
@@ -253,7 +253,7 @@ impl Tree {
 
     pub fn extract_text(
         &self,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         group_kind: GroupKind,
         index: usize,
     ) -> Option<&Text> {
@@ -269,7 +269,7 @@ impl Tree {
 
     pub fn extract_word(
         &self,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         group_kind: GroupKind,
         index: usize,
     ) -> Option<&Token> {
@@ -283,14 +283,14 @@ impl Tree {
 
     pub fn extract_comma_separated_words(
         &self,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         group_kind: GroupKind,
         index: usize,
     ) -> Option<Vec<&Token>> {
         let group = self.extract_group(parent, group_kind, index)?;
         let mut words = Vec::new();
         for child in self.children(group) {
-            match &self.graph[child] {
+            match &self[child] {
                 Node::Root(_) | Node::Group(_) | Node::Command(_) | Node::Math(_) => return None,
                 Node::Text(text) => {
                     for word in &text.words {
@@ -305,7 +305,7 @@ impl Tree {
 
     pub fn print_group_content(
         &self,
-        parent: NodeIndex,
+        parent: AstNodeIndex,
         group_kind: GroupKind,
         index: usize,
     ) -> Option<String> {
@@ -317,13 +317,13 @@ impl Tree {
 }
 
 pub trait Visitor {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex);
+    fn visit(&mut self, tree: &Tree, node: AstNodeIndex);
 }
 
 #[derive(Debug)]
 struct Finder {
     position: Position,
-    results: Vec<NodeIndex>,
+    results: Vec<AstNodeIndex>,
 }
 
 impl Finder {
@@ -336,8 +336,8 @@ impl Finder {
 }
 
 impl Visitor for Finder {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
-        if tree.graph[node].range().contains(self.position) {
+    fn visit(&mut self, tree: &Tree, node: AstNodeIndex) {
+        if tree[node].range().contains(self.position) {
             self.results.push(node);
             tree.walk(self, node);
         }
@@ -382,8 +382,8 @@ impl Printer {
 }
 
 impl Visitor for Printer {
-    fn visit(&mut self, tree: &Tree, node: NodeIndex) {
-        match &tree.graph[node] {
+    fn visit(&mut self, tree: &Tree, node: AstNodeIndex) {
+        match &tree[node] {
             Node::Root(_) => tree.walk(self, node),
             Node::Group(group) => {
                 self.print_token(&group.left);

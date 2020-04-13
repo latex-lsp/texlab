@@ -55,8 +55,8 @@ fn find_environment(
 ) -> Option<(&latex::Token, &latex::Token)> {
     if let DocumentContent::Latex(table) = content {
         for env in &table.environments {
-            if let Some(left_name) = env.left.name(&table.tree) {
-                if let Some(right_name) = env.right.name(&table.tree) {
+            if let Some(left_name) = env.left.name(&table) {
+                if let Some(right_name) = env.right.name(&table) {
                     if left_name.range().contains(pos) || right_name.range().contains(pos) {
                         return Some((left_name, right_name));
                     }

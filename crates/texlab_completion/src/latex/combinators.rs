@@ -1,8 +1,7 @@
-use petgraph::graph::NodeIndex;
 use std::future::Future;
 use texlab_feature::{DocumentContent, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt};
-use texlab_syntax::{latex, SyntaxNode, LANGUAGE_DATA};
+use texlab_syntax::{latex, AstNodeIndex, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Parameter<'a> {
@@ -15,14 +14,12 @@ pub async fn command<E, F>(
     execute: E,
 ) -> Vec<CompletionItem>
 where
-    E: FnOnce(NodeIndex) -> F,
+    E: FnOnce(AstNodeIndex) -> F,
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let DocumentContent::Latex(table) = &req.current().content {
-        if let Some(cmd) = table
-            .tree
-            .find_command_by_short_name_range(req.params.text_document_position.position)
-        {
+        let pos = req.params.text_document_position.position;
+        if let Some(cmd) = table.find_command_by_short_name_range(pos) {
             return execute(cmd).await;
         }
     }
@@ -32,7 +29,7 @@ where
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ArgumentContext<'a> {
     pub parameter: Parameter<'a>,
-    pub node: NodeIndex,
+    pub node: AstNodeIndex,
     pub range: Range,
 }
 
@@ -49,25 +46,22 @@ where
     if let DocumentContent::Latex(table) = &req.current().content {
         let pos = req.params.text_document_position.position;
         if let Some(node) = find_command(&table, pos) {
-            let cmd = table.tree.as_command(node).unwrap();
+            let cmd = table.as_command(node).unwrap();
             for parameter in parameters
                 .by_ref()
                 .filter(|param| param.name == cmd.name.text())
             {
                 if let Some(args_node) =
-                    table
-                        .tree
-                        .extract_group(node, latex::GroupKind::Group, parameter.index)
+                    table.extract_group(node, latex::GroupKind::Group, parameter.index)
                 {
-                    let args = table.tree.as_group(args_node).unwrap();
+                    let args = table.as_group(args_node).unwrap();
                     if args.right.is_some() && !args.range().contains_exclusive(pos) {
                         continue;
                     }
 
                     let range = table
-                        .tree
                         .children(args_node)
-                        .filter_map(|child| table.tree.as_text(child))
+                        .filter_map(|child| table.as_text(child))
                         .flat_map(|text| text.words.iter())
                         .map(|word| word.range())
                         .find(|range| range.contains(pos))
@@ -93,30 +87,27 @@ pub async fn argument_word<'a, I, E, F>(
 ) -> Vec<CompletionItem>
 where
     I: Iterator<Item = Parameter<'a>>,
-    E: FnOnce(NodeIndex, usize) -> F,
+    E: FnOnce(AstNodeIndex, usize) -> F,
     F: Future<Output = Vec<CompletionItem>>,
 {
     if let DocumentContent::Latex(table) = &req.current().content {
         let pos = req.params.text_document_position.position;
         if let Some(node) = find_command(&table, pos) {
-            let cmd = table.tree.as_command(node).unwrap();
+            let cmd = table.as_command(node).unwrap();
             for parameter in parameters
                 .by_ref()
                 .filter(|param| param.name == cmd.name.text())
             {
                 if let Some(args_node) =
-                    table
-                        .tree
-                        .extract_group(node, latex::GroupKind::Group, parameter.index)
+                    table.extract_group(node, latex::GroupKind::Group, parameter.index)
                 {
-                    let args = table.tree.as_group(args_node).unwrap();
+                    let args = table.as_group(args_node).unwrap();
                     if args.right.is_some() && !args.range().contains_exclusive(pos) {
                         continue;
                     }
 
-                    if table.tree.children(args_node).next().is_some()
+                    if table.children(args_node).next().is_some()
                         && table
-                            .tree
                             .extract_word(node, latex::GroupKind::Group, parameter.index)
                             .is_none()
                     {
@@ -149,11 +140,10 @@ where
     argument(req, parameters, execute).await
 }
 
-fn find_command(table: &latex::SymbolTable, pos: Position) -> Option<NodeIndex> {
+fn find_command(table: &latex::SymbolTable, pos: Position) -> Option<AstNodeIndex> {
     table
-        .tree
         .find(pos)
         .into_iter()
         .rev()
-        .find(|node| table.tree.as_command(*node).is_some())
+        .find(|node| table.as_command(*node).is_some())
 }

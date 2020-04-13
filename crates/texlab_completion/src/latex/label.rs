@@ -6,7 +6,7 @@ use texlab_feature::{
     DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Outline, OutlineContext,
 };
 use texlab_protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit};
-use texlab_syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, LANGUAGE_DATA};
+use texlab_syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, SyntaxNode, LANGUAGE_DATA};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelCompletionProvider;
@@ -47,7 +47,7 @@ impl FeatureProvider for LatexLabelCompletionProvider {
                         .filter(|label| Self::is_included(&table, label, source))
                     {
                         let outline_context = OutlineContext::parse(&view, &outline, *label);
-                        for name in label.names(&table.tree) {
+                        for name in label.names(&table) {
                             let text = name.text().to_owned();
                             let text_edit = TextEdit::new(ctx.range, text.clone());
                             let item =
@@ -82,14 +82,14 @@ impl LatexLabelCompletionProvider {
         label: &latex::Label,
         source: LatexLabelReferenceSource,
     ) -> bool {
-        let label_range = table.tree.range(label.parent);
+        let label_range = table[label.parent].range();
         match source {
             LatexLabelReferenceSource::Everything => true,
             LatexLabelReferenceSource::Math => table
                 .environments
                 .iter()
-                .filter(|env| env.left.is_math(&table.tree))
-                .any(|env| env.range(&table.tree).contains_exclusive(label_range.start)),
+                .filter(|env| env.left.is_math(&table))
+                .any(|env| env.range(&table).contains_exclusive(label_range.start)),
         }
     }
 }

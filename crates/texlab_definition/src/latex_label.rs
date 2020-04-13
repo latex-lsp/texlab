@@ -46,7 +46,7 @@ impl LatexLabelDefinitionProvider {
             table
                 .labels
                 .iter()
-                .flat_map(|label| label.names(&table.tree))
+                .flat_map(|label| label.names(&table))
                 .find(|label| label.range().contains(req.params.position))
         } else {
             None
@@ -66,7 +66,7 @@ impl LatexLabelDefinitionProvider {
             for label in &table.labels {
                 if label.kind == LatexLabelKind::Definition {
                     let context = OutlineContext::parse(view, &outline, *label);
-                    for name in label.names(&table.tree) {
+                    for name in label.names(&table) {
                         if name.text() == reference.text() {
                             let target_range = if let Some(OutlineContextItem::Section { .. }) =
                                 context.as_ref().map(|ctx| &ctx.item)
@@ -82,8 +82,8 @@ impl LatexLabelDefinitionProvider {
                                 origin_selection_range: Some(reference.range()),
                                 target_uri: view.current.uri.clone().into(),
                                 target_range: target_range
-                                    .unwrap_or_else(|| table.tree.range(label.parent)),
-                                target_selection_range: table.tree.range(label.parent),
+                                    .unwrap_or_else(|| table[label.parent].range()),
+                                target_selection_range: table[label.parent].range(),
                             });
                         }
                     }

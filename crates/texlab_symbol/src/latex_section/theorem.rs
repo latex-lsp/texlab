@@ -17,14 +17,13 @@ fn make_symbol(
     main_table: &latex::SymbolTable,
     env: latex::Environment,
 ) -> Option<LatexSymbol> {
-    let env_name = env.left.name(&main_table.tree).map(latex::Token::text)?;
+    let env_name = env.left.name(&main_table).map(latex::Token::text)?;
 
     for document in &view.related {
         if let DocumentContent::Latex(table) = &document.content {
             for definition in &table.theorem_definitions {
-                if definition.name(&table.tree).text() == env_name {
+                if definition.name(&table).text() == env_name {
                     let kind = table
-                        .tree
                         .print_group_content(
                             definition.parent,
                             latex::GroupKind::Group,
@@ -32,11 +31,8 @@ fn make_symbol(
                         )
                         .unwrap_or_else(|| titlecase(env_name));
 
-                    let desc = table.tree.print_group_content(
-                        env.left.parent,
-                        latex::GroupKind::Options,
-                        0,
-                    );
+                    let desc =
+                        table.print_group_content(env.left.parent, latex::GroupKind::Options, 0);
 
                     let label = main_table.find_label_by_environment(env);
                     let number = label
@@ -54,12 +50,8 @@ fn make_symbol(
                         label: label_name(main_table, label),
                         kind: LatexSymbolKind::Theorem,
                         deprecated: false,
-                        full_range: env.range(&main_table.tree),
-                        selection_range: selection_range(
-                            main_table,
-                            env.range(&main_table.tree),
-                            label,
-                        ),
+                        full_range: env.range(&main_table),
+                        selection_range: selection_range(main_table, env.range(&main_table), label),
                         children: Vec::new(),
                     };
                     return Some(symbol);

@@ -26,7 +26,7 @@ impl<'a> Outline<'a> {
             .rev()
             .find(|section| {
                 let table = section.document.content.as_latex().unwrap();
-                table.tree.graph[section.item.parent].end() <= pos
+                table[section.item.parent].end() <= pos
             })
             .map(|sec| sec.item)
     }
@@ -78,8 +78,8 @@ impl<'a> OutlineSectionFinder<'a> {
                 items.push(OutlineItem::Include(include));
             }
             items.sort_by_key(|item| match item {
-                OutlineItem::Include(include) => table.tree.graph[include.parent].start(),
-                OutlineItem::Section(section) => table.tree.graph[section.parent].start(),
+                OutlineItem::Include(include) => table[include.parent].start(),
+                OutlineItem::Section(section) => table[section.parent].start(),
             });
 
             for item in items {
@@ -243,19 +243,19 @@ impl OutlineContext {
         table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = table.tree.graph[label.parent].range();
+        let label_range = table[label.parent].range();
         let caption_env = table
             .environments
             .iter()
-            .filter(|env| !env.is_root(&table.tree))
-            .find(|env| env.range(&table.tree).contains(label_range.start))?;
+            .filter(|env| !env.is_root(&table))
+            .find(|env| env.range(&table).contains(label_range.start))?;
 
         let caption = table
             .captions
             .iter()
-            .find(|cap| table.is_direct_child(*caption_env, table.tree.range(cap.parent).start))?;
+            .find(|cap| table.is_direct_child(*caption_env, table[cap.parent].start()))?;
 
-        let caption_text = table.tree.print_group_content(
+        let caption_text = table.print_group_content(
             caption.parent,
             latex::GroupKind::Group,
             caption.arg_index,
@@ -263,12 +263,12 @@ impl OutlineContext {
 
         let caption_kind = caption_env
             .left
-            .name(&table.tree)
+            .name(&table)
             .map(latex::Token::text)
             .and_then(OutlineCaptionKind::parse);
 
         Some(Self {
-            range: caption_env.range(&table.tree),
+            range: caption_env.range(&table),
             number: Self::find_number(view, table, label),
             item: Caption {
                 kind: caption_kind,
@@ -282,20 +282,19 @@ impl OutlineContext {
         main_table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = main_table.tree.range(label.parent);
+        let label_range = main_table[label.parent].range();
         let env = main_table
             .environments
             .iter()
-            .find(|env| env.range(&main_table.tree).contains(label_range.start))?;
+            .find(|env| env.range(&main_table).contains(label_range.start))?;
 
-        let env_name = env.left.name(&main_table.tree).map(latex::Token::text)?;
+        let env_name = env.left.name(&main_table).map(latex::Token::text)?;
 
         for doc in &view.related {
             if let DocumentContent::Latex(table) = &doc.content {
                 for def in &table.theorem_definitions {
-                    if env_name == def.name(&table.tree).text() {
+                    if env_name == def.name(&table).text() {
                         let kind = table
-                            .tree
                             .print_group_content(
                                 def.parent,
                                 latex::GroupKind::Group,
@@ -303,14 +302,14 @@ impl OutlineContext {
                             )
                             .unwrap_or_else(|| titlecase(&env_name));
 
-                        let description = main_table.tree.print_group_content(
+                        let description = main_table.print_group_content(
                             env.left.parent,
                             latex::GroupKind::Options,
                             0,
                         );
 
                         return Some(Self {
-                            range: env.range(&main_table.tree),
+                            range: env.range(&main_table),
                             number: Self::find_number(view, main_table, label),
                             item: Theorem { kind, description },
                         });
@@ -326,12 +325,12 @@ impl OutlineContext {
         table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = table.tree.range(label.parent);
+        let label_range = table[label.parent].range();
         table
             .environments
             .iter()
-            .filter(|env| env.left.is_math(&table.tree))
-            .map(|env| env.range(&table.tree))
+            .filter(|env| env.left.is_math(&table))
+            .map(|env| env.range(&table))
             .find(|range| range.contains(label_range.start))
             .map(|range| Self {
                 range,
@@ -345,7 +344,7 @@ impl OutlineContext {
         table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = table.tree.range(label.parent);
+        let label_range = table[label.parent].range();
         struct LatexItemNode {
             item: latex::Item,
             range: Range,
@@ -354,8 +353,8 @@ impl OutlineContext {
         let enumeration = table
             .environments
             .iter()
-            .filter(|env| env.left.is_enum(&table.tree))
-            .find(|env| env.range(&table.tree).contains(label_range.start))?;
+            .filter(|env| env.left.is_enum(&table))
+            .find(|env| env.range(&table).contains(label_range.start))?;
 
         let mut item_nodes: Vec<_> = table
             .items
@@ -368,11 +367,11 @@ impl OutlineContext {
             .collect();
 
         for i in 0..item_nodes.len() {
-            let start = table.tree.range(item_nodes[i].item.parent).start;
+            let start = table[item_nodes[i].item.parent].start();
             let end = item_nodes
                 .get(i + 1)
-                .map(|node| table.tree.range(node.item.parent).start)
-                .unwrap_or_else(|| table.tree.range(enumeration.right.parent).start);
+                .map(|node| table[node.item.parent].start())
+                .unwrap_or_else(|| table[enumeration.right.parent].start());
             item_nodes[i].range = Range::new(start, end);
         }
 
@@ -382,11 +381,11 @@ impl OutlineContext {
 
         let number = node
             .item
-            .name(&table.tree)
+            .name(&table)
             .or_else(|| Self::find_number(view, table, label));
 
         Some(Self {
-            range: enumeration.range(&table.tree),
+            range: enumeration.range(&table),
             number,
             item: Item,
         })
@@ -398,14 +397,14 @@ impl OutlineContext {
         table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<Self> {
-        let label_range = table.tree.range(label.parent);
+        let label_range = table[label.parent].range();
         let section = outline.find(&view.current.uri, label_range.start)?;
         Some(Self {
-            range: table.tree.range(section.parent),
+            range: table[section.parent].range(),
             number: Self::find_number(view, table, label),
             item: Section {
                 prefix: section.prefix.clone(),
-                text: table.tree.print_group_content(
+                text: table.print_group_content(
                     section.parent,
                     latex::GroupKind::Group,
                     section.arg_index,
@@ -419,7 +418,7 @@ impl OutlineContext {
         table: &latex::SymbolTable,
         label: latex::Label,
     ) -> Option<String> {
-        let label_names = label.names(&table.tree);
+        let label_names = label.names(&table);
         if label_names.len() != 1 {
             return None;
         }
@@ -427,7 +426,7 @@ impl OutlineContext {
         for doc in &view.related {
             if let DocumentContent::Latex(table) = &doc.content {
                 for numbering in &table.label_numberings {
-                    if numbering.name(&table.tree).text() == label_names[0].text() {
+                    if numbering.name(&table).text() == label_names[0].text() {
                         return Some(numbering.number.clone());
                     }
                 }
