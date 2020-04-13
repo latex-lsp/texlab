@@ -1,5 +1,5 @@
-use crate::workspace::{Document, DocumentContent};
 use petgraph::graph::NodeIndex;
+use texlab_feature::{Document, DocumentContent};
 use texlab_protocol::{Diagnostic, DiagnosticSeverity, Position, Range};
 use texlab_syntax::{bibtex, SyntaxNode};
 

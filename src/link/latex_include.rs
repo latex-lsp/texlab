@@ -1,8 +1,5 @@
-use crate::{
-    feature::{FeatureProvider, FeatureRequest},
-    workspace::DocumentContent,
-};
 use futures_boxed::boxed;
+use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 use texlab_syntax::{latex, SyntaxNode};
 
@@ -54,7 +51,7 @@ impl LatexIncludeLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
+    use texlab_feature::FeatureTester;
     use texlab_protocol::{Range, RangeExt};
 
     #[tokio::test]

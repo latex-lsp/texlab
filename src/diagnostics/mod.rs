@@ -8,7 +8,7 @@ pub use self::{
     latex::LatexDiagnosticsProvider,
 };
 
-use crate::workspace::Document;
+use texlab_feature::Document;
 use texlab_protocol::Diagnostic;
 
 #[derive(Debug, Default)]

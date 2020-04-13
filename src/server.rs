@@ -1,19 +1,6 @@
 use crate::{
-    build::BuildProvider,
-    completion::{CompletionItemData, CompletionProvider},
-    config::ConfigManager,
-    definition::DefinitionProvider,
-    diagnostics::DiagnosticsManager,
-    feature::{DocumentView, FeatureProvider, FeatureRequest},
-    folding::FoldingProvider,
-    forward_search,
-    highlight::HighlightProvider,
-    hover::HoverProvider,
-    link::LinkProvider,
-    reference::ReferenceProvider,
-    rename::{PrepareRenameProvider, RenameProvider},
-    symbol::{document_symbols, workspace_symbols, SymbolProvider},
-    workspace::{DocumentContent, Workspace},
+    build::BuildProvider, config::ConfigManager, diagnostics::DiagnosticsManager, forward_search,
+    highlight::HighlightProvider, link::LinkProvider,
 };
 use futures::lock::Mutex;
 use futures_boxed::boxed;
@@ -23,8 +10,16 @@ use log::{debug, error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 use texlab_citeproc::render_citation;
+use texlab_completion::{CompletionItemData, CompletionProvider};
 use texlab_components::COMPONENT_DATABASE;
+use texlab_definition::DefinitionProvider;
+use texlab_feature::{DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Workspace};
+use texlab_folding::FoldingProvider;
+use texlab_hover::HoverProvider;
 use texlab_protocol::*;
+use texlab_reference::ReferenceProvider;
+use texlab_rename::{PrepareRenameProvider, RenameProvider};
+use texlab_symbol::{document_symbols, workspace_symbols, SymbolProvider};
 use texlab_syntax::{bibtex, latexindent, CharStream, SyntaxNode};
 use texlab_tex::{DistributionKind, DynamicDistribution, KpsewhichError};
 

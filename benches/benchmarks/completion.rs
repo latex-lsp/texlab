@@ -2,7 +2,8 @@ use super::test_data::TEST_LATEX;
 use criterion::{BenchmarkId, Criterion};
 use futures::executor::block_on;
 use std::time::Duration;
-use texlab::{completion::CompletionProvider, feature::FeatureTester};
+use texlab_completion::CompletionProvider;
+use texlab_feature::FeatureTester;
 
 fn criterion_benchmark(criterion: &mut Criterion) {
     criterion.bench_with_input(

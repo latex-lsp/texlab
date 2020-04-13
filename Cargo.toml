@@ -17,13 +17,10 @@ doctest = false
 
 [dependencies]
 aovec = "1.1"
-base64 = "0.12"
 chashmap = "2.2"
 clap = "2.33"
 futures = "0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-html2md = "0.2"
-image = "0.23"
 itertools = "0.8"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
@@ -33,16 +30,21 @@ petgraph = { version = "0.5", features = ["serde-1"] }
 regex = "1.3"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
-serde_repr = "0.1"
 stderrlog = "0.4"
 tempfile = "3.1"
 texlab-citeproc = { path = "crates/texlab_citeproc" }
+texlab-completion = { path = "crates/texlab_completion" }
 texlab-components = { path = "crates/texlab_components" }
+texlab-definition = { path = "crates/texlab_definition" }
+texlab-feature = { path = "crates/texlab_feature" }
+texlab-folding = { path = "crates/texlab_folding" }
+texlab-hover = { path = "crates/texlab_hover" }
 texlab-protocol = { path = "crates/texlab_protocol" }
+texlab-reference = { path = "crates/texlab_reference" }
+texlab-rename = { path = "crates/texlab_rename" }
+texlab-symbol = { path = "crates/texlab_symbol" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-tex = { path = "crates/texlab_tex" }
-thiserror = "1.0"
-titlecase = "1.1"
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.2", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }

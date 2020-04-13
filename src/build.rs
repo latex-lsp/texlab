@@ -1,12 +1,3 @@
-use crate::{
-    feature::{FeatureProvider, FeatureRequest},
-};
-use texlab_protocol::{
-    BuildParams, BuildResult, BuildStatus, ClientCapabilitiesExt, LatexOptions,
-    LogMessageParams, LspClient, MessageType, ProgressParams, ProgressParamsValue,
-    ProgressToken, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCreateParams,
-    WorkDoneProgressEnd,
-};
 use futures::{
     future::{AbortHandle, Abortable, Aborted},
     lock::Mutex,
@@ -15,6 +6,12 @@ use futures::{
 };
 use futures_boxed::boxed;
 use std::{collections::HashMap, io, path::Path, process::Stdio, sync::Arc};
+use texlab_feature::{FeatureProvider, FeatureRequest};
+use texlab_protocol::{
+    BuildParams, BuildResult, BuildStatus, ClientCapabilitiesExt, LatexOptions, LogMessageParams,
+    LspClient, MessageType, ProgressParams, ProgressParamsValue, ProgressToken, WorkDoneProgress,
+    WorkDoneProgressBegin, WorkDoneProgressCreateParams, WorkDoneProgressEnd,
+};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,

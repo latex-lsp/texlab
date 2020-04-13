@@ -1,8 +1,8 @@
 mod latex_include;
 
 use self::latex_include::LatexIncludeLinkProvider;
-use crate::feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use futures_boxed::boxed;
+use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 
 pub struct LinkProvider {

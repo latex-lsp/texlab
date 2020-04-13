@@ -1,8 +1,5 @@
-use crate::{
-    feature::{FeatureProvider, FeatureRequest},
-    workspace::DocumentContent,
-};
 use futures_boxed::boxed;
+use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
     DocumentHighlight, DocumentHighlightKind, RangeExt, TextDocumentPositionParams,
 };
@@ -51,8 +48,8 @@ impl FeatureProvider for LatexLabelHighlightProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::feature::FeatureTester;
     use indoc::indoc;
+    use texlab_feature::FeatureTester;
     use texlab_protocol::Range;
 
     #[tokio::test]
