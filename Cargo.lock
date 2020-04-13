@@ -244,7 +244,7 @@ dependencies = [
  "salsa 0.13.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2280,7 +2280,7 @@ dependencies = [
  "texlab-protocol 0.1.0",
  "texlab-syntax 0.1.0",
  "texlab-tex 0.1.0",
- "thiserror 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2378,7 +2378,7 @@ dependencies = [
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-boxed 0.1.0",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2392,15 +2392,15 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.11"
+version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "thiserror-impl 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "thiserror-impl 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.11"
+version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3049,8 +3049,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum termcolor 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bb6bfa289a4d7c5766392812c0a1f4c1ba45afa1ad47803c11e1f407d846d75f"
 "checksum termion 1.5.5 (registry+https://github.com/rust-lang/crates.io-index)" = "c22cec9d8978d906be5ac94bceb5a010d885c626c4c8855721a4dbd20e3ac905"
 "checksum textwrap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
-"checksum thiserror 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)" = "ee14bf8e6767ab4c687c9e8bc003879e042a96fd67a3ba5934eadb6536bef4db"
-"checksum thiserror-impl 1.0.11 (registry+https://github.com/rust-lang/crates.io-index)" = "a7b51e1fbc44b5a0840be594fbc0f960be09050f2617e61e6aa43bef97cd3ef4"
+"checksum thiserror 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)" = "54b3d3d2ff68104100ab257bb6bb0cb26c901abe4bd4ba15961f3bf867924012"
+"checksum thiserror-impl 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)" = "ca972988113b7715266f91250ddb98070d033c62a011fa0fcc57434a649310dd"
 "checksum thread_local 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "1697c4b57aeeb7a536b647165a2825faddffb1d3bad386d507709bd51a90bb14"
 "checksum thread_local 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d40c6d1b69745a6ec6fb1ca717914848da4b44ae29d9b3080cbee91d72a69b14"
 "checksum tiff 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "002351e428db1eb1d8656d4ca61947c3519ac3191e1c804d4600cd32093b77ad"
