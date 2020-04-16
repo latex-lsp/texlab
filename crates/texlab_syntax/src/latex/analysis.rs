@@ -21,6 +21,7 @@ pub struct SymbolTable {
     pub environments: Vec<Environment>,
     pub is_standalone: bool,
     pub includes: Vec<Include>,
+    pub imports: Vec<Import>,
     pub components: Vec<String>,
     pub citations: Vec<Citation>,
     pub command_definitions: Vec<CommandDefinition>,
@@ -58,6 +59,7 @@ impl SymbolTable {
 
         let mut environments = None;
         let mut includes = None;
+        let mut imports = None;
         let mut citations = None;
         let mut command_definitions = None;
         let mut glossary_entries = None;
@@ -74,6 +76,7 @@ impl SymbolTable {
         rayon::scope(|s| {
             s.spawn(|_| environments = Some(Environment::parse(ctx)));
             s.spawn(|_| includes = Some(Include::parse(ctx)));
+            s.spawn(|_| imports = Some(Import::parse(ctx)));
             s.spawn(|_| citations = Some(Citation::parse(ctx)));
             s.spawn(|_| command_definitions = Some(CommandDefinition::parse(ctx)));
             s.spawn(|_| glossary_entries = Some(GlossaryEntry::parse(ctx)));
@@ -107,6 +110,7 @@ impl SymbolTable {
             environments: environments.unwrap(),
             is_standalone,
             includes: includes.unwrap(),
+            imports: imports.unwrap(),
             components,
             citations: citations.unwrap(),
             command_definitions: command_definitions.unwrap(),
@@ -320,7 +324,7 @@ impl Include {
             .extract_comma_separated_words(parent, GroupKind::Group, desc.index)?;
         for path in paths {
             let mut targets = Vec::new();
-            let base_url = Self::base_url(ctx)?;
+            let base_url = base_url(ctx)?;
             targets.push(base_url.join(path.text()).ok()?.into());
 
             if let Some(extensions) = desc.kind.extensions() {
@@ -346,21 +350,6 @@ impl Include {
         Some(include)
     }
 
-    fn base_url(ctx: SymbolContext) -> Option<Uri> {
-        if let Some(root_directory) = ctx
-            .options
-            .latex
-            .as_ref()
-            .and_then(|opts| opts.root_directory.as_ref())
-        {
-            let file_name = ctx.uri.path_segments()?.last()?;
-            let path = ctx.current_dir.join(root_directory).join(file_name);
-            Uri::from_file_path(path).ok()
-        } else {
-            Some(ctx.uri.clone())
-        }
-    }
-
     fn resolve_distro_file(
         ctx: SymbolContext,
         desc: &LatexIncludeCommand,
@@ -376,6 +365,52 @@ impl Include {
             }
         }
         path.and_then(|p| Uri::from_file_path(p).ok())
+    }
+}
+
+fn base_url(ctx: SymbolContext) -> Option<Uri> {
+    if let Some(root_directory) = ctx
+        .options
+        .latex
+        .as_ref()
+        .and_then(|opts| opts.root_directory.as_ref())
+    {
+        let file_name = ctx.uri.path_segments()?.last()?;
+        let path = ctx.current_dir.join(root_directory).join(file_name);
+        Uri::from_file_path(path).ok()
+    } else {
+        Some(ctx.uri.clone())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Import {
+    pub parent: AstNodeIndex,
+    pub targets: Vec<Uri>,
+}
+
+impl Import {
+    fn parse(ctx: SymbolContext) -> Vec<Self> {
+        ctx.commands
+            .iter()
+            .filter_map(|parent| Self::parse_single(ctx, *parent))
+            .collect()
+    }
+
+    fn parse_single(ctx: SymbolContext, parent: AstNodeIndex) -> Option<Self> {
+        let cmd = ctx.tree.as_command(parent)?;
+        if cmd.name.text() != "\\import" && cmd.name.text() != "\\subimport" {
+            return None;
+        }
+
+        let dir = ctx.tree.extract_word(parent, GroupKind::Group, 0)?;
+        let file = ctx.tree.extract_word(parent, GroupKind::Group, 1)?;
+
+        let mut targets = Vec::new();
+        let base_url = base_url(ctx)?.join(dir.text()).ok()?;
+        targets.push(base_url.join(file.text()).ok()?.into());
+        targets.push(base_url.join(&format!("{}.tex", file.text())).ok()?.into());
+        Some(Self { parent, targets })
     }
 }
 

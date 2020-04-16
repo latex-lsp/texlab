@@ -154,6 +154,16 @@ impl Snapshot {
                         graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
                     });
 
+                table
+                    .imports
+                    .iter()
+                    .flat_map(|import| import.targets.iter())
+                    .find_map(|target| self.find(target))
+                    .into_iter()
+                    .for_each(|child| {
+                        graph.add_edge(indices_by_uri[&parent.uri], indices_by_uri[&child.uri], ());
+                    });
+
                 self.resolve_aux_targets(&parent.uri, options, current_dir, "aux")
                     .into_iter()
                     .flatten()
@@ -202,6 +212,18 @@ impl Snapshot {
                     .flat_map(|include| include.all_targets.iter())
                     .filter(|targets| targets.iter().all(|target| self.find(target).is_none()))
                     .flatten()
+                    .for_each(|target| unknown_targets.push(target.clone()));
+
+                table
+                    .imports
+                    .iter()
+                    .filter(|import| {
+                        import
+                            .targets
+                            .iter()
+                            .all(|target| self.find(target).is_none())
+                    })
+                    .flat_map(|import| import.targets.iter())
                     .for_each(|target| unknown_targets.push(target.clone()));
 
                 self.resolve_aux_targets(&parent.uri, options, current_dir, "aux")
@@ -786,6 +808,27 @@ mod tests {
     }
 
     #[test]
+    fn relations_import() {
+        let uri1 = Uri::parse("http://www.example.com/foo.tex").unwrap();
+        let uri2 = Uri::parse("http://www.example.com/bar/baz.tex").unwrap();
+        let uri3 = Uri::parse("http://www.example.com/bar/qux/foo-bar.tex").unwrap();
+        let mut snapshot = Snapshot::new();
+        snapshot.0 = vec![
+            create_simple_document(&uri1, Language::Latex, r#"\import{bar/}{baz.tex}"#),
+            create_simple_document(&uri2, Language::Latex, r#"\subimport{qux/}{foo-bar}"#),
+            create_simple_document(&uri3, Language::Latex, r#""#),
+        ];
+
+        let actual_uris: Vec<_> = snapshot
+            .relations(&uri1, &Options::default(), &env::current_dir().unwrap())
+            .into_iter()
+            .map(|doc| doc.uri.clone())
+            .collect();
+
+        assert_eq!(actual_uris, vec![uri1, uri2, uri3]);
+    }
+
+    #[test]
     fn parent() {
         let uri1 = Uri::parse("http://www.example.com/foo.tex").unwrap();
         let uri2 = Uri::parse("http://www.example.com/bar.tex").unwrap();
@@ -893,5 +936,29 @@ mod tests {
                 .collect_vec(),
             vec!["http://www.example.com/bar/baz.tex"]
         );
+    }
+
+    #[test]
+    fn expand_import() {
+        let uri1 = Uri::parse("http://www.example.com/qux/foo.tex").unwrap();
+        let uri2 = Uri::parse("http://www.example.com/qux/baz/bar.tex").unwrap();
+        let mut snapshot = Snapshot::new();
+        snapshot.0 = vec![
+            create_simple_document(
+                &uri1,
+                Language::Latex,
+                r#"\import{.}{foo}\import{baz/}{bar}\import{baz/foo-bar/}{qux}"#,
+            ),
+            create_simple_document(&uri2, Language::Latex, r#""#),
+        ];
+        let expansion = snapshot.expand(&Options::default(), &env::current_dir().unwrap());
+        assert_eq!(
+            expansion
+                .iter()
+                .map(|uri| uri.as_str())
+                .filter(|uri| uri.ends_with(".tex"))
+                .collect_vec(),
+            vec!["http://www.example.com/qux/baz/foo-bar/qux.tex"]
+        )
     }
 }
