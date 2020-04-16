@@ -14,7 +14,7 @@ base64 = "0.12"
 futures = "0.3"
 futures-boxed = { path = "../futures_boxed" }
 image = "0.23"
-itertools = "0.8"
+itertools = "0.9"
 log = "0.4"
 once_cell = "1.3"
 petgraph = { version = "0.5", features = ["serde-1"] }
