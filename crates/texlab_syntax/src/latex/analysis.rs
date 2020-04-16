@@ -390,6 +390,14 @@ pub struct Import {
 }
 
 impl Import {
+    pub fn dir<'a>(&self, tree: &'a Tree) -> &'a Token {
+        tree.extract_word(self.parent, GroupKind::Group, 0).unwrap()
+    }
+
+    pub fn file<'a>(&self, tree: &'a Tree) -> &'a Token {
+        tree.extract_word(self.parent, GroupKind::Group, 1).unwrap()
+    }
+
     fn parse(ctx: SymbolContext) -> Vec<Self> {
         ctx.commands
             .iter()

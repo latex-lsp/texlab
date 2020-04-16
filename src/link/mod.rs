@@ -1,6 +1,7 @@
+mod latex_import;
 mod latex_include;
 
-use self::latex_include::LatexIncludeLinkProvider;
+use self::{latex_import::LatexImportLinkProvider, latex_include::LatexIncludeLinkProvider};
 use futures_boxed::boxed;
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
@@ -12,7 +13,10 @@ pub struct LinkProvider {
 impl LinkProvider {
     pub fn new() -> Self {
         Self {
-            provider: ConcatProvider::new(vec![Box::new(LatexIncludeLinkProvider)]),
+            provider: ConcatProvider::new(vec![
+                Box::new(LatexImportLinkProvider),
+                Box::new(LatexIncludeLinkProvider),
+            ]),
         }
     }
 }

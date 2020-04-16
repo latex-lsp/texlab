@@ -4,9 +4,9 @@ use texlab_protocol::{DocumentLink, DocumentLinkParams};
 use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexIncludeLinkProvider;
+pub struct LatexImportLinkProvider;
 
-impl FeatureProvider for LatexIncludeLinkProvider {
+impl FeatureProvider for LatexImportLinkProvider {
     type Params = DocumentLinkParams;
     type Output = Vec<DocumentLink>;
 
@@ -14,9 +14,9 @@ impl FeatureProvider for LatexIncludeLinkProvider {
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let DocumentContent::Latex(table) = &req.current().content {
             table
-                .includes
+                .imports
                 .iter()
-                .flat_map(|include| Self::resolve(req, table, include))
+                .flat_map(|import| Self::resolve(req, table, import))
                 .collect()
         } else {
             Vec::new()
@@ -24,24 +24,22 @@ impl FeatureProvider for LatexIncludeLinkProvider {
     }
 }
 
-impl LatexIncludeLinkProvider {
+impl LatexImportLinkProvider {
     fn resolve(
         req: &FeatureRequest<DocumentLinkParams>,
         table: &latex::SymbolTable,
-        include: &latex::Include,
+        import: &latex::Import,
     ) -> Vec<DocumentLink> {
         let mut links = Vec::new();
-        let paths = include.paths(&table);
-        for (i, targets) in include.all_targets.iter().enumerate() {
-            for target in targets {
-                if let Some(link) = req.snapshot().find(target).map(|doc| DocumentLink {
-                    range: paths[i].range(),
-                    target: doc.uri.clone().into(),
-                    tooltip: None,
-                }) {
-                    links.push(link);
-                    break;
-                }
+        let file = import.file(&table);
+        for target in &import.targets {
+            if let Some(link) = req.snapshot().find(target).map(|doc| DocumentLink {
+                range: file.range(),
+                target: doc.uri.clone().into(),
+                tooltip: None,
+            }) {
+                links.push(link);
+                break;
             }
         }
         links
@@ -59,7 +57,7 @@ mod tests {
         let actual_links = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
-            .test_link(LatexIncludeLinkProvider)
+            .test_link(LatexImportLinkProvider)
             .await;
 
         assert!(actual_links.is_empty());
@@ -70,7 +68,7 @@ mod tests {
         let actual_links = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
-            .test_link(LatexIncludeLinkProvider)
+            .test_link(LatexImportLinkProvider)
             .await;
 
         assert!(actual_links.is_empty());
@@ -79,15 +77,15 @@ mod tests {
     #[tokio::test]
     async fn has_links() {
         let actual_links = FeatureTester::new()
-            .file("foo.tex", r#"\input{bar.tex}"#)
-            .file("bar.tex", r#""#)
+            .file("foo.tex", r#"\import{bar/}{baz}"#)
+            .file("bar/baz.tex", r#""#)
             .main("foo.tex")
-            .test_link(LatexIncludeLinkProvider)
+            .test_link(LatexImportLinkProvider)
             .await;
 
         let expected_links = vec![DocumentLink {
-            range: Range::new_simple(0, 7, 0, 14),
-            target: FeatureTester::uri("bar.tex").into(),
+            range: Range::new_simple(0, 14, 0, 17),
+            target: FeatureTester::uri("bar/baz.tex").into(),
             tooltip: None,
         }];
 
