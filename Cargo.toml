@@ -21,7 +21,7 @@ chashmap = "2.2"
 clap = "2.33"
 futures = "0.3"
 futures-boxed = { path = "crates/futures_boxed" }
-itertools = "0.8"
+itertools = "0.9"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }
 log = "0.4"
