@@ -1,8 +1,20 @@
 use super::combinators;
-use crate::factory::{self, LatexComponentId};
+use crate::{
+    factory::{self, LatexComponentId},
+    quality::QualityEvaluator,
+    COMPLETION_LIMIT,
+};
 use futures_boxed::boxed;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
+
+#[derive(Debug)]
+struct CommandItem {
+    id: LatexComponentId,
+    name: &'static str,
+    image: &'static Option<String>,
+    glyph: &'static Option<String>,
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexComponentCommandCompletionProvider;
@@ -17,25 +29,40 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
             let table = req.current().content.as_latex().unwrap();
             let cmd = table.as_command(cmd_node).unwrap();
             let range = cmd.short_name_range();
-            let mut items = Vec::new();
-            req.view.components();
-            for comp in req.view.components() {
-                let file_names = comp.file_names.iter().map(AsRef::as_ref).collect();
-                let id = LatexComponentId::Component(file_names);
-                for cmd in &comp.commands {
-                    let text_edit = TextEdit::new(range, (&cmd.name).into());
-                    let item = factory::command(
-                        req,
-                        (&cmd.name).into(),
-                        cmd.image.as_ref().map(AsRef::as_ref),
-                        cmd.glyph.as_ref().map(AsRef::as_ref),
-                        text_edit,
-                        &id,
-                    );
-                    items.push(item);
-                }
-            }
+            let pos = req.params.text_document_position.position;
+            let eval = QualityEvaluator::parse(req.current(), pos);
+
+            let mut items: Vec<_> = req
+                .view
+                .components()
+                .into_iter()
+                .flat_map(|comp| {
+                    comp.commands.iter().map(move |cmd| CommandItem {
+                        id: LatexComponentId::Component(&comp.file_names),
+                        name: &cmd.name,
+                        image: &cmd.image,
+                        glyph: &cmd.glyph,
+                    })
+                })
+                .collect();
+
+            items.sort_by_key(|item| -eval.quality_of(item.name, &None));
             items
+                .into_iter()
+                .take(COMPLETION_LIMIT)
+                .map(|item| {
+                    let text_edit = TextEdit::new(range, item.name.into());
+                    let new_item = factory::command(
+                        req,
+                        item.name.into(),
+                        item.image.as_ref().map(AsRef::as_ref),
+                        item.glyph.as_ref().map(AsRef::as_ref),
+                        text_edit,
+                        &item.id,
+                    );
+                    new_item
+                })
+                .collect()
         })
         .await
     }
@@ -52,8 +79,7 @@ impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
         combinators::environment(req, |ctx| async move {
             let mut items = Vec::new();
             for comp in req.view.components() {
-                let file_names = comp.file_names.iter().map(AsRef::as_ref).collect();
-                let id = LatexComponentId::Component(file_names);
+                let id = LatexComponentId::Component(&comp.file_names);
                 for env in &comp.environments {
                     let text_edit = TextEdit::new(ctx.range, env.into());
                     let item = factory::environment(req, env.into(), text_edit, &id);

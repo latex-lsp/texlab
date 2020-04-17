@@ -39,15 +39,15 @@ impl Into<serde_json::Value> for CompletionItemData {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum LatexComponentId<'a> {
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LatexComponentId {
     User,
-    Component(Vec<&'a str>),
+    Component(&'static [String]),
 }
 
-impl<'a> LatexComponentId<'a> {
+impl LatexComponentId {
     pub fn kernel() -> Self {
-        LatexComponentId::Component(vec![])
+        LatexComponentId::Component(&[])
     }
 
     pub fn detail(&self) -> String {

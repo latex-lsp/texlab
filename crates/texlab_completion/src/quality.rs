@@ -4,40 +4,64 @@ use texlab_feature::{Document, DocumentContent, FeatureProvider, FeatureRequest}
 use texlab_protocol::{CompletionItem, CompletionParams, Position, RangeExt};
 use texlab_syntax::{bibtex, latex, SyntaxNode};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct OrderByQualityCompletionProvider<F>(pub F);
-
-impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
-where
-    F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
-{
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    #[boxed]
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let query = Self::query(req.current(), req.params.text_document_position.position);
-        let mut items = self.0.execute(req).await;
-        items.sort_by_key(|item| -Self::get_quality(&query, &item));
-        items
-    }
+#[derive(Debug)]
+pub struct QualityEvaluator<'a> {
+    query: Option<Cow<'a, str>>,
 }
 
-impl<F> OrderByQualityCompletionProvider<F> {
-    fn query(doc: &Document, pos: Position) -> Option<Cow<str>> {
+impl<'a> QualityEvaluator<'a> {
+    pub fn quality_of(&self, label: &str, preselect: &Option<bool>) -> i32 {
+        if *preselect == Some(true) {
+            return 8;
+        }
+
+        if let Some(query) = &self.query {
+            if label == query {
+                return 7;
+            }
+
+            if label.to_lowercase() == query.to_lowercase() {
+                return 6;
+            }
+
+            if label.starts_with(query.as_ref()) {
+                return 5;
+            }
+
+            if label.to_lowercase().starts_with(&query.to_lowercase()) {
+                return 4;
+            }
+
+            if label.contains(query.as_ref()) {
+                return 3;
+            }
+
+            if label.to_lowercase().contains(&query.to_lowercase()) {
+                return 2;
+            }
+
+            1
+        } else {
+            0
+        }
+    }
+
+    pub fn parse(doc: &'a Document, pos: Position) -> Self {
+        Self {
+            query: Self::parse_query(doc, pos),
+        }
+    }
+
+    fn parse_query(doc: &'a Document, pos: Position) -> Option<Cow<'a, str>> {
         match &doc.content {
             DocumentContent::Latex(table) => {
-                fn command_query(cmd: &latex::Command) -> Cow<str> {
-                    cmd.name.text()[1..].to_owned().into()
-                }
-
                 if let Some(node) = table.find_command_by_short_name_range(pos) {
-                    return Some(command_query(table.as_command(node).unwrap()));
+                    return Some(Self::command_query(table.as_command(node).unwrap()));
                 }
 
                 match &table[table.find(pos).into_iter().last()?] {
                     latex::Node::Root(_) | latex::Node::Group(_) => Some("".into()),
-                    latex::Node::Command(cmd) => Some(command_query(cmd)),
+                    latex::Node::Command(cmd) => Some(Self::command_query(cmd)),
                     latex::Node::Text(text) => text
                         .words
                         .iter()
@@ -79,40 +103,27 @@ impl<F> OrderByQualityCompletionProvider<F> {
         }
     }
 
-    fn get_quality(query: &Option<Cow<str>>, item: &CompletionItem) -> i32 {
-        if item.preselect == Some(true) {
-            return 8;
-        }
+    fn command_query(cmd: &'a latex::Command) -> Cow<'a, str> {
+        cmd.name.text()[1..].to_owned().into()
+    }
+}
 
-        let label = &item.label;
-        if let Some(query) = query {
-            if label == query {
-                return 7;
-            }
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct OrderByQualityCompletionProvider<F>(pub F);
 
-            if label.to_lowercase() == query.to_lowercase() {
-                return 6;
-            }
+impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
+where
+    F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
+{
+    type Params = CompletionParams;
+    type Output = Vec<CompletionItem>;
 
-            if label.starts_with(query.as_ref()) {
-                return 5;
-            }
-
-            if label.to_lowercase().starts_with(&query.to_lowercase()) {
-                return 4;
-            }
-
-            if label.contains(query.as_ref()) {
-                return 3;
-            }
-
-            if label.to_lowercase().contains(&query.to_lowercase()) {
-                return 2;
-            }
-
-            1
-        } else {
-            0
-        }
+    #[boxed]
+    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
+        let pos = req.params.text_document_position.position;
+        let eval = QualityEvaluator::parse(req.current(), pos);
+        let mut items = self.0.execute(req).await;
+        items.sort_by_key(|item| -eval.quality_of(&item.label, &item.preselect));
+        items
     }
 }
