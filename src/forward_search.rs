@@ -13,7 +13,7 @@ pub async fn search<'a>(
 ) -> Option<ForwardSearchResult> {
     let pdf_path = snapshot
         .resolve_aux_targets(
-            &snapshot.parent(tex_uri, options, current_dir)?.uri,
+            &snapshot.parent_subfile(tex_uri, options, current_dir)?.uri,
             options,
             current_dir,
             "pdf",

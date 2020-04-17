@@ -191,10 +191,28 @@ impl Snapshot {
         options: &Options,
         current_dir: &Path,
     ) -> Option<Arc<Document>> {
-        for document in self.relations(uri, options, current_dir) {
-            if let DocumentContent::Latex(table) = &document.content {
+        for doc in self.relations(uri, options, current_dir) {
+            if let DocumentContent::Latex(table) = &doc.content {
                 if table.is_standalone {
-                    return Some(document);
+                    return Some(doc);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn parent_subfile(
+        &self,
+        uri: &Uri,
+        options: &Options,
+        current_dir: &Path,
+    ) -> Option<Arc<Document>> {
+        for doc in self.relations(uri, options, current_dir) {
+            if let DocumentContent::Latex(table) = &doc.content {
+                if table.is_standalone
+                    && !table.components.iter().any(|comp| comp == "subfiles.cls")
+                {
+                    return Some(doc);
                 }
             }
         }
@@ -452,7 +470,10 @@ impl Workspace {
         if let Ok(mut path) = uri.to_file_path() {
             while path.pop() {
                 let snapshot = self.get().await;
-                if snapshot.parent(&uri, &options, &self.current_dir).is_some() {
+                if snapshot
+                    .parent_subfile(&uri, &options, &self.current_dir)
+                    .is_some()
+                {
                     break;
                 }
 
