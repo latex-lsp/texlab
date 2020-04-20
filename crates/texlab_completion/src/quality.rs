@@ -20,7 +20,9 @@ impl<'a> QualityEvaluator<'a> {
                 return 7;
             }
 
-            if label.to_lowercase() == query.to_lowercase() {
+            let label_ci = label.to_lowercase();
+            let query_ci = query.to_lowercase();
+            if label_ci == query_ci {
                 return 6;
             }
 
@@ -28,7 +30,7 @@ impl<'a> QualityEvaluator<'a> {
                 return 5;
             }
 
-            if label.to_lowercase().starts_with(&query.to_lowercase()) {
+            if label_ci.starts_with(&query_ci) {
                 return 4;
             }
 
@@ -36,7 +38,7 @@ impl<'a> QualityEvaluator<'a> {
                 return 3;
             }
 
-            if label.to_lowercase().contains(&query.to_lowercase()) {
+            if label_ci.contains(&query_ci) {
                 return 2;
             }
 
