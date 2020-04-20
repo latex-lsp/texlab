@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 20.04.2020
+
+### Added
+
+- Add basic support for the `import` package
+- Allow LaTeX and BibTeX formatting via `latexindent`.
+  The built-in BibTeX formatter is still available via `"bibtex.formatting.formatter": "texlab"` ([#151](https://github.com/latex-lsp/texlab/issues/151))
+
+### Fixed
+
+- Handle `subfiles` package when executing forward search ([#208](https://github.com/latex-lsp/texlab/issues/208))
+- Fix detection of terminated builds
+- Ensure that there is at most one instance of ChkTeX running
+- Fix deserialization of incoming JSON-RPC errors
+- Fix preview when including packages in a child file
+
+### Changed
+
+- **Breaking change**: `latex.build.args` now uses placeholders like the forward search.
+  The filename (`%f`) is no longer implicitly appended to the end of the argument list.
+- **Breaking change**: Update the LSP types to accommodate newer LSP clients ([#200](https://github.com/latex-lsp/texlab/issues/200))
+- Improve performance of completion (when completing LaTeX commands)
+- Improve workspace detection algorithm
+
 ## [1.10.0] - 11.02.2020
 
 ### Added

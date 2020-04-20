@@ -2122,7 +2122,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "1.10.0"
+version = "2.0.0"
 dependencies = [
  "aovec 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chashmap 2.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
