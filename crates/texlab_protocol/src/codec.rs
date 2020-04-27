@@ -29,11 +29,10 @@ impl Decoder for LspCodec {
     }
 }
 
-impl Encoder for LspCodec {
-    type Item = String;
+impl Encoder<String> for LspCodec {
     type Error = Error;
 
-    fn encode(&mut self, item: Self::Item, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: String, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let message = format!("Content-Length: {}\r\n\r\n{}", item.len(), item);
         trace!("Sent message:\n{}\n", message);
 

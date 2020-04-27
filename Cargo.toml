@@ -46,7 +46,7 @@ texlab-symbol = { path = "crates/texlab_symbol" }
 texlab-syntax = { path = "crates/texlab_syntax" }
 texlab-tex = { path = "crates/texlab_tex" }
 tokio = { version = "0.2", features = ["full"] }
-tokio-util = { version = "0.2", features = ["codec"] }
+tokio-util = { version = "0.3", features = ["codec"] }
 uuid = { version = "0.8", features = ["v4"] }
 
 [dev-dependencies]
