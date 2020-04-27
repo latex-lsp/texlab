@@ -2,7 +2,8 @@ use indoc::indoc;
 use itertools::Itertools;
 use texlab::test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES};
 use texlab_protocol::{
-    CompletionItem, Documentation, MarkupContent, MarkupKind, Range, RangeExt, TextEdit,
+    CompletionItem, CompletionTextEdit, Documentation, MarkupContent, MarkupKind, Range, RangeExt,
+    TextEdit,
 };
 
 async fn run_item(
@@ -49,10 +50,10 @@ fn verify_text_edit(
 ) {
     assert_eq!(
         *item.text_edit.as_ref().unwrap(),
-        TextEdit::new(
+        CompletionTextEdit::Edit(TextEdit::new(
             Range::new_simple(start_line, start_character, end_line, end_character),
             text.into()
-        )
+        ))
     );
 }
 

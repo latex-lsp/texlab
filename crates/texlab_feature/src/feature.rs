@@ -333,7 +333,11 @@ impl FeatureTester {
         F: FeatureProvider<Params = DocumentLinkParams, Output = O>,
     {
         let text_document = self.identifier();
-        let params = DocumentLinkParams { text_document };
+        let params = DocumentLinkParams {
+            text_document,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
         let req = self.request(params).await;
         provider.execute(&req).await
     }
@@ -351,6 +355,7 @@ impl FeatureTester {
                 include_declaration: self.include_declaration,
             },
             work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         let req = self.request(params).await;
         provider.execute(&req).await
@@ -377,7 +382,11 @@ impl FeatureTester {
         F: FeatureProvider<Params = DocumentSymbolParams, Output = O>,
     {
         let text_document = self.identifier();
-        let params = DocumentSymbolParams { text_document };
+        let params = DocumentSymbolParams {
+            text_document,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
         let req = self.request(params).await;
         provider.execute(&req).await
     }

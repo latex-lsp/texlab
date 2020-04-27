@@ -90,7 +90,7 @@ pub fn command(
         kind: Some(adjust_kind(req, Structure::Command.completion_kind())),
         data: Some(CompletionItemData::Command.into()),
         documentation: image.and_then(|image| image_documentation(&req, &name, image)),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::new_simple(name, detail)
     }
 }
@@ -121,7 +121,7 @@ pub fn environment(
     CompletionItem {
         kind: Some(adjust_kind(req, Structure::Environment.completion_kind())),
         data: Some(CompletionItemData::Environment.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::new_simple(name, component.detail())
     }
 }
@@ -158,7 +158,7 @@ pub fn label(
         label: name,
         kind: Some(adjust_kind(req, kind)),
         data: Some(CompletionItemData::Label.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         filter_text,
         detail,
         documentation,
@@ -175,7 +175,7 @@ pub fn folder(
         label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(adjust_kind(req, Structure::Folder.completion_kind())),
         data: Some(CompletionItemData::Folder.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -189,7 +189,7 @@ pub fn file(
         label: path.file_name().unwrap().to_string_lossy().into_owned(),
         kind: Some(adjust_kind(req, Structure::File.completion_kind())),
         data: Some(CompletionItemData::File.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -203,7 +203,7 @@ pub fn pgf_library(
         label: name.into(),
         kind: Some(adjust_kind(req, Structure::PgfLibrary.completion_kind())),
         data: Some(CompletionItemData::PgfLibrary.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -217,7 +217,7 @@ pub fn tikz_library(
         label: name.into(),
         kind: Some(adjust_kind(req, Structure::TikzLibrary.completion_kind())),
         data: Some(CompletionItemData::TikzLibrary.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -231,7 +231,7 @@ pub fn color(
         label: name.into(),
         kind: Some(adjust_kind(req, Structure::Color.completion_kind())),
         data: Some(CompletionItemData::Color.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -245,7 +245,7 @@ pub fn color_model(
         label: name.into(),
         kind: Some(adjust_kind(req, Structure::ColorModel.completion_kind())),
         data: Some(CompletionItemData::ColorModel.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -259,7 +259,7 @@ pub fn package(
         label: name,
         kind: Some(adjust_kind(req, Structure::Package.completion_kind())),
         data: Some(CompletionItemData::Package.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -273,7 +273,7 @@ pub fn class(
         label: name,
         kind: Some(adjust_kind(req, Structure::Class.completion_kind())),
         data: Some(CompletionItemData::Class.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -318,7 +318,7 @@ pub fn citation(
         kind: Some(adjust_kind(req, kind)),
         filter_text: Some(filter_text),
         data: Some(CompletionItemData::Citation { uri, key }.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }
@@ -333,7 +333,7 @@ pub fn entry_type(
         label: (&ty.name).into(),
         kind: Some(adjust_kind(req, kind)),
         data: Some(CompletionItemData::EntryType.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         documentation: ty.documentation.as_ref().map(|doc| {
             Documentation::MarkupContent(MarkupContent {
                 kind: MarkupKind::Markdown,
@@ -353,7 +353,7 @@ pub fn field_name(
         label: (&field.name).into(),
         kind: Some(adjust_kind(req, Structure::Field.completion_kind())),
         data: Some(CompletionItemData::FieldName.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         documentation: Some(Documentation::MarkupContent(MarkupContent {
             kind: MarkupKind::Markdown,
             value: (&field.documentation).into(),
@@ -372,7 +372,7 @@ pub fn argument(
         label: name.into(),
         kind: Some(adjust_kind(req, Structure::Argument.completion_kind())),
         data: Some(CompletionItemData::Argument.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         documentation: image.and_then(|image| image_documentation(&req, &name, image)),
         ..CompletionItem::default()
     }
@@ -387,7 +387,7 @@ pub fn glossary_entry(
         label,
         kind: Some(adjust_kind(req, Structure::GlossaryEntry.completion_kind())),
         data: Some(CompletionItemData::GlossaryEntry.into()),
-        text_edit: Some(text_edit),
+        text_edit: Some(CompletionTextEdit::Edit(text_edit)),
         ..CompletionItem::default()
     }
 }

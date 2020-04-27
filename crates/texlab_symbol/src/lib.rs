@@ -19,7 +19,8 @@ use std::{
 use texlab_feature::{ConcatProvider, DocumentView, FeatureProvider, FeatureRequest, Snapshot};
 use texlab_protocol::{
     ClientCapabilities, ClientCapabilitiesExt, DocumentSymbolParams, DocumentSymbolResponse,
-    Options, SymbolInformation, TextDocumentIdentifier, Uri, WorkspaceSymbolParams,
+    Options, PartialResultParams, SymbolInformation, TextDocumentIdentifier, Uri,
+    WorkDoneProgressParams, WorkspaceSymbolParams,
 };
 use texlab_tex::DynamicDistribution;
 
@@ -100,6 +101,8 @@ pub async fn workspace_symbols<'a>(
         let req = FeatureRequest {
             params: DocumentSymbolParams {
                 text_document: TextDocumentIdentifier::new(uri.clone().into()),
+                work_done_progress_params: WorkDoneProgressParams::default(),
+                partial_result_params: PartialResultParams::default(),
             },
             view: DocumentView::analyze(
                 Arc::clone(&snapshot),

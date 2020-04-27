@@ -1,6 +1,7 @@
 mod capabilities;
 mod client;
 mod codec;
+mod edit;
 mod options;
 mod range;
 mod uri;
@@ -9,6 +10,7 @@ pub use self::{
     capabilities::ClientCapabilitiesExt,
     client::{LatexLspClient, LspClient},
     codec::LspCodec,
+    edit::*,
     options::*,
     range::RangeExt,
     uri::{AsUri, Uri},
