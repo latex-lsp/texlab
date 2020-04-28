@@ -41,7 +41,7 @@ impl FeatureProvider for LatexColorModelCompletionProvider {
 mod tests {
     use super::*;
     use texlab_feature::FeatureTester;
-    use texlab_protocol::{Range, RangeExt};
+    use texlab_protocol::{CompletionTextEditExt, Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {
@@ -81,6 +81,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(0, 19, 0, 19)
@@ -101,6 +102,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(0, 16, 0, 16)

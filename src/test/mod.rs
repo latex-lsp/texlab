@@ -387,6 +387,8 @@ impl TestBed {
     pub async fn document_link(&self, relative_path: &str) -> Option<Vec<DocumentLink>> {
         let params = DocumentLinkParams {
             text_document: self.identifier(relative_path),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.client.document_link(params).await.ok()
     }
@@ -407,6 +409,7 @@ impl TestBed {
                 include_declaration,
             },
             work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         self.client.references(params).await.ok()
     }
@@ -446,6 +449,8 @@ impl TestBed {
     ) -> Option<Vec<SymbolInformation>> {
         let params = DocumentSymbolParams {
             text_document: self.identifier(relative_path),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         match self.client.document_symbol(params).await.ok()? {
             DocumentSymbolResponse::Flat(symbols) => Some(symbols),
@@ -456,6 +461,8 @@ impl TestBed {
     pub async fn document_symbol_nested(&self, relative_path: &str) -> Option<Vec<DocumentSymbol>> {
         let params = DocumentSymbolParams {
             text_document: self.identifier(relative_path),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
         };
         match self.client.document_symbol(params).await.ok()? {
             DocumentSymbolResponse::Flat(_) => unreachable!(),

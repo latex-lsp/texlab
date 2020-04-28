@@ -62,7 +62,7 @@ mod tests {
     use super::*;
     use indoc::indoc;
     use texlab_feature::FeatureTester;
-    use texlab_protocol::{Range, RangeExt};
+    use texlab_protocol::{CompletionTextEditExt, Range, RangeExt};
 
     #[tokio::test]
     async fn empty_latex_document() {
@@ -114,6 +114,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(1, 6, 1, 6)
@@ -145,6 +146,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(1, 6, 1, 6)
@@ -176,6 +178,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(1, 6, 1, 9)
@@ -207,6 +210,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(1, 10, 1, 10)

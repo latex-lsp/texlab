@@ -61,6 +61,7 @@ impl BibtexEntryTypeCompletionProvider {
 mod tests {
     use super::*;
     use texlab_feature::FeatureTester;
+    use texlab_protocol::CompletionTextEditExt;
 
     #[tokio::test]
     async fn empty_latex_document() {
@@ -112,6 +113,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(0, 1, 0, 1)
@@ -132,6 +134,7 @@ mod tests {
             actual_items[0]
                 .text_edit
                 .as_ref()
+                .and_then(|edit| edit.text_edit())
                 .map(|edit| edit.range)
                 .unwrap(),
             Range::new_simple(0, 1, 0, 4)
