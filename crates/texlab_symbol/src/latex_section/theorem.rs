@@ -31,8 +31,11 @@ fn make_symbol(
                         )
                         .unwrap_or_else(|| titlecase(env_name));
 
-                    let desc =
-                        table.print_group_content(env.left.parent, latex::GroupKind::Options, 0);
+                    let desc = main_table.print_group_content(
+                        env.left.parent,
+                        latex::GroupKind::Options,
+                        0,
+                    );
 
                     let label = main_table.find_label_by_environment(env);
                     let number = label
