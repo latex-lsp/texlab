@@ -508,7 +508,7 @@ impl Workspace {
             for path in snapshot
                 .expand(&options, &self.current_dir)
                 .into_iter()
-                .filter(|uri| uri.scheme() == "file")
+                .filter(|uri| uri.scheme() == "file" && uri.fragment().is_none())
                 .filter_map(|uri| uri.to_file_path().ok())
             {
                 if path.exists() {
