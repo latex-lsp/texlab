@@ -92,7 +92,6 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // let item = TokenStream::from_str(&item.to_string().replace("async ", "")).unwrap();
     let trait_: ItemTrait = parse_macro_input!(item);
     let trait_ident = &trait_.ident;
     let stubs = generate_client_stubs(&trait_.items);
