@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -9,11 +9,11 @@ use texlab_syntax::{Span, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryPrepareRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexEntryPrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         find_key(&req.current().content, req.params.position).map(Span::range)
     }
@@ -22,11 +22,11 @@ impl FeatureProvider for BibtexEntryPrepareRenameProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexEntryRenameProvider {
     type Params = RenameParams;
     type Output = Option<WorkspaceEdit>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let key_name = find_key(
             &req.current().content,

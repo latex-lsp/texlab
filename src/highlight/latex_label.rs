@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
     DocumentHighlight, DocumentHighlightKind, RangeExt, TextDocumentPositionParams,
@@ -8,11 +8,11 @@ use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelHighlightProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelHighlightProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<DocumentHighlight>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut highlights = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {

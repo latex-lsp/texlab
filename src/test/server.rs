@@ -1,7 +1,7 @@
 use aovec::Aovec;
+use async_trait::async_trait;
 use chashmap::CHashMap;
 use futures::lock::Mutex;
-use futures_boxed::boxed;
 use jsonrpc::server::{Middleware, Result};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use texlab_protocol::*;
@@ -53,7 +53,6 @@ impl TestLatexLspServer {
     }
 
     #[jsonrpc_method("textDocument/publishDiagnostics", kind = "notification")]
-    #[boxed]
     pub async fn publish_diagnostics(&self, params: PublishDiagnosticsParams) {
         let _ = self
             .diagnostics_by_uri
@@ -61,13 +60,11 @@ impl TestLatexLspServer {
     }
 
     #[jsonrpc_method("$/progress", kind = "notification")]
-    #[boxed]
     pub async fn progress(&self, params: ProgressParams) {
         self.progress_buf.push(params);
     }
 
     #[jsonrpc_method("window/workDoneProgress/create", kind = "request")]
-    #[boxed]
     pub async fn work_done_progress_create(
         &self,
         params: WorkDoneProgressCreateParams,
@@ -77,16 +74,14 @@ impl TestLatexLspServer {
     }
 
     #[jsonrpc_method("window/logMessage", kind = "notification")]
-    #[boxed]
     pub async fn log_message(&self, params: LogMessageParams) {
         self.log_message_buf.push(params);
     }
 }
 
+#[async_trait]
 impl Middleware for TestLatexLspServer {
-    #[boxed]
     async fn before_message(&self) {}
 
-    #[boxed]
-    fn after_message(&self) {}
+    async fn after_message(&self) {}
 }

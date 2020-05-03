@@ -10,7 +10,7 @@ pub use self::{
 };
 
 use self::{compile::Compiler, miktex::Miktex, tectonic::Tectonic, texlive::Texlive};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::{fmt, process::Stdio, sync::Arc};
 use tokio::process::Command;
 
@@ -87,26 +87,14 @@ impl Language {
     }
 }
 
+#[async_trait]
 pub trait Distribution {
     fn kind(&self) -> DistributionKind;
 
-    #[boxed]
-    async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError> {
-        let executable = params.format.executable();
-        let args = &["--interaction=batchmode", "-shell-escape", params.file_name];
-        let compiler = Compiler {
-            executable,
-            args,
-            file_name: params.file_name,
-            timeout: params.timeout,
-        };
-        compiler.compile(params.code).await
-    }
+    async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError>;
 
-    #[boxed]
     async fn load(&self) -> Result<(), KpsewhichError>;
 
-    #[boxed]
     async fn resolver(&self) -> Arc<Resolver>;
 }
 
@@ -123,6 +111,18 @@ impl dyn Distribution {
     }
 }
 
+async fn compile(params: CompileParams<'_>) -> Result<Artifacts, CompileError> {
+    let executable = params.format.executable();
+    let args = &["--interaction=batchmode", "-shell-escape", params.file_name];
+    let compiler = Compiler {
+        executable,
+        args,
+        file_name: params.file_name,
+        timeout: params.timeout,
+    };
+    compiler.compile(params.code).await
+}
+
 #[derive(Debug, Default)]
 pub struct UnknownDistribution {
     resolver: Arc<Resolver>,
@@ -136,22 +136,20 @@ impl UnknownDistribution {
     }
 }
 
+#[async_trait]
 impl Distribution for UnknownDistribution {
     fn kind(&self) -> DistributionKind {
         DistributionKind::Unknown
     }
 
-    #[boxed]
-    async fn compile<'a>(&'a self, _params: CompileParams) -> Result<Artifacts, CompileError> {
+    async fn compile<'a>(&'a self, _params: CompileParams<'a>) -> Result<Artifacts, CompileError> {
         Err(CompileError::NotInstalled)
     }
 
-    #[boxed]
     async fn load(&self) -> Result<(), KpsewhichError> {
         Ok(())
     }
 
-    #[boxed]
     async fn resolver(&self) -> Arc<Resolver> {
         Arc::clone(&self.resolver)
     }

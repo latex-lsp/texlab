@@ -1,8 +1,11 @@
-use super::kpsewhich::{self, KpsewhichError, Resolver};
-use super::{Distribution, DistributionKind};
+use super::{
+    compile,
+    kpsewhich::{self, KpsewhichError, Resolver},
+    Artifacts, CompileError, CompileParams, Distribution, DistributionKind,
+};
+use async_trait::async_trait;
 use byteorder::{LittleEndian, ReadBytesExt};
 use futures::lock::Mutex;
-use futures_boxed::boxed;
 use std::{
     ffi::OsStr,
     io::{self, Cursor},
@@ -23,12 +26,16 @@ impl Miktex {
     }
 }
 
+#[async_trait]
 impl Distribution for Miktex {
     fn kind(&self) -> DistributionKind {
         DistributionKind::Miktex
     }
 
-    #[boxed]
+    async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError> {
+        compile(params).await
+    }
+
     async fn load(&self) -> Result<(), KpsewhichError> {
         let root_directories = kpsewhich::root_directories().await?;
         let resolver = kpsewhich::parse_database(&root_directories, read_database).await?;
@@ -36,7 +43,6 @@ impl Distribution for Miktex {
         Ok(())
     }
 
-    #[boxed]
     async fn resolver(&self) -> Arc<Resolver> {
         let resolver = self.resolver.lock().await;
         Arc::clone(&resolver)

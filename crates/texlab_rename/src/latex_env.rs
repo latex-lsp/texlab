@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -9,11 +9,11 @@ use texlab_syntax::{latex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexEnvironmentPrepareRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexEnvironmentPrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.position;
         let (left_name, right_name) = find_environment(&req.current().content, pos)?;
@@ -29,11 +29,11 @@ impl FeatureProvider for LatexEnvironmentPrepareRenameProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexEnvironmentRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexEnvironmentRenameProvider {
     type Params = RenameParams;
     type Output = Option<WorkspaceEdit>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let (left_name, right_name) = find_environment(
             &req.current().content,

@@ -10,9 +10,9 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+async-trait = "0.1"
 chashmap = "2.2"
 futures = "0.3"
-futures-boxed = { path = "../futures_boxed" }
 log = "0.4"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"

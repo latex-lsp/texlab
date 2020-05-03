@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_components::COMPONENT_DATABASE;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
@@ -9,11 +9,11 @@ use texlab_syntax::{LatexIncludeKind, LANGUAGE_DATA};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexClassImportProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexClassImportProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         import(req, LatexIncludeKind::Class, factory::class).await
     }
@@ -22,11 +22,11 @@ impl FeatureProvider for LatexClassImportProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexPackageImportProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexPackageImportProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         import(req, LatexIncludeKind::Package, factory::package).await
     }

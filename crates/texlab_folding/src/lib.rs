@@ -6,7 +6,7 @@ use self::{
     bibtex_decl::BibtexDeclarationFoldingProvider, latex_env::LatexEnvironmentFoldingProvider,
     latex_section::LatexSectionFoldingProvider,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{FoldingRange, FoldingRangeParams};
 
@@ -32,11 +32,11 @@ impl Default for FoldingProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for FoldingProvider {
     type Params = FoldingRangeParams;
     type Output = Vec<FoldingRange>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

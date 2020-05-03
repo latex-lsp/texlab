@@ -4,7 +4,7 @@ mod float;
 mod theorem;
 
 use super::types::{LatexSymbol, LatexSymbolKind};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::path::Path;
 use texlab_feature::{
     DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Outline, OutlineContext,
@@ -30,11 +30,11 @@ fn selection_range(
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexSectionSymbolProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexSectionSymbolProvider {
     type Params = DocumentSymbolParams;
     type Output = Vec<LatexSymbol>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut symbols = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {

@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use petgraph::graph::NodeIndex;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{Location, Position, RangeExt, ReferenceParams, Url};
@@ -10,11 +10,11 @@ use texlab_syntax::{
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringReferenceProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexStringReferenceProvider {
     type Params = ReferenceParams;
     type Output = Vec<Location>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut refs = Vec::new();
         if let DocumentContent::Bibtex(tree) = &req.current().content {

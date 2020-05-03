@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use log::warn;
 use texlab_citeproc::render_citation;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
@@ -8,11 +8,11 @@ use texlab_syntax::{bibtex, Span, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCitationHoverProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexCitationHoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let (tree, src_key, entry) = Self::get_entry(req)?;
         if entry.is_comment() {

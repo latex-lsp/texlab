@@ -1,6 +1,6 @@
 use super::combinators;
 use crate::factory::{self, LatexComponentId};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use itertools::Itertools;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, Range, TextEdit};
@@ -9,11 +9,11 @@ use texlab_syntax::latex;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexUserCommandCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexUserCommandCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::command(req, |current_cmd_node| async move {
             let current_cmd = req
@@ -60,11 +60,11 @@ impl FeatureProvider for LatexUserCommandCompletionProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexUserEnvironmentCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::environment(req, |ctx| async move {
             let mut items = Vec::new();

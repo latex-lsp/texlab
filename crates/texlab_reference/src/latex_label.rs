@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{Location, RangeExt, ReferenceParams};
 use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
@@ -6,11 +6,11 @@ use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelReferenceProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelReferenceProvider {
     type Params = ReferenceParams;
     type Output = Vec<Location>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut refs = Vec::new();
         if let Some(def) = Self::find_name(req) {

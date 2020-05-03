@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, RangeExt};
 use texlab_syntax::{latex, SyntaxNode};
@@ -6,6 +6,7 @@ use texlab_syntax::{latex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PreselectCompletionProvider<F>(pub F);
 
+#[async_trait]
 impl<F> FeatureProvider for PreselectCompletionProvider<F>
 where
     F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
@@ -13,7 +14,6 @@ where
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.text_document_position.position;
         let mut items = self.0.execute(req).await;

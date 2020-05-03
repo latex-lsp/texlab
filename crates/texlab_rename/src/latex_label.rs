@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -9,11 +9,11 @@ use texlab_syntax::{Span, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelPrepareRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelPrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.position;
         find_label(&req.current().content, pos).map(Span::range)
@@ -23,11 +23,11 @@ impl FeatureProvider for LatexLabelPrepareRenameProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelRenameProvider {
     type Params = RenameParams;
     type Output = Option<WorkspaceEdit>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.text_document_position.position;
         let name = find_label(&req.current().content, pos)?;

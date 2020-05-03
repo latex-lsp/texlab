@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use petgraph::graph::NodeIndex;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -10,11 +10,11 @@ use texlab_syntax::{bibtex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringReferenceHoverProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexStringReferenceHoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let tree = req.current().content.as_bibtex()?;
         let reference = Self::find_reference(tree, req.params.position)?;

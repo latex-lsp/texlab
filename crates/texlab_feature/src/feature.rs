@@ -1,5 +1,5 @@
 use crate::workspace::{Document, DocumentContent, DocumentParams, Snapshot};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use itertools::Itertools;
 use std::{
     env,
@@ -85,11 +85,11 @@ impl<P> FeatureRequest<P> {
     }
 }
 
+#[async_trait]
 pub trait FeatureProvider {
     type Params;
     type Output;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output;
 }
 
@@ -106,6 +106,7 @@ impl<P, O> ConcatProvider<P, O> {
     }
 }
 
+#[async_trait]
 impl<P, O> FeatureProvider for ConcatProvider<P, O>
 where
     P: Send + Sync,
@@ -114,7 +115,6 @@ where
     type Params = P;
     type Output = Vec<O>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<P>) -> Vec<O> {
         let mut items = Vec::new();
         for provider in &self.providers {
@@ -137,6 +137,7 @@ impl<P, O> ChoiceProvider<P, O> {
     }
 }
 
+#[async_trait]
 impl<P, O> FeatureProvider for ChoiceProvider<P, O>
 where
     P: Send + Sync,
@@ -145,7 +146,6 @@ where
     type Params = P;
     type Output = Option<O>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<P>) -> Option<O> {
         for provider in &self.providers {
             let item = provider.execute(req).await;

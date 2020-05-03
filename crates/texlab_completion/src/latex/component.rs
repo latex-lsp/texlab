@@ -4,7 +4,7 @@ use crate::{
     quality::QualityEvaluator,
     COMPLETION_LIMIT,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 
@@ -19,11 +19,11 @@ struct CommandItem {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexComponentCommandCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexComponentCommandCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::command(req, |cmd_node| async move {
             let table = req.current().content.as_latex().unwrap();
@@ -70,11 +70,11 @@ impl FeatureProvider for LatexComponentCommandCompletionProvider {
 
 pub struct LatexComponentEnvironmentCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexComponentEnvironmentCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::environment(req, |ctx| async move {
             let mut items = Vec::new();

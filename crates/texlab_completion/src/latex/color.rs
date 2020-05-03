@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 use texlab_syntax::LANGUAGE_DATA;
@@ -8,11 +8,11 @@ use texlab_syntax::LANGUAGE_DATA;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexColorCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexColorCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameters = LANGUAGE_DATA.color_commands.iter().map(|cmd| Parameter {
             name: &cmd.name,

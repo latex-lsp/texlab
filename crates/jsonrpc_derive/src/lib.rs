@@ -4,7 +4,6 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use std::str::FromStr;
 use syn::{export::TokenStream2, *};
 
 macro_rules! unwrap {
@@ -66,8 +65,8 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let tokens = quote! {
         #impl_
 
+        #[async_trait::async_trait]
         impl #generics jsonrpc::RequestHandler for #self_ty {
-            #[futures_boxed::boxed]
             async fn handle_request(&self, request: jsonrpc::Request) -> jsonrpc::Response {
                 use jsonrpc::*;
 
@@ -79,7 +78,6 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            #[futures_boxed::boxed]
             async fn handle_notification(&self, notification: jsonrpc::Notification) {
                 match notification.method.as_str() {
                     #(#notifications),*,
@@ -94,7 +92,7 @@ pub fn jsonrpc_server(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let item = TokenStream::from_str(&item.to_string().replace("async ", "")).unwrap();
+    // let item = TokenStream::from_str(&item.to_string().replace("async ", "")).unwrap();
     let trait_: ItemTrait = parse_macro_input!(item);
     let trait_ident = &trait_.ident;
     let stubs = generate_client_stubs(&trait_.items);
@@ -102,6 +100,7 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
     let struct_ident = unwrap!(attr.first().unwrap(), NestedMeta::Meta(Meta::Path(x)) => x);
 
     let tokens = quote! {
+        #[async_trait::async_trait]
         #trait_
 
         pub struct #struct_ident {
@@ -117,14 +116,15 @@ pub fn jsonrpc_client(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
+        #[async_trait::async_trait]
         impl #trait_ident for #struct_ident
         {
             #(#stubs)*
         }
 
+        #[async_trait::async_trait]
         impl jsonrpc::ResponseHandler for #struct_ident
         {
-            #[futures_boxed::boxed]
             async fn handle(&self, response: jsonrpc::Response) -> () {
                 self.client.handle(response).await
             }
@@ -189,14 +189,12 @@ fn generate_client_stubs(items: &Vec<TraitItem>) -> Vec<TokenStream2> {
 
         let stub = match meta.kind {
             MethodKind::Request => quote!(
-                #[futures_boxed::boxed]
                 #sig {
                     let result = self.client.send_request(#name.to_owned(), #param).await?;
                     serde_json::from_value(result).map_err(|_| jsonrpc::Error::deserialize_error())
                 }
             ),
             MethodKind::Notification => quote!(
-                #[futures_boxed::boxed]
                 #sig {
                     self.client.send_notification(#name.to_owned(), #param).await
                 }

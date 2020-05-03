@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::{path::Path, sync::Arc};
 use texlab_feature::{
     DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Outline, OutlineContext,
@@ -11,11 +11,11 @@ use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelDefinitionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelDefinitionProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<LocationLink>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut links = Vec::new();
         if let Some(reference) = Self::find_reference(req) {

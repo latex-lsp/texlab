@@ -10,7 +10,7 @@ use self::{
     bibtex_entry::BibtexEntrySymbolProvider, bibtex_string::BibtexStringSymbolProvider,
     latex_section::LatexSectionSymbolProvider, project_order::ProjectOrdering, types::LatexSymbol,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::{
     cmp::Reverse,
     path::{Path, PathBuf},
@@ -46,11 +46,11 @@ impl Default for SymbolProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for SymbolProvider {
     type Params = DocumentSymbolParams;
     type Output = Vec<LatexSymbol>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

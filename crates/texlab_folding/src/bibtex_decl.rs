@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use petgraph::graph::NodeIndex;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
@@ -7,11 +7,11 @@ use texlab_syntax::{bibtex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexDeclarationFoldingProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexDeclarationFoldingProvider {
     type Params = FoldingRangeParams;
     type Output = Vec<FoldingRange>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let DocumentContent::Bibtex(tree) = &req.current().content {
             tree.children(tree.root)

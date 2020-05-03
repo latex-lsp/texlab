@@ -9,7 +9,7 @@ use self::{
     latex_env::{LatexEnvironmentPrepareRenameProvider, LatexEnvironmentRenameProvider},
     latex_label::{LatexLabelPrepareRenameProvider, LatexLabelRenameProvider},
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{Range, RenameParams, TextDocumentPositionParams, WorkspaceEdit};
 
@@ -36,11 +36,11 @@ impl Default for PrepareRenameProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for PrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
 
-    #[boxed]
     async fn execute<'a>(
         &'a self,
         req: &'a FeatureRequest<TextDocumentPositionParams>,
@@ -72,11 +72,11 @@ impl Default for RenameProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for RenameProvider {
     type Params = RenameParams;
     type Output = Option<WorkspaceEdit>;
 
-    #[boxed]
     async fn execute<'a>(
         &'a self,
         request: &'a FeatureRequest<RenameParams>,

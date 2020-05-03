@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{
     Hover, HoverContents, MarkupContent, MarkupKind, RangeExt, TextDocumentPositionParams,
@@ -8,11 +8,11 @@ use texlab_syntax::{SyntaxNode, LANGUAGE_DATA};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryTypeHoverProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexEntryTypeHoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let tree = req.current().content.as_bibtex()?;
         for entry in tree

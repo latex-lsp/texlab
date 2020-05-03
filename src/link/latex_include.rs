@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 use texlab_syntax::{latex, SyntaxNode};
@@ -6,11 +6,11 @@ use texlab_syntax::{latex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexIncludeLinkProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexIncludeLinkProvider {
     type Params = DocumentLinkParams;
     type Output = Vec<DocumentLink>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let DocumentContent::Latex(table) = &req.current().content {
             table

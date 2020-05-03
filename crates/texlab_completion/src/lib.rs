@@ -31,7 +31,7 @@ use self::{
     preselect::PreselectCompletionProvider,
     quality::OrderByQualityCompletionProvider,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use itertools::Itertools;
 use std::hash::{Hash, Hasher};
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
@@ -82,11 +82,11 @@ impl Default for CompletionProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for CompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider
             .execute(req)

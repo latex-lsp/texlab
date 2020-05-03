@@ -1,6 +1,6 @@
 use super::combinators::{self, ArgumentContext, Parameter};
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::sync::Arc;
 use texlab_feature::{
     DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Outline, OutlineContext,
@@ -11,11 +11,11 @@ use texlab_syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, SyntaxNode
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameters = LANGUAGE_DATA
             .label_commands

@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::sync::Arc;
 use texlab_feature::{
     Document, DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Outline,
@@ -10,11 +10,11 @@ use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelHoverProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexLabelHoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let table = req.current().content.as_latex()?;
         let reference = Self::find_reference(table, req.params.position)?;

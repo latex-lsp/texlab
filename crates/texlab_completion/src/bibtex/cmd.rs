@@ -1,5 +1,5 @@
 use crate::factory::{self, LatexComponentId};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_components::COMPONENT_DATABASE;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit};
@@ -8,11 +8,11 @@ use texlab_syntax::SyntaxNode;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexCommandCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexCommandCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut items = Vec::new();
         if let DocumentContent::Bibtex(tree) = &req.current().content {

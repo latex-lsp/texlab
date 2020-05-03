@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 use texlab_syntax::SyntaxNode;
@@ -6,11 +6,11 @@ use texlab_syntax::SyntaxNode;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCommandDefinitionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexCommandDefinitionProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<LocationLink>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut links = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {

@@ -1,5 +1,5 @@
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt, TextEdit};
 use texlab_syntax::{bibtex, SyntaxNode, LANGUAGE_DATA};
@@ -7,11 +7,11 @@ use texlab_syntax::{bibtex, SyntaxNode, LANGUAGE_DATA};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexEntryTypeCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexEntryTypeCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if let DocumentContent::Bibtex(tree) = &req.current().content {
             let pos = req.params.text_document_position.position;

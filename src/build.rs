@@ -1,10 +1,10 @@
+use async_trait::async_trait;
 use futures::{
     future::{AbortHandle, Abortable, Aborted},
     lock::Mutex,
     prelude::*,
     stream,
 };
-use futures_boxed::boxed;
 use std::{collections::HashMap, io, path::Path, process::Stdio, sync::Arc};
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -43,6 +43,7 @@ impl<C> BuildProvider<C> {
     }
 }
 
+#[async_trait]
 impl<C> FeatureProvider for BuildProvider<C>
 where
     C: LspClient + Send + Sync + 'static,
@@ -50,7 +51,6 @@ where
     type Params = BuildParams;
     type Output = BuildResult;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<BuildParams>) -> BuildResult {
         let token = ProgressToken::String(format!("texlab-build-{}", Uuid::new_v4()));
         let (handle, reg) = AbortHandle::new_pair();

@@ -10,8 +10,8 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+async-trait = "0.1"
 futures = "0.3"
-futures-boxed = { path = "../futures_boxed" }
 itertools = "0.9"
 log = "0.4"
 petgraph = { version = "0.5", features = ["serde-1"] }

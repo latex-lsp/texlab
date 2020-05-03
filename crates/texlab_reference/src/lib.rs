@@ -6,7 +6,7 @@ use self::{
     bibtex_entry::BibtexEntryReferenceProvider, bibtex_string::BibtexStringReferenceProvider,
     latex_label::LatexLabelReferenceProvider,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{Location, ReferenceParams};
 
@@ -32,11 +32,11 @@ impl Default for ReferenceProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for ReferenceProvider {
     type Params = ReferenceParams;
     type Output = Vec<Location>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

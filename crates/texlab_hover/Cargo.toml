@@ -10,9 +10,9 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+async-trait = "0.1"
 base64 = "0.12"
 futures = "0.3"
-futures-boxed = { path = "../futures_boxed" }
 image = "0.23"
 itertools = "0.9"
 log = "0.4"

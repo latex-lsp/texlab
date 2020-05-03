@@ -2,8 +2,8 @@ use crate::{
     build::BuildProvider, config::ConfigManager, diagnostics::DiagnosticsManager, forward_search,
     highlight::HighlightProvider, link::LinkProvider,
 };
+use async_trait::async_trait;
 use futures::lock::Mutex;
-use futures_boxed::boxed;
 use jsonrpc::{server::Result, Middleware};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::{debug, error, info, warn};
@@ -583,8 +583,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 }
 
+#[async_trait]
 impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
-    #[boxed]
     async fn before_message(&self) {
         if let Some(config_manager) = self.config_manager.get() {
             let options = config_manager.get().await;
@@ -593,7 +593,6 @@ impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
         }
     }
 
-    #[boxed]
     async fn after_message(&self) {
         self.update_build_diagnostics().await;
         for action in self.action_manager.take().await {

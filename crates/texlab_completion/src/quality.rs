@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::borrow::Cow;
 use texlab_feature::{Document, DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, Position, RangeExt};
@@ -113,6 +113,7 @@ impl<'a> QualityEvaluator<'a> {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct OrderByQualityCompletionProvider<F>(pub F);
 
+#[async_trait]
 impl<F> FeatureProvider for OrderByQualityCompletionProvider<F>
 where
     F: FeatureProvider<Params = CompletionParams, Output = Vec<CompletionItem>> + Send + Sync,
@@ -120,7 +121,6 @@ where
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.text_document_position.position;
         let eval = QualityEvaluator::parse(req.current(), pos);

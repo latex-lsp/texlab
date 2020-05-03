@@ -1,24 +1,22 @@
 use super::types::*;
+use async_trait::async_trait;
 use futures::prelude::*;
-use futures_boxed::boxed;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::json;
 
 pub type Result<T> = std::result::Result<T, String>;
 
+#[async_trait]
 pub trait RequestHandler {
-    #[boxed]
     async fn handle_request(&self, request: Request) -> Response;
 
-    #[boxed]
     async fn handle_notification(&self, notification: Notification);
 }
 
+#[async_trait]
 pub trait Middleware {
-    #[boxed]
     async fn before_message(&self);
 
-    #[boxed]
     async fn after_message(&self);
 }
 

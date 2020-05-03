@@ -2,7 +2,7 @@ mod latex_import;
 mod latex_include;
 
 use self::{latex_import::LatexImportLinkProvider, latex_include::LatexIncludeLinkProvider};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{DocumentLink, DocumentLinkParams};
 
@@ -27,11 +27,11 @@ impl Default for LinkProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for LinkProvider {
     type Params = DocumentLinkParams;
     type Output = Vec<DocumentLink>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

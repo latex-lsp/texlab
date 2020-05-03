@@ -11,7 +11,7 @@ use self::{
         label::LatexLabelHoverProvider, preview::LatexPreviewHoverProvider,
     },
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ChoiceProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{Hover, TextDocumentPositionParams};
 
@@ -41,11 +41,11 @@ impl Default for HoverProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for HoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

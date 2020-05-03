@@ -7,7 +7,7 @@ use self::{
     bibtex_string::BibtexStringDefinitionProvider, latex_citation::LatexCitationDefinitionProvider,
     latex_cmd::LatexCommandDefinitionProvider, latex_label::LatexLabelDefinitionProvider,
 };
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
 use texlab_protocol::{LocationLink, TextDocumentPositionParams};
 
@@ -34,11 +34,11 @@ impl Default for DefinitionProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for DefinitionProvider {
     type Params = TextDocumentPositionParams;
     type Output = Vec<LocationLink>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         self.provider.execute(req).await
     }

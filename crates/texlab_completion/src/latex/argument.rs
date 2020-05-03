@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::iter;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
@@ -8,11 +8,11 @@ use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexArgumentCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexArgumentCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut all_items = Vec::new();
         for comp in req.view.components() {

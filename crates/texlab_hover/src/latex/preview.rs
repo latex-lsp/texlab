@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use image::{png::PNGEncoder, ColorType, DynamicImage, GenericImageView, ImageBuffer, RgbaImage};
 use io::Cursor;
 use log::warn;
@@ -282,11 +282,11 @@ impl LatexPreviewHoverProvider {
     }
 }
 
+#[async_trait]
 impl FeatureProvider for LatexPreviewHoverProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Hover>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if !req.client_capabilities.has_hover_markdown_support()
             || req.distro.0.kind() == DistributionKind::Tectonic

@@ -1,6 +1,6 @@
 use super::combinators::{self, Parameter};
 use crate::factory;
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams, TextEdit};
 use texlab_syntax::{
@@ -11,11 +11,11 @@ use texlab_syntax::{
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexGlossaryCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexGlossaryCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let parameters = LANGUAGE_DATA
             .glossary_entry_reference_commands

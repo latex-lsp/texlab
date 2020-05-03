@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{
@@ -9,11 +9,11 @@ use texlab_syntax::{latex, SyntaxNode};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCommandPrepareRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexCommandPrepareRenameProvider {
     type Params = TextDocumentPositionParams;
     type Output = Option<Range>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.position;
         find_command(&req.current().content, pos).map(SyntaxNode::range)
@@ -23,11 +23,11 @@ impl FeatureProvider for LatexCommandPrepareRenameProvider {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexCommandRenameProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexCommandRenameProvider {
     type Params = RenameParams;
     type Output = Option<WorkspaceEdit>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.text_document_position.position;
         let cmd_name = find_command(&req.current().content, pos)?.name.text();

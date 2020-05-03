@@ -1,7 +1,10 @@
-use super::kpsewhich::{self, KpsewhichError, Resolver};
-use super::{Distribution, DistributionKind};
+use super::{
+    compile,
+    kpsewhich::{self, KpsewhichError, Resolver},
+    Artifacts, CompileError, CompileParams, Distribution, DistributionKind,
+};
+use async_trait::async_trait;
 use futures::lock::Mutex;
-use futures_boxed::boxed;
 use std::{
     io, mem,
     path::{Path, PathBuf},
@@ -21,12 +24,16 @@ impl Texlive {
     }
 }
 
+#[async_trait]
 impl Distribution for Texlive {
     fn kind(&self) -> DistributionKind {
         DistributionKind::Texlive
     }
 
-    #[boxed]
+    async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError> {
+        compile(params).await
+    }
+
     async fn load(&self) -> Result<(), KpsewhichError> {
         let root_directories = kpsewhich::root_directories().await?;
         let resolver = kpsewhich::parse_database(&root_directories, read_database).await?;
@@ -34,7 +41,6 @@ impl Distribution for Texlive {
         Ok(())
     }
 
-    #[boxed]
     async fn resolver(&self) -> Arc<Resolver> {
         let resolver = self.resolver.lock().await;
         Arc::clone(&resolver)

@@ -1,18 +1,18 @@
 use super::types::*;
+use async_trait::async_trait;
 use chashmap::CHashMap;
 use futures::{
     channel::{mpsc, oneshot},
     prelude::*,
 };
-use futures_boxed::boxed;
 use serde::Serialize;
 use serde_json::json;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[async_trait]
 pub trait ResponseHandler {
-    #[boxed]
     async fn handle(&self, response: Response);
 }
 
@@ -59,8 +59,8 @@ impl Client {
     }
 }
 
+#[async_trait]
 impl ResponseHandler for Client {
-    #[boxed]
     async fn handle(&self, response: Response) {
         let id = response.id.expect("Expected response with id");
         let result = match response.error {

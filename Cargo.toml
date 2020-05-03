@@ -16,12 +16,12 @@ members = ["crates/*"]
 doctest = false
 
 [dependencies]
+async-trait = "0.1"
 aovec = "1.1"
 chashmap = "2.2"
 clap = "2.33"
 fern = "0.6"
 futures = "0.3"
-futures-boxed = { path = "crates/futures_boxed" }
 itertools = "0.9"
 jsonrpc = { path = "crates/jsonrpc" }
 jsonrpc-derive = { path = "crates/jsonrpc_derive" }

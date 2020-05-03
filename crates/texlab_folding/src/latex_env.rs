@@ -1,4 +1,4 @@
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::{FoldingRange, FoldingRangeKind, FoldingRangeParams};
 use texlab_syntax::SyntaxNode;
@@ -6,11 +6,11 @@ use texlab_syntax::SyntaxNode;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexEnvironmentFoldingProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexEnvironmentFoldingProvider {
     type Params = FoldingRangeParams;
     type Output = Vec<FoldingRange>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut foldings = Vec::new();
         if let DocumentContent::Latex(table) = &req.current().content {

@@ -1,5 +1,5 @@
 use super::types::{LatexSymbol, LatexSymbolKind};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
 use texlab_protocol::DocumentSymbolParams;
 use texlab_syntax::SyntaxNode;
@@ -7,11 +7,11 @@ use texlab_syntax::SyntaxNode;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct BibtexStringSymbolProvider;
 
+#[async_trait]
 impl FeatureProvider for BibtexStringSymbolProvider {
     type Params = DocumentSymbolParams;
     type Output = Vec<LatexSymbol>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let mut symbols = Vec::new();
         if let DocumentContent::Bibtex(tree) = &req.current().content {

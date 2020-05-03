@@ -1,7 +1,9 @@
-use super::compile::{Artifacts, CompileError, CompileParams, Compiler};
-use super::kpsewhich::{KpsewhichError, Resolver};
+use super::{
+    compile::{Artifacts, CompileError, CompileParams, Compiler},
+    kpsewhich::{KpsewhichError, Resolver},
+};
 use super::{Distribution, DistributionKind};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use std::sync::Arc;
 
 #[derive(Debug, Default)]
@@ -13,12 +15,12 @@ impl Tectonic {
     }
 }
 
+#[async_trait]
 impl Distribution for Tectonic {
     fn kind(&self) -> DistributionKind {
         DistributionKind::Tectonic
     }
 
-    #[boxed]
     async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError> {
         let args = [params.file_name];
         let compiler = Compiler {
@@ -30,12 +32,10 @@ impl Distribution for Tectonic {
         compiler.compile(params.code).await
     }
 
-    #[boxed]
     async fn load(&self) -> Result<(), KpsewhichError> {
         Ok(())
     }
 
-    #[boxed]
     async fn resolver(&self) -> Arc<Resolver> {
         Arc::new(Resolver::default())
     }

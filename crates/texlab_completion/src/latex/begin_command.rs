@@ -1,17 +1,17 @@
 use super::combinators;
 use crate::factory::{self, LatexComponentId};
-use futures_boxed::boxed;
+use async_trait::async_trait;
 use texlab_feature::{FeatureProvider, FeatureRequest};
 use texlab_protocol::{CompletionItem, CompletionParams};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexBeginCommandCompletionProvider;
 
+#[async_trait]
 impl FeatureProvider for LatexBeginCommandCompletionProvider {
     type Params = CompletionParams;
     type Output = Vec<CompletionItem>;
 
-    #[boxed]
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         combinators::command(req, |_| async move {
             let snippet = factory::command_snippet(

@@ -10,9 +10,9 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+async-trait = "0.1"
 bytes = "0.5"
 futures = "0.3"
-futures-boxed = { path = "../futures_boxed" }
 jsonrpc = { path = "../jsonrpc" }
 jsonrpc-derive = { path = "../jsonrpc_derive" }
 log = "0.4"
