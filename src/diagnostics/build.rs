@@ -1,3 +1,7 @@
+use crate::{
+    protocol::{Diagnostic, DiagnosticSeverity, Options, Position, Range, Uri},
+    workspace::{Document, Snapshot},
+};
 use futures::lock::Mutex;
 use once_cell::sync::Lazy;
 use regex::{Match, Regex};
@@ -9,8 +13,6 @@ use std::{
     str,
     time::SystemTime,
 };
-use texlab_feature::{Document, Snapshot};
-use texlab_protocol::{Diagnostic, DiagnosticSeverity, Options, Position, Range, Uri};
 use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

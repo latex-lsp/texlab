@@ -1,9 +1,11 @@
 mod latex_label;
 
 use self::latex_label::LatexLabelHighlightProvider;
+use crate::{
+    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
+    protocol::{DocumentHighlight, TextDocumentPositionParams},
+};
 use async_trait::async_trait;
-use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use texlab_protocol::{DocumentHighlight, TextDocumentPositionParams};
 
 pub struct HighlightProvider {
     provider: ConcatProvider<TextDocumentPositionParams, DocumentHighlight>,

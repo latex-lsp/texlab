@@ -5,10 +5,11 @@ use futures::{channel::mpsc, prelude::*};
 use jsonrpc::MessageHandler;
 use log::LevelFilter;
 use std::{env, error, fs::OpenOptions, sync::Arc};
-
-use texlab::server::LatexLspServer;
-use texlab_protocol::{LatexLspClient, LspCodec};
-use texlab_tex::DynamicDistribution;
+use texlab::{
+    protocol::{LatexLspClient, LspCodec},
+    server::LatexLspServer,
+    tex::DynamicDistribution,
+};
 use tokio_util::codec::{FramedRead, FramedWrite};
 
 #[tokio::main]

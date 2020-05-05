@@ -2,9 +2,11 @@ mod latex_import;
 mod latex_include;
 
 use self::{latex_import::LatexImportLinkProvider, latex_include::LatexIncludeLinkProvider};
+use crate::{
+    feature::{ConcatProvider, FeatureProvider, FeatureRequest},
+    protocol::{DocumentLink, DocumentLinkParams},
+};
 use async_trait::async_trait;
-use texlab_feature::{ConcatProvider, FeatureProvider, FeatureRequest};
-use texlab_protocol::{DocumentLink, DocumentLinkParams};
 
 pub struct LinkProvider {
     provider: ConcatProvider<DocumentLinkParams, DocumentLink>,

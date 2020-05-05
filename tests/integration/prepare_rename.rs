@@ -1,5 +1,7 @@
-use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
-use texlab_protocol::{Range, RangeExt};
+use texlab::{
+    protocol::{Range, RangeExt},
+    test::{TestBedBuilder, PULL_CAPABILITIES},
+};
 
 #[tokio::test]
 async fn empty_latex_document() {

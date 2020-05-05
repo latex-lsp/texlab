@@ -1,7 +1,7 @@
 use indoc::indoc;
-use texlab::test::{TestBedBuilder, LOCATION_LINK_CAPABILITIES, PULL_CAPABILITIES};
-use texlab_protocol::{
-    HoverContents, Location, LocationLink, MarkupContent, MarkupKind, Range, RangeExt,
+use texlab::{
+    protocol::{HoverContents, Location, LocationLink, MarkupContent, MarkupKind, Range, RangeExt},
+    test::{TestBedBuilder, LOCATION_LINK_CAPABILITIES, PULL_CAPABILITIES},
 };
 
 #[tokio::test]

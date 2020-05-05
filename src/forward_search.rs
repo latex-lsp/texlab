@@ -1,7 +1,9 @@
+use crate::{
+    protocol::{ForwardSearchResult, ForwardSearchStatus, Options, Uri},
+    workspace::Snapshot,
+};
 use log::error;
 use std::{io, path::Path, process::Stdio};
-use texlab_feature::Snapshot;
-use texlab_protocol::{ForwardSearchResult, ForwardSearchStatus, Options, Uri};
 use tokio::process::Command;
 
 pub async fn search<'a>(

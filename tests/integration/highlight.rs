@@ -1,6 +1,8 @@
 use indoc::indoc;
-use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
-use texlab_protocol::{DocumentHighlight, DocumentHighlightKind, Range, RangeExt};
+use texlab::{
+    protocol::{DocumentHighlight, DocumentHighlightKind, Range, RangeExt},
+    test::{TestBedBuilder, PULL_CAPABILITIES},
+};
 
 #[tokio::test]
 async fn empty_latex_document() {

@@ -1,6 +1,8 @@
 use indoc::indoc;
-use texlab::test::{TestBedBuilder, NESTED_SYMBOL_CAPABILITIES};
-use texlab_protocol::{DocumentSymbol, Range, RangeExt};
+use texlab::{
+    protocol::{DocumentSymbol, Range, RangeExt},
+    test::{TestBedBuilder, NESTED_SYMBOL_CAPABILITIES},
+};
 
 fn verify_symbol(
     symbol: &DocumentSymbol,

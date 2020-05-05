@@ -1,6 +1,8 @@
 use indoc::indoc;
-use texlab::test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES};
-use texlab_protocol::{Location, Range, RangeExt, SymbolInformation, WorkspaceSymbolParams};
+use texlab::{
+    protocol::{Location, Range, RangeExt, SymbolInformation, WorkspaceSymbolParams},
+    test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES},
+};
 
 pub fn verify_symbol_info(
     symbol: &SymbolInformation,

@@ -1,6 +1,24 @@
 use crate::{
-    build::BuildProvider, config::ConfigManager, diagnostics::DiagnosticsManager, forward_search,
-    highlight::HighlightProvider, link::LinkProvider,
+    build::BuildProvider,
+    citeproc::render_citation,
+    completion::{CompletionItemData, CompletionProvider},
+    components::COMPONENT_DATABASE,
+    config::ConfigManager,
+    definition::DefinitionProvider,
+    diagnostics::DiagnosticsManager,
+    feature::{DocumentView, FeatureProvider, FeatureRequest},
+    folding::FoldingProvider,
+    forward_search,
+    highlight::HighlightProvider,
+    hover::HoverProvider,
+    link::LinkProvider,
+    protocol::*,
+    reference::ReferenceProvider,
+    rename::{PrepareRenameProvider, RenameProvider},
+    symbol::{document_symbols, workspace_symbols, SymbolProvider},
+    syntax::{bibtex, latexindent, CharStream, SyntaxNode},
+    tex::{DistributionKind, DynamicDistribution, KpsewhichError},
+    workspace::{DocumentContent, Workspace},
 };
 use async_trait::async_trait;
 use futures::lock::Mutex;
@@ -9,19 +27,6 @@ use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
 use log::{debug, error, info, warn};
 use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
-use texlab_citeproc::render_citation;
-use texlab_completion::{CompletionItemData, CompletionProvider};
-use texlab_components::COMPONENT_DATABASE;
-use texlab_definition::DefinitionProvider;
-use texlab_feature::{DocumentContent, DocumentView, FeatureProvider, FeatureRequest, Workspace};
-use texlab_folding::FoldingProvider;
-use texlab_hover::HoverProvider;
-use texlab_protocol::*;
-use texlab_reference::ReferenceProvider;
-use texlab_rename::{PrepareRenameProvider, RenameProvider};
-use texlab_symbol::{document_symbols, workspace_symbols, SymbolProvider};
-use texlab_syntax::{bibtex, latexindent, CharStream, SyntaxNode};
-use texlab_tex::{DistributionKind, DynamicDistribution, KpsewhichError};
 
 pub struct LatexLspServer<C> {
     distro: DynamicDistribution,

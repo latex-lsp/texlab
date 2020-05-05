@@ -1,7 +1,10 @@
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{DocumentLink, DocumentLinkParams},
+    syntax::{latex, SyntaxNode},
+    workspace::DocumentContent,
+};
 use async_trait::async_trait;
-use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
-use texlab_protocol::{DocumentLink, DocumentLinkParams};
-use texlab_syntax::{latex, SyntaxNode};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexImportLinkProvider;
@@ -49,8 +52,10 @@ impl LatexImportLinkProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use texlab_feature::FeatureTester;
-    use texlab_protocol::{Range, RangeExt};
+    use crate::{
+        feature::FeatureTester,
+        protocol::{Range, RangeExt},
+    };
 
     #[tokio::test]
     async fn empty_latex_document_command() {

@@ -1,6 +1,8 @@
 use indoc::indoc;
-use texlab::test::{TestBedBuilder, PULL_CAPABILITIES};
-use texlab_protocol::{HoverContents, MarkupContent, MarkupKind};
+use texlab::{
+    protocol::{HoverContents, MarkupContent, MarkupKind},
+    test::{TestBedBuilder, PULL_CAPABILITIES},
+};
 
 #[tokio::test]
 async fn label_theorem_child_file() {

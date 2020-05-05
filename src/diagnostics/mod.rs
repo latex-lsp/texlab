@@ -8,8 +8,7 @@ pub use self::{
     latex::LatexDiagnosticsProvider,
 };
 
-use texlab_feature::Document;
-use texlab_protocol::Diagnostic;
+use crate::{protocol::Diagnostic, workspace::Document};
 
 #[derive(Debug, Default)]
 pub struct DiagnosticsManager {

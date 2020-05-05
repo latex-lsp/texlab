@@ -1,9 +1,10 @@
-use async_trait::async_trait;
-use texlab_feature::{DocumentContent, FeatureProvider, FeatureRequest};
-use texlab_protocol::{
-    DocumentHighlight, DocumentHighlightKind, RangeExt, TextDocumentPositionParams,
+use crate::{
+    feature::{FeatureProvider, FeatureRequest},
+    protocol::{DocumentHighlight, DocumentHighlightKind, RangeExt, TextDocumentPositionParams},
+    syntax::{latex, LatexLabelKind, SyntaxNode},
+    workspace::DocumentContent,
 };
-use texlab_syntax::{latex, LatexLabelKind, SyntaxNode};
+use async_trait::async_trait;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct LatexLabelHighlightProvider;
@@ -48,9 +49,8 @@ impl FeatureProvider for LatexLabelHighlightProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{feature::FeatureTester, protocol::Range};
     use indoc::indoc;
-    use texlab_feature::FeatureTester;
-    use texlab_protocol::Range;
 
     #[tokio::test]
     async fn has_label() {
