@@ -1,10 +1,9 @@
-use clap::{
-    app_from_crate, crate_authors, crate_description, crate_name, crate_version, Arg, ArgMatches,
-};
 use futures::{channel::mpsc, prelude::*};
 use jsonrpc::MessageHandler;
 use log::LevelFilter;
+use std::path::PathBuf;
 use std::{env, error, fs::OpenOptions, sync::Arc};
+use structopt::StructOpt;
 use texlab::{
     protocol::{LatexLspClient, LspCodec},
     server::LatexLspServer,
@@ -12,30 +11,25 @@ use texlab::{
 };
 use tokio_util::codec::{FramedRead, FramedWrite};
 
+/// An implementation of the Language Server Protocol for LaTeX
+#[derive(Debug, StructOpt)]
+struct Opts {
+    /// Increase message verbosity (-vvvv for max verbosity)
+    #[structopt(short, long, parse(from_occurrences))]
+    verbosity: u8,
+
+    /// No output printed to stderr
+    #[structopt(short, long)]
+    quiet: bool,
+
+    /// Write the logging output to FILE
+    #[structopt(long, name = "FILE", parse(from_os_str))]
+    log_file: Option<PathBuf>,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn error::Error>> {
-    let opts = app_from_crate!()
-        .author("")
-        .arg(
-            Arg::with_name("verbosity")
-                .short("v")
-                .multiple(true)
-                .help("Increase message verbosity (-vvvv for max verbosity)"),
-        )
-        .arg(
-            Arg::with_name("quiet")
-                .long("quiet")
-                .short("q")
-                .help("No output printed to stderr"),
-        )
-        .arg(
-            Arg::with_name("log_file")
-                .long("log-file")
-                .value_name("FILE")
-                .help("Send the logs to the given file"),
-        )
-        .get_matches();
-
+    let opts = Opts::from_args();
     setup_logger(opts);
 
     let mut stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
@@ -68,9 +62,9 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     Ok(())
 }
 
-fn setup_logger(opts: ArgMatches) {
-    let verbosity_level = if !opts.is_present("quiet") {
-        match opts.occurrences_of("verbosity") {
+fn setup_logger(opts: Opts) {
+    let verbosity_level = if !opts.quiet {
+        match opts.verbosity {
             0 => LevelFilter::Error,
             1 => LevelFilter::Warn,
             2 => LevelFilter::Info,
@@ -87,7 +81,7 @@ fn setup_logger(opts: ArgMatches) {
         .filter(|metadata| metadata.target() == "jsonrpc" || metadata.target().contains("texlab"))
         .chain(std::io::stderr());
 
-    let logger = match opts.value_of("log_file") {
+    let logger = match opts.log_file {
         Some(log_file) => logger.chain(
             OpenOptions::new()
                 .write(true)
