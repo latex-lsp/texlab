@@ -5,8 +5,8 @@ version = "2.0.0"
 license = "GPLv3"
 readme = "README.md"
 authors = [
-    "Eric Förster <efoerster@users.noreply.github.com>", 
-    "Patrick Förster <pfoerster@users.noreply.github.com>"]
+    "Eric Förster <eric.foerster@outlook.com>", 
+    "Patrick Förster <patrick.foerster@outlook.de>"]
 edition = "2018"
 
 [workspace]
