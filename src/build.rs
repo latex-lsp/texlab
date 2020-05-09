@@ -14,6 +14,7 @@ use futures::{
     prelude::*,
     stream,
 };
+use log::error;
 use std::{collections::HashMap, io, path::Path, process::Stdio, sync::Arc};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
@@ -68,6 +69,7 @@ where
             .unwrap_or_else(|| Arc::clone(&req.view.current));
 
         if !doc.is_file() {
+            error!("Unable to build the document {}: wrong URI scheme", doc.uri);
             return BuildResult {
                 status: BuildStatus::Failure,
             };
@@ -101,11 +103,17 @@ where
                 match Abortable::new(build(&path, &latex_options, client), reg).await {
                     Ok(Ok(true)) => BuildStatus::Success,
                     Ok(Ok(false)) => BuildStatus::Error,
-                    Ok(Err(_)) => BuildStatus::Failure,
+                    Ok(Err(why)) => {
+                        error!("Unable to build the document {}: {}", doc.uri, why);
+                        BuildStatus::Failure
+                    }
                     Err(Aborted) => BuildStatus::Cancelled,
                 }
             }
-            Err(()) => BuildStatus::Failure,
+            Err(()) => {
+                error!("Unable to build the document {}: invalid URI", doc.uri);
+                BuildStatus::Failure
+            }
         };
 
         if req.client_capabilities.has_work_done_progress_support() {
