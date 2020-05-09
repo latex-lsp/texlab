@@ -39,9 +39,12 @@ pub fn render_citation(tree: &bibtex::Tree, key: &str) -> Option<MarkupContent> 
             .into_owned();
     }
 
-    markdown = markdown.replace("..", ".");
-    markdown = markdown.replace("\\\'", "'");
-    markdown = markdown.replace("\\-", "-");
+    markdown = markdown
+        .replace("..", ".")
+        .replace("\\\'", "'")
+        .replace("\\-", "-")
+        .replace("\\\\textsubscript", "")
+        .replace("\\\\textsuperscript", "");
     let content = MarkupContent {
         kind: MarkupKind::Markdown,
         value: markdown,
