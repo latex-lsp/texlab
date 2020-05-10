@@ -1,8 +1,8 @@
 [package]
 name = "texlab"
 description = "LaTeX Language Server"
-version = "2.0.0"
-license = "GPLv3"
+version = "2.1.0"
+license = "GPL-3.0"
 readme = "README.md"
 authors = [
     "Eric Förster <eric.foerster@outlook.com>", 
