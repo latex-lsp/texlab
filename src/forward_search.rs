@@ -74,7 +74,7 @@ fn replace_placeholder(
         argument
             .replace("%f", tex_file.to_str()?)
             .replace("%p", pdf_file.to_str()?)
-            .replace("%l", &line_number.to_string())
+            .replace("%l", &(line_number + 1).to_string())
     };
     Some(result)
 }

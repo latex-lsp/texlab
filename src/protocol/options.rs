@@ -51,6 +51,7 @@ pub struct LatexBuildOptions {
     pub args: Option<Vec<String>>,
     pub on_save: Option<bool>,
     pub output_directory: Option<PathBuf>,
+    pub forward_search_after: Option<bool>,
 }
 
 impl LatexBuildOptions {
@@ -73,6 +74,10 @@ impl LatexBuildOptions {
 
     pub fn on_save(&self) -> bool {
         self.on_save.unwrap_or(false)
+    }
+
+    pub fn forward_search_after(&self) -> bool {
+        self.forward_search_after.unwrap_or(false)
     }
 }
 

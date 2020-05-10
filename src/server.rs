@@ -21,6 +21,7 @@ use crate::{
     workspace::{DocumentContent, Workspace},
 };
 use async_trait::async_trait;
+use chashmap::CHashMap;
 use futures::lock::Mutex;
 use jsonrpc::{server::Result, Middleware};
 use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
@@ -48,6 +49,7 @@ pub struct LatexLspServer<C> {
     symbol_provider: SymbolProvider,
     hover_provider: HoverProvider,
     diagnostics_manager: DiagnosticsManager,
+    last_position_by_uri: CHashMap<Uri, Position>,
 }
 
 #[jsonrpc_server]
@@ -74,6 +76,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             symbol_provider: SymbolProvider::new(),
             hover_provider: HoverProvider::new(),
             diagnostics_manager: DiagnosticsManager::default(),
+            last_position_by_uri: CHashMap::new(),
         }
     }
 
@@ -242,6 +245,12 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let req = self
             .make_feature_request(params.text_document_position.text_document.as_uri(), params)
             .await?;
+
+        self.last_position_by_uri.insert(
+            req.current().uri.clone(),
+            req.params.text_document_position.position,
+        );
+
         Ok(CompletionList {
             is_incomplete: true,
             items: self.completion_provider.execute(&req).await,
@@ -276,6 +285,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
+
+        self.last_position_by_uri
+            .insert(req.current().uri.clone(), req.params.position);
+
         Ok(self.hover_provider.execute(&req).await)
     }
 
@@ -464,7 +477,27 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
         let req = self
             .make_feature_request(params.text_document.as_uri(), params)
             .await?;
-        Ok(self.build_provider.execute(&req).await)
+
+        let pos = self
+            .last_position_by_uri
+            .get(&req.current().uri)
+            .map(|pos| *pos)
+            .unwrap_or_default();
+
+        let res = self.build_provider.execute(&req).await;
+
+        if req
+            .options
+            .latex
+            .and_then(|opts| opts.build)
+            .unwrap_or_default()
+            .forward_search_after()
+        {
+            let params = TextDocumentPositionParams::new(req.params.text_document, pos);
+            self.forward_search(params).await?;
+        }
+
+        Ok(res)
     }
 
     #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
