@@ -492,6 +492,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             .and_then(|opts| opts.build)
             .unwrap_or_default()
             .forward_search_after()
+            && !self.build_provider.is_building()
         {
             let params = TextDocumentPositionParams::new(req.params.text_document, pos);
             self.forward_search(params).await?;

@@ -3,11 +3,12 @@ use crate::{
     protocol::{
         BuildParams, BuildResult, BuildStatus, ClientCapabilitiesExt, LatexOptions,
         LogMessageParams, LspClient, MessageType, ProgressParams, ProgressParamsValue,
-        ProgressToken, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCreateParams,
+        ProgressToken, Uri, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCreateParams,
         WorkDoneProgressEnd,
     },
 };
 use async_trait::async_trait;
+use chashmap::CHashMap;
 use futures::{
     future::{AbortHandle, Abortable, Aborted},
     lock::Mutex,
@@ -25,6 +26,7 @@ use uuid::Uuid;
 pub struct BuildProvider<C> {
     client: Arc<C>,
     handles_by_token: Mutex<HashMap<ProgressToken, AbortHandle>>,
+    current_docs: CHashMap<Uri, ()>,
 }
 
 impl<C> BuildProvider<C> {
@@ -32,7 +34,12 @@ impl<C> BuildProvider<C> {
         Self {
             client,
             handles_by_token: Mutex::new(HashMap::new()),
+            current_docs: CHashMap::new(),
         }
+    }
+
+    pub fn is_building(&self) -> bool {
+        self.current_docs.len() > 0
     }
 
     pub async fn cancel(&self, token: ProgressToken) {
@@ -74,6 +81,13 @@ where
                 status: BuildStatus::Failure,
             };
         }
+
+        if self.current_docs.get(&doc.uri).is_some() {
+            return BuildResult {
+                status: BuildStatus::Success,
+            };
+        }
+        self.current_docs.insert(doc.uri.clone(), ());
 
         let status = match doc.uri.to_file_path() {
             Ok(path) => {
@@ -130,6 +144,7 @@ where
             handles_by_token.remove(&token);
         }
 
+        self.current_docs.remove(&doc.uri);
         BuildResult { status }
     }
 }
