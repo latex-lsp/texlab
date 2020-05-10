@@ -13,8 +13,6 @@ jobs:
         with:
           toolchain: stable
       - uses: actions-rs/tarpaulin@v0.1
-        with:
-          args: "-- --test-threads 1"
       - uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
