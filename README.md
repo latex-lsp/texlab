@@ -3,10 +3,13 @@
 [![Rust](https://img.shields.io/badge/rustc-1.39%2B-blue)](https://blog.rust-lang.org/2019/11/07/Rust-1.39.0.html)
 [![Dependabot](https://api.dependabot.com/badges/status?host=github&repo=latex-lsp/texlab)](https://dependabot.com)
 
-[![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab)](https://github.com/latex-lsp/texlab/releases)
+[![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
-[![Arch Linux](https://img.shields.io/archlinux/v/community/x86_64/texlab)](https://www.archlinux.org/packages/community/x86_64/texlab/)
-[![Homebrew](https://img.shields.io/homebrew/v/texlab)](https://formulae.brew.sh/formula/texlab)
+[![Arch Linux](https://repology.org/badge/version-for-repo/arch/texlab.svg?header=arch%20linux)](https://www.archlinux.org/packages/community/x86_64/texlab/)
+[![NixOS Stable](https://repology.org/badge/version-for-repo/nix_stable/texlab.svg?header=nixos%20stable)](https://formulae.brew.sh/formula/texlab)
+[![NixOS Unstable](https://repology.org/badge/version-for-repo/nix_unstable/texlab.svg?header=nixos%20unstable)](https://nixos.org/nixos/packages.html?channel=nixpkgs-unstable&query=texlab)
+[![Homebrew](https://repology.org/badge/version-for-repo/homebrew/texlab.svg?header=homebrew)](https://formulae.brew.sh/formula/texlab)
+[![Scoop](https://repology.org/badge/version-for-repo/scoop/texlab.svg?header=scoop)](https://scoop.sh/)
 
 # TexLab
 
