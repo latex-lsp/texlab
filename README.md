@@ -1,11 +1,12 @@
+[![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
+[![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
+[![Rust](https://img.shields.io/badge/rustc-1.39%2B-blue)](https://blog.rust-lang.org/2019/11/07/Rust-1.39.0.html)
+[![Dependabot](https://api.dependabot.com/badges/status?host=github&repo=latex-lsp/texlab)](https://dependabot.com)
+
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab)](https://github.com/latex-lsp/texlab/releases)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
 [![Arch Linux](https://img.shields.io/archlinux/v/community/x86_64/texlab)](https://www.archlinux.org/packages/community/x86_64/texlab/)
 [![Homebrew](https://img.shields.io/homebrew/v/texlab)](https://formulae.brew.sh/formula/texlab)
-[![Rust](https://img.shields.io/badge/rustc-1.39%2B-blue)](https://blog.rust-lang.org/2019/11/07/Rust-1.39.0.html)
-[![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
-[![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
-[![Dependabot](https://api.dependabot.com/badges/status?host=github&repo=latex-lsp/texlab)](https://dependabot.com)
 
 # TexLab
 
