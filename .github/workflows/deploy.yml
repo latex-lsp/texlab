@@ -1,0 +1,38 @@
+name: Deployment
+on:
+  release:
+    types: [published]
+jobs:
+  deploy:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            archive_file: texlab-x86_64-linux.tar.gz
+            archive_cmd: tar -czvf {0} target/release/texlab
+            archive_type: application/gzip
+          - os: windows-latest
+            archive_file: texlab-x86_64-windows.zip
+            archive_cmd: Compress-Archive target/release/texlab.exe {0}
+            archive_type: application/zip
+          - os: macos-latest
+            archive_file: texlab-x86_64-macos.tar.gz
+            archive_cmd: tar -czvf {0} target/release/texlab
+            archive_type: application/gzip
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked
+      - run: ${{ format(matrix.archive_cmd, matrix.archive_file) }}
+        name: "Compress release binary"
+      - uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ matrix.archive_file }}
+          asset_name: ${{ matrix.archive_file }}
+          asset_content_type: ${{ matrix.archive_type }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
