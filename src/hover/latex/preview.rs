@@ -196,6 +196,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .command_definitions
                     .iter()
+                    .filter(|def| !def.definition_name(&table).contains("@"))
                     .map(|def| CharStream::extract(&doc.text, table[def.parent].range()))
                     .for_each(|def| {
                         code.push_str(&def);
@@ -214,6 +215,7 @@ impl LatexPreviewHoverProvider {
                 table
                     .math_operators
                     .iter()
+                    .filter(|op| !op.definition_name(&table).contains("@"))
                     .map(|op| CharStream::extract(&doc.text, table[op.parent].range()))
                     .for_each(|op| {
                         code.push_str(&op);
