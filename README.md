@@ -51,7 +51,7 @@ by adding the absolute path of the `target/debug` folder to your `PATH` environm
 TexLab has an extensive test suite of unit and integration tests. You can run them by executing
 
 ```shell
-cargo test --all
+cargo test
 ```
 
 in the project folder.

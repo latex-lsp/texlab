@@ -19,4 +19,4 @@ jobs:
         name: Run tests
         with:
           command: test
-          args: --all --locked
+          args: --locked
