@@ -17,11 +17,11 @@ A cross-platform implementation of the [Language Server Protocol](https://micros
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
 We provide an [extension](https://github.com/latex-lsp/texlab-vscode) for [Visual Studio Code](https://code.visualstudio.com).
 
-Learn more about the project on our [website](https://texlab.netlify.com).
+Learn more about the project on our [website](https://texlab.netlify.app).
 
 ## Getting Started
 
-See the [installation chapter](https://texlab.netlify.com/docs) from our docs.
+See the [installation chapter](https://texlab.netlify.app/docs) from our docs.
 
 ## Building from Source
 

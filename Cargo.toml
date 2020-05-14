@@ -8,6 +8,7 @@ authors = [
     "Eric Förster <eric.foerster@outlook.com>", 
     "Patrick Förster <patrick.foerster@outlook.de>"]
 edition = "2018"
+homepage = "https://texlab.netlify.app"
 
 [workspace]
 members = ["crates/*"]
