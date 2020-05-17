@@ -1,10 +1,7 @@
 mod benchmarks;
 
-use criterion::Criterion;
+use criterion::criterion_main;
 
-fn main() {
-    benchmarks::completion::benches();
-    benchmarks::open_bibtex::benches();
-    benchmarks::open_latex::benches();
-    Criterion::default().configure_from_args().final_summary();
+criterion_main! {
+    benchmarks::completion::benches
 }
