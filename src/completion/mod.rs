@@ -90,7 +90,8 @@ impl FeatureProvider for CompletionProvider {
     type Output = Vec<CompletionItem>;
 
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        self.provider
+        let mut items: Vec<_> = self
+            .provider
             .execute(req)
             .await
             .into_iter()
@@ -98,7 +99,20 @@ impl FeatureProvider for CompletionProvider {
             .unique()
             .map(|item| item.0)
             .take(COMPLETION_LIMIT)
-            .collect()
+            .collect();
+
+        for (i, item) in items.iter_mut().enumerate() {
+            let sort_prefix = format!("{:0>2}", i);
+            match &item.sort_text {
+                Some(sort_text) => {
+                    item.sort_text = Some(format!("{} {}", sort_prefix, sort_text));
+                }
+                None => {
+                    item.sort_text = Some(sort_prefix);
+                }
+            };
+        }
+        items
     }
 }
 

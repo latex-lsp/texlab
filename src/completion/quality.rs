@@ -127,8 +127,24 @@ where
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         let pos = req.params.text_document_position.position;
         let eval = QualityEvaluator::parse(req.current(), pos);
-        let mut items = self.0.execute(req).await;
-        items.sort_by_key(|item| -eval.quality_of(&item.label, &item.preselect));
-        items
+        let mut items: Vec<_> = self
+            .0
+            .execute(req)
+            .await
+            .into_iter()
+            .map(|inner| QualityCompletionItem {
+                quality: -eval.quality_of(&inner.label, &inner.preselect),
+                inner,
+            })
+            .filter(|item| item.quality != 0)
+            .collect();
+
+        items.sort_by_key(|item| item.quality);
+        items.into_iter().map(|item| item.inner).collect()
     }
+}
+
+struct QualityCompletionItem {
+    inner: CompletionItem,
+    quality: i32,
 }
