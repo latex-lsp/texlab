@@ -136,8 +136,11 @@ where
                 quality: -eval.quality_of(&inner.label, &inner.preselect),
                 inner,
             })
-            .filter(|item| -item.quality > 1)
             .collect();
+
+        if items.iter().any(|item| -item.quality > 1) {
+            items = items.into_iter().filter(|item| -item.quality > 1).collect();
+        }
 
         items.sort_by_key(|item| item.quality);
         items.into_iter().map(|item| item.inner).collect()

@@ -218,7 +218,7 @@ async fn issue_23_completion() {
                 r#"
                     \section{Section 2}\label{sec:2}
                     %
-                    This section continues from Section \ref{sec:1}"#
+                    This section continues from Section \ref{sec}"#
             ),
         )
         .build()
