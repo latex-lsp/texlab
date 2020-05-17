@@ -136,7 +136,7 @@ where
                 quality: -eval.quality_of(&inner.label, &inner.preselect),
                 inner,
             })
-            .filter(|item| item.quality != 0)
+            .filter(|item| -item.quality > 1)
             .collect();
 
         items.sort_by_key(|item| item.quality);
