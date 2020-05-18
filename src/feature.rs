@@ -309,6 +309,11 @@ impl FeatureTester {
     where
         F: FeatureProvider<Params = CompletionParams, Output = O>,
     {
+        let req = self.test_completion_request().await;
+        provider.execute(&req).await
+    }
+
+    pub async fn test_completion_request(&self) -> FeatureRequest<CompletionParams> {
         let params = CompletionParams {
             text_document_position: TextDocumentPositionParams::new(
                 self.identifier(),
@@ -318,8 +323,7 @@ impl FeatureTester {
             work_done_progress_params: WorkDoneProgressParams::default(),
             partial_result_params: PartialResultParams::default(),
         };
-        let req = self.request(params).await;
-        provider.execute(&req).await
+        self.request(params).await
     }
 
     pub async fn test_folding<F, O>(&self, provider: F) -> O

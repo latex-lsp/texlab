@@ -1,63 +1,44 @@
 use super::combinators::{self, Parameter};
 use crate::{
-    completion::factory,
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
+    completion::types::{Item, ItemData},
+    feature::FeatureRequest,
+    protocol::CompletionParams,
     syntax::LANGUAGE_DATA,
 };
-use async_trait::async_trait;
 use std::iter;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexPgfLibraryCompletionProvider;
-
-#[async_trait]
-impl FeatureProvider for LatexPgfLibraryCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let param = Parameter {
-            name: "\\usepgflibrary",
-            index: 0,
-        };
-        combinators::argument(req, iter::once(param), |ctx| async move {
-            let mut items = Vec::new();
-            for name in &LANGUAGE_DATA.pgf_libraries {
-                let text_edit = TextEdit::new(ctx.range, name.into());
-                let item = factory::pgf_library(req, name, text_edit);
-                items.push(item);
-            }
-            items
-        })
-        .await
-    }
+pub async fn complete_latex_pgf_libraries<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    let param = Parameter {
+        name: "usepgflibrary",
+        index: 0,
+    };
+    combinators::argument(req, iter::once(param), |ctx| async move {
+        for name in &LANGUAGE_DATA.pgf_libraries {
+            let item = Item::new(ctx.range, ItemData::PgfLibrary { name });
+            items.push(item);
+        }
+    })
+    .await;
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexTikzLibraryCompletionProvider;
-
-#[async_trait]
-impl FeatureProvider for LatexTikzLibraryCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let param = Parameter {
-            name: "\\usetikzlibrary",
-            index: 0,
-        };
-        combinators::argument(req, iter::once(param), |ctx| async move {
-            let mut items = Vec::new();
-            for name in &LANGUAGE_DATA.tikz_libraries {
-                let text_edit = TextEdit::new(ctx.range, name.into());
-                let item = factory::tikz_library(req, name, text_edit);
-                items.push(item);
-            }
-            items
-        })
-        .await
-    }
+pub async fn complete_latex_tikz_libraries<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    let param = Parameter {
+        name: "usetikzlibrary",
+        index: 0,
+    };
+    combinators::argument(req, iter::once(param), |ctx| async move {
+        for name in &LANGUAGE_DATA.tikz_libraries {
+            let item = Item::new(ctx.range, ItemData::TikzLibrary { name });
+            items.push(item);
+        }
+    })
+    .await;
 }
 
 #[cfg(test)]
@@ -67,72 +48,90 @@ mod tests {
 
     #[tokio::test]
     async fn empty_latex_document_pgf() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexPgfLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_pgf_libraries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_pgf() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexPgfLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_pgf_libraries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_latex_document_tikz() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexTikzLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_tikz_libraries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_tikz() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexTikzLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_tikz_libraries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn pgf_library() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", r#"\usepgflibrary{}"#)
             .main("main.tex")
             .position(0, 15)
-            .test_completion(LatexPgfLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_pgf_libraries(&req, &mut actual_items).await;
 
         assert!(!actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn tikz_library() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", r#"\usetikzlibrary{}"#)
             .main("main.tex")
             .position(0, 16)
-            .test_completion(LatexTikzLibraryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_tikz_libraries(&req, &mut actual_items).await;
 
         assert!(!actual_items.is_empty());
     }

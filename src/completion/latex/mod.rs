@@ -1,5 +1,5 @@
 pub mod argument;
-pub mod begin_command;
+pub mod begin_cmd;
 pub mod citation;
 pub mod color;
 pub mod color_model;

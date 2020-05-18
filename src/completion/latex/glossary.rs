@@ -1,61 +1,51 @@
 use super::combinators::{self, Parameter};
 use crate::{
-    completion::factory,
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
+    completion::types::{Item, ItemData},
+    feature::FeatureRequest,
+    protocol::CompletionParams,
     syntax::{
         LatexGlossaryEntryKind::{Acronym, General},
         LANGUAGE_DATA,
     },
     workspace::DocumentContent,
 };
-use async_trait::async_trait;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexGlossaryCompletionProvider;
+pub async fn complete_latex_glossary_entries<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    let parameters = LANGUAGE_DATA
+        .glossary_entry_reference_commands
+        .iter()
+        .map(|cmd| Parameter {
+            name: &cmd.name[1..],
+            index: cmd.index,
+        });
 
-#[async_trait]
-impl FeatureProvider for LatexGlossaryCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = LANGUAGE_DATA
+    combinators::argument(req, parameters, |ctx| async move {
+        let cmd_kind = LANGUAGE_DATA
             .glossary_entry_reference_commands
             .iter()
-            .map(|cmd| Parameter {
-                name: &cmd.name,
-                index: cmd.index,
-            });
+            .find(|cmd| &cmd.name[1..] == ctx.parameter.name)
+            .unwrap()
+            .kind;
 
-        combinators::argument(req, parameters, |ctx| async move {
-            let cmd_kind = LANGUAGE_DATA
-                .glossary_entry_reference_commands
-                .iter()
-                .find(|cmd| cmd.name == ctx.parameter.name)
-                .unwrap()
-                .kind;
-
-            let mut items = Vec::new();
-            for doc in req.related() {
-                if let DocumentContent::Latex(table) = &doc.content {
-                    for entry in &table.glossary_entries {
-                        match (cmd_kind, entry.kind) {
-                            (Acronym, Acronym) | (General, General) | (General, Acronym) => {
-                                let label = entry.label(&table).text().to_owned();
-                                let text_edit = TextEdit::new(ctx.range, label.clone());
-                                let item = factory::glossary_entry(req, label, text_edit);
-                                items.push(item);
-                            }
-                            (Acronym, General) => {}
+        for doc in req.related() {
+            if let DocumentContent::Latex(table) = &doc.content {
+                for entry in &table.glossary_entries {
+                    match (cmd_kind, entry.kind) {
+                        (Acronym, Acronym) | (General, General) | (General, Acronym) => {
+                            let name = entry.label(&table).text();
+                            let item = Item::new(ctx.range, ItemData::GlossaryEntry { name });
+                            items.push(item);
                         }
+                        (Acronym, General) => {}
                     }
                 }
             }
-            items
-        })
-        .await
-    }
+        }
+    })
+    .await
 }
 
 #[cfg(test)]
@@ -63,37 +53,43 @@ mod tests {
     use super::*;
     use crate::{
         feature::FeatureTester,
-        protocol::{CompletionTextEditExt, Range, RangeExt},
+        protocol::{Range, RangeExt},
     };
     use indoc::indoc;
 
     #[tokio::test]
     async fn empty_latex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexGlossaryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_glossary_entries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexGlossaryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_glossary_entries(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn acronym() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "main.tex",
                 indoc!(
@@ -105,19 +101,14 @@ mod tests {
             )
             .main("main.tex")
             .position(1, 9)
-            .test_completion(LatexGlossaryCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_glossary_entries(&req, &mut actual_items).await;
 
         assert_eq!(actual_items.len(), 1);
-        assert_eq!(actual_items[0].label, "lvm");
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 9, 1, 12)
-        );
+        assert_eq!(actual_items[0].data.label(), "lvm");
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 9, 1, 12));
     }
 }

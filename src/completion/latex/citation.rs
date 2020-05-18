@@ -1,101 +1,133 @@
 use super::combinators::{self, ArgumentContext, Parameter};
 use crate::{
-    completion::factory,
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
-    syntax::{bibtex, LANGUAGE_DATA},
+    completion::types::{Item, ItemData},
+    feature::FeatureRequest,
+    protocol::{BibtexFormattingOptions, CompletionParams},
+    syntax::{bibtex, BibtexEntryTypeCategory, Structure, LANGUAGE_DATA},
     workspace::{Document, DocumentContent},
 };
-use async_trait::async_trait;
+use once_cell::sync::Lazy;
 use petgraph::graph::NodeIndex;
+use regex::Regex;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexCitationCompletionProvider;
+pub async fn complete_latex_citations<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    let parameters = LANGUAGE_DATA.citation_commands.iter().map(|cmd| Parameter {
+        name: &cmd.name[1..],
+        index: cmd.index,
+    });
 
-#[async_trait]
-impl FeatureProvider for LatexCitationCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = LANGUAGE_DATA.citation_commands.iter().map(|cmd| Parameter {
-            name: &cmd.name,
-            index: cmd.index,
-        });
-
-        combinators::argument(req, parameters, |ctx| async move {
-            let mut items = Vec::new();
-            for doc in req.related() {
-                if let DocumentContent::Bibtex(tree) = &doc.content {
-                    for entry_node in tree.children(tree.root) {
-                        if let Some(item) = Self::make_item(req, ctx, doc, tree, entry_node) {
-                            items.push(item);
-                        }
+    combinators::argument(req, parameters, |ctx| async move {
+        for doc in req.related() {
+            if let DocumentContent::Bibtex(tree) = &doc.content {
+                for entry_node in tree.children(tree.root) {
+                    if let Some(item) = make_item(ctx, doc, tree, entry_node) {
+                        items.push(item);
                     }
                 }
             }
-            items
-        })
-        .await
-    }
-}
-
-impl LatexCitationCompletionProvider {
-    fn make_item(
-        req: &FeatureRequest<CompletionParams>,
-        ctx: ArgumentContext,
-        doc: &Document,
-        tree: &bibtex::Tree,
-        entry_node: NodeIndex,
-    ) -> Option<CompletionItem> {
-        let entry = tree.as_entry(entry_node)?;
-        if entry.is_comment() {
-            return None;
         }
-
-        let key = entry.key.as_ref()?.text().to_owned();
-        let text_edit = TextEdit::new(ctx.range, key.clone());
-        let item = factory::citation(req, doc.uri.clone(), tree, entry_node, key, text_edit);
-        Some(item)
-    }
+    })
+    .await;
 }
+
+fn make_item<'a>(
+    ctx: ArgumentContext,
+    doc: &'a Document,
+    tree: &'a bibtex::Tree,
+    entry_node: NodeIndex,
+) -> Option<Item<'a>> {
+    let entry = tree.as_entry(entry_node)?;
+    if entry.is_comment() {
+        return None;
+    }
+
+    let key = entry.key.as_ref()?.text();
+    let options = BibtexFormattingOptions::default();
+    let params = bibtex::FormattingParams {
+        insert_spaces: true,
+        tab_size: 4,
+        options: &options,
+    };
+    let entry_code = bibtex::format(tree, entry_node, params);
+    let text = format!(
+        "{} {}",
+        &key,
+        WHITESPACE_REGEX
+            .replace_all(
+                &entry_code
+                    .replace('{', "")
+                    .replace('}', "")
+                    .replace(',', " ")
+                    .replace('=', " "),
+                " ",
+            )
+            .trim()
+    );
+
+    let ty = LANGUAGE_DATA
+        .find_entry_type(&entry.ty.text()[1..])
+        .map(|ty| Structure::Entry(ty.category))
+        .unwrap_or_else(|| Structure::Entry(BibtexEntryTypeCategory::Misc));
+
+    let item = Item::new(
+        ctx.range,
+        ItemData::Citation {
+            uri: &doc.uri,
+            key,
+            text,
+            ty,
+        },
+    );
+    Some(item)
+}
+
+static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
         feature::FeatureTester,
-        protocol::{CompletionTextEditExt, Range, RangeExt},
+        protocol::{Range, RangeExt},
     };
     use indoc::indoc;
 
     #[tokio::test]
     async fn empty_latex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn incomplete() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "main.tex",
                 indoc!(
@@ -110,31 +142,26 @@ mod tests {
             .file("main.bib", "@article{foo,}")
             .main("main.tex")
             .position(1, 6)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert_eq!(actual_items.len(), 1);
-        assert_eq!(actual_items[0].label, "foo");
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 6, 1, 6)
-        );
+        assert_eq!(actual_items[0].data.label(), "foo");
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 6, 1, 6));
     }
 
     #[tokio::test]
     async fn empty_key() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
                     r#"
                         \addbibresource{bar.bib}
-                        \cite{}  
+                        \cite{}
                     "#
                 ),
             )
@@ -142,31 +169,26 @@ mod tests {
             .file("baz.bib", "@article{bar,}")
             .main("foo.tex")
             .position(1, 6)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert_eq!(actual_items.len(), 1);
-        assert_eq!(actual_items[0].label, "foo");
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 6, 1, 6)
-        );
+        assert_eq!(actual_items[0].data.label(), "foo");
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 6, 1, 6));
     }
 
     #[tokio::test]
     async fn single_key() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
                     r#"
                     \addbibresource{bar.bib}
-                    \cite{foo}  
+                    \cite{foo}
                 "#
                 ),
             )
@@ -174,31 +196,26 @@ mod tests {
             .file("baz.bib", "@article{bar,}")
             .main("foo.tex")
             .position(1, 6)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert_eq!(actual_items.len(), 1);
-        assert_eq!(actual_items[0].label, "foo");
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 6, 1, 9)
-        );
+        assert_eq!(actual_items[0].data.label(), "foo");
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 6, 1, 9));
     }
 
     #[tokio::test]
     async fn second_key() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
                     r#"
                     \addbibresource{bar.bib}
-                    \cite{foo,}  
+                    \cite{foo,}
                 "#
                 ),
             )
@@ -206,31 +223,26 @@ mod tests {
             .file("baz.bib", "@article{bar,}")
             .main("foo.tex")
             .position(1, 10)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert_eq!(actual_items.len(), 1);
-        assert_eq!(actual_items[0].label, "foo");
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 10, 1, 10)
-        );
+        assert_eq!(actual_items[0].data.label(), "foo");
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 10, 1, 10));
     }
 
     #[tokio::test]
     async fn outside_cite() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
                     r#"
                         \addbibresource{bar.bib}
-                        \cite{}  
+                        \cite{}
                     "#
                 ),
             )
@@ -238,8 +250,11 @@ mod tests {
             .file("baz.bib", "@article{bar,}")
             .main("foo.tex")
             .position(1, 7)
-            .test_completion(LatexCitationCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_citations(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }

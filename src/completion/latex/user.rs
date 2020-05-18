@@ -1,114 +1,83 @@
 use super::combinators;
 use crate::{
-    completion::factory::{self, LatexComponentId},
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, Range, TextEdit},
+    completion::{Item, ItemData},
+    feature::FeatureRequest,
+    protocol::{CompletionParams, Range},
     syntax::latex,
     workspace::DocumentContent,
 };
-use async_trait::async_trait;
-use itertools::Itertools;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexUserCommandCompletionProvider;
+pub async fn complete_latex_user_commands<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    combinators::command(req, |current_cmd_node| async move {
+        let current_cmd = req
+            .current()
+            .content
+            .as_latex()
+            .unwrap()
+            .as_command(current_cmd_node)
+            .unwrap();
 
-#[async_trait]
-impl FeatureProvider for LatexUserCommandCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::command(req, |current_cmd_node| async move {
-            let current_cmd = req
-                .current()
-                .content
-                .as_latex()
-                .unwrap()
-                .as_command(current_cmd_node)
-                .unwrap();
-
-            let mut items = Vec::new();
-            for doc in req.related() {
-                if let DocumentContent::Latex(table) = &doc.content {
-                    table
-                        .commands
-                        .iter()
-                        .filter(|cmd_node| **cmd_node != current_cmd_node)
-                        .map(|cmd_node| {
-                            let cmd = table.as_command(*cmd_node).unwrap();
-                            cmd.name.text()[1..].to_owned()
-                        })
-                        .unique()
-                        .map(|cmd| {
-                            let text_edit =
-                                TextEdit::new(current_cmd.short_name_range(), cmd.clone());
-                            factory::command(
-                                req,
-                                cmd,
-                                None,
-                                None,
-                                text_edit,
-                                &LatexComponentId::User,
-                            )
-                        })
-                        .for_each(|item| items.push(item));
-                }
-            }
-            items
-        })
-        .await
-    }
+        for table in req
+            .related()
+            .into_iter()
+            .flat_map(|doc| doc.content.as_latex())
+        {
+            table
+                .commands
+                .iter()
+                .filter(|cmd_node| **cmd_node != current_cmd_node)
+                .map(|cmd_node| {
+                    let name = &table.as_command(*cmd_node).unwrap().name.text()[1..];
+                    Item::new(
+                        current_cmd.short_name_range(),
+                        ItemData::UserCommand { name },
+                    )
+                })
+                .for_each(|item| items.push(item));
+        }
+    })
+    .await;
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexUserEnvironmentCompletionProvider;
-
-#[async_trait]
-impl FeatureProvider for LatexUserEnvironmentCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        combinators::environment(req, |ctx| async move {
-            let mut items = Vec::new();
-            for doc in req.related() {
-                if let DocumentContent::Latex(table) = &doc.content {
-                    for env in &table.environments {
-                        if (env.left.parent == ctx.node || env.right.parent == ctx.node)
-                            && doc.uri == req.current().uri
-                        {
-                            continue;
-                        }
-
-                        if let Some(item) = Self::make_item(req, &table, env.left, ctx.range) {
-                            items.push(item);
-                        }
-
-                        if let Some(item) = Self::make_item(req, &table, env.right, ctx.range) {
-                            items.push(item);
-                        }
-                    }
-                }
-            }
-            items
-        })
-        .await
-    }
-}
-
-impl LatexUserEnvironmentCompletionProvider {
+pub async fn complete_latex_user_environments<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
     fn make_item(
-        req: &FeatureRequest<CompletionParams>,
         table: &latex::SymbolTable,
         delim: latex::EnvironmentDelimiter,
         name_range: Range,
-    ) -> Option<CompletionItem> {
-        delim.name(&table).map(|name| {
-            let text = name.text().to_owned();
-            let text_edit = TextEdit::new(name_range, text.clone());
-            factory::environment(req, text, text_edit, &LatexComponentId::User)
-        })
+    ) -> Option<Item> {
+        delim
+            .name(&table)
+            .map(|name| Item::new(name_range, ItemData::UserEnvironment { name: &name.text() }))
     }
+
+    combinators::environment(req, |ctx| async move {
+        for doc in req.related() {
+            if let DocumentContent::Latex(table) = &doc.content {
+                for env in &table.environments {
+                    if (env.left.parent == ctx.node || env.right.parent == ctx.node)
+                        && doc.uri == req.current().uri
+                    {
+                        continue;
+                    }
+
+                    if let Some(item) = make_item(&table, env.left, ctx.range) {
+                        items.push(item);
+                    }
+
+                    if let Some(item) = make_item(&table, env.right, ctx.range) {
+                        items.push(item);
+                    }
+                }
+            }
+        }
+    })
+    .await;
 }
 
 #[cfg(test)]
@@ -120,55 +89,63 @@ mod tests {
 
     #[tokio::test]
     async fn empty_latex_document_command() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexUserCommandCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+        complete_latex_user_commands(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_command() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexUserCommandCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+        complete_latex_user_commands(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_latex_document_environment() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexUserEnvironmentCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+        complete_latex_user_environments(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_environment() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexUserEnvironmentCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+        complete_latex_user_environments(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn command() {
-        let actual_labels: Vec<_> = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
@@ -182,18 +159,22 @@ mod tests {
             .file("baz.tex", r#"\baz"#)
             .main("foo.tex")
             .position(1, 2)
-            .test_completion(LatexUserCommandCompletionProvider)
-            .await
-            .into_iter()
-            .map(|item| item.label)
-            .collect();
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
 
+        complete_latex_user_commands(&req, &mut actual_items).await;
+
+        let actual_labels: Vec<_> = actual_items
+            .into_iter()
+            .map(|item| item.data.label().to_owned())
+            .collect();
         assert_eq!(actual_labels, vec!["include", "bar"]);
     }
 
     #[tokio::test]
     async fn environment() {
-        let actual_labels: Vec<_> = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
@@ -207,13 +188,17 @@ mod tests {
             .file("baz.tex", r#"\begin{baz}\end{baz}"#)
             .main("foo.tex")
             .position(1, 9)
-            .test_completion(LatexUserEnvironmentCompletionProvider)
-            .await
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_user_environments(&req, &mut actual_items).await;
+
+        let actual_labels: Vec<_> = actual_items
             .into_iter()
-            .map(|item| item.label)
+            .map(|item| item.data.label().to_owned())
             .unique()
             .collect();
-
         assert_eq!(actual_labels, vec!["bar"]);
     }
 }

@@ -712,6 +712,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "fuzzy-matcher"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "thread_local 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "generational-arena"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2194,6 +2202,7 @@ dependencies = [
  "fern 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fuzzy-matcher 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "html2md 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.23.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "indoc 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2709,6 +2718,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum futures-sink 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "3f2032893cb734c7a05d85ce0cc8b8c4075278e93b24b66f9de99d6eb0fa8acc"
 "checksum futures-task 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "bdb66b5f09e22019b1ab0830f7785bcea8e7a42148683f99214f73f8ec21a626"
 "checksum futures-util 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "8764574ff08b701a084482c3c7031349104b07ac897393010494beaa18ce32c6"
+"checksum fuzzy-matcher 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)" = "75a03d6d8629fcd151ece9d3a7f59a87fc38a620ab0290bf2888c2ad73821170"
 "checksum generational-arena 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "0e40d0cee2e2fb4fba18b55a27bf96faf49fa86d49f178695bd3bf4500b156b4"
 "checksum generic-array 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c68f0274ae0e023facc3c97b2e00f076be70e254bc851d972503b328db79b2ec"
 "checksum getrandom 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"

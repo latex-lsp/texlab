@@ -1,6 +1,6 @@
 use crate::{
     feature::FeatureRequest,
-    protocol::{CompletionItem, CompletionParams, Position, Range, RangeExt},
+    protocol::{CompletionParams, Position, Range, RangeExt},
     syntax::{latex, AstNodeIndex, SyntaxNode, LANGUAGE_DATA},
     workspace::DocumentContent,
 };
@@ -12,21 +12,17 @@ pub struct Parameter<'a> {
     pub index: usize,
 }
 
-pub async fn command<E, F>(
-    req: &FeatureRequest<CompletionParams>,
-    execute: E,
-) -> Vec<CompletionItem>
+pub async fn command<E, F>(req: &FeatureRequest<CompletionParams>, execute: E)
 where
     E: FnOnce(AstNodeIndex) -> F,
-    F: Future<Output = Vec<CompletionItem>>,
+    F: Future<Output = ()>,
 {
     if let DocumentContent::Latex(table) = &req.current().content {
         let pos = req.params.text_document_position.position;
         if let Some(cmd) = table.find_command_by_short_name_range(pos) {
-            return execute(cmd).await;
+            execute(cmd).await;
         }
     }
-    Vec::new()
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -40,11 +36,10 @@ pub async fn argument<'a, I, E, F>(
     req: &'a FeatureRequest<CompletionParams>,
     mut parameters: I,
     execute: E,
-) -> Vec<CompletionItem>
-where
+) where
     I: Iterator<Item = Parameter<'a>>,
     E: FnOnce(ArgumentContext<'a>) -> F,
-    F: Future<Output = Vec<CompletionItem>>,
+    F: Future<Output = ()>,
 {
     if let DocumentContent::Latex(table) = &req.current().content {
         let pos = req.params.text_document_position.position;
@@ -52,7 +47,7 @@ where
             let cmd = table.as_command(node).unwrap();
             for parameter in parameters
                 .by_ref()
-                .filter(|param| param.name == cmd.name.text())
+                .filter(|param| param.name == &cmd.name.text()[1..])
             {
                 if let Some(args_node) =
                     table.extract_group(node, latex::GroupKind::Group, parameter.index)
@@ -75,23 +70,22 @@ where
                         node,
                         range,
                     };
-                    return execute(context).await;
+                    execute(context).await;
+                    return;
                 }
             }
         }
     }
-    Vec::new()
 }
 
 pub async fn argument_word<'a, I, E, F>(
     req: &'a FeatureRequest<CompletionParams>,
     mut parameters: I,
     execute: E,
-) -> Vec<CompletionItem>
-where
+) where
     I: Iterator<Item = Parameter<'a>>,
     E: FnOnce(AstNodeIndex, usize) -> F,
-    F: Future<Output = Vec<CompletionItem>>,
+    F: Future<Output = ()>,
 {
     if let DocumentContent::Latex(table) = &req.current().content {
         let pos = req.params.text_document_position.position;
@@ -99,7 +93,7 @@ where
             let cmd = table.as_command(node).unwrap();
             for parameter in parameters
                 .by_ref()
-                .filter(|param| param.name == cmd.name.text())
+                .filter(|param| param.name == &cmd.name.text()[1..])
             {
                 if let Some(args_node) =
                     table.extract_group(node, latex::GroupKind::Group, parameter.index)
@@ -117,30 +111,27 @@ where
                         continue;
                     }
 
-                    return execute(node, parameter.index).await;
+                    execute(node, parameter.index).await;
+                    return;
                 }
             }
         }
     }
-    Vec::new()
 }
 
-pub async fn environment<'a, E, F>(
-    req: &'a FeatureRequest<CompletionParams>,
-    execute: E,
-) -> Vec<CompletionItem>
+pub async fn environment<'a, E, F>(req: &'a FeatureRequest<CompletionParams>, execute: E)
 where
     E: FnOnce(ArgumentContext<'a>) -> F,
-    F: Future<Output = Vec<CompletionItem>>,
+    F: Future<Output = ()>,
 {
     let parameters = LANGUAGE_DATA
         .environment_commands
         .iter()
         .map(|cmd| Parameter {
-            name: &cmd.name,
+            name: &cmd.name[1..],
             index: cmd.index,
         });
-    argument(req, parameters, execute).await
+    argument(req, parameters, execute).await;
 }
 
 fn find_command(table: &latex::SymbolTable, pos: Position) -> Option<AstNodeIndex> {

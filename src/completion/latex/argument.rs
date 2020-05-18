@@ -1,5 +1,164 @@
 use super::combinators::{self, Parameter};
 use crate::{
+    completion::types::{Item, ItemData},
+    feature::FeatureRequest,
+    protocol::CompletionParams,
+};
+use std::iter;
+
+pub async fn complete_latex_arguments<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    for comp in req.view.components() {
+        for cmd in &comp.commands {
+            for (i, param) in cmd.parameters.iter().enumerate() {
+                complete_internal(req, items, &cmd.name, i, param).await;
+            }
+        }
+    }
+}
+
+async fn complete_internal<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+    name: &'a str,
+    index: usize,
+    param: &'a crate::components::Parameter,
+) {
+    combinators::argument(
+        req,
+        iter::once(Parameter { name, index }),
+        |ctx| async move {
+            for arg in &param.0 {
+                let item = Item::new(
+                    ctx.range,
+                    ItemData::Argument {
+                        name: &arg.name,
+                        image: arg.image.as_deref(),
+                    },
+                );
+                items.push(item);
+            }
+        },
+    )
+    .await;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        feature::FeatureTester,
+        protocol::{Range, RangeExt},
+    };
+    use indoc::indoc;
+
+    #[tokio::test]
+    async fn empty_latex_document() {
+        let req = FeatureTester::new()
+            .file("main.tex", "")
+            .main("main.tex")
+            .position(0, 0)
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_arguments(&req, &mut actual_items).await;
+
+        assert!(actual_items.is_empty());
+    }
+
+    #[tokio::test]
+    async fn empty_bibtex_document() {
+        let req = FeatureTester::new()
+            .file("main.bib", "")
+            .main("main.bib")
+            .position(0, 0)
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_arguments(&req, &mut actual_items).await;
+
+        assert!(actual_items.is_empty());
+    }
+
+    #[tokio::test]
+    async fn inside_mathbb_empty() {
+        let req = FeatureTester::new()
+            .file(
+                "main.tex",
+                indoc!(
+                    r#"
+                        \usepackage{amsfonts}
+                        \mathbb{}
+                    "#
+                ),
+            )
+            .main("main.tex")
+            .position(1, 8)
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_arguments(&req, &mut actual_items).await;
+
+        assert!(!actual_items.is_empty());
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 8, 1, 8));
+    }
+
+    #[tokio::test]
+    async fn inside_mathbb_non_empty() {
+        let req = FeatureTester::new()
+            .file(
+                "main.tex",
+                indoc!(
+                    r#"
+                        \usepackage{amsfonts}
+                        \mathbb{foo}
+                    "#
+                ),
+            )
+            .main("main.tex")
+            .position(1, 8)
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_arguments(&req, &mut actual_items).await;
+
+        assert!(!actual_items.is_empty());
+        assert_eq!(actual_items[0].range, Range::new_simple(1, 8, 1, 11));
+    }
+
+    #[tokio::test]
+    async fn outside_mathbb_empty() {
+        let req = FeatureTester::new()
+            .file(
+                "main.tex",
+                indoc!(
+                    r#"
+                        \usepackage{amsfonts}
+                        \mathbb{}
+                    "#
+                ),
+            )
+            .main("main.tex")
+            .position(1, 9)
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_arguments(&req, &mut actual_items).await;
+
+        assert!(actual_items.is_empty());
+    }
+}
+
+/*
+use super::combinators::{self, Parameter};
+use crate::{
     completion::factory,
     feature::{FeatureProvider, FeatureRequest},
     protocol::{CompletionItem, CompletionParams, TextEdit},
@@ -51,114 +210,6 @@ impl FeatureProvider for LatexArgumentCompletionProvider {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{
-        feature::FeatureTester,
-        protocol::{CompletionTextEditExt, Range, RangeExt},
-    };
-    use indoc::indoc;
 
-    #[tokio::test]
-    async fn empty_latex_document() {
-        let actual_items = FeatureTester::new()
-            .file("main.tex", "")
-            .main("main.tex")
-            .position(0, 0)
-            .test_completion(LatexArgumentCompletionProvider)
-            .await;
 
-        assert!(actual_items.is_empty());
-    }
-
-    #[tokio::test]
-    async fn empty_bibtex_document() {
-        let actual_items = FeatureTester::new()
-            .file("main.bib", "")
-            .main("main.bib")
-            .position(0, 0)
-            .test_completion(LatexArgumentCompletionProvider)
-            .await;
-
-        assert!(actual_items.is_empty());
-    }
-
-    #[tokio::test]
-    async fn inside_mathbb_empty() {
-        let actual_items = FeatureTester::new()
-            .file(
-                "main.tex",
-                indoc!(
-                    r#"
-                        \usepackage{amsfonts}
-                        \mathbb{}
-                    "#
-                ),
-            )
-            .main("main.tex")
-            .position(1, 8)
-            .test_completion(LatexArgumentCompletionProvider)
-            .await;
-
-        assert!(!actual_items.is_empty());
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 8, 1, 8)
-        );
-    }
-
-    #[tokio::test]
-    async fn inside_mathbb_non_empty() {
-        let actual_items = FeatureTester::new()
-            .file(
-                "main.tex",
-                indoc!(
-                    r#"
-                        \usepackage{amsfonts}
-                        \mathbb{foo}
-                    "#
-                ),
-            )
-            .main("main.tex")
-            .position(1, 8)
-            .test_completion(LatexArgumentCompletionProvider)
-            .await;
-
-        assert!(!actual_items.is_empty());
-        assert_eq!(
-            actual_items[0]
-                .text_edit
-                .as_ref()
-                .and_then(|edit| edit.text_edit())
-                .map(|edit| edit.range)
-                .unwrap(),
-            Range::new_simple(1, 8, 1, 11)
-        );
-    }
-
-    #[tokio::test]
-    async fn outside_mathbb_empty() {
-        let actual_items = FeatureTester::new()
-            .file(
-                "main.tex",
-                indoc!(
-                    r#"
-                        \usepackage{amsfonts}
-                        \mathbb{}
-                    "#
-                ),
-            )
-            .main("main.tex")
-            .position(1, 9)
-            .test_completion(LatexArgumentCompletionProvider)
-            .await;
-
-        assert!(actual_items.is_empty());
-    }
-}
+*/

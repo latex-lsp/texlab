@@ -1,46 +1,40 @@
 use super::combinators::{self, Parameter};
 use crate::{
-    completion::factory,
+    completion::types::{Item, ItemData},
     components::COMPONENT_DATABASE,
-    feature::{FeatureProvider, FeatureRequest},
-    protocol::{CompletionItem, CompletionParams, TextEdit},
+    feature::FeatureRequest,
+    protocol::CompletionParams,
     syntax::{LatexIncludeKind, LANGUAGE_DATA},
 };
-use async_trait::async_trait;
+use std::{borrow::Cow, collections::HashSet};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexClassImportProvider;
-
-#[async_trait]
-impl FeatureProvider for LatexClassImportProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        import(req, LatexIncludeKind::Class, factory::class).await
-    }
+pub async fn complete_latex_classes<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    complete_latex_imports(req, items, LatexIncludeKind::Class, |name| {
+        ItemData::Class { name }
+    })
+    .await;
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexPackageImportProvider;
-
-#[async_trait]
-impl FeatureProvider for LatexPackageImportProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
-
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        import(req, LatexIncludeKind::Package, factory::package).await
-    }
+pub async fn complete_latex_packages<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    complete_latex_imports(req, items, LatexIncludeKind::Package, |name| {
+        ItemData::Package { name }
+    })
+    .await;
 }
 
-async fn import<F>(
-    req: &FeatureRequest<CompletionParams>,
+async fn complete_latex_imports<'a, F>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
     kind: LatexIncludeKind,
     mut factory: F,
-) -> Vec<CompletionItem>
-where
-    F: FnMut(&FeatureRequest<CompletionParams>, String, TextEdit) -> CompletionItem,
+) where
+    F: FnMut(Cow<'a, str>) -> ItemData<'a>,
 {
     let extension = if kind == LatexIncludeKind::Package {
         "sty"
@@ -53,26 +47,38 @@ where
         .iter()
         .filter(|cmd| cmd.kind == kind)
         .map(|cmd| Parameter {
-            name: &cmd.name,
+            name: &cmd.name[1..],
             index: cmd.index,
         });
 
     combinators::argument(req, parameters, |ctx| async move {
         let resolver = req.distro.resolver().await;
+        let mut file_names = HashSet::new();
         COMPONENT_DATABASE
             .components
             .iter()
             .flat_map(|comp| comp.file_names.iter())
-            .chain(resolver.files_by_name.keys())
             .filter(|file_name| file_name.ends_with(extension))
-            .map(|file_name| {
+            .for_each(|file_name| {
+                file_names.insert(file_name);
                 let stem = &file_name[0..file_name.len() - 4];
-                let text_edit = TextEdit::new(ctx.range, stem.to_owned());
-                factory(req, stem.into(), text_edit)
-            })
-            .collect()
+                let data = factory(stem.into());
+                let item = Item::new(ctx.range, data);
+                items.push(item);
+            });
+
+        resolver
+            .files_by_name
+            .keys()
+            .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))
+            .for_each(|file_name| {
+                let stem = &file_name[0..file_name.len() - 4];
+                let data = factory(stem.to_owned().into());
+                let item = Item::new(ctx.range, data);
+                items.push(item);
+            });
     })
-    .await
+    .await;
 }
 
 #[cfg(test)]
@@ -82,75 +88,101 @@ mod tests {
 
     #[tokio::test]
     async fn empty_latex_document_class() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexClassImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_classes(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_class() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexClassImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_classes(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_latex_document_package() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexPackageImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_packages(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document_package() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexPackageImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_packages(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn class() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", r#"\documentclass{}"#)
             .main("main.tex")
             .position(0, 15)
-            .test_completion(LatexClassImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
 
-        assert!(actual_items.iter().any(|item| item.label == "beamer"));
-        assert!(actual_items.iter().all(|item| item.label != "amsmath"));
+        complete_latex_classes(&req, &mut actual_items).await;
+
+        assert!(actual_items
+            .iter()
+            .any(|item| item.data.label() == "beamer"));
+        assert!(actual_items
+            .iter()
+            .all(|item| item.data.label() != "amsmath"));
     }
 
     #[tokio::test]
     async fn package() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", r#"\usepackage{}"#)
             .main("main.tex")
             .position(0, 12)
-            .test_completion(LatexPackageImportProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
 
-        assert!(actual_items.iter().all(|item| item.label != "beamer"));
-        assert!(actual_items.iter().any(|item| item.label == "amsmath"));
+        complete_latex_packages(&req, &mut actual_items).await;
+
+        assert!(actual_items
+            .iter()
+            .all(|item| item.data.label() != "beamer"));
+        assert!(actual_items
+            .iter()
+            .any(|item| item.data.label() == "amsmath"));
     }
 }

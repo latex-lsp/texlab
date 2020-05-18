@@ -1,98 +1,112 @@
 use super::combinators::{self, ArgumentContext, Parameter};
 use crate::{
-    completion::factory,
-    feature::{DocumentView, FeatureProvider, FeatureRequest},
-    outline::{Outline, OutlineContext},
-    protocol::{CompletionItem, CompletionParams, RangeExt, TextEdit},
-    syntax::{latex, LatexLabelKind, LatexLabelReferenceSource, SyntaxNode, LANGUAGE_DATA},
+    completion::types::{Item, ItemData},
+    feature::{DocumentView, FeatureRequest},
+    outline::{Outline, OutlineContext, OutlineContextItem},
+    protocol::{CompletionParams, RangeExt},
+    syntax::{
+        latex, LatexLabelKind, LatexLabelReferenceSource, Structure, SyntaxNode, LANGUAGE_DATA,
+    },
     workspace::DocumentContent,
 };
-use async_trait::async_trait;
 use std::sync::Arc;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-pub struct LatexLabelCompletionProvider;
+pub async fn complete_latex_labels<'a>(
+    req: &'a FeatureRequest<CompletionParams>,
+    items: &mut Vec<Item<'a>>,
+) {
+    let parameters = LANGUAGE_DATA
+        .label_commands
+        .iter()
+        .filter(|cmd| cmd.kind.is_reference())
+        .map(|cmd| Parameter {
+            name: &cmd.name[1..],
+            index: cmd.index,
+        });
 
-#[async_trait]
-impl FeatureProvider for LatexLabelCompletionProvider {
-    type Params = CompletionParams;
-    type Output = Vec<CompletionItem>;
+    combinators::argument(req, parameters, |ctx| async move {
+        let source = find_source(ctx);
+        for doc in req.related() {
+            let snapshot = Arc::clone(&req.view.snapshot);
+            let view =
+                DocumentView::analyze(snapshot, Arc::clone(&doc), &req.options, &req.current_dir);
+            let outline = Outline::analyze(&view, &req.options, &req.current_dir);
 
-    async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
-        let parameters = LANGUAGE_DATA
-            .label_commands
-            .iter()
-            .filter(|cmd| cmd.kind.is_reference())
-            .map(|cmd| Parameter {
-                name: &cmd.name,
-                index: cmd.index,
-            });
+            if let DocumentContent::Latex(table) = &doc.content {
+                for label in table
+                    .labels
+                    .iter()
+                    .filter(|label| label.kind == LatexLabelKind::Definition)
+                    .filter(|label| is_included(&table, label, source))
+                {
+                    let outline_ctx = OutlineContext::parse(&view, &outline, *label);
 
-        combinators::argument(req, parameters, |ctx| async move {
-            let source = Self::find_source(ctx);
-            let mut items = Vec::new();
-            for doc in req.related() {
-                let snapshot = Arc::clone(&req.view.snapshot);
-                let view = DocumentView::analyze(
-                    snapshot,
-                    Arc::clone(&doc),
-                    &req.options,
-                    &req.current_dir,
-                );
-                let outline = Outline::analyze(&view, &req.options, &req.current_dir);
+                    let kind = match outline_ctx.as_ref().map(|ctx| &ctx.item) {
+                        Some(OutlineContextItem::Section { .. }) => Structure::Section,
+                        Some(OutlineContextItem::Caption { .. }) => Structure::Float,
+                        Some(OutlineContextItem::Theorem { .. }) => Structure::Theorem,
+                        Some(OutlineContextItem::Equation) => Structure::Equation,
+                        Some(OutlineContextItem::Item) => Structure::Item,
+                        None => Structure::Label,
+                    };
 
-                if let DocumentContent::Latex(table) = &doc.content {
-                    for label in table
-                        .labels
-                        .iter()
-                        .filter(|label| label.kind == LatexLabelKind::Definition)
-                        .filter(|label| Self::is_included(&table, label, source))
-                    {
-                        let outline_context = OutlineContext::parse(&view, &outline, *label);
-                        for name in label.names(&table) {
-                            let text = name.text().to_owned();
-                            let text_edit = TextEdit::new(ctx.range, text.clone());
-                            let item =
-                                factory::label(req, text, text_edit, outline_context.as_ref());
-                            items.push(item);
-                        }
+                    for name in label.names(&table) {
+                        let header = outline_ctx.as_ref().and_then(|ctx| ctx.detail());
+                        let footer = outline_ctx.as_ref().and_then(|ctx| match &ctx.item {
+                            OutlineContextItem::Caption { text, .. } => Some(text.clone()),
+                            _ => None,
+                        });
+
+                        let text = outline_ctx
+                            .as_ref()
+                            .map(|ctx| format!("{} {}", name.text(), ctx.reference()))
+                            .unwrap_or_else(|| name.text().into());
+
+                        let item = Item::new(
+                            ctx.range,
+                            ItemData::Label {
+                                name: name.text(),
+                                kind,
+                                header,
+                                footer,
+                                text,
+                            },
+                        );
+                        items.push(item);
                     }
                 }
             }
-            items
-        })
-        .await
+        }
+    })
+    .await;
+}
+
+fn find_source(ctx: ArgumentContext) -> LatexLabelReferenceSource {
+    match LANGUAGE_DATA
+        .label_commands
+        .iter()
+        .find(|cmd| &cmd.name[1..] == ctx.parameter.name && cmd.index == ctx.parameter.index)
+        .map(|cmd| cmd.kind)
+        .unwrap()
+    {
+        LatexLabelKind::Definition => unreachable!(),
+        LatexLabelKind::Reference(source) => source,
     }
 }
 
-impl LatexLabelCompletionProvider {
-    fn find_source(ctx: ArgumentContext) -> LatexLabelReferenceSource {
-        match LANGUAGE_DATA
-            .label_commands
+fn is_included(
+    table: &latex::SymbolTable,
+    label: &latex::Label,
+    source: LatexLabelReferenceSource,
+) -> bool {
+    let label_range = table[label.parent].range();
+    match source {
+        LatexLabelReferenceSource::Everything => true,
+        LatexLabelReferenceSource::Math => table
+            .environments
             .iter()
-            .find(|cmd| cmd.name == ctx.parameter.name && cmd.index == ctx.parameter.index)
-            .map(|cmd| cmd.kind)
-            .unwrap()
-        {
-            LatexLabelKind::Definition => unreachable!(),
-            LatexLabelKind::Reference(source) => source,
-        }
-    }
-
-    fn is_included(
-        table: &latex::SymbolTable,
-        label: &latex::Label,
-        source: LatexLabelReferenceSource,
-    ) -> bool {
-        let label_range = table[label.parent].range();
-        match source {
-            LatexLabelReferenceSource::Everything => true,
-            LatexLabelReferenceSource::Math => table
-                .environments
-                .iter()
-                .filter(|env| env.left.is_math(&table))
-                .any(|env| env.range(&table).contains_exclusive(label_range.start)),
-        }
+            .filter(|env| env.left.is_math(&table))
+            .any(|env| env.range(&table).contains_exclusive(label_range.start)),
     }
 }
 
@@ -104,31 +118,37 @@ mod tests {
 
     #[tokio::test]
     async fn empty_latex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.tex", "")
             .main("main.tex")
             .position(0, 0)
-            .test_completion(LatexLabelCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_labels(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn empty_bibtex_document() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file("main.bib", "")
             .main("main.bib")
             .position(0, 0)
-            .test_completion(LatexLabelCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_labels(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn inside_of_ref() {
-        let actual_labels: Vec<_> = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
@@ -143,18 +163,22 @@ mod tests {
             .file("baz.tex", r#"\label{foo}\label{bar}\ref{baz}"#)
             .main("foo.tex")
             .position(2, 5)
-            .test_completion(LatexLabelCompletionProvider)
-            .await
-            .into_iter()
-            .map(|item| item.label)
-            .collect();
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
 
+        complete_latex_labels(&req, &mut actual_items).await;
+
+        let actual_labels: Vec<_> = actual_items
+            .into_iter()
+            .map(|item| item.data.label().to_owned())
+            .collect();
         assert_eq!(actual_labels, vec!["foo", "bar"]);
     }
 
     #[tokio::test]
     async fn outside_of_ref() {
-        let actual_items = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "foo.tex",
                 indoc!(
@@ -167,15 +191,18 @@ mod tests {
             .file("bar.tex", r#"\label{foo}\label{bar}"#)
             .main("foo.tex")
             .position(1, 6)
-            .test_completion(LatexLabelCompletionProvider)
+            .test_completion_request()
             .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_labels(&req, &mut actual_items).await;
 
         assert!(actual_items.is_empty());
     }
 
     #[tokio::test]
     async fn eqref() {
-        let actual_labels: Vec<_> = FeatureTester::new()
+        let req = FeatureTester::new()
             .file(
                 "main.tex",
                 indoc!(
@@ -187,10 +214,15 @@ mod tests {
             )
             .main("main.tex")
             .position(1, 7)
-            .test_completion(LatexLabelCompletionProvider)
-            .await
+            .test_completion_request()
+            .await;
+        let mut actual_items = Vec::new();
+
+        complete_latex_labels(&req, &mut actual_items).await;
+
+        let actual_labels: Vec<_> = actual_items
             .into_iter()
-            .map(|item| item.label)
+            .map(|item| item.data.label().to_owned())
             .collect();
 
         assert_eq!(actual_labels, vec!["foo"]);

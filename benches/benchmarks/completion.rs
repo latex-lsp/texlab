@@ -24,7 +24,7 @@ fn criterion_benchmark(criterion: &mut Criterion) {
     );
 
     criterion.bench_with_input(
-        BenchmarkId::new("Completion", "LaTeX Command"),
+        BenchmarkId::new("Completion", "LaTeX Command (Filtered)"),
         &LATEX_CODE,
         |b, code| {
             b.iter(|| {
@@ -33,6 +33,23 @@ fn criterion_benchmark(criterion: &mut Criterion) {
                         .file("main.tex", *code)
                         .main("main.tex")
                         .position(0, 1)
+                        .test_completion(CompletionProvider::new())
+                        .await
+                });
+            });
+        },
+    );
+
+    criterion.bench_with_input(
+        BenchmarkId::new("Completion", "LaTeX Command (Unfiltered)"),
+        &LATEX_CODE,
+        |b, code| {
+            b.iter(|| {
+                block_on(async {
+                    FeatureTester::new()
+                        .file("main.tex", *code)
+                        .main("main.tex")
+                        .position(30, 1)
                         .test_completion(CompletionProvider::new())
                         .await
                 });
@@ -113,5 +130,6 @@ static LATEX_CODE: &str = indoc!(
         \nocite{*}
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec fermentum lectus placerat, suscipit ligula quis.
         \end{document}
+        \
     "#
 );
