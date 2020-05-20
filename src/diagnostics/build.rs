@@ -200,7 +200,7 @@ fn extract_matches(
     errors
 }
 
-fn prepare_log(log: &str) -> String {
+pub fn prepare_log(log: &str) -> String {
     let mut old_lines = log.lines();
     let mut new_lines: Vec<String> = Vec::new();
     while let Some(line) = old_lines.next() {
@@ -230,7 +230,7 @@ fn prepare_log(log: &str) -> String {
     new_lines.join("\n")
 }
 
-fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
+pub fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
     let mut balance = 1;
     let mut end = result.start() + 1;
     let chars = (&log[result.start() + 1..]).chars();
@@ -264,7 +264,7 @@ fn create_file_range(parent: Uri, log: &str, result: Match) -> FileRange {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-struct FileRange {
+pub struct FileRange {
     pub uri: Option<Uri>,
     pub start: usize,
     pub end: usize,

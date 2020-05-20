@@ -1,5 +1,5 @@
 mod bibtex;
-mod build;
+pub mod build;
 mod latex;
 
 pub use self::{
