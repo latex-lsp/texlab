@@ -88,7 +88,7 @@ impl Language {
 }
 
 #[async_trait]
-pub trait Distribution {
+pub trait Distribution: Send + Sync {
     fn kind(&self) -> DistributionKind;
 
     async fn compile<'a>(&'a self, params: CompileParams<'a>) -> Result<Artifacts, CompileError>;
@@ -99,15 +99,21 @@ pub trait Distribution {
 }
 
 impl dyn Distribution {
-    pub async fn detect() -> Arc<dyn Distribution + Send + Sync> {
+    pub async fn detect() -> Arc<dyn Distribution> {
         let kind = DistributionKind::detect().await;
         let distro: Arc<dyn Distribution + Send + Sync> = match kind {
-            DistributionKind::Texlive => Arc::new(Texlive::new()),
-            DistributionKind::Miktex => Arc::new(Miktex::new()),
-            DistributionKind::Tectonic => Arc::new(Tectonic::new()),
-            DistributionKind::Unknown => Arc::new(UnknownDistribution::new()),
+            DistributionKind::Texlive => Arc::new(Texlive::default()),
+            DistributionKind::Miktex => Arc::new(Miktex::default()),
+            DistributionKind::Tectonic => Arc::new(Tectonic::default()),
+            DistributionKind::Unknown => Arc::new(UnknownDistribution::default()),
         };
         distro
+    }
+}
+
+impl fmt::Debug for dyn Distribution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.kind())
     }
 }
 
@@ -128,14 +134,6 @@ pub struct UnknownDistribution {
     resolver: Arc<Resolver>,
 }
 
-impl UnknownDistribution {
-    pub fn new() -> Self {
-        Self {
-            resolver: Arc::default(),
-        }
-    }
-}
-
 #[async_trait]
 impl Distribution for UnknownDistribution {
     fn kind(&self) -> DistributionKind {
@@ -152,26 +150,5 @@ impl Distribution for UnknownDistribution {
 
     async fn resolver(&self) -> Arc<Resolver> {
         Arc::clone(&self.resolver)
-    }
-}
-
-#[derive(Clone)]
-pub struct DynamicDistribution(pub Arc<dyn Distribution + Send + Sync>);
-
-impl DynamicDistribution {
-    pub async fn detect() -> Self {
-        Self(Distribution::detect().await)
-    }
-}
-
-impl Default for DynamicDistribution {
-    fn default() -> Self {
-        Self(Arc::new(UnknownDistribution::new()))
-    }
-}
-
-impl fmt::Debug for DynamicDistribution {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.kind())
     }
 }

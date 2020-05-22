@@ -1,7 +1,7 @@
 use crate::{
     components::{Component, COMPONENT_DATABASE},
     protocol::*,
-    tex::{DynamicDistribution, Language},
+    tex::{Distribution, Language, UnknownDistribution},
     workspace::{Document, DocumentContent, DocumentParams, Snapshot},
 };
 use async_trait::async_trait;
@@ -67,7 +67,7 @@ impl DocumentView {
 pub struct FeatureRequest<P> {
     pub params: P,
     pub view: DocumentView,
-    pub distro: DynamicDistribution,
+    pub distro: Arc<dyn Distribution>,
     pub client_capabilities: Arc<ClientCapabilities>,
     pub options: Options,
     pub current_dir: Arc<PathBuf>,
@@ -159,11 +159,11 @@ where
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct FeatureTester {
     main: String,
     files: Vec<(String, String)>,
-    distro: DynamicDistribution,
+    distro: Arc<dyn Distribution>,
     position: Position,
     new_name: String,
     include_declaration: bool,
@@ -173,12 +173,18 @@ pub struct FeatureTester {
     output_dir: Option<PathBuf>,
 }
 
+impl Default for FeatureTester {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FeatureTester {
     pub fn new() -> Self {
         Self {
             main: String::new(),
             files: Vec::new(),
-            distro: DynamicDistribution::default(),
+            distro: Arc::new(UnknownDistribution::default()),
             position: Position::default(),
             new_name: String::new(),
             include_declaration: false,
@@ -254,7 +260,7 @@ impl FeatureTester {
 
     async fn view(&self) -> DocumentView {
         let mut snapshot = Snapshot::new();
-        let resolver = self.distro.0.resolver().await;
+        let resolver = self.distro.resolver().await;
         let options = self.options();
         for (name, text) in &self.files {
             let uri = Self::uri(name);

@@ -17,7 +17,7 @@ use crate::{
     rename::{PrepareRenameProvider, RenameProvider},
     symbol::{document_symbols, workspace_symbols, SymbolProvider},
     syntax::{bibtex, latexindent, CharStream, SyntaxNode},
-    tex::{DistributionKind, DynamicDistribution, KpsewhichError},
+    tex::{Distribution, DistributionKind, KpsewhichError},
     workspace::{DocumentContent, Workspace},
 };
 use async_trait::async_trait;
@@ -30,7 +30,7 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::{mem, path::PathBuf, sync::Arc};
 
 pub struct LatexLspServer<C> {
-    distro: DynamicDistribution,
+    distro: Arc<dyn Distribution>,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
     current_dir: Arc<PathBuf>,
@@ -54,7 +54,7 @@ pub struct LatexLspServer<C> {
 
 #[jsonrpc_server]
 impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(distro: DynamicDistribution, client: Arc<C>, current_dir: Arc<PathBuf>) -> Self {
+    pub fn new(distro: Arc<dyn Distribution>, client: Arc<C>, current_dir: Arc<PathBuf>) -> Self {
         let workspace = Workspace::new(distro.clone(), Arc::clone(&current_dir));
         Self {
             distro,
@@ -583,8 +583,8 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     async fn load_distribution(&self) {
-        info!("Detected TeX distribution: {}", self.distro.0.kind());
-        if self.distro.0.kind() == DistributionKind::Unknown {
+        info!("Detected TeX distribution: {}", self.distro.kind());
+        if self.distro.kind() == DistributionKind::Unknown {
             let params = ShowMessageParams {
                 message: "Your TeX distribution could not be detected. \
                           Please make sure that your distribution is in your PATH."
@@ -594,7 +594,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             self.client.show_message(params).await;
         }
 
-        if let Err(why) = self.distro.0.load().await {
+        if let Err(why) = self.distro.load().await {
             let message = match why {
                 KpsewhichError::NotInstalled | KpsewhichError::InvalidOutput => {
                     "An error occurred while executing `kpsewhich`.\

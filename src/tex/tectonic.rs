@@ -9,12 +9,6 @@ use std::sync::Arc;
 #[derive(Debug, Default)]
 pub struct Tectonic;
 
-impl Tectonic {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 #[async_trait]
 impl Distribution for Tectonic {
     fn kind(&self) -> DistributionKind {

@@ -18,12 +18,6 @@ pub struct Texlive {
     resolver: Mutex<Arc<Resolver>>,
 }
 
-impl Texlive {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 #[async_trait]
 impl Distribution for Texlive {
     fn kind(&self) -> DistributionKind {

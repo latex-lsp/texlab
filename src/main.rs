@@ -7,7 +7,7 @@ use structopt::StructOpt;
 use texlab::{
     protocol::{LatexLspClient, LspCodec},
     server::LatexLspServer,
-    tex::DynamicDistribution,
+    tex::Distribution,
 };
 use tokio_util::codec::{FramedRead, FramedWrite};
 
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
 
     let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
     let server = Arc::new(LatexLspServer::new(
-        DynamicDistribution::detect().await,
+        Distribution::detect().await,
         Arc::clone(&client),
         Arc::new(env::current_dir().expect("failed to get working directory")),
     ));

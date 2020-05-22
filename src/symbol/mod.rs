@@ -17,7 +17,7 @@ use crate::{
         Options, PartialResultParams, SymbolInformation, TextDocumentIdentifier, Uri,
         WorkDoneProgressParams, WorkspaceSymbolParams,
     },
-    tex::DynamicDistribution,
+    tex::Distribution,
     workspace::Snapshot,
 };
 use async_trait::async_trait;
@@ -89,7 +89,7 @@ struct WorkspaceSymbol {
 }
 
 pub async fn workspace_symbols<'a>(
-    distro: DynamicDistribution,
+    distro: Arc<dyn Distribution>,
     client_capabilities: Arc<ClientCapabilities>,
     snapshot: Arc<Snapshot>,
     options: &'a Options,

@@ -123,7 +123,7 @@ impl LatexPreviewHoverProvider {
             format: Format::Latex,
             timeout: Duration::from_secs(10),
         };
-        let dir = req.distro.0.compile(params).await?.dir;
+        let dir = req.distro.compile(params).await?.dir;
         if !dir.path().join("preview.dvi").exists() {
             return Err(RenderError::DviNotFound);
         }
@@ -294,7 +294,7 @@ impl FeatureProvider for LatexPreviewHoverProvider {
 
     async fn execute<'a>(&'a self, req: &'a FeatureRequest<Self::Params>) -> Self::Output {
         if !req.client_capabilities.has_hover_markdown_support()
-            || req.distro.0.kind() == DistributionKind::Tectonic
+            || req.distro.kind() == DistributionKind::Tectonic
         {
             return None;
         }

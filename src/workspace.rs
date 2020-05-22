@@ -2,7 +2,7 @@ use crate::{
     components::COMPONENT_DATABASE,
     protocol::{Options, TextDocumentItem, Uri},
     syntax::{bibtex, latex, LatexIncludeKind},
-    tex::{DynamicDistribution, Language, Resolver},
+    tex::{Distribution, Language, Resolver},
 };
 use futures::lock::Mutex;
 use log::{debug, error, warn};
@@ -340,13 +340,13 @@ impl error::Error for WorkspaceLoadError {
 }
 
 pub struct Workspace {
-    distro: DynamicDistribution,
+    distro: Arc<dyn Distribution>,
     current_dir: Arc<PathBuf>,
     snapshot: Mutex<Arc<Snapshot>>,
 }
 
 impl Workspace {
-    pub fn new(distro: DynamicDistribution, current_dir: Arc<PathBuf>) -> Self {
+    pub fn new(distro: Arc<dyn Distribution>, current_dir: Arc<PathBuf>) -> Self {
         Self {
             distro,
             current_dir,
@@ -559,7 +559,7 @@ impl Workspace {
         language: Language,
         options: &Options,
     ) -> Arc<Snapshot> {
-        let resolver = self.distro.0.resolver().await;
+        let resolver = self.distro.resolver().await;
         let document = Document::open(DocumentParams {
             uri,
             text,

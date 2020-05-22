@@ -8,7 +8,11 @@ pub use self::{
     server::TestLatexLspServer,
 };
 
-use crate::{protocol::*, server::LatexLspServer, tex::DynamicDistribution};
+use crate::{
+    protocol::*,
+    server::LatexLspServer,
+    tex::{Distribution, UnknownDistribution},
+};
 use futures::{
     channel::mpsc,
     future::{join, AbortHandle, Abortable},
@@ -22,7 +26,7 @@ use tempfile::{tempdir, TempDir};
 use tokio::fs;
 
 struct GlobalDistribution {
-    distro: Mutex<Option<DynamicDistribution>>,
+    distro: Mutex<Option<Arc<dyn Distribution>>>,
 }
 
 impl GlobalDistribution {
@@ -32,19 +36,19 @@ impl GlobalDistribution {
         }
     }
 
-    async fn get(&self, use_distro: bool) -> DynamicDistribution {
+    async fn get(&self, use_distro: bool) -> Arc<dyn Distribution> {
         if use_distro {
             let mut distro_lock = self.distro.lock().await;
             match &*distro_lock {
                 Some(distro) => distro.clone(),
                 None => {
-                    let distro = DynamicDistribution::detect().await;
+                    let distro = Distribution::detect().await;
                     *distro_lock = Some(distro.clone());
                     distro
                 }
             }
         } else {
-            DynamicDistribution::default()
+            Arc::new(UnknownDistribution::default())
         }
     }
 }

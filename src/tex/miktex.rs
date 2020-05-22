@@ -20,12 +20,6 @@ pub struct Miktex {
     resolver: Mutex<Arc<Resolver>>,
 }
 
-impl Miktex {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 #[async_trait]
 impl Distribution for Miktex {
     fn kind(&self) -> DistributionKind {

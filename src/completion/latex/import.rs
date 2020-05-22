@@ -58,7 +58,7 @@ where
         });
 
     combinators::argument(req, parameters, |ctx| async move {
-        let resolver = req.distro.0.resolver().await;
+        let resolver = req.distro.resolver().await;
         COMPONENT_DATABASE
             .components
             .iter()
