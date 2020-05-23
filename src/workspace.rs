@@ -9,15 +9,14 @@ use log::{debug, error, warn};
 use petgraph::{graph::Graph, visit::Dfs};
 use std::{
     collections::HashMap,
-    error,
     ffi::OsStr,
-    fmt,
     hash::{Hash, Hasher},
     io,
     path::{Path, PathBuf},
     sync::Arc,
     time::SystemTime,
 };
+use thiserror::Error;
 use tokio::fs;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -307,36 +306,14 @@ impl Snapshot {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum WorkspaceLoadError {
+    #[error("invalid language id")]
     UnknownLanguage,
+    #[error("invalid file path")]
     InvalidPath,
-    IO(io::Error),
-}
-
-impl From<io::Error> for WorkspaceLoadError {
-    fn from(why: io::Error) -> Self {
-        Self::IO(why)
-    }
-}
-
-impl fmt::Display for WorkspaceLoadError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::UnknownLanguage => write!(f, "Invalid language ID"),
-            Self::InvalidPath => write!(f, "Invalid file path"),
-            Self::IO(why) => write!(f, "{}", why),
-        }
-    }
-}
-
-impl error::Error for WorkspaceLoadError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Self::UnknownLanguage | Self::InvalidPath => None,
-            Self::IO(why) => why.source(),
-        }
-    }
+    #[error("an I/O error occurred: `{0}`")]
+    IO(#[from] io::Error),
 }
 
 pub struct Workspace {
