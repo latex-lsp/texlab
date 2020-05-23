@@ -65,7 +65,7 @@ structopt = "0.3"
 tempfile = "3.1"
 thiserror = "1.0"
 titlecase = "1.1"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "0.2", features = ["fs", "io-std", "macros", "process", "rt-core", "time"] }
 tokio-util = { version = "0.3", features = ["codec"] }
 url = "2.1"
 uuid = { version = "0.8", features = ["v4"] }
