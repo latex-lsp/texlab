@@ -1,14 +1,17 @@
 mod bibtex;
 mod latex;
 
+#[cfg(feature = "citation")]
+use self::latex::citation::LatexCitationHoverProvider;
+
 use self::{
     bibtex::{
         entry_type::BibtexEntryTypeHoverProvider, field::BibtexFieldHoverProvider,
         string_reference::BibtexStringReferenceHoverProvider,
     },
     latex::{
-        citation::LatexCitationHoverProvider, component::LatexComponentHoverProvider,
-        label::LatexLabelHoverProvider, preview::LatexPreviewHoverProvider,
+        component::LatexComponentHoverProvider, label::LatexLabelHoverProvider,
+        preview::LatexPreviewHoverProvider,
     },
 };
 use crate::{
@@ -28,6 +31,7 @@ impl HoverProvider {
                 Box::new(BibtexEntryTypeHoverProvider),
                 Box::new(BibtexStringReferenceHoverProvider),
                 Box::new(BibtexFieldHoverProvider),
+                #[cfg(feature = "citation")]
                 Box::new(LatexCitationHoverProvider),
                 Box::new(LatexComponentHoverProvider),
                 Box::new(LatexLabelHoverProvider),

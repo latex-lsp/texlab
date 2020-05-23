@@ -1,10 +1,10 @@
+#[cfg(feature = "citation")]
+use texlab::protocol::{MarkupContent, MarkupKind};
+
 use indoc::indoc;
 use itertools::Itertools;
 use texlab::{
-    protocol::{
-        CompletionItem, CompletionTextEdit, Documentation, MarkupContent, MarkupKind, Range,
-        RangeExt, TextEdit,
-    },
+    protocol::{CompletionItem, CompletionTextEdit, Documentation, Range, RangeExt, TextEdit},
     test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES},
 };
 
@@ -301,6 +301,7 @@ async fn latex_begin_command() {
     verify_detail(&actual_item, "built-in");
 }
 
+#[cfg(feature = "citation")]
 #[tokio::test]
 async fn latex_citation_valid() {
     let mut test_bed = TestBedBuilder::new()
@@ -351,6 +352,7 @@ async fn latex_citation_valid() {
     );
 }
 
+#[cfg(feature = "citation")]
 #[tokio::test]
 async fn latex_citation_invalid() {
     let mut test_bed = TestBedBuilder::new()

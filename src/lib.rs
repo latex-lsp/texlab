@@ -1,5 +1,7 @@
-pub mod build;
+#[cfg(feature = "citation")]
 pub mod citeproc;
+
+pub mod build;
 pub mod completion;
 pub mod components;
 pub mod config;

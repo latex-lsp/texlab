@@ -1,6 +1,8 @@
+#[cfg(feature = "citation")]
+use crate::citeproc::render_citation;
+
 use crate::{
     build::BuildProvider,
-    citeproc::render_citation,
     completion::{CompletionItemData, CompletionProvider},
     components::COMPONENT_DATABASE,
     config::ConfigManager,
@@ -266,6 +268,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                     .documentation(&item.label)
                     .map(Documentation::MarkupContent);
             }
+            #[cfg(feature = "citation")]
             CompletionItemData::Citation { uri, key } => {
                 let snapshot = self.workspace.get().await;
                 if let Some(doc) = snapshot.find(&uri) {
