@@ -2,59 +2,29 @@ use super::Language;
 use futures::Future;
 use std::{
     collections::HashMap,
-    env, error,
+    env,
     ffi::OsStr,
-    fmt, io,
+    io,
     path::{Path, PathBuf},
     string::FromUtf8Error,
 };
+use thiserror::Error;
 use tokio::{fs, process::Command};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum KpsewhichError {
-    IO(io::Error),
-    Decode(FromUtf8Error),
+    #[error("an I/O error occurred: `{0}`")]
+    IO(#[from] io::Error),
+    #[error("an utf8 error occurred: `{0}`")]
+    Decode(#[from] FromUtf8Error),
+    #[error("invalid output from kpsewhich")]
     InvalidOutput,
+    #[error("kpsewhich not installed")]
     NotInstalled,
+    #[error("no kpsewhich database")]
     NoDatabase,
+    #[error("corrupt kpsewhich database")]
     CorruptDatabase,
-}
-
-impl From<io::Error> for KpsewhichError {
-    fn from(why: io::Error) -> Self {
-        Self::IO(why)
-    }
-}
-
-impl From<FromUtf8Error> for KpsewhichError {
-    fn from(why: FromUtf8Error) -> Self {
-        Self::Decode(why)
-    }
-}
-
-impl fmt::Display for KpsewhichError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::IO(why) => write!(f, "{}", why),
-            Self::Decode(why) => write!(f, "{}", why),
-            Self::InvalidOutput => write!(f, "invalid output from kpsewhich"),
-            Self::NotInstalled => write!(f, "kpsewhich not installed"),
-            Self::NoDatabase => write!(f, "no kpsewhich database"),
-            Self::CorruptDatabase => write!(f, "corrupt kpsewhich database"),
-        }
-    }
-}
-
-impl error::Error for KpsewhichError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Self::IO(why) => why.source(),
-            Self::Decode(why) => why.source(),
-            Self::InvalidOutput | Self::NotInstalled | Self::NoDatabase | Self::CorruptDatabase => {
-                None
-            }
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
