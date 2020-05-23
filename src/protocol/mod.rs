@@ -1,6 +1,16 @@
+cfg_if::cfg_if! {
+    if #[cfg(feature = "server")] {
+        mod client;
+        mod codec;
+
+        pub use self::{
+            client::{LatexLspClient, LspClient},
+            codec::LspCodec,
+        };
+    }
+}
+
 mod capabilities;
-mod client;
-mod codec;
 mod edit;
 mod options;
 mod range;
@@ -8,8 +18,6 @@ mod uri;
 
 pub use self::{
     capabilities::ClientCapabilitiesExt,
-    client::{LatexLspClient, LspClient},
-    codec::LspCodec,
     edit::*,
     options::*,
     range::RangeExt,
