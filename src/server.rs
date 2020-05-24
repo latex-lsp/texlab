@@ -3,7 +3,7 @@ use crate::citeproc::render_citation;
 
 use crate::{
     build::BuildProvider,
-    completion::{CompletionItemData, CompletionProvider, COMPLETION_LIMIT},
+    completion::{CompletionItemData, CompletionProvider},
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     definition::DefinitionProvider,
@@ -253,10 +253,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             req.params.text_document_position.position,
         );
 
-        let items = self.completion_provider.execute(&req).await;
         Ok(CompletionList {
-            is_incomplete: items.len() >= COMPLETION_LIMIT,
-            items,
+            is_incomplete: true,
+            items: self.completion_provider.execute(&req).await,
         })
     }
 
