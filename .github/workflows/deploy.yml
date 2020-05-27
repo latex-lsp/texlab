@@ -10,7 +10,7 @@ jobs:
         include:
           - os: ubuntu-latest
             archive_file: texlab-x86_64-linux.tar.gz
-            archive_cmd: tar -czvf {0} target/release/texlab
+            archive_cmd: tar -czvf {0} -C target/release texlab
             archive_type: application/gzip
           - os: windows-latest
             archive_file: texlab-x86_64-windows.zip
@@ -18,7 +18,7 @@ jobs:
             archive_type: application/zip
           - os: macos-latest
             archive_file: texlab-x86_64-macos.tar.gz
-            archive_cmd: tar -czvf {0} target/release/texlab
+            archive_cmd: tar -czvf {0} -C target/release texlab
             archive_type: application/gzip
     steps:
       - uses: actions/checkout@v2
