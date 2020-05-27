@@ -2184,7 +2184,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
  "aovec 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-trait 0.1.31 (registry+https://github.com/rust-lang/crates.io-index)",
