@@ -20,10 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the ordering of completion items when using `lsp-mode` ([#227](https://github.com/latex-lsp/texlab/issues/227))
 - Fix preview when using custom class files ([#228](https://github.com/latex-lsp/texlab/issues/228))
 
-### Fixed
-
-### Performance
-
 ## [2.1.0] - 10.05.2020
 
 ### Added
