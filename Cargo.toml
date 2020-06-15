@@ -101,7 +101,7 @@ criterion = "0.3"
 indoc = "0.3"
 
 [build-dependencies]
-lalrpop = { version = "0.18", optional = true }
+lalrpop = { version = "0.19", optional = true }
 
 [profile.release]
 lto = true
