@@ -3,7 +3,7 @@ use crate::citeproc::render_citation;
 
 use crate::{
     build::BuildProvider,
-    completion::{CompletionItemData, CompletionProvider},
+    completion::{CompletionItemData, CompletionProvider, COMPLETION_LIMIT},
     components::COMPONENT_DATABASE,
     config::ConfigManager,
     definition::DefinitionProvider,
@@ -35,6 +35,7 @@ pub struct LatexLspServer<C> {
     distro: Arc<dyn Distribution>,
     client: Arc<C>,
     client_capabilities: OnceCell<Arc<ClientCapabilities>>,
+    client_info: OnceCell<Option<ClientInfo>>,
     current_dir: Arc<PathBuf>,
     config_manager: OnceCell<ConfigManager<C>>,
     action_manager: ActionManager,
@@ -62,6 +63,7 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             distro,
             client: Arc::clone(&client),
             client_capabilities: OnceCell::new(),
+            client_info: OnceCell::new(),
             current_dir,
             config_manager: OnceCell::new(),
             action_manager: ActionManager::default(),
@@ -100,6 +102,10 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.client_capabilities
             .set(Arc::new(params.capabilities))
+            .expect("initialize was called two times");
+
+        self.client_info
+            .set(params.client_info)
             .expect("initialize was called two times");
 
         let _ = self.config_manager.set(ConfigManager::new(
@@ -253,9 +259,23 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
             req.params.text_document_position.position,
         );
 
+        let items = self.completion_provider.execute(&req).await;
+        let is_incomplete = if self
+            .client_info
+            .get()
+            .and_then(|info| info.as_ref())
+            .map(|info| info.name.as_str())
+            .unwrap_or_default()
+            == "vscode"
+        {
+            true
+        } else {
+            items.len() >= COMPLETION_LIMIT
+        };
+
         Ok(CompletionList {
-            is_incomplete: true,
-            items: self.completion_provider.execute(&req).await,
+            is_incomplete,
+            items,
         })
     }
 
