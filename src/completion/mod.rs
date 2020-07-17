@@ -37,7 +37,8 @@ use crate::{
     workspace::DocumentContent,
 };
 use async_trait::async_trait;
-use fuzzy_matcher::skim::fuzzy_match;
+use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::skim::SkimMatcherV2;
 use std::collections::HashSet;
 
 pub const COMPLETION_LIMIT: usize = 50;
@@ -145,27 +146,28 @@ fn preselect(req: &FeatureRequest<CompletionParams>, items: &mut [Item]) {
 fn score(req: &FeatureRequest<CompletionParams>, items: &mut Vec<Item>) {
     let current_word = current_word(req);
     let pattern = current_word.as_deref().unwrap_or_default();
+    let matcher = SkimMatcherV2::default();
     for item in items {
         item.score = match &item.data {
-            ItemData::ComponentCommand { name, .. } => fuzzy_match(name, pattern),
-            ItemData::ComponentEnvironment { name, .. } => fuzzy_match(name, pattern),
-            ItemData::UserCommand { name } => fuzzy_match(name, pattern),
-            ItemData::UserEnvironment { name } => fuzzy_match(name, pattern),
-            ItemData::Label { text, .. } => fuzzy_match(&text, pattern),
-            ItemData::Class { name } => fuzzy_match(&name, pattern),
-            ItemData::Package { name } => fuzzy_match(&name, pattern),
-            ItemData::PgfLibrary { name } => fuzzy_match(name, pattern),
-            ItemData::TikzLibrary { name } => fuzzy_match(name, pattern),
-            ItemData::File { name } => fuzzy_match(name, pattern),
-            ItemData::Directory { name } => fuzzy_match(name, pattern),
-            ItemData::Citation { text, .. } => fuzzy_match(&text, pattern),
-            ItemData::Argument { name, .. } => fuzzy_match(&name, pattern),
-            ItemData::BeginCommand => fuzzy_match("begin", pattern),
-            ItemData::Color { name } => fuzzy_match(name, pattern),
-            ItemData::ColorModel { name } => fuzzy_match(name, pattern),
-            ItemData::GlossaryEntry { name } => fuzzy_match(name, pattern),
-            ItemData::EntryType { ty } => fuzzy_match(&ty.name, pattern),
-            ItemData::Field { field } => fuzzy_match(&field.name, pattern),
+            ItemData::ComponentCommand { name, .. } => matcher.fuzzy_match(name, pattern),
+            ItemData::ComponentEnvironment { name, .. } => matcher.fuzzy_match(name, pattern),
+            ItemData::UserCommand { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::UserEnvironment { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::Label { text, .. } => matcher.fuzzy_match(&text, pattern),
+            ItemData::Class { name } => matcher.fuzzy_match(&name, pattern),
+            ItemData::Package { name } => matcher.fuzzy_match(&name, pattern),
+            ItemData::PgfLibrary { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::TikzLibrary { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::File { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::Directory { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::Citation { text, .. } => matcher.fuzzy_match(&text, pattern),
+            ItemData::Argument { name, .. } => matcher.fuzzy_match(&name, pattern),
+            ItemData::BeginCommand => matcher.fuzzy_match("begin", pattern),
+            ItemData::Color { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::ColorModel { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::GlossaryEntry { name } => matcher.fuzzy_match(name, pattern),
+            ItemData::EntryType { ty } => matcher.fuzzy_match(&ty.name, pattern),
+            ItemData::Field { field } => matcher.fuzzy_match(&field.name, pattern),
         };
     }
 }
