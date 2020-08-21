@@ -105,7 +105,7 @@ impl Params {
                 inner.as_mut_ptr(),
                 from.read_mode() as i32,
                 to.write_mode() as i32,
-                program.as_ptr() as *mut i8,
+                program.as_ptr() as *mut std::os::raw::c_char,
             );
         }
         Self { inner }
@@ -158,7 +158,7 @@ pub fn convert(input: &str, from: InputFormat, to: OutputFormat) -> Option<Strin
         let status = bibl_read(
             context.inner.as_mut_ptr(),
             input_file.handle,
-            input_file.path.as_ptr() as *mut i8,
+            input_file.path.as_ptr() as *mut std::os::raw::c_char,
             params.inner.as_mut_ptr(),
         );
 
