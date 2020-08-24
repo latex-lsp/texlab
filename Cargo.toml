@@ -98,7 +98,7 @@ uuid = { version = "0.8", features = ["v4"] }
 
 [dev-dependencies]
 criterion = "0.3"
-indoc = "0.3"
+indoc = "1.0"
 
 [build-dependencies]
 lalrpop = { version = "0.18", optional = true }
