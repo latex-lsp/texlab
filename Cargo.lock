@@ -530,7 +530,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_derive",
- "string_cache",
+ "string_cache 0.7.5",
  "strum",
  "strum_macros",
 ]
@@ -624,9 +624,9 @@ checksum = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
 
 [[package]]
 name = "ena"
-version = "0.13.1"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8944dc8fa28ce4a38f778bd46bf7d923fe73eed5a439398507246c8e017e6f36"
+checksum = "d7402b94a93c24e742487327a7cd839dc9d36fec9de9fb25b09f2dae459f36c3"
 dependencies = [
  "log",
 ]
@@ -1080,9 +1080,9 @@ dependencies = [
 
 [[package]]
 name = "lalrpop"
-version = "0.18.1"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de5e019883a6e9734d093f34216a3857160c6bc2a9a1ec196a177aaa737c74af"
+checksum = "60fb56191fb8ed5311597e5750debe6779c9fdb487dbaa5ff302592897d7a2c8"
 dependencies = [
  "ascii-canvas",
  "atty",
@@ -1090,15 +1090,15 @@ dependencies = [
  "diff",
  "docopt",
  "ena",
- "itertools 0.8.2",
- "lalrpop-util",
- "petgraph 0.4.13",
+ "itertools 0.9.0",
+ "lalrpop-util 0.19.1",
+ "petgraph 0.5.1",
  "regex",
  "regex-syntax",
  "serde",
  "serde_derive",
  "sha2",
- "string_cache",
+ "string_cache 0.8.0",
  "term",
  "unicode-xid 0.2.0",
 ]
@@ -1108,6 +1108,12 @@ name = "lalrpop-util"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d6e9bc1801eb54529fd6a020aaf9514e8193bb6b42d96d0fe7da99187efa93d"
+
+[[package]]
+name = "lalrpop-util"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6771161eff561647fad8bb7e745e002c304864fb8f436b52b30acda51fca4408"
 dependencies = [
  "regex",
 ]
@@ -1192,7 +1198,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "string_cache",
+ "string_cache 0.7.5",
  "string_cache_codegen",
  "tendril",
 ]
@@ -1209,7 +1215,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "string_cache",
+ "string_cache 0.7.5",
  "string_cache_codegen",
  "tendril",
 ]
@@ -2292,6 +2298,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "string_cache"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2940c75beb4e3bf3a494cef919a747a2cb81e52571e212bfbd185074add7208a"
+dependencies = [
+ "lazy_static",
+ "new_debug_unreachable",
+ "phf_shared 0.8.0",
+ "precomputed-hash",
+ "serde",
+]
+
+[[package]]
 name = "string_cache_codegen"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2485,7 +2504,7 @@ dependencies = [
  "jsonrpc",
  "jsonrpc-derive",
  "lalrpop",
- "lalrpop-util",
+ "lalrpop-util 0.18.1",
  "log",
  "lsp-types",
  "nom 6.0.0",
