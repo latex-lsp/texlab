@@ -249,6 +249,20 @@
       }
     },
     {
+      "name": "\\vref",
+      "index": 0,
+      "kind": {
+        "reference": "everything"
+      }
+    },
+    {
+      "name": "\\Vref",
+      "index": 0,
+      "kind": {
+        "reference": "everything"
+      }
+    },
+    {
       "name": "\\autoref",
       "index": 0,
       "kind": {
