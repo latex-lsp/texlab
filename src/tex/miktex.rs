@@ -9,7 +9,6 @@ use futures::lock::Mutex;
 use std::{
     ffi::OsStr,
     io::{self, Cursor},
-    mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -33,7 +32,7 @@ impl Distribution for Miktex {
     async fn load(&self) -> Result<(), KpsewhichError> {
         let root_directories = kpsewhich::root_directories().await?;
         let resolver = kpsewhich::parse_database(&root_directories, read_database).await?;
-        mem::replace(&mut *self.resolver.lock().await, Arc::new(resolver));
+        *self.resolver.lock().await = Arc::new(resolver);
         Ok(())
     }
 

@@ -6,7 +6,7 @@ use super::{
 use async_trait::async_trait;
 use futures::lock::Mutex;
 use std::{
-    io, mem,
+    io,
     path::{Path, PathBuf},
     str::Lines,
     sync::Arc,
@@ -31,7 +31,7 @@ impl Distribution for Texlive {
     async fn load(&self) -> Result<(), KpsewhichError> {
         let root_directories = kpsewhich::root_directories().await?;
         let resolver = kpsewhich::parse_database(&root_directories, read_database).await?;
-        mem::replace(&mut *self.resolver.lock().await, Arc::new(resolver));
+        *self.resolver.lock().await = Arc::new(resolver);
         Ok(())
     }
 
