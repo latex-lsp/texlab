@@ -2,7 +2,7 @@
 name = "jsonrpc-derive"
 version = "0.1.0"
 authors = [
-    "Eric Förster <eric.foerster@outlook.com>", 
+    "Eric Förster <eric.foerster@outlook.com>",
     "Patrick Förster <patrick.foerster@outlook.de>"]
 edition = "2018"
 
