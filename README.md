@@ -39,7 +39,7 @@ Alternatively, Rust users can run the following command
 without having to clone this repository:
 
 ```shell
-cargo install --git https://github.com/latex-lsp/texlab.git
+cargo install --git --locked https://github.com/latex-lsp/texlab.git
 ```
 
 ## Development
