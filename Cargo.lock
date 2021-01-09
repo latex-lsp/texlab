@@ -1123,6 +1123,7 @@ dependencies = [
 name = "jsonrpc-derive"
 version = "0.1.0"
 dependencies = [
+ "proc-macro2 1.0.13",
  "quote 1.0.7",
  "syn 1.0.39",
 ]
