@@ -39,22 +39,22 @@ jobs:
           asset_content_type: ${{ matrix.archive_type }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  ctan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: git archive --prefix=texlab/ -o texlab.zip HEAD
-      - id: get-version
-        run: |
-          RELEASE_TAG=${{ github.event.release.tag_name }}
-          echo "::set-output name=version::${RELEASE_TAG:1}"
-      - uses: paolobrasolin/ctan-submit-action@v1
-        with:
-          action: upload
-          file_path: texlab.zip
-          fields: |
-            pkg: texlab
-            version: ${{ steps.get-version.outputs.version }}
-            uploader: Eric Förster
-            email: eric.foerster@outlook.com
-            update: 'true'
+  # ctan:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - run: git archive --prefix=texlab/ -o texlab.zip HEAD
+  #     - id: get-version
+  #       run: |
+  #         RELEASE_TAG=${{ github.event.release.tag_name }}
+  #         echo "::set-output name=version::${RELEASE_TAG:1}"
+  #     - uses: paolobrasolin/ctan-submit-action@v1
+  #       with:
+  #         action: upload
+  #         file_path: texlab.zip
+  #         fields: |
+  #           pkg: texlab
+  #           version: ${{ steps.get-version.outputs.version }}
+  #           uploader: Eric Förster
+  #           email: eric.foerster@outlook.com
+  #           update: 'true'
