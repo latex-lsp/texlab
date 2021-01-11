@@ -1161,7 +1161,7 @@ dependencies = [
  "docopt",
  "ena",
  "itertools 0.8.2",
- "lalrpop-util",
+ "lalrpop-util 0.18.1",
  "petgraph 0.4.13",
  "regex",
  "regex-syntax",
@@ -1181,6 +1181,12 @@ checksum = "7d6e9bc1801eb54529fd6a020aaf9514e8193bb6b42d96d0fe7da99187efa93d"
 dependencies = [
  "regex",
 ]
+
+[[package]]
+name = "lalrpop-util"
+version = "0.19.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ebbd90154472db6267a7d28ca08fea7788e5619fef10f2398155cb74c08f77a"
 
 [[package]]
 name = "lazy_static"
@@ -2607,7 +2613,7 @@ dependencies = [
  "jsonrpc",
  "jsonrpc-derive",
  "lalrpop",
- "lalrpop-util",
+ "lalrpop-util 0.19.4",
  "log",
  "lsp-types",
  "nom 6.0.1",
