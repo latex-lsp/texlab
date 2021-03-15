@@ -92,7 +92,7 @@ tempfile = "3.1"
 thiserror = "1.0"
 titlecase = "1.1"
 tokio = { version = "0.2", features = ["fs", "io-std", "macros", "process", "rt-core", "time"] }
-tokio-util = { version = "0.3", optional = true }
+tokio-util = { version = "0.6", optional = true }
 url = "2.2"
 uuid = { version = "0.8", features = ["v4"] }
 
