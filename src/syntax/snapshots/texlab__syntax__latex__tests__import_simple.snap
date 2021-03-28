@@ -1,0 +1,18 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\import{foo}{bar}\"#)"
+
+---
+ROOT@0..17
+  PREAMBLE@0..17
+    IMPORT@0..17
+      IMPORT_COMMAND@0..7 "\\import"
+      BRACE_GROUP_WORD@7..12
+        L_BRACE@7..8 "{"
+        WORD@8..11 "foo"
+        R_BRACE@11..12 "}"
+      BRACE_GROUP_WORD@12..17
+        L_BRACE@12..13 "{"
+        WORD@13..16 "bar"
+        R_BRACE@16..17 "}"
+

@@ -1,0 +1,36 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\definecolorset[ty]{rgb,HTML}{foo}{bar}\"#)"
+
+---
+ROOT@0..39
+  PREAMBLE@0..39
+    COLOR_SET_DEFINITION@0..18
+      COLOR_SET_DEFINITION_COMMAND@0..15 "\\definecolorset"
+      BRACE_GROUP_WORD@15..18
+        L_BRACKET@15..16 "["
+        WORD@16..18 "ty"
+        MISSING@18..18 ""
+      MISSING@18..18 ""
+      MISSING@18..18 ""
+      MISSING@18..18 ""
+      MISSING@18..18 ""
+    ERROR@18..19 "]"
+    BRACE_GROUP@19..29
+      L_BRACE@19..20 "{"
+      TEXT@20..28
+        WORD@20..23 "rgb"
+        COMMA@23..24 ","
+        WORD@24..28 "HTML"
+      R_BRACE@28..29 "}"
+    BRACE_GROUP@29..34
+      L_BRACE@29..30 "{"
+      TEXT@30..33
+        WORD@30..33 "foo"
+      R_BRACE@33..34 "}"
+    BRACE_GROUP@34..39
+      L_BRACE@34..35 "{"
+      TEXT@35..38
+        WORD@35..38 "bar"
+      R_BRACE@38..39 "}"
+

@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\newcommand{\\foo}\"#)"
+
+---
+ROOT@0..17
+  PREAMBLE@0..17
+    COMMAND_DEFINITION@0..17
+      COMMAND_DEFINITION_COMMAND@0..11 "\\newcommand"
+      BRACE_GROUP_COMMAND@11..17
+        L_BRACE@11..12 "{"
+        GENERIC_COMMAND_NAME@12..16 "\\foo"
+        R_BRACE@16..17 "}"
+

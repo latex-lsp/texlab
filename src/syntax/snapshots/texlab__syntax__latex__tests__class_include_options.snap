@@ -1,0 +1,33 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\documentclass[foo = bar, baz, qux]{article}\"#)"
+
+---
+ROOT@0..44
+  PREAMBLE@0..44
+    CLASS_INCLUDE@0..44
+      CLASS_INCLUDE_COMMAND@0..14 "\\documentclass"
+      BRACKET_GROUP_KEY_VALUE@14..35
+        L_BRACKET@14..15 "["
+        KEY_VALUE_BODY@15..34
+          KEY_VALUE_PAIR@15..34
+            KEY@15..19
+              WORD@15..18 "foo"
+              WHITESPACE@18..19 " "
+            EQUALITY_SIGN@19..20 "="
+            WHITESPACE@20..21 " "
+            VALUE@21..34
+              TEXT@21..34
+                WORD@21..24 "bar"
+                COMMA@24..25 ","
+                WHITESPACE@25..26 " "
+                WORD@26..29 "baz"
+                COMMA@29..30 ","
+                WHITESPACE@30..31 " "
+                WORD@31..34 "qux"
+        R_BRACKET@34..35 "]"
+      BRACE_GROUP_WORD_LIST@35..44
+        L_BRACE@35..36 "{"
+        WORD@36..43 "article"
+        R_BRACE@43..44 "}"
+

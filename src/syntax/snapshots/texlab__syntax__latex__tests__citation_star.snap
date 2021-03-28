@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\nocite{*}\"#)"
+
+---
+ROOT@0..10
+  PREAMBLE@0..10
+    CITATION@0..10
+      CITATION_COMMAND@0..7 "\\nocite"
+      BRACE_GROUP_WORD_LIST@7..10
+        L_BRACE@7..8 "{"
+        WORD@8..9 "*"
+        R_BRACE@9..10 "}"
+

@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\includesvg{foo/bar.svg}\"#)"
+
+---
+ROOT@0..24
+  PREAMBLE@0..24
+    SVG_INCLUDE@0..24
+      SVG_INCLUDE_COMMAND@0..11 "\\includesvg"
+      BRACE_GROUP_WORD_LIST@11..24
+        L_BRACE@11..12 "{"
+        WORD@12..23 "foo/bar.svg"
+        R_BRACE@23..24 "}"
+

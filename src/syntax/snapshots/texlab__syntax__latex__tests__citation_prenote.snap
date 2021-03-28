@@ -1,0 +1,19 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\cite[foo]{bar}\"#)"
+
+---
+ROOT@0..15
+  PREAMBLE@0..15
+    CITATION@0..15
+      CITATION_COMMAND@0..5 "\\cite"
+      BRACKET_GROUP@5..10
+        L_BRACKET@5..6 "["
+        TEXT@6..9
+          WORD@6..9 "foo"
+        R_BRACKET@9..10 "]"
+      BRACE_GROUP_WORD_LIST@10..15
+        L_BRACE@10..11 "{"
+        WORD@11..14 "bar"
+        R_BRACE@14..15 "}"
+

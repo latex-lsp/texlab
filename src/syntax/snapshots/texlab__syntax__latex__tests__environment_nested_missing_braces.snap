@@ -1,0 +1,42 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\begin{foo \\begin{qux Hello World \\end{baz} \\end{bar\"#)"
+
+---
+ROOT@0..52
+  PREAMBLE@0..0
+  ENVIRONMENT@0..52
+    BEGIN@0..11
+      BEGIN_ENV@0..6 "\\begin"
+      BRACE_GROUP_WORD@6..11
+        L_BRACE@6..7 "{"
+        WORD@7..10 "foo"
+        WHITESPACE@10..11 " "
+        MISSING@11..11 ""
+    ENVIRONMENT@11..44
+      BEGIN@11..22
+        BEGIN_ENV@11..17 "\\begin"
+        BRACE_GROUP_WORD@17..22
+          L_BRACE@17..18 "{"
+          WORD@18..21 "qux"
+          WHITESPACE@21..22 " "
+          MISSING@22..22 ""
+      TEXT@22..34
+        WORD@22..27 "Hello"
+        WHITESPACE@27..28 " "
+        WORD@28..33 "World"
+        WHITESPACE@33..34 " "
+      END@34..44
+        END_ENV@34..38 "\\end"
+        BRACE_GROUP_WORD@38..44
+          L_BRACE@38..39 "{"
+          WORD@39..42 "baz"
+          R_BRACE@42..43 "}"
+          WHITESPACE@43..44 " "
+    END@44..52
+      END_ENV@44..48 "\\end"
+      BRACE_GROUP_WORD@48..52
+        L_BRACE@48..49 "{"
+        WORD@49..52 "bar"
+        MISSING@52..52 ""
+

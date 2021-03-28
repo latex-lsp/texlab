@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\include{foo/bar}\"#)"
+
+---
+ROOT@0..17
+  PREAMBLE@0..17
+    LATEX_INCLUDE@0..17
+      LATEX_INCLUDE_COMMAND@0..8 "\\include"
+      BRACE_GROUP_WORD_LIST@8..17
+        L_BRACE@8..9 "{"
+        WORD@9..16 "foo/bar"
+        R_BRACE@16..17 "}"
+

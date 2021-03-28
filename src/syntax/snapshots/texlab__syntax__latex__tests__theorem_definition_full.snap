@@ -1,0 +1,27 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\newtheorem{foo}[bar]{Foo}[baz]\"#)"
+
+---
+ROOT@0..31
+  PREAMBLE@0..31
+    THEOREM_DEFINITION@0..31
+      THEOREM_DEFINITION_COMMAND@0..11 "\\newtheorem"
+      BRACE_GROUP_WORD@11..16
+        L_BRACE@11..12 "{"
+        WORD@12..15 "foo"
+        R_BRACE@15..16 "}"
+      BRACKET_GROUP_WORD@16..21
+        L_BRACKET@16..17 "["
+        WORD@17..20 "bar"
+        R_BRACKET@20..21 "]"
+      BRACE_GROUP@21..26
+        L_BRACE@21..22 "{"
+        TEXT@22..25
+          WORD@22..25 "Foo"
+        R_BRACE@25..26 "}"
+      BRACKET_GROUP_WORD@26..31
+        L_BRACKET@26..27 "["
+        WORD@27..30 "baz"
+        R_BRACKET@30..31 "]"
+

@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\label{foo}\"#)"
+
+---
+ROOT@0..11
+  PREAMBLE@0..11
+    LABEL_DEFINITION@0..11
+      LABEL_DEFINITION_COMMAND@0..6 "\\label"
+      BRACE_GROUP_WORD@6..11
+        L_BRACE@6..7 "{"
+        WORD@7..10 "foo"
+        R_BRACE@10..11 "}"
+

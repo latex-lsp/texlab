@@ -1,0 +1,18 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\crefrange{foo}{bar}\"#)"
+
+---
+ROOT@0..20
+  PREAMBLE@0..20
+    LABEL_REFERENCE_RANGE@0..20
+      LABEL_REFERENCE_RANGE_COMMAND@0..10 "\\crefrange"
+      BRACE_GROUP_WORD@10..15
+        L_BRACE@10..11 "{"
+        WORD@11..14 "foo"
+        R_BRACE@14..15 "}"
+      BRACE_GROUP_WORD@15..20
+        L_BRACE@15..16 "{"
+        WORD@16..19 "bar"
+        R_BRACE@19..20 "}"
+

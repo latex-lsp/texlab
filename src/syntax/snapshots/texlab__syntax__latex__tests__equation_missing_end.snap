@@ -1,0 +1,31 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\begin{a} \\[ foo bar \\end{b}\"#)"
+
+---
+ROOT@0..28
+  PREAMBLE@0..0
+  ENVIRONMENT@0..28
+    BEGIN@0..10
+      BEGIN_ENV@0..6 "\\begin"
+      BRACE_GROUP_WORD@6..10
+        L_BRACE@6..7 "{"
+        WORD@7..8 "a"
+        R_BRACE@8..9 "}"
+        WHITESPACE@9..10 " "
+    EQUATION@10..21
+      BEGIN_EQUATION@10..12 "\\["
+      WHITESPACE@12..13 " "
+      TEXT@13..21
+        WORD@13..16 "foo"
+        WHITESPACE@16..17 " "
+        WORD@17..20 "bar"
+        WHITESPACE@20..21 " "
+      MISSING@21..21 ""
+    END@21..28
+      END_ENV@21..25 "\\end"
+      BRACE_GROUP_WORD@25..28
+        L_BRACE@25..26 "{"
+        WORD@26..27 "b"
+        R_BRACE@27..28 "}"
+

@@ -1,0 +1,18 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"{[}{]}\"#)"
+
+---
+ROOT@0..6
+  PREAMBLE@0..6
+    BRACE_GROUP@0..3
+      L_BRACE@0..1 "{"
+      MIXED_GROUP@1..2
+        L_BRACKET@1..2 "["
+        MISSING@2..2 ""
+      R_BRACE@2..3 "}"
+    BRACE_GROUP@3..6
+      L_BRACE@3..4 "{"
+      ERROR@4..5 "]"
+      R_BRACE@5..6 "}"
+

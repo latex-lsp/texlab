@@ -1,0 +1,20 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\DeclareMathOperator{\\foo}{foo}\"#)"
+
+---
+ROOT@0..31
+  PREAMBLE@0..31
+    MATH_OPERATOR@0..31
+      MATH_OPERATOR_COMMAND@0..20 "\\DeclareMathOperator"
+      BRACE_GROUP_COMMAND@20..26
+        L_BRACE@20..21 "{"
+        GENERIC_COMMAND_NAME@21..25 "\\foo"
+        R_BRACE@25..26 "}"
+      BRACE_GROUP@26..31
+        L_BRACE@26..27 "{"
+        TEXT@27..30
+          WORD@27..30 "foo"
+        R_BRACE@30..31 "}"
+      MISSING@31..31 ""
+

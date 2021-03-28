@@ -1,0 +1,19 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\definecolorset{rgb,HTML}\"#)"
+
+---
+ROOT@0..25
+  PREAMBLE@0..25
+    COLOR_SET_DEFINITION@0..25
+      COLOR_SET_DEFINITION_COMMAND@0..15 "\\definecolorset"
+      BRACE_GROUP_WORD_LIST@15..25
+        L_BRACE@15..16 "{"
+        WORD@16..19 "rgb"
+        COMMA@19..20 ","
+        WORD@20..24 "HTML"
+        R_BRACE@24..25 "}"
+      MISSING@25..25 ""
+      MISSING@25..25 ""
+      MISSING@25..25 ""
+

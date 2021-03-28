@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\usepackage{amsmath}\"#)"
+
+---
+ROOT@0..20
+  PREAMBLE@0..20
+    PACKAGE_INCLUDE@0..20
+      PACKAGE_INCLUDE_COMMAND@0..11 "\\usepackage"
+      BRACE_GROUP_WORD_LIST@11..20
+        L_BRACE@11..12 "{"
+        WORD@12..19 "amsmath"
+        R_BRACE@19..20 "}"
+

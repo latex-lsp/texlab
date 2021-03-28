@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\color{black}\"#)"
+
+---
+ROOT@0..13
+  PREAMBLE@0..13
+    COLOR_REFERENCE@0..13
+      COLOR_REFERENCE_COMMAND@0..6 "\\color"
+      BRACE_GROUP_WORD@6..13
+        L_BRACE@6..7 "{"
+        WORD@7..12 "black"
+        R_BRACE@12..13 "}"
+

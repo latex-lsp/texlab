@@ -1,0 +1,23 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\newcommand[1]{\\id}{#1}\"#)"
+
+---
+ROOT@0..23
+  PREAMBLE@0..23
+    COMMAND_DEFINITION@0..23
+      COMMAND_DEFINITION_COMMAND@0..11 "\\newcommand"
+      BRACKET_GROUP_WORD@11..14
+        L_BRACKET@11..12 "["
+        WORD@12..13 "1"
+        R_BRACKET@13..14 "]"
+      BRACE_GROUP_COMMAND@14..19
+        L_BRACE@14..15 "{"
+        GENERIC_COMMAND_NAME@15..18 "\\id"
+        R_BRACE@18..19 "}"
+      BRACE_GROUP@19..23
+        L_BRACE@19..20 "{"
+        PARAMETER@20..22 "#1"
+        R_BRACE@22..23 "}"
+      MISSING@23..23 ""
+

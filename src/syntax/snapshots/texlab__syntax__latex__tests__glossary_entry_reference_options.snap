@@ -1,0 +1,30 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\gls[foo = bar, qux]{baz}\"#)"
+
+---
+ROOT@0..25
+  PREAMBLE@0..25
+    GLOSSARY_ENTRY_REFERENCE@0..25
+      GLOSSARY_ENTRY_REFERENCE_COMMAND@0..4 "\\gls"
+      BRACKET_GROUP_KEY_VALUE@4..20
+        L_BRACKET@4..5 "["
+        KEY_VALUE_BODY@5..19
+          KEY_VALUE_PAIR@5..19
+            KEY@5..9
+              WORD@5..8 "foo"
+              WHITESPACE@8..9 " "
+            EQUALITY_SIGN@9..10 "="
+            WHITESPACE@10..11 " "
+            VALUE@11..19
+              TEXT@11..19
+                WORD@11..14 "bar"
+                COMMA@14..15 ","
+                WHITESPACE@15..16 " "
+                WORD@16..19 "qux"
+        R_BRACKET@19..20 "]"
+      BRACE_GROUP_WORD@20..25
+        L_BRACE@20..21 "{"
+        WORD@21..24 "baz"
+        R_BRACE@24..25 "}"
+

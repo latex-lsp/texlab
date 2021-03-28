@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\acrshort{fpsLabel}\"#)"
+
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    ACRONYM_REFERENCE@0..19
+      ACRONYM_REFERENCE_COMMAND@0..9 "\\acrshort"
+      BRACE_GROUP_WORD@9..19
+        L_BRACE@9..10 "{"
+        WORD@10..18 "fpsLabel"
+        R_BRACE@18..19 "}"
+

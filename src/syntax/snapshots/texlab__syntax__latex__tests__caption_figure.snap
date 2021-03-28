@@ -1,0 +1,28 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\begin{figure}\\caption{Foo}\\end{figure}\"#)"
+
+---
+ROOT@0..39
+  PREAMBLE@0..0
+  ENVIRONMENT@0..39
+    BEGIN@0..14
+      BEGIN_ENV@0..6 "\\begin"
+      BRACE_GROUP_WORD@6..14
+        L_BRACE@6..7 "{"
+        WORD@7..13 "figure"
+        R_BRACE@13..14 "}"
+    CAPTION@14..27
+      CAPTION_COMMAND@14..22 "\\caption"
+      BRACE_GROUP@22..27
+        L_BRACE@22..23 "{"
+        TEXT@23..26
+          WORD@23..26 "Foo"
+        R_BRACE@26..27 "}"
+    END@27..39
+      END_ENV@27..31 "\\end"
+      BRACE_GROUP_WORD@31..39
+        L_BRACE@31..32 "{"
+        WORD@32..38 "figure"
+        R_BRACE@38..39 "}"
+

@@ -36,6 +36,7 @@ url = "2.2.1"
 
 [dev-dependencies]
 criterion = "0.3.4"
+insta = "1.7.1"
 
 [build-dependencies]
 

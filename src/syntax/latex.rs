@@ -52,6 +52,21 @@ pub enum SyntaxKind {
     INKSCAPE_INCLUDE_COMMAND,
     VERBATIM_INCLUDE_COMMAND,
     IMPORT_COMMAND,
+    LABEL_DEFINITION_COMMAND,
+    LABEL_REFERENCE_COMMAND,
+    LABEL_REFERENCE_RANGE_COMMAND,
+    LABEL_NUMBER_COMMAND,
+    COMMAND_DEFINITION_COMMAND,
+    MATH_OPERATOR_COMMAND,
+    GLOSSARY_ENTRY_DEFINITION_COMMAND,
+    GLOSSARY_ENTRY_REFERENCE_COMMAND,
+    ACRONYM_DEFINITION_COMMAND,
+    ACRONYM_REFERENCE_COMMAND,
+    THEOREM_DEFINITION_COMMAND,
+    COLOR_REFERENCE_COMMAND,
+    COLOR_DEFINITION_COMMAND,
+    COLOR_SET_DEFINITION_COMMAND,
+    TIKZ_LIBRARY_IMPORT_COMMAND,
 
     PREAMBLE,
     TEXT,
@@ -95,6 +110,21 @@ pub enum SyntaxKind {
     INKSCAPE_INCLUDE,
     VERBATIM_INCLUDE,
     IMPORT,
+    LABEL_DEFINITION,
+    LABEL_REFERENCE,
+    LABEL_REFERENCE_RANGE,
+    LABEL_NUMBER,
+    COMMAND_DEFINITION,
+    MATH_OPERATOR,
+    GLOSSARY_ENTRY_DEFINITION,
+    GLOSSARY_ENTRY_REFERENCE,
+    ACRONYM_DEFINITION,
+    ACRONYM_REFERENCE,
+    THEOREM_DEFINITION,
+    COLOR_REFERENCE,
+    COLOR_DEFINITION,
+    COLOR_SET_DEFINITION,
+    TIKZ_LIBRARY_IMPORT,
     ROOT,
 }
 
@@ -177,16 +207,16 @@ enum LogosToken {
     #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
     GENERIC_COMMAND_NAME,
 
-    #[token("\\begin")]
+    #[regex(r"\\begin")]
     BEGIN_ENV,
 
-    #[token("\\end")]
+    #[regex(r"\\end")]
     END_ENV,
 
-    #[token("\\[")]
+    #[regex(r"\\\[")]
     BEGIN_EQUATION,
 
-    #[token("\\]")]
+    #[regex(r"\\\]")]
     END_EQUATION,
 
     #[regex(r"\\part\*?")]
@@ -210,10 +240,10 @@ enum LogosToken {
     #[regex(r"\\subparagraph\*?")]
     SUBPARAGRAPH_COMMAND,
 
-    #[token("\\item")]
+    #[regex(r"\\item")]
     ENUM_ITEM_COMMAND,
 
-    #[token("\\caption")]
+    #[regex(r"\\caption")]
     CAPTION_COMMAND,
 
     #[regex(r"\\cite|\\cite\*|\\Cite|\\nocite|\\citet|\\citep|\\citet\*|\\citep\*|\\citeauthor|\\citeauthor\*|\\Citeauthor|\\Citeauthor\*|\\citetitle|\\citetitle\*|\\citeyear|\\citeyear\*|\\citedate|\\citedate\*|\\citeurl|\\fullcite|\\citeyearpar|\\citealt|\\citealp|\\citetext|\\parencite|\\parencite\*|\\Parencite|\\footcite|\\footfullcite|\\footcitetext|\\textcite|\\Textcite|\\smartcite|\\Smartcite|\\supercite|\\autocite|\\Autocite|\\autocite\*|\\Autocite\*|\\volcite|\\Volcite|\\pvolcite|\\Pvolcite|\\fvolcite|\\ftvolcite|\\svolcite|\\Svolcite|\\tvolcite|\\Tvolcite|\\avolcite|\\Avolcite|\\notecite|\\notecite|\\pnotecite|\\Pnotecite|\\fnotecite")]
@@ -248,6 +278,51 @@ enum LogosToken {
 
     #[regex(r"\\import|\\subimport|\\inputfrom|\\subimportfrom|\\includefrom|\\subincludefrom")]
     IMPORT_COMMAND,
+
+    #[regex(r"\\label")]
+    LABEL_DEFINITION_COMMAND,
+
+    #[regex(r"\\ref|\\vref|\\Vref|\\autoref|\\pageref|\\cref|\\Cref|\\cref*|\\Cref*|\\namecref|\\nameCref|\\lcnamecref|\\namecrefs|\\nameCrefs|\\lcnamecrefs|\\labelcref|\\labelcpageref|\\eqref")]
+    LABEL_REFERENCE_COMMAND,
+
+    #[regex(r"\\crefrange\*?|\\Crefrange\*?")]
+    LABEL_REFERENCE_RANGE_COMMAND,
+
+    #[regex(r"\\newlabel")]
+    LABEL_NUMBER_COMMAND,
+
+    #[regex(r"\\newcommand|\\renewcommand|\\DeclareRobustCommand")]
+    COMMAND_DEFINITION_COMMAND,
+
+    #[regex(r"\\DeclareMathOperator\*?")]
+    MATH_OPERATOR_COMMAND,
+
+    #[regex(r"\\newglossaryentry")]
+    GLOSSARY_ENTRY_DEFINITION_COMMAND,
+
+    #[regex(r"\\gls|\\Gls|\\GLS|\\glspl|\\Glspl|\\GLSpl|\\glsdisp|\\glslink|\\glstext|\\Glstext|\\GLStext|\\glsfirst|\\Glsfirst|\\GLSfirst|\\glsplural|\\Glsplural|\\GLSplural|\\glsfirstplural|\\Glsfirstplural|\\GLSfirstplural|\\glsname|\\Glsname|\\GLSname|\\glssymbol|\\Glssymbol|\\glsdesc|\\Glsdesc|\\GLSdesc|\\glsuseri|\\Glsuseri|\\GLSuseri|\\glsuserii|\\Glsuserii|\\GLSuserii|\\glsuseriii|\\Glsuseriii|\\GLSuseriii|\\glsuseriv|\\Glsuseriv|\\GLSuseriv|\\glsuserv|\\Glsuserv|\\GLSuserv|\\glsuservi|\\Glsuservi|\\GLSuservi")]
+    GLOSSARY_ENTRY_REFERENCE_COMMAND,
+
+    #[regex(r"\\newacronym")]
+    ACRONYM_DEFINITION_COMMAND,
+
+    #[regex(r"\\acrshort|\\Acrshort|\\ACRshort|\\acrshortpl|\\Acrshortpl|\\ACRshortpl|\\acrlong|\\Acrlong|\\ACRlong|\\acrlongpl|\\Acrlongpl|\\ACRlongpl|\\acrfull|\\Acrfull|\\ACRfull|\\acrfullpl|\\Acrfullpl|\\ACRfullpl|\\acs|\\Acs|\\acsp|\\Acsp|\\acl|\\Acl|\\aclp|\\Aclp|\\acf|\\Acf|\\acfp|\\Acfp|\\ac|\\Ac|\\acp|\\glsentrylong|\\Glsentrylong|\\glsentrylongpl|\\Glsentrylongpl|\\glsentryshort|\\Glsentryshort|\\glsentryshortpl|\\Glsentryshortpl|\\glsentryfullpl|\\Glsentryfullpl")]
+    ACRONYM_REFERENCE_COMMAND,
+
+    #[regex(r"\\newtheorem|\\declaretheorem")]
+    THEOREM_DEFINITION_COMMAND,
+
+    #[regex(r"\\color|\\colorbox|\\textcolor|\\pagecolor")]
+    COLOR_REFERENCE_COMMAND,
+
+    #[regex(r"\\definecolor")]
+    COLOR_DEFINITION_COMMAND,
+
+    #[regex(r"\\definecolorset")]
+    COLOR_SET_DEFINITION_COMMAND,
+
+    #[regex(r"\\usepgflibrary|\\usetikzlibrary")]
+    TIKZ_LIBRARY_IMPORT_COMMAND,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -357,13 +432,28 @@ impl<'a> Parser<'a> {
             CLASS_INCLUDE_COMMAND => self.class_include(),
             LATEX_INCLUDE_COMMAND => self.latex_include(),
             BIBLATEX_INCLUDE_COMMAND => self.biblatex_include(),
-            BIBTEX_INCLUDE => self.bibtex_include(),
+            BIBTEX_INCLUDE_COMMAND => self.bibtex_include(),
             GRAPHICS_INCLUDE_COMMAND => self.graphics_include(),
             SVG_INCLUDE_COMMAND => self.svg_include(),
             INKSCAPE_INCLUDE_COMMAND => self.inkscape_include(),
             VERBATIM_INCLUDE_COMMAND => self.verbatim_include(),
             IMPORT_COMMAND => self.import(),
-            _ => unreachable!(),
+            LABEL_DEFINITION_COMMAND => self.label_definition(),
+            LABEL_REFERENCE_COMMAND => self.label_reference(),
+            LABEL_REFERENCE_RANGE_COMMAND => self.label_reference_range(),
+            LABEL_NUMBER_COMMAND => self.label_number(),
+            COMMAND_DEFINITION_COMMAND => self.command_definition(),
+            MATH_OPERATOR_COMMAND => self.math_operator(),
+            GLOSSARY_ENTRY_DEFINITION_COMMAND => self.glossary_entry_definition(),
+            GLOSSARY_ENTRY_REFERENCE_COMMAND => self.glossary_entry_reference(),
+            ACRONYM_DEFINITION_COMMAND => self.acronym_definition(),
+            ACRONYM_REFERENCE_COMMAND => self.acronym_reference(),
+            THEOREM_DEFINITION_COMMAND => self.theorem_definition(),
+            COLOR_REFERENCE_COMMAND => self.color_reference(),
+            COLOR_DEFINITION_COMMAND => self.color_definition(),
+            COLOR_SET_DEFINITION_COMMAND => self.color_set_definition(),
+            TIKZ_LIBRARY_IMPORT_COMMAND => self.tikz_library_import(),
+            _ => unreachable!("{:#?}", self.tokens.peek().unwrap()),
         }
     }
 
@@ -587,6 +677,7 @@ impl<'a> Parser<'a> {
         self.key();
         if self.tokens.peek() == Some(EQUALITY_SIGN) {
             self.consume();
+            self.trivia();
             if self
                 .tokens
                 .peek()
@@ -1065,6 +1156,296 @@ impl<'a> Parser<'a> {
 
         self.builder.finish_node();
     }
+
+    fn label_definition(&mut self) {
+        self.builder.start_node(LABEL_DEFINITION.into());
+        self.consume();
+        self.trivia();
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+        self.builder.finish_node();
+    }
+
+    fn label_reference(&mut self) {
+        self.builder.start_node(LABEL_REFERENCE.into());
+        self.consume();
+        self.trivia();
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word_list();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+        self.builder.finish_node();
+    }
+
+    fn label_reference_range(&mut self) {
+        self.builder.start_node(LABEL_REFERENCE_RANGE.into());
+        self.consume();
+        self.trivia();
+
+        for _ in 0..2 {
+            if self.tokens.peek() == Some(L_BRACE) {
+                self.brace_group_word();
+            } else {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn label_number(&mut self) {
+        self.builder.start_node(LABEL_NUMBER.into());
+        self.consume();
+        self.trivia();
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.bracket_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group();
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn command_definition(&mut self) {
+        self.builder.start_node(COMMAND_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_word();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_command();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group();
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn math_operator(&mut self) {
+        self.builder.start_node(MATH_OPERATOR.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_command();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group();
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn glossary_entry_definition(&mut self) {
+        self.builder.start_node(GLOSSARY_ENTRY_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_key_value();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn glossary_entry_reference(&mut self) {
+        self.builder.start_node(GLOSSARY_ENTRY_REFERENCE.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_key_value();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn acronym_definition(&mut self) {
+        self.builder.start_node(ACRONYM_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_key_value();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        for _ in 0..2 {
+            if self.tokens.peek() == Some(L_BRACE) {
+                self.brace_group();
+            } else {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn acronym_reference(&mut self) {
+        self.builder.start_node(ACRONYM_REFERENCE.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_key_value();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn theorem_definition(&mut self) {
+        self.builder.start_node(THEOREM_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_word();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.bracket_group_word();
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn color_reference(&mut self) {
+        self.builder.start_node(COLOR_REFERENCE.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn color_definition(&mut self) {
+        self.builder.start_node(COLOR_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn color_set_definition(&mut self) {
+        self.builder.start_node(COLOR_SET_DEFINITION.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACKET) {
+            self.brace_group_word();
+        }
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word_list();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        for _ in 0..3 {
+            if self.tokens.peek() == Some(L_BRACE) {
+                self.brace_group_word();
+            } else {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn tikz_library_import(&mut self) {
+        self.builder.start_node(TIKZ_LIBRARY_IMPORT.into());
+        self.consume();
+        self.trivia();
+
+        if self.tokens.peek() == Some(L_BRACE) {
+            self.brace_group_word_list();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
 }
 
 pub fn parse(text: &str) -> Parse {
@@ -1437,5 +1818,494 @@ impl Import {
             .filter_map(BraceGroupWord::cast)
             .skip(1)
             .next()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_debug_snapshot;
+
+    use super::*;
+
+    fn setup(text: &str) -> SyntaxNode {
+        SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green_node)
+    }
+
+    #[test]
+    fn test_empty() {
+        assert_debug_snapshot!(setup(r#""#));
+    }
+
+    #[test]
+    fn test_hello_world() {
+        assert_debug_snapshot!(setup(r#"Hello World!"#));
+    }
+
+    #[test]
+    fn test_generic_command_empty() {
+        assert_debug_snapshot!(setup(r#"\foo"#));
+    }
+
+    #[test]
+    fn test_generic_command_escape() {
+        assert_debug_snapshot!(setup(r#"\#"#));
+    }
+
+    #[test]
+    fn test_generic_command_args() {
+        assert_debug_snapshot!(setup(r#"\foo{bar}[qux]"#));
+    }
+
+    #[test]
+    fn test_inline() {
+        assert_debug_snapshot!(setup(r#"$x \in [0, \infty)$"#));
+    }
+
+    #[test]
+    fn test_inline_double_dollar() {
+        assert_debug_snapshot!(setup(r#"$$x \in [0, \infty)$$"#));
+    }
+
+    #[test]
+    fn test_brace_group_simple() {
+        assert_debug_snapshot!(setup(r#"{hello world}"#));
+    }
+
+    #[test]
+    fn test_brace_group_missing_end() {
+        assert_debug_snapshot!(setup(r#"{hello world"#));
+    }
+
+    #[test]
+    fn test_unmatched_braces() {
+        assert_debug_snapshot!(setup(r#"}{"#));
+    }
+
+    #[test]
+    fn test_unmatched_brackets() {
+        assert_debug_snapshot!(setup(r#"]["#));
+    }
+
+    #[test]
+    fn test_unmatched_brackets_with_group() {
+        assert_debug_snapshot!(setup(r#"{][}"#));
+    }
+
+    #[test]
+    fn test_escaped_brackets() {
+        assert_debug_snapshot!(setup(r#"{[}{]}"#));
+    }
+
+    #[test]
+    fn test_parameter() {
+        assert_debug_snapshot!(setup(r#"#1"#));
+    }
+
+    #[test]
+    fn test_parameter_error() {
+        assert_debug_snapshot!(setup(r#"#"#));
+    }
+
+    #[test]
+    fn test_environment_simple() {
+        assert_debug_snapshot!(setup(r#"\begin{foo} Hello World \end{bar}"#));
+    }
+
+    #[test]
+    fn test_environment_nested() {
+        assert_debug_snapshot!(setup(r#"\begin{foo} \begin{qux} \end{baz} \end{bar}"#));
+    }
+
+    #[test]
+    fn test_environment_nested_missing_braces() {
+        assert_debug_snapshot!(setup(
+            r#"\begin{foo \begin{qux Hello World \end{baz} \end{bar"#
+        ));
+    }
+
+    #[test]
+    fn test_structure_siblings() {
+        assert_debug_snapshot!(setup(r#"\section{Foo} Foo \section{Bar} Bar"#));
+    }
+
+    #[test]
+    fn test_structure_nested() {
+        assert_debug_snapshot!(setup(
+            r#"\part{1}\chapter{2}\section{3}\subsection{4}\subsubsection{5}\paragraph{6}\subparagraph{7}"#
+        ));
+    }
+
+    #[test]
+    fn test_structure_enum_item() {
+        assert_debug_snapshot!(setup(
+            r#"\begin{enumerate} \item 1 \item[2] 2 \item 3 \end{enumerate}"#
+        ));
+    }
+
+    #[test]
+    fn test_structure_invalid_nesting() {
+        assert_debug_snapshot!(setup(r#"\section{Foo} \chapter{Bar}"#));
+    }
+
+    #[test]
+    fn test_equation() {
+        assert_debug_snapshot!(setup(r#"\[ foo bar \]"#));
+    }
+
+    #[test]
+    fn test_equation_missing_end() {
+        assert_debug_snapshot!(setup(r#"\begin{a} \[ foo bar \end{b}"#));
+    }
+
+    #[test]
+    fn test_equation_missing_begin() {
+        assert_debug_snapshot!(setup(r#"\begin{a} foo bar \] \end{b}"#));
+    }
+
+    #[test]
+    fn test_caption_minimal() {
+        assert_debug_snapshot!(setup(r#"\caption{Foo \Bar Baz}"#));
+    }
+
+    #[test]
+    fn test_caption_minimal_error() {
+        assert_debug_snapshot!(setup(r#"\caption{Foo \Bar Baz"#));
+    }
+
+    #[test]
+    fn test_caption() {
+        assert_debug_snapshot!(setup(r#"\caption[qux]{Foo \Bar Baz}"#));
+    }
+
+    #[test]
+    fn test_caption_error() {
+        assert_debug_snapshot!(setup(r#"\caption[qux]{Foo \Bar Baz"#));
+    }
+
+    #[test]
+    fn test_caption_figure() {
+        assert_debug_snapshot!(setup(r#"\begin{figure}\caption{Foo}\end{figure}"#));
+    }
+
+    #[test]
+    fn test_citation_empty() {
+        assert_debug_snapshot!(setup(r#"\cite{}"#));
+    }
+
+    #[test]
+    fn test_citation_simple() {
+        assert_debug_snapshot!(setup(r#"\cite{foo}"#));
+    }
+
+    #[test]
+    fn test_citation_multiple_keys() {
+        assert_debug_snapshot!(setup(r#"\cite{foo, bar}"#));
+    }
+
+    #[test]
+    fn test_citation_star() {
+        assert_debug_snapshot!(setup(r#"\nocite{*}"#));
+    }
+
+    #[test]
+    fn test_citation_prenote() {
+        assert_debug_snapshot!(setup(r#"\cite[foo]{bar}"#));
+    }
+
+    #[test]
+    fn test_citation_prenote_postnote() {
+        assert_debug_snapshot!(setup(r#"\cite[foo][bar]{baz}"#));
+    }
+
+    #[test]
+    fn test_citation_missing_brace() {
+        assert_debug_snapshot!(setup(r#"\cite{foo"#));
+    }
+
+    #[test]
+    fn test_citation_redundant_comma() {
+        assert_debug_snapshot!(setup(r#"\cite{,foo,}"#));
+    }
+
+    #[test]
+    fn test_package_include_empty() {
+        assert_debug_snapshot!(setup(r#"\usepackage{}"#));
+    }
+
+    #[test]
+    fn test_package_include_simple() {
+        assert_debug_snapshot!(setup(r#"\usepackage{amsmath}"#));
+    }
+
+    #[test]
+    fn test_package_include_multiple() {
+        assert_debug_snapshot!(setup(r#"\usepackage{amsmath, lipsum}"#));
+    }
+
+    #[test]
+    fn test_package_include_options() {
+        assert_debug_snapshot!(setup(r#"\usepackage[foo = bar, baz, qux]{amsmath}"#));
+    }
+
+    #[test]
+    fn test_class_include_empty() {
+        assert_debug_snapshot!(setup(r#"\documentclass{}"#));
+    }
+
+    #[test]
+    fn test_class_include_simple() {
+        assert_debug_snapshot!(setup(r#"\documentclass{article}"#));
+    }
+
+    #[test]
+    fn test_class_include_options() {
+        assert_debug_snapshot!(setup(r#"\documentclass[foo = bar, baz, qux]{article}"#));
+    }
+
+    #[test]
+    fn test_latex_include_simple() {
+        assert_debug_snapshot!(setup(r#"\include{foo/bar}"#));
+    }
+
+    #[test]
+    fn test_latex_input_simple() {
+        assert_debug_snapshot!(setup(r#"\input{foo/bar.tex}"#));
+    }
+
+    #[test]
+    fn test_biblatex_include_simple() {
+        assert_debug_snapshot!(setup(r#"\addbibresource{foo/bar.bib}"#));
+    }
+
+    #[test]
+    fn test_biblatex_include_options() {
+        assert_debug_snapshot!(setup(r#"\addbibresource[foo=bar, baz]{foo/bar.bib}"#));
+    }
+
+    #[test]
+    fn test_bibtex_include_simple() {
+        assert_debug_snapshot!(setup(r#"\bibliography{foo/bar}"#));
+    }
+
+    #[test]
+    fn test_graphics_include_simple() {
+        assert_debug_snapshot!(setup(r#"\includegraphics{foo/bar.pdf}"#));
+    }
+
+    #[test]
+    fn test_graphics_include_options() {
+        assert_debug_snapshot!(setup(r#"\includegraphics[scale=.5]{foo/bar.pdf}"#));
+    }
+
+    #[test]
+    fn test_svg_include_simple() {
+        assert_debug_snapshot!(setup(r#"\includesvg{foo/bar.svg}"#));
+    }
+
+    #[test]
+    fn test_svg_include_options() {
+        assert_debug_snapshot!(setup(r#"\includesvg[scale=.5]{foo/bar.svg}"#));
+    }
+
+    #[test]
+    fn test_inkscape_include_simple() {
+        assert_debug_snapshot!(setup(r#"\includesvg{foo/bar}"#));
+    }
+
+    #[test]
+    fn test_inkscape_include_options() {
+        assert_debug_snapshot!(setup(r#"\includesvg[scale=.5]{foo/bar}"#));
+    }
+
+    #[test]
+    fn test_verbatim_include_simple() {
+        assert_debug_snapshot!(setup(r#"\verbatiminput{foo/bar.txt}"#));
+    }
+
+    #[test]
+    fn test_import_simple() {
+        assert_debug_snapshot!(setup(r#"\import{foo}{bar}"#));
+    }
+
+    #[test]
+    fn test_import_incomplete() {
+        assert_debug_snapshot!(setup(r#"\import{foo"#));
+    }
+
+    #[test]
+    fn test_label_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\label{foo}"#));
+    }
+
+    #[test]
+    fn test_label_reference_simple() {
+        assert_debug_snapshot!(setup(r#"\ref{foo}"#));
+    }
+
+    #[test]
+    fn test_label_reference_multiple() {
+        assert_debug_snapshot!(setup(r#"\ref{foo, bar}"#));
+    }
+
+    #[test]
+    fn test_equation_label_reference_simple() {
+        assert_debug_snapshot!(setup(r#"\eqref{foo}"#));
+    }
+
+    #[test]
+    fn test_label_reference_range_simple() {
+        assert_debug_snapshot!(setup(r#"\crefrange{foo}{bar}"#));
+    }
+
+    #[test]
+    fn test_label_reference_range_incomplete() {
+        assert_debug_snapshot!(setup(r#"\crefrange{foo}"#));
+    }
+
+    #[test]
+    fn test_label_reference_range_error() {
+        assert_debug_snapshot!(setup(r#"\crefrange{foo{bar}"#));
+    }
+
+    #[test]
+    fn test_label_number() {
+        assert_debug_snapshot!(setup(r#"\newlabel{foo}{{1.1}}"#));
+    }
+
+    #[test]
+    fn test_command_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\newcommand[1]{\id}{#1}"#));
+    }
+
+    #[test]
+    fn test_command_definition_no_argc() {
+        assert_debug_snapshot!(setup(r#"\newcommand{\foo}{foo}"#));
+    }
+
+    #[test]
+    fn test_command_definition_no_impl() {
+        assert_debug_snapshot!(setup(r#"\newcommand{\foo}"#));
+    }
+
+    #[test]
+    fn test_command_definition_no_impl_error() {
+        assert_debug_snapshot!(setup(r#"\newcommand{\foo"#));
+    }
+
+    #[test]
+    fn test_math_operator_simple() {
+        assert_debug_snapshot!(setup(r#"\DeclareMathOperator{\foo}{foo}"#));
+    }
+
+    #[test]
+    fn test_math_operator_no_impl() {
+        assert_debug_snapshot!(setup(r#"\DeclareMathOperator{\foo}"#));
+    }
+
+    #[test]
+    fn test_glossary_entry_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\newglossaryentry{foo}{bar = baz, qux,}"#));
+    }
+
+    #[test]
+    fn test_glossary_entry_reference_simple() {
+        assert_debug_snapshot!(setup(r#"\gls{foo}"#));
+    }
+
+    #[test]
+    fn test_glossary_entry_reference_options() {
+        assert_debug_snapshot!(setup(r#"\gls[foo = bar, qux]{baz}"#));
+    }
+
+    #[test]
+    fn test_acroynm_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\newacronym{fpsLabel}{FPS}{Frame per Second}"#));
+    }
+
+    #[test]
+    fn test_acroynm_definition_options() {
+        assert_debug_snapshot!(setup(
+            r#"\newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}"#
+        ));
+    }
+
+    #[test]
+    fn test_acroynm_reference_simple() {
+        assert_debug_snapshot!(setup(r#"\acrshort{fpsLabel}"#));
+    }
+
+    #[test]
+    fn test_acroynm_reference_options() {
+        assert_debug_snapshot!(setup(r#"\acrshort[foo=bar,baz]{fpsLabel}"#));
+    }
+
+    #[test]
+    fn test_theorem_definition_only_name() {
+        assert_debug_snapshot!(setup(r#"\newtheorem{foo}"#));
+    }
+
+    #[test]
+    fn test_theorem_definition_name_with_description() {
+        assert_debug_snapshot!(setup(r#"\newtheorem{foo}{Foo}"#));
+    }
+
+    #[test]
+    fn test_theorem_definition_name_with_description_and_counter() {
+        assert_debug_snapshot!(setup(r#"\newtheorem{foo}[bar]{Foo}"#));
+    }
+
+    #[test]
+    fn test_theorem_definition_name_with_counter() {
+        assert_debug_snapshot!(setup(r#"\newtheorem{foo}[bar]"#));
+    }
+
+    #[test]
+    fn test_theorem_definition_full() {
+        assert_debug_snapshot!(setup(r#"\newtheorem{foo}[bar]{Foo}[baz]"#));
+    }
+
+    #[test]
+    fn test_color_reference_simple() {
+        assert_debug_snapshot!(setup(r#"\color{black}"#));
+    }
+
+    #[test]
+    fn test_color_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\definecolor{foo}{rgb}{255,168,0}"#));
+    }
+
+    #[test]
+    fn test_color_set_definition_simple() {
+        assert_debug_snapshot!(setup(r#"\definecolorset[ty]{rgb,HTML}{foo}{bar}{baz}"#));
+    }
+
+    #[test]
+    fn test_color_set_definition_error1() {
+        assert_debug_snapshot!(setup(r#"\definecolorset[ty]{rgb,HTML}{foo}{bar}"#));
+    }
+
+    #[test]
+    fn test_color_set_definition_error2() {
+        assert_debug_snapshot!(setup(r#"\definecolorset{rgb,HTML}{foo}"#));
+    }
+
+    #[test]
+    fn test_color_set_definition_error3() {
+        assert_debug_snapshot!(setup(r#"\definecolorset{rgb,HTML}"#));
+    }
+
+    #[test]
+    fn test_color_set_definition_error4() {
+        assert_debug_snapshot!(setup(r#"\definecolorset"#));
+    }
+
+    #[test]
+    fn test_pgf_library_import_simple() {
+        assert_debug_snapshot!(setup(r#"\usepgflibrary{foo}"#));
+    }
+
+    #[test]
+    fn test_tikz_library_import_simple() {
+        assert_debug_snapshot!(setup(r#"\usetikzlibrary{foo}"#));
     }
 }

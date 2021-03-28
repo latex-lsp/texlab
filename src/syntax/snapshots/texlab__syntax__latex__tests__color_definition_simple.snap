@@ -1,0 +1,27 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\definecolor{foo}{rgb}{255,168,0}\"#)"
+
+---
+ROOT@0..33
+  PREAMBLE@0..33
+    COLOR_DEFINITION@0..33
+      COLOR_DEFINITION_COMMAND@0..12 "\\definecolor"
+      BRACE_GROUP_WORD@12..17
+        L_BRACE@12..13 "{"
+        WORD@13..16 "foo"
+        R_BRACE@16..17 "}"
+      BRACE_GROUP_WORD@17..22
+        L_BRACE@17..18 "{"
+        WORD@18..21 "rgb"
+        R_BRACE@21..22 "}"
+      BRACE_GROUP@22..33
+        L_BRACE@22..23 "{"
+        TEXT@23..32
+          WORD@23..26 "255"
+          COMMA@26..27 ","
+          WORD@27..30 "168"
+          COMMA@30..31 ","
+          WORD@31..32 "0"
+        R_BRACE@32..33 "}"
+

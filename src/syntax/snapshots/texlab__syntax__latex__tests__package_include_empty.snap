@@ -1,0 +1,13 @@
+---
+source: src/syntax/latex.rs
+expression: "setup(r#\"\\usepackage{}\"#)"
+
+---
+ROOT@0..13
+  PREAMBLE@0..13
+    PACKAGE_INCLUDE@0..13
+      PACKAGE_INCLUDE_COMMAND@0..11 "\\usepackage"
+      BRACE_GROUP_WORD_LIST@11..13
+        L_BRACE@11..12 "{"
+        R_BRACE@12..13 "}"
+
