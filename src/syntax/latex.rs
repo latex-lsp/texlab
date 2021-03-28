@@ -5,6 +5,8 @@ use rowan::{GreenNode, GreenNodeBuilder};
 
 pub use self::SyntaxKind::*;
 
+use super::AstNode;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 #[allow(non_camel_case_types)]
 #[repr(u16)]
@@ -384,7 +386,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, BEGIN_ENV))
             .is_some()
         {
-            self.consume();
+            self.content();
         }
         self.builder.finish_node();
     }
@@ -551,7 +553,7 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn brace_group_command_name(&mut self) {
+    fn brace_group_command(&mut self) {
         self.builder.start_node(BRACE_GROUP_COMMAND.into());
         self.consume();
         self.trivia();
@@ -997,6 +999,7 @@ impl<'a> Parser<'a> {
 
     fn generic_include(&mut self, kind: SyntaxKind, options: bool) {
         self.builder.start_node(kind.into());
+        self.consume();
         self.trivia();
         if options && self.tokens.peek() == Some(L_BRACKET) {
             self.bracket_group_key_value();
@@ -1049,6 +1052,7 @@ impl<'a> Parser<'a> {
 
     fn import(&mut self) {
         self.builder.start_node(IMPORT.into());
+        self.consume();
         self.trivia();
 
         for _ in 0..2 {
@@ -1065,4 +1069,373 @@ impl<'a> Parser<'a> {
 
 pub fn parse(text: &str) -> Parse {
     Parser::new(TokenSource::new(text)).parse()
+}
+
+macro_rules! ast_node {
+    ($name:ident, $($kind:pat),+) => {
+        #[derive(Debug, Clone)]
+        #[repr(transparent)]
+        pub struct $name(SyntaxNode);
+
+        impl AstNode for $name {
+            type Lang = Lang;
+
+            fn cast(node: rowan::SyntaxNode<Self::Lang>) -> Option<Self>
+            where
+                Self: Sized,
+            {
+                match node.kind() {
+                    $($kind => Some(Self(node)),)+
+                    _ => None,
+                }
+            }
+
+            fn syntax(&self) -> &rowan::SyntaxNode<Self::Lang> {
+                &self.0
+            }
+        }
+    };
+}
+
+ast_node!(Text, TEXT);
+
+pub trait HasBraces: AstNode<Lang = Lang> {
+    fn left_brace(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == L_BRACE.into())
+    }
+
+    fn right_brace(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == R_BRACE.into())
+    }
+}
+
+ast_node!(BraceGroup, BRACE_GROUP);
+
+impl HasBraces for BraceGroup {}
+
+pub trait HasBrackets: AstNode<Lang = Lang> {
+    fn left_bracket(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == L_BRACKET.into())
+    }
+
+    fn right_bracket(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == R_BRACKET.into())
+    }
+}
+
+ast_node!(BracketGroup, BRACKET_GROUP);
+
+impl HasBrackets for BracketGroup {}
+
+pub trait HasParens: AstNode<Lang = Lang> {
+    fn left_paren(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == L_PAREN.into())
+    }
+
+    fn right_paren(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == R_PAREN.into())
+    }
+}
+
+ast_node!(ParenGroup, PAREN_GROUP);
+
+impl HasParens for ParenGroup {}
+
+ast_node!(MixedGroup, MIXED_GROUP);
+
+impl MixedGroup {
+    pub fn left_delim(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| matches!(node.kind().into(), L_BRACKET | L_PAREN))
+    }
+
+    pub fn right_delim(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| matches!(node.kind().into(), R_BRACKET | R_PAREN))
+    }
+}
+
+ast_node!(BraceGroupWord, BRACE_GROUP_WORD);
+
+impl HasBraces for BraceGroupWord {}
+
+impl BraceGroupWord {
+    pub fn word(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == WORD)
+    }
+}
+
+ast_node!(BracketGroupWord, BRACKET_GROUP_WORD);
+
+impl HasBrackets for BracketGroupWord {}
+
+impl BracketGroupWord {
+    pub fn word(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == WORD)
+    }
+}
+
+ast_node!(BraceGroupWordList, BRACE_GROUP_WORD_LIST);
+
+impl HasBraces for BraceGroupWordList {}
+
+impl BraceGroupWordList {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .filter(|node| node.kind() == WORD.into())
+    }
+}
+
+ast_node!(BraceGroupCommand, BRACE_GROUP_COMMAND);
+
+impl HasBraces for BraceGroupCommand {}
+
+impl BraceGroupCommand {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == GENERIC_COMMAND_NAME)
+    }
+}
+
+ast_node!(Key, KEY);
+
+impl Key {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .filter(|node| node.kind() == WORD.into())
+    }
+}
+
+ast_node!(Value, VALUE);
+
+ast_node!(KeyValuePair, KEY_VALUE_PAIR);
+
+impl KeyValuePair {
+    pub fn key(&self) -> Option<Key> {
+        self.syntax().children().find_map(Key::cast)
+    }
+
+    pub fn value(&self) -> Option<Value> {
+        self.syntax().children().find_map(Value::cast)
+    }
+}
+
+ast_node!(KeyValueBody, KEY_VALUE_BODY);
+
+impl KeyValueBody {
+    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair> {
+        self.syntax().children().filter_map(KeyValuePair::cast)
+    }
+}
+
+pub trait HasKeyValueBody: AstNode<Lang = Lang> {
+    fn body(&self) -> Option<KeyValueBody> {
+        self.syntax().children().find_map(KeyValueBody::cast)
+    }
+}
+
+ast_node!(BraceGroupKeyValue, BRACE_GROUP_KEY_VALUE);
+
+impl HasBraces for BraceGroupKeyValue {}
+
+impl HasKeyValueBody for BraceGroupKeyValue {}
+
+ast_node!(BracketGroupKeyValue, BRACKET_GROUP_KEY_VALUE);
+
+impl HasBrackets for BracketGroupKeyValue {}
+
+impl HasKeyValueBody for BracketGroupKeyValue {}
+
+ast_node!(Formula, FORMULA);
+
+ast_node!(GenericCommand, GENERIC_COMMAND);
+
+ast_node!(Equation, EQUATION);
+
+ast_node!(Begin, BEGIN);
+
+impl Begin {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<BraceGroupWord> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+
+    pub fn options(&self) -> Option<BracketGroupKeyValue> {
+        self.syntax()
+            .children()
+            .find_map(BracketGroupKeyValue::cast)
+    }
+}
+
+ast_node!(End, END);
+
+impl End {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<BraceGroupWord> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+}
+
+ast_node!(Environment, ENVIRONMENT);
+
+impl Environment {
+    pub fn begin(&self) -> Option<Begin> {
+        self.syntax().children().find_map(Begin::cast)
+    }
+
+    pub fn end(&self) -> Option<End> {
+        self.syntax().children().find_map(End::cast)
+    }
+}
+
+ast_node!(
+    Section,
+    PART,
+    CHAPTER,
+    SECTION,
+    SUBSECTION,
+    SUBSUBSECTION,
+    PARAGRAPH,
+    SUBPARAGRAPH
+);
+
+impl Section {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<BraceGroup> {
+        self.syntax().children().find_map(BraceGroup::cast)
+    }
+}
+
+ast_node!(EnumItem, ENUM_ITEM);
+
+impl EnumItem {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn label(&self) -> Option<BracketGroupWord> {
+        self.syntax().children().find_map(BracketGroupWord::cast)
+    }
+}
+
+ast_node!(Caption, CAPTION);
+
+impl Caption {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn short(&self) -> Option<BracketGroup> {
+        self.syntax().children().find_map(BracketGroup::cast)
+    }
+
+    pub fn long(&self) -> Option<BraceGroup> {
+        self.syntax().children().find_map(BraceGroup::cast)
+    }
+}
+
+ast_node!(Citation, CITATION);
+
+impl Citation {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn prenote(&self) -> Option<BracketGroup> {
+        self.syntax().children().find_map(BracketGroup::cast)
+    }
+
+    pub fn postnote(&self) -> Option<BracketGroup> {
+        self.syntax()
+            .children()
+            .filter_map(BracketGroup::cast)
+            .skip(1)
+            .next()
+    }
+
+    pub fn key_list(&self) -> Option<BraceGroupWordList> {
+        self.syntax().children().find_map(BraceGroupWordList::cast)
+    }
+}
+
+ast_node!(
+    Include,
+    PACKAGE_INCLUDE,
+    CLASS_INCLUDE,
+    LATEX_INCLUDE,
+    BIBLATEX_INCLUDE,
+    BIBTEX_INCLUDE,
+    GRAPHICS_INCLUDE,
+    SVG_INCLUDE,
+    INKSCAPE_INCLUDE,
+    VERBATIM_INCLUDE
+);
+
+impl Include {
+    pub fn path_list(&self) -> Option<BraceGroupWordList> {
+        self.syntax().children().find_map(BraceGroupWordList::cast)
+    }
+}
+
+ast_node!(Import, IMPORT);
+
+impl Import {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn directory(&self) -> Option<BraceGroupWord> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+
+    pub fn file(&self) -> Option<BraceGroupWord> {
+        self.syntax()
+            .children()
+            .filter_map(BraceGroupWord::cast)
+            .skip(1)
+            .next()
+    }
 }

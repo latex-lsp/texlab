@@ -1,3 +1,6 @@
+pub mod distro;
+mod lang;
+pub mod protocol;
 mod syntax;
 
-pub use self::syntax::latex;
+pub use self::{lang::DocumentLanguage, syntax::latex};
