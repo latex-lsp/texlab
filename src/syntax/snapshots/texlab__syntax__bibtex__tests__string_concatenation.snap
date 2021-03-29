@@ -1,0 +1,43 @@
+---
+source: src/syntax/bibtex.rs
+expression: "setup(r#\"@string{foo = {Hello World}} @string{bar = foo # \"!\"}\"#)"
+
+---
+ROOT@0..53
+  STRING@0..29
+    STRING_TYPE@0..7 "@string"
+    L_BRACE@7..8 "{"
+    WORD@8..11 "foo"
+    WHITESPACE@11..12 " "
+    EQUALITY_SIGN@12..13 "="
+    WHITESPACE@13..14 " "
+    VALUE@14..27
+      TOKEN@14..27
+        BRACE_GROUP@14..27
+          L_BRACE@14..15 "{"
+          WORD@15..20 "Hello"
+          WHITESPACE@20..21 " "
+          WORD@21..26 "World"
+          R_BRACE@26..27 "}"
+    R_BRACE@27..28 "}"
+    WHITESPACE@28..29 " "
+  STRING@29..53
+    STRING_TYPE@29..36 "@string"
+    L_BRACE@36..37 "{"
+    WORD@37..40 "bar"
+    WHITESPACE@40..41 " "
+    EQUALITY_SIGN@41..42 "="
+    WHITESPACE@42..43 " "
+    VALUE@43..52
+      TOKEN@43..46
+        WORD@43..46 "foo"
+      WHITESPACE@46..47 " "
+      HASH@47..48 "#"
+      WHITESPACE@48..49 " "
+      TOKEN@49..52
+        QUOTE_GROUP@49..52
+          QUOTE@49..50 "\""
+          WORD@50..51 "!"
+          QUOTE@51..52 "\""
+    R_BRACE@52..53 "}"
+

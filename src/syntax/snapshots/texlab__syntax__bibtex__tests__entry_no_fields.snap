@@ -1,0 +1,13 @@
+---
+source: src/syntax/bibtex.rs
+expression: "setup(r#\"@article{foo,}\"#)"
+
+---
+ROOT@0..14
+  ENTRY@0..14
+    ENTRY_TYPE@0..8 "@article"
+    L_BRACE@8..9 "{"
+    WORD@9..12 "foo"
+    COMMA@12..13 ","
+    R_BRACE@13..14 "}"
+

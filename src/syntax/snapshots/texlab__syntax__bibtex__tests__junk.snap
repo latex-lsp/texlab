@@ -1,0 +1,11 @@
+---
+source: src/syntax/bibtex.rs
+expression: "setup(r#\"Hello World!\"#)"
+
+---
+ROOT@0..12
+  JUNK@0..12
+    WORD@0..5 "Hello"
+    WHITESPACE@5..6 " "
+    WORD@6..12 "World!"
+
