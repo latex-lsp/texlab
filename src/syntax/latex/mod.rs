@@ -1,378 +1,72 @@
-use std::mem;
+mod kind;
+mod lexer;
 
-use logos::Logos;
-use rowan::{GreenNode, GreenNodeBuilder};
+use std::marker::PhantomData;
 
-pub use self::SyntaxKind::*;
+use cstree::GreenNodeBuilder;
 
-use super::AstNode;
+pub use self::kind::SyntaxKind::{self, *};
+use self::lexer::Lexer;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-#[allow(non_camel_case_types)]
-#[repr(u16)]
-pub enum SyntaxKind {
-    ERROR = 0,
-    MISSING,
-
-    WHITESPACE,
-    COMMENT,
-    L_BRACE,
-    R_BRACE,
-    L_BRACKET,
-    R_BRACKET,
-    L_PAREN,
-    R_PAREN,
-    PARAMETER,
-    COMMA,
-    EQUALITY_SIGN,
-    WORD,
-    DOLLAR,
-    GENERIC_COMMAND_NAME,
-    BEGIN_ENV,
-    END_ENV,
-    BEGIN_EQUATION,
-    END_EQUATION,
-    PART_COMMAND,
-    CHAPTER_COMMAND,
-    SECTION_COMMAND,
-    SUBSECTION_COMMAND,
-    SUBSUBSECTION_COMMAND,
-    PARAGRAPH_COMMAND,
-    SUBPARAGRAPH_COMMAND,
-    ENUM_ITEM_COMMAND,
-    CAPTION_COMMAND,
-    CITATION_COMMAND,
-    PACKAGE_INCLUDE_COMMAND,
-    CLASS_INCLUDE_COMMAND,
-    LATEX_INCLUDE_COMMAND,
-    BIBLATEX_INCLUDE_COMMAND,
-    BIBTEX_INCLUDE_COMMAND,
-    GRAPHICS_INCLUDE_COMMAND,
-    SVG_INCLUDE_COMMAND,
-    INKSCAPE_INCLUDE_COMMAND,
-    VERBATIM_INCLUDE_COMMAND,
-    IMPORT_COMMAND,
-    LABEL_DEFINITION_COMMAND,
-    LABEL_REFERENCE_COMMAND,
-    LABEL_REFERENCE_RANGE_COMMAND,
-    LABEL_NUMBER_COMMAND,
-    COMMAND_DEFINITION_COMMAND,
-    MATH_OPERATOR_COMMAND,
-    GLOSSARY_ENTRY_DEFINITION_COMMAND,
-    GLOSSARY_ENTRY_REFERENCE_COMMAND,
-    ACRONYM_DEFINITION_COMMAND,
-    ACRONYM_REFERENCE_COMMAND,
-    THEOREM_DEFINITION_COMMAND,
-    COLOR_REFERENCE_COMMAND,
-    COLOR_DEFINITION_COMMAND,
-    COLOR_SET_DEFINITION_COMMAND,
-    TIKZ_LIBRARY_IMPORT_COMMAND,
-
-    PREAMBLE,
-    TEXT,
-    KEY,
-    VALUE,
-    KEY_VALUE_PAIR,
-    KEY_VALUE_BODY,
-    BRACE_GROUP,
-    BRACE_GROUP_WORD,
-    BRACE_GROUP_WORD_LIST,
-    BRACE_GROUP_COMMAND,
-    BRACE_GROUP_KEY_VALUE,
-    BRACKET_GROUP,
-    BRACKET_GROUP_WORD,
-    BRACKET_GROUP_KEY_VALUE,
-    PAREN_GROUP,
-    MIXED_GROUP,
-    GENERIC_COMMAND,
-    ENVIRONMENT,
-    BEGIN,
-    END,
-    EQUATION,
-    PART,
-    CHAPTER,
-    SECTION,
-    SUBSECTION,
-    SUBSUBSECTION,
-    PARAGRAPH,
-    SUBPARAGRAPH,
-    ENUM_ITEM,
-    FORMULA,
-    CAPTION,
-    CITATION,
-    PACKAGE_INCLUDE,
-    CLASS_INCLUDE,
-    LATEX_INCLUDE,
-    BIBLATEX_INCLUDE,
-    BIBTEX_INCLUDE,
-    GRAPHICS_INCLUDE,
-    SVG_INCLUDE,
-    INKSCAPE_INCLUDE,
-    VERBATIM_INCLUDE,
-    IMPORT,
-    LABEL_DEFINITION,
-    LABEL_REFERENCE,
-    LABEL_REFERENCE_RANGE,
-    LABEL_NUMBER,
-    COMMAND_DEFINITION,
-    MATH_OPERATOR,
-    GLOSSARY_ENTRY_DEFINITION,
-    GLOSSARY_ENTRY_REFERENCE,
-    ACRONYM_DEFINITION,
-    ACRONYM_REFERENCE,
-    THEOREM_DEFINITION,
-    COLOR_REFERENCE,
-    COLOR_DEFINITION,
-    COLOR_SET_DEFINITION,
-    TIKZ_LIBRARY_IMPORT,
-    ROOT,
-}
-
-impl From<SyntaxKind> for rowan::SyntaxKind {
-    fn from(kind: SyntaxKind) -> Self {
-        Self(kind as u16)
-    }
-}
+use super::CstNode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Lang {}
 
-impl rowan::Language for Lang {
+impl cstree::Language for Lang {
     type Kind = SyntaxKind;
 
-    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
+    fn kind_from_raw(raw: cstree::SyntaxKind) -> Self::Kind {
         assert!(raw.0 <= ROOT as u16);
-        unsafe { mem::transmute::<u16, SyntaxKind>(raw.0) }
+        unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
     }
 
-    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
+    fn kind_to_raw(kind: Self::Kind) -> cstree::SyntaxKind {
         kind.into()
     }
 }
 
-pub struct Parse {
-    pub green_node: GreenNode,
+pub type SyntaxNode<D> = cstree::ResolvedNode<Lang, D>;
+
+pub type SyntaxToken<D> = cstree::ResolvedToken<Lang, D>;
+
+pub type SyntaxElement<D> = cstree::ResolvedElement<Lang, D>;
+
+pub type SyntaxElementRef<'a, D> = cstree::ResolvedElementRef<'a, Lang, D>;
+
+#[derive(Clone)]
+pub struct Parse<D>
+where
+    D: 'static,
+{
+    pub root: SyntaxNode<D>,
 }
 
-pub type SyntaxNode = rowan::SyntaxNode<Lang>;
-
-pub type SyntaxToken = rowan::SyntaxToken<Lang>;
-
-pub type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
-#[allow(non_camel_case_types)]
-#[repr(u16)]
-enum LogosToken {
-    #[regex(r"\s+")]
-    WHITESPACE = 2,
-
-    #[regex(r"%[\r\n]*")]
-    COMMENT,
-
-    #[token("{")]
-    L_BRACE,
-
-    #[token("}")]
-    R_BRACE,
-
-    #[token("[")]
-    L_BRACKET,
-
-    #[token("]")]
-    R_BRACKET,
-
-    #[token("(")]
-    L_PAREN,
-
-    #[token(")")]
-    R_PAREN,
-
-    #[regex(r"#\d?")]
-    PARAMETER,
-
-    #[token(",")]
-    COMMA,
-
-    #[token("=")]
-    EQUALITY_SIGN,
-
-    #[regex(r"[^\s\\%\{\},\$\[\]\(\)=\#]+")]
-    #[error]
-    WORD,
-
-    #[regex(r"\$\$?")]
-    DOLLAR,
-
-    #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
-    GENERIC_COMMAND_NAME,
-
-    #[regex(r"\\begin")]
-    BEGIN_ENV,
-
-    #[regex(r"\\end")]
-    END_ENV,
-
-    #[regex(r"\\\[")]
-    BEGIN_EQUATION,
-
-    #[regex(r"\\\]")]
-    END_EQUATION,
-
-    #[regex(r"\\part\*?")]
-    PART_COMMAND,
-
-    #[regex(r"\\chapter\*?")]
-    CHAPTER_COMMAND,
-
-    #[regex(r"\\section\*?")]
-    SECTION_COMMAND,
-
-    #[regex(r"\\subsection\*?")]
-    SUBSECTION_COMMAND,
-
-    #[regex(r"\\subsubsection\*?")]
-    SUBSUBSECTION_COMMAND,
-
-    #[regex(r"\\paragraph\*?")]
-    PARAGRAPH_COMMAND,
-
-    #[regex(r"\\subparagraph\*?")]
-    SUBPARAGRAPH_COMMAND,
-
-    #[regex(r"\\item")]
-    ENUM_ITEM_COMMAND,
-
-    #[regex(r"\\caption")]
-    CAPTION_COMMAND,
-
-    #[regex(r"\\cite|\\cite\*|\\Cite|\\nocite|\\citet|\\citep|\\citet\*|\\citep\*|\\citeauthor|\\citeauthor\*|\\Citeauthor|\\Citeauthor\*|\\citetitle|\\citetitle\*|\\citeyear|\\citeyear\*|\\citedate|\\citedate\*|\\citeurl|\\fullcite|\\citeyearpar|\\citealt|\\citealp|\\citetext|\\parencite|\\parencite\*|\\Parencite|\\footcite|\\footfullcite|\\footcitetext|\\textcite|\\Textcite|\\smartcite|\\Smartcite|\\supercite|\\autocite|\\Autocite|\\autocite\*|\\Autocite\*|\\volcite|\\Volcite|\\pvolcite|\\Pvolcite|\\fvolcite|\\ftvolcite|\\svolcite|\\Svolcite|\\tvolcite|\\Tvolcite|\\avolcite|\\Avolcite|\\notecite|\\notecite|\\pnotecite|\\Pnotecite|\\fnotecite")]
-    CITATION_COMMAND,
-
-    #[regex(r"\\usepackage|\\RequirePackage")]
-    PACKAGE_INCLUDE_COMMAND,
-
-    #[regex(r"\\documentclass")]
-    CLASS_INCLUDE_COMMAND,
-
-    #[regex(r"\\include|\\subfileinclude|\\input|\\subfile")]
-    LATEX_INCLUDE_COMMAND,
-
-    #[regex(r"\\addbibresource")]
-    BIBLATEX_INCLUDE_COMMAND,
-
-    #[regex(r"\\bibliography")]
-    BIBTEX_INCLUDE_COMMAND,
-
-    #[regex(r"\\includegraphics")]
-    GRAPHICS_INCLUDE_COMMAND,
-
-    #[regex(r"\\includesvg")]
-    SVG_INCLUDE_COMMAND,
-
-    #[regex(r"\\includeinkscape")]
-    INKSCAPE_INCLUDE_COMMAND,
-
-    #[regex(r"\\verbatiminput|\\VerbatimInput")]
-    VERBATIM_INCLUDE_COMMAND,
-
-    #[regex(r"\\import|\\subimport|\\inputfrom|\\subimportfrom|\\includefrom|\\subincludefrom")]
-    IMPORT_COMMAND,
-
-    #[regex(r"\\label")]
-    LABEL_DEFINITION_COMMAND,
-
-    #[regex(r"\\ref|\\vref|\\Vref|\\autoref|\\pageref|\\cref|\\Cref|\\cref*|\\Cref*|\\namecref|\\nameCref|\\lcnamecref|\\namecrefs|\\nameCrefs|\\lcnamecrefs|\\labelcref|\\labelcpageref|\\eqref")]
-    LABEL_REFERENCE_COMMAND,
-
-    #[regex(r"\\crefrange\*?|\\Crefrange\*?")]
-    LABEL_REFERENCE_RANGE_COMMAND,
-
-    #[regex(r"\\newlabel")]
-    LABEL_NUMBER_COMMAND,
-
-    #[regex(r"\\newcommand|\\renewcommand|\\DeclareRobustCommand")]
-    COMMAND_DEFINITION_COMMAND,
-
-    #[regex(r"\\DeclareMathOperator\*?")]
-    MATH_OPERATOR_COMMAND,
-
-    #[regex(r"\\newglossaryentry")]
-    GLOSSARY_ENTRY_DEFINITION_COMMAND,
-
-    #[regex(r"\\gls|\\Gls|\\GLS|\\glspl|\\Glspl|\\GLSpl|\\glsdisp|\\glslink|\\glstext|\\Glstext|\\GLStext|\\glsfirst|\\Glsfirst|\\GLSfirst|\\glsplural|\\Glsplural|\\GLSplural|\\glsfirstplural|\\Glsfirstplural|\\GLSfirstplural|\\glsname|\\Glsname|\\GLSname|\\glssymbol|\\Glssymbol|\\glsdesc|\\Glsdesc|\\GLSdesc|\\glsuseri|\\Glsuseri|\\GLSuseri|\\glsuserii|\\Glsuserii|\\GLSuserii|\\glsuseriii|\\Glsuseriii|\\GLSuseriii|\\glsuseriv|\\Glsuseriv|\\GLSuseriv|\\glsuserv|\\Glsuserv|\\GLSuserv|\\glsuservi|\\Glsuservi|\\GLSuservi")]
-    GLOSSARY_ENTRY_REFERENCE_COMMAND,
-
-    #[regex(r"\\newacronym")]
-    ACRONYM_DEFINITION_COMMAND,
-
-    #[regex(r"\\acrshort|\\Acrshort|\\ACRshort|\\acrshortpl|\\Acrshortpl|\\ACRshortpl|\\acrlong|\\Acrlong|\\ACRlong|\\acrlongpl|\\Acrlongpl|\\ACRlongpl|\\acrfull|\\Acrfull|\\ACRfull|\\acrfullpl|\\Acrfullpl|\\ACRfullpl|\\acs|\\Acs|\\acsp|\\Acsp|\\acl|\\Acl|\\aclp|\\Aclp|\\acf|\\Acf|\\acfp|\\Acfp|\\ac|\\Ac|\\acp|\\glsentrylong|\\Glsentrylong|\\glsentrylongpl|\\Glsentrylongpl|\\glsentryshort|\\Glsentryshort|\\glsentryshortpl|\\Glsentryshortpl|\\glsentryfullpl|\\Glsentryfullpl")]
-    ACRONYM_REFERENCE_COMMAND,
-
-    #[regex(r"\\newtheorem|\\declaretheorem")]
-    THEOREM_DEFINITION_COMMAND,
-
-    #[regex(r"\\color|\\colorbox|\\textcolor|\\pagecolor")]
-    COLOR_REFERENCE_COMMAND,
-
-    #[regex(r"\\definecolor")]
-    COLOR_DEFINITION_COMMAND,
-
-    #[regex(r"\\definecolorset")]
-    COLOR_SET_DEFINITION_COMMAND,
-
-    #[regex(r"\\usepgflibrary|\\usetikzlibrary")]
-    TIKZ_LIBRARY_IMPORT_COMMAND,
+struct Parser<'a, D> {
+    lexer: Lexer<'a>,
+    builder: GreenNodeBuilder<'static, 'static>,
+    _phantom: PhantomData<D>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct TokenSource<'a> {
-    tokens: Vec<(SyntaxKind, &'a str)>,
-}
-
-impl<'a> TokenSource<'a> {
-    pub fn new(text: &'a str) -> Self {
-        let mut tokens = Vec::new();
-        let mut lexer = LogosToken::lexer(text);
-        while let Some(kind) = lexer.next() {
-            tokens.push((
-                unsafe { mem::transmute::<LogosToken, SyntaxKind>(kind) },
-                lexer.slice(),
-            ));
-        }
-        tokens.reverse();
-        Self { tokens }
-    }
-
-    pub fn peek(&self) -> Option<SyntaxKind> {
-        self.tokens.last().map(|(kind, _)| *kind)
-    }
-
-    pub fn consume(&mut self) -> Option<(SyntaxKind, &'a str)> {
-        self.tokens.pop()
-    }
-}
-
-struct Parser<'a> {
-    tokens: TokenSource<'a>,
-    builder: GreenNodeBuilder<'a>,
-}
-
-impl<'a> Parser<'a> {
-    pub fn new(tokens: TokenSource<'a>) -> Self {
+impl<'a, D> Parser<'a, D>
+where
+    D: 'static,
+{
+    pub fn new(lexer: Lexer<'a>) -> Self {
         Self {
-            tokens,
+            lexer,
             builder: GreenNodeBuilder::new(),
+            _phantom: PhantomData::default(),
         }
     }
 
     fn consume(&mut self) {
-        let (kind, text) = self.tokens.consume().unwrap();
+        let (kind, text) = self.lexer.consume().unwrap();
         self.builder.token(kind.into(), text);
     }
 
     fn expect_or_missing(&mut self, kind: SyntaxKind) {
-        if self.tokens.peek() == Some(kind) {
+        if self.lexer.peek() == Some(kind) {
             self.consume();
             self.trivia();
         } else {
@@ -380,33 +74,35 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    pub fn parse(mut self) -> Parse<D> {
         self.builder.start_node(ROOT.into());
         self.preamble();
-        while self.tokens.peek().is_some() {
+        while self.lexer.peek().is_some() {
             self.content();
         }
         self.builder.finish_node();
-        let green_node = self.builder.finish();
-        Parse { green_node }
+        let (green_node, interner) = self.builder.finish();
+        Parse {
+            root: SyntaxNode::new_root_with_resolver(green_node, interner.unwrap()),
+        }
     }
 
     fn content(&mut self) {
-        match self.tokens.peek().unwrap() {
+        match self.lexer.peek().unwrap() {
             WHITESPACE => self.consume(),
             COMMENT => self.consume(),
             L_BRACE => self.brace_group(),
             R_BRACE => {
-                self.tokens.consume();
+                self.lexer.consume();
                 self.builder.token(ERROR.into(), "}");
             }
             L_BRACKET | L_PAREN => self.mixed_group(),
             R_BRACKET => {
-                self.tokens.consume();
+                self.lexer.consume();
                 self.builder.token(ERROR.into(), "]");
             }
             R_PAREN => {
-                self.tokens.consume();
+                self.lexer.consume();
                 self.builder.token(ERROR.into(), ")");
             }
             PARAMETER => self.consume(),
@@ -453,13 +149,13 @@ impl<'a> Parser<'a> {
             COLOR_DEFINITION_COMMAND => self.color_definition(),
             COLOR_SET_DEFINITION_COMMAND => self.color_set_definition(),
             TIKZ_LIBRARY_IMPORT_COMMAND => self.tikz_library_import(),
-            _ => unreachable!("{:#?}", self.tokens.peek().unwrap()),
+            _ => unreachable!("{:#?}", self.lexer.peek().unwrap()),
         }
     }
 
     fn trivia(&mut self) {
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, WHITESPACE | COMMENT))
             .is_some()
@@ -471,7 +167,7 @@ impl<'a> Parser<'a> {
     fn preamble(&mut self) {
         self.builder.start_node(PREAMBLE.into());
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, BEGIN_ENV))
             .is_some()
@@ -485,7 +181,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(TEXT.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
             .is_some()
@@ -499,7 +195,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BRACE_GROUP.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, R_BRACE | END_ENV))
             .is_some()
@@ -515,7 +211,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BRACKET_GROUP.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -544,7 +240,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(PAREN_GROUP.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -574,7 +270,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(MIXED_GROUP.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -597,7 +293,7 @@ impl<'a> Parser<'a> {
         }
 
         if self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, R_BRACKET | R_PAREN))
             .is_some()
@@ -632,7 +328,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BRACE_GROUP_WORD_LIST.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
             .is_some()
@@ -656,7 +352,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(KEY.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD))
             .is_some()
@@ -675,11 +371,11 @@ impl<'a> Parser<'a> {
     fn key_value_pair(&mut self) {
         self.builder.start_node(KEY_VALUE_PAIR.into());
         self.key();
-        if self.tokens.peek() == Some(EQUALITY_SIGN) {
+        if self.lexer.peek() == Some(EQUALITY_SIGN) {
             self.consume();
             self.trivia();
             if self
-                .tokens
+                .lexer
                 .peek()
                 .filter(|&kind| matches!(kind, END_ENV | R_BRACE | R_BRACKET | R_PAREN | COMMA))
                 .is_some()
@@ -694,13 +390,13 @@ impl<'a> Parser<'a> {
 
     fn key_value_body(&mut self) {
         self.builder.start_node(KEY_VALUE_BODY.into());
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE | COMMENT => self.consume(),
                 WORD => {
                     self.key_value_pair();
 
-                    if self.tokens.peek() == Some(COMMA) {
+                    if self.lexer.peek() == Some(COMMA) {
                         self.consume();
                     } else {
                         break;
@@ -734,7 +430,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(FORMULA.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, R_BRACE | END_ENV | DOLLAR))
             .is_some()
@@ -749,7 +445,7 @@ impl<'a> Parser<'a> {
     fn generic_command(&mut self) {
         self.builder.start_node(GENERIC_COMMAND.into());
         self.consume();
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE | COMMENT => self.consume(),
                 L_BRACE => self.brace_group(),
@@ -765,7 +461,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(EQUATION.into());
         self.consume();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, END_ENV | R_BRACE | END_EQUATION))
             .is_some()
@@ -781,7 +477,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(ENVIRONMENT.into());
         self.begin();
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, END_ENV))
             .is_some()
@@ -789,7 +485,7 @@ impl<'a> Parser<'a> {
             self.content();
         }
 
-        if self.tokens.peek() == Some(END_ENV) {
+        if self.lexer.peek() == Some(END_ENV) {
             self.end();
         }
 
@@ -800,13 +496,13 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BEGIN.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group();
         }
 
@@ -817,7 +513,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(END.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -830,14 +526,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(PART.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, END_ENV | R_BRACE | PART_COMMAND))
             .is_some()
@@ -851,14 +547,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(CHAPTER.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| !matches!(kind, END_ENV | R_BRACE | PART_COMMAND | CHAPTER_COMMAND))
             .is_some()
@@ -872,14 +568,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SECTION.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -898,14 +594,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SUBSECTION.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -924,14 +620,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SUBSUBSECTION.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -956,14 +652,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(PARAGRAPH.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -989,14 +685,14 @@ impl<'a> Parser<'a> {
         self.builder.start_node(SUBPARAGRAPH.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -1023,12 +719,12 @@ impl<'a> Parser<'a> {
         self.builder.start_node(ENUM_ITEM.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_word();
         }
 
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -1056,11 +752,11 @@ impl<'a> Parser<'a> {
         self.builder.start_node(CAPTION.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1074,12 +770,12 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
         for _ in 0..2 {
-            if self.tokens.peek() == Some(L_BRACKET) {
+            if self.lexer.peek() == Some(L_BRACKET) {
                 self.bracket_group();
             }
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1092,11 +788,11 @@ impl<'a> Parser<'a> {
         self.builder.start_node(kind.into());
         self.consume();
         self.trivia();
-        if options && self.tokens.peek() == Some(L_BRACKET) {
+        if options && self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_key_value();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1147,7 +843,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         for _ in 0..2 {
-            if self.tokens.peek() == Some(L_BRACE) {
+            if self.lexer.peek() == Some(L_BRACE) {
                 self.brace_group_word();
             } else {
                 self.builder.token(MISSING.into(), "");
@@ -1161,7 +857,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_DEFINITION.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1173,7 +869,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_REFERENCE.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1187,7 +883,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         for _ in 0..2 {
-            if self.tokens.peek() == Some(L_BRACE) {
+            if self.lexer.peek() == Some(L_BRACE) {
                 self.brace_group_word();
             } else {
                 self.builder.token(MISSING.into(), "");
@@ -1201,13 +897,13 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_NUMBER.into());
         self.consume();
         self.trivia();
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.bracket_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
             self.builder.token(MISSING.into(), "");
         }
@@ -1220,17 +916,17 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_word();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_command();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
             self.builder.token(MISSING.into(), "");
         }
@@ -1243,13 +939,13 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_command();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
             self.builder.token(MISSING.into(), "");
         }
@@ -1262,13 +958,13 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_key_value();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1282,11 +978,11 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_key_value();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1300,18 +996,18 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_key_value();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         for _ in 0..2 {
-            if self.tokens.peek() == Some(L_BRACE) {
+            if self.lexer.peek() == Some(L_BRACE) {
                 self.brace_group();
             } else {
                 self.builder.token(MISSING.into(), "");
@@ -1326,11 +1022,11 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_key_value();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1344,23 +1040,23 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_word();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.bracket_group_word();
         }
 
@@ -1372,7 +1068,7 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1386,19 +1082,19 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1412,18 +1108,18 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACKET) {
+        if self.lexer.peek() == Some(L_BRACKET) {
             self.brace_group_word();
         }
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
         for _ in 0..3 {
-            if self.tokens.peek() == Some(L_BRACE) {
+            if self.lexer.peek() == Some(L_BRACE) {
                 self.brace_group_word();
             } else {
                 self.builder.token(MISSING.into(), "");
@@ -1438,7 +1134,7 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(L_BRACE) {
+        if self.lexer.peek() == Some(L_BRACE) {
             self.brace_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
@@ -1448,20 +1144,22 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn parse(text: &str) -> Parse {
-    Parser::new(TokenSource::new(text)).parse()
+pub fn parse<D>(text: &str) -> Parse<D> {
+    Parser::new(Lexer::new(text)).parse()
 }
 
-macro_rules! ast_node {
+macro_rules! cst_node {
     ($name:ident, $($kind:pat),+) => {
-        #[derive(Debug, Clone)]
+        #[derive(Clone)]
         #[repr(transparent)]
-        pub struct $name(SyntaxNode);
+        pub struct $name<'a, D: 'static>(&'a SyntaxNode<D>);
 
-        impl AstNode for $name {
+        impl<'a, D> CstNode<'a, D> for $name<'a, D>
+        where D: 'static
+        {
             type Lang = Lang;
 
-            fn cast(node: rowan::SyntaxNode<Self::Lang>) -> Option<Self>
+            fn cast(node: &'a cstree::ResolvedNode<Self::Lang, D>) -> Option<Self>
             where
                 Self: Sized,
             {
@@ -1471,24 +1169,24 @@ macro_rules! ast_node {
                 }
             }
 
-            fn syntax(&self) -> &rowan::SyntaxNode<Self::Lang> {
+            fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang, D> {
                 &self.0
             }
         }
     };
 }
 
-ast_node!(Text, TEXT);
+cst_node!(Text, TEXT);
 
-pub trait HasBraces: AstNode<Lang = Lang> {
-    fn left_brace(&self) -> Option<SyntaxToken> {
+pub trait HasBraces<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_brace(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_BRACE.into())
     }
 
-    fn right_brace(&self) -> Option<SyntaxToken> {
+    fn right_brace(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1496,19 +1194,19 @@ pub trait HasBraces: AstNode<Lang = Lang> {
     }
 }
 
-ast_node!(BraceGroup, BRACE_GROUP);
+cst_node!(BraceGroup, BRACE_GROUP);
 
-impl HasBraces for BraceGroup {}
+impl<'a, D> HasBraces<'a, D> for BraceGroup<'a, D> {}
 
-pub trait HasBrackets: AstNode<Lang = Lang> {
-    fn left_bracket(&self) -> Option<SyntaxToken> {
+pub trait HasBrackets<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_bracket(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_BRACKET.into())
     }
 
-    fn right_bracket(&self) -> Option<SyntaxToken> {
+    fn right_bracket(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1516,19 +1214,19 @@ pub trait HasBrackets: AstNode<Lang = Lang> {
     }
 }
 
-ast_node!(BracketGroup, BRACKET_GROUP);
+cst_node!(BracketGroup, BRACKET_GROUP);
 
-impl HasBrackets for BracketGroup {}
+impl<'a, D> HasBrackets<'a, D> for BracketGroup<'a, D> {}
 
-pub trait HasParens: AstNode<Lang = Lang> {
-    fn left_paren(&self) -> Option<SyntaxToken> {
+pub trait HasParens<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_paren(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_PAREN.into())
     }
 
-    fn right_paren(&self) -> Option<SyntaxToken> {
+    fn right_paren(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1536,21 +1234,21 @@ pub trait HasParens: AstNode<Lang = Lang> {
     }
 }
 
-ast_node!(ParenGroup, PAREN_GROUP);
+cst_node!(ParenGroup, PAREN_GROUP);
 
-impl HasParens for ParenGroup {}
+impl<'a, D> HasParens<'a, D> for ParenGroup<'a, D> {}
 
-ast_node!(MixedGroup, MIXED_GROUP);
+cst_node!(MixedGroup, MIXED_GROUP);
 
-impl MixedGroup {
-    pub fn left_delim(&self) -> Option<SyntaxToken> {
+impl<'a, D> MixedGroup<'a, D> {
+    pub fn left_delim(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| matches!(node.kind().into(), L_BRACKET | L_PAREN))
     }
 
-    pub fn right_delim(&self) -> Option<SyntaxToken> {
+    pub fn right_delim(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1558,12 +1256,12 @@ impl MixedGroup {
     }
 }
 
-ast_node!(BraceGroupWord, BRACE_GROUP_WORD);
+cst_node!(BraceGroupWord, BRACE_GROUP_WORD);
 
-impl HasBraces for BraceGroupWord {}
+impl<'a, D> HasBraces<'a, D> for BraceGroupWord<'a, D> {}
 
-impl BraceGroupWord {
-    pub fn word(&self) -> Option<SyntaxToken> {
+impl<'a, D> BraceGroupWord<'a, D> {
+    pub fn word(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1571,12 +1269,12 @@ impl BraceGroupWord {
     }
 }
 
-ast_node!(BracketGroupWord, BRACKET_GROUP_WORD);
+cst_node!(BracketGroupWord, BRACKET_GROUP_WORD);
 
-impl HasBrackets for BracketGroupWord {}
+impl<'a, D> HasBrackets<'a, D> for BracketGroupWord<'a, D> {}
 
-impl BracketGroupWord {
-    pub fn word(&self) -> Option<SyntaxToken> {
+impl<'a, D> BracketGroupWord<'a, D> {
+    pub fn word(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1584,12 +1282,12 @@ impl BracketGroupWord {
     }
 }
 
-ast_node!(BraceGroupWordList, BRACE_GROUP_WORD_LIST);
+cst_node!(BraceGroupWordList, BRACE_GROUP_WORD_LIST);
 
-impl HasBraces for BraceGroupWordList {}
+impl<'a, D> HasBraces<'a, D> for BraceGroupWordList<'a, D> {}
 
-impl BraceGroupWordList {
-    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+impl<'a, D> BraceGroupWordList<'a, D> {
+    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1597,12 +1295,12 @@ impl BraceGroupWordList {
     }
 }
 
-ast_node!(BraceGroupCommand, BRACE_GROUP_COMMAND);
+cst_node!(BraceGroupCommand, BRACE_GROUP_COMMAND);
 
-impl HasBraces for BraceGroupCommand {}
+impl<'a, D> HasBraces<'a, D> for BraceGroupCommand<'a, D> {}
 
-impl BraceGroupCommand {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> BraceGroupCommand<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1610,10 +1308,10 @@ impl BraceGroupCommand {
     }
 }
 
-ast_node!(Key, KEY);
+cst_node!(Key, KEY);
 
-impl Key {
-    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+impl<'a, D> Key<'a, D> {
+    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -1621,95 +1319,104 @@ impl Key {
     }
 }
 
-ast_node!(Value, VALUE);
+cst_node!(Value, VALUE);
 
-ast_node!(KeyValuePair, KEY_VALUE_PAIR);
+cst_node!(KeyValuePair, KEY_VALUE_PAIR);
 
-impl KeyValuePair {
-    pub fn key(&self) -> Option<Key> {
+impl<'a, D> KeyValuePair<'a, D> {
+    pub fn key(&self) -> Option<Key<'a, D>> {
         self.syntax().children().find_map(Key::cast)
     }
 
-    pub fn value(&self) -> Option<Value> {
+    pub fn value(&self) -> Option<Value<'a, D>> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
-ast_node!(KeyValueBody, KEY_VALUE_BODY);
+cst_node!(KeyValueBody, KEY_VALUE_BODY);
 
-impl KeyValueBody {
-    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair> {
+impl<'a, D> KeyValueBody<'a, D> {
+    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair<'a, D>> {
         self.syntax().children().filter_map(KeyValuePair::cast)
     }
 }
 
-pub trait HasKeyValueBody: AstNode<Lang = Lang> {
-    fn body(&self) -> Option<KeyValueBody> {
+pub trait HasKeyValueBody<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn body(&self) -> Option<KeyValueBody<'a, D>> {
         self.syntax().children().find_map(KeyValueBody::cast)
     }
 }
 
-ast_node!(BraceGroupKeyValue, BRACE_GROUP_KEY_VALUE);
+cst_node!(BraceGroupKeyValue, BRACE_GROUP_KEY_VALUE);
 
-impl HasBraces for BraceGroupKeyValue {}
+impl<'a, D> HasBraces<'a, D> for BraceGroupKeyValue<'a, D> {}
 
-impl HasKeyValueBody for BraceGroupKeyValue {}
+impl<'a, D> HasKeyValueBody<'a, D> for BraceGroupKeyValue<'a, D> {}
 
-ast_node!(BracketGroupKeyValue, BRACKET_GROUP_KEY_VALUE);
+cst_node!(BracketGroupKeyValue, BRACKET_GROUP_KEY_VALUE);
 
-impl HasBrackets for BracketGroupKeyValue {}
+impl<'a, D> HasBrackets<'a, D> for BracketGroupKeyValue<'a, D> {}
 
-impl HasKeyValueBody for BracketGroupKeyValue {}
+impl<'a, D> HasKeyValueBody<'a, D> for BracketGroupKeyValue<'a, D> {}
 
-ast_node!(Formula, FORMULA);
+cst_node!(Formula, FORMULA);
 
-ast_node!(GenericCommand, GENERIC_COMMAND);
+cst_node!(GenericCommand, GENERIC_COMMAND);
 
-ast_node!(Equation, EQUATION);
+impl<'a, D> GenericCommand<'a, D> {
+    pub fn name(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == GENERIC_COMMAND_NAME)
+    }
+}
 
-ast_node!(Begin, BEGIN);
+cst_node!(Equation, EQUATION);
 
-impl Begin {
-    pub fn command(&self) -> Option<SyntaxToken> {
+cst_node!(Begin, BEGIN);
+
+impl<'a, D> Begin<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<BraceGroupWord> {
+    pub fn name(&self) -> Option<BraceGroupWord<'a, D>> {
         self.syntax().children().find_map(BraceGroupWord::cast)
     }
 
-    pub fn options(&self) -> Option<BracketGroupKeyValue> {
+    pub fn options(&self) -> Option<BracketGroupKeyValue<'a, D>> {
         self.syntax()
             .children()
             .find_map(BracketGroupKeyValue::cast)
     }
 }
 
-ast_node!(End, END);
+cst_node!(End, END);
 
-impl End {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> End<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<BraceGroupWord> {
+    pub fn name(&self) -> Option<BraceGroupWord<'a, D>> {
         self.syntax().children().find_map(BraceGroupWord::cast)
     }
 }
 
-ast_node!(Environment, ENVIRONMENT);
+cst_node!(Environment, ENVIRONMENT);
 
-impl Environment {
-    pub fn begin(&self) -> Option<Begin> {
+impl<'a, D> Environment<'a, D> {
+    pub fn begin(&self) -> Option<Begin<'a, D>> {
         self.syntax().children().find_map(Begin::cast)
     }
 
-    pub fn end(&self) -> Option<End> {
+    pub fn end(&self) -> Option<End<'a, D>> {
         self.syntax().children().find_map(End::cast)
     }
 }
 
-ast_node!(
+cst_node!(
     Section,
     PART,
     CHAPTER,
@@ -1720,56 +1427,56 @@ ast_node!(
     SUBPARAGRAPH
 );
 
-impl Section {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> Section<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<BraceGroup> {
+    pub fn name(&self) -> Option<BraceGroup<'a, D>> {
         self.syntax().children().find_map(BraceGroup::cast)
     }
 }
 
-ast_node!(EnumItem, ENUM_ITEM);
+cst_node!(EnumItem, ENUM_ITEM);
 
-impl EnumItem {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> EnumItem<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn label(&self) -> Option<BracketGroupWord> {
+    pub fn label(&self) -> Option<BracketGroupWord<'a, D>> {
         self.syntax().children().find_map(BracketGroupWord::cast)
     }
 }
 
-ast_node!(Caption, CAPTION);
+cst_node!(Caption, CAPTION);
 
-impl Caption {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> Caption<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn short(&self) -> Option<BracketGroup> {
+    pub fn short(&self) -> Option<BracketGroup<'a, D>> {
         self.syntax().children().find_map(BracketGroup::cast)
     }
 
-    pub fn long(&self) -> Option<BraceGroup> {
+    pub fn long(&self) -> Option<BraceGroup<'a, D>> {
         self.syntax().children().find_map(BraceGroup::cast)
     }
 }
 
-ast_node!(Citation, CITATION);
+cst_node!(Citation, CITATION);
 
-impl Citation {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> Citation<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn prenote(&self) -> Option<BracketGroup> {
+    pub fn prenote(&self) -> Option<BracketGroup<'a, D>> {
         self.syntax().children().find_map(BracketGroup::cast)
     }
 
-    pub fn postnote(&self) -> Option<BracketGroup> {
+    pub fn postnote(&self) -> Option<BracketGroup<'a, D>> {
         self.syntax()
             .children()
             .filter_map(BracketGroup::cast)
@@ -1777,12 +1484,12 @@ impl Citation {
             .next()
     }
 
-    pub fn key_list(&self) -> Option<BraceGroupWordList> {
+    pub fn key_list(&self) -> Option<BraceGroupWordList<'a, D>> {
         self.syntax().children().find_map(BraceGroupWordList::cast)
     }
 }
 
-ast_node!(
+cst_node!(
     Include,
     PACKAGE_INCLUDE,
     CLASS_INCLUDE,
@@ -1795,29 +1502,93 @@ ast_node!(
     VERBATIM_INCLUDE
 );
 
-impl Include {
-    pub fn path_list(&self) -> Option<BraceGroupWordList> {
+impl<'a, D> Include<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax().first_token()
+    }
+
+    pub fn path_list(&self) -> Option<BraceGroupWordList<'a, D>> {
         self.syntax().children().find_map(BraceGroupWordList::cast)
     }
 }
 
-ast_node!(Import, IMPORT);
+cst_node!(Import, IMPORT);
 
-impl Import {
-    pub fn command(&self) -> Option<SyntaxToken> {
+impl<'a, D> Import<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax().first_token()
     }
 
-    pub fn directory(&self) -> Option<BraceGroupWord> {
+    pub fn directory(&self) -> Option<BraceGroupWord<'a, D>> {
         self.syntax().children().find_map(BraceGroupWord::cast)
     }
 
-    pub fn file(&self) -> Option<BraceGroupWord> {
+    pub fn file(&self) -> Option<BraceGroupWord<'a, D>> {
         self.syntax()
             .children()
             .filter_map(BraceGroupWord::cast)
             .skip(1)
             .next()
+    }
+}
+
+cst_node!(LabelDefinition, LABEL_DEFINITION);
+
+impl<'a, D> LabelDefinition<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<BraceGroupWord<'a, D>> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+}
+
+cst_node!(LabelReference, LABEL_REFERENCE);
+
+impl<'a, D> LabelReference<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax().first_token()
+    }
+
+    pub fn name_list(&self) -> Option<BraceGroupWordList<'a, D>> {
+        self.syntax().children().find_map(BraceGroupWordList::cast)
+    }
+}
+
+cst_node!(LabelReferenceRange, LABEL_REFERENCE_RANGE);
+
+impl<'a, D> LabelReferenceRange<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax().first_token()
+    }
+
+    pub fn from(&self) -> Option<BraceGroupWord<'a, D>> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+
+    pub fn to(&self) -> Option<BraceGroupWord<'a, D>> {
+        self.syntax()
+            .children()
+            .filter_map(BraceGroupWord::cast)
+            .skip(1)
+            .next()
+    }
+}
+
+cst_node!(LabelNumber, LABEL_NUMBER);
+
+impl<'a, D> LabelNumber<'a, D> {
+    pub fn command(&self) -> Option<&'a SyntaxToken<D>> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<BraceGroupWord<'a, D>> {
+        self.syntax().children().find_map(BraceGroupWord::cast)
+    }
+
+    pub fn text(&self) -> Option<BraceGroup<'a, D>> {
+        self.syntax().children().find_map(BraceGroup::cast)
     }
 }
 
@@ -1827,8 +1598,8 @@ mod tests {
 
     use super::*;
 
-    fn setup(text: &str) -> SyntaxNode {
-        SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green_node)
+    fn setup(text: &str) -> SyntaxNode<()> {
+        parse(&text.trim().replace("\r", "")).root
     }
 
     #[test]

@@ -1,9 +1,8 @@
+pub mod db;
 pub mod distro;
 mod lang;
+pub mod line_index;
 pub mod protocol;
-mod syntax;
+pub mod syntax;
 
-pub use self::{
-    lang::DocumentLanguage,
-    syntax::{bibtex, latex, AstNode},
-};
+pub use self::lang::DocumentLanguage;

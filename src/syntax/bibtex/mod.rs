@@ -1,183 +1,69 @@
-use std::mem;
+mod kind;
+mod lexer;
 
-use logos::Logos;
-use rowan::{GreenNode, GreenNodeBuilder};
+use std::marker::PhantomData;
 
-pub use self::SyntaxKind::*;
+use cstree::GreenNodeBuilder;
 
-use super::AstNode;
+pub use self::kind::SyntaxKind::{self, *};
+use self::lexer::Lexer;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-#[allow(non_camel_case_types)]
-#[repr(u16)]
-pub enum SyntaxKind {
-    ERROR = 0,
-    MISSING,
-
-    WHITESPACE,
-    PREAMBLE_TYPE,
-    STRING_TYPE,
-    COMMENT_TYPE,
-    ENTRY_TYPE,
-    WORD,
-    L_BRACE,
-    R_BRACE,
-    L_PAREN,
-    R_PAREN,
-    COMMA,
-    HASH,
-    QUOTE,
-    EQUALITY_SIGN,
-    NUMBER,
-    COMMAND_NAME,
-
-    JUNK,
-    PREAMBLE,
-    STRING,
-    COMMENT,
-    ENTRY,
-    FIELD,
-    VALUE,
-    TOKEN,
-    BRACE_GROUP,
-    QUOTE_GROUP,
-    ROOT,
-}
-
-impl From<SyntaxKind> for rowan::SyntaxKind {
-    fn from(kind: SyntaxKind) -> Self {
-        Self(kind as u16)
-    }
-}
+use super::CstNode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Lang {}
 
-impl rowan::Language for Lang {
+impl cstree::Language for Lang {
     type Kind = SyntaxKind;
 
-    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
+    fn kind_from_raw(raw: cstree::SyntaxKind) -> Self::Kind {
         assert!(raw.0 <= ROOT as u16);
-        unsafe { mem::transmute::<u16, SyntaxKind>(raw.0) }
+        unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
     }
 
-    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
+    fn kind_to_raw(kind: Self::Kind) -> cstree::SyntaxKind {
         kind.into()
     }
 }
 
-pub struct Parse {
-    pub green_node: GreenNode,
+pub type SyntaxNode<D> = cstree::ResolvedNode<Lang, D>;
+
+pub type SyntaxToken<D> = cstree::ResolvedToken<Lang, D>;
+
+pub type SyntaxElement<D> = cstree::ResolvedElement<Lang, D>;
+
+pub type SyntaxElementRef<'a, D> = cstree::ResolvedElementRef<'a, Lang, D>;
+
+#[derive(Debug, Clone)]
+pub struct Parse<D>
+where
+    D: 'static,
+{
+    pub root: SyntaxNode<D>,
 }
 
-pub type SyntaxNode = rowan::SyntaxNode<Lang>;
-
-pub type SyntaxToken = rowan::SyntaxToken<Lang>;
-
-pub type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
-#[allow(non_camel_case_types)]
-#[repr(u16)]
-enum LogosToken {
-    #[regex(r"\s+")]
-    WHITESPACE = 2,
-
-    #[regex(r"@[Pp][Rr][Ee][Aa][Mm][Bb][Ll][Ee]")]
-    PREAMBLE_TYPE,
-
-    #[regex(r"@[Ss][Tt][Rr][Ii][Nn][Gg]")]
-    STRING_TYPE,
-
-    #[regex(r"@[Cc][Oo][Mm][Mm][Ee][Nn][Tt]")]
-    COMMENT_TYPE,
-
-    #[regex(r"@[!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z][!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z0-9]*")]
-    ENTRY_TYPE,
-
-    #[regex(r#"[^\s\{\}\(\),#"=\d\\]+"#)]
-    #[error]
-    WORD,
-
-    #[token("{")]
-    L_BRACE,
-
-    #[token("}")]
-    R_BRACE,
-
-    #[token("(")]
-    L_PAREN,
-
-    #[token(")")]
-    R_PAREN,
-
-    #[token(",")]
-    COMMA,
-
-    #[token("#")]
-    HASH,
-
-    #[token("\"")]
-    QUOTE,
-
-    #[token("=")]
-    EQUALITY_SIGN,
-
-    #[regex(r"\d+")]
-    NUMBER,
-
-    #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
-    COMMAND_NAME,
+struct Parser<'a, D> {
+    lexer: Lexer<'a>,
+    builder: GreenNodeBuilder<'static, 'static>,
+    _phantom: PhantomData<D>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct TokenSource<'a> {
-    tokens: Vec<(SyntaxKind, &'a str)>,
-}
-
-impl<'a> TokenSource<'a> {
-    pub fn new(text: &'a str) -> Self {
-        let mut tokens = Vec::new();
-        let mut lexer = LogosToken::lexer(text);
-        while let Some(kind) = lexer.next() {
-            tokens.push((
-                unsafe { mem::transmute::<LogosToken, SyntaxKind>(kind) },
-                lexer.slice(),
-            ));
-        }
-        tokens.reverse();
-        Self { tokens }
-    }
-
-    pub fn peek(&self) -> Option<SyntaxKind> {
-        self.tokens.last().map(|(kind, _)| *kind)
-    }
-
-    pub fn consume(&mut self) -> Option<(SyntaxKind, &'a str)> {
-        self.tokens.pop()
-    }
-}
-
-struct Parser<'a> {
-    tokens: TokenSource<'a>,
-    builder: GreenNodeBuilder<'a>,
-}
-
-impl<'a> Parser<'a> {
-    pub fn new(tokens: TokenSource<'a>) -> Self {
+impl<'a, D> Parser<'a, D> {
+    pub fn new(lexer: Lexer<'a>) -> Self {
         Self {
-            tokens,
+            lexer,
             builder: GreenNodeBuilder::new(),
+            _phantom: PhantomData::default(),
         }
     }
 
     fn consume(&mut self) {
-        let (kind, text) = self.tokens.consume().unwrap();
+        let (kind, text) = self.lexer.consume().unwrap();
         self.builder.token(kind.into(), text);
     }
 
     fn expect_or_missing(&mut self, kind: SyntaxKind) {
-        if self.tokens.peek() == Some(kind) {
+        if self.lexer.peek() == Some(kind) {
             self.consume();
             self.trivia();
         } else {
@@ -185,9 +71,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    pub fn parse(mut self) -> Parse<D> {
         self.builder.start_node(ROOT.into());
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 PREAMBLE_TYPE => self.preamble(),
                 STRING_TYPE => self.string(),
@@ -197,12 +83,14 @@ impl<'a> Parser<'a> {
             }
         }
         self.builder.finish_node();
-        let green_node = self.builder.finish();
-        Parse { green_node }
+        let (green, resolver) = self.builder.finish();
+        Parse {
+            root: SyntaxNode::new_root_with_resolver(green, resolver.unwrap()),
+        }
     }
 
     fn trivia(&mut self) {
-        while self.tokens.peek() == Some(WHITESPACE) {
+        while self.lexer.peek() == Some(WHITESPACE) {
             self.consume();
         }
     }
@@ -210,7 +98,7 @@ impl<'a> Parser<'a> {
     fn junk(&mut self) {
         self.builder.start_node(JUNK.into());
         while self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| {
                 !matches!(
@@ -227,7 +115,7 @@ impl<'a> Parser<'a> {
 
     fn left_delimiter_or_missing(&mut self) {
         if self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, L_BRACE | L_PAREN))
             .is_some()
@@ -241,7 +129,7 @@ impl<'a> Parser<'a> {
 
     fn right_delimiter_or_missing(&mut self) {
         if self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, R_BRACE | R_PAREN))
             .is_some()
@@ -255,7 +143,7 @@ impl<'a> Parser<'a> {
 
     fn value_or_missing(&mut self) {
         if self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, L_BRACE | QUOTE | NUMBER | WORD))
             .is_some()
@@ -281,7 +169,7 @@ impl<'a> Parser<'a> {
         self.trivia();
         self.left_delimiter_or_missing();
 
-        if self.tokens.peek() != Some(WORD) {
+        if self.lexer.peek() != Some(WORD) {
             self.builder.token(MISSING.into(), "");
             self.builder.finish_node();
             return;
@@ -309,14 +197,14 @@ impl<'a> Parser<'a> {
 
         self.left_delimiter_or_missing();
 
-        if self.tokens.peek() != Some(WORD) {
+        if self.lexer.peek() != Some(WORD) {
             self.builder.token(MISSING.into(), "");
             self.builder.finish_node();
             return;
         }
         self.consume();
 
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE => self.consume(),
                 WORD => self.field(),
@@ -335,7 +223,7 @@ impl<'a> Parser<'a> {
         self.consume();
         self.trivia();
 
-        if self.tokens.peek() == Some(EQUALITY_SIGN) {
+        if self.lexer.peek() == Some(EQUALITY_SIGN) {
             self.consume();
             self.trivia();
         } else {
@@ -343,7 +231,7 @@ impl<'a> Parser<'a> {
         }
 
         if self
-            .tokens
+            .lexer
             .peek()
             .filter(|&kind| matches!(kind, L_BRACE | QUOTE | NUMBER | WORD))
             .is_some()
@@ -359,7 +247,7 @@ impl<'a> Parser<'a> {
     fn value(&mut self) {
         self.builder.start_node(VALUE.into());
         self.token();
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE => self.consume(),
                 L_BRACE | QUOTE | NUMBER | WORD => self.token(),
@@ -372,7 +260,7 @@ impl<'a> Parser<'a> {
 
     fn token(&mut self) {
         self.builder.start_node(TOKEN.into());
-        match self.tokens.peek().unwrap() {
+        match self.lexer.peek().unwrap() {
             L_BRACE => self.brace_group(),
             QUOTE => self.quote_group(),
             NUMBER => self.consume(),
@@ -386,7 +274,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BRACE_GROUP.into());
         self.consume();
 
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE => self.consume(),
                 PREAMBLE_TYPE => break,
@@ -417,7 +305,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(QUOTE_GROUP.into());
         self.consume();
 
-        while let Some(kind) = self.tokens.peek() {
+        while let Some(kind) = self.lexer.peek() {
             match kind {
                 WHITESPACE => self.consume(),
                 PREAMBLE_TYPE => break,
@@ -444,20 +332,23 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn parse(text: &str) -> Parse {
-    Parser::new(TokenSource::new(text)).parse()
+pub fn parse<D>(text: &str) -> Parse<D>
+where
+    D: 'static,
+{
+    Parser::new(Lexer::new(text)).parse()
 }
 
-macro_rules! ast_node {
+macro_rules! cst_node {
     ($name:ident, $($kind:pat),+) => {
-        #[derive(Debug, Clone)]
+        #[derive(Clone)]
         #[repr(transparent)]
-        pub struct $name(SyntaxNode);
+        pub struct $name<'a, D: 'static>(&'a SyntaxNode<D>);
 
-        impl AstNode for $name {
+        impl<'a, D> CstNode<'a, D> for $name<'a, D> {
             type Lang = Lang;
 
-            fn cast(node: rowan::SyntaxNode<Self::Lang>) -> Option<Self>
+            fn cast(node: &'a cstree::ResolvedNode<Self::Lang, D>) -> Option<Self>
             where
                 Self: Sized,
             {
@@ -467,22 +358,22 @@ macro_rules! ast_node {
                 }
             }
 
-            fn syntax(&self) -> &rowan::SyntaxNode<Self::Lang> {
+            fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang, D> {
                 &self.0
             }
         }
     };
 }
 
-pub trait HasBraces: AstNode<Lang = Lang> {
-    fn left_brace(&self) -> Option<SyntaxToken> {
+pub trait HasBraces<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_brace(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_BRACE.into())
     }
 
-    fn right_brace(&self) -> Option<SyntaxToken> {
+    fn right_brace(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -490,15 +381,15 @@ pub trait HasBraces: AstNode<Lang = Lang> {
     }
 }
 
-pub trait HasQuotes: AstNode<Lang = Lang> {
-    fn left_quote(&self) -> Option<SyntaxToken> {
+pub trait HasQuotes<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_quote(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == QUOTE.into())
     }
 
-    fn right_quote(&self) -> Option<SyntaxToken> {
+    fn right_quote(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -508,15 +399,15 @@ pub trait HasQuotes: AstNode<Lang = Lang> {
     }
 }
 
-pub trait HasDelimiters: AstNode<Lang = Lang> {
-    fn left_delimiter(&self) -> Option<SyntaxToken> {
+pub trait HasDelimiters<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn left_delimiter(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| matches!(node.kind(), L_BRACE | L_PAREN))
     }
 
-    fn right_delimiter(&self) -> Option<SyntaxToken> {
+    fn right_delimiter(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -524,8 +415,8 @@ pub trait HasDelimiters: AstNode<Lang = Lang> {
     }
 }
 
-pub trait HasType: AstNode<Lang = Lang> {
-    fn ty(&self) -> Option<SyntaxToken> {
+pub trait HasType<'a, D: 'static>: CstNode<'a, D, Lang = Lang> {
+    fn ty(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -538,89 +429,89 @@ pub trait HasType: AstNode<Lang = Lang> {
     }
 }
 
-ast_node!(Root, ROOT);
+cst_node!(Root, ROOT);
 
-ast_node!(Junk, JUNK);
+cst_node!(Junk, JUNK);
 
-ast_node!(Comment, COMMENT);
+cst_node!(Comment, COMMENT);
 
-impl HasType for Comment {}
+impl<'a, D: 'static> HasType<'a, D> for Comment<'a, D> {}
 
-ast_node!(Preamble, PREAMBLE);
+cst_node!(Preamble, PREAMBLE);
 
-impl HasType for Preamble {}
+impl<'a, D: 'static> HasType<'a, D> for Preamble<'a, D> {}
 
-impl HasDelimiters for Preamble {}
+impl<'a, D: 'static> HasDelimiters<'a, D> for Preamble<'a, D> {}
 
-impl Preamble {
-    pub fn value(&self) -> Option<Value> {
+impl<'a, D: 'static> Preamble<'a, D> {
+    pub fn value(&self) -> Option<Value<'a, D>> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
-ast_node!(String, STRING);
+cst_node!(String, STRING);
 
-impl HasType for String {}
+impl<'a, D: 'static> HasType<'a, D> for String<'a, D> {}
 
-impl HasDelimiters for String {}
+impl<'a, D: 'static> HasDelimiters<'a, D> for String<'a, D> {}
 
-impl String {
-    pub fn value(&self) -> Option<Value> {
+impl<'a, D: 'static> String<'a, D> {
+    pub fn value(&self) -> Option<Value<'a, D>> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
-ast_node!(Entry, ENTRY);
+cst_node!(Entry, ENTRY);
 
-impl HasType for Entry {}
+impl<'a, D> HasType<'a, D> for Entry<'a, D> {}
 
-impl HasDelimiters for Entry {}
+impl<'a, D> HasDelimiters<'a, D> for Entry<'a, D> {}
 
-impl Entry {
-    pub fn key(&self) -> Option<SyntaxToken> {
+impl<'a, D> Entry<'a, D> {
+    pub fn key(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == WORD)
     }
 
-    pub fn fields(&self) -> impl Iterator<Item = Field> {
+    pub fn fields(&self) -> impl Iterator<Item = Field<'a, D>> {
         self.syntax().children().filter_map(Field::cast)
     }
 }
 
-ast_node!(Field, FIELD);
+cst_node!(Field, FIELD);
 
-impl Field {
-    pub fn name(&self) -> Option<SyntaxToken> {
+impl<'a, D> Field<'a, D> {
+    pub fn name(&self) -> Option<&'a SyntaxToken<D>> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == WORD)
     }
 
-    pub fn value(&self) -> Option<Value> {
+    pub fn value(&self) -> Option<Value<'a, D>> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
-ast_node!(Value, VALUE);
+cst_node!(Value, VALUE);
 
-impl Value {
-    pub fn tokens(&self) -> impl Iterator<Item = Token> {
+impl<'a, D> Value<'a, D> {
+    pub fn tokens(&self) -> impl Iterator<Item = Token<'a, D>> {
         self.syntax().children().filter_map(Token::cast)
     }
 }
 
-ast_node!(Token, TOKEN);
+cst_node!(Token, TOKEN);
 
-ast_node!(BraceGroup, BRACE_GROUP);
+cst_node!(BraceGroup, BRACE_GROUP);
 
-impl HasBraces for BraceGroup {}
+impl<'a, D> HasBraces<'a, D> for BraceGroup<'a, D> {}
 
-ast_node!(QuoteGroup, QUOTE_GROUP);
+cst_node!(QuoteGroup, QUOTE_GROUP);
 
-impl HasQuotes for QuoteGroup {}
+impl<'a, D> HasQuotes<'a, D> for QuoteGroup<'a, D> {}
 
 #[cfg(test)]
 mod tests {
@@ -628,8 +519,8 @@ mod tests {
 
     use super::*;
 
-    fn setup(text: &str) -> SyntaxNode {
-        SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green_node)
+    fn setup(text: &str) -> SyntaxNode<()> {
+        parse(&text.trim().replace("\r", "")).root
     }
 
     #[test]
