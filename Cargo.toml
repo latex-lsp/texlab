@@ -73,7 +73,7 @@ futures = "0.3"
 fuzzy-matcher = "0.3"
 html2md = { version = "0.2", optional = true }
 image = "0.23"
-itertools = "0.9"
+itertools = "0.10"
 jsonrpc = { path = "crates/jsonrpc", optional = true }
 jsonrpc-derive = { path = "crates/jsonrpc_derive", optional = true }
 lalrpop-util = { version = "0.18", optional = true }
