@@ -1,0 +1,32 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\definecolorset[ty]{rgb,HTML}{foo}{bar}{baz}\"#)"
+
+---
+ROOT@0..44
+  PREAMBLE@0..44
+    COLOR_SET_DEFINITION@0..44
+      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      BRACK_GROUP_WORD@15..19
+        L_BRACK@15..16 "["
+        WORD@16..18 "ty"
+        R_BRACK@18..19 "]"
+      CURLY_GROUP_WORD_LIST@19..29
+        L_CURLY@19..20 "{"
+        WORD@20..23 "rgb"
+        COMMA@23..24 ","
+        WORD@24..28 "HTML"
+        R_CURLY@28..29 "}"
+      CURLY_GROUP_WORD@29..34
+        L_CURLY@29..30 "{"
+        WORD@30..33 "foo"
+        R_CURLY@33..34 "}"
+      CURLY_GROUP_WORD@34..39
+        L_CURLY@34..35 "{"
+        WORD@35..38 "bar"
+        R_CURLY@38..39 "}"
+      CURLY_GROUP_WORD@39..44
+        L_CURLY@39..40 "{"
+        WORD@40..43 "baz"
+        R_CURLY@43..44 "}"
+

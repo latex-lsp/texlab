@@ -1,38 +1,16 @@
 use std::{
     env,
     ffi::OsStr,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
     process::Command,
-    string::FromUtf8Error,
 };
 
+use anyhow::Result;
 use rustc_hash::FxHashMap;
 use smol_str::SmolStr;
-use thiserror::Error;
 
 use crate::DocumentLanguage;
-
-#[derive(Debug, Error)]
-pub enum KpsewhichError {
-    #[error("an I/O error occurred: `{0}`")]
-    IO(#[from] io::Error),
-
-    #[error("an utf8 error occurred: `{0}`")]
-    Decode(#[from] FromUtf8Error),
-
-    #[error("invalid output from kpsewhich")]
-    InvalidOutput,
-
-    #[error("kpsewhich not installed")]
-    NotInstalled,
-
-    #[error("no kpsewhich db")]
-    NoDatabase,
-
-    #[error("corrupt kpsewhich db")]
-    CorruptDatabase,
-}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Resolver {
@@ -47,8 +25,8 @@ impl Resolver {
 
 pub fn parse_database(
     root_directories: &[PathBuf],
-    mut reader: impl FnMut(&Path) -> Result<Vec<PathBuf>, KpsewhichError>,
-) -> Result<Resolver, KpsewhichError> {
+    mut reader: impl FnMut(&Path) -> Result<Vec<PathBuf>>,
+) -> Result<Resolver> {
     let mut files_by_name = FxHashMap::default();
     for directory in root_directories {
         for path in reader(directory)? {
@@ -73,7 +51,7 @@ fn make_absolute(root_directories: &[PathBuf], relative_path: &Path) -> Option<P
     None
 }
 
-pub fn root_directories() -> Result<Vec<PathBuf>, KpsewhichError> {
+pub fn root_directories() -> Result<Vec<PathBuf>> {
     let texmf = run(&["-var-value", "TEXMF"])?;
     let expand_arg = format!("--expand-braces={}", texmf);
     let expanded = run(&[&expand_arg])?;
@@ -83,16 +61,13 @@ pub fn root_directories() -> Result<Vec<PathBuf>, KpsewhichError> {
     Ok(directories)
 }
 
-fn run(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Result<String, KpsewhichError> {
-    let output = Command::new("kpsewhich")
-        .args(args)
-        .output()
-        .map_err(|_| KpsewhichError::NotInstalled)?;
+fn run(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Result<String> {
+    let output = Command::new("kpsewhich").args(args).output()?;
 
     let result = String::from_utf8(output.stdout)?
         .lines()
         .next()
-        .ok_or(KpsewhichError::InvalidOutput)?
+        .unwrap()
         .into();
 
     Ok(result)

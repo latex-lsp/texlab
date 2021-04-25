@@ -1,0 +1,28 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\newacronym{fpsLabel}{FPS}{Frame per Second}\"#)"
+
+---
+ROOT@0..44
+  PREAMBLE@0..44
+    ACRONYM_DEFINITION@0..44
+      ACRONYM_DEFINITION_NAME@0..11 "\\newacronym"
+      CURLY_GROUP_WORD@11..21
+        L_CURLY@11..12 "{"
+        WORD@12..20 "fpsLabel"
+        R_CURLY@20..21 "}"
+      CURLY_GROUP@21..26
+        L_CURLY@21..22 "{"
+        TEXT@22..25
+          WORD@22..25 "FPS"
+        R_CURLY@25..26 "}"
+      CURLY_GROUP@26..44
+        L_CURLY@26..27 "{"
+        TEXT@27..43
+          WORD@27..32 "Frame"
+          WHITESPACE@32..33 " "
+          WORD@33..36 "per"
+          WHITESPACE@36..37 " "
+          WORD@37..43 "Second"
+        R_CURLY@43..44 "}"
+

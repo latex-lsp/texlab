@@ -1,0 +1,101 @@
+use std::sync::Arc;
+
+use derive_more::From;
+
+use crate::{
+    line_index::LineIndex,
+    syntax::{
+        bibtex,
+        latex::{self, LatexAnalyzerContext},
+    },
+    DocumentLanguage, ServerContext, Uri,
+};
+
+#[derive(Debug, Clone)]
+pub struct LatexDocumentData {
+    pub root: latex::SyntaxNode,
+    pub extras: latex::Extras,
+}
+
+#[derive(Debug, Clone)]
+pub struct BibtexDocumentData {
+    pub root: bibtex::SyntaxNode,
+}
+
+#[derive(Debug, Clone, From)]
+pub enum DocumentData {
+    Latex(LatexDocumentData),
+    Bibtex(BibtexDocumentData),
+    BuildLog,
+}
+
+impl DocumentData {
+    pub fn as_latex(&self) -> Option<&LatexDocumentData> {
+        if let Self::Latex(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_bibtex(&self) -> Option<&BibtexDocumentData> {
+        if let Self::Bibtex(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Document {
+    pub uri: Arc<Uri>,
+    pub text: String,
+    pub line_index: LineIndex,
+    pub data: DocumentData,
+}
+
+impl Document {
+    pub fn parse(
+        context: Arc<ServerContext>,
+        uri: Arc<Uri>,
+        text: String,
+        language: DocumentLanguage,
+    ) -> Self {
+        let line_index = LineIndex::new(&text);
+        let data = match language {
+            DocumentLanguage::Latex => {
+                let root = latex::parse(&text).root;
+
+                let base_uri = match &context.options.read().unwrap().root_directory {
+                    Some(root_dir) => Uri::from_directory_path(root_dir)
+                        .map(Arc::new)
+                        .unwrap_or_else(|()| Arc::clone(&uri)),
+                    None => Arc::clone(&uri),
+                };
+                let mut context = LatexAnalyzerContext {
+                    inner: context,
+                    extras: latex::Extras::default(),
+                    document_uri: Arc::clone(&uri),
+                    base_uri,
+                };
+                latex::analyze(&mut context, &root);
+                let extras = context.extras;
+
+                LatexDocumentData { root, extras }.into()
+            }
+            DocumentLanguage::Bibtex => {
+                let root = bibtex::parse(&text).root;
+                BibtexDocumentData { root }.into()
+            }
+            DocumentLanguage::BuildLog => DocumentData::BuildLog,
+        };
+
+        Self {
+            uri,
+            text,
+            line_index,
+            data,
+        }
+    }
+}

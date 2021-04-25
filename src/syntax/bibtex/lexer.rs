@@ -26,10 +26,10 @@ enum LogosToken {
     WORD,
 
     #[token("{")]
-    L_BRACE,
+    L_CURLY,
 
     #[token("}")]
-    R_BRACE,
+    R_CURLY,
 
     #[token("(")]
     L_PAREN,

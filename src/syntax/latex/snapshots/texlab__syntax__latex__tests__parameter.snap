@@ -1,9 +1,0 @@
----
-source: src/syntax/latex.rs
-expression: "setup(r#\"#1\"#)"
-
----
-ROOT@0..2
-  PREAMBLE@0..2
-    PARAMETER@0..2 "#1"
-

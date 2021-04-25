@@ -1,0 +1,17 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\ref{foo, bar}\"#)"
+
+---
+ROOT@0..14
+  PREAMBLE@0..14
+    LABEL_REFERENCE@0..14
+      LABEL_REFERENCE_NAME@0..4 "\\ref"
+      CURLY_GROUP_WORD_LIST@4..14
+        L_CURLY@4..5 "{"
+        WORD@5..8 "foo"
+        COMMA@8..9 ","
+        WHITESPACE@9..10 " "
+        WORD@10..13 "bar"
+        R_CURLY@13..14 "}"
+

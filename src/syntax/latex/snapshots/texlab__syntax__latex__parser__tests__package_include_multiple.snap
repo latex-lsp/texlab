@@ -1,0 +1,17 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\usepackage{amsmath, lipsum}\"#)"
+
+---
+ROOT@0..28
+  PREAMBLE@0..28
+    PACKAGE_INCLUDE@0..28
+      PACKAGE_INCLUDE_NAME@0..11 "\\usepackage"
+      CURLY_GROUP_WORD_LIST@11..28
+        L_CURLY@11..12 "{"
+        WORD@12..19 "amsmath"
+        COMMA@19..20 ","
+        WHITESPACE@20..21 " "
+        WORD@21..27 "lipsum"
+        R_CURLY@27..28 "}"
+

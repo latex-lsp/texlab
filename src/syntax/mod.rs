@@ -1,15 +1,12 @@
 pub mod bibtex;
 pub mod latex;
 
-pub trait CstNode<'a, D>
-where
-    D: 'static,
-{
+pub trait CstNode<'a> {
     type Lang: cstree::Language;
 
-    fn cast(node: &'a cstree::ResolvedNode<Self::Lang, D>) -> Option<Self>
+    fn cast(node: &'a cstree::ResolvedNode<Self::Lang>) -> Option<Self>
     where
         Self: Sized;
 
-    fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang, D>;
+    fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang>;
 }

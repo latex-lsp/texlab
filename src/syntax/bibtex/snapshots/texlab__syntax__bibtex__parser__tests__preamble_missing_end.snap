@@ -1,0 +1,19 @@
+---
+source: src/syntax/bibtex/parser.rs
+expression: "setup(r#\"@preamble{ \"Hello World\" \"#)"
+
+---
+PREAMBLE@0..24
+  PREAMBLE_TYPE@0..9 "@preamble"
+  L_CURLY@9..10 "{"
+  WHITESPACE@10..11 " "
+  VALUE@11..24
+    TOKEN@11..24
+      QUOTE_GROUP@11..24
+        QUOTE@11..12 "\""
+        WORD@12..17 "Hello"
+        WHITESPACE@17..18 " "
+        WORD@18..23 "World"
+        QUOTE@23..24 "\""
+  MISSING@24..24 ""
+

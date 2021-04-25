@@ -1,0 +1,16 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\cite{,foo,}\"#)"
+
+---
+ROOT@0..12
+  PREAMBLE@0..12
+    CITATION@0..12
+      CITATION_NAME@0..5 "\\cite"
+      CURLY_GROUP_WORD_LIST@5..12
+        L_CURLY@5..6 "{"
+        COMMA@6..7 ","
+        WORD@7..10 "foo"
+        COMMA@10..11 ","
+        R_CURLY@11..12 "}"
+

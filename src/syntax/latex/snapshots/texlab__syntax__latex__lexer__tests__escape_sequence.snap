@@ -1,0 +1,19 @@
+---
+source: src/syntax/latex/lexer.rs
+expression: "verify(r#\"\\% hello\"#)"
+
+---
+[
+    (
+        GENERIC_COMMAND_NAME,
+        "\\%",
+    ),
+    (
+        WHITESPACE,
+        " ",
+    ),
+    (
+        WORD,
+        "hello",
+    ),
+]

@@ -4,9 +4,11 @@ use std::{
     str::Lines,
 };
 
-use super::kpsewhich::{self, KpsewhichError, Resolver};
+use anyhow::Result;
 
-pub fn load_resolver() -> Result<Resolver, KpsewhichError> {
+use super::kpsewhich::{self, Resolver};
+
+pub fn load_resolver() -> Result<Resolver> {
     let root_directories = kpsewhich::root_directories()?;
     let resolver = kpsewhich::parse_database(&root_directories, read_database)?;
     Ok(resolver)
@@ -14,14 +16,15 @@ pub fn load_resolver() -> Result<Resolver, KpsewhichError> {
 
 const DATABASE_PATH: &str = "ls-R";
 
-fn read_database(directory: &Path) -> Result<Vec<PathBuf>, KpsewhichError> {
+fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let file = directory.join(DATABASE_PATH);
     if !file.is_file() {
         return Ok(Vec::new());
     }
 
-    let text = fs::read_to_string(file).map_err(|_| KpsewhichError::NoDatabase)?;
-    parse_database(text.lines()).map_err(|_| KpsewhichError::CorruptDatabase)
+    let text = fs::read_to_string(file)?;
+    let files = parse_database(text.lines())?;
+    Ok(files)
 }
 
 fn parse_database(lines: Lines) -> io::Result<Vec<PathBuf>> {

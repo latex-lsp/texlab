@@ -4,13 +4,14 @@ mod texlive;
 
 use std::process::{Command, Stdio};
 
+use anyhow::Result;
 use derive_more::Display;
 use log::warn;
 
-pub use self::kpsewhich::{KpsewhichError, Resolver};
+pub use kpsewhich::Resolver;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Display)]
-pub enum DistroKind {
+pub enum DistributionKind {
     #[display(fmt = "TeXLive")]
     Texlive,
     #[display(fmt = "MikTeX")]
@@ -22,22 +23,22 @@ pub enum DistroKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct Distro {
-    pub kind: DistroKind,
+pub struct Distribution {
+    pub kind: DistributionKind,
     pub resolver: Resolver,
 }
 
-impl Distro {
+impl Distribution {
     pub fn detect() -> Self {
         let kind = match Command::new("latex").arg("--version").output() {
             Ok(output) => {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 if stdout.contains("TeX Live") {
-                    DistroKind::Texlive
+                    DistributionKind::Texlive
                 } else if stdout.contains("MiKTeX") {
-                    DistroKind::Miktex
+                    DistributionKind::Miktex
                 } else {
-                    DistroKind::Unknown
+                    DistributionKind::Unknown
                 }
             }
             Err(_) => {
@@ -48,43 +49,25 @@ impl Distro {
                     .status()
                     .is_ok()
                 {
-                    DistroKind::Tectonic
+                    DistributionKind::Tectonic
                 } else {
-                    DistroKind::Unknown
+                    DistributionKind::Unknown
                 }
             }
         };
 
         let resolver = match kind {
-            DistroKind::Texlive => Self::load_resolver(texlive::load_resolver),
-            DistroKind::Miktex => Self::load_resolver(miktex::load_resolver),
-            DistroKind::Tectonic | DistroKind::Unknown => Resolver::default(),
+            DistributionKind::Texlive => Self::load_resolver(texlive::load_resolver),
+            DistributionKind::Miktex => Self::load_resolver(miktex::load_resolver),
+            DistributionKind::Tectonic | DistributionKind::Unknown => Resolver::default(),
         };
         Self { kind, resolver }
     }
 
-    fn load_resolver(loader: impl FnOnce() -> Result<Resolver, KpsewhichError>) -> Resolver {
+    fn load_resolver(loader: impl FnOnce() -> Result<Resolver>) -> Resolver {
         match loader() {
             Ok(resolver) => return resolver,
-            Err(KpsewhichError::NotInstalled) | Err(KpsewhichError::InvalidOutput) => {
-                warn!(
-                    "An error occurred while executing `kpsewhich`.\
-                     Please make sure that your distribution is in your PATH \
-                     environment variable and provides the `kpsewhich` tool."
-                );
-            }
-            Err(KpsewhichError::CorruptDatabase) | Err(KpsewhichError::NoDatabase) => {
-                warn!(
-                    "The file database of your TeX distribution seems \
-                     to be corrupt. Please rebuild it and try again."
-                );
-            }
-            Err(KpsewhichError::IO(why)) => {
-                warn!("An I/O error occurred while executing 'kpsewhich': {}", why);
-            }
-            Err(KpsewhichError::Decode(_)) => {
-                warn!("An error occurred while decoding the output of `kpsewhich`.");
-            }
+            Err(why) => warn!("Failed to load resolver: {}", why),
         };
         Resolver::default()
     }

@@ -5,24 +5,24 @@ use super::kind::SyntaxKind;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
 #[allow(non_camel_case_types)]
 #[repr(u16)]
-enum LogosToken {
+enum Token {
     #[regex(r"\s+")]
     WHITESPACE = 2,
 
-    #[regex(r"%[\r\n]*")]
+    #[regex(r"%[^\r\n]*")]
     COMMENT,
 
     #[token("{")]
-    L_BRACE,
+    L_CURLY,
 
     #[token("}")]
-    R_BRACE,
+    R_CURLY,
 
     #[token("[")]
-    L_BRACKET,
+    L_BRACK,
 
     #[token("]")]
-    R_BRACKET,
+    R_BRACK,
 
     #[token("(")]
     L_PAREN,
@@ -50,121 +50,121 @@ enum LogosToken {
     GENERIC_COMMAND_NAME,
 
     #[regex(r"\\begin")]
-    BEGIN_ENV,
+    BEGIN_ENVIRONMENT_NAME,
 
     #[regex(r"\\end")]
-    END_ENV,
+    END_ENVIRONMENT_NAME,
 
     #[regex(r"\\\[")]
-    BEGIN_EQUATION,
+    BEGIN_EQUATION_NAME,
 
     #[regex(r"\\\]")]
-    END_EQUATION,
+    END_EQUATION_NAME,
 
     #[regex(r"\\part\*?")]
-    PART_COMMAND,
+    PART_NAME,
 
     #[regex(r"\\chapter\*?")]
-    CHAPTER_COMMAND,
+    CHAPTER_NAME,
 
     #[regex(r"\\section\*?")]
-    SECTION_COMMAND,
+    SECTION_NAME,
 
     #[regex(r"\\subsection\*?")]
-    SUBSECTION_COMMAND,
+    SUBSECTION_NAME,
 
     #[regex(r"\\subsubsection\*?")]
-    SUBSUBSECTION_COMMAND,
+    SUBSUBSECTION_NAME,
 
     #[regex(r"\\paragraph\*?")]
-    PARAGRAPH_COMMAND,
+    PARAGRAPH_NAME,
 
     #[regex(r"\\subparagraph\*?")]
-    SUBPARAGRAPH_COMMAND,
+    SUBPARAGRAPH_NAME,
 
     #[regex(r"\\item")]
-    ENUM_ITEM_COMMAND,
+    ENUM_ITEM_NAME,
 
     #[regex(r"\\caption")]
-    CAPTION_COMMAND,
+    CAPTION_NAME,
 
     #[regex(r"\\cite|\\cite\*|\\Cite|\\nocite|\\citet|\\citep|\\citet\*|\\citep\*|\\citeauthor|\\citeauthor\*|\\Citeauthor|\\Citeauthor\*|\\citetitle|\\citetitle\*|\\citeyear|\\citeyear\*|\\citedate|\\citedate\*|\\citeurl|\\fullcite|\\citeyearpar|\\citealt|\\citealp|\\citetext|\\parencite|\\parencite\*|\\Parencite|\\footcite|\\footfullcite|\\footcitetext|\\textcite|\\Textcite|\\smartcite|\\Smartcite|\\supercite|\\autocite|\\Autocite|\\autocite\*|\\Autocite\*|\\volcite|\\Volcite|\\pvolcite|\\Pvolcite|\\fvolcite|\\ftvolcite|\\svolcite|\\Svolcite|\\tvolcite|\\Tvolcite|\\avolcite|\\Avolcite|\\notecite|\\notecite|\\pnotecite|\\Pnotecite|\\fnotecite")]
-    CITATION_COMMAND,
+    CITATION_NAME,
 
     #[regex(r"\\usepackage|\\RequirePackage")]
-    PACKAGE_INCLUDE_COMMAND,
+    PACKAGE_INCLUDE_NAME,
 
     #[regex(r"\\documentclass")]
-    CLASS_INCLUDE_COMMAND,
+    CLASS_INCLUDE_NAME,
 
     #[regex(r"\\include|\\subfileinclude|\\input|\\subfile")]
-    LATEX_INCLUDE_COMMAND,
+    LATEX_INCLUDE_NAME,
 
     #[regex(r"\\addbibresource")]
-    BIBLATEX_INCLUDE_COMMAND,
+    BIBLATEX_INCLUDE_NAME,
 
     #[regex(r"\\bibliography")]
-    BIBTEX_INCLUDE_COMMAND,
+    BIBTEX_INCLUDE_NAME,
 
     #[regex(r"\\includegraphics")]
-    GRAPHICS_INCLUDE_COMMAND,
+    GRAPHICS_INCLUDE_NAME,
 
     #[regex(r"\\includesvg")]
-    SVG_INCLUDE_COMMAND,
+    SVG_INCLUDE_NAME,
 
     #[regex(r"\\includeinkscape")]
-    INKSCAPE_INCLUDE_COMMAND,
+    INKSCAPE_INCLUDE_NAME,
 
     #[regex(r"\\verbatiminput|\\VerbatimInput")]
-    VERBATIM_INCLUDE_COMMAND,
+    VERBATIM_INCLUDE_NAME,
 
     #[regex(r"\\import|\\subimport|\\inputfrom|\\subimportfrom|\\includefrom|\\subincludefrom")]
-    IMPORT_COMMAND,
+    IMPORT_NAME,
 
     #[regex(r"\\label")]
-    LABEL_DEFINITION_COMMAND,
+    LABEL_DEFINITION_NAME,
 
     #[regex(r"\\ref|\\vref|\\Vref|\\autoref|\\pageref|\\cref|\\Cref|\\cref*|\\Cref*|\\namecref|\\nameCref|\\lcnamecref|\\namecrefs|\\nameCrefs|\\lcnamecrefs|\\labelcref|\\labelcpageref|\\eqref")]
-    LABEL_REFERENCE_COMMAND,
+    LABEL_REFERENCE_NAME,
 
     #[regex(r"\\crefrange\*?|\\Crefrange\*?")]
-    LABEL_REFERENCE_RANGE_COMMAND,
+    LABEL_REFERENCE_RANGE_NAME,
 
     #[regex(r"\\newlabel")]
-    LABEL_NUMBER_COMMAND,
+    LABEL_NUMBER_NAME,
 
     #[regex(r"\\newcommand\*?|\\renewcommand|\\DeclareRobustCommand")]
-    COMMAND_DEFINITION_COMMAND,
+    COMMAND_DEFINITION_NAME,
 
     #[regex(r"\\DeclareMathOperator\*?")]
-    MATH_OPERATOR_COMMAND,
+    MATH_OPERATOR_NAME,
 
     #[regex(r"\\newglossaryentry")]
-    GLOSSARY_ENTRY_DEFINITION_COMMAND,
+    GLOSSARY_ENTRY_DEFINITION_NAME,
 
     #[regex(r"\\gls|\\Gls|\\GLS|\\glspl|\\Glspl|\\GLSpl|\\glsdisp|\\glslink|\\glstext|\\Glstext|\\GLStext|\\glsfirst|\\Glsfirst|\\GLSfirst|\\glsplural|\\Glsplural|\\GLSplural|\\glsfirstplural|\\Glsfirstplural|\\GLSfirstplural|\\glsname|\\Glsname|\\GLSname|\\glssymbol|\\Glssymbol|\\glsdesc|\\Glsdesc|\\GLSdesc|\\glsuseri|\\Glsuseri|\\GLSuseri|\\glsuserii|\\Glsuserii|\\GLSuserii|\\glsuseriii|\\Glsuseriii|\\GLSuseriii|\\glsuseriv|\\Glsuseriv|\\GLSuseriv|\\glsuserv|\\Glsuserv|\\GLSuserv|\\glsuservi|\\Glsuservi|\\GLSuservi")]
-    GLOSSARY_ENTRY_REFERENCE_COMMAND,
+    GLOSSARY_ENTRY_REFERENCE_NAME,
 
     #[regex(r"\\newacronym")]
-    ACRONYM_DEFINITION_COMMAND,
+    ACRONYM_DEFINITION_NAME,
 
     #[regex(r"\\acrshort|\\Acrshort|\\ACRshort|\\acrshortpl|\\Acrshortpl|\\ACRshortpl|\\acrlong|\\Acrlong|\\ACRlong|\\acrlongpl|\\Acrlongpl|\\ACRlongpl|\\acrfull|\\Acrfull|\\ACRfull|\\acrfullpl|\\Acrfullpl|\\ACRfullpl|\\acs|\\Acs|\\acsp|\\Acsp|\\acl|\\Acl|\\aclp|\\Aclp|\\acf|\\Acf|\\acfp|\\Acfp|\\ac|\\Ac|\\acp|\\glsentrylong|\\Glsentrylong|\\glsentrylongpl|\\Glsentrylongpl|\\glsentryshort|\\Glsentryshort|\\glsentryshortpl|\\Glsentryshortpl|\\glsentryfullpl|\\Glsentryfullpl")]
-    ACRONYM_REFERENCE_COMMAND,
+    ACRONYM_REFERENCE_NAME,
 
     #[regex(r"\\newtheorem|\\declaretheorem")]
-    THEOREM_DEFINITION_COMMAND,
+    THEOREM_DEFINITION_NAME,
 
     #[regex(r"\\color|\\colorbox|\\textcolor|\\pagecolor")]
-    COLOR_REFERENCE_COMMAND,
+    COLOR_REFERENCE_NAME,
 
     #[regex(r"\\definecolor")]
-    COLOR_DEFINITION_COMMAND,
+    COLOR_DEFINITION_NAME,
 
     #[regex(r"\\definecolorset")]
-    COLOR_SET_DEFINITION_COMMAND,
+    COLOR_SET_DEFINITION_NAME,
 
     #[regex(r"\\usepgflibrary|\\usetikzlibrary")]
-    TIKZ_LIBRARY_IMPORT_COMMAND,
+    TIKZ_LIBRARY_IMPORT_NAME,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -175,10 +175,10 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(text: &'a str) -> Self {
         let mut tokens = Vec::new();
-        let mut lexer = LogosToken::lexer(text);
+        let mut lexer = Token::lexer(text);
         while let Some(kind) = lexer.next() {
             tokens.push((
-                unsafe { std::mem::transmute::<LogosToken, SyntaxKind>(kind) },
+                unsafe { std::mem::transmute::<Token, SyntaxKind>(kind) },
                 lexer.slice(),
             ));
         }
@@ -190,7 +190,60 @@ impl<'a> Lexer<'a> {
         self.tokens.last().map(|(kind, _)| *kind)
     }
 
-    pub fn consume(&mut self) -> Option<(SyntaxKind, &'a str)> {
+    pub fn eat(&mut self) -> Option<(SyntaxKind, &'a str)> {
         self.tokens.pop()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_debug_snapshot;
+
+    use super::*;
+
+    fn verify(text: &str) -> Vec<(SyntaxKind, &str)> {
+        let mut tokens = Lexer::new(text).tokens;
+        tokens.reverse();
+        tokens
+    }
+
+    #[test]
+    fn test_empty() {
+        assert_debug_snapshot!(verify(r#""#));
+    }
+
+    #[test]
+    fn test_delimiters() {
+        assert_debug_snapshot!(verify(r#"{foo} (bar) [baz, qux = foo-bar]"#));
+    }
+
+    #[test]
+    fn test_command_with_parameter() {
+        assert_debug_snapshot!(verify(r#"\newcommand{\id}[1]{#1}"#));
+    }
+
+    #[test]
+    fn test_command_with_star() {
+        assert_debug_snapshot!(verify(r#"\section*{Foo}"#));
+    }
+
+    #[test]
+    fn test_escape_sequence() {
+        assert_debug_snapshot!(verify(r#"\% hello"#));
+    }
+
+    #[test]
+    fn test_formula() {
+        assert_debug_snapshot!(verify(r#"$ f(x) = y $$"#));
+    }
+
+    #[test]
+    fn test_comment() {
+        assert_debug_snapshot!(verify("hello %world\r\ntest %test"));
+    }
+
+    #[test]
+    fn test_invalid_parameter() {
+        assert_debug_snapshot!(verify(r#"#"#))
     }
 }

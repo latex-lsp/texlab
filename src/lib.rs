@@ -1,8 +1,14 @@
-pub mod db;
+pub mod component_db;
+mod context;
 pub mod distro;
 mod lang;
 pub mod line_index;
-pub mod protocol;
+mod options;
+mod req_queue;
 pub mod syntax;
+mod uri;
+mod workspace;
 
-pub use self::lang::DocumentLanguage;
+pub use self::{
+    context::ServerContext, lang::DocumentLanguage, options::*, uri::Uri, workspace::*,
+};

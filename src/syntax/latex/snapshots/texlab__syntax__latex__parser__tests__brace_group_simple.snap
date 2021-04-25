@@ -1,0 +1,15 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"{hello world}\"#)"
+
+---
+ROOT@0..13
+  PREAMBLE@0..13
+    CURLY_GROUP@0..13
+      L_CURLY@0..1 "{"
+      TEXT@1..12
+        WORD@1..6 "hello"
+        WHITESPACE@6..7 " "
+        WORD@7..12 "world"
+      R_CURLY@12..13 "}"
+

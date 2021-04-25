@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\input{foo/bar.tex}\"#)"
+
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    LATEX_INCLUDE@0..19
+      LATEX_INCLUDE_NAME@0..6 "\\input"
+      CURLY_GROUP_WORD_LIST@6..19
+        L_CURLY@6..7 "{"
+        WORD@7..18 "foo/bar.tex"
+        R_CURLY@18..19 "}"
+

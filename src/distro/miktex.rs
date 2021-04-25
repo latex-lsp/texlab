@@ -5,11 +5,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use anyhow::{Context, Result};
 use byteorder::{LittleEndian, ReadBytesExt};
 
-use super::kpsewhich::{self, KpsewhichError, Resolver};
+use super::kpsewhich::{self, Resolver};
 
-pub fn load_resolver() -> Result<Resolver, KpsewhichError> {
+pub fn load_resolver() -> Result<Resolver> {
     let root_directories = kpsewhich::root_directories()?;
     let resolver = kpsewhich::parse_database(&root_directories, read_database)?;
     Ok(resolver)
@@ -22,7 +23,7 @@ const FNDB_TABLE_POINTER_OFFSET: usize = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: usize = 6 * FNDB_WORD_SIZE;
 const FNDB_ENTRY_SIZE: usize = 4 * FNDB_WORD_SIZE;
 
-fn read_database(directory: &Path) -> Result<Vec<PathBuf>, KpsewhichError> {
+fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
     if !database_directory.exists() {
         return Ok(Vec::new());
@@ -32,7 +33,7 @@ fn read_database(directory: &Path) -> Result<Vec<PathBuf>, KpsewhichError> {
     for file in fs::read_dir(database_directory)?.filter_map(Result::ok) {
         if file.path().extension().and_then(OsStr::to_str) == Some("fndb-5") {
             let bytes = fs::read(file.path())?;
-            database.extend(parse_database(&bytes).map_err(|_| KpsewhichError::CorruptDatabase)?);
+            database.extend(parse_database(&bytes).context("parsing kpsewhich database")?);
         }
     }
     Ok(database)

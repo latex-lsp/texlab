@@ -1,88 +1,63 @@
+use std::{fs::OpenOptions, io, path::PathBuf};
+
 use anyhow::Result;
-use texlab::db::*;
+use log::LevelFilter;
+use structopt::StructOpt;
+
+/// An implementation of the Language Server Protocol for LaTeX
+#[derive(Debug, StructOpt)]
+struct Opts {
+    /// Increase message verbosity (-vvvv for max verbosity)
+    #[structopt(short, long, parse(from_occurrences))]
+    verbosity: u8,
+
+    /// No output printed to stderr
+    #[structopt(short, long)]
+    quiet: bool,
+
+    /// Write the logging output to FILE
+    #[structopt(long, name = "FILE", parse(from_os_str))]
+    log_file: Option<PathBuf>,
+}
 
 fn main() -> Result<()> {
-    let mut db = RootDatabase::default();
+    let opts = Opts::from_args();
+    setup_logger(opts);
+
     Ok(())
 }
 
-// use std::sync::Arc;
+fn setup_logger(opts: Opts) {
+    let verbosity_level = if !opts.quiet {
+        match opts.verbosity {
+            0 => LevelFilter::Error,
+            1 => LevelFilter::Warn,
+            2 => LevelFilter::Info,
+            3 => LevelFilter::Debug,
+            _ => LevelFilter::Trace,
+        }
+    } else {
+        LevelFilter::Off
+    };
 
-// use anyhow::Result;
-// use salsa::{InternId, InternKey};
-// use texlab::{db::*, protocol::Uri, DocumentLanguage};
+    let logger = fern::Dispatch::new()
+        .format(|out, message, record| out.finish(format_args!("{} - {}", record.level(), message)))
+        .level(verbosity_level)
+        .filter(|metadata| {
+            metadata.target().contains("texlab") || metadata.target().contains("lsp_server")
+        })
+        .chain(io::stderr());
 
-// static CODE: &str = r#"
-// \documentclass[12pt]{article}
-// \usepackage{lingmacros}
-// \usepackage{tree-dvips}
-// \begin{document}
+    let logger = match opts.log_file {
+        Some(log_file) => logger.chain(
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(log_file)
+                .expect("failed to open log file"),
+        ),
+        None => logger,
+    };
 
-// \section*{Notes for My Paper}\label{sec:foo}
-
-// Don't forget to include examples of topicalization.
-// They look like this:
-
-// {\small
-// \enumsentence{Topicalization from sentential subject:\\
-// \shortex{7}{a John$_i$ [a & kltukl & [el &
-//   {\bf l-}oltoir & er & ngii$_i$ & a Mary]]}
-// { & {\bf R-}clear & {\sc comp} &
-//   {\bf IR}.{\sc 3s}-love   & P & him & }
-// {John, (it's) clear that Mary loves (him).}}
-// }
-
-// \subsection*{How to handle topicalization}
-
-// I'll just assume a tree structure like (\ex{1}).
-
-// {\small
-// \enumsentence{Structure of A$'$ Projections:\\ [2ex]
-// \begin{tabular}[t]{cccc}
-//     & \node{i}{CP}\\ [2ex]
-//     \node{ii}{Spec} &   &\node{iii}{C$'$}\\ [2ex]
-//         &\node{iv}{C} & & \node{v}{SAgrP}
-// \end{tabular}
-// \nodeconnect{i}{ii}
-// \nodeconnect{i}{iii}
-// \nodeconnect{iii}{iv}
-// \nodeconnect{iii}{v}
-// }
-// }
-
-// \subsection*{Mood}
-
-// Mood changes when there is a topic, as well as when
-// there is WH-movement.  \emph{Irrealis} is the mood when
-// there is a non-subject topic or WH-phrase in Comp.
-// \emph{Realis} is the mood when there is a subject topic
-// or WH-phrase.
-
-// \end{document}
-
-// "#;
-
-// fn main() -> Result<()> {
-//     let mut db = RootDatabase::default();
-//     let document = db.intern_document(DocumentData {
-//         uri: Arc::new(Uri::parse("http://www.example.com/foo.tex")?),
-//     });
-
-//     db.set_source_code(document, Arc::new(CODE.to_string()));
-//     db.set_source_language(document, DocumentLanguage::Latex);
-//     db.set_documents(Arc::new(vec![document]));
-
-//     // println!("{:#?}", db.symbol_tree(document));
-//     // println!(
-//     //     "{:#?}",
-//     //     db.lookup_intern_latex_section(LatexSection::from_intern_id(InternId::from(2u32)))
-//     // );
-//     // println!(
-//     //     "{:#?}",
-//     //     db.lookup_intern_latex_label_definition(LatexLabelDefinition::from_intern_id(
-//     //         InternId::from(0u32)
-//     //     ))
-//     // );
-
-//     Ok(())
-// }
+    logger.apply().expect("failed to initialize logger");
+}

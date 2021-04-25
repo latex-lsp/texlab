@@ -1,0 +1,18 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\crefrange{foo{bar}\"#)"
+
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    LABEL_REFERENCE_RANGE@0..19
+      LABEL_REFERENCE_RANGE_NAME@0..10 "\\crefrange"
+      CURLY_GROUP_WORD@10..14
+        L_CURLY@10..11 "{"
+        WORD@11..14 "foo"
+        MISSING@14..14 ""
+      CURLY_GROUP_WORD@14..19
+        L_CURLY@14..15 "{"
+        WORD@15..18 "bar"
+        R_CURLY@18..19 "}"
+
