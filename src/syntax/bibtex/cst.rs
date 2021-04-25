@@ -1,3 +1,5 @@
+use cstree::TextRange;
+
 use crate::syntax::CstNode;
 
 use super::{Language, SyntaxKind::*, SyntaxNode, SyntaxToken};
@@ -23,6 +25,19 @@ macro_rules! cst_node {
 
             fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang> {
                 &self.0
+            }
+
+            fn small_range(&self) -> TextRange {
+                let full_range = self.syntax().text_range();
+                let start = full_range.start();
+                let mut token = self.syntax().last_token();
+                while let Some(current) = token {
+                    if !matches!(current.kind(), WHITESPACE | JUNK) {
+                        return TextRange::new(start, current.text_range().end());
+                    }
+                    token = current.prev_token();
+                }
+                TextRange::new(start, start)
             }
         }
     };
@@ -119,6 +134,13 @@ impl<'a> HasType<'a> for String<'a> {}
 impl<'a> HasDelimiters<'a> for String<'a> {}
 
 impl<'a> String<'a> {
+    pub fn name(&self) -> Option<&'a SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == WORD)
+    }
+
     pub fn value(&self) -> Option<Value<'a>> {
         self.syntax().children().find_map(Value::cast)
     }
@@ -151,6 +173,13 @@ impl<'a> Field<'a> {
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == WORD)
+    }
+
+    pub fn equality_sign(&self) -> Option<&'a SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == EQUALITY_SIGN)
     }
 
     pub fn value(&self) -> Option<Value<'a>> {

@@ -1,8 +1,10 @@
-use std::{fs::OpenOptions, io, path::PathBuf};
+use std::{env, fs::OpenOptions, io, path::PathBuf};
 
 use anyhow::Result;
 use log::LevelFilter;
+use lsp_server::Connection;
 use structopt::StructOpt;
+use texlab::Server;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, StructOpt)]
@@ -23,6 +25,10 @@ struct Opts {
 fn main() -> Result<()> {
     let opts = Opts::from_args();
     setup_logger(opts);
+
+    let (connection, threads) = Connection::stdio();
+    Server::with_connection(connection, env::current_dir()?, true)?.run()?;
+    threads.join()?;
 
     Ok(())
 }

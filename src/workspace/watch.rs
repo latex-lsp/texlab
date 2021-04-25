@@ -36,7 +36,7 @@ where
             if let Ok(event) = event {
                 if event.kind.is_modify() {
                     for path in event.paths {
-                        let _ = workspace.load(path);
+                        let _ = workspace.reload(path);
                     }
                 }
             }

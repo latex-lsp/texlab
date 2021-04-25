@@ -12,7 +12,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ServerContext {
-    pub current_dir: PathBuf,
+    pub current_directory: PathBuf,
     pub distro_kind: Mutex<DistributionKind>,
     pub resolver: Mutex<Resolver>,
     pub client_capabilities: Mutex<ClientCapabilities>,
@@ -23,7 +23,7 @@ pub struct ServerContext {
 impl ServerContext {
     pub fn new(current_dir: PathBuf) -> Self {
         Self {
-            current_dir,
+            current_directory: current_dir,
             distro_kind: Mutex::new(DistributionKind::Unknown),
             resolver: Mutex::new(Resolver::default()),
             client_capabilities: Mutex::default(),

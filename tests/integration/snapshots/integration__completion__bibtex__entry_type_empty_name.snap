@@ -1,0 +1,159 @@
+---
+source: tests/integration/completion.rs
+expression: "complete_and_resolve(&server, uri, 0, 1)?"
+
+---
+{
+  "isIncomplete": true,
+  "items": [
+    {
+      "label": "preamble",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "preamble"
+      }
+    },
+    {
+      "label": "string",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "string"
+      }
+    },
+    {
+      "label": "comment",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "comment"
+      }
+    },
+    {
+      "label": "article",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An article in a journal, magazine, newspaper, or other periodical which forms a \n self-contained unit with its own title. The title of the periodical is given in the \n journaltitle field. If the issue has its own title in addition to the main title of \n the periodical, it goes in the issuetitle field. Note that editor and related \n fields refer to the journal while translator and related fields refer to the article.\n\nRequired fields: `author`, `title`, `journaltitle`, `year/date`"
+      },
+      "preselect": false,
+      "sortText": "03",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "article"
+      }
+    },
+    {
+      "label": "book",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "A single-volume book with one or more authors where the authors share credit for\n the work as a whole. This entry type also covers the function of the `@inbook` type\n of traditional BibTeX.\n\nRequired fields: `author`, `title`, `year/date`"
+      },
+      "preselect": false,
+      "sortText": "04",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "book"
+      }
+    },
+    {
+      "label": "mvbook",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "A multi-volume `@book`. For backwards compatibility, multi-volume books are also\n supported by the entry type `@book`. However, it is advisable to make use of the\n dedicated entry type `@mvbook`.\n\nRequired fields: `author`, `title`, `year/date`"
+      },
+      "preselect": false,
+      "sortText": "05",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "mvbook"
+      }
+    },
+    {
+      "label": "inbook",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "A part of a book which forms a self-contained unit with its own title. Note that the\n profile of this entry type is different from standard BibTeX.\n\nRequired fields: `author`, `title`, `booktitle`, `year/date`"
+      },
+      "preselect": false,
+      "sortText": "06",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 1
+          }
+        },
+        "newText": "inbook"
+      }
+    }
+  ]
+}

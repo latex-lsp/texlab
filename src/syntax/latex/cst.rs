@@ -1,3 +1,5 @@
+use cstree::{TextRange, TextSize};
+
 use crate::syntax::CstNode;
 
 use super::{Language, SyntaxKind::*, SyntaxNode, SyntaxToken};
@@ -24,6 +26,19 @@ macro_rules! cst_node {
             fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang> {
                 &self.0
             }
+
+            fn small_range(&self) -> TextRange {
+                let full_range = self.syntax().text_range();
+                let start = full_range.start();
+                let mut token = self.syntax().last_token();
+                while let Some(current) = token {
+                    if !matches!(current.kind(), WHITESPACE | COMMENT) {
+                        return TextRange::new(start, current.text_range().end());
+                    }
+                    token = current.prev_token();
+                }
+                TextRange::new(start, start)
+            }
         }
     };
 }
@@ -44,11 +59,24 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == R_CURLY.into())
     }
+
+    fn content_text(&self) -> Option<String> {
+        let left = self.left_curly()?;
+        let right = self.right_curly()?;
+        Some(
+            self.syntax()
+                .text()
+                .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
+                .to_string(),
+        )
+    }
 }
 
 cst_node!(CurlyGroup, CURLY_GROUP);
 
 impl<'a> HasCurly<'a> for CurlyGroup<'a> {}
+
+impl<'a> CurlyGroup<'a> {}
 
 pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
     fn left_brack(&self) -> Option<&'a SyntaxToken> {
@@ -64,9 +92,22 @@ pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == R_BRACK.into())
     }
+
+    fn content_text(&self) -> Option<String> {
+        let left = self.left_brack()?;
+        let right = self.right_brack()?;
+        Some(
+            self.syntax()
+                .text()
+                .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
+                .to_string(),
+        )
+    }
 }
 
 cst_node!(BrackGroup, BRACK_GROUP);
+
+impl<'a> BrackGroup<'a> {}
 
 impl<'a> HasBrack<'a> for BrackGroup<'a> {}
 
@@ -455,5 +496,125 @@ impl<'a> TheoremDefinition<'a> {
 
     pub fn description(&self) -> Option<CurlyGroup<'a>> {
         self.syntax().children().find_map(CurlyGroup::cast)
+    }
+}
+
+cst_node!(CommandDefinition, COMMAND_DEFINITION, MATH_OPERATOR);
+
+impl<'a> CommandDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupCommand<'a>> {
+        self.syntax().children().find_map(CurlyGroupCommand::cast)
+    }
+
+    pub fn implementation(&self) -> Option<CurlyGroup<'a>> {
+        self.syntax().children().find_map(CurlyGroup::cast)
+    }
+}
+
+cst_node!(AcronymReference, ACRONYM_REFERENCE);
+
+impl<'a> AcronymReference<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+}
+
+cst_node!(AcroynmDefinition, ACRONYM_DEFINITION);
+
+impl<'a> AcroynmDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}
+
+cst_node!(ColorDefinition, COLOR_DEFINITION);
+
+impl<'a> ColorDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+
+    pub fn model(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax()
+            .children()
+            .filter_map(CurlyGroupWord::cast)
+            .skip(1)
+            .next()
+    }
+
+    pub fn spec(&self) -> Option<CurlyGroup<'a>> {
+        self.syntax().children().find_map(CurlyGroup::cast)
+    }
+}
+
+cst_node!(ColorSetDefinition, COLOR_SET_DEFINITION);
+
+impl<'a> ColorSetDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn model_list(&self) -> Option<CurlyGroupWordList<'a>> {
+        self.syntax().children().find_map(CurlyGroupWordList::cast)
+    }
+}
+
+cst_node!(ColorReference, COLOR_REFERENCE);
+
+impl<'a> ColorReference<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}
+
+cst_node!(GlossaryEntryReference, GLOSSARY_ENTRY_REFERENCE);
+
+impl<'a> GlossaryEntryReference<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}
+
+cst_node!(GlossaryEntryDefinition, GLOSSARY_ENTRY_DEFINITION);
+
+impl<'a> GlossaryEntryDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}
+
+cst_node!(TikzLibraryImport, TIKZ_LIBRARY_IMPORT);
+
+impl<'a> TikzLibraryImport<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name_list(&self) -> Option<CurlyGroupWordList<'a>> {
+        self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }

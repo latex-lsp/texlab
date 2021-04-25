@@ -19,7 +19,7 @@ pub struct WorkspaceSubset {
 
 pub type OpenHandler = Arc<dyn Fn(Arc<Document>) + Send + Sync + 'static>;
 
-pub trait Workspace {
+pub trait Workspace: Send + Sync {
     fn open(
         &self,
         uri: Arc<Uri>,
@@ -30,8 +30,30 @@ pub trait Workspace {
 
     fn register_open_handler(&self, handler: OpenHandler);
 
+    fn reload(&self, path: PathBuf) -> Result<Option<Arc<Document>>> {
+        let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
+
+        if self.is_open(&uri) {
+            return Ok(self.get(&uri));
+        }
+
+        let data = fs::read(&path)?;
+        let text = String::from_utf8_lossy(&data).into_owned();
+        if let Some(language) = DocumentLanguage::by_path(&path) {
+            Ok(Some(self.open(
+                uri,
+                text,
+                language,
+                WorkspaceSource::Server,
+            )))
+        } else {
+            Ok(None)
+        }
+    }
+
     fn load(&self, path: PathBuf) -> Result<Option<Arc<Document>>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
+
         if let Some(document) = self.get(&uri) {
             return Ok(Some(document));
         }

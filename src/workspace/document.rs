@@ -5,7 +5,7 @@ use derive_more::From;
 use crate::{
     line_index::LineIndex,
     syntax::{
-        bibtex,
+        bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
     },
     DocumentLanguage, ServerContext, Uri,
@@ -26,20 +26,36 @@ pub struct BibtexDocumentData {
 pub enum DocumentData {
     Latex(LatexDocumentData),
     Bibtex(BibtexDocumentData),
-    BuildLog,
+    BuildLog(build_log::Parse),
 }
 
 impl DocumentData {
+    pub fn language(&self) -> DocumentLanguage {
+        match self {
+            Self::Latex(_) => DocumentLanguage::Latex,
+            Self::Bibtex(_) => DocumentLanguage::Bibtex,
+            Self::BuildLog(_) => DocumentLanguage::BuildLog,
+        }
+    }
+
     pub fn as_latex(&self) -> Option<&LatexDocumentData> {
-        if let Self::Latex(v) = self {
-            Some(v)
+        if let Self::Latex(data) = self {
+            Some(data)
         } else {
             None
         }
     }
 
     pub fn as_bibtex(&self) -> Option<&BibtexDocumentData> {
-        if let Self::Bibtex(v) = self {
+        if let Self::Bibtex(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_build_log(&self) -> Option<&build_log::Parse> {
+        if let Self::BuildLog(v) = self {
             Some(v)
         } else {
             None
@@ -88,7 +104,7 @@ impl Document {
                 let root = bibtex::parse(&text).root;
                 BibtexDocumentData { root }.into()
             }
-            DocumentLanguage::BuildLog => DocumentData::BuildLog,
+            DocumentLanguage::BuildLog => DocumentData::BuildLog(build_log::parse(&text)),
         };
 
         Self {
@@ -97,5 +113,9 @@ impl Document {
             line_index,
             data,
         }
+    }
+
+    pub fn language(&self) -> DocumentLanguage {
+        self.data.language()
     }
 }

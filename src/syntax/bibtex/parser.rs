@@ -116,7 +116,7 @@ impl<'a> Parser<'a> {
         if self
             .lexer
             .peek()
-            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | NUMBER | WORD))
+            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
             .is_some()
         {
             self.value();
@@ -132,6 +132,7 @@ impl<'a> Parser<'a> {
         self.left_delimiter_or_missing();
         self.value_or_missing();
         self.right_delimiter_or_missing();
+        self.builder.finish_node();
     }
 
     fn string(&mut self) {
@@ -204,7 +205,7 @@ impl<'a> Parser<'a> {
         if self
             .lexer
             .peek()
-            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | NUMBER | WORD))
+            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
             .is_some()
         {
             self.value();
@@ -221,7 +222,7 @@ impl<'a> Parser<'a> {
         while let Some(kind) = self.peek() {
             match kind {
                 WHITESPACE => self.eat(),
-                L_CURLY | QUOTE | NUMBER | WORD => self.token(),
+                L_CURLY | QUOTE | WORD => self.token(),
                 HASH => self.eat(),
                 _ => break,
             }
@@ -234,7 +235,6 @@ impl<'a> Parser<'a> {
         match self.peek().unwrap() {
             L_CURLY => self.brace_group(),
             QUOTE => self.quote_group(),
-            NUMBER => self.eat(),
             WORD => self.eat(),
             _ => unreachable!(),
         };
@@ -261,7 +261,6 @@ impl<'a> Parser<'a> {
                 HASH => self.eat(),
                 QUOTE => self.eat(),
                 EQUALITY_SIGN => self.eat(),
-                NUMBER => self.eat(),
                 COMMAND_NAME => self.eat(),
                 _ => unreachable!(),
             };
@@ -292,7 +291,6 @@ impl<'a> Parser<'a> {
                 HASH => self.eat(),
                 QUOTE => break,
                 EQUALITY_SIGN => self.eat(),
-                NUMBER => self.eat(),
                 COMMAND_NAME => self.eat(),
                 _ => unreachable!(),
             };
@@ -382,6 +380,11 @@ mod tests {
     #[test]
     fn test_entry_one_field() {
         assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar}}"#));
+    }
+
+    #[test]
+    fn test_entry_one_field_number_key() {
+        assert_debug_snapshot!(setup(r#"@article{foo2021, author = {Foo Bar}}"#));
     }
 
     #[test]

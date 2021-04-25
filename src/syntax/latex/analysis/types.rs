@@ -47,6 +47,16 @@ pub struct ExplicitLink {
     pub kind: ExplicitLinkKind,
 }
 
+impl ExplicitLink {
+    pub fn as_component_name(&self) -> Option<String> {
+        match self.kind {
+            ExplicitLinkKind::Package => Some(format!("{}.sty", self.stem)),
+            ExplicitLinkKind::Class => Some(format!("{}.cls", self.stem)),
+            ExplicitLinkKind::Latex | ExplicitLinkKind::Bibtex => None,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Hash)]
 pub struct TheoremEnvironment {
     pub name: SmolStr,

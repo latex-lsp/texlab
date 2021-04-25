@@ -19,7 +19,6 @@ pub enum SyntaxKind {
     HASH,
     QUOTE,
     EQUALITY_SIGN,
-    NUMBER,
     COMMAND_NAME,
 
     JUNK,
@@ -33,6 +32,16 @@ pub enum SyntaxKind {
     BRACE_GROUP,
     QUOTE_GROUP,
     ROOT,
+}
+
+impl SyntaxKind {
+    pub fn is_type(&self) -> bool {
+        use SyntaxKind::*;
+        matches!(
+            self,
+            PREAMBLE_TYPE | STRING_TYPE | COMMENT_TYPE | ENTRY_TYPE
+        )
+    }
 }
 
 impl From<SyntaxKind> for cstree::SyntaxKind {

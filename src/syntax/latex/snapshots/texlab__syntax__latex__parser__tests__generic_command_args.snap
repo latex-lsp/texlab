@@ -12,7 +12,7 @@ ROOT@0..14
         TEXT@5..8
           WORD@5..8 "bar"
         R_CURLY@8..9 "}"
-      BRACK_GROUP@9..14
+      MIXED_GROUP@9..14
         L_BRACK@9..10 "["
         TEXT@10..13
           WORD@10..13 "qux"

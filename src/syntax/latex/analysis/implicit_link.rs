@@ -19,12 +19,20 @@ fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<
 
         let options = context.inner.options.read().unwrap();
         if let Some(root_dir) = options.root_directory.as_ref() {
-            let path = context.inner.current_dir.join(root_dir).join(&aux_name);
+            let path = context
+                .inner
+                .current_directory
+                .join(root_dir)
+                .join(&aux_name);
             targets.push(Arc::new(Uri::from_file_path(path).ok()?));
         }
 
         if let Some(build_dir) = options.aux_directory.as_ref() {
-            let path = context.inner.current_dir.join(build_dir).join(&aux_name);
+            let path = context
+                .inner
+                .current_directory
+                .join(build_dir)
+                .join(&aux_name);
             targets.push(Arc::new(Uri::from_file_path(path).ok()?));
         }
     }

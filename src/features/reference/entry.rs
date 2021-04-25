@@ -1,0 +1,216 @@
+use cancellation::CancellationToken;
+use lsp_types::{Location, ReferenceParams};
+
+use crate::{
+    features::cursor::CursorContext,
+    syntax::{bibtex, latex, CstNode},
+    DocumentData, LineIndexExt,
+};
+
+pub fn find_entry_references(
+    context: &CursorContext<ReferenceParams>,
+    cancellation_token: &CancellationToken,
+    references: &mut Vec<Location>,
+) -> Option<()> {
+    let key_text = find_citation_key(context).or_else(|| find_entry_key(context))?;
+
+    for document in &context.request.subset.documents {
+        cancellation_token.result().ok()?;
+
+        match &document.data {
+            DocumentData::Latex(data) => {
+                data.root
+                    .descendants()
+                    .filter_map(latex::Citation::cast)
+                    .filter_map(|citation| citation.key_list())
+                    .flat_map(|keys| keys.words())
+                    .filter(|key| key.text() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .for_each(|range| {
+                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
+                    });
+            }
+            DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
+                data.root
+                    .children()
+                    .filter_map(bibtex::Entry::cast)
+                    .filter_map(|entry| entry.key())
+                    .filter(|key| key.text() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .for_each(|range| {
+                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
+                    });
+            }
+            DocumentData::Bibtex(_) | DocumentData::BuildLog(_) => {}
+        }
+    }
+    Some(())
+}
+
+fn find_citation_key(context: &CursorContext<ReferenceParams>) -> Option<&str> {
+    let key = context
+        .cursor
+        .as_latex()
+        .filter(|token| token.kind() == latex::WORD)?;
+
+    let group = latex::CurlyGroupWordList::cast(key.parent())?;
+    latex::Citation::cast(group.syntax().parent()?)?;
+    Some(key.text())
+}
+
+fn find_entry_key(context: &CursorContext<ReferenceParams>) -> Option<&str> {
+    let key = context
+        .cursor
+        .as_bibtex()
+        .filter(|token| token.kind() == bibtex::WORD)?;
+
+    bibtex::Entry::cast(key.parent())?;
+    Some(key.text())
+}
+
+#[cfg(test)]
+mod tests {
+    use lsp_types::Range;
+
+    use crate::{features::testing::FeatureTester, RangeExt};
+
+    use super::*;
+
+    #[test]
+    fn test_empty_latex_document() {
+        let request = FeatureTester::builder()
+            .files(vec![("main.tex", "")])
+            .main("main.tex")
+            .line(0)
+            .character(0)
+            .build()
+            .reference();
+
+        let mut actual_references = Vec::new();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        assert!(actual_references.is_empty());
+    }
+
+    #[test]
+    fn test_empty_bibtex_document() {
+        let request = FeatureTester::builder()
+            .files(vec![("main.bib", "")])
+            .main("main.bib")
+            .line(0)
+            .character(0)
+            .build()
+            .reference();
+
+        let mut actual_references = Vec::new();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        assert!(actual_references.is_empty());
+    }
+
+    #[test]
+    fn test_definition() {
+        let tester = FeatureTester::builder()
+            .files(vec![
+                ("foo.bib", r#"@article{foo,}"#),
+                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
+            ])
+            .main("foo.bib")
+            .line(0)
+            .character(11)
+            .build();
+        let uri = tester.uri("bar.tex");
+        let mut actual_references = Vec::new();
+
+        let request = tester.reference();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        let expected_references = vec![Location::new(
+            uri.as_ref().clone().into(),
+            Range::new_simple(0, 6, 0, 9),
+        )];
+        assert_eq!(actual_references, expected_references);
+    }
+
+    #[test]
+    fn test_definition_include_declaration() {
+        let tester = FeatureTester::builder()
+            .files(vec![
+                ("foo.bib", r#"@article{foo,}"#),
+                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
+            ])
+            .main("foo.bib")
+            .line(0)
+            .character(11)
+            .include_declaration(true)
+            .build();
+        let uri1 = tester.uri("foo.bib");
+        let uri2 = tester.uri("bar.tex");
+        let mut actual_references = Vec::new();
+
+        let request = tester.reference();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        let expected_references = vec![
+            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
+            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
+        ];
+        assert_eq!(actual_references, expected_references);
+    }
+
+    #[test]
+    fn test_reference() {
+        let tester = FeatureTester::builder()
+            .files(vec![
+                ("foo.bib", r#"@article{foo,}"#),
+                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
+            ])
+            .main("bar.tex")
+            .line(0)
+            .character(8)
+            .build();
+        let uri = tester.uri("bar.tex");
+        let mut actual_references = Vec::new();
+
+        let request = tester.reference();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        let expected_references = vec![Location::new(
+            uri.as_ref().clone().into(),
+            Range::new_simple(0, 6, 0, 9),
+        )];
+        assert_eq!(actual_references, expected_references);
+    }
+
+    #[test]
+    fn test_reference_include_declaration() {
+        let tester = FeatureTester::builder()
+            .files(vec![
+                ("foo.bib", r#"@article{foo,}"#),
+                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
+            ])
+            .main("bar.tex")
+            .line(0)
+            .character(6)
+            .include_declaration(true)
+            .build();
+        let uri1 = tester.uri("foo.bib");
+        let uri2 = tester.uri("bar.tex");
+        let mut actual_references = Vec::new();
+
+        let request = tester.reference();
+        let context = CursorContext::new(request);
+        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+
+        let expected_references = vec![
+            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
+            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
+        ];
+        assert_eq!(actual_references, expected_references);
+    }
+}

@@ -3,7 +3,8 @@ use std::sync::Arc;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    Document, DocumentLanguage, OpenHandler, Uri, Workspace, WorkspaceSource, WorkspaceSubset,
+    component_db::COMPONENT_DATABASE, Document, DocumentLanguage, OpenHandler, Uri, Workspace,
+    WorkspaceSource, WorkspaceSubset,
 };
 
 pub struct ChildrenExpander<W> {
@@ -27,7 +28,13 @@ where
             let extras = &data.extras;
             let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];
             for link in &extras.explicit_links {
-                all_targets.push(&link.targets);
+                if link
+                    .as_component_name()
+                    .and_then(|name| COMPONENT_DATABASE.find(&name))
+                    .is_none()
+                {
+                    all_targets.push(&link.targets);
+                }
             }
 
             all_targets.into_par_iter().for_each(|targets| {

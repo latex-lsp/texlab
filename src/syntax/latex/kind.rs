@@ -119,6 +119,55 @@ pub enum SyntaxKind {
     ROOT,
 }
 
+impl SyntaxKind {
+    pub fn is_command_name(&self) -> bool {
+        use SyntaxKind::*;
+        matches!(
+            self,
+            GENERIC_COMMAND_NAME
+                | BEGIN_ENVIRONMENT_NAME
+                | END_ENVIRONMENT_NAME
+                | BEGIN_EQUATION_NAME
+                | END_EQUATION_NAME
+                | PART_NAME
+                | CHAPTER_NAME
+                | SECTION_NAME
+                | SUBSECTION_NAME
+                | SUBSUBSECTION_NAME
+                | PARAGRAPH_NAME
+                | SUBPARAGRAPH_NAME
+                | ENUM_ITEM_NAME
+                | CAPTION_NAME
+                | CITATION_NAME
+                | PACKAGE_INCLUDE_NAME
+                | CLASS_INCLUDE_NAME
+                | LATEX_INCLUDE_NAME
+                | BIBLATEX_INCLUDE_NAME
+                | BIBTEX_INCLUDE_NAME
+                | GRAPHICS_INCLUDE_NAME
+                | SVG_INCLUDE_NAME
+                | INKSCAPE_INCLUDE_NAME
+                | VERBATIM_INCLUDE_NAME
+                | IMPORT_NAME
+                | LABEL_DEFINITION_NAME
+                | LABEL_REFERENCE_NAME
+                | LABEL_REFERENCE_RANGE_NAME
+                | LABEL_NUMBER_NAME
+                | COMMAND_DEFINITION_NAME
+                | MATH_OPERATOR_NAME
+                | GLOSSARY_ENTRY_DEFINITION_NAME
+                | GLOSSARY_ENTRY_REFERENCE_NAME
+                | ACRONYM_DEFINITION_NAME
+                | ACRONYM_REFERENCE_NAME
+                | THEOREM_DEFINITION_NAME
+                | COLOR_REFERENCE_NAME
+                | COLOR_DEFINITION_NAME
+                | COLOR_SET_DEFINITION_NAME
+                | TIKZ_LIBRARY_IMPORT_NAME
+        )
+    }
+}
+
 impl From<SyntaxKind> for cstree::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         Self(kind as u16)

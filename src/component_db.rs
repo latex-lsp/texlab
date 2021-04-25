@@ -1,7 +1,10 @@
+use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
+
+use crate::WorkspaceSubset;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,37 +32,34 @@ impl ComponentDatabase {
         })
     }
 
-    // pub fn linked_components(
-    //     &self,
-    //     workspace: &Workspace,
-    //     file_uris: &[Arc<Uri>],
-    // ) -> Vec<&'static Component> {
-    //     let mut start_components = vec![COMPONENT_DATABASE.kernel()];
-    //     for file_uri in file_uris {
-    //         workspace
-    //             .extras(&file_uri)
-    //             .explicit_links
-    //             .iter()
-    //             .filter_map(|link| link.as_component_name())
-    //             .filter_map(|name| COMPONENT_DATABASE.find(&name))
-    //             .for_each(|component| start_components.push(component));
-    //     }
+    pub fn linked_components<'a>(&self, subset: &WorkspaceSubset) -> Vec<&Component> {
+        let mut start_components = vec![self.kernel()];
+        for document in &subset.documents {
+            if let Some(data) = document.data.as_latex() {
+                data.extras
+                    .explicit_links
+                    .iter()
+                    .filter_map(|link| link.as_component_name())
+                    .filter_map(|name| self.find(&name))
+                    .for_each(|component| start_components.push(component));
+            }
+        }
 
-    //     let mut all_components = Vec::new();
-    //     for component in start_components {
-    //         all_components.push(component);
-    //         component
-    //             .references
-    //             .iter()
-    //             .flat_map(|file| COMPONENT_DATABASE.find(&file))
-    //             .for_each(|component| all_components.push(component))
-    //     }
+        let mut all_components = Vec::new();
+        for component in start_components {
+            all_components.push(component);
+            component
+                .references
+                .iter()
+                .flat_map(|file| self.find(&file))
+                .for_each(|component| all_components.push(component))
+        }
 
-    //     all_components
-    //         .into_iter()
-    //         .unique_by(|component| &component.file_names)
-    //         .collect()
-    // }
+        all_components
+            .into_iter()
+            .unique_by(|component| &component.file_names)
+            .collect()
+    }
 
     pub fn contains(&self, short_name: &str) -> bool {
         let sty = format!("{}.sty", short_name);

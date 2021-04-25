@@ -235,38 +235,39 @@ impl<'a> Parser<'a> {
         self.group_with_token(BRACK_GROUP_WORD, WORD, R_BRACK);
     }
 
-    fn paren_group(&mut self) {
-        self.builder.start_node(PAREN_GROUP.into());
-        self.eat();
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    R_CURLY
-                        | R_BRACK
-                        | R_PAREN
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | PARAGRAPH_NAME
-                        | SUBPARAGRAPH_NAME
-                        | ENUM_ITEM_NAME
-                        | END_ENVIRONMENT_NAME
-                )
-            })
-            .is_some()
-        {
-            self.content();
-        }
-        self.expect(R_PAREN);
-        self.builder.finish_node();
-    }
+    // fn paren_group(&mut self) {
+    //     self.builder.start_node(PAREN_GROUP.into());
+    //     self.eat();
+    //     while self
+    //         .peek()
+    //         .filter(|&kind| {
+    //             !matches!(
+    //                 kind,
+    //                 R_CURLY
+    //                     | R_BRACK
+    //                     | R_PAREN
+    //                     | PART_NAME
+    //                     | CHAPTER_NAME
+    //                     | SECTION_NAME
+    //                     | SUBSECTION_NAME
+    //                     | PARAGRAPH_NAME
+    //                     | SUBPARAGRAPH_NAME
+    //                     | ENUM_ITEM_NAME
+    //                     | END_ENVIRONMENT_NAME
+    //             )
+    //         })
+    //         .is_some()
+    //     {
+    //         self.content();
+    //     }
+    //     self.expect(R_PAREN);
+    //     self.builder.finish_node();
+    // }
 
     fn mixed_group(&mut self) {
         self.builder.start_node(MIXED_GROUP.into());
         self.eat();
+        self.trivia();
         while self
             .peek()
             .filter(|&kind| {
@@ -289,7 +290,7 @@ impl<'a> Parser<'a> {
         {
             self.content();
         }
-        self.expect2(R_BRACK, R_CURLY);
+        self.expect2(R_BRACK, R_PAREN);
         self.builder.finish_node();
     }
 
@@ -376,6 +377,7 @@ impl<'a> Parser<'a> {
     fn formula(&mut self) {
         self.builder.start_node(FORMULA.into());
         self.eat();
+        self.trivia();
         while self
             .peek()
             .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME | DOLLAR))
@@ -383,6 +385,7 @@ impl<'a> Parser<'a> {
         {
             self.content();
         }
+        self.expect(DOLLAR);
         self.builder.finish_node();
     }
 
@@ -393,8 +396,7 @@ impl<'a> Parser<'a> {
             match kind {
                 WHITESPACE | COMMENT => self.eat(),
                 L_CURLY => self.curly_group(),
-                L_BRACK => self.brack_group(),
-                L_PAREN => self.paren_group(),
+                L_BRACK | L_PAREN => self.mixed_group(),
                 _ => break,
             }
         }
@@ -427,7 +429,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.peek() == Some(L_BRACK) {
-            self.brack_group();
+            self.brack_group_key_value();
         }
         self.builder.finish_node();
     }
@@ -687,7 +689,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         if self.peek() == Some(L_BRACK) {
-            self.brack_group();
+            self.brack_group_word();
         }
 
         while self

@@ -18,10 +18,10 @@ enum LogosToken {
     #[regex(r"@[Cc][Oo][Mm][Mm][Ee][Nn][Tt]")]
     COMMENT_TYPE,
 
-    #[regex(r"@[!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z][!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z0-9]*")]
+    #[regex(r"@[!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z][!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z0-9]*|@")]
     ENTRY_TYPE,
 
-    #[regex(r#"[^\s\{\}\(\),#"=\d\\]+"#)]
+    #[regex(r#"[^\s\{\}\(\),#"=\\]+"#)]
     #[error]
     WORD,
 
@@ -48,9 +48,6 @@ enum LogosToken {
 
     #[token("=")]
     EQUALITY_SIGN,
-
-    #[regex(r"\d+")]
-    NUMBER,
 
     #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
     COMMAND_NAME,

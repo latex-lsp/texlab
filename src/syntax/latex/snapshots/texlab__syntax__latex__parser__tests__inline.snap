@@ -10,10 +10,10 @@ ROOT@0..19
       TEXT@1..3
         WORD@1..2 "x"
         WHITESPACE@2..3 " "
-      GENERIC_COMMAND@3..19
+      GENERIC_COMMAND@3..18
         GENERIC_COMMAND_NAME@3..6 "\\in"
         WHITESPACE@6..7 " "
-        BRACK_GROUP@7..19
+        MIXED_GROUP@7..18
           L_BRACK@7..8 "["
           TEXT@8..11
             WORD@8..9 "0"
@@ -21,9 +21,6 @@ ROOT@0..19
             WHITESPACE@10..11 " "
           GENERIC_COMMAND@11..17
             GENERIC_COMMAND_NAME@11..17 "\\infty"
-          ERROR@17..18
-            R_PAREN@17..18 ")"
-          FORMULA@18..19
-            DOLLAR@18..19 "$"
-          MISSING@19..19 ""
+          R_PAREN@17..18 ")"
+      DOLLAR@18..19 "$"
 

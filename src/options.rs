@@ -7,4 +7,18 @@ use serde::{Deserialize, Serialize};
 pub struct Options {
     pub root_directory: Option<PathBuf>,
     pub aux_directory: Option<PathBuf>,
+    pub bibtex_formatter: Option<BibtexFormatter>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BibtexFormatter {
+    Texlab,
+    Latexindent,
+}
+
+impl Default for BibtexFormatter {
+    fn default() -> Self {
+        Self::Texlab
+    }
 }

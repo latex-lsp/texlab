@@ -1,0 +1,16 @@
+---
+source: src/features/formatting/bibtex_internal.rs
+expression: edit.new_text
+
+---
+@article{foo,
+	bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum
+	       dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,
+	       consectetur adipiscing elit.},
+}
+@article{foo,
+	bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum
+	       dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,
+	       consectetur adipiscing elit.},
+}
+
