@@ -1,0 +1,44 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: futures
+    versions:
+    - 0.3.12
+    - 0.3.13
+  - dependency-name: tokio-util
+    versions:
+    - 0.6.2
+    - 0.6.3
+    - 0.6.4
+    - 0.6.5
+  - dependency-name: async-trait
+    versions:
+    - 0.1.42
+    - 0.1.47
+  - dependency-name: image
+    versions:
+    - 0.23.12
+    - 0.23.13
+    - 0.23.14
+  - dependency-name: lsp-types
+    versions:
+    - 0.86.0
+    - 0.87.0
+    - 0.88.0
+  - dependency-name: uuid
+    versions:
+    - 0.8.2
+  - dependency-name: lalrpop
+    versions:
+    - 0.19.4
+  - dependency-name: lalrpop-util
+    versions:
+    - 0.19.4
+  - dependency-name: tokio
+    versions:
+    - 0.2.24
