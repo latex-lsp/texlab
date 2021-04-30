@@ -180,7 +180,9 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
     }
 
     #[jsonrpc_method("exit", kind = "notification")]
-    pub async fn exit(&self, _params: ()) {}
+    pub async fn exit(&self, _params: ()) {
+        std::process::exit(0)
+    }
 
     #[jsonrpc_method("$/cancelRequest", kind = "notification")]
     pub async fn cancel_request(&self, _params: CancelParams) {}
