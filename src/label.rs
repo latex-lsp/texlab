@@ -129,23 +129,23 @@ impl RenderedLabel {
 pub fn render_label<'a>(
     subset: &'a WorkspaceSubset,
     label_name: &str,
-    label: Option<latex::LabelDefinition<'a>>,
+    mut label: Option<latex::LabelDefinition<'a>>,
 ) -> Option<RenderedLabel> {
     let mut number = find_label_number(subset, label_name).map(ToString::to_string);
-    let main_document = subset.documents.first()?;
-    let data = main_document.data.as_latex()?;
 
-    label
-        .or_else(|| find_label_definition(&data.root, label_name))?
-        .syntax()
-        .ancestors()
-        .find_map(|parent| {
-            render_label_float(parent, &mut number)
-                .or_else(|| render_label_section(parent, &mut number))
-                .or_else(|| render_label_enum_item(parent, &mut number))
-                .or_else(|| render_label_equation(parent, &mut number))
-                .or_else(|| render_label_theorem(subset, parent, &mut number))
-        })
+    for document in &subset.documents {
+        if let Some(data) = document.data.as_latex() {
+            label = label.or_else(|| find_label_definition(&data.root, label_name));
+        }
+    }
+
+    label?.syntax().ancestors().find_map(|parent| {
+        render_label_float(parent, &mut number)
+            .or_else(|| render_label_section(parent, &mut number))
+            .or_else(|| render_label_enum_item(parent, &mut number))
+            .or_else(|| render_label_equation(parent, &mut number))
+            .or_else(|| render_label_theorem(subset, parent, &mut number))
+    })
 }
 
 pub fn find_label_definition<'a>(
