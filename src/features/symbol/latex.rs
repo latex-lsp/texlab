@@ -21,7 +21,11 @@ pub fn find_latex_symbols(
     buf: &mut Vec<InternalSymbol>,
     token: &CancellationToken,
 ) -> Option<()> {
-    let main_document = subset.documents.first()?;
+    let main_document = subset
+        .documents
+        .first()
+        .filter(|document| document.uri.as_str().ends_with(".tex"))?;
+
     let data = main_document.data.as_latex()?;
     let mut context = Context {
         subset,
