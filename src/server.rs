@@ -95,7 +95,7 @@ impl Server {
             }),
             folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
             definition_provider: Some(OneOf::Left(true)),
-            // references_provider: Some(OneOf::Left(true)),
+            references_provider: Some(OneOf::Left(true)),
             hover_provider: Some(HoverProviderCapability::Simple(true)),
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
