@@ -2,19 +2,15 @@ use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
 use crate::{
-    component_db::COMPONENT_DATABASE, features::FeatureRequest, syntax::latex, LineIndexExt,
+    component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex, LineIndexExt,
 };
 
 pub fn find_component_hover(
-    request: &FeatureRequest<HoverParams>,
+    context: &CursorContext<HoverParams>,
     token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
+    let main_document = context.request.main_document();
     let data = main_document.data.as_latex()?;
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
-
     for link in &data.extras.explicit_links {
         if token.is_canceled() {
             break;
@@ -23,7 +19,7 @@ pub fn find_component_hover(
         if matches!(
             link.kind,
             latex::ExplicitLinkKind::Package | latex::ExplicitLinkKind::Class
-        ) && link.stem_range.contains(offset)
+        ) && link.stem_range.contains_inclusive(context.offset)
         {
             let docs = COMPONENT_DATABASE.documentation(&link.stem)?;
             return Some(Hover {
@@ -53,7 +49,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_component_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_component_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -68,7 +65,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_component_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_component_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -83,7 +81,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_component_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_component_hover(&context, CancellationToken::none()).unwrap();
 
         assert_eq!(actual_hover.range.unwrap(), Range::new_simple(0, 12, 0, 19));
     }
@@ -98,7 +97,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_component_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_component_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }

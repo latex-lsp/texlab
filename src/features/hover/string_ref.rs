@@ -2,25 +2,21 @@ use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
 
 use crate::{
-    features::FeatureRequest,
+    features::cursor::CursorContext,
     syntax::{bibtex, CstNode},
     LineIndexExt,
 };
 
 pub fn find_string_reference_hover(
-    request: &FeatureRequest<HoverParams>,
-    token: &CancellationToken,
+    context: &CursorContext<HoverParams>,
+    cancellation_token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
+    let main_document = context.request.main_document();
     let data = main_document.data.as_bibtex()?;
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
 
-    let name = data
-        .root
-        .token_at_offset(offset)
-        .right_biased()
+    let name = context
+        .cursor
+        .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)?;
 
     if !matches!(name.parent().kind(), bibtex::TOKEN | bibtex::STRING) {
@@ -28,7 +24,7 @@ pub fn find_string_reference_hover(
     }
 
     for string in data.root.children().filter_map(bibtex::String::cast) {
-        if token.is_canceled() {
+        if cancellation_token.is_canceled() {
             return None;
         }
 
@@ -70,7 +66,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_string_reference_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -85,7 +82,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_string_reference_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -107,8 +105,9 @@ mod tests {
             .build()
             .hover();
 
+        let context = CursorContext::new(request);
         let actual_hover =
-            find_string_reference_hover(&request, CancellationToken::none()).unwrap();
+            find_string_reference_hover(&context, CancellationToken::none()).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -138,7 +137,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_string_reference_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
         assert_eq!(actual_hover, None);
     }
 }

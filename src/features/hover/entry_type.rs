@@ -1,31 +1,16 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 
-use crate::{features::FeatureRequest, syntax::bibtex, LineIndexExt, LANGUAGE_DATA};
+use crate::{features::cursor::CursorContext, LineIndexExt, LANGUAGE_DATA};
 
 pub fn find_entry_type_hover(
-    request: &FeatureRequest<HoverParams>,
+    context: &CursorContext<HoverParams>,
     _token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
-    let data = main_document.data.as_bibtex()?;
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
-
-    let name = data
-        .root
-        .token_at_offset(offset)
-        .right_biased()
-        .filter(|token| {
-            matches!(
-                token.kind(),
-                bibtex::PREAMBLE_TYPE
-                    | bibtex::STRING_TYPE
-                    | bibtex::ENTRY_TYPE
-                    | bibtex::COMMENT_TYPE
-            )
-        })?;
+    let name = context
+        .cursor
+        .as_bibtex()
+        .filter(|token| token.kind().is_type())?;
 
     let docs = LANGUAGE_DATA.entry_type_documentation(&name.text()[1..])?;
     Some(Hover {
@@ -34,7 +19,9 @@ pub fn find_entry_type_hover(
             value: docs.to_string(),
         }),
         range: Some(
-            main_document
+            context
+                .request
+                .main_document()
                 .line_index
                 .line_col_lsp_range(name.text_range()),
         ),
@@ -59,7 +46,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_entry_type_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -74,7 +62,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_entry_type_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -89,7 +78,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_entry_type_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_entry_type_hover(&context, CancellationToken::none()).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -114,7 +104,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_entry_type_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -129,7 +120,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_entry_type_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }

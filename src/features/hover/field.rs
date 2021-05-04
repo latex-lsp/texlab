@@ -2,25 +2,20 @@ use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 
 use crate::{
-    features::FeatureRequest,
+    features::cursor::CursorContext,
     syntax::{bibtex, CstNode},
     LineIndexExt, LANGUAGE_DATA,
 };
 
 pub fn find_field_hover(
-    request: &FeatureRequest<HoverParams>,
+    context: &CursorContext<HoverParams>,
     _token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
-    let data = main_document.data.as_bibtex()?;
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
+    let main_document = context.request.main_document();
 
-    let name = data
-        .root
-        .token_at_offset(offset)
-        .right_biased()
+    let name = context
+        .cursor
+        .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)?;
 
     bibtex::Field::cast(name.parent())?;
@@ -57,7 +52,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_field_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_field_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -72,7 +68,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_field_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_field_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -87,7 +84,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_field_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_field_hover(&context, CancellationToken::none()).unwrap();
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
@@ -108,7 +106,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_field_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_field_hover(&context, CancellationToken::none());
         assert_eq!(actual_hover, None);
     }
 
@@ -122,7 +121,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_field_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_field_hover(&context, CancellationToken::none());
         assert_eq!(actual_hover, None);
     }
 }

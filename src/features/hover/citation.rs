@@ -1,53 +1,31 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
-use crate::{
-    citation,
-    features::FeatureRequest,
-    syntax::{bibtex, latex, CstNode},
-    DocumentData, LineIndexExt,
-};
+use crate::{citation, features::cursor::CursorContext, LineIndexExt};
 
 pub fn find_citation_hover(
-    request: &FeatureRequest<HoverParams>,
-    _token: &CancellationToken,
+    context: &CursorContext<HoverParams>,
+    cancellation_token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
+    cancellation_token.result().ok()?;
+    let main_document = context.request.main_document();
 
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
+    let (key, key_range) = context
+        .find_citation_key_word()
+        .or_else(|| context.find_citation_key_command())
+        .or_else(|| context.find_entry_key())?;
 
-    let (key, key_range) = match &main_document.data {
-        DocumentData::Latex(data) => {
-            let word = data
-                .root
-                .token_at_offset(offset)
-                .right_biased()
-                .filter(|token| token.kind() == latex::WORD)?;
-
-            latex::Citation::cast(word.parent().parent()?);
-            (word.text().to_string(), word.text_range())
-        }
-        DocumentData::Bibtex(data) => {
-            let word = data
-                .root
-                .token_at_offset(offset)
-                .right_biased()
-                .filter(|token| token.kind() == bibtex::WORD)?;
-
-            bibtex::Entry::cast(word.parent())?;
-            (word.text().to_string(), word.text_range())
-        }
-        DocumentData::BuildLog(_) => return None,
-    };
-
-    let contents = request.subset.documents.iter().find_map(|document| {
-        document
-            .data
-            .as_bibtex()
-            .and_then(|data| citation::render_citation(&data.root, &key))
-    })?;
+    let contents = context
+        .request
+        .subset
+        .documents
+        .iter()
+        .find_map(|document| {
+            document
+                .data
+                .as_bibtex()
+                .and_then(|data| citation::render_citation(&data.root, &key))
+        })?;
 
     Some(Hover {
         range: Some(main_document.line_index.line_col_lsp_range(key_range)),
@@ -73,7 +51,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_citation_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_citation_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -88,7 +67,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_citation_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_citation_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -109,7 +89,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_citation_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_citation_hover(&context, CancellationToken::none()).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -137,7 +118,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_citation_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_citation_hover(&context, CancellationToken::none()).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {

@@ -1,39 +1,22 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
-use crate::{features::FeatureRequest, render_label, syntax::latex, LineIndexExt};
+use crate::{features::cursor::CursorContext, render_label, LineIndexExt};
 
 pub fn find_label_hover(
-    request: &FeatureRequest<HoverParams>,
+    context: &CursorContext<HoverParams>,
     _token: &CancellationToken,
 ) -> Option<Hover> {
-    let main_document = request.main_document();
-    let data = main_document.data.as_latex()?;
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
+    let main_document = context.request.main_document();
 
-    let name = data
-        .root
-        .token_at_offset(offset)
-        .right_biased()
-        .filter(|token| token.kind() == latex::WORD)?;
+    let (name_text, name_range) = context
+        .find_label_name_word()
+        .or_else(|| context.find_label_name_command())?;
 
-    if !matches!(
-        name.parent().parent()?.kind(),
-        latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
-    ) {
-        return None;
-    }
-
-    let label = render_label(&request.subset, name.text(), None)?;
+    let label = render_label(&context.request.subset, name_text, None)?;
 
     Some(Hover {
-        range: Some(
-            main_document
-                .line_index
-                .line_col_lsp_range(name.text_range()),
-        ),
+        range: Some(main_document.line_index.line_col_lsp_range(name_range)),
         contents: HoverContents::Markup(label.documentation()),
     })
 }
@@ -56,7 +39,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_label_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_label_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -71,7 +55,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_label_hover(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_hover = find_label_hover(&context, CancellationToken::none());
 
         assert_eq!(actual_hover, None);
     }
@@ -86,7 +71,8 @@ mod tests {
             .build()
             .hover();
 
-        let actual_hover = find_label_hover(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_hover = find_label_hover(&context, CancellationToken::none()).unwrap();
 
         assert_eq!(actual_hover.range.unwrap(), Range::new_simple(0, 20, 0, 27));
     }
