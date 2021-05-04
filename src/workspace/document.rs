@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt, sync::Arc};
 
 use derive_more::From;
 
@@ -63,12 +63,18 @@ impl DocumentData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Document {
     pub uri: Arc<Uri>,
     pub text: String,
     pub line_index: LineIndex,
     pub data: DocumentData,
+}
+
+impl fmt::Debug for Document {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.uri)
+    }
 }
 
 impl Document {

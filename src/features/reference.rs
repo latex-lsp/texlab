@@ -17,6 +17,7 @@ pub fn find_all_references(
 ) -> Option<Vec<Location>> {
     let mut references = Vec::new();
     let context = CursorContext::new(request);
+    log::debug!("[References] Cursor: {:?}", context.cursor);
     find_label_references(&context, cancellation_token, &mut references);
     find_entry_references(&context, cancellation_token, &mut references);
     find_string_references(&context, cancellation_token, &mut references);

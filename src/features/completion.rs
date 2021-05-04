@@ -71,6 +71,7 @@ pub fn complete(
 ) -> Option<CompletionList> {
     let mut items = Vec::new();
     let context = CursorContext::new(request);
+    log::debug!("[Completion] Cursor: {:?}", context.cursor);
     complete_entry_types(&context, &mut items, cancellation_token);
     complete_fields(&context, &mut items, cancellation_token);
     complete_arguments(&context, &mut items, cancellation_token);

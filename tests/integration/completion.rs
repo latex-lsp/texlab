@@ -274,6 +274,38 @@ mod latex {
     }
 
     #[test]
+    fn test_citation_open_brace() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let tex_uri = server.open(
+            "main.tex",
+            r#"
+                \documentclass{article}
+                \bibliography{main}
+                \begin{document}
+                \cite{Foo
+                \end{document}
+            "#,
+            "latex",
+            false,
+        )?;
+        server.open(
+            "main.bib",
+            r#"
+                @article{FooBar,
+                    author = {Foo Bar},
+                    title = {Baz Qux},
+                    year = {2019},
+                }
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 9)?);
+        Ok(())
+    }
+
+    #[test]
     fn test_color_name() -> Result<()> {
         let server = ServerTester::launch_new_instance()?;
         server.initialize(ClientCapabilities::default(), None)?;

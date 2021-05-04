@@ -24,6 +24,7 @@ pub fn find_hover(
     cabcellation_token: &CancellationToken,
 ) -> Option<Hover> {
     let context = CursorContext::new(request);
+    log::debug!("[Hover] Cursor: {:?}", context.cursor);
     let mut hover = find_label_hover(&context, cabcellation_token);
 
     cfg_if! {
