@@ -63,7 +63,7 @@ use super::{
     FeatureRequest,
 };
 
-pub const COMPLETION_LIMIT: usize = 35;
+pub const COMPLETION_LIMIT: usize = 50;
 
 pub fn complete(
     request: FeatureRequest<CompletionParams>,
