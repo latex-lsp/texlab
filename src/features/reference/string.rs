@@ -12,13 +12,12 @@ pub fn find_string_references(
     cancellation_token: &CancellationToken,
     items: &mut Vec<Location>,
 ) -> Option<()> {
-    let token = context
+    let name_text = context
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)
-        .filter(|token| matches!(token.parent().kind(), bibtex::TOKEN | bibtex::STRING))?;
-
-    let name_text = token.text();
+        .filter(|token| matches!(token.parent().kind(), bibtex::TOKEN | bibtex::STRING))?
+        .text();
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;

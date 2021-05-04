@@ -12,7 +12,10 @@ pub fn find_entry_references(
     cancellation_token: &CancellationToken,
     references: &mut Vec<Location>,
 ) -> Option<()> {
-    let key_text = find_citation_key(context).or_else(|| find_entry_key(context))?;
+    let (key_text, _) = context
+        .find_citation_key_word()
+        .or_else(|| context.find_citation_key_command())
+        .or_else(|| context.find_entry_key())?;
 
     for document in &context.request.subset.documents {
         cancellation_token.result().ok()?;
@@ -45,27 +48,6 @@ pub fn find_entry_references(
         }
     }
     Some(())
-}
-
-fn find_citation_key(context: &CursorContext<ReferenceParams>) -> Option<&str> {
-    let key = context
-        .cursor
-        .as_latex()
-        .filter(|token| token.kind() == latex::WORD)?;
-
-    let group = latex::CurlyGroupWordList::cast(key.parent())?;
-    latex::Citation::cast(group.syntax().parent()?)?;
-    Some(key.text())
-}
-
-fn find_entry_key(context: &CursorContext<ReferenceParams>) -> Option<&str> {
-    let key = context
-        .cursor
-        .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)?;
-
-    bibtex::Entry::cast(key.parent())?;
-    Some(key.text())
 }
 
 #[cfg(test)]

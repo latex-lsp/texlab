@@ -10,7 +10,7 @@ pub fn find_citation_hover(
     cancellation_token.result().ok()?;
     let main_document = context.request.main_document();
 
-    let (key, key_range) = context
+    let (key_text, key_range) = context
         .find_citation_key_word()
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
@@ -24,7 +24,7 @@ pub fn find_citation_hover(
             document
                 .data
                 .as_bibtex()
-                .and_then(|data| citation::render_citation(&data.root, &key))
+                .and_then(|data| citation::render_citation(&data.root, &key_text))
         })?;
 
     Some(Hover {

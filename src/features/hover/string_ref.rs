@@ -17,11 +17,8 @@ pub fn find_string_reference_hover(
     let name = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)?;
-
-    if !matches!(name.parent().kind(), bibtex::TOKEN | bibtex::STRING) {
-        return None;
-    }
+        .filter(|token| token.kind() == bibtex::WORD)
+        .filter(|name| matches!(name.parent().kind(), bibtex::TOKEN | bibtex::STRING))?;
 
     for string in data.root.children().filter_map(bibtex::String::cast) {
         if cancellation_token.is_canceled() {

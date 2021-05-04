@@ -14,19 +14,10 @@ pub fn find_label_references(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let name = context
-        .cursor
-        .as_latex()
-        .filter(|token| token.kind() == latex::WORD)?;
+    let (name_text, _) = context
+        .find_label_name_word()
+        .or_else(|| context.find_label_name_command())?;
 
-    if !matches!(
-        name.parent().parent()?.kind(),
-        latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
-    ) {
-        return None;
-    }
-
-    let name_text = name.text();
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
             for node in data.root.descendants() {
