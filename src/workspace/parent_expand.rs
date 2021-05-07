@@ -43,7 +43,7 @@ where
         let mut files = Vec::new();
         if uri.scheme() == "file" {
             if let Ok(mut path) = uri.to_file_path() {
-                while path.pop() {
+                while path.pop() && !self.has_parent(Arc::clone(&uri)).unwrap_or(false) {
                     fs::read_dir(&path)
                         .into_iter()
                         .flatten()
@@ -95,5 +95,29 @@ where
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {
         self.workspace.subset(uri)
+    }
+}
+
+impl<W> ParentExpander<W>
+where
+    W: Workspace + Send + Sync + 'static,
+{
+    fn has_parent(&self, uri: Arc<Uri>) -> Option<bool> {
+        let subset = self.subset(Arc::clone(&uri))?;
+        Some(subset.documents.iter().any(|document| {
+            document
+                .data
+                .as_latex()
+                .map(|data| {
+                    data.extras.has_document_environment
+                        && data
+                            .extras
+                            .explicit_links
+                            .iter()
+                            .filter_map(|link| link.as_component_name())
+                            .all(|name| name != "subfiles.cls")
+                })
+                .unwrap_or(false)
+        }))
     }
 }
