@@ -93,10 +93,19 @@ fn analyze_curly_group(
         return None;
     }
 
-    if !node
-        .children_with_tokens()
-        .filter_map(|element| element.into_token())
-        .any(|token| token.kind() == latex::R_CURLY)
+    let is_inside_verbatim = node
+        .ancestors()
+        .filter_map(latex::Environment::cast)
+        .filter_map(|env| env.begin())
+        .filter_map(|begin| begin.name())
+        .filter_map(|name| name.word())
+        .any(|name| ["asy", "lstlisting", "minted", "verbatim"].contains(&name.text()));
+
+    if !is_inside_verbatim
+        && !node
+            .children_with_tokens()
+            .filter_map(|element| element.into_token())
+            .any(|token| token.kind() == latex::R_CURLY)
     {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
