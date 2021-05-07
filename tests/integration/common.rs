@@ -12,7 +12,7 @@ use lsp_server::{Connection, RequestId};
 use lsp_types::{notification::Notification, request::Request, *};
 use rustc_hash::FxHashMap;
 use tempfile::{tempdir, TempDir};
-use texlab::{Options, Server};
+use texlab::Server;
 use unindent::unindent;
 
 pub struct ServerTester {
@@ -257,18 +257,18 @@ impl ServerTester {
         Ok(symbols)
     }
 
-    pub fn change_configuration(&self, options: Options) -> Result<()> {
-        self.client.sender.send(
-            lsp_server::Notification::new(
-                notification::DidChangeConfiguration::METHOD.to_string(),
-                DidChangeConfigurationParams {
-                    settings: serde_json::to_value(options)?,
-                },
-            )
-            .into(),
-        )?;
-        Ok(())
-    }
+    // pub fn change_configuration(&self, options: Options) -> Result<()> {
+    //     self.client.sender.send(
+    //         lsp_server::Notification::new(
+    //             notification::DidChangeConfiguration::METHOD.to_string(),
+    //             DidChangeConfigurationParams {
+    //                 settings: serde_json::to_value(options)?,
+    //             },
+    //         )
+    //         .into(),
+    //     )?;
+    //     Ok(())
+    // }
 }
 
 impl Drop for ServerTester {

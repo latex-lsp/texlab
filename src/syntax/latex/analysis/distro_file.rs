@@ -57,15 +57,15 @@ mod tests {
             .insert("bar.tex".into(), "/distro/bar.tex".into());
 
         assert_eq!(
-            analyze_distro_file(&resolver, "foo", &["tex"]),
+            resolve_distro_file(&resolver, "foo", &["tex"]),
             Some(Uri::from_file_path("/distro/foo.tex").unwrap())
         );
 
         assert_eq!(
-            analyze_distro_file(&resolver, "foo", &["sty"]),
+            resolve_distro_file(&resolver, "foo", &["sty"]),
             Some(Uri::from_file_path("/distro/foo.sty").unwrap())
         );
 
-        assert_eq!(analyze_distro_file(&resolver, "foo", &["cls"]), None);
+        assert_eq!(resolve_distro_file(&resolver, "foo", &["cls"]), None);
     }
 }
