@@ -39,7 +39,7 @@ where
 
             all_targets.into_par_iter().for_each(|targets| {
                 for path in targets
-                    .into_iter()
+                    .iter()
                     .filter(|uri| uri.scheme() == "file" && uri.fragment().is_none())
                     .filter_map(|uri| uri.to_file_path().ok())
                 {

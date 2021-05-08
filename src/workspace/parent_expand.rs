@@ -1,5 +1,4 @@
-use std::sync::Arc;
-use std::{fs, iter::FromIterator};
+use std::{fs, sync::Arc};
 
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rustc_hash::FxHashSet;
@@ -33,12 +32,12 @@ where
             .workspace
             .open(Arc::clone(&uri), text, language, source);
 
-        let all_current_paths = FxHashSet::from_iter(
-            self.workspace
-                .documents()
-                .into_iter()
-                .filter_map(|doc| doc.uri.to_file_path().ok()),
-        );
+        let all_current_paths = self
+            .workspace
+            .documents()
+            .into_iter()
+            .filter_map(|doc| doc.uri.to_file_path().ok())
+            .collect::<FxHashSet<_>>();
 
         let mut files = Vec::new();
         if uri.scheme() == "file" {

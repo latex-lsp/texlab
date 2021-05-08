@@ -72,8 +72,7 @@ pub trait HasQuotes<'a>: CstNode<'a, Lang = Language> {
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .filter(|node| node.kind() == QUOTE.into())
-            .skip(1)
-            .next()
+            .nth(1)
     }
 }
 

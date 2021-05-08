@@ -124,7 +124,7 @@ impl Workspace for Storage {
 
         let graph = UnGraphMap::from_edges(edges);
         let start = all_current_uris.iter().position(|u| *u == uri)?;
-        let mut dfs = Dfs::new(&graph, start.into());
+        let mut dfs = Dfs::new(&graph, start);
         let mut documents = Vec::new();
         while let Some(i) = dfs.next(&graph) {
             documents.push(self.get(&all_current_uris[i])?);

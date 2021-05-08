@@ -50,14 +50,14 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == L_CURLY.into())
+            .find(|node| node.kind() == L_CURLY)
     }
 
     fn right_curly(&self) -> Option<&'a SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == R_CURLY.into())
+            .find(|node| node.kind() == R_CURLY)
     }
 
     fn content_text(&self) -> Option<String> {
@@ -83,14 +83,14 @@ pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == L_BRACK.into())
+            .find(|node| node.kind() == L_BRACK)
     }
 
     fn right_brack(&self) -> Option<&'a SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == R_BRACK.into())
+            .find(|node| node.kind() == R_BRACK)
     }
 
     fn content_text(&self) -> Option<String> {
@@ -116,14 +116,14 @@ pub trait HasParen<'a>: CstNode<'a, Lang = Language> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == L_PAREN.into())
+            .find(|node| node.kind() == L_PAREN)
     }
 
     fn right_paren(&self) -> Option<&'a SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == R_PAREN.into())
+            .find(|node| node.kind() == R_PAREN)
     }
 }
 
@@ -184,7 +184,7 @@ impl<'a> CurlyGroupWordList<'a> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .filter(|node| node.kind() == WORD.into())
+            .filter(|node| node.kind() == WORD)
     }
 }
 
@@ -208,7 +208,7 @@ impl<'a> Key<'a> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .filter(|node| node.kind() == WORD.into())
+            .filter(|node| node.kind() == WORD)
     }
 }
 
@@ -368,11 +368,7 @@ impl<'a> Citation<'a> {
     }
 
     pub fn postnote(&self) -> Option<BrackGroup<'a>> {
-        self.syntax()
-            .children()
-            .filter_map(BrackGroup::cast)
-            .skip(1)
-            .next()
+        self.syntax().children().filter_map(BrackGroup::cast).nth(1)
     }
 
     pub fn key_list(&self) -> Option<CurlyGroupWordList<'a>> {
@@ -418,8 +414,7 @@ impl<'a> Import<'a> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
-            .skip(1)
-            .next()
+            .nth(1)
     }
 }
 
@@ -462,8 +457,7 @@ impl<'a> LabelReferenceRange<'a> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
-            .skip(1)
-            .next()
+            .nth(1)
     }
 }
 
@@ -550,8 +544,7 @@ impl<'a> ColorDefinition<'a> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
-            .skip(1)
-            .next()
+            .nth(1)
     }
 
     pub fn spec(&self) -> Option<CurlyGroup<'a>> {
