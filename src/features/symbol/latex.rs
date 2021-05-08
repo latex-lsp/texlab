@@ -155,6 +155,23 @@ fn visit_section(context: &mut Context, node: &latex::SyntaxNode) -> Option<Inte
 
 fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<InternalSymbol> {
     let enum_item = latex::EnumItem::cast(node)?;
+    if !enum_item
+        .syntax()
+        .ancestors()
+        .filter_map(latex::Environment::cast)
+        .filter_map(|environment| environment.begin())
+        .filter_map(|begin| begin.name())
+        .filter_map(|name| name.word())
+        .any(|name| {
+            LANGUAGE_DATA
+                .enum_environments
+                .iter()
+                .any(|e| e == name.text())
+        })
+    {
+        return None;
+    }
+
     let full_range = context
         .subset
         .documents
