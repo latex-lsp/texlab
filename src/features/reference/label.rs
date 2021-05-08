@@ -1,11 +1,7 @@
 use cancellation::CancellationToken;
 use lsp_types::{Location, ReferenceParams};
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, LineIndexExt};
 
 pub fn find_label_references(
     context: &CursorContext<ReferenceParams>,
@@ -20,48 +16,20 @@ pub fn find_label_references(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for node in data.root.descendants() {
-                cancellation_token.result().ok()?;
-
-                if let Some(range) = latex::LabelDefinition::cast(node)
-                    .filter(|_| context.request.params.context.include_declaration)
-                    .and_then(|label| label.name())
-                    .and_then(|name| name.word())
-                    .filter(|name| name.text() == name_text)
-                    .map(|name| document.line_index.line_col_lsp_range(name.text_range()))
-                {
-                    references.push(Location::new(document.uri.as_ref().clone().into(), range));
-                }
-
-                latex::LabelReference::cast(node)
-                    .and_then(|label| label.name_list())
-                    .into_iter()
-                    .flat_map(|label| label.words())
-                    .filter(|name| name.text() == name_text)
-                    .map(|name| document.line_index.line_col_lsp_range(name.text_range()))
-                    .for_each(|range| {
-                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
-                    });
-
-                if let Some(label) = latex::LabelReferenceRange::cast(node) {
-                    if let Some(range) = label
-                        .from()
-                        .and_then(|name| name.word())
-                        .filter(|name| name.text() == name_text)
-                        .map(|name| document.line_index.line_col_lsp_range(name.text_range()))
-                    {
-                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
-                    }
-
-                    if let Some(range) = label
-                        .from()
-                        .and_then(|name| name.word())
-                        .filter(|name| name.text() == name_text)
-                        .map(|name| document.line_index.line_col_lsp_range(name.text_range()))
-                    {
-                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
-                    }
-                }
+            cancellation_token.result().ok()?;
+            for name in data
+                .extras
+                .label_names
+                .iter()
+                .filter(|name| name.text == name_text)
+                .filter(|name| {
+                    !name.is_definition || context.request.params.context.include_declaration
+                })
+            {
+                references.push(Location::new(
+                    document.uri.as_ref().clone().into(),
+                    document.line_index.line_col_lsp_range(name.range),
+                ));
             }
         }
     }

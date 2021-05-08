@@ -21,6 +21,7 @@ pub struct Extras {
     pub has_document_environment: bool,
     pub command_names: FxHashSet<SmolStr>,
     pub environment_names: FxHashSet<SmolStr>,
+    pub label_names: Vec<LabelName>,
     pub label_numbers_by_name: FxHashMap<SmolStr, String>,
     pub theorem_environments: Vec<TheoremEnvironment>,
 }
@@ -61,4 +62,11 @@ impl ExplicitLink {
 pub struct TheoremEnvironment {
     pub name: SmolStr,
     pub description: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Hash)]
+pub struct LabelName {
+    pub text: SmolStr,
+    pub range: TextRange,
+    pub is_definition: bool,
 }
