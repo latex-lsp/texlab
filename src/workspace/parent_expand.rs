@@ -39,10 +39,10 @@ where
             .filter_map(|doc| doc.uri.to_file_path().ok())
             .collect::<FxHashSet<_>>();
 
-        let mut files = Vec::new();
         if uri.scheme() == "file" {
             if let Ok(mut path) = uri.to_file_path() {
                 while path.pop() && !self.has_parent(Arc::clone(&uri)).unwrap_or(false) {
+                    let mut files = Vec::new();
                     fs::read_dir(&path)
                         .into_iter()
                         .flatten()
@@ -56,14 +56,15 @@ where
                             )
                         })
                         .filter(|path| !all_current_paths.contains(path))
-                        .for_each(|path| files.push(path));
+                        .for_each(|path| {
+                            files.push(path);
+                        });
+                    files.into_par_iter().for_each(|path| {
+                        let _ = self.workspace.load(path);
+                    });
                 }
             }
         }
-
-        files.into_par_iter().for_each(|path| {
-            let _ = self.workspace.load(path);
-        });
 
         document
     }
@@ -109,12 +110,12 @@ where
                 .as_latex()
                 .map(|data| {
                     data.extras.has_document_environment
-                        && data
+                        && !data
                             .extras
                             .explicit_links
                             .iter()
                             .filter_map(|link| link.as_component_name())
-                            .all(|name| name != "subfiles.cls")
+                            .any(|name| name == "subfiles.cls")
                 })
                 .unwrap_or(false)
         }))

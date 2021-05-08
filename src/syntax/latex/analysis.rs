@@ -32,4 +32,5 @@ pub fn analyze(context: &mut LatexAnalyzerContext, root: &latex::SyntaxNode) {
             .or_else(|| analyze_label_number(context, node))
             .or_else(|| analyze_theorem_definition(context, node));
     }
+    context.extras.has_document_environment = context.extras.environment_names.contains("document");
 }
