@@ -70,7 +70,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(ROOT.into());
         self.preamble();
         while self.peek().is_some() {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
         let (green_node, interner) = self.builder.finish();
@@ -79,10 +79,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn content(&mut self) {
+    fn content(&mut self, allow_enviornments: bool) {
         match self.peek().unwrap() {
             WHITESPACE | COMMENT => self.eat(),
-            L_CURLY => self.curly_group(),
+            L_CURLY if allow_enviornments => self.curly_group(),
+            L_CURLY => self.curly_group_without_environments(),
             L_BRACK | L_PAREN => self.mixed_group(),
             R_CURLY | R_BRACK | R_PAREN => {
                 self.builder.start_node(ERROR.into());
@@ -94,7 +95,8 @@ impl<'a> Parser<'a> {
             EQUALITY_SIGN => self.eat(),
             DOLLAR => self.formula(),
             GENERIC_COMMAND_NAME => self.generic_command(),
-            BEGIN_ENVIRONMENT_NAME => self.environment(),
+            BEGIN_ENVIRONMENT_NAME if allow_enviornments => self.environment(),
+            BEGIN_ENVIRONMENT_NAME => self.generic_command(),
             END_ENVIRONMENT_NAME => self.generic_command(),
             BEGIN_EQUATION_NAME => self.equation(),
             END_EQUATION_NAME => self.generic_command(),
@@ -134,6 +136,7 @@ impl<'a> Parser<'a> {
             COLOR_DEFINITION_NAME => self.color_definition(),
             COLOR_SET_DEFINITION_NAME => self.color_set_definition(),
             TIKZ_LIBRARY_IMPORT_NAME => self.tikz_library_import(),
+            ENVIRONMENT_DEFINIITION_NAME => self.environment_definition(),
             _ => unreachable!(),
         }
     }
@@ -173,7 +176,21 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME))
             .is_some()
         {
-            self.content();
+            self.content(true);
+        }
+        self.expect(R_CURLY);
+        self.builder.finish_node();
+    }
+
+    fn curly_group_without_environments(&mut self) {
+        self.builder.start_node(CURLY_GROUP.into());
+        self.eat();
+        while self
+            .peek()
+            .filter(|&kind| !matches!(kind, R_CURLY))
+            .is_some()
+        {
+            self.content(false);
         }
         self.expect(R_CURLY);
         self.builder.finish_node();
@@ -225,7 +242,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.expect(R_BRACK);
         self.builder.finish_node();
@@ -288,7 +305,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.expect2(R_BRACK, R_PAREN);
         self.builder.finish_node();
@@ -309,7 +326,7 @@ impl<'a> Parser<'a> {
 
     fn value(&mut self) {
         self.builder.start_node(VALUE.into());
-        self.content();
+        self.content(true);
         self.builder.finish_node();
     }
 
@@ -383,7 +400,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME | DOLLAR))
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.expect(DOLLAR);
         self.builder.finish_node();
@@ -411,7 +428,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | END_EQUATION_NAME))
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.expect(END_EQUATION_NAME);
         self.builder.finish_node();
@@ -457,7 +474,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| kind != END_ENVIRONMENT_NAME)
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
 
         if self.peek() == Some(END_ENVIRONMENT_NAME) {
@@ -475,7 +492,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| kind != END_ENVIRONMENT_NAME)
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -496,7 +513,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | PART_NAME))
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -522,7 +539,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -548,7 +565,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -579,7 +596,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -611,7 +628,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -644,7 +661,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -678,7 +695,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -711,7 +728,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content();
+            self.content(true);
         }
         self.builder.finish_node();
     }
@@ -1109,6 +1126,32 @@ impl<'a> Parser<'a> {
             self.curly_group_word_list();
         } else {
             self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn environment_definition(&mut self) {
+        self.builder.start_node(ENVIRONMENT_DEFINITION.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(L_CURLY) {
+            self.curly_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.lexer.peek() == Some(L_BRACK) {
+            self.brack_group_word();
+        }
+
+        for _ in 0..2 {
+            if self.lexer.peek() == Some(L_CURLY) {
+                self.curly_group_without_environments();
+            } else {
+                self.builder.token(MISSING.into(), "");
+            }
         }
 
         self.builder.finish_node();
@@ -1605,5 +1648,10 @@ mod tests {
     #[test]
     fn test_tikz_library_import_simple() {
         assert_debug_snapshot!(setup(r#"\usetikzlibrary{foo}"#));
+    }
+
+    #[test]
+    fn test_environment_definition() {
+        assert_debug_snapshot!(setup(r#"\newenvironment{bar}[1]{\begin{foo}}{\end{foo}}"#));
     }
 }

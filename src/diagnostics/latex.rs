@@ -93,7 +93,7 @@ fn analyze_curly_group(
         return None;
     }
 
-    let is_inside_verbatim = node
+    let is_inside_verbatim_environment = node
         .ancestors()
         .filter_map(latex::Environment::cast)
         .filter_map(|env| env.begin())
@@ -101,7 +101,7 @@ fn analyze_curly_group(
         .filter_map(|name| name.word())
         .any(|name| ["asy", "lstlisting", "minted", "verbatim"].contains(&name.text()));
 
-    if !is_inside_verbatim
+    if !is_inside_verbatim_environment
         && !node
             .children_with_tokens()
             .filter_map(|element| element.into_token())
