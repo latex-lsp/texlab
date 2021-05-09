@@ -9,6 +9,7 @@ mod link;
 mod lsp_kinds;
 mod reference;
 mod rename;
+mod semantic;
 mod symbol;
 
 use std::sync::Arc;
@@ -25,6 +26,7 @@ pub use self::{
     link::find_document_links,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
+    semantic::{find_semantic_tokens_range, legend},
     symbol::{find_document_symbols, find_workspace_symbols},
 };
 

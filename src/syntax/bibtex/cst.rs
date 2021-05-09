@@ -140,6 +140,13 @@ impl<'a> String<'a> {
             .find(|node| node.kind() == WORD)
     }
 
+    pub fn equality_sign(&self) -> Option<&'a SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .find(|node| node.kind() == EQUALITY_SIGN)
+    }
+
     pub fn value(&self) -> Option<Value<'a>> {
         self.syntax().children().find_map(Value::cast)
     }

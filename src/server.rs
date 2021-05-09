@@ -15,7 +15,7 @@ use lsp_types::{
     },
     request::{
         DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
-        References, Rename,
+        References, Rename, SemanticTokensRangeRequest,
     },
     *,
 };
@@ -37,9 +37,9 @@ use crate::{
     distro::Distribution,
     features::{
         complete, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
-        format_source_code, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
-        FeatureRequest,
+        find_document_symbols, find_foldings, find_hover, find_semantic_tokens_range,
+        find_workspace_symbols, format_source_code, goto_definition, legend, prepare_rename_all,
+        rename_all, CompletionItemData, FeatureRequest,
     },
     req_queue::{IncomingData, ReqQueue},
     DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -117,6 +117,17 @@ impl Server {
             })),
             document_highlight_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
+            semantic_tokens_provider: Some(
+                SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
+                    full: None,
+                    range: Some(true),
+                    legend: SemanticTokensLegend {
+                        token_types: legend::SUPPORTED_TYPES.to_vec(),
+                        token_modifiers: legend::SUPPORTED_MODIFIERS.to_vec(),
+                    },
+                    work_done_progress_options: WorkDoneProgressOptions::default(),
+                }),
+            ),
             ..ServerCapabilities::default()
         }
     }
@@ -521,6 +532,17 @@ impl Server {
         Ok(())
     }
 
+    fn semantic_tokens_range(
+        &self,
+        id: RequestId,
+        params: SemanticTokensRangeParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, find_semantic_tokens_range)?;
+        Ok(())
+    }
+
     fn process_messages(&self) -> Result<()> {
         for msg in &self.conn.receiver {
             match msg {
@@ -560,6 +582,9 @@ impl Server {
                             self.document_highlight(id, params, &token)
                         })?
                         .on::<Formatting, _>(|id, params| self.formatting(id, params, &token))?
+                        .on::<SemanticTokensRangeRequest, _>(|id, params| {
+                            self.semantic_tokens_range(id, params, &token)
+                        })?
                         .default()
                     {
                         self.conn.sender.send(response.into())?;
