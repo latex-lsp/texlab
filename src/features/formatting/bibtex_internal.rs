@@ -79,14 +79,20 @@ impl<'a> Formatter<'a> {
             || previous_range.end.character < current_range.start.character
     }
 
-    fn visit_node(&mut self, node: &bibtex::SyntaxNode) {
-        match node.kind() {
+    fn base_align(&self) -> usize {
+        self.output[self.output.rfind('\n').unwrap_or(0)..]
+            .chars()
+            .count()
+    }
+
+    fn visit_node(&mut self, parent: &bibtex::SyntaxNode) {
+        match parent.kind() {
             bibtex::PREAMBLE => {
-                let preamble = bibtex::Preamble::cast(node).unwrap();
+                let preamble = bibtex::Preamble::cast(parent).unwrap();
                 self.visit_token_lowercase(preamble.ty().unwrap());
                 self.output.push('{');
                 if preamble.syntax().arity() > 0 {
-                    self.align.push(self.output.chars().count());
+                    self.align.push(self.base_align());
                     for node in preamble.syntax().children() {
                         self.visit_node(node);
                     }
@@ -95,39 +101,37 @@ impl<'a> Formatter<'a> {
                 self.output.push('\n');
             }
             bibtex::STRING => {
-                let string = bibtex::String::cast(node).unwrap();
+                let string = bibtex::String::cast(parent).unwrap();
                 self.visit_token_lowercase(string.ty().unwrap());
                 self.output.push('{');
                 if let Some(name) = string.name() {
                     self.output.push_str(name.text());
                     self.output.push_str(" = ");
-                    if string.syntax().arity() > 0 {
-                        self.align.push(self.output.chars().count());
-                        for node in string.syntax().children() {
-                            self.visit_node(node);
-                        }
+                    if let Some(value) = string.value() {
+                        self.align.push(self.base_align());
+                        self.visit_node(value.syntax());
                         self.output.push('}');
                     }
                 }
                 self.output.push('\n');
             }
             bibtex::ENTRY => {
-                let entry = bibtex::Entry::cast(node).unwrap();
+                let entry = bibtex::Entry::cast(parent).unwrap();
                 self.visit_token_lowercase(entry.ty().unwrap());
                 self.output.push('{');
                 if let Some(key) = entry.key() {
                     self.output.push_str(key.text());
                     self.output.push(',');
                     self.output.push('\n');
-                    for field in node.children() {
-                        self.visit_node(field);
+                    for field in entry.fields() {
+                        self.visit_node(field.syntax());
                     }
                     self.output.push('}');
                 }
                 self.output.push('\n');
             }
             bibtex::FIELD => {
-                let field = bibtex::Field::cast(node).unwrap();
+                let field = bibtex::Field::cast(parent).unwrap();
                 self.output.push_str(&self.indent);
                 let name = field.name().unwrap();
                 self.output.push_str(name.text());
@@ -141,7 +145,7 @@ impl<'a> Formatter<'a> {
                 }
             }
             bibtex::VALUE => {
-                let tokens: Vec<_> = node
+                let tokens: Vec<_> = parent
                     .descendants_with_tokens()
                     .filter_map(|element| element.into_token())
                     .filter(|token| token.kind() != bibtex::WHITESPACE)
@@ -175,7 +179,7 @@ impl<'a> Formatter<'a> {
                 }
             }
             bibtex::ROOT | bibtex::JUNK | bibtex::COMMENT => {
-                for element in node.children_with_tokens() {
+                for element in parent.children_with_tokens() {
                     match element {
                         NodeOrToken::Token(token) => {
                             self.output.push_str(token.text());
