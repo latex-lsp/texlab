@@ -2,42 +2,32 @@ use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 
 use crate::{
-    features::FeatureRequest,
+    features::cursor::CursorContext,
     syntax::{bibtex, latex, CstNode},
     LineIndexExt,
 };
 
 pub fn goto_entry_definition(
-    request: &FeatureRequest<GotoDefinitionParams>,
-    token: &CancellationToken,
+    context: &CursorContext<GotoDefinitionParams>,
+    cancellation_token: &CancellationToken,
 ) -> Option<Vec<LocationLink>> {
-    let main_document = request.main_document();
+    let main_document = context.request.main_document();
 
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
+    let key = context
+        .cursor
+        .as_latex()
+        .filter(|token| token.kind() == latex::WORD)?;
 
-    let key = main_document
-        .data
-        .as_latex()?
-        .root
-        .token_at_offset(offset)
-        .right_biased()?;
-    if key.kind() != latex::WORD {
-        return None;
-    }
     latex::Citation::cast(key.parent().parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
         .line_col_lsp_range(key.text_range());
 
-    for document in &request.subset.documents {
+    for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
             for entry in data.root.children().filter_map(bibtex::Entry::cast) {
-                if token.is_canceled() {
-                    return None;
-                }
+                cancellation_token.result().ok()?;
 
                 if let Some(key) = entry.key().filter(|k| k.text() == key.text()) {
                     return Some(vec![LocationLink {
@@ -75,7 +65,8 @@ mod tests {
             .build()
             .definition();
 
-        let actual_links = goto_entry_definition(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_links = goto_entry_definition(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }
@@ -90,7 +81,8 @@ mod tests {
             .build()
             .definition();
 
-        let actual_links = goto_entry_definition(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_links = goto_entry_definition(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }
@@ -118,7 +110,8 @@ mod tests {
         let target_uri = tester.uri("baz.bib").as_ref().clone().into();
 
         let request = tester.definition();
-        let actual_links = goto_entry_definition(&request, CancellationToken::none()).unwrap();
+        let context = CursorContext::new(request);
+        let actual_links = goto_entry_definition(&context, CancellationToken::none()).unwrap();
 
         let expected_links = vec![LocationLink {
             origin_selection_range: Some(Range::new_simple(1, 6, 1, 9)),

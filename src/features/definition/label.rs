@@ -1,52 +1,29 @@
 use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 
-use crate::{
-    features::FeatureRequest, find_label_definition, render_label, syntax::latex, LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, find_label_definition, render_label, LineIndexExt};
 
 pub fn goto_label_definition(
-    request: &FeatureRequest<GotoDefinitionParams>,
-    token: &CancellationToken,
+    context: &CursorContext<GotoDefinitionParams>,
+    cancellation_token: &CancellationToken,
 ) -> Option<Vec<LocationLink>> {
-    let main_document = request.main_document();
+    let main_document = context.request.main_document();
 
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
+    let (name_text, name_range) = context
+        .find_label_name_word()
+        .or_else(|| context.find_label_name_command())?;
 
-    let name = main_document
-        .data
-        .as_latex()?
-        .root
-        .token_at_offset(offset)
-        .right_biased()?;
-    if name.kind() != latex::WORD {
-        return None;
-    }
+    let origin_selection_range = main_document.line_index.line_col_lsp_range(name_range);
 
-    if !matches!(
-        name.parent().parent()?.kind(),
-        latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
-    ) {
-        return None;
-    }
-
-    let origin_selection_range = main_document
-        .line_index
-        .line_col_lsp_range(name.text_range());
-
-    for document in &request.subset.documents {
-        if token.is_canceled() {
-            return None;
-        }
-
+    for document in &context.request.subset.documents {
+        cancellation_token.result().ok()?;
         if let Some(data) = document.data.as_latex() {
-            if let Some(definition) = find_label_definition(&data.root, name.text()) {
+            if let Some(definition) = find_label_definition(&data.root, name_text) {
                 let target_selection_range = definition.name()?.word()?.text_range();
-                let target_range = render_label(&request.subset, name.text(), Some(definition))
-                    .map(|label| label.range)
-                    .unwrap_or(target_selection_range);
+                let target_range =
+                    render_label(&context.request.subset, name_text, Some(definition))
+                        .map(|label| label.range)
+                        .unwrap_or(target_selection_range);
 
                 return Some(vec![LocationLink {
                     origin_selection_range: Some(origin_selection_range),
@@ -79,7 +56,8 @@ mod tests {
             .build()
             .definition();
 
-        let actual_links = goto_label_definition(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_links = goto_label_definition(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }
@@ -94,7 +72,8 @@ mod tests {
             .build()
             .definition();
 
-        let actual_links = goto_label_definition(&request, CancellationToken::none());
+        let context = CursorContext::new(request);
+        let actual_links = goto_label_definition(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }

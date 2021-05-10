@@ -1,6 +1,6 @@
 use cstree::{TextRange, TextSize};
 use lsp_types::{
-    CompletionParams, HoverParams, Position, ReferenceParams, RenameParams,
+    CompletionParams, GotoDefinitionParams, HoverParams, Position, ReferenceParams, RenameParams,
     TextDocumentPositionParams,
 };
 
@@ -240,6 +240,12 @@ impl HasPosition for ReferenceParams {
 }
 
 impl HasPosition for HoverParams {
+    fn position(&self) -> Position {
+        self.text_document_position_params.position
+    }
+}
+
+impl HasPosition for GotoDefinitionParams {
     fn position(&self) -> Position {
         self.text_document_position_params.position
     }
