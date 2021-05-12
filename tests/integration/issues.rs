@@ -6,6 +6,7 @@ use lsp_types::ClientCapabilities;
 use crate::common::ServerTester;
 
 #[test]
+#[cfg(feature = "completion")]
 fn test_408_parent_expansion() -> Result<()> {
     let server = ServerTester::launch_new_instance()?;
     server.initialize(ClientCapabilities::default(), None)?;

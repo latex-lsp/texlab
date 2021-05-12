@@ -15,8 +15,10 @@ homepage = "https://texlab.netlify.app"
 doctest = false
 
 [features]
-default = ["citation"]
+default = ["citation", "completion"]
+completion = ["fuzzy-matcher"]
 citation = ["bibutils-sys", "citeproc", "citeproc-db", "citeproc-io", "csl", "fnv", "html2md", "lalrpop-util", "lalrpop"]
+semantic = []
 
 [dependencies]
 anyhow = "1.0.40"
@@ -33,7 +35,7 @@ cstree = "0.4.0"
 derive_more = "0.99.13"
 fern = "0.6"
 fnv = { version = "1.0", optional = true }
-fuzzy-matcher = "0.3.7"
+fuzzy-matcher = { version = "0.3.7", optional = true }
 html2md = { version = "0.2.10", optional = true }
 itertools = "0.10.0"
 lalrpop-util = { version = "0.18", optional = true }

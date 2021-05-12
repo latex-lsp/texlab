@@ -1,3 +1,4 @@
+#[cfg(feature = "completion")]
 mod completion;
 mod cursor;
 mod definition;
@@ -9,6 +10,7 @@ mod link;
 mod lsp_kinds;
 mod reference;
 mod rename;
+#[cfg(feature = "semantic")]
 mod semantic;
 mod symbol;
 
@@ -16,8 +18,11 @@ use std::sync::Arc;
 
 use crate::{Document, ServerContext, Workspace, WorkspaceSubset};
 
+#[cfg(feature = "completion")]
+pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
+#[cfg(feature = "semantic")]
+pub use self::semantic::{find_semantic_tokens_range, legend};
 pub use self::{
-    completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     folding::find_foldings,
     formatting::format_source_code,
@@ -26,7 +31,6 @@ pub use self::{
     link::find_document_links,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
-    semantic::{find_semantic_tokens_range, legend},
     symbol::{find_document_symbols, find_workspace_symbols},
 };
 

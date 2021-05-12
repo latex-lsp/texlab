@@ -38,10 +38,9 @@ use crate::{
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
-        complete, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_foldings, find_hover, find_semantic_tokens_range,
-        find_workspace_symbols, format_source_code, goto_definition, legend, prepare_rename_all,
-        rename_all, CompletionItemData, FeatureRequest,
+        find_all_references, find_document_highlights, find_document_links, find_document_symbols,
+        find_foldings, find_hover, find_workspace_symbols, format_source_code, goto_definition,
+        prepare_rename_all, rename_all, FeatureRequest,
     },
     req_queue::{IncomingData, ReqQueue},
     Document, DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -111,6 +110,7 @@ impl Server {
             definition_provider: Some(OneOf::Left(true)),
             references_provider: Some(OneOf::Left(true)),
             hover_provider: Some(HoverProviderCapability::Simple(true)),
+            #[cfg(feature = "completion")]
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
                 trigger_characters: Some(vec![
@@ -131,13 +131,14 @@ impl Server {
             })),
             document_highlight_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
+            #[cfg(feature = "semantic")]
             semantic_tokens_provider: Some(
                 SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
                     full: None,
                     range: Some(true),
                     legend: SemanticTokensLegend {
-                        token_types: legend::SUPPORTED_TYPES.to_vec(),
-                        token_modifiers: legend::SUPPORTED_MODIFIERS.to_vec(),
+                        token_types: crate::features::legend::SUPPORTED_TYPES.to_vec(),
+                        token_modifiers: crate::features::legend::SUPPORTED_MODIFIERS.to_vec(),
                     },
                     work_done_progress_options: WorkDoneProgressOptions::default(),
                 }),
@@ -403,6 +404,7 @@ impl Server {
         Ok(())
     }
 
+    #[cfg(feature = "completion")]
     fn completion(
         &self,
         id: RequestId,
@@ -417,10 +419,11 @@ impl Server {
                 .clone()
                 .into(),
         );
-        self.handle_feature_request(id, params, uri, token, complete)?;
+        self.handle_feature_request(id, params, uri, token, crate::features::complete)?;
         Ok(())
     }
 
+    #[cfg(feature = "completion")]
     fn completion_resolve(
         &self,
         id: RequestId,
@@ -432,13 +435,14 @@ impl Server {
         let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
-                CompletionItemData::Package | CompletionItemData::Class => {
+                crate::features::CompletionItemData::Package
+                | crate::features::CompletionItemData::Class => {
                     item.documentation = COMPONENT_DATABASE
                         .documentation(&item.label)
                         .map(Documentation::MarkupContent);
                 }
                 #[cfg(feature = "citeproc")]
-                CompletionItemData::Citation { uri, key } => {
+                crate::features::CompletionItemData::Citation { uri, key } => {
                     if let Some(document) = workspace.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
                             let markup = crate::citation::render_citation(&data.root, &key);
@@ -584,6 +588,7 @@ impl Server {
         Ok(())
     }
 
+    #[cfg(feature = "semantic")]
     fn semantic_tokens_range(
         &self,
         id: RequestId,
@@ -591,7 +596,23 @@ impl Server {
         token: &Arc<CancellationToken>,
     ) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
-        self.handle_feature_request(id, params, uri, token, find_semantic_tokens_range)?;
+        self.handle_feature_request(
+            id,
+            params,
+            uri,
+            token,
+            crate::features::find_semantic_tokens_range,
+        )?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "semantic"))]
+    fn semantic_tokens_range(
+        &self,
+        _id: RequestId,
+        _params: SemanticTokensRangeParams,
+        _token: &Arc<CancellationToken>,
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -619,9 +640,15 @@ impl Server {
                         .on::<WorkspaceSymbol, _>(|id, params| {
                             self.workspace_symbols(id, params, &token)
                         })?
-                        .on::<Completion, _>(|id, params| self.completion(id, params, &token))?
+                        .on::<Completion, _>(|id, params| {
+                            #[cfg(feature = "completion")]
+                            self.completion(id, params, &token)?;
+                            Ok(())
+                        })?
                         .on::<ResolveCompletionItem, _>(|id, params| {
-                            self.completion_resolve(id, params, &token)
+                            #[cfg(feature = "completion")]
+                            self.completion_resolve(id, params, &token)?;
+                            Ok(())
                         })?
                         .on::<GotoDefinition, _>(|id, params| {
                             self.goto_definition(id, params, &token)
