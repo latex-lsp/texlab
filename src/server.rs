@@ -199,13 +199,23 @@ impl Server {
 
         let diag_manager = Arc::clone(&self.diag_manager);
         let sender = self.conn.sender.clone();
+        let context = Arc::clone(&self.context);
         self.diag_thread = Some(thread::spawn(move || {
             while let Ok(DiagnosticsMessage::Analyze {
                 workspace,
                 document,
             }) = diag_thread_receiver.recv()
             {
-                thread::sleep(Duration::from_millis(300));
+                let delay = {
+                    context
+                        .options
+                        .read()
+                        .unwrap()
+                        .diagnostics_delay
+                        .unwrap_or(300)
+                };
+
+                thread::sleep(Duration::from_millis(delay));
                 while let Ok(message) = diag_thread_receiver.try_recv() {
                     match message {
                         DiagnosticsMessage::Analyze { .. } => (),

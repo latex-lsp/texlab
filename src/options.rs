@@ -8,6 +8,7 @@ pub struct Options {
     pub root_directory: Option<PathBuf>,
     pub aux_directory: Option<PathBuf>,
     pub bibtex_formatter: Option<BibtexFormatter>,
+    pub diagnostics_delay: Option<u64>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
