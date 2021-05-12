@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, thread, time::Duration};
 
 use anyhow::Result;
 use lsp_types::ClientCapabilities;
@@ -25,6 +25,8 @@ fn test_408_parent_expansion() -> Result<()> {
         r#"\documentclass{article}\begin{document}\include{level2/c}\end{document}"#,
     )?;
     fs::write(root.join("a.tex"), "}")?;
+
+    thread::sleep(Duration::from_millis(300));
 
     let uri = server.open("level1/level2/level3/d.tex", "d", "latex", false)?;
     server.complete(uri, 0, 0)?;

@@ -1,6 +1,8 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
+    thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use anyhow::Result;
@@ -42,8 +44,16 @@ use crate::{
         rename_all, CompletionItemData, FeatureRequest,
     },
     req_queue::{IncomingData, ReqQueue},
-    DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
+    Document, DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
 };
+
+enum DiagnosticsMessage {
+    Analyze {
+        workspace: Box<dyn Workspace>,
+        document: Arc<Document>,
+    },
+    Shutdown,
+}
 
 pub struct Server {
     conn: Connection,
@@ -51,6 +61,8 @@ pub struct Server {
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Arc<dyn Workspace>,
     diag_manager: Arc<Mutex<DiagnosticsManager>>,
+    diag_thread: Option<JoinHandle<()>>,
+    diag_thread_sender: Option<Sender<DiagnosticsMessage>>,
     pool: ThreadPool,
     load_resolver: bool,
 }
@@ -71,6 +83,8 @@ impl Server {
             req_queue,
             workspace,
             diag_manager,
+            diag_thread: None,
+            diag_thread_sender: None,
             pool: threadpool::Builder::new().build(),
             load_resolver,
         })
@@ -158,17 +172,7 @@ impl Server {
             });
         }
 
-        let workspace = Arc::clone(&self.workspace);
-        let diag_manager = Arc::clone(&self.diag_manager);
-        let sender = self.conn.sender.clone();
-        self.workspace
-            .register_open_handler(Arc::new(move |document| {
-                let mut diag_manager = diag_manager.lock().unwrap();
-                diag_manager.update(workspace.as_ref(), Arc::clone(&document.uri));
-                if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
-                    warn!("Failed to publish diagnostics: {}", why);
-                }
-            }));
+        self.register_diagnostics_handler();
 
         let req_queue = Arc::clone(&self.req_queue);
         let sender = self.conn.sender.clone();
@@ -177,6 +181,44 @@ impl Server {
             register_config_capability(&req_queue, &sender, &cx.client_capabilities);
         });
         Ok(())
+    }
+
+    fn register_diagnostics_handler(&mut self) {
+        let (diag_thread_sender, diag_thread_receiver) = crossbeam_channel::unbounded();
+        self.diag_thread_sender = Some(diag_thread_sender.clone());
+
+        self.workspace
+            .register_open_handler(Arc::new(move |workspace, document| {
+                diag_thread_sender
+                    .send(DiagnosticsMessage::Analyze {
+                        workspace,
+                        document,
+                    })
+                    .unwrap();
+            }));
+
+        let diag_manager = Arc::clone(&self.diag_manager);
+        let sender = self.conn.sender.clone();
+        self.diag_thread = Some(thread::spawn(move || {
+            while let Ok(DiagnosticsMessage::Analyze {
+                workspace,
+                document,
+            }) = diag_thread_receiver.recv()
+            {
+                thread::sleep(Duration::from_millis(300));
+                while let Ok(message) = diag_thread_receiver.try_recv() {
+                    match message {
+                        DiagnosticsMessage::Analyze { .. } => (),
+                        DiagnosticsMessage::Shutdown => return,
+                    }
+                }
+                let mut diag_manager = diag_manager.lock().unwrap();
+                diag_manager.update(workspace.as_ref(), Arc::clone(&document.uri));
+                if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
+                    warn!("Failed to publish diagnostics: {}", why);
+                }
+            }
+        }));
     }
 
     fn register_incoming_request(&self, id: RequestId) -> Arc<CancellationToken> {
@@ -621,6 +663,10 @@ impl Server {
         self.initialize()?;
         self.process_messages()?;
         self.pool.join();
+        self.diag_thread_sender
+            .unwrap()
+            .send(DiagnosticsMessage::Shutdown)?;
+        self.diag_thread.take().unwrap().join().unwrap();
         Ok(())
     }
 }

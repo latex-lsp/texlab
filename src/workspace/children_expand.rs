@@ -16,14 +16,13 @@ where
     W: Workspace + Send + Sync + 'static,
 {
     pub fn new(workspace: Arc<W>) -> Self {
-        let ws = Arc::clone(&workspace);
-        workspace.register_open_handler(Arc::new(move |document| {
-            Self::expand(&ws, &document);
+        workspace.register_open_handler(Arc::new(move |workspace, document| {
+            Self::expand(workspace.as_ref(), document.as_ref());
         }));
         Self { workspace }
     }
 
-    fn expand(workspace: &W, document: &Document) {
+    fn expand(workspace: &dyn Workspace, document: &Document) {
         if let Some(data) = document.data.as_latex() {
             let extras = &data.extras;
             let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];

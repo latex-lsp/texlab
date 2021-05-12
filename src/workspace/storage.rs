@@ -8,20 +8,21 @@ use crate::{
     WorkspaceSubset,
 };
 
+#[derive(Clone)]
 pub struct Storage {
     context: Arc<ServerContext>,
-    documents_by_uri: Mutex<FxHashMap<Arc<Uri>, Arc<Document>>>,
-    opened_documents: Mutex<FxHashSet<Arc<Uri>>>,
-    open_handlers: Mutex<Vec<OpenHandler>>,
+    documents_by_uri: Arc<Mutex<FxHashMap<Arc<Uri>, Arc<Document>>>>,
+    opened_documents: Arc<Mutex<FxHashSet<Arc<Uri>>>>,
+    open_handlers: Arc<Mutex<Vec<OpenHandler>>>,
 }
 
 impl Storage {
     pub fn new(context: Arc<ServerContext>) -> Self {
         Self {
             context,
-            documents_by_uri: Mutex::default(),
-            opened_documents: Mutex::default(),
-            open_handlers: Mutex::default(),
+            documents_by_uri: Arc::default(),
+            opened_documents: Arc::default(),
+            open_handlers: Arc::default(),
         }
     }
 }
@@ -54,7 +55,7 @@ impl Workspace for Storage {
 
         let handlers = { self.open_handlers.lock().unwrap().clone() };
         for handler in handlers {
-            handler(Arc::clone(&document));
+            handler(Box::new(self.clone()), Arc::clone(&document));
         }
 
         document
