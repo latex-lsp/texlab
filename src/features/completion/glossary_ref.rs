@@ -40,7 +40,7 @@ pub fn complete_glossary_entries<'a>(
                         range,
                         InternalCompletionItemData::GlossaryEntry { name },
                     ));
-                } else if let Some(name) = latex::AcroynmDefinition::cast(node)
+                } else if let Some(name) = latex::AcronymDefinition::cast(node)
                     .and_then(|entry| entry.name())
                     .and_then(|name| name.word())
                     .map(|name| name.text())

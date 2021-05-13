@@ -11,6 +11,21 @@ pub struct Parse {
     pub root: SyntaxNode,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct ParserContext {
+    allow_environment: bool,
+    allow_comma: bool,
+}
+
+impl Default for ParserContext {
+    fn default() -> Self {
+        Self {
+            allow_environment: true,
+            allow_comma: true,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -70,7 +85,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(ROOT.into());
         self.preamble();
         while self.peek().is_some() {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
         let (green_node, interner) = self.builder.finish();
@@ -79,10 +94,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn content(&mut self, allow_enviornments: bool) {
+    fn content(&mut self, context: ParserContext) {
         match self.peek().unwrap() {
             WHITESPACE | COMMENT => self.eat(),
-            L_CURLY if allow_enviornments => self.curly_group(),
+            L_CURLY if context.allow_environment => self.curly_group(),
             L_CURLY => self.curly_group_without_environments(),
             L_BRACK | L_PAREN => self.mixed_group(),
             R_CURLY | R_BRACK | R_PAREN => {
@@ -91,11 +106,11 @@ impl<'a> Parser<'a> {
                 self.builder.finish_node();
             }
             PARAMETER => self.eat(),
-            WORD | COMMA => self.text(),
+            WORD | COMMA => self.text(context),
             EQUALITY_SIGN => self.eat(),
             DOLLAR => self.formula(),
             GENERIC_COMMAND_NAME => self.generic_command(),
-            BEGIN_ENVIRONMENT_NAME if allow_enviornments => self.environment(),
+            BEGIN_ENVIRONMENT_NAME if context.allow_environment => self.environment(),
             BEGIN_ENVIRONMENT_NAME => self.generic_command(),
             END_ENVIRONMENT_NAME => self.generic_command(),
             BEGIN_EQUATION_NAME => self.equation(),
@@ -130,6 +145,7 @@ impl<'a> Parser<'a> {
             GLOSSARY_ENTRY_DEFINITION_NAME => self.glossary_entry_definition(),
             GLOSSARY_ENTRY_REFERENCE_NAME => self.glossary_entry_reference(),
             ACRONYM_DEFINITION_NAME => self.acronym_definition(),
+            ACRONYM_DECLARATION_NAME => self.acronym_declaration(),
             ACRONYM_REFERENCE_NAME => self.acronym_reference(),
             THEOREM_DEFINITION_NAME => self.theorem_definition(),
             COLOR_REFERENCE_NAME => self.color_reference(),
@@ -141,12 +157,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn text(&mut self) {
+    fn text(&mut self, context: ParserContext) {
         self.builder.start_node(TEXT.into());
         self.eat();
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
+            .filter(|&kind| {
+                matches!(kind, WHITESPACE | COMMENT | WORD | COMMA)
+                    && (context.allow_comma || kind != COMMA)
+            })
             .is_some()
         {
             self.eat();
@@ -176,7 +195,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME))
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.expect(R_CURLY);
         self.builder.finish_node();
@@ -190,7 +209,10 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, R_CURLY))
             .is_some()
         {
-            self.content(false);
+            self.content(ParserContext {
+                allow_environment: false,
+                allow_comma: true,
+            });
         }
         self.expect(R_CURLY);
         self.builder.finish_node();
@@ -242,7 +264,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.expect(R_BRACK);
         self.builder.finish_node();
@@ -305,7 +327,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.expect2(R_BRACK, R_PAREN);
         self.builder.finish_node();
@@ -326,7 +348,10 @@ impl<'a> Parser<'a> {
 
     fn value(&mut self) {
         self.builder.start_node(VALUE.into());
-        self.content(true);
+        self.content(ParserContext {
+            allow_environment: true,
+            allow_comma: false,
+        });
         self.builder.finish_node();
     }
 
@@ -400,7 +425,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME | DOLLAR))
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.expect(DOLLAR);
         self.builder.finish_node();
@@ -428,7 +453,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | END_EQUATION_NAME))
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.expect(END_EQUATION_NAME);
         self.builder.finish_node();
@@ -474,7 +499,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| kind != END_ENVIRONMENT_NAME)
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
 
         if self.peek() == Some(END_ENVIRONMENT_NAME) {
@@ -492,7 +517,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| kind != END_ENVIRONMENT_NAME)
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -513,7 +538,7 @@ impl<'a> Parser<'a> {
             .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | PART_NAME))
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -539,7 +564,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -565,7 +590,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -596,7 +621,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -628,7 +653,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -661,7 +686,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -695,7 +720,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -728,7 +753,7 @@ impl<'a> Parser<'a> {
             })
             .is_some()
         {
-            self.content(true);
+            self.content(ParserContext::default());
         }
         self.builder.finish_node();
     }
@@ -1000,6 +1025,26 @@ impl<'a> Parser<'a> {
             } else {
                 self.builder.token(MISSING.into(), "");
             }
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn acronym_declaration(&mut self) {
+        self.builder.start_node(ACRONYM_DECLARATION.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(L_CURLY) {
+            self.curly_group_word();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.lexer.peek() == Some(L_CURLY) {
+            self.curly_group_key_value();
+        } else {
+            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1653,5 +1698,12 @@ mod tests {
     #[test]
     fn test_environment_definition() {
         assert_debug_snapshot!(setup(r#"\newenvironment{bar}[1]{\begin{foo}}{\end{foo}}"#));
+    }
+
+    #[test]
+    fn test_acronym_declaration() {
+        assert_debug_snapshot!(setup(
+            r#"\DeclareAcronym{eg}{short = e.g,long = for example,tag = abbrev}"#
+        ));
     }
 }

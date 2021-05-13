@@ -31,9 +31,7 @@ pub fn complete_citations<'a>(
         TextRange::empty(context.offset)
     };
 
-    let group = latex::CurlyGroupWordList::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
-    latex::Citation::cast(group.syntax().parent()?)?;
+    check_citation(context, token).or_else(|| check_acronym(token))?;
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
             for entry in data.root.children().filter_map(bibtex::Entry::cast) {
@@ -45,6 +43,27 @@ pub fn complete_citations<'a>(
         }
     }
 
+    Some(())
+}
+
+fn check_citation(
+    context: &CursorContext<CompletionParams>,
+    token: &latex::SyntaxToken,
+) -> Option<()> {
+    let group = latex::CurlyGroupWordList::cast(token.parent())
+        .filter(|group| context.is_inside_latex_curly(group))?;
+    latex::Citation::cast(group.syntax().parent()?)?;
+    Some(())
+}
+
+fn check_acronym(token: &latex::SyntaxToken) -> Option<()> {
+    let pair = token.ancestors().find_map(latex::KeyValuePair::cast)?;
+    let mut key_words = pair.key()?.words();
+    if key_words.next()?.text() != "cite" || key_words.next().is_some() {
+        return None;
+    }
+
+    latex::AcronymDeclaration::cast(pair.syntax().parent()?.parent()?.parent()?)?;
     Some(())
 }
 
@@ -194,6 +213,32 @@ mod tests {
         assert!(!actual_items.is_empty());
         for item in actual_items {
             assert_eq!(item.range, TextRange::new(36.into(), 37.into()));
+        }
+    }
+
+    #[test]
+    fn test_latex_acronym() {
+        let request = FeatureTester::builder()
+            .files(vec![
+                (
+                    "main.tex",
+                    "\\addbibresource{main.bib}\n\\DeclareAcronym{foo}{cite={\n}}",
+                ),
+                ("main.bib", "@article{foo,}"),
+            ])
+            .main("main.tex")
+            .line(2)
+            .character(0)
+            .build()
+            .completion();
+
+        let context = CursorContext::new(request);
+        let mut actual_items = Vec::new();
+        complete_citations(&context, &mut actual_items, CancellationToken::none());
+
+        assert!(!actual_items.is_empty());
+        for item in actual_items {
+            assert_eq!(item.range, TextRange::new(54.into(), 54.into()));
         }
     }
 }

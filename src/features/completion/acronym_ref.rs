@@ -33,7 +33,7 @@ pub fn complete_acronyms<'a>(
             for name in data
                 .root
                 .descendants()
-                .filter_map(latex::AcroynmDefinition::cast)
+                .filter_map(latex::AcronymDefinition::cast)
                 .filter_map(|node| node.name())
                 .filter_map(|name| name.word())
                 .map(|name| name.text())

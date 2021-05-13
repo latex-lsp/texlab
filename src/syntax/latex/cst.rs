@@ -517,9 +517,21 @@ impl<'a> AcronymReference<'a> {
     }
 }
 
-cst_node!(AcroynmDefinition, ACRONYM_DEFINITION);
+cst_node!(AcronymDefinition, ACRONYM_DEFINITION);
 
-impl<'a> AcroynmDefinition<'a> {
+impl<'a> AcronymDefinition<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}
+
+cst_node!(AcronymDeclaration, ACRONYM_DECLARATION);
+
+impl<'a> AcronymDeclaration<'a> {
     pub fn command(&self) -> Option<&'a SyntaxToken> {
         self.syntax().first_token()
     }
