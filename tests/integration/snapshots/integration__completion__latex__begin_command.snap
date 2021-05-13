@@ -12,8 +12,19 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
       "detail": "built-in",
       "preselect": false,
       "sortText": "00",
-      "insertText": "begin{$1}\n\t$0\n\\end{$1}",
-      "insertTextFormat": 2
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 2
+          }
+        },
+        "newText": "begin"
+      }
     },
     {
       "label": "b",

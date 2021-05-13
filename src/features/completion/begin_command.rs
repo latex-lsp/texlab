@@ -11,14 +11,12 @@ pub fn complete_begin_command(
     cancellation_token: &CancellationToken,
 ) -> Option<()> {
     cancellation_token.result().ok()?;
-
     let range = context.cursor.command_range(context.offset)?;
 
     items.push(InternalCompletionItem::new(
         range,
         InternalCompletionItemData::BeginCommand,
     ));
-
     Some(())
 }
 

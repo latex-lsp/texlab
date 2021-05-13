@@ -281,16 +281,43 @@ fn convert_internal_items(
                 ..CompletionItem::default()
             }
         }
-        InternalCompletionItemData::BeginCommand => CompletionItem {
-            kind: Some(adjust_kind(
-                &context.request,
-                Structure::Snippet.completion_kind(),
-            )),
-            data: Some(serde_json::to_value(CompletionItemData::CommandSnippet).unwrap()),
-            insert_text: Some("begin{$1}\n\t$0\n\\end{$1}".into()),
-            insert_text_format: Some(InsertTextFormat::Snippet),
-            ..CompletionItem::new_simple("begin".into(), component_detail(&[]))
-        },
+        InternalCompletionItemData::BeginCommand => {
+            if context
+                .request
+                .context
+                .client_capabilities
+                .lock()
+                .unwrap()
+                .text_document
+                .as_ref()
+                .and_then(|cap| cap.completion.as_ref())
+                .and_then(|cap| cap.completion_item.as_ref())
+                .and_then(|cap| cap.snippet_support)
+                == Some(true)
+            {
+                CompletionItem {
+                    kind: Some(adjust_kind(
+                        &context.request,
+                        Structure::Snippet.completion_kind(),
+                    )),
+                    data: Some(serde_json::to_value(CompletionItemData::CommandSnippet).unwrap()),
+                    insert_text: Some("begin{$1}\n\t$0\n\\end{$1}".into()),
+                    insert_text_format: Some(InsertTextFormat::Snippet),
+                    ..CompletionItem::new_simple("begin".into(), component_detail(&[]))
+                }
+            } else {
+                let text_edit = TextEdit::new(range, "begin".to_string());
+                CompletionItem {
+                    kind: Some(adjust_kind(
+                        &context.request,
+                        Structure::Command.completion_kind(),
+                    )),
+                    data: Some(serde_json::to_value(CompletionItemData::Command).unwrap()),
+                    text_edit: Some(CompletionTextEdit::Edit(text_edit)),
+                    ..CompletionItem::new_simple("begin".to_string(), component_detail(&[]))
+                }
+            }
+        }
         InternalCompletionItemData::Citation { uri, key, text, ty } => {
             let text_edit = TextEdit::new(range, key.to_string());
             CompletionItem {
