@@ -15,15 +15,7 @@ pub fn format_source_code(
     cancellation_token: &CancellationToken,
 ) -> Option<Vec<TextEdit>> {
     let mut edits = None;
-    if request
-        .context
-        .options
-        .read()
-        .unwrap()
-        .bibtex_formatter
-        .unwrap_or_default()
-        == BibtexFormatter::Texlab
-    {
+    if request.context.options.read().unwrap().bibtex_formatter == BibtexFormatter::Texlab {
         edits = edits.or_else(|| format_bibtex_internal(&request, cancellation_token));
     }
 

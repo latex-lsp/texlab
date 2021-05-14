@@ -12,7 +12,7 @@ use log::{info, warn};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{
     notification::{
-        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
+        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument, LogMessage,
         PublishDiagnostics,
     },
     request::{
@@ -38,9 +38,10 @@ use crate::{
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
-        find_all_references, find_document_highlights, find_document_links, find_document_symbols,
-        find_foldings, find_hover, find_workspace_symbols, format_source_code, goto_definition,
-        prepare_rename_all, rename_all, FeatureRequest,
+        build_document, find_all_references, find_document_highlights, find_document_links,
+        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
+        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildParams,
+        BuildResult, FeatureRequest,
     },
     req_queue::{IncomingData, ReqQueue},
     Document, DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -616,6 +617,35 @@ impl Server {
         Ok(())
     }
 
+    fn build(
+        &self,
+        id: RequestId,
+        params: BuildParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        let lsp_sender = self.conn.sender.clone();
+        self.handle_feature_request(id, params, uri, token, |request, token| {
+            let (log_sender, log_receiver) = crossbeam_channel::unbounded();
+
+            thread::spawn(move || {
+                for message in &log_receiver {
+                    send_notification::<LogMessage>(
+                        &lsp_sender,
+                        LogMessageParams {
+                            message,
+                            typ: MessageType::Log,
+                        },
+                    )
+                    .unwrap();
+                }
+            });
+
+            build_document(request, token, log_sender)
+        })?;
+        Ok(())
+    }
+
     fn process_messages(&self) -> Result<()> {
         for msg in &self.conn.receiver {
             match msg {
@@ -661,6 +691,7 @@ impl Server {
                             self.document_highlight(id, params, &token)
                         })?
                         .on::<Formatting, _>(|id, params| self.formatting(id, params, &token))?
+                        .on::<BuildRequest, _>(|id, params| self.build(id, params, &token))?
                         .on::<SemanticTokensRangeRequest, _>(|id, params| {
                             self.semantic_tokens_range(id, params, &token)
                         })?
@@ -733,4 +764,14 @@ fn cancel_response(id: RequestId) -> lsp_server::Response {
         ErrorCode::RequestCanceled as i32,
         "canceled by client".to_string(),
     )
+}
+
+struct BuildRequest;
+
+impl lsp_types::request::Request for BuildRequest {
+    type Params = BuildParams;
+
+    type Result = BuildResult;
+
+    const METHOD: &'static str = "textDocument/build";
 }
