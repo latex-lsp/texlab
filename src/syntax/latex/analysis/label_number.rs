@@ -13,7 +13,7 @@ pub fn analyze_label_number(
         .syntax()
         .descendants_with_tokens()
         .filter_map(|element| element.into_node())
-        .find(|node| node.kind() == latex::TEXT)?
+        .find(|node| node.kind() == latex::TEXT || node.kind() == latex::MIXED_GROUP)?
         .text()
         .to_string();
 

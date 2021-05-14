@@ -181,9 +181,8 @@ fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<In
 
     let name = enum_item
         .label()
-        .and_then(|label| label.word())
-        .map(|label| label.text())
-        .unwrap_or_else(|| "Item");
+        .and_then(|label| label.content_text())
+        .unwrap_or_else(|| "Item".to_string());
 
     let symbol = match find_label_by_parent(context, node) {
         Some(NumberedLabel {

@@ -67,6 +67,8 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
             self.syntax()
                 .text()
                 .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
+                .to_string()
+                .trim()
                 .to_string(),
         )
     }
@@ -100,6 +102,8 @@ pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
             self.syntax()
                 .text()
                 .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
+                .to_string()
+                .trim()
                 .to_string(),
         )
     }
@@ -278,8 +282,8 @@ impl<'a> Begin<'a> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn options(&self) -> Option<BrackGroupKeyValue<'a>> {
-        self.syntax().children().find_map(BrackGroupKeyValue::cast)
+    pub fn options(&self) -> Option<BrackGroup<'a>> {
+        self.syntax().children().find_map(BrackGroup::cast)
     }
 }
 
@@ -335,8 +339,8 @@ impl<'a> EnumItem<'a> {
         self.syntax().first_token()
     }
 
-    pub fn label(&self) -> Option<BrackGroupWord<'a>> {
-        self.syntax().children().find_map(BrackGroupWord::cast)
+    pub fn label(&self) -> Option<BrackGroup<'a>> {
+        self.syntax().children().find_map(BrackGroup::cast)
     }
 }
 

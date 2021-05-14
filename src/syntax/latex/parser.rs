@@ -471,7 +471,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.peek() == Some(L_BRACK) {
-            self.brack_group_key_value();
+            self.brack_group();
         }
         self.builder.finish_node();
     }
@@ -731,7 +731,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         if self.peek() == Some(L_BRACK) {
-            self.brack_group_word();
+            self.brack_group();
         }
 
         while self

@@ -5,7 +5,7 @@ use lsp_types::{MarkupContent, MarkupKind};
 
 use crate::{
     syntax::{
-        latex::{self, HasCurly, HasKeyValueBody},
+        latex::{self, HasBrack, HasCurly},
         CstNode,
     },
     WorkspaceSubset, LANGUAGE_DATA,
@@ -224,8 +224,7 @@ fn render_label_enum_item(
         range: enum_item.small_range(),
         number: enum_item
             .label()
-            .and_then(|number| number.word())
-            .map(|number| number.text().to_string())
+            .and_then(|number| number.content_text())
             .or_else(|| number.take()),
         object: LabelledObject::EnumItem,
     })
@@ -260,10 +259,7 @@ fn render_label_theorem(
 ) -> Option<RenderedLabel> {
     let environment = latex::Environment::cast(parent)?;
     let begin = environment.begin()?;
-    let description = begin
-        .options()
-        .and_then(|options| options.body())
-        .map(|body| body.syntax().text().to_string());
+    let description = begin.options().and_then(|options| options.content_text());
 
     let environment_name = begin.name()?.word()?.text();
 
