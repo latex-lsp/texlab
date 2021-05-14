@@ -12,7 +12,7 @@ use crate::{
     Document, LineIndexExt, Uri, Workspace,
 };
 
-pub fn analyze_bibtex(
+pub fn analyze_bibtex_static(
     workspace: &dyn Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     uri: &Uri,

@@ -12,8 +12,8 @@ use log::{info, warn};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{
     notification::{
-        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument, LogMessage,
-        PublishDiagnostics,
+        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
+        DidSaveTextDocument, LogMessage, PublishDiagnostics,
     },
     request::{
         DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
@@ -49,7 +49,7 @@ use crate::{
 
 enum DiagnosticsMessage {
     Analyze {
-        workspace: Box<dyn Workspace>,
+        workspace: Arc<dyn Workspace>,
         document: Arc<Document>,
     },
     Shutdown,
@@ -61,8 +61,10 @@ pub struct Server {
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Arc<dyn Workspace>,
     diag_manager: Arc<Mutex<DiagnosticsManager>>,
-    diag_thread: Option<JoinHandle<()>>,
-    diag_thread_sender: Option<Sender<DiagnosticsMessage>>,
+    diag_thread_static: Option<JoinHandle<()>>,
+    diag_thread_sender_static: Option<Sender<DiagnosticsMessage>>,
+    diag_thread_chktex: Option<JoinHandle<()>>,
+    diag_thread_sender_chktex: Option<Sender<DiagnosticsMessage>>,
     pool: ThreadPool,
     load_resolver: bool,
 }
@@ -83,8 +85,10 @@ impl Server {
             req_queue,
             workspace,
             diag_manager,
-            diag_thread: None,
-            diag_thread_sender: None,
+            diag_thread_static: None,
+            diag_thread_sender_static: None,
+            diag_thread_chktex: None,
+            diag_thread_sender_chktex: None,
             pool: threadpool::Builder::new().build(),
             load_resolver,
         })
@@ -186,12 +190,14 @@ impl Server {
     }
 
     fn register_diagnostics_handler(&mut self) {
-        let (diag_thread_sender, diag_thread_receiver) = crossbeam_channel::unbounded();
-        self.diag_thread_sender = Some(diag_thread_sender.clone());
+        let (linting_sender, linting_receiver) = crossbeam_channel::unbounded();
+        self.diag_thread_sender_static = Some(linting_sender.clone());
+        let (grammar_sender, grammar_receiver) = crossbeam_channel::unbounded();
+        self.diag_thread_sender_chktex = Some(grammar_sender.clone());
 
         self.workspace
             .register_open_handler(Arc::new(move |workspace, document| {
-                diag_thread_sender
+                linting_sender
                     .send(DiagnosticsMessage::Analyze {
                         workspace,
                         document,
@@ -202,11 +208,11 @@ impl Server {
         let diag_manager = Arc::clone(&self.diag_manager);
         let sender = self.conn.sender.clone();
         let context = Arc::clone(&self.context);
-        self.diag_thread = Some(thread::spawn(move || {
+        self.diag_thread_static = Some(thread::spawn(move || {
             while let Ok(DiagnosticsMessage::Analyze {
                 workspace,
                 document,
-            }) = diag_thread_receiver.recv()
+            }) = linting_receiver.recv()
             {
                 let delay = {
                     context
@@ -218,14 +224,36 @@ impl Server {
                 };
 
                 thread::sleep(Duration::from_millis(delay));
-                while let Ok(message) = diag_thread_receiver.try_recv() {
+                while let Ok(message) = linting_receiver.try_recv() {
                     match message {
                         DiagnosticsMessage::Analyze { .. } => (),
                         DiagnosticsMessage::Shutdown => return,
                     }
                 }
                 let mut diag_manager = diag_manager.lock().unwrap();
-                diag_manager.update(workspace.as_ref(), Arc::clone(&document.uri));
+                diag_manager.update_static(workspace.as_ref(), Arc::clone(&document.uri));
+                if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
+                    warn!("Failed to publish diagnostics: {}", why);
+                }
+            }
+        }));
+
+        let diag_manager = Arc::clone(&self.diag_manager);
+        let sender = self.conn.sender.clone();
+        self.diag_thread_chktex = Some(thread::spawn(move || {
+            while let Ok(DiagnosticsMessage::Analyze {
+                workspace,
+                document,
+            }) = grammar_receiver.recv()
+            {
+                while let Ok(message) = grammar_receiver.try_recv() {
+                    match message {
+                        DiagnosticsMessage::Analyze { .. } => (),
+                        DiagnosticsMessage::Shutdown => return,
+                    }
+                }
+                let mut diag_manager = diag_manager.lock().unwrap();
+                diag_manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri));
                 if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
                     warn!("Failed to publish diagnostics: {}", why);
                 }
@@ -265,12 +293,27 @@ impl Server {
     fn did_open(&self, params: DidOpenTextDocumentParams) -> Result<()> {
         let language_id = &params.text_document.language_id;
         let language = DocumentLanguage::by_language_id(language_id);
-        self.workspace.open(
+        let document = self.workspace.open(
             Arc::new(params.text_document.uri.into()),
             params.text_document.text,
             language.unwrap_or(DocumentLanguage::Latex),
             WorkspaceSource::Client,
         );
+
+        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
+        if let Some(document) = self
+            .workspace
+            .get(document.uri.as_ref())
+            .filter(|_| should_lint)
+        {
+            self.diag_thread_sender_chktex
+                .as_ref()
+                .unwrap()
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
         Ok(())
     }
 
@@ -284,8 +327,40 @@ impl Server {
             .map(|document| document.data.language())
             .unwrap_or(DocumentLanguage::Latex);
 
-        self.workspace
+        let document = self
+            .workspace
             .open(Arc::new(uri), text, language, WorkspaceSource::Client);
+
+        let should_lint = { self.context.options.read().unwrap().chktex.on_edit };
+        if let Some(document) = self
+            .workspace
+            .get(document.uri.as_ref())
+            .filter(|_| should_lint)
+        {
+            self.diag_thread_sender_chktex
+                .as_ref()
+                .unwrap()
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
+
+        Ok(())
+    }
+
+    fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
+        let uri = params.text_document.uri.into();
+        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
+        if let Some(document) = self.workspace.get(&uri).filter(|_| should_lint) {
+            self.diag_thread_sender_chktex
+                .as_ref()
+                .unwrap()
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
         Ok(())
     }
 
@@ -708,6 +783,7 @@ impl Server {
                         })?
                         .on::<DidOpenTextDocument, _>(|params| self.did_open(params))?
                         .on::<DidChangeTextDocument, _>(|params| self.did_change(params))?
+                        .on::<DidSaveTextDocument, _>(|params| self.did_save(params))?
                         .on::<DidCloseTextDocument, _>(|params| self.did_close(params))?
                         .default();
                 }
@@ -731,10 +807,14 @@ impl Server {
         self.initialize()?;
         self.process_messages()?;
         self.pool.join();
-        self.diag_thread_sender
+        self.diag_thread_sender_static
             .unwrap()
             .send(DiagnosticsMessage::Shutdown)?;
-        self.diag_thread.take().unwrap().join().unwrap();
+        self.diag_thread_sender_chktex
+            .unwrap()
+            .send(DiagnosticsMessage::Shutdown)?;
+        self.diag_thread_static.take().unwrap().join().unwrap();
+        self.diag_thread_chktex.take().unwrap().join().unwrap();
         Ok(())
     }
 }

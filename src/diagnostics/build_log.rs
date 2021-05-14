@@ -5,7 +5,7 @@ use multimap::MultiMap;
 
 use crate::{syntax::build_log::BuildErrorLevel, Uri, Workspace};
 
-pub fn analyze_build_log(
+pub fn analyze_build_log_static(
     workspace: &dyn Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     build_log_uri: &Uri,

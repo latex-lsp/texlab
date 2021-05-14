@@ -6,12 +6,19 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     pub root_directory: Option<PathBuf>,
+
     pub aux_directory: Option<PathBuf>,
+
     #[serde(default)]
     pub bibtex_formatter: BibtexFormatter,
+
     pub diagnostics_delay: Option<u64>,
+
     #[serde(default)]
-    pub build: LatexBuildOptions,
+    pub build: BuildOptions,
+
+    #[serde(default)]
+    pub chktex: ChktexOptions,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -29,14 +36,16 @@ impl Default for BibtexFormatter {
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LatexBuildOptions {
+pub struct BuildOptions {
     pub executable: Option<String>,
+
     pub args: Option<Vec<String>>,
+
     #[serde(default)]
     pub is_continous: bool,
 }
 
-impl LatexBuildOptions {
+impl BuildOptions {
     pub fn executable(&self) -> String {
         self.executable
             .as_ref()
@@ -54,4 +63,14 @@ impl LatexBuildOptions {
             ]
         })
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChktexOptions {
+    #[serde(default)]
+    pub on_open_and_save: bool,
+
+    #[serde(default)]
+    pub on_edit: bool,
 }

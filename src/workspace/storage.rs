@@ -55,7 +55,7 @@ impl Workspace for Storage {
 
         let handlers = { self.open_handlers.lock().unwrap().clone() };
         for handler in handlers {
-            handler(Box::new(self.clone()), Arc::clone(&document));
+            handler(Arc::new(self.clone()), Arc::clone(&document));
         }
 
         document

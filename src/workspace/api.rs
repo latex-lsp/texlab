@@ -17,7 +17,7 @@ pub struct WorkspaceSubset {
     pub documents: Vec<Arc<Document>>,
 }
 
-pub type OpenHandler = Arc<dyn Fn(Box<dyn Workspace>, Arc<Document>) + Send + Sync + 'static>;
+pub type OpenHandler = Arc<dyn Fn(Arc<dyn Workspace>, Arc<Document>) + Send + Sync + 'static>;
 
 pub trait Workspace: Send + Sync {
     fn open(
