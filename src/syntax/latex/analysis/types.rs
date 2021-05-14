@@ -30,6 +30,7 @@ pub struct Extras {
 pub struct ImplicitLinks {
     pub aux: Vec<Arc<Uri>>,
     pub log: Vec<Arc<Uri>>,
+    pub pdf: Vec<Arc<Uri>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]

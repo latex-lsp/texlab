@@ -7,6 +7,7 @@ use super::LatexAnalyzerContext;
 pub fn analyze_implicit_links(context: &mut LatexAnalyzerContext) {
     context.extras.implicit_links.aux = find_by_extension(context, "aux").unwrap_or_default();
     context.extras.implicit_links.log = find_by_extension(context, "log").unwrap_or_default();
+    context.extras.implicit_links.pdf = find_by_extension(context, "pdf").unwrap_or_default();
 }
 
 fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<Vec<Arc<Uri>>> {

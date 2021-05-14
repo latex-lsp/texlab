@@ -41,7 +41,7 @@ use crate::{
         build_document, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
         format_source_code, goto_definition, prepare_rename_all, rename_all, BuildParams,
-        BuildResult, FeatureRequest,
+        BuildResult, FeatureRequest, ForwardSearchResult,
     },
     req_queue::{IncomingData, ReqQueue},
     Document, DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -723,6 +723,23 @@ impl Server {
         Ok(())
     }
 
+    fn forward_search(
+        &self,
+        id: RequestId,
+        params: TextDocumentPositionParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(
+            id,
+            params,
+            uri,
+            token,
+            crate::features::execute_forward_search,
+        )?;
+        Ok(())
+    }
+
     fn process_messages(&self) -> Result<()> {
         for msg in &self.conn.receiver {
             match msg {
@@ -769,6 +786,9 @@ impl Server {
                         })?
                         .on::<Formatting, _>(|id, params| self.formatting(id, params, &token))?
                         .on::<BuildRequest, _>(|id, params| self.build(id, params, &token))?
+                        .on::<ForwardSearchRequest, _>(|id, params| {
+                            self.forward_search(id, params, &token)
+                        })?
                         .on::<SemanticTokensRangeRequest, _>(|id, params| {
                             self.semantic_tokens_range(id, params, &token)
                         })?
@@ -856,4 +876,14 @@ impl lsp_types::request::Request for BuildRequest {
     type Result = BuildResult;
 
     const METHOD: &'static str = "textDocument/build";
+}
+
+struct ForwardSearchRequest;
+
+impl lsp_types::request::Request for ForwardSearchRequest {
+    type Params = TextDocumentPositionParams;
+
+    type Result = ForwardSearchResult;
+
+    const METHOD: &'static str = "textDocument/forwardSearch";
 }

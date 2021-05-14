@@ -19,6 +19,8 @@ pub struct Options {
 
     #[serde(default)]
     pub chktex: ChktexOptions,
+
+    pub forward_search: Option<ForwardSearchOptions>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -73,4 +75,10 @@ pub struct ChktexOptions {
 
     #[serde(default)]
     pub on_edit: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+pub struct ForwardSearchOptions {
+    pub executable: Option<String>,
+    pub args: Option<Vec<String>>,
 }

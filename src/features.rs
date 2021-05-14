@@ -5,6 +5,7 @@ mod cursor;
 mod definition;
 mod folding;
 mod formatting;
+mod forward_search;
 mod highlight;
 mod hover;
 mod link;
@@ -28,6 +29,7 @@ pub use self::{
     definition::goto_definition,
     folding::find_foldings,
     formatting::format_source_code,
+    forward_search::{execute_forward_search, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
     hover::find_hover,
     link::find_document_links,
