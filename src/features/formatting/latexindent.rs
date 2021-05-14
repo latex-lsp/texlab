@@ -1,5 +1,5 @@
 use std::{
-    io::{BufReader, BufWriter, Read, Write},
+    io::{BufWriter, Read, Write},
     process::{Command, Stdio},
 };
 
@@ -37,14 +37,9 @@ pub fn format_with_latexindent(
     stdin.write_all(document.text.as_bytes()).ok()?;
     drop(stdin);
 
-    let stdout = process.stdout.take()?;
-    let mut stdout = BufReader::new(stdout);
-    let mut buffer = Vec::new();
-    stdout.read_to_end(&mut buffer).ok()?;
-    drop(stdout);
+    let output = process.wait_with_output().ok()?;
 
-    let _ = process.kill();
-    let new_text = String::from_utf8_lossy(&buffer).into_owned();
+    let new_text = String::from_utf8_lossy(&output.stdout).into_owned();
 
     Some(vec![TextEdit {
         range: document

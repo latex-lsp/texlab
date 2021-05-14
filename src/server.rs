@@ -1,8 +1,7 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
-    thread::{self, JoinHandle},
-    time::Duration,
+    thread,
 };
 
 use anyhow::Result;
@@ -34,7 +33,7 @@ use crate::{
     component_db::COMPONENT_DATABASE,
     config::{pull_config, push_config, register_config_capability},
     create_workspace_full,
-    diagnostics::DiagnosticsManager,
+    diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
@@ -44,34 +43,23 @@ use crate::{
         BuildResult, FeatureRequest, ForwardSearchResult,
     },
     req_queue::{IncomingData, ReqQueue},
-    Document, DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
+    DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
 };
 
-enum DiagnosticsMessage {
-    Analyze {
-        workspace: Arc<dyn Workspace>,
-        document: Arc<Document>,
-    },
-    Shutdown,
-}
-
 pub struct Server {
-    conn: Connection,
+    connection: Connection,
     context: Arc<ServerContext>,
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Arc<dyn Workspace>,
-    diag_manager: Arc<Mutex<DiagnosticsManager>>,
-    diag_thread_static: Option<JoinHandle<()>>,
-    diag_thread_sender_static: Option<Sender<DiagnosticsMessage>>,
-    diag_thread_chktex: Option<JoinHandle<()>>,
-    diag_thread_sender_chktex: Option<Sender<DiagnosticsMessage>>,
+    static_debouncer: DiagnosticsDebouncer,
+    chktex_debouncer: DiagnosticsDebouncer,
     pool: ThreadPool,
     load_resolver: bool,
 }
 
 impl Server {
     pub fn with_connection(
-        conn: Connection,
+        connection: Connection,
         current_dir: PathBuf,
         load_resolver: bool,
     ) -> Result<Self> {
@@ -79,16 +67,20 @@ impl Server {
         let req_queue = Arc::default();
         let workspace = Arc::new(create_workspace_full(Arc::clone(&context))?);
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
+
+        let static_debouncer =
+            create_static_debouncer(Arc::clone(&diag_manager), &connection, Arc::clone(&context));
+
+        let chktex_debouncer =
+            create_chktex_debouncer(diag_manager, &connection, Arc::clone(&context));
+
         Ok(Self {
-            conn,
+            connection,
             context,
             req_queue,
             workspace,
-            diag_manager,
-            diag_thread_static: None,
-            diag_thread_sender_static: None,
-            diag_thread_chktex: None,
-            diag_thread_sender_chktex: None,
+            static_debouncer,
+            chktex_debouncer,
             pool: threadpool::Builder::new().build(),
             load_resolver,
         })
@@ -153,7 +145,7 @@ impl Server {
     }
 
     fn initialize(&mut self) -> Result<()> {
-        let (id, params) = self.conn.initialize_start()?;
+        let (id, params) = self.connection.initialize_start()?;
         let params: InitializeParams = serde_json::from_value(params)?;
 
         *self.context.client_capabilities.lock().unwrap() = params.capabilities;
@@ -166,7 +158,7 @@ impl Server {
                 version: Some(env!("CARGO_PKG_VERSION").to_owned()),
             }),
         };
-        self.conn
+        self.connection
             .initialize_finish(id, serde_json::to_value(result)?)?;
 
         let cx = Arc::clone(&self.context);
@@ -181,7 +173,7 @@ impl Server {
         self.register_diagnostics_handler();
 
         let req_queue = Arc::clone(&self.req_queue);
-        let sender = self.conn.sender.clone();
+        let sender = self.connection.sender.clone();
         let cx = Arc::clone(&self.context);
         self.pool.execute(move || {
             register_config_capability(&req_queue, &sender, &cx.client_capabilities);
@@ -190,77 +182,15 @@ impl Server {
     }
 
     fn register_diagnostics_handler(&mut self) {
-        let (linting_sender, linting_receiver) = crossbeam_channel::unbounded();
-        self.diag_thread_sender_static = Some(linting_sender.clone());
-        let (grammar_sender, grammar_receiver) = crossbeam_channel::unbounded();
-        self.diag_thread_sender_chktex = Some(grammar_sender.clone());
-
+        let sender = self.static_debouncer.sender.clone();
         self.workspace
             .register_open_handler(Arc::new(move |workspace, document| {
-                linting_sender
-                    .send(DiagnosticsMessage::Analyze {
-                        workspace,
-                        document,
-                    })
-                    .unwrap();
-            }));
-
-        let diag_manager = Arc::clone(&self.diag_manager);
-        let sender = self.conn.sender.clone();
-        let context = Arc::clone(&self.context);
-        self.diag_thread_static = Some(thread::spawn(move || {
-            while let Ok(DiagnosticsMessage::Analyze {
-                workspace,
-                document,
-            }) = linting_receiver.recv()
-            {
-                let delay = {
-                    context
-                        .options
-                        .read()
-                        .unwrap()
-                        .diagnostics_delay
-                        .unwrap_or(300)
+                let message = DiagnosticsMessage::Analyze {
+                    workspace,
+                    document,
                 };
-
-                thread::sleep(Duration::from_millis(delay));
-                while let Ok(message) = linting_receiver.try_recv() {
-                    match message {
-                        DiagnosticsMessage::Analyze { .. } => (),
-                        DiagnosticsMessage::Shutdown => return,
-                    }
-                }
-                let mut diag_manager = diag_manager.lock().unwrap();
-                diag_manager.update_static(workspace.as_ref(), Arc::clone(&document.uri));
-                if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
-                    warn!("Failed to publish diagnostics: {}", why);
-                }
-            }
-        }));
-
-        let diag_manager = Arc::clone(&self.diag_manager);
-        let sender = self.conn.sender.clone();
-        let context = Arc::clone(&self.context);
-        self.diag_thread_chktex = Some(thread::spawn(move || {
-            while let Ok(DiagnosticsMessage::Analyze {
-                workspace,
-                document,
-            }) = grammar_receiver.recv()
-            {
-                while let Ok(message) = grammar_receiver.try_recv() {
-                    match message {
-                        DiagnosticsMessage::Analyze { .. } => (),
-                        DiagnosticsMessage::Shutdown => return,
-                    }
-                }
-                let mut diag_manager = diag_manager.lock().unwrap();
-                let options = { context.options.read().unwrap().clone() };
-                diag_manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri), &options);
-                if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
-                    warn!("Failed to publish diagnostics: {}", why);
-                }
-            }
-        }));
+                sender.send(message).unwrap();
+            }));
     }
 
     fn register_incoming_request(&self, id: RequestId) -> Arc<CancellationToken> {
@@ -308,9 +238,8 @@ impl Server {
             .get(document.uri.as_ref())
             .filter(|_| should_lint)
         {
-            self.diag_thread_sender_chktex
-                .as_ref()
-                .unwrap()
+            self.chktex_debouncer
+                .sender
                 .send(DiagnosticsMessage::Analyze {
                     workspace: Arc::clone(&self.workspace),
                     document,
@@ -339,9 +268,8 @@ impl Server {
             .get(document.uri.as_ref())
             .filter(|_| should_lint)
         {
-            self.diag_thread_sender_chktex
-                .as_ref()
-                .unwrap()
+            self.chktex_debouncer
+                .sender
                 .send(DiagnosticsMessage::Analyze {
                     workspace: Arc::clone(&self.workspace),
                     document,
@@ -355,9 +283,8 @@ impl Server {
         let uri = params.text_document.uri.into();
         let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
         if let Some(document) = self.workspace.get(&uri).filter(|_| should_lint) {
-            self.diag_thread_sender_chktex
-                .as_ref()
-                .unwrap()
+            self.chktex_debouncer
+                .sender
                 .send(DiagnosticsMessage::Analyze {
                     workspace: Arc::clone(&self.workspace),
                     document,
@@ -374,7 +301,7 @@ impl Server {
 
     fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> Option<FeatureRequest<P>> {
         let req_queue = Arc::clone(&self.req_queue);
-        let sender = self.conn.sender.clone();
+        let sender = self.connection.sender.clone();
         let cx = Arc::clone(&self.context);
         self.pool.execute(move || {
             pull_config(
@@ -399,7 +326,7 @@ impl Server {
             ErrorCode::InternalError as i32,
             "unknown document URI".to_string(),
         );
-        self.conn.sender.send(resp.into())?;
+        self.connection.sender.send(resp.into())?;
         Ok(())
     }
 
@@ -418,7 +345,7 @@ impl Server {
     {
         match self.feature_request(uri, params) {
             Some(req) => {
-                let sender = self.conn.sender.clone();
+                let sender = self.connection.sender.clone();
                 let token = Arc::clone(token);
                 self.pool.execute(move || {
                     let result = handler(req, &token);
@@ -466,7 +393,7 @@ impl Server {
         params: WorkspaceSymbolParams,
         token: &Arc<CancellationToken>,
     ) -> Result<()> {
-        let sender = self.conn.sender.clone();
+        let sender = self.connection.sender.clone();
         let workspace = Arc::clone(&self.workspace);
         let token = Arc::clone(token);
         self.pool.execute(move || {
@@ -508,7 +435,7 @@ impl Server {
         mut item: CompletionItem,
         token: &Arc<CancellationToken>,
     ) -> Result<()> {
-        let sender = self.conn.sender.clone();
+        let sender = self.connection.sender.clone();
         let token = Arc::clone(token);
         let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
@@ -701,7 +628,7 @@ impl Server {
         token: &Arc<CancellationToken>,
     ) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
-        let lsp_sender = self.conn.sender.clone();
+        let lsp_sender = self.connection.sender.clone();
         self.handle_feature_request(id, params, uri, token, |request, token| {
             let (log_sender, log_receiver) = crossbeam_channel::unbounded();
 
@@ -741,10 +668,10 @@ impl Server {
     }
 
     fn process_messages(&self) -> Result<()> {
-        for msg in &self.conn.receiver {
+        for msg in &self.connection.receiver {
             match msg {
                 Message::Request(request) => {
-                    if self.conn.handle_shutdown(&request)? {
+                    if self.connection.handle_shutdown(&request)? {
                         return Ok(());
                     }
 
@@ -794,7 +721,7 @@ impl Server {
                         })?
                         .default()
                     {
-                        self.conn.sender.send(response.into())?;
+                        self.connection.sender.send(response.into())?;
                     }
                 }
                 Message::Notification(notification) => {
@@ -828,17 +755,42 @@ impl Server {
     pub fn run(mut self) -> Result<()> {
         self.initialize()?;
         self.process_messages()?;
+        drop(self.static_debouncer);
+        drop(self.chktex_debouncer);
         self.pool.join();
-        self.diag_thread_sender_static
-            .unwrap()
-            .send(DiagnosticsMessage::Shutdown)?;
-        self.diag_thread_sender_chktex
-            .unwrap()
-            .send(DiagnosticsMessage::Shutdown)?;
-        self.diag_thread_static.take().unwrap().join().unwrap();
-        self.diag_thread_chktex.take().unwrap().join().unwrap();
         Ok(())
     }
+}
+
+fn create_static_debouncer(
+    manager: Arc<Mutex<DiagnosticsManager>>,
+    conn: &Connection,
+    context: Arc<ServerContext>,
+) -> DiagnosticsDebouncer {
+    let sender = conn.sender.clone();
+    DiagnosticsDebouncer::launch(context, move |workspace, document| {
+        let mut manager = manager.lock().unwrap();
+        manager.update_static(workspace.as_ref(), Arc::clone(&document.uri));
+        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+            warn!("Failed to publish diagnostics: {}", why);
+        }
+    })
+}
+
+fn create_chktex_debouncer(
+    manager: Arc<Mutex<DiagnosticsManager>>,
+    conn: &Connection,
+    context: Arc<ServerContext>,
+) -> DiagnosticsDebouncer {
+    let sender = conn.sender.clone();
+    DiagnosticsDebouncer::launch(Arc::clone(&context), move |workspace, document| {
+        let options = { context.options.read().unwrap().clone() };
+        let mut manager = manager.lock().unwrap();
+        manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri), &options);
+        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+            warn!("Failed to publish diagnostics: {}", why);
+        }
+    })
 }
 
 fn publish_diagnostics(

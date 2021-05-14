@@ -1,6 +1,7 @@
 mod bibtex;
 mod build_log;
 mod chktex;
+mod debouncer;
 mod latex;
 
 use std::sync::Arc;
@@ -10,6 +11,8 @@ use multimap::MultiMap;
 use rustc_hash::FxHashMap;
 
 use crate::{Options, Uri, Workspace};
+
+pub use self::debouncer::{DiagnosticsDebouncer, DiagnosticsMessage};
 
 use self::{
     bibtex::analyze_bibtex_static, build_log::analyze_build_log_static,
