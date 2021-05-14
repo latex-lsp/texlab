@@ -49,7 +49,7 @@ enum LogosToken {
     #[token("=")]
     EQUALITY_SIGN,
 
-    #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
     COMMAND_NAME,
 }
 

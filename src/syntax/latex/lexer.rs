@@ -46,7 +46,7 @@ enum Token {
     #[regex(r"\$\$?")]
     DOLLAR,
 
-    #[regex(r"\\([^\r\n]|[@a-zA-Z]+\*?)?")]
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
     GENERIC_COMMAND_NAME,
 
     #[regex(r"\\begin")]
