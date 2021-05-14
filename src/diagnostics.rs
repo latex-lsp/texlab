@@ -9,7 +9,7 @@ use lsp_types::Diagnostic;
 use multimap::MultiMap;
 use rustc_hash::FxHashMap;
 
-use crate::{Uri, Workspace};
+use crate::{Options, Uri, Workspace};
 
 use self::{
     bibtex::analyze_bibtex_static, build_log::analyze_build_log_static,
@@ -31,8 +31,8 @@ impl DiagnosticsManager {
         self.static_diagnostics.insert(uri, diagnostics_by_uri);
     }
 
-    pub fn update_chktex(&mut self, workspace: &dyn Workspace, uri: Arc<Uri>) {
-        analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, &uri);
+    pub fn update_chktex(&mut self, workspace: &dyn Workspace, uri: Arc<Uri>, options: &Options) {
+        analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, &uri, options);
     }
 
     pub fn publish(&self, uri: Arc<Uri>) -> Vec<Diagnostic> {

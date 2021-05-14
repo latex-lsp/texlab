@@ -240,6 +240,7 @@ impl Server {
 
         let diag_manager = Arc::clone(&self.diag_manager);
         let sender = self.conn.sender.clone();
+        let context = Arc::clone(&self.context);
         self.diag_thread_chktex = Some(thread::spawn(move || {
             while let Ok(DiagnosticsMessage::Analyze {
                 workspace,
@@ -253,7 +254,8 @@ impl Server {
                     }
                 }
                 let mut diag_manager = diag_manager.lock().unwrap();
-                diag_manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri));
+                let options = { context.options.read().unwrap().clone() };
+                diag_manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri), &options);
                 if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &diag_manager) {
                     warn!("Failed to publish diagnostics: {}", why);
                 }

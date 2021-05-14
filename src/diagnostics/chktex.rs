@@ -1,5 +1,6 @@
 use std::{
     io::{self, BufRead, BufReader, BufWriter, Write},
+    path::Path,
     process::{Command, Stdio},
     sync::Arc,
 };
@@ -10,19 +11,39 @@ use multimap::MultiMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{RangeExt, Uri, Workspace};
+use crate::{Options, RangeExt, Uri, Workspace};
 
 pub fn analyze_latex_chktex(
     workspace: &dyn Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     uri: &Uri,
+    options: &Options,
 ) -> Option<()> {
     let document = workspace.get(uri)?;
     document.data.as_latex()?;
+
+    let current_dir = options
+        .root_directory
+        .as_ref()
+        .cloned()
+        .or_else(|| {
+            if document.uri.scheme() == "file" {
+                document
+                    .uri
+                    .to_file_path()
+                    .unwrap()
+                    .parent()
+                    .map(ToOwned::to_owned)
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| ".".into());
+
     diagnostics_by_uri.remove(uri);
     diagnostics_by_uri.insert_many(
         Arc::clone(&document.uri),
-        lint(&document.text).unwrap_or_default(),
+        lint(&document.text, &current_dir).unwrap_or_default(),
     );
     Some(())
 }
@@ -30,12 +51,13 @@ pub fn analyze_latex_chktex(
 pub static LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
 
-fn lint(text: &str) -> io::Result<Vec<Diagnostic>> {
+fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
     let mut process = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
+        .current_dir(current_dir)
         .spawn()?;
 
     let mut writer = BufWriter::new(process.stdin.take().unwrap());
