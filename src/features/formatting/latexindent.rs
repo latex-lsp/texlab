@@ -28,7 +28,7 @@ pub fn format_with_latexindent(
         .current_dir(current_dir)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::null())
         .spawn()
         .ok()?;
 
