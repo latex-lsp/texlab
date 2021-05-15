@@ -102,7 +102,7 @@ fn build_internal(path: &Path, options: &Options, log_sender: Sender<String>) ->
     track_output(process.stdout.take().unwrap(), log_sender.clone());
     track_output(process.stderr.take().unwrap(), log_sender.clone());
 
-    if !options.build.is_continous {
+    if !options.build.is_continuous {
         process.wait().map(|status| status.success())
     } else {
         Ok(true)

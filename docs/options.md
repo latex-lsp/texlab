@@ -46,7 +46,7 @@ The placeholder `%f` will be replaced by the server.
 
 ---
 
-## texlab.build.isContinous
+## texlab.build.isContinuous
 
 Set this property to true if the build arguments imply a continous build (like `latexmk -pvc`).
 

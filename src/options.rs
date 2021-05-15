@@ -44,7 +44,7 @@ pub struct BuildOptions {
     pub args: Option<Vec<String>>,
 
     #[serde(default)]
-    pub is_continous: bool,
+    pub is_continuous: bool,
 }
 
 impl BuildOptions {
