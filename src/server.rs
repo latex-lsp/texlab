@@ -174,9 +174,15 @@ impl Server {
 
         let req_queue = Arc::clone(&self.req_queue);
         let sender = self.connection.sender.clone();
-        let cx = Arc::clone(&self.context);
+        let context = Arc::clone(&self.context);
         self.pool.execute(move || {
-            register_config_capability(&req_queue, &sender, &cx.client_capabilities);
+            register_config_capability(&req_queue, &sender, &context.client_capabilities);
+            pull_config(
+                &req_queue,
+                &sender,
+                &context.options,
+                &context.client_capabilities.lock().unwrap(),
+            );
         });
         Ok(())
     }
