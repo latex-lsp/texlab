@@ -1,5 +1,5 @@
 use cancellation::CancellationToken;
-use cstree::{NodeOrToken, TextLen, TextRange};
+use cstree::NodeOrToken;
 use lsp_types::{DocumentFormattingParams, TextEdit};
 
 use crate::{
@@ -32,7 +32,7 @@ pub fn format_bibtex_internal(
             .unwrap()
             .formatter_line_length
             .map(|value| {
-                if value < 0 {
+                if value <= 0 {
                     usize::MAX
                 } else {
                     value as usize
@@ -43,22 +43,34 @@ pub fn format_bibtex_internal(
 
     let document = request.main_document();
     let data = document.data.as_bibtex()?;
+    let mut edits = Vec::new();
 
-    let mut formatter = Formatter::new(
-        indent,
-        request.params.options.tab_size,
-        line_length,
-        &document.line_index,
-    );
+    for node in data.root.children() {
+        let range = if let Some(entry) = bibtex::Entry::cast(node) {
+            entry.small_range()
+        } else if let Some(string) = bibtex::String::cast(node) {
+            string.small_range()
+        } else if let Some(preamble) = bibtex::Preamble::cast(node) {
+            preamble.small_range()
+        } else {
+            continue;
+        };
 
-    formatter.visit_node(&data.root);
+        let mut formatter = Formatter::new(
+            indent.clone(),
+            request.params.options.tab_size,
+            line_length,
+            &document.line_index,
+        );
 
-    Some(vec![TextEdit {
-        range: document
-            .line_index
-            .line_col_lsp_range(TextRange::new(0.into(), document.text.text_len())),
-        new_text: formatter.output,
-    }])
+        formatter.visit_node(node);
+        edits.push(TextEdit {
+            range: document.line_index.line_col_lsp_range(range),
+            new_text: formatter.output,
+        });
+    }
+
+    Some(edits)
 }
 
 struct Formatter<'a> {
@@ -116,7 +128,6 @@ impl<'a> Formatter<'a> {
                     }
                     self.output.push('}');
                 }
-                self.output.push('\n');
             }
             bibtex::STRING => {
                 let string = bibtex::String::cast(parent).unwrap();
@@ -131,7 +142,6 @@ impl<'a> Formatter<'a> {
                         self.output.push('}');
                     }
                 }
-                self.output.push('\n');
             }
             bibtex::ENTRY => {
                 let entry = bibtex::Entry::cast(parent).unwrap();
@@ -146,7 +156,6 @@ impl<'a> Formatter<'a> {
                     }
                     self.output.push('}');
                 }
-                self.output.push('\n');
             }
             bibtex::FIELD => {
                 let field = bibtex::Field::cast(parent).unwrap();
@@ -215,7 +224,7 @@ impl<'a> Formatter<'a> {
 
 #[cfg(test)]
 mod tests {
-    use insta::assert_display_snapshot;
+    use insta::{assert_debug_snapshot, assert_display_snapshot};
 
     use crate::features::testing::FeatureTester;
 
@@ -251,12 +260,11 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let mut edits = format_bibtex_internal(&request, CancellationToken::none()).unwrap();
+        let edit2 = edits.pop().unwrap();
+        let edit1 = edits.pop().unwrap();
 
-        assert_display_snapshot!(edit.new_text);
+        assert_debug_snapshot!((edit1.new_text, edit2.new_text));
     }
 
     #[test]
