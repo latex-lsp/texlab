@@ -43,7 +43,7 @@ pub fn analyze_latex_chktex(
     diagnostics_by_uri.remove(uri);
     diagnostics_by_uri.insert_many(
         Arc::clone(&document.uri),
-        lint(&document.text, &current_dir).unwrap(),
+        lint(&document.text, &current_dir).unwrap_or_default(),
     );
     Some(())
 }
