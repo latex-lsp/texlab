@@ -1,4 +1,4 @@
-use cstree::{TextRange, TextSize};
+use cstree::TextRange;
 
 use crate::syntax::CstNode;
 
@@ -61,16 +61,21 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
     }
 
     fn content_text(&self) -> Option<String> {
-        let left = self.left_curly()?;
-        let right = self.right_curly()?;
-        Some(
-            self.syntax()
-                .text()
-                .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
-                .to_string()
-                .trim()
-                .to_string(),
-        )
+        self.left_curly()?;
+        self.right_curly()?;
+        let mut text = String::new();
+        for child in self
+            .syntax()
+            .descendants_with_tokens()
+            .filter_map(|child| child.into_token())
+            .filter(|token| !matches!(token.kind(), COMMENT))
+        {
+            text.push_str(child.text());
+        }
+        let text = text.trim_end();
+        let text = text[1..text.len() - 1].trim().to_string();
+
+        Some(text)
     }
 }
 
@@ -96,16 +101,21 @@ pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
     }
 
     fn content_text(&self) -> Option<String> {
-        let left = self.left_brack()?;
-        let right = self.right_brack()?;
-        Some(
-            self.syntax()
-                .text()
-                .slice(TextSize::from(1)..right.text_range().end() - left.text_range().end())
-                .to_string()
-                .trim()
-                .to_string(),
-        )
+        self.left_brack()?;
+        self.right_brack()?;
+        let mut text = String::new();
+        for child in self
+            .syntax()
+            .descendants_with_tokens()
+            .filter_map(|child| child.into_token())
+            .filter(|token| !matches!(token.kind(), COMMENT))
+        {
+            text.push_str(child.text());
+        }
+        let text = text.trim_end();
+        let text = text[1..text.len() - 1].trim().to_string();
+
+        Some(text)
     }
 }
 
