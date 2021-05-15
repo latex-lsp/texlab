@@ -12,6 +12,8 @@ pub struct Options {
     #[serde(default)]
     pub bibtex_formatter: BibtexFormatter,
 
+    pub formatter_line_length: Option<i32>,
+
     pub diagnostics_delay: Option<u64>,
 
     #[serde(default)]

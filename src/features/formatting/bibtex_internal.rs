@@ -11,8 +11,6 @@ use crate::{
     LineIndex, LineIndexExt,
 };
 
-const LINE_LENGTH: usize = 80;
-
 pub fn format_bibtex_internal(
     request: &FeatureRequest<DocumentFormattingParams>,
     _cancellation_token: &CancellationToken,
@@ -26,12 +24,30 @@ pub fn format_bibtex_internal(
         indent.push('\t');
     }
 
+    let line_length = {
+        request
+            .context
+            .options
+            .read()
+            .unwrap()
+            .formatter_line_length
+            .map(|value| {
+                if value < 0 {
+                    usize::MAX
+                } else {
+                    value as usize
+                }
+            })
+            .unwrap_or(80)
+    };
+
     let document = request.main_document();
     let data = document.data.as_bibtex()?;
 
     let mut formatter = Formatter::new(
         indent,
         request.params.options.tab_size,
+        line_length,
         &document.line_index,
     );
 
@@ -48,16 +64,18 @@ pub fn format_bibtex_internal(
 struct Formatter<'a> {
     indent: String,
     tab_size: u32,
+    line_length: usize,
     output: String,
     align: Vec<usize>,
     line_index: &'a LineIndex,
 }
 
 impl<'a> Formatter<'a> {
-    fn new(indent: String, tab_size: u32, line_index: &'a LineIndex) -> Self {
+    fn new(indent: String, tab_size: u32, line_length: usize, line_index: &'a LineIndex) -> Self {
         Self {
             indent,
             tab_size,
+            line_length,
             output: String::new(),
             align: Vec::new(),
             line_index,
@@ -163,7 +181,7 @@ impl<'a> Formatter<'a> {
                     let insert_space = self.should_insert_space(previous, current);
                     let space_length = if insert_space { 1 } else { 0 };
 
-                    if length + current_length + space_length > LINE_LENGTH {
+                    if length + current_length + space_length > self.line_length {
                         self.output.push('\n');
                         self.output.push_str(self.indent.as_ref());
                         for _ in 0..=align - self.tab_size as usize {

@@ -119,9 +119,19 @@ Lint using [chktex](https://www.nongnu.org/chktex/) after editing a file.
 
 Delay in milliseconds before reporting diagnostics.
 
-**Type:** `number`
+**Type:** `integer`
 
 **Default value:** `300`
+
+---
+
+## texlab.formatterLineLength
+
+Defines the maximum amount of characters per line (0 = disable) when formatting BibTeX files.
+
+**Type:** `integer`
+
+**Default value:** `80`
 
 ---
 
