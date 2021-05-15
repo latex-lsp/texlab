@@ -15,19 +15,33 @@
 
 A cross-platform implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol)
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
-We provide an [extension](https://github.com/latex-lsp/texlab-vscode) for [Visual Studio Code](https://code.visualstudio.com).
+The server may be used with [any editor that implements the Language Server Protocol](https://microsoft.github.io/language-server-protocol/implementors/tools/).
 
-Learn more about the project on our [website](https://texlab.netlify.app).
+![Demo](docs/demo.gif)
 
 ## Getting Started
 
-See the [installation chapter](https://texlab.netlify.app/docs) from our docs.
+If your editor extension like does not install the TexLab server automatically,
+you will need to install it manually.
+We provide [precompiled binaries](https://github.com/latex-lsp/texlab/releases)
+for Windows, Linux and macOS.
+Alternatively, you can build TexLab from source or install it using your package manager.
+For a list of supported package managers, you can take a look at [Repology](https://repology.org/project/texlab/versions).
 
-## Building from Source
+### Requirements
+
+A [TeX distribution](https://www.latex-project.org/get/#tex-distributions) is _not_ strictly required
+to use the server but TexLab cannot compile your documents without one.
+TexLab supports compiling using [Tectonic](https://tectonic-typesetting.github.io/).
+For an example configuration, please see [here](docs/tectonic.md).
+
+On Windows, you may need to install [Microsoft Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145).
+
+### Building from Source
 
 You will need to install the following dependencies to compile the server:
 
-- [Rust (>= 1.39)](https://rustup.rs/)
+- A recent, stable version of [Rust](https://rustup.rs/)
 
 Then run the following command in the project folder:
 
@@ -35,12 +49,21 @@ Then run the following command in the project folder:
 cargo build --release
 ```
 
-Alternatively, Rust users can run the following command
-without having to clone this repository:
+Alternatively, you can run the following command
+without having to clone this repository and make TexLab available in your PATH:
 
 ```shell
 cargo install --git https://github.com/latex-lsp/texlab.git --locked
 ```
+
+## Usage
+
+After installing an editor extension, you can simply start editing LaTeX files. All editing features work out-of-the-box over all files in the currently opened workspace.
+There is no need for magic comments like `%!TEX root`
+and TexLab should figure out the dependencies of a file on its own.
+Note that you may need to set the `texlab.rootDirectory` option for some multi-folder projects.
+
+TexLab features a variety of [options](docs/options.md) which can be used to configure features like building or [forward search](docs/previewing.md).
 
 ## Development
 
@@ -55,6 +78,8 @@ cargo test
 ```
 
 in the project folder.
+
+For a list of custom messages, please see [here](docs/custom_messages.md).
 
 ## Contributing
 
