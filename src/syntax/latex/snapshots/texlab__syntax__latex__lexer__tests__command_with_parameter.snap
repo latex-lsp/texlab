@@ -1,0 +1,47 @@
+---
+source: src/syntax/latex/lexer.rs
+expression: "verify(r#\"\\newcommand{\\id}[1]{#1}\"#)"
+
+---
+[
+    (
+        COMMAND_DEFINITION_NAME,
+        "\\newcommand",
+    ),
+    (
+        L_CURLY,
+        "{",
+    ),
+    (
+        GENERIC_COMMAND_NAME,
+        "\\id",
+    ),
+    (
+        R_CURLY,
+        "}",
+    ),
+    (
+        L_BRACK,
+        "[",
+    ),
+    (
+        WORD,
+        "1",
+    ),
+    (
+        R_BRACK,
+        "]",
+    ),
+    (
+        L_CURLY,
+        "{",
+    ),
+    (
+        PARAMETER,
+        "#1",
+    ),
+    (
+        R_CURLY,
+        "}",
+    ),
+]

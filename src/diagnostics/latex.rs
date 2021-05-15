@@ -1,113 +1,129 @@
+use std::sync::Arc;
+
+use cstree::TextRange;
+use lsp_types::{Diagnostic, DiagnosticSeverity};
+use multimap::MultiMap;
+
 use crate::{
-    protocol::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, RangeExt, Uri},
-    workspace::Document,
+    syntax::{latex, CstNode},
+    Document, LineIndexExt, Uri, Workspace,
 };
-use chashmap::CHashMap;
-use futures::{
-    future::{AbortHandle, Abortable, Aborted},
-    lock::Mutex,
-};
-use log::trace;
-use once_cell::sync::Lazy;
-use regex::Regex;
-use std::process::Stdio;
-use tokio::{prelude::*, process::Command};
 
-#[derive(Debug, Default)]
-pub struct LatexDiagnosticsProvider {
-    diagnostics_by_uri: CHashMap<Uri, Vec<Diagnostic>>,
-    handle: Mutex<Option<AbortHandle>>,
-}
-
-impl LatexDiagnosticsProvider {
-    pub fn get(&self, document: &Document) -> Vec<Diagnostic> {
-        match self.diagnostics_by_uri.get(&document.uri) {
-            Some(diagnostics) => diagnostics.to_owned(),
-            None => Vec::new(),
-        }
+pub fn analyze_latex_static(
+    workspace: &dyn Workspace,
+    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    uri: &Uri,
+) -> Option<()> {
+    let document = workspace.get(uri)?;
+    if !document.uri.as_str().ends_with(".tex") {
+        return None;
     }
 
-    pub async fn update(&self, uri: &Uri, text: &str) {
-        if uri.scheme() != "file" {
-            return;
-        }
+    let data = document.data.as_latex()?;
 
-        let mut handle_guard = self.handle.lock().await;
-        if let Some(handle) = &*handle_guard {
-            handle.abort();
-        }
-
-        let (handle, registration) = AbortHandle::new_pair();
-        *handle_guard = Some(handle);
-        drop(handle_guard);
-
-        let future = Abortable::new(
-            async move {
-                self.diagnostics_by_uri
-                    .insert(uri.clone(), lint(text.into()).await.unwrap_or_default());
-            },
-            registration,
-        );
-
-        if let Err(Aborted) = future.await {
-            trace!("Killed ChkTeX because it took too long to execute")
-        }
+    for node in data.root.descendants() {
+        analyze_environment(&document, diagnostics_by_uri, node)
+            .or_else(|| analyze_curly_group(&document, diagnostics_by_uri, node))
+            .or_else(|| {
+                if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
+                    diagnostics_by_uri.insert(
+                        Arc::clone(&document.uri),
+                        Diagnostic {
+                            range: document.line_index.line_col_lsp_range(node.text_range()),
+                            severity: Some(DiagnosticSeverity::Error),
+                            code: None,
+                            code_description: None,
+                            source: Some("texlab".to_string()),
+                            message: "Unexpected \"}\"".to_string(),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        },
+                    );
+                    Some(())
+                } else {
+                    None
+                }
+            });
     }
+
+    Some(())
 }
 
-pub static LINE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
-
-async fn lint(text: String) -> io::Result<Vec<Diagnostic>> {
-    let mut process: tokio::process::Child = Command::new("chktex")
-        .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .kill_on_drop(true)
-        .spawn()?;
-
-    process
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(text.as_bytes())
-        .await?;
-
-    let mut stdout = String::new();
-    process
-        .stdout
-        .take()
-        .unwrap()
-        .read_to_string(&mut stdout)
-        .await?;
-
-    let mut diagnostics = Vec::new();
-    for line in stdout.lines() {
-        if let Some(captures) = LINE_REGEX.captures(line) {
-            let line = captures[1].parse::<u64>().unwrap() - 1;
-            let character = captures[2].parse::<u64>().unwrap() - 1;
-            let digit = captures[3].parse::<u64>().unwrap();
-            let kind = &captures[4];
-            let code = &captures[5];
-            let message = captures[6].into();
-            let range = Range::new_simple(line, character, line, character + digit);
-            let severity = match kind {
-                "Message" => DiagnosticSeverity::Information,
-                "Warning" => DiagnosticSeverity::Warning,
-                _ => DiagnosticSeverity::Error,
-            };
-
-            diagnostics.push(Diagnostic {
-                source: Some("chktex".into()),
-                code: Some(NumberOrString::String(code.into())),
-                message,
-                severity: Some(severity),
-                range,
+fn analyze_environment(
+    document: &Document,
+    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    node: &latex::SyntaxNode,
+) -> Option<()> {
+    let environment = latex::Environment::cast(node)?;
+    let name1 = environment.begin()?.name()?.word()?;
+    let name2 = environment.end()?.name()?.word()?;
+    if name1.text() != name2.text() {
+        diagnostics_by_uri.insert(
+            Arc::clone(&document.uri),
+            Diagnostic {
+                range: document.line_index.line_col_lsp_range(name1.text_range()),
+                severity: Some(DiagnosticSeverity::Error),
+                code: None,
+                code_description: None,
+                source: Some("texlab".to_string()),
+                message: "Mismatched environment".to_string(),
                 related_information: None,
                 tags: None,
-            })
-        }
+                data: None,
+            },
+        );
     }
-    Ok(diagnostics)
+    Some(())
+}
+
+fn analyze_curly_group(
+    document: &Document,
+    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    node: &latex::SyntaxNode,
+) -> Option<()> {
+    if !matches!(
+        node.kind(),
+        latex::CURLY_GROUP
+            | latex::CURLY_GROUP_COMMAND
+            | latex::CURLY_GROUP_KEY_VALUE
+            | latex::CURLY_GROUP_WORD
+            | latex::CURLY_GROUP_WORD_LIST
+    ) {
+        return None;
+    }
+
+    let is_inside_verbatim_environment = node
+        .ancestors()
+        .filter_map(latex::Environment::cast)
+        .filter_map(|env| env.begin())
+        .filter_map(|begin| begin.name())
+        .filter_map(|name| name.word())
+        .any(|name| ["asy", "lstlisting", "minted", "verbatim"].contains(&name.text()));
+
+    if !is_inside_verbatim_environment
+        && !node
+            .children_with_tokens()
+            .filter_map(|element| element.into_token())
+            .any(|token| token.kind() == latex::R_CURLY)
+    {
+        diagnostics_by_uri.insert(
+            Arc::clone(&document.uri),
+            Diagnostic {
+                range: document
+                    .line_index
+                    .line_col_lsp_range(TextRange::empty(node.text_range().end())),
+                severity: Some(DiagnosticSeverity::Error),
+                code: None,
+                code_description: None,
+                source: Some("texlab".to_string()),
+                message: "Missing \"}\" inserted".to_string(),
+                related_information: None,
+                tags: None,
+                data: None,
+            },
+        );
+    }
+
+    Some(())
 }

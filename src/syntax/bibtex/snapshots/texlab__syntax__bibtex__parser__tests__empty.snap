@@ -1,0 +1,7 @@
+---
+source: src/syntax/bibtex/parser.rs
+expression: "setup(r#\"\"#)"
+
+---
+ROOT@0..0
+

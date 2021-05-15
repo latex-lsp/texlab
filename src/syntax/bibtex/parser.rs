@@ -1,401 +1,413 @@
-use super::ast::*;
-use crate::{
-    protocol::{Range, RangeExt},
-    syntax::text::SyntaxNode,
-};
-use petgraph::graph::{Graph, NodeIndex};
-use std::iter::Peekable;
+use cstree::GreenNodeBuilder;
 
-pub struct Parser<I: Iterator<Item = Token>> {
-    graph: Graph<Node, ()>,
-    tokens: Peekable<I>,
+use super::{
+    lexer::Lexer,
+    SyntaxKind::{self, *},
+    SyntaxNode,
+};
+
+#[derive(Debug, Clone)]
+pub struct Parse {
+    pub root: SyntaxNode,
 }
 
-impl<I: Iterator<Item = Token>> Parser<I> {
-    pub fn new(tokens: I) -> Self {
+struct Parser<'a> {
+    lexer: Lexer<'a>,
+    builder: GreenNodeBuilder<'static, 'static>,
+}
+
+impl<'a> Parser<'a> {
+    pub fn new(lexer: Lexer<'a>) -> Self {
         Self {
-            tokens: tokens.peekable(),
-            graph: Graph::new(),
+            lexer,
+            builder: GreenNodeBuilder::new(),
         }
     }
 
-    pub fn parse(mut self) -> Tree {
-        let mut children = Vec::new();
+    fn peek(&self) -> Option<SyntaxKind> {
+        self.lexer.peek()
+    }
 
-        while let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                TokenKind::PreambleKind => children.push(self.preamble()),
-                TokenKind::StringKind => children.push(self.string()),
-                TokenKind::EntryKind => children.push(self.entry()),
-                _ => children.push(self.comment()),
-            }
-        }
+    fn eat(&mut self) {
+        let (kind, text) = self.lexer.consume().unwrap();
+        self.builder.token(kind.into(), text);
+    }
 
-        let range = if children.is_empty() {
-            Range::new_simple(0, 0, 0, 0)
+    fn expect(&mut self, kind: SyntaxKind) {
+        if self.peek() == Some(kind) {
+            self.eat();
+            self.trivia();
         } else {
-            let start = self.graph[children[0]].start();
-            let end = self.graph[children[children.len() - 1]].end();
-            Range::new(start, end)
-        };
-
-        let root = self.graph.add_node(Node::Root(Root { range }));
-        self.connect(root, &children);
-        Tree {
-            graph: self.graph,
-            root,
+            self.builder.token(MISSING.into(), "");
         }
     }
 
-    fn preamble(&mut self) -> NodeIndex {
-        let ty = self.tokens.next().unwrap();
-
-        let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
-        if left.is_none() {
-            return self.graph.add_node(Node::Preamble(Box::new(Preamble {
-                range: ty.range(),
-                ty,
-                left: None,
-                right: None,
-            })));
-        }
-
-        if !self.can_match_content() {
-            return self.graph.add_node(Node::Preamble(Box::new(Preamble {
-                range: Range::new(ty.start(), left.as_ref().unwrap().end()),
-                ty,
-                left,
-                right: None,
-            })));
-        }
-
-        let content = self.content();
-
-        let right = self.expect2(TokenKind::EndBrace, TokenKind::EndParen);
-        let end = right
-            .as_ref()
-            .map(Token::end)
-            .unwrap_or_else(|| self.graph[content].end());
-
-        let parent = self.graph.add_node(Node::Preamble(Box::new(Preamble {
-            range: Range::new(ty.start(), end),
-            ty,
-            left,
-            right,
-        })));
-        self.graph.add_edge(parent, content, ());
-        parent
-    }
-
-    fn string(&mut self) -> NodeIndex {
-        let ty = self.tokens.next().unwrap();
-
-        let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
-        if left.is_none() {
-            return self.graph.add_node(Node::String(Box::new(String {
-                range: ty.range(),
-                ty,
-                left: None,
-                name: None,
-                assign: None,
-                right: None,
-            })));
-        }
-
-        let name = self.expect1(TokenKind::Word);
-        if name.is_none() {
-            return self.graph.add_node(Node::String(Box::new(String {
-                range: Range::new(ty.start(), left.as_ref().unwrap().end()),
-                ty,
-                left,
-                name: None,
-                assign: None,
-                right: None,
-            })));
-        }
-
-        let assign = self.expect1(TokenKind::Assign);
-        if assign.is_none() {
-            return self.graph.add_node(Node::String(Box::new(String {
-                range: Range::new(ty.start(), name.as_ref().unwrap().end()),
-                ty,
-                left,
-                name,
-                assign: None,
-                right: None,
-            })));
-        }
-
-        if !self.can_match_content() {
-            return self.graph.add_node(Node::String(Box::new(String {
-                range: Range::new(ty.start(), assign.as_ref().unwrap().end()),
-                ty,
-                left,
-                name,
-                assign,
-                right: None,
-            })));
-        }
-        let value = self.content();
-
-        let right = self.expect2(TokenKind::EndBrace, TokenKind::EndParen);
-        let end = right
-            .as_ref()
-            .map(Token::end)
-            .unwrap_or_else(|| self.graph[value].end());
-
-        let parent = self.graph.add_node(Node::String(Box::new(String {
-            range: Range::new(ty.start(), end),
-            ty,
-            left,
-            name,
-            assign,
-            right,
-        })));
-        self.graph.add_edge(parent, value, ());
-        parent
-    }
-
-    fn entry(&mut self) -> NodeIndex {
-        let ty = self.tokens.next().unwrap();
-
-        let left = self.expect2(TokenKind::BeginBrace, TokenKind::BeginParen);
-        if left.is_none() {
-            return self.graph.add_node(Node::Entry(Box::new(Entry {
-                range: ty.range(),
-                ty,
-                left: None,
-                key: None,
-                comma: None,
-                right: None,
-            })));
-        }
-
-        let key = self.expect1(TokenKind::Word);
-        if key.is_none() {
-            return self.graph.add_node(Node::Entry(Box::new(Entry {
-                range: Range::new(ty.start(), left.as_ref().unwrap().end()),
-                ty,
-                left,
-                key: None,
-                comma: None,
-                right: None,
-            })));
-        }
-
-        let comma = self.expect1(TokenKind::Comma);
-        if comma.is_none() {
-            return self.graph.add_node(Node::Entry(Box::new(Entry {
-                range: Range::new(ty.start(), key.as_ref().unwrap().end()),
-                ty,
-                left,
-                key,
-                comma: None,
-                right: None,
-            })));
-        }
-
-        let mut fields = Vec::new();
-        while self.next_of_kind(TokenKind::Word) {
-            fields.push(self.field());
-        }
-
-        let right = self.expect2(TokenKind::EndBrace, TokenKind::EndParen);
-
-        let end = right
-            .as_ref()
-            .map(Token::end)
-            .or_else(|| fields.last().map(|field| self.graph[*field].end()))
-            .unwrap_or_else(|| comma.as_ref().unwrap().end());
-        let parent = self.graph.add_node(Node::Entry(Box::new(Entry {
-            range: Range::new(ty.start(), end),
-            ty,
-            left,
-            key,
-            comma,
-            right,
-        })));
-        self.connect(parent, &fields);
-        parent
-    }
-
-    fn comment(&mut self) -> NodeIndex {
-        let token = self.tokens.next().unwrap();
-        self.graph.add_node(Node::Comment(Comment { token }))
-    }
-
-    fn field(&mut self) -> NodeIndex {
-        let name = self.tokens.next().unwrap();
-
-        let assign = self.expect1(TokenKind::Assign);
-        if assign.is_none() {
-            return self.graph.add_node(Node::Field(Box::new(Field {
-                range: name.range(),
-                name,
-                assign: None,
-                comma: None,
-            })));
-        }
-
-        if !self.can_match_content() {
-            return self.graph.add_node(Node::Field(Box::new(Field {
-                range: Range::new(name.start(), assign.as_ref().unwrap().end()),
-                name,
-                assign,
-                comma: None,
-            })));
-        }
-
-        let content = self.content();
-
-        let comma = self.expect1(TokenKind::Comma);
-
-        let end = comma
-            .as_ref()
-            .map(Token::end)
-            .unwrap_or_else(|| self.graph[content].end());
-        let parent = self.graph.add_node(Node::Field(Box::new(Field {
-            range: Range::new(name.start(), end),
-            name,
-            assign,
-            comma,
-        })));
-        self.graph.add_edge(parent, content, ());
-        parent
-    }
-
-    fn content(&mut self) -> NodeIndex {
-        let token = self.tokens.next().unwrap();
-        let left = match token.kind {
-            TokenKind::PreambleKind
-            | TokenKind::StringKind
-            | TokenKind::EntryKind
-            | TokenKind::Word
-            | TokenKind::Assign
-            | TokenKind::Comma
-            | TokenKind::BeginParen
-            | TokenKind::EndParen => self.graph.add_node(Node::Word(Word { token })),
-            TokenKind::Command => self.graph.add_node(Node::Command(Command { token })),
-            TokenKind::Quote => {
-                let mut children = Vec::new();
-                while self.can_match_content() {
-                    if self.next_of_kind(TokenKind::Quote) {
-                        break;
-                    }
-                    children.push(self.content());
-                }
-                let right = self.expect1(TokenKind::Quote);
-
-                let end = right
-                    .as_ref()
-                    .map(Token::end)
-                    .or_else(|| children.last().map(|child| self.graph[*child].end()))
-                    .unwrap_or_else(|| token.end());
-                let parent = self.graph.add_node(Node::QuotedContent(QuotedContent {
-                    range: Range::new(token.start(), end),
-                    left: token,
-                    right,
-                }));
-                self.connect(parent, &children);
-                parent
+    pub fn parse(mut self) -> Parse {
+        self.builder.start_node(ROOT.into());
+        while let Some(kind) = self.peek() {
+            match kind {
+                PREAMBLE_TYPE => self.preamble(),
+                STRING_TYPE => self.string(),
+                COMMENT_TYPE => self.comment(),
+                ENTRY_TYPE => self.entry(),
+                _ => self.junk(),
             }
-            TokenKind::BeginBrace => {
-                let mut children = Vec::new();
-                while self.can_match_content() {
-                    children.push(self.content());
-                }
-                let right = self.expect1(TokenKind::EndBrace);
+        }
+        self.builder.finish_node();
+        let (green, resolver) = self.builder.finish();
+        Parse {
+            root: SyntaxNode::new_root_with_resolver(green, resolver.unwrap()),
+        }
+    }
 
-                let end = right
-                    .as_ref()
-                    .map(Token::end)
-                    .or_else(|| children.last().map(|child| self.graph[*child].end()))
-                    .unwrap_or_else(|| token.end());
-                let parent = self.graph.add_node(Node::BracedContent(BracedContent {
-                    range: Range::new(token.start(), end),
-                    left: token,
-                    right,
-                }));
-                self.connect(parent, &children);
-                parent
+    fn trivia(&mut self) {
+        while self.peek() == Some(WHITESPACE) {
+            self.eat();
+        }
+    }
+
+    fn junk(&mut self) {
+        self.builder.start_node(JUNK.into());
+        while self
+            .lexer
+            .peek()
+            .filter(|&kind| {
+                !matches!(
+                    kind,
+                    PREAMBLE_TYPE | STRING_TYPE | COMMENT_TYPE | ENTRY_TYPE,
+                )
+            })
+            .is_some()
+        {
+            self.eat();
+        }
+        self.builder.finish_node();
+    }
+
+    fn left_delimiter_or_missing(&mut self) {
+        if self
+            .lexer
+            .peek()
+            .filter(|&kind| matches!(kind, L_CURLY | L_PAREN))
+            .is_some()
+        {
+            self.eat();
+            self.trivia();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+    }
+
+    fn right_delimiter_or_missing(&mut self) {
+        if self
+            .lexer
+            .peek()
+            .filter(|&kind| matches!(kind, R_CURLY | R_PAREN))
+            .is_some()
+        {
+            self.eat();
+            self.trivia();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+    }
+
+    fn value_or_missing(&mut self) {
+        if self
+            .lexer
+            .peek()
+            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
+            .is_some()
+        {
+            self.value();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+    }
+
+    fn preamble(&mut self) {
+        self.builder.start_node(PREAMBLE.into());
+        self.eat();
+        self.trivia();
+        self.left_delimiter_or_missing();
+        self.value_or_missing();
+        self.right_delimiter_or_missing();
+        self.builder.finish_node();
+    }
+
+    fn string(&mut self) {
+        self.builder.start_node(STRING.into());
+        self.eat();
+        self.trivia();
+        self.left_delimiter_or_missing();
+
+        if self.peek() != Some(WORD) {
+            self.builder.token(MISSING.into(), "");
+            self.builder.finish_node();
+            return;
+        }
+        self.eat();
+        self.trivia();
+        self.expect(EQUALITY_SIGN);
+
+        self.value_or_missing();
+
+        self.right_delimiter_or_missing();
+        self.builder.finish_node();
+    }
+
+    fn comment(&mut self) {
+        self.builder.start_node(COMMENT.into());
+        self.eat();
+        self.builder.finish_node();
+    }
+
+    fn entry(&mut self) {
+        self.builder.start_node(ENTRY.into());
+        self.eat();
+        self.trivia();
+
+        self.left_delimiter_or_missing();
+
+        if self.peek() != Some(WORD) {
+            self.builder.token(MISSING.into(), "");
+            self.builder.finish_node();
+            return;
+        }
+        self.eat();
+
+        while let Some(kind) = self.peek() {
+            match kind {
+                WHITESPACE => self.eat(),
+                WORD => self.field(),
+                COMMA => self.eat(),
+                _ => break,
+            };
+        }
+
+        self.right_delimiter_or_missing();
+
+        self.builder.finish_node();
+    }
+
+    fn field(&mut self) {
+        self.builder.start_node(FIELD.into());
+        self.eat();
+        self.trivia();
+
+        if self.peek() == Some(EQUALITY_SIGN) {
+            self.eat();
+            self.trivia();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        if self
+            .lexer
+            .peek()
+            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
+            .is_some()
+        {
+            self.value();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn value(&mut self) {
+        self.builder.start_node(VALUE.into());
+        self.token();
+        while let Some(kind) = self.peek() {
+            match kind {
+                WHITESPACE => self.eat(),
+                L_CURLY | QUOTE | WORD => self.token(),
+                HASH => self.eat(),
+                _ => break,
             }
+        }
+        self.builder.finish_node();
+    }
+
+    fn token(&mut self) {
+        self.builder.start_node(TOKEN.into());
+        match self.peek().unwrap() {
+            L_CURLY => self.brace_group(),
+            QUOTE => self.quote_group(),
+            WORD => self.eat(),
             _ => unreachable!(),
         };
-
-        match self.expect1(TokenKind::Concat) {
-            Some(operator) => {
-                if self.can_match_content() {
-                    let right = self.content();
-                    let parent = self.graph.add_node(Node::Concat(Concat {
-                        range: Range::new(self.graph[left].start(), self.graph[right].end()),
-                        operator,
-                    }));
-                    self.graph.add_edge(parent, left, ());
-                    self.graph.add_edge(parent, right, ());
-                    parent
-                } else {
-                    let parent = self.graph.add_node(Node::Concat(Concat {
-                        range: Range::new(self.graph[left].start(), operator.end()),
-                        operator,
-                    }));
-                    self.graph.add_edge(parent, left, ());
-                    parent
-                }
-            }
-            None => left,
-        }
+        self.builder.finish_node();
     }
 
-    fn connect(&mut self, parent: NodeIndex, children: &[NodeIndex]) {
-        for child in children {
-            self.graph.add_edge(parent, *child, ());
+    fn brace_group(&mut self) {
+        self.builder.start_node(BRACE_GROUP.into());
+        self.eat();
+
+        while let Some(kind) = self.peek() {
+            match kind {
+                WHITESPACE => self.eat(),
+                PREAMBLE_TYPE => break,
+                STRING_TYPE => break,
+                COMMENT_TYPE => break,
+                ENTRY_TYPE => break,
+                WORD => self.eat(),
+                L_CURLY => self.brace_group(),
+                R_CURLY => break,
+                L_PAREN => self.eat(),
+                R_PAREN => self.eat(),
+                COMMA => self.eat(),
+                HASH => self.eat(),
+                QUOTE => self.eat(),
+                EQUALITY_SIGN => self.eat(),
+                COMMAND_NAME => self.eat(),
+                _ => unreachable!(),
+            };
         }
+
+        self.expect(R_CURLY);
+
+        self.builder.finish_node();
     }
 
-    fn can_match_content(&mut self) -> bool {
-        if let Some(ref token) = self.tokens.peek() {
-            match token.kind {
-                TokenKind::PreambleKind
-                | TokenKind::StringKind
-                | TokenKind::EntryKind
-                | TokenKind::Word
-                | TokenKind::Command
-                | TokenKind::Assign
-                | TokenKind::Comma
-                | TokenKind::Quote
-                | TokenKind::BeginBrace
-                | TokenKind::BeginParen
-                | TokenKind::EndParen => true,
-                TokenKind::Concat | TokenKind::EndBrace => false,
-            }
-        } else {
-            false
+    fn quote_group(&mut self) {
+        self.builder.start_node(QUOTE_GROUP.into());
+        self.eat();
+
+        while let Some(kind) = self.peek() {
+            match kind {
+                WHITESPACE => self.eat(),
+                PREAMBLE_TYPE => break,
+                STRING_TYPE => break,
+                COMMENT_TYPE => break,
+                ENTRY_TYPE => break,
+                WORD => self.eat(),
+                L_CURLY => self.brace_group(),
+                R_CURLY => break,
+                L_PAREN => self.eat(),
+                R_PAREN => self.eat(),
+                COMMA => self.eat(),
+                HASH => self.eat(),
+                QUOTE => break,
+                EQUALITY_SIGN => self.eat(),
+                COMMAND_NAME => self.eat(),
+                _ => unreachable!(),
+            };
         }
+
+        self.expect(QUOTE);
+        self.builder.finish_node();
+    }
+}
+
+pub fn parse(text: &str) -> Parse {
+    Parser::new(Lexer::new(text)).parse()
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_debug_snapshot;
+
+    use super::*;
+
+    fn setup(text: &str) -> SyntaxNode {
+        parse(&text.trim().replace("\r", "")).root
     }
 
-    fn expect1(&mut self, kind: TokenKind) -> Option<Token> {
-        if let Some(ref token) = self.tokens.peek() {
-            if token.kind == kind {
-                return self.tokens.next();
-            }
-        }
-        None
+    #[test]
+    fn test_empty() {
+        assert_debug_snapshot!(setup(r#""#));
     }
 
-    fn expect2(&mut self, kind1: TokenKind, kind2: TokenKind) -> Option<Token> {
-        if let Some(ref token) = self.tokens.peek() {
-            if token.kind == kind1 || token.kind == kind2 {
-                return self.tokens.next();
-            }
-        }
-        None
+    #[test]
+    fn test_junk() {
+        assert_debug_snapshot!(setup(r#"Hello World!"#));
     }
 
-    fn next_of_kind(&mut self, kind: TokenKind) -> bool {
-        if let Some(token) = self.tokens.peek() {
-            token.kind == kind
-        } else {
-            false
-        }
+    #[test]
+    fn test_preamble_complete() {
+        assert_debug_snapshot!(setup(r#"@preamble{ "Hello World" }"#));
+    }
+
+    #[test]
+    fn test_preamble_missing_end() {
+        assert_debug_snapshot!(setup(r#"@preamble{ "Hello World" "#));
+    }
+
+    #[test]
+    fn test_preamble_casing() {
+        assert_debug_snapshot!(setup(r#"@preAmbLe{ "Hello World" }"#));
+    }
+
+    #[test]
+    fn test_string_complete() {
+        assert_debug_snapshot!(setup(r#"@string{foo = {Hello World}}"#));
+    }
+
+    #[test]
+    fn test_string_incomplete() {
+        assert_debug_snapshot!(setup(r#"@string{foo = {Hello World}"#));
+    }
+
+    #[test]
+    fn test_string_concatenation() {
+        assert_debug_snapshot!(setup(
+            r#"@string{foo = {Hello World}} @string{bar = foo # "!"}"#
+        ));
+    }
+
+    #[test]
+    fn test_string_casing() {
+        assert_debug_snapshot!(setup(r#"@STRING{foo = "Hello World"}"#));
+    }
+
+    #[test]
+    fn test_string_missing_quote() {
+        assert_debug_snapshot!(setup(r#"@STRING{foo = "Hello World}"#));
+    }
+
+    #[test]
+    fn test_entry_no_fields() {
+        assert_debug_snapshot!(setup(r#"@article{foo,}"#));
+    }
+
+    #[test]
+    fn test_entry_no_fields_missing_comma() {
+        assert_debug_snapshot!(setup(r#"@article{foo}"#));
+    }
+
+    #[test]
+    fn test_entry_one_field() {
+        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar}}"#));
+    }
+
+    #[test]
+    fn test_entry_one_field_number_key() {
+        assert_debug_snapshot!(setup(r#"@article{foo2021, author = {Foo Bar}}"#));
+    }
+
+    #[test]
+    fn test_entry_one_field_trailing_comma() {
+        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar},}"#));
+    }
+
+    #[test]
+    fn test_entry_two_fields() {
+        assert_debug_snapshot!(setup(
+            r#"@article{foo, author = {Foo Bar}, title = {Hello World}}"#
+        ));
+    }
+
+    #[test]
+    fn test_entry_two_fields_incomplete() {
+        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar}, t}"#));
+    }
+
+    #[test]
+    fn test_entry_complete_parens() {
+        assert_debug_snapshot!(setup(
+            r#"@article(foo, author = {Foo Bar}, title = {Hello})"#
+        ));
     }
 }

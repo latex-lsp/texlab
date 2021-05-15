@@ -1,0 +1,23 @@
+---
+source: src/syntax/latex/lexer.rs
+expression: "verify(r#\"\\section*{Foo}\"#)"
+
+---
+[
+    (
+        SECTION_NAME,
+        "\\section*",
+    ),
+    (
+        L_CURLY,
+        "{",
+    ),
+    (
+        WORD,
+        "Foo",
+    ),
+    (
+        R_CURLY,
+        "}",
+    ),
+]

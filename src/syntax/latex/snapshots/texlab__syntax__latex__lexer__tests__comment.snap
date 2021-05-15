@@ -1,0 +1,35 @@
+---
+source: src/syntax/latex/lexer.rs
+expression: "verify(\"hello %world\\r\\ntest %test\")"
+
+---
+[
+    (
+        WORD,
+        "hello",
+    ),
+    (
+        WHITESPACE,
+        " ",
+    ),
+    (
+        COMMENT,
+        "%world",
+    ),
+    (
+        WHITESPACE,
+        "\r\n",
+    ),
+    (
+        WORD,
+        "test",
+    ),
+    (
+        WHITESPACE,
+        " ",
+    ),
+    (
+        COMMENT,
+        "%test",
+    ),
+]

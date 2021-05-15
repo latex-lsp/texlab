@@ -1,33 +1,38 @@
+mod capabilities;
 #[cfg(feature = "citation")]
-pub mod citeproc;
-
-#[cfg(feature = "test")]
-pub mod test;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "server")] {
-        mod config;
-        mod build;
-
-        pub mod server;
-    }
-}
-
-pub mod completion;
-pub mod components;
-pub mod definition;
+pub mod citation;
+mod client;
+pub mod component_db;
+mod config;
+mod context;
 pub mod diagnostics;
-pub mod feature;
-pub mod folding;
-pub mod forward_search;
-pub mod highlight;
-pub mod hover;
-pub mod link;
-pub mod outline;
-pub mod protocol;
-pub mod reference;
-pub mod rename;
-pub mod symbol;
+mod dispatch;
+pub mod distro;
+pub mod features;
+mod label;
+mod lang_data;
+mod language;
+mod line_index;
+mod line_index_ext;
+mod options;
+mod range;
+mod req_queue;
+mod server;
 pub mod syntax;
-pub mod tex;
-pub mod workspace;
+mod uri;
+mod workspace;
+
+pub use self::{
+    capabilities::ClientCapabilitiesExt,
+    context::ServerContext,
+    label::*,
+    lang_data::*,
+    language::DocumentLanguage,
+    line_index::{LineCol, LineColUtf16, LineIndex},
+    line_index_ext::LineIndexExt,
+    options::*,
+    range::RangeExt,
+    server::Server,
+    uri::Uri,
+    workspace::*,
+};

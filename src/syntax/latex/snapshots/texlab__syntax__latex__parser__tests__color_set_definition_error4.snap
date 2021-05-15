@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\definecolorset\"#)"
+
+---
+ROOT@0..15
+  PREAMBLE@0..15
+    COLOR_SET_DEFINITION@0..15
+      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      MISSING@15..15 ""
+      MISSING@15..15 ""
+      MISSING@15..15 ""
+      MISSING@15..15 ""
+

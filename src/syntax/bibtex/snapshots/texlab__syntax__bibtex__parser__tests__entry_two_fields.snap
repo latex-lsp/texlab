@@ -1,0 +1,42 @@
+---
+source: src/syntax/bibtex/parser.rs
+expression: "setup(r#\"@article{foo, author = {Foo Bar}, title = {Hello World}}\"#)"
+
+---
+ROOT@0..56
+  ENTRY@0..56
+    ENTRY_TYPE@0..8 "@article"
+    L_CURLY@8..9 "{"
+    WORD@9..12 "foo"
+    COMMA@12..13 ","
+    WHITESPACE@13..14 " "
+    FIELD@14..32
+      WORD@14..20 "author"
+      WHITESPACE@20..21 " "
+      EQUALITY_SIGN@21..22 "="
+      WHITESPACE@22..23 " "
+      VALUE@23..32
+        TOKEN@23..32
+          BRACE_GROUP@23..32
+            L_CURLY@23..24 "{"
+            WORD@24..27 "Foo"
+            WHITESPACE@27..28 " "
+            WORD@28..31 "Bar"
+            R_CURLY@31..32 "}"
+    COMMA@32..33 ","
+    WHITESPACE@33..34 " "
+    FIELD@34..55
+      WORD@34..39 "title"
+      WHITESPACE@39..40 " "
+      EQUALITY_SIGN@40..41 "="
+      WHITESPACE@41..42 " "
+      VALUE@42..55
+        TOKEN@42..55
+          BRACE_GROUP@42..55
+            L_CURLY@42..43 "{"
+            WORD@43..48 "Hello"
+            WHITESPACE@48..49 " "
+            WORD@49..54 "World"
+            R_CURLY@54..55 "}"
+    R_CURLY@55..56 "}"
+

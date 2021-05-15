@@ -1,0 +1,16 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"{][}\"#)"
+
+---
+ROOT@0..4
+  PREAMBLE@0..4
+    CURLY_GROUP@0..4
+      L_CURLY@0..1 "{"
+      ERROR@1..2
+        R_BRACK@1..2 "]"
+      MIXED_GROUP@2..3
+        L_BRACK@2..3 "["
+        MISSING@3..3 ""
+      R_CURLY@3..4 "}"
+

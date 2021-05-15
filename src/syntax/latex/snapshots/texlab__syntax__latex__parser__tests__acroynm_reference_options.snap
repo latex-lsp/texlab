@@ -1,0 +1,29 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\acrshort[foo=bar,baz]{fpsLabel}\"#)"
+
+---
+ROOT@0..32
+  PREAMBLE@0..32
+    ACRONYM_REFERENCE@0..32
+      ACRONYM_REFERENCE_NAME@0..9 "\\acrshort"
+      BRACK_GROUP_KEY_VALUE@9..22
+        L_BRACK@9..10 "["
+        KEY_VALUE_BODY@10..21
+          KEY_VALUE_PAIR@10..17
+            KEY@10..13
+              WORD@10..13 "foo"
+            EQUALITY_SIGN@13..14 "="
+            VALUE@14..17
+              TEXT@14..17
+                WORD@14..17 "bar"
+          COMMA@17..18 ","
+          KEY_VALUE_PAIR@18..21
+            KEY@18..21
+              WORD@18..21 "baz"
+        R_BRACK@21..22 "]"
+      CURLY_GROUP_WORD@22..32
+        L_CURLY@22..23 "{"
+        WORD@23..31 "fpsLabel"
+        R_CURLY@31..32 "}"
+

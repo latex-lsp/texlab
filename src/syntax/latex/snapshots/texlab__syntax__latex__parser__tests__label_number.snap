@@ -1,0 +1,23 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\newlabel{foo}{{1.1}}\"#)"
+
+---
+ROOT@0..21
+  PREAMBLE@0..21
+    LABEL_NUMBER@0..21
+      LABEL_NUMBER_NAME@0..9 "\\newlabel"
+      CURLY_GROUP_WORD@9..14
+        L_CURLY@9..10 "{"
+        WORD@10..13 "foo"
+        R_CURLY@13..14 "}"
+      CURLY_GROUP@14..21
+        L_CURLY@14..15 "{"
+        CURLY_GROUP@15..20
+          L_CURLY@15..16 "{"
+          TEXT@16..19
+            WORD@16..19 "1.1"
+          R_CURLY@19..20 "}"
+        R_CURLY@20..21 "}"
+      MISSING@21..21 ""
+

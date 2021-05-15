@@ -1,1227 +1,762 @@
-#[cfg(feature = "citation")]
-use texlab::protocol::{MarkupContent, MarkupKind};
+use anyhow::Result;
+use lsp_types::{CompletionList, Url};
 
-use indoc::indoc;
-use itertools::Itertools;
-use texlab::{
-    protocol::{CompletionItem, CompletionTextEdit, Documentation, Range, RangeExt, TextEdit},
-    test::{TestBed, TestBedBuilder, TestLspClient, PULL_CAPABILITIES},
-};
+use crate::common::ServerTester;
 
-async fn run_item(
-    test_bed: &TestBed,
-    relative_path: &str,
-    line: u64,
-    character: u64,
-    label: &str,
-) -> CompletionItem {
-    let item = test_bed
-        .completion(relative_path, line, character)
-        .await
-        .unwrap()
-        .into_iter()
-        .find(|item| item.label == label)
-        .unwrap();
-
-    test_bed.client.completion_resolve(item).await.unwrap()
+fn complete_and_resolve(
+    server: &ServerTester,
+    uri: Url,
+    line: u32,
+    character: u32,
+) -> Result<CompletionList> {
+    let mut list = server.complete(uri, line, character)?;
+    let mut new_items = Vec::new();
+    for item in list.items.into_iter().take(7) {
+        let mut new_item = server.resolve_completion_item(item)?;
+        new_item.data = None;
+        new_items.push(new_item);
+    }
+    list.items = new_items;
+    Ok(list)
 }
 
-async fn run_list(
-    test_bed: &TestBed,
-    relative_path: &str,
-    line: u64,
-    character: u64,
-) -> Vec<String> {
-    test_bed
-        .completion(relative_path, line, character)
-        .await
-        .unwrap()
-        .into_iter()
-        .map(|item| item.label)
-        .sorted()
-        .collect()
-}
+mod bibtex {
+    use insta::assert_json_snapshot;
+    use lsp_types::ClientCapabilities;
 
-fn verify_text_edit(
-    item: &CompletionItem,
-    start_line: u64,
-    start_character: u64,
-    end_line: u64,
-    end_character: u64,
-    text: &str,
-) {
-    assert_eq!(
-        *item.text_edit.as_ref().unwrap(),
-        CompletionTextEdit::Edit(TextEdit::new(
-            Range::new_simple(start_line, start_character, end_line, end_character),
-            text.into()
-        ))
-    );
-}
+    use super::*;
 
-fn verify_detail(item: &CompletionItem, detail: &str) {
-    assert_eq!(item.detail.as_ref().unwrap(), detail);
-}
+    #[test]
+    fn test_empty_document() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open("main.bib", "", "bibtex", false)?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 0)?);
+        Ok(())
+    }
 
-#[tokio::test]
-async fn empty_latex_document() {
-    let mut test_bed = TestBedBuilder::new().file("main.tex", "").build().await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+    #[test]
+    fn test_junk() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open("main.bib", "foo", "bibtex", false)?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 0)?);
+        Ok(())
+    }
 
-    let actual_items = test_bed.completion("main.tex", 0, 0).await.unwrap();
-
-    test_bed.shutdown().await;
-
-    assert!(actual_items.is_empty());
-}
-
-#[tokio::test]
-async fn empty_bibtex_document() {
-    let mut test_bed = TestBedBuilder::new().file("main.bib", "").build().await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
-
-    let actual_items = test_bed.completion("main.bib", 0, 0).await.unwrap();
-
-    test_bed.shutdown().await;
-
-    assert!(actual_items.is_empty());
-}
-
-#[tokio::test]
-async fn bibtex_comment() {
-    let mut test_bed = TestBedBuilder::new().file("main.bib", "foo").build().await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
-
-    let actual_items = test_bed.completion("main.bib", 0, 2).await.unwrap();
-
-    test_bed.shutdown().await;
-
-    assert!(actual_items.is_empty());
-}
-
-#[tokio::test]
-async fn bibtex_command_incomplete_entry() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_command_incomplete_entry() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo,
-                        author = {\LaT
-                    }
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @article{foo,
+                    author = {\LaT
+                }
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 18)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 1, 18, "LaTeX").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "built-in");
-    verify_text_edit(&actual_item, 1, 15, 1, 18, "LaTeX");
-}
-
-#[tokio::test]
-async fn bibtex_command_complete_entry() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_command_complete_entry() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo,
-                        author = {\LaT}
-                    }
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @article{foo,
+                    author = {\LaT}
+                }
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 18)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 1, 18, "LaTeX").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "built-in");
-    verify_text_edit(&actual_item, 1, 15, 1, 18, "LaTeX");
-}
-
-#[tokio::test]
-async fn bibtex_type_empty() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_entry_type_empty_name() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 0, 1, "article").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 0, 1, 0, 1, "article");
-}
-
-#[tokio::test]
-async fn bibtex_type_incomplete() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_entry_type_empty_name_before() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @art
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 0)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 0, 1, "article").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 0, 1, 0, 4, "article");
-}
-
-#[tokio::test]
-async fn bibtex_type_complete() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_entry_type_incomplete() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @art
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 0, 1, "article").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 0, 1, 0, 8, "article");
-}
-
-#[tokio::test]
-async fn bibtex_field_incomplete_entry() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_entry_type_complete() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo,
-                        titl
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @article
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 1, 6, "title").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 1, 4, 1, 8, "title");
-}
-
-#[tokio::test]
-async fn bibtex_field_complete_entry() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_field_incomplete_entry() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo,
-                        title = {}
-                    }
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.bib").await;
+            r#"
+                @article{foo,
+                    titl
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 6)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.bib", 1, 6, "title").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 1, 4, 1, 9, "title");
-}
-
-#[tokio::test]
-async fn latex_begin_command() {
-    let mut test_bed = TestBedBuilder::new().file("main.tex", r#"\"#).build().await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-
-    let actual_item = run_item(&test_bed, "main.tex", 0, 1, "begin").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "built-in");
-}
-
-#[cfg(feature = "citation")]
-#[tokio::test]
-async fn latex_citation_valid() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \bibliography{main}
-                    \begin{document}
-                    \cite{
-                    \end{document}
-                "#
-            ),
-        )
-        .file(
+    #[test]
+    fn test_field_complete_entry() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo:2019,
-                        author = {Foo Bar},
-                        title = {Baz Qux},
-                        year = {2019},
-                    }
-
-                    @article{bar:2005,}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-    test_bed.open("main.bib").await;
-
-    let actual_item = run_item(&test_bed, "main.tex", 3, 6, "foo:2019").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 3, 6, 3, 6, "foo:2019");
-    assert_eq!(
-        actual_item.documentation.unwrap(),
-        Documentation::MarkupContent(MarkupContent {
-            kind: MarkupKind::Markdown,
-            value: "Bar, F. (2019). *Baz Qux*.".into()
-        })
-    );
+            r#"
+                @article{foo,
+                    title = {}
+                }
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 6)?);
+        Ok(())
+    }
 }
 
-#[cfg(feature = "citation")]
-#[tokio::test]
-async fn latex_citation_invalid() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+mod latex {
+    use insta::assert_json_snapshot;
+    use lsp_types::ClientCapabilities;
+
+    use super::*;
+
+    #[test]
+    fn test_empty_document() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open("main.tex", "", "latex", false)?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 0)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_begin_command() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open("main.tex", r#"\b"#, "latex", false)?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_citation() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let tex_uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \bibliography{main}
-                    \begin{document}
-                    \cite{
-                    \end{document}
-                "#
-            ),
-        )
-        .file(
+            r#"
+                \documentclass{article}
+                \bibliography{main}
+                \begin{document}
+                \cite{
+                \end{document}
+            "#,
+            "latex",
+            false,
+        )?;
+        server.open(
             "main.bib",
-            indoc!(
-                r#"
-                    @article{foo:2019,
-                        author = {Foo Bar},
-                        title = {Baz Qux},
-                        year = {2019},
-                    }
+            r#"
+                @article{foo:2019,
+                    author = {Foo Bar},
+                    title = {Baz Qux},
+                    year = {2019},
+                }
 
-                    @article{bar:2005,}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-    test_bed.open("main.bib").await;
+                @article{bar:2005,}
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 6)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 3, 6, "bar:2005").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 3, 6, 3, 6, "bar:2005");
-    assert_eq!(actual_item.documentation, None);
-}
-
-#[tokio::test]
-async fn latex_color_name() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_citation_after() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let tex_uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \color{re}
-                    \definecolor{foo}{
-                    \definecolorset{R}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{article}
+                \bibliography{main}
+                \begin{document}
+                \cite{}
+                \end{document}
+            "#,
+            "latex",
+            false,
+        )?;
+        server.open(
+            "main.bib",
+            r#"
+                @article{foo:2019,
+                    author = {Foo Bar},
+                    title = {Baz Qux},
+                    year = {2019},
+                }
 
-    let actual_item = run_item(&test_bed, "main.tex", 0, 9, "red").await;
+                @article{bar:2005,}
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 7)?);
+        Ok(())
+    }
 
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 0, 7, 0, 9, "red");
-}
-
-#[tokio::test]
-async fn latex_color_model_define_color() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_citation_open_brace() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let tex_uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \color{re}
-                    \definecolor{foo}{
-                    \definecolorset{R}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{article}
+                \bibliography{main}
+                \begin{document}
+                \cite{Foo
+                \end{document}
+            "#,
+            "latex",
+            false,
+        )?;
+        server.open(
+            "main.bib",
+            r#"
+                @article{FooBar,
+                    author = {Foo Bar},
+                    title = {Baz Qux},
+                    year = {2019},
+                }
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 9)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 1, 18, "rgb").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 1, 18, 1, 18, "rgb");
-}
-
-#[tokio::test]
-async fn latex_model_define_color_set() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_color_name() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \color{re}
-                    \definecolor{foo}{
-                    \definecolorset{R}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \color{re}
+                \definecolor{foo}{
+                \definecolorset{R}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 9)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 2, 17, "RGB").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 2, 16, 2, 17, "RGB");
-}
-
-#[tokio::test]
-async fn latex_component_kernel_command() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_color_model_define_color() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \color{re}
+                \definecolor{foo}{
+                \definecolorset{R}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 18)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 0, 1, "documentclass").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "built-in");
-    verify_text_edit(&actual_item, 0, 1, 0, 14, "documentclass");
-}
-
-#[tokio::test]
-async fn latex_component_kernel_command_glyph() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_color_model_define_color_set() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \color{re}
+                \definecolor{foo}{
+                \definecolorset{R}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 2, 17)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 7, 7, "varepsilon").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "ε, built-in");
-    verify_text_edit(&actual_item, 7, 1, 7, 7, "varepsilon");
-}
-
-#[tokio::test]
-async fn latex_component_kernel_environment() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_kernel_command() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 6, 10, "document").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "built-in");
-    verify_text_edit(&actual_item, 6, 7, 6, 10, "document");
-}
-
-#[tokio::test]
-async fn latex_component_class_command() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_kernel_command_glyph() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 7, 7)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 2, 5, "chapter").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "book.cls");
-    verify_text_edit(&actual_item, 2, 1, 2, 5, "chapter");
-}
-
-#[tokio::test]
-async fn latex_component_class_environment() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_kernel_command_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 6, 10)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 4, 13, "theindex").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "book.cls");
-    verify_text_edit(&actual_item, 4, 7, 4, 13, "theindex");
-}
-
-#[tokio::test]
-async fn latex_component_package_command() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_class_command() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 2, 5)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 3, 7, "varDelta").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "amsmath.sty");
-    verify_text_edit(&actual_item, 3, 1, 3, 7, "varDelta");
-}
-
-#[tokio::test]
-async fn latex_component_package_environment() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_class_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}
-                    \chap
-                    \varDel
-                    \begin{theind}
-                    \end{alig}
-                    \begin{doc}
-                    \vareps                
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 13)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 5, 5, "align").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "amsmath.sty");
-    verify_text_edit(&actual_item, 5, 5, 5, 9, "align");
-}
-
-#[tokio::test]
-async fn latex_import_class() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_package_command() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}            
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 3, 7)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 0, 19, "book").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 0, 15, 0, 19, "book");
-}
-
-#[tokio::test]
-async fn latex_import_package() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_package_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{book}
-                    \usepackage{amsmath}            
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+                \chap
+                \varDel
+                \begin{theind}
+                \end{alig}
+                \begin{doc}
+                \vareps
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 5, 5)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 1, 15, "amsmath").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.documentation.is_some());
-    verify_text_edit(&actual_item, 1, 12, 1, 19, "amsmath");
-}
-
-#[tokio::test]
-async fn latex_include_relative_root_no_extension() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_class_import() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \include{}
-                    \input{}
-                    \input{qux/}
-                    \addbibresource{}
-                "#
-            ),
-        )
-        .file("foo.bib", "")
-        .file("bar.tex", "")
-        .file("qux/baz.tex", "")
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 19)?);
+        Ok(())
+    }
 
-    let actual_items = run_list(&test_bed, "main.tex", 1, 9).await;
-
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["bar", "main", "qux"]);
-}
-
-#[tokio::test]
-async fn latex_include_relative_root_with_extension() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_package_import() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \include{}
-                    \input{}
-                    \input{qux/}
-                    \addbibresource{}
-                "#
-            ),
-        )
-        .file("foo.bib", "")
-        .file("bar.tex", "")
-        .file("qux/baz.tex", "")
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{book}
+                \usepackage{amsmath}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 15)?);
+        Ok(())
+    }
 
-    let actual_items = run_list(&test_bed, "main.tex", 2, 7).await;
+    #[test]
+    fn test_label() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
 
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["bar.tex", "main.tex", "qux"]);
-}
-
-#[tokio::test]
-async fn latex_include_relative_subdir() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \include{}
-                    \input{}
-                    \input{qux/}
-                    \addbibresource{}
-                "#
-            ),
-        )
-        .file("foo.bib", "")
-        .file("bar.tex", "")
-        .file("qux/baz.tex", "")
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-
-    let actual_items = run_list(&test_bed, "main.tex", 3, 11).await;
-
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["baz.tex"]);
-}
-
-#[tokio::test]
-async fn latex_include_relative_parent_dir() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \include{}
-                    \input{}
-                    \input{qux/}
-                    \addbibresource{}
-                "#
-            ),
-        )
-        .file("foo.bib", "")
-        .file("bar.tex", "")
-        .file("qux/baz.tex", r#"\input{../}"#)
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("qux/baz.tex").await;
-
-    let actual_items = run_list(&test_bed, "qux/baz.tex", 0, 10).await;
-
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["bar.tex", "main.tex", "qux"]);
-}
-
-#[tokio::test]
-async fn latex_include_relative_bibliography() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \include{}
-                    \input{}
-                    \input{qux/}
-                    \addbibresource{}
-                "#
-            ),
-        )
-        .file("foo.bib", "")
-        .file("bar.tex", "")
-        .file("qux/baz.tex", "")
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-
-    let actual_items = run_list(&test_bed, "main.tex", 4, 16).await;
-
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["foo.bib", "qux"]);
-}
-
-#[tokio::test]
-async fn latex_include_root_dir() {
-    let mut test_bed = TestBedBuilder::new()
-        .file("src/main.tex", r#"\input{}"#)
-        .root_dir(".")
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("src/main.tex").await;
-
-    let actual_items = run_list(&test_bed, "src/main.tex", 0, 7).await;
-
-    test_bed.shutdown().await;
-
-    assert_eq!(actual_items, vec!["src"]);
-}
-
-#[tokio::test]
-async fn latex_label() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+        server.open(
             "foo.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    %
-                    \usepackage{amsmath}
-                    \usepackage{caption}
-                    \usepackage{amsthm}
-                    \newtheorem{lemma}{Lemma}
-                    %
-                    \begin{document}
-                    %
-                    \section{Foo}%
-                    \label{sec:foo}
-                    %
-                    \begin{equation}%
-                    \label{eq:foo}
-                        1 + 1 = 2
-                    \end{equation}
-                    %
-                    \begin{equation}%
-                    \label{eq:bar}
-                        1 + 1 = 2
-                    \end{equation}
-                    %
-                    \begin{figure}%
-                    \LaTeX{}
-                    \caption{Baz}%
-                    \label{fig:baz}
-                    \end{figure}
-                    %
-                    \begin{lemma}%
-                    \label{thm:foo}
-                        1 + 1 = 2
-                    \end{lemma}
-                    %
-                    \include{bar}
-                    %
-                    \end{document}    
-                "#
-            ),
-        )
-        .file(
-            "foo.aux", 
-            indoc!(
-                r#"
-                    \relax 
-                    \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Baz\relax }}{1}\protected@file@percent }
-                    \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-                    \newlabel{fig:baz}{{1}{1}}
-                    \@writefile{toc}{\contentsline {section}{\numberline {1}Foo}{1}\protected@file@percent }
-                    \newlabel{sec:foo}{{1}{1}}
-                    \newlabel{eq:foo}{{1}{1}}
-                    \newlabel{eq:bar}{{2}{1}}
-                    \newlabel{thm:foo}{{1}{1}}
-                    \@input{bar.aux}            
-                "#
-            ),
-        )
-        .file(
-            "bar.tex", 
-            indoc!(
-                r#"
-                    \section{Bar}%
-                    \label{sec:bar}
-                    %
-                    Lorem ipsum dolor sit amet.
-                    \ref{}
-                    \eqref{}
-                "#
-            ),
-        )
-        .file(
-            "bar.aux", 
-            indoc!(
-                r#"
-                    \relax 
-                    \@writefile{toc}{\contentsline {section}{\numberline {2}Bar}{2}\protected@file@percent }
-                    \newlabel{sec:bar}{{2}{2}}
-                    \@setckpt{bar}{
-                    \setcounter{page}{3}
-                    \setcounter{equation}{2}
-                    \setcounter{enumi}{0}
-                    \setcounter{enumii}{0}
-                    \setcounter{enumiii}{0}
-                    \setcounter{enumiv}{0}
-                    \setcounter{footnote}{0}
-                    \setcounter{mpfootnote}{0}
-                    \setcounter{part}{0}
-                    \setcounter{section}{2}
-                    \setcounter{subsection}{0}
-                    \setcounter{subsubsection}{0}
-                    \setcounter{paragraph}{0}
-                    \setcounter{subparagraph}{0}
-                    \setcounter{figure}{1}
-                    \setcounter{table}{0}
-                    \setcounter{parentequation}{0}
-                    \setcounter{caption@flags}{0}
-                    \setcounter{ContinuedFloat}{0}
-                    \setcounter{lemma}{1}
-                    }
-                "#),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("foo.tex").await;
-    test_bed.open("foo.aux").await;
-    test_bed.open("bar.tex").await;
-    test_bed.open("bar.aux").await;
+            r#"
+                \documentclass{article}
 
-    let actual_items = test_bed.completion("bar.tex", 4, 5).await.unwrap();
+                \usepackage{amsmath}
+                \usepackage{caption}
+                \usepackage{amsthm}
+                \newtheorem{lemma}{Lemma}
 
-    test_bed.shutdown().await;
+                \begin{document}
 
-    assert_eq!(actual_items.len(), 6);
-    verify_text_edit(&actual_items[0], 4, 5, 4, 5, "sec:bar");
-    verify_text_edit(&actual_items[1], 4, 5, 4, 5, "sec:foo");
-    verify_text_edit(&actual_items[2], 4, 5, 4, 5, "eq:foo");
-    verify_text_edit(&actual_items[3], 4, 5, 4, 5, "eq:bar");
-    verify_text_edit(&actual_items[4], 4, 5, 4, 5, "fig:baz");
-    verify_text_edit(&actual_items[5], 4, 5, 4, 5, "thm:foo");
-    verify_detail(&actual_items[0], "Section 2 (Bar)");
-    verify_detail(&actual_items[1], "Section 1 (Foo)");
-    verify_detail(&actual_items[2], "Equation (1)");
-    verify_detail(&actual_items[3], "Equation (2)");
-    verify_detail(&actual_items[4], "Figure 1");
-    verify_detail(&actual_items[5], "Lemma 1");
-    assert_eq!(
-        *actual_items[4].documentation.as_ref().unwrap(),
-        Documentation::String("Baz".into())
-    );
-}
+                \section{Foo}%
+                \label{sec:foo}
 
-#[tokio::test]
-async fn latex_preselect_environment() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+                \begin{equation}%
+                \label{eq:foo}
+                    1 + 1 = 2
+                \end{equation}
+
+                \begin{equation}%
+                \label{eq:bar}
+                    1 + 1 = 2
+                \end{equation}
+
+                \begin{figure}%
+                \LaTeX{}
+                \caption{Baz}%
+                \label{fig:baz}
+                \end{figure}
+
+                \begin{lemma}%
+                \label{thm:foo}
+                    1 + 1 = 2
+                \end{lemma}
+
+                \include{bar}
+
+                \end{document}
+            "#,
+            "latex",
+            true,
+        )?;
+        server.open(
+            "foo.aux",
+            r#"
+                \relax
+                \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Baz\relax }}{1}\protected@file@percent }
+                \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+                \newlabel{fig:baz}{{1}{1}}
+                \@writefile{toc}{\contentsline {section}{\numberline {1}Foo}{1}\protected@file@percent }
+                \newlabel{sec:foo}{{1}{1}}
+                \newlabel{eq:foo}{{1}{1}}
+                \newlabel{eq:bar}{{2}{1}}
+                \newlabel{thm:foo}{{1}{1}}
+                \@input{bar.aux}
+            "#,
+            "latex",
+            true,
+        )?;
+        let uri = server.open(
+            "bar.tex",
+            r#"
+                \section{Bar}%
+                \label{sec:bar}
+
+                Lorem ipsum dolor sit amet.
+                \ref{}
+                \eqref{}
+            "#,
+            "latex",
+            true,
+        )?;
+        server.open(
+            "bar.aux",
+            r#"
+                \relax
+                \@writefile{toc}{\contentsline {section}{\numberline {2}Bar}{2}\protected@file@percent }
+                \newlabel{sec:bar}{{2}{2}}
+                \@setckpt{bar}{
+                \setcounter{page}{3}
+                \setcounter{equation}{2}
+                \setcounter{enumi}{0}
+                \setcounter{enumii}{0}
+                \setcounter{enumiii}{0}
+                \setcounter{enumiv}{0}
+                \setcounter{footnote}{0}
+                \setcounter{mpfootnote}{0}
+                \setcounter{part}{0}
+                \setcounter{section}{2}
+                \setcounter{subsection}{0}
+                \setcounter{subsubsection}{0}
+                \setcounter{paragraph}{0}
+                \setcounter{subparagraph}{0}
+                \setcounter{figure}{1}
+                \setcounter{table}{0}
+                \setcounter{parentequation}{0}
+                \setcounter{caption@flags}{0}
+                \setcounter{ContinuedFloat}{0}
+                \setcounter{lemma}{1}
+            "#,
+            "latex",
+            true,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 5)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_preselect_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \begin{document}
-                    \end{                          
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \begin{document}
+                \end{
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 5)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 1, 5, "document").await;
-
-    test_bed.shutdown().await;
-
-    assert!(actual_item.preselect.unwrap());
-}
-
-#[tokio::test]
-async fn latex_theorem() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_theorem_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \usepackage{amsthm}
-                    \newtheorem{foo}{Foo}
-                    \begin{f}                        
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \documentclass{article}
+                \usepackage{amsthm}
+                \newtheorem{foo}{Foo}
+                \begin{f}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 3, 7)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 3, 7, "foo").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 3, 7, 3, 8, "foo");
-    verify_detail(&actual_item, "user-defined");
-}
-
-#[tokio::test]
-async fn latex_pgf_library() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_pgf_library() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \usepackage{tikz}
-                    \usepgflibrary{}
-                    \usetikzlibrary{}                    
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \usepackage{tikz}
+                \usepgflibrary{}
+                \usetikzlibrary{}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 15)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 1, 15, "arrows").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 1, 15, 1, 15, "arrows");
-}
-
-#[tokio::test]
-async fn latex_tikz_library() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_user_command() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \usepackage{tikz}
-                    \usepgflibrary{}
-                    \usetikzlibrary{}                    
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+            r#"
+                \foobar
+                \fooba
+                \begin{foo}
+                \end{foo}
+                \begin{fo}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 3)?);
+        Ok(())
+    }
 
-    let actual_item = run_item(&test_bed, "main.tex", 2, 16, "arrows").await;
-
-    test_bed.shutdown().await;
-
-    verify_text_edit(&actual_item, 2, 16, 2, 16, "arrows");
-}
-
-#[tokio::test]
-async fn latex_user_command() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
+    #[test]
+    fn test_user_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
             "main.tex",
-            indoc!(
-                r#"
-                    \foo
-                    \fo
-                    \begin{foo}
-                    \end{foo}
-                    \begin{fo}     
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-
-    let actual_item = run_item(&test_bed, "main.tex", 1, 3, "foo").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "user-defined");
-    verify_text_edit(&actual_item, 1, 1, 1, 3, "foo");
-}
-
-#[tokio::test]
-async fn latex_user_environment() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \foo
-                    \fo
-                    \begin{foo}
-                    \end{foo}
-                    \begin{fo}     
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
-
-    let actual_item = run_item(&test_bed, "main.tex", 4, 7, "foo").await;
-
-    test_bed.shutdown().await;
-
-    verify_detail(&actual_item, "user-defined");
-    verify_text_edit(&actual_item, 4, 7, 4, 9, "foo");
+            r#"
+                \foobar
+                \fooba
+                \begin{foo}
+                \end{foo}
+                \begin{fo}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 7)?);
+        Ok(())
+    }
 }

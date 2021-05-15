@@ -1,0 +1,15 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\import{foo\"#)"
+
+---
+ROOT@0..11
+  PREAMBLE@0..11
+    IMPORT@0..11
+      IMPORT_NAME@0..7 "\\import"
+      CURLY_GROUP_WORD@7..11
+        L_CURLY@7..8 "{"
+        WORD@8..11 "foo"
+        MISSING@11..11 ""
+      MISSING@11..11 ""
+

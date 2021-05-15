@@ -1,15 +1,10 @@
-use futures::{channel::mpsc, prelude::*};
-use jsonrpc::MessageHandler;
+use std::{env, fs::OpenOptions, io, path::PathBuf};
+
+use anyhow::Result;
 use log::LevelFilter;
-use std::path::PathBuf;
-use std::{env, error, fs::OpenOptions, sync::Arc};
+use lsp_server::Connection;
 use structopt::StructOpt;
-use texlab::{
-    protocol::{LatexLspClient, LspCodec},
-    server::LatexLspServer,
-    tex::Distribution,
-};
-use tokio_util::codec::{FramedRead, FramedWrite};
+use texlab::Server;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, StructOpt)]
@@ -27,37 +22,13 @@ struct Opts {
     log_file: Option<PathBuf>,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn error::Error>> {
+fn main() -> Result<()> {
     let opts = Opts::from_args();
     setup_logger(opts);
 
-    let mut stdin = FramedRead::new(tokio::io::stdin(), LspCodec);
-    let (stdout_tx, mut stdout_rx) = mpsc::channel(0);
-
-    let client = Arc::new(LatexLspClient::new(stdout_tx.clone()));
-    let server = Arc::new(LatexLspServer::new(
-        Distribution::detect().await,
-        Arc::clone(&client),
-        Arc::new(env::current_dir().expect("failed to get working directory")),
-    ));
-    let mut handler = MessageHandler {
-        server,
-        client,
-        output: stdout_tx,
-    };
-
-    tokio::spawn(async move {
-        let mut stdout = FramedWrite::new(tokio::io::stdout(), LspCodec);
-        loop {
-            let message = stdout_rx.next().await.unwrap();
-            stdout.send(message).await.unwrap();
-        }
-    });
-
-    while let Some(json) = stdin.next().await {
-        handler.handle(&json.unwrap()).await;
-    }
+    let (connection, threads) = Connection::stdio();
+    Server::with_connection(connection, env::current_dir()?, true)?.run()?;
+    threads.join()?;
 
     Ok(())
 }
@@ -78,8 +49,10 @@ fn setup_logger(opts: Opts) {
     let logger = fern::Dispatch::new()
         .format(|out, message, record| out.finish(format_args!("{} - {}", record.level(), message)))
         .level(verbosity_level)
-        .filter(|metadata| metadata.target() == "jsonrpc" || metadata.target().contains("texlab"))
-        .chain(std::io::stderr());
+        .filter(|metadata| {
+            metadata.target().contains("texlab") || metadata.target().contains("lsp_server")
+        })
+        .chain(io::stderr());
 
     let logger = match opts.log_file {
         Some(log_file) => logger.chain(

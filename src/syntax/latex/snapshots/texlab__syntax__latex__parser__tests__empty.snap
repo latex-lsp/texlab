@@ -1,0 +1,8 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\"#)"
+
+---
+ROOT@0..0
+  PREAMBLE@0..0
+

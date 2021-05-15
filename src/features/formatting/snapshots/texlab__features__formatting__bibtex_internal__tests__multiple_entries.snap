@@ -1,0 +1,9 @@
+---
+source: src/features/formatting/bibtex_internal.rs
+expression: "(edit1.new_text, edit2.new_text)"
+
+---
+(
+    "@article{foo,\n\tbar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum\n\t       dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,\n\t       consectetur adipiscing elit.},\n}",
+    "@article{foo,\n\tbar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum\n\t       dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,\n\t       consectetur adipiscing elit.},\n}",
+)

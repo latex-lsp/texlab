@@ -1,0 +1,14 @@
+---
+source: src/syntax/latex/parser.rs
+expression: "setup(r#\"\\gls{foo}\"#)"
+
+---
+ROOT@0..9
+  PREAMBLE@0..9
+    GLOSSARY_ENTRY_REFERENCE@0..9
+      GLOSSARY_ENTRY_REFERENCE_NAME@0..4 "\\gls"
+      CURLY_GROUP_WORD@4..9
+        L_CURLY@4..5 "{"
+        WORD@5..8 "foo"
+        R_CURLY@8..9 "}"
+

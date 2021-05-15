@@ -1,131 +1,113 @@
-#[cfg(feature = "citation")]
-use crate::citeproc::render_citation;
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+    thread,
+};
+
+use anyhow::Result;
+use cancellation::{CancellationToken, CancellationTokenSource};
+use crossbeam_channel::Sender;
+use log::{info, warn};
+use lsp_server::{Connection, ErrorCode, Message, RequestId};
+use lsp_types::{
+    notification::{
+        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
+        DidSaveTextDocument, LogMessage, PublishDiagnostics,
+    },
+    request::{
+        DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
+        References, Rename, SemanticTokensRangeRequest,
+    },
+    *,
+};
+use notification::DidCloseTextDocument;
+use request::{
+    Completion, DocumentHighlightRequest, DocumentSymbolRequest, HoverRequest,
+    ResolveCompletionItem, WorkspaceSymbol,
+};
+use serde::Serialize;
+use threadpool::ThreadPool;
 
 use crate::{
-    build::BuildProvider,
-    completion::{CompletionItemData, CompletionProvider, COMPLETION_LIMIT},
-    components::COMPONENT_DATABASE,
-    config::ConfigManager,
-    definition::DefinitionProvider,
-    diagnostics::DiagnosticsManager,
-    feature::{DocumentView, FeatureProvider, FeatureRequest},
-    folding::FoldingProvider,
-    forward_search,
-    highlight::HighlightProvider,
-    hover::HoverProvider,
-    link::LinkProvider,
-    protocol::*,
-    reference::ReferenceProvider,
-    rename::{PrepareRenameProvider, RenameProvider},
-    symbol::{document_symbols, workspace_symbols, SymbolProvider},
-    syntax::{bibtex, latexindent, CharStream, SyntaxNode},
-    tex::{Distribution, DistributionKind, KpsewhichError},
-    workspace::{DocumentContent, Workspace},
+    client::send_notification,
+    component_db::COMPONENT_DATABASE,
+    config::{pull_config, push_config, register_config_capability},
+    create_workspace_full,
+    diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
+    dispatch::{NotificationDispatcher, RequestDispatcher},
+    distro::Distribution,
+    features::{
+        build_document, find_all_references, find_document_highlights, find_document_links,
+        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
+        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildParams,
+        BuildResult, FeatureRequest, ForwardSearchResult,
+    },
+    req_queue::{IncomingData, ReqQueue},
+    DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
 };
-use async_trait::async_trait;
-use chashmap::CHashMap;
-use futures::lock::Mutex;
-use jsonrpc::{server::Result, Middleware};
-use jsonrpc_derive::{jsonrpc_method, jsonrpc_server};
-use log::{debug, error, info, warn};
-use once_cell::sync::{Lazy, OnceCell};
-use std::{mem, path::PathBuf, sync::Arc};
 
-pub struct LatexLspServer<C> {
-    distro: Arc<dyn Distribution>,
-    client: Arc<C>,
-    client_capabilities: OnceCell<Arc<ClientCapabilities>>,
-    client_info: OnceCell<Option<ClientInfo>>,
-    current_dir: Arc<PathBuf>,
-    config_manager: OnceCell<ConfigManager<C>>,
-    action_manager: ActionManager,
-    workspace: Workspace,
-    build_provider: BuildProvider<C>,
-    completion_provider: CompletionProvider,
-    definition_provider: DefinitionProvider,
-    folding_provider: FoldingProvider,
-    highlight_provider: HighlightProvider,
-    link_provider: LinkProvider,
-    reference_provider: ReferenceProvider,
-    prepare_rename_provider: PrepareRenameProvider,
-    rename_provider: RenameProvider,
-    symbol_provider: SymbolProvider,
-    hover_provider: HoverProvider,
-    diagnostics_manager: DiagnosticsManager,
-    last_position_by_uri: CHashMap<Uri, Position>,
+pub struct Server {
+    connection: Connection,
+    context: Arc<ServerContext>,
+    req_queue: Arc<Mutex<ReqQueue>>,
+    workspace: Arc<dyn Workspace>,
+    static_debouncer: DiagnosticsDebouncer,
+    chktex_debouncer: DiagnosticsDebouncer,
+    pool: ThreadPool,
+    load_resolver: bool,
 }
 
-#[jsonrpc_server]
-impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
-    pub fn new(distro: Arc<dyn Distribution>, client: Arc<C>, current_dir: Arc<PathBuf>) -> Self {
-        let workspace = Workspace::new(distro.clone(), Arc::clone(&current_dir));
-        Self {
-            distro,
-            client: Arc::clone(&client),
-            client_capabilities: OnceCell::new(),
-            client_info: OnceCell::new(),
-            current_dir,
-            config_manager: OnceCell::new(),
-            action_manager: ActionManager::default(),
+impl Server {
+    pub fn with_connection(
+        connection: Connection,
+        current_dir: PathBuf,
+        load_resolver: bool,
+    ) -> Result<Self> {
+        let context = Arc::new(ServerContext::new(current_dir));
+        let req_queue = Arc::default();
+        let workspace = Arc::new(create_workspace_full(Arc::clone(&context))?);
+        let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
+
+        let static_debouncer =
+            create_static_debouncer(Arc::clone(&diag_manager), &connection, Arc::clone(&context));
+
+        let chktex_debouncer =
+            create_chktex_debouncer(diag_manager, &connection, Arc::clone(&context));
+
+        Ok(Self {
+            connection,
+            context,
+            req_queue,
             workspace,
-            build_provider: BuildProvider::new(client),
-            completion_provider: CompletionProvider::new(),
-            definition_provider: DefinitionProvider::new(),
-            folding_provider: FoldingProvider::new(),
-            highlight_provider: HighlightProvider::new(),
-            link_provider: LinkProvider::new(),
-            reference_provider: ReferenceProvider::new(),
-            prepare_rename_provider: PrepareRenameProvider::new(),
-            rename_provider: RenameProvider::new(),
-            symbol_provider: SymbolProvider::new(),
-            hover_provider: HoverProvider::new(),
-            diagnostics_manager: DiagnosticsManager::default(),
-            last_position_by_uri: CHashMap::new(),
-        }
+            static_debouncer,
+            chktex_debouncer,
+            pool: threadpool::Builder::new().build(),
+            load_resolver,
+        })
     }
 
-    fn client_capabilities(&self) -> Arc<ClientCapabilities> {
-        Arc::clone(
-            self.client_capabilities
-                .get()
-                .expect("initialize has not been called"),
-        )
-    }
-
-    fn config_manager(&self) -> &ConfigManager<C> {
-        self.config_manager
-            .get()
-            .expect("initialize has not been called")
-    }
-
-    #[jsonrpc_method("initialize", kind = "request")]
-    pub async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        self.client_capabilities
-            .set(Arc::new(params.capabilities))
-            .expect("initialize was called two times");
-
-        self.client_info
-            .set(params.client_info)
-            .expect("initialize was called two times");
-
-        let _ = self.config_manager.set(ConfigManager::new(
-            Arc::clone(&self.client),
-            self.client_capabilities(),
-        ));
-
-        let capabilities = ServerCapabilities {
+    fn capabilities(&self) -> ServerCapabilities {
+        ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
                     open_close: Some(true),
                     change: Some(TextDocumentSyncKind::Full),
                     will_save: None,
                     will_save_wait_until: None,
-                    save: Some(SaveOptions {
+                    save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
                         include_text: Some(false),
-                    }),
+                    })),
                 },
             )),
-            hover_provider: Some(true),
+            document_link_provider: Some(DocumentLinkOptions {
+                resolve_provider: Some(false),
+                work_done_progress_options: WorkDoneProgressOptions::default(),
+            }),
+            folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+            definition_provider: Some(OneOf::Left(true)),
+            references_provider: Some(OneOf::Left(true)),
+            hover_provider: Some(HoverProviderCapability::Simple(true)),
+            #[cfg(feature = "completion")]
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
                 trigger_characters: Some(vec![
@@ -138,627 +120,728 @@ impl<C: LspClient + Send + Sync + 'static> LatexLspServer<C> {
                 ]),
                 ..CompletionOptions::default()
             }),
-            definition_provider: Some(true),
-            references_provider: Some(true),
-            document_highlight_provider: Some(true),
-            document_symbol_provider: Some(true),
-            workspace_symbol_provider: Some(true),
-            document_formatting_provider: Some(true),
-            rename_provider: Some(RenameProviderCapability::Options(RenameOptions {
+            document_symbol_provider: Some(OneOf::Left(true)),
+            workspace_symbol_provider: Some(OneOf::Left(true)),
+            rename_provider: Some(OneOf::Right(RenameOptions {
                 prepare_provider: Some(true),
                 work_done_progress_options: WorkDoneProgressOptions::default(),
             })),
-            document_link_provider: Some(DocumentLinkOptions {
-                resolve_provider: Some(false),
-                work_done_progress_options: WorkDoneProgressOptions::default(),
-            }),
-            folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+            document_highlight_provider: Some(OneOf::Left(true)),
+            document_formatting_provider: Some(OneOf::Left(true)),
+            #[cfg(feature = "semantic")]
+            semantic_tokens_provider: Some(
+                SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
+                    full: None,
+                    range: Some(true),
+                    legend: SemanticTokensLegend {
+                        token_types: crate::features::legend::SUPPORTED_TYPES.to_vec(),
+                        token_modifiers: crate::features::legend::SUPPORTED_MODIFIERS.to_vec(),
+                    },
+                    work_done_progress_options: WorkDoneProgressOptions::default(),
+                }),
+            ),
             ..ServerCapabilities::default()
-        };
+        }
+    }
 
-        Lazy::force(&COMPONENT_DATABASE);
-        Ok(InitializeResult {
-            capabilities,
+    fn initialize(&mut self) -> Result<()> {
+        let (id, params) = self.connection.initialize_start()?;
+        let params: InitializeParams = serde_json::from_value(params)?;
+
+        *self.context.client_capabilities.lock().unwrap() = params.capabilities;
+        *self.context.client_info.lock().unwrap() = params.client_info;
+
+        let result = InitializeResult {
+            capabilities: self.capabilities(),
             server_info: Some(ServerInfo {
                 name: "TexLab".to_owned(),
                 version: Some(env!("CARGO_PKG_VERSION").to_owned()),
             }),
-        })
-    }
+        };
+        self.connection
+            .initialize_finish(id, serde_json::to_value(result)?)?;
 
-    #[jsonrpc_method("initialized", kind = "notification")]
-    pub async fn initialized(&self, _params: InitializedParams) {
-        self.action_manager.push(Action::PullConfiguration).await;
-        self.action_manager.push(Action::RegisterCapabilities).await;
-        self.action_manager.push(Action::LoadDistribution).await;
-        self.action_manager.push(Action::PublishDiagnostics).await;
-    }
+        let cx = Arc::clone(&self.context);
+        if self.load_resolver {
+            self.pool.execute(move || {
+                let distro = Distribution::detect();
+                info!("Detected distribution: {}", distro.kind);
+                *cx.resolver.lock().unwrap() = distro.resolver;
+            });
+        }
 
-    #[jsonrpc_method("shutdown", kind = "request")]
-    pub async fn shutdown(&self, _params: ()) -> Result<()> {
+        self.register_diagnostics_handler();
+
+        let req_queue = Arc::clone(&self.req_queue);
+        let sender = self.connection.sender.clone();
+        let context = Arc::clone(&self.context);
+        self.pool.execute(move || {
+            register_config_capability(&req_queue, &sender, &context.client_capabilities);
+            pull_config(
+                &req_queue,
+                &sender,
+                &context.options,
+                &context.client_capabilities.lock().unwrap(),
+            );
+        });
         Ok(())
     }
 
-    #[jsonrpc_method("exit", kind = "notification")]
-    pub async fn exit(&self, _params: ()) {
-        std::process::exit(0)
+    fn register_diagnostics_handler(&mut self) {
+        let sender = self.static_debouncer.sender.clone();
+        self.workspace
+            .register_open_handler(Arc::new(move |workspace, document| {
+                let message = DiagnosticsMessage::Analyze {
+                    workspace,
+                    document,
+                };
+                sender.send(message).unwrap();
+            }));
     }
 
-    #[jsonrpc_method("$/cancelRequest", kind = "notification")]
-    pub async fn cancel_request(&self, _params: CancelParams) {}
-
-    #[jsonrpc_method("textDocument/didOpen", kind = "notification")]
-    pub async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let uri = params.text_document.uri.clone();
-        let options = self.config_manager().get().await;
-        self.workspace.add(params.text_document, &options).await;
-        self.action_manager
-            .push(Action::DetectRoot(uri.clone().into()))
-            .await;
-        self.action_manager
-            .push(Action::RunLinter(uri.into(), LintReason::Save))
-            .await;
-        self.action_manager.push(Action::PublishDiagnostics).await;
+    fn register_incoming_request(&self, id: RequestId) -> Arc<CancellationToken> {
+        let token_source = CancellationTokenSource::new();
+        let token = Arc::clone(token_source.token());
+        let mut req_queue = self.req_queue.lock().unwrap();
+        req_queue
+            .incoming
+            .register(id.clone(), IncomingData { token_source });
+        token
     }
 
-    #[jsonrpc_method("textDocument/didChange", kind = "notification")]
-    pub async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let options = self.config_manager().get().await;
-        for change in params.content_changes {
-            let uri = params.text_document.uri.clone();
-            self.workspace
-                .update(uri.into(), change.text, &options)
-                .await;
-        }
-        self.action_manager
-            .push(Action::RunLinter(
-                params.text_document.uri.clone().into(),
-                LintReason::Change,
-            ))
-            .await;
-        self.action_manager.push(Action::PublishDiagnostics).await;
-    }
-
-    #[jsonrpc_method("textDocument/didSave", kind = "notification")]
-    pub async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        self.action_manager
-            .push(Action::Build(params.text_document.uri.clone().into()))
-            .await;
-
-        self.action_manager
-            .push(Action::RunLinter(
-                params.text_document.uri.into(),
-                LintReason::Save,
-            ))
-            .await;
-        self.action_manager.push(Action::PublishDiagnostics).await;
-    }
-
-    #[jsonrpc_method("textDocument/didClose", kind = "notification")]
-    pub async fn did_close(&self, _params: DidCloseTextDocumentParams) {}
-
-    #[jsonrpc_method("workspace/didChangeConfiguration", kind = "notification")]
-    pub async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let config_manager = self.config_manager();
-        config_manager.push(params.settings).await;
-        let options = config_manager.get().await;
-        self.workspace.reparse(&options).await;
-    }
-
-    #[jsonrpc_method("window/workDoneProgress/cancel", kind = "notification")]
-    pub async fn work_done_progress_cancel(&self, params: WorkDoneProgressCancelParams) {
-        self.build_provider.cancel(params.token).await;
-    }
-
-    #[jsonrpc_method("textDocument/completion", kind = "request")]
-    pub async fn completion(&self, params: CompletionParams) -> Result<CompletionList> {
-        let req = self
-            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
-            .await?;
-
-        self.last_position_by_uri.insert(
-            req.current().uri.clone(),
-            req.params.text_document_position.position,
-        );
-
-        let items = self.completion_provider.execute(&req).await;
-        let is_incomplete = if self
-            .client_info
-            .get()
-            .and_then(|info| info.as_ref())
-            .map(|info| info.name.as_str())
-            .unwrap_or_default()
-            == "vscode"
-        {
-            true
-        } else {
-            items.len() >= COMPLETION_LIMIT
+    fn cancel(&self, params: CancelParams) -> Result<()> {
+        let id = match params.id {
+            NumberOrString::Number(id) => RequestId::from(id),
+            NumberOrString::String(id) => RequestId::from(id),
         };
 
-        Ok(CompletionList {
-            is_incomplete,
-            items,
-        })
-    }
-
-    #[jsonrpc_method("completionItem/resolve", kind = "request")]
-    pub async fn completion_resolve(&self, mut item: CompletionItem) -> Result<CompletionItem> {
-        let data: CompletionItemData = serde_json::from_value(item.data.clone().unwrap()).unwrap();
-        match data {
-            CompletionItemData::Package | CompletionItemData::Class => {
-                item.documentation = COMPONENT_DATABASE
-                    .documentation(&item.label)
-                    .map(Documentation::MarkupContent);
-            }
-            #[cfg(feature = "citation")]
-            CompletionItemData::Citation { uri, key } => {
-                let snapshot = self.workspace.get().await;
-                if let Some(doc) = snapshot.find(&uri) {
-                    if let DocumentContent::Bibtex(tree) = &doc.content {
-                        let markup = render_citation(&tree, &key);
-                        item.documentation = markup.map(Documentation::MarkupContent);
-                    }
-                }
-            }
-            _ => {}
-        };
-        Ok(item)
-    }
-
-    #[jsonrpc_method("textDocument/hover", kind = "request")]
-    pub async fn hover(&self, params: TextDocumentPositionParams) -> Result<Option<Hover>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-
-        self.last_position_by_uri
-            .insert(req.current().uri.clone(), req.params.position);
-
-        Ok(self.hover_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/definition", kind = "request")]
-    pub async fn definition(
-        &self,
-        params: TextDocumentPositionParams,
-    ) -> Result<DefinitionResponse> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        let results = self.definition_provider.execute(&req).await;
-        let response = if req.client_capabilities.has_definition_link_support() {
-            DefinitionResponse::LocationLinks(results)
-        } else {
-            DefinitionResponse::Locations(
-                results
-                    .into_iter()
-                    .map(|link| Location::new(link.target_uri, link.target_selection_range))
-                    .collect(),
-            )
-        };
-
-        Ok(response)
-    }
-
-    #[jsonrpc_method("textDocument/references", kind = "request")]
-    pub async fn references(&self, params: ReferenceParams) -> Result<Vec<Location>> {
-        let req = self
-            .make_feature_request(params.text_document_position.as_uri(), params)
-            .await?;
-        Ok(self.reference_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/documentHighlight", kind = "request")]
-    pub async fn document_highlight(
-        &self,
-        params: TextDocumentPositionParams,
-    ) -> Result<Vec<DocumentHighlight>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        Ok(self.highlight_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("workspace/symbol", kind = "request")]
-    pub async fn workspace_symbol(
-        &self,
-        params: WorkspaceSymbolParams,
-    ) -> Result<Vec<SymbolInformation>> {
-        let distro = self.distro.clone();
-        let client_capabilities = self.client_capabilities();
-        let snapshot = self.workspace.get().await;
-        let options = self.config_manager().get().await;
-        let symbols = workspace_symbols(
-            distro,
-            client_capabilities,
-            snapshot,
-            &options,
-            Arc::clone(&self.current_dir),
-            &params,
-        )
-        .await;
-        Ok(symbols)
-    }
-
-    #[jsonrpc_method("textDocument/documentSymbol", kind = "request")]
-    pub async fn document_symbol(
-        &self,
-        params: DocumentSymbolParams,
-    ) -> Result<DocumentSymbolResponse> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-
-        let symbols = self.symbol_provider.execute(&req).await;
-        let response = document_symbols(
-            &req.client_capabilities,
-            req.snapshot(),
-            &req.current().uri,
-            &req.options,
-            &req.current_dir,
-            symbols.into_iter().map(Into::into).collect(),
-        );
-        Ok(response)
-    }
-
-    #[jsonrpc_method("textDocument/documentLink", kind = "request")]
-    pub async fn document_link(&self, params: DocumentLinkParams) -> Result<Vec<DocumentLink>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        Ok(self.link_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/formatting", kind = "request")]
-    pub async fn formatting(&self, params: DocumentFormattingParams) -> Result<Vec<TextEdit>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        let mut edits = Vec::new();
-        match &req.current().content {
-            DocumentContent::Latex(_) => {
-                Self::run_latexindent(&req.current().text, "tex", &mut edits).await;
-            }
-            DocumentContent::Bibtex(tree) => {
-                let options = req
-                    .options
-                    .bibtex
-                    .clone()
-                    .and_then(|opts| opts.formatting)
-                    .unwrap_or_default();
-
-                match options.formatter.unwrap_or_default() {
-                    BibtexFormatter::Texlab => {
-                        let params = bibtex::FormattingParams {
-                            tab_size: req.params.options.tab_size as usize,
-                            insert_spaces: req.params.options.insert_spaces,
-                            options: &options,
-                        };
-
-                        for node in tree.children(tree.root) {
-                            let should_format = match &tree.graph[node] {
-                                bibtex::Node::Preamble(_) | bibtex::Node::String(_) => true,
-                                bibtex::Node::Entry(entry) => !entry.is_comment(),
-                                _ => false,
-                            };
-                            if should_format {
-                                let text = bibtex::format(&tree, node, params);
-                                edits.push(TextEdit::new(tree.graph[node].range(), text));
-                            }
-                        }
-                    }
-                    BibtexFormatter::Latexindent => {
-                        Self::run_latexindent(&req.current().text, "bib", &mut edits).await;
-                    }
-                }
-            }
-        }
-        Ok(edits)
-    }
-
-    async fn run_latexindent(old_text: &str, extension: &str, edits: &mut Vec<TextEdit>) {
-        match latexindent::format(old_text, extension).await {
-            Ok(new_text) => {
-                let mut stream = CharStream::new(&old_text);
-                while stream.next().is_some() {}
-                let range = Range::new(Position::new(0, 0), stream.current_position);
-                edits.push(TextEdit::new(range, new_text));
-            }
-            Err(why) => {
-                debug!("Failed to run latexindent.pl: {}", why);
-            }
-        }
-    }
-
-    #[jsonrpc_method("textDocument/prepareRename", kind = "request")]
-    pub async fn prepare_rename(
-        &self,
-        params: TextDocumentPositionParams,
-    ) -> Result<Option<Range>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        Ok(self.prepare_rename_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/rename", kind = "request")]
-    pub async fn rename(&self, params: RenameParams) -> Result<Option<WorkspaceEdit>> {
-        let req = self
-            .make_feature_request(params.text_document_position.text_document.as_uri(), params)
-            .await?;
-        Ok(self.rename_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/foldingRange", kind = "request")]
-    pub async fn folding_range(&self, params: FoldingRangeParams) -> Result<Vec<FoldingRange>> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-        Ok(self.folding_provider.execute(&req).await)
-    }
-
-    #[jsonrpc_method("textDocument/build", kind = "request")]
-    pub async fn build(&self, params: BuildParams) -> Result<BuildResult> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-
-        let pos = self
-            .last_position_by_uri
-            .get(&req.current().uri)
-            .map(|pos| *pos)
-            .unwrap_or_default();
-
-        let res = self.build_provider.execute(&req).await;
-
-        if req
-            .options
-            .latex
-            .and_then(|opts| opts.build)
-            .unwrap_or_default()
-            .forward_search_after()
-            && !self.build_provider.is_building()
-        {
-            let params = TextDocumentPositionParams::new(req.params.text_document, pos);
-            self.forward_search(params).await?;
+        let mut req_queue = self.req_queue.lock().unwrap();
+        if let Some(data) = req_queue.incoming.complete(id.clone()) {
+            data.token_source.cancel();
         }
 
-        Ok(res)
-    }
-
-    #[jsonrpc_method("textDocument/forwardSearch", kind = "request")]
-    pub async fn forward_search(
-        &self,
-        params: TextDocumentPositionParams,
-    ) -> Result<ForwardSearchResult> {
-        let req = self
-            .make_feature_request(params.text_document.as_uri(), params)
-            .await?;
-
-        forward_search::search(
-            &req.view.snapshot,
-            &req.current().uri,
-            req.params.position.line,
-            &req.options,
-            &self.current_dir,
-        )
-        .await
-        .ok_or_else(|| "Unable to execute forward search".into())
-    }
-
-    #[jsonrpc_method("$/detectRoot", kind = "request")]
-    pub async fn detect_root(&self, params: TextDocumentIdentifier) -> Result<()> {
-        let options = self.config_manager().get().await;
-        let _ = self.workspace.detect_root(&params.as_uri(), &options).await;
         Ok(())
     }
 
-    async fn make_feature_request<P>(&self, uri: Uri, params: P) -> Result<FeatureRequest<P>> {
-        let options = self.pull_configuration().await;
-        let snapshot = self.workspace.get().await;
-        let client_capabilities = self.client_capabilities();
-        match snapshot.find(&uri) {
-            Some(current) => Ok(FeatureRequest {
-                params,
-                view: DocumentView::analyze(snapshot, current, &options, &self.current_dir),
-                distro: self.distro.clone(),
-                client_capabilities,
-                options,
-                current_dir: Arc::clone(&self.current_dir),
-            }),
+    fn did_change_configuration(&self, params: DidChangeConfigurationParams) -> Result<()> {
+        push_config(&self.context.options, params.settings);
+        Ok(())
+    }
+
+    fn did_open(&self, params: DidOpenTextDocumentParams) -> Result<()> {
+        let language_id = &params.text_document.language_id;
+        let language = DocumentLanguage::by_language_id(language_id);
+        let document = self.workspace.open(
+            Arc::new(params.text_document.uri.into()),
+            params.text_document.text,
+            language.unwrap_or(DocumentLanguage::Latex),
+            WorkspaceSource::Client,
+        );
+
+        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
+        if let Some(document) = self
+            .workspace
+            .get(document.uri.as_ref())
+            .filter(|_| should_lint)
+        {
+            self.chktex_debouncer
+                .sender
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
+        Ok(())
+    }
+
+    fn did_change(&self, mut params: DidChangeTextDocumentParams) -> Result<()> {
+        let uri = params.text_document.uri.into();
+        assert_eq!(params.content_changes.len(), 1);
+        let text = params.content_changes.pop().unwrap().text;
+        let language = self
+            .workspace
+            .get(&uri)
+            .map(|document| document.data.language())
+            .unwrap_or(DocumentLanguage::Latex);
+
+        let document = self
+            .workspace
+            .open(Arc::new(uri), text, language, WorkspaceSource::Client);
+
+        let should_lint = { self.context.options.read().unwrap().chktex.on_edit };
+        if let Some(document) = self
+            .workspace
+            .get(document.uri.as_ref())
+            .filter(|_| should_lint)
+        {
+            self.chktex_debouncer
+                .sender
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
+
+        Ok(())
+    }
+
+    fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
+        let uri = params.text_document.uri.into();
+        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
+        if let Some(document) = self.workspace.get(&uri).filter(|_| should_lint) {
+            self.chktex_debouncer
+                .sender
+                .send(DiagnosticsMessage::Analyze {
+                    workspace: Arc::clone(&self.workspace),
+                    document,
+                })?;
+        };
+        Ok(())
+    }
+
+    fn did_close(&self, params: DidCloseTextDocumentParams) -> Result<()> {
+        let uri = params.text_document.uri.into();
+        self.workspace.close(&uri);
+        Ok(())
+    }
+
+    fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> Option<FeatureRequest<P>> {
+        let req_queue = Arc::clone(&self.req_queue);
+        let sender = self.connection.sender.clone();
+        let cx = Arc::clone(&self.context);
+        self.pool.execute(move || {
+            pull_config(
+                &req_queue,
+                &sender,
+                &cx.options,
+                &cx.client_capabilities.lock().unwrap(),
+            );
+        });
+
+        Some(FeatureRequest {
+            context: Arc::clone(&self.context),
+            params,
+            workspace: Arc::clone(&self.workspace),
+            subset: self.workspace.subset(uri)?,
+        })
+    }
+
+    fn send_feature_error(&self, id: RequestId) -> Result<()> {
+        let resp = lsp_server::Response::new_err(
+            id,
+            ErrorCode::InternalError as i32,
+            "unknown document URI".to_string(),
+        );
+        self.connection.sender.send(resp.into())?;
+        Ok(())
+    }
+
+    fn handle_feature_request<P, R, H>(
+        &self,
+        id: RequestId,
+        params: P,
+        uri: Arc<Uri>,
+        token: &Arc<CancellationToken>,
+        handler: H,
+    ) -> Result<()>
+    where
+        P: Send + 'static,
+        R: Serialize,
+        H: FnOnce(FeatureRequest<P>, &CancellationToken) -> R + Send + 'static,
+    {
+        match self.feature_request(uri, params) {
+            Some(req) => {
+                let sender = self.connection.sender.clone();
+                let token = Arc::clone(token);
+                self.pool.execute(move || {
+                    let result = handler(req, &token);
+                    if token.is_canceled() {
+                        sender.send(cancel_response(id).into()).unwrap();
+                    } else {
+                        sender
+                            .send(lsp_server::Response::new_ok(id, result).into())
+                            .unwrap();
+                    }
+                });
+            }
             None => {
-                let msg = format!("Unknown document: {}", uri);
-                Err(msg)
+                self.send_feature_error(id)?;
             }
-        }
-    }
-
-    async fn pull_configuration(&self) -> Options {
-        let config_manager = self.config_manager();
-        let has_changed = config_manager.pull().await;
-        let options = config_manager.get().await;
-        if has_changed {
-            self.workspace.reparse(&options).await;
-        }
-        options
-    }
-
-    async fn update_build_diagnostics(&self) {
-        let snapshot = self.workspace.get().await;
-        let options = self.config_manager().get().await;
-
-        for doc in snapshot.0.iter().filter(|doc| doc.uri.scheme() == "file") {
-            if let DocumentContent::Latex(table) = &doc.content {
-                if table.is_standalone {
-                    match self
-                        .diagnostics_manager
-                        .build
-                        .update(&snapshot, &doc.uri, &options, &self.current_dir)
-                        .await
-                    {
-                        Ok(true) => self.action_manager.push(Action::PublishDiagnostics).await,
-                        Ok(false) => (),
-                        Err(why) => {
-                            warn!("Unable to read log file ({}): {}", why, doc.uri.as_str())
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    async fn load_distribution(&self) {
-        info!("Detected TeX distribution: {}", self.distro.kind());
-        if self.distro.kind() == DistributionKind::Unknown {
-            let params = ShowMessageParams {
-                message: "Your TeX distribution could not be detected. \
-                          Please make sure that your distribution is in your PATH."
-                    .into(),
-                typ: MessageType::Error,
-            };
-            self.client.show_message(params).await;
-        }
-
-        if let Err(why) = self.distro.load().await {
-            let message = match why {
-                KpsewhichError::NotInstalled | KpsewhichError::InvalidOutput => {
-                    "An error occurred while executing `kpsewhich`.\
-                     Please make sure that your distribution is in your PATH \
-                     environment variable and provides the `kpsewhich` tool."
-                }
-                KpsewhichError::CorruptDatabase | KpsewhichError::NoDatabase => {
-                    "The file database of your TeX distribution seems \
-                     to be corrupt. Please rebuild it and try again."
-                }
-                KpsewhichError::Decode(_) => {
-                    "An error occurred while decoding the output of `kpsewhich`."
-                }
-                KpsewhichError::IO(why) => {
-                    error!("An I/O error occurred while executing 'kpsewhich': {}", why);
-                    "An I/O error occurred while executing 'kpsewhich'"
-                }
-            };
-            let params = ShowMessageParams {
-                message: message.into(),
-                typ: MessageType::Error,
-            };
-            self.client.show_message(params).await;
         };
-    }
-}
-
-#[async_trait]
-impl<C: LspClient + Send + Sync + 'static> Middleware for LatexLspServer<C> {
-    async fn before_message(&self) {
-        if let Some(config_manager) = self.config_manager.get() {
-            let options = config_manager.get().await;
-            self.workspace.detect_children(&options).await;
-            self.workspace.reparse_all_if_newer(&options).await;
-        }
+        Ok(())
     }
 
-    async fn after_message(&self) {
-        self.update_build_diagnostics().await;
-        for action in self.action_manager.take().await {
-            match action {
-                Action::LoadDistribution => {
-                    self.load_distribution().await;
-                }
-                Action::RegisterCapabilities => {
-                    let config_manager = self.config_manager();
-                    config_manager.register().await;
-                }
-                Action::PullConfiguration => {
-                    self.pull_configuration().await;
-                }
-                Action::DetectRoot(uri) => {
-                    let options = self.config_manager().get().await;
-                    let _ = self.workspace.detect_root(&uri, &options).await;
-                }
-                Action::PublishDiagnostics => {
-                    let snapshot = self.workspace.get().await;
-                    for doc in &snapshot.0 {
-                        let diagnostics = self.diagnostics_manager.get(doc).await;
-                        let params = PublishDiagnosticsParams {
-                            uri: doc.uri.clone().into(),
-                            diagnostics,
-                            version: None,
-                        };
-                        self.client.publish_diagnostics(params).await;
-                    }
-                }
-                Action::Build(uri) => {
-                    let options = self
-                        .config_manager()
-                        .get()
-                        .await
-                        .latex
-                        .and_then(|opts| opts.build)
-                        .unwrap_or_default();
+    fn document_link(
+        &self,
+        id: RequestId,
+        params: DocumentLinkParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, find_document_links)?;
+        Ok(())
+    }
 
-                    if options.on_save() {
-                        let text_document = TextDocumentIdentifier::new(uri.into());
-                        self.build(BuildParams { text_document }).await.unwrap();
-                    }
+    fn document_symbols(
+        &self,
+        id: RequestId,
+        params: DocumentSymbolParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, find_document_symbols)?;
+        Ok(())
+    }
+
+    fn workspace_symbols(
+        &self,
+        id: RequestId,
+        params: WorkspaceSymbolParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let sender = self.connection.sender.clone();
+        let workspace = Arc::clone(&self.workspace);
+        let token = Arc::clone(token);
+        self.pool.execute(move || {
+            let result = find_workspace_symbols(workspace.as_ref(), &params, &token);
+            if token.is_canceled() {
+                sender.send(cancel_response(id).into()).unwrap();
+            } else {
+                sender
+                    .send(lsp_server::Response::new_ok(id, result).into())
+                    .unwrap();
+            }
+        });
+        Ok(())
+    }
+
+    #[cfg(feature = "completion")]
+    fn completion(
+        &self,
+        id: RequestId,
+        params: CompletionParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, crate::features::complete)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "completion")]
+    fn completion_resolve(
+        &self,
+        id: RequestId,
+        mut item: CompletionItem,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let sender = self.connection.sender.clone();
+        let token = Arc::clone(token);
+        let workspace = Arc::clone(&self.workspace);
+        self.pool.execute(move || {
+            match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
+                crate::features::CompletionItemData::Package
+                | crate::features::CompletionItemData::Class => {
+                    item.documentation = COMPONENT_DATABASE
+                        .documentation(&item.label)
+                        .map(Documentation::MarkupContent);
                 }
-                Action::RunLinter(uri, reason) => {
-                    let options = self
-                        .config_manager()
-                        .get()
-                        .await
-                        .latex
-                        .and_then(|opts| opts.lint)
-                        .unwrap_or_default();
-
-                    let should_lint = match reason {
-                        LintReason::Change => options.on_change(),
-                        LintReason::Save => options.on_save() || options.on_change(),
-                    };
-
-                    if should_lint {
-                        let snapshot = self.workspace.get().await;
-                        if let Some(doc) = snapshot.find(&uri) {
-                            if let DocumentContent::Latex(_) = &doc.content {
-                                self.diagnostics_manager.latex.update(&uri, &doc.text).await;
-                            }
+                #[cfg(feature = "citeproc")]
+                crate::features::CompletionItemData::Citation { uri, key } => {
+                    if let Some(document) = workspace.get(&uri) {
+                        if let Some(data) = document.data.as_bibtex() {
+                            let markup = crate::citation::render_citation(&data.root, &key);
+                            item.documentation = markup.map(Documentation::MarkupContent);
                         }
                     }
                 }
+                _ => {}
+            };
+
+            drop(workspace);
+            if token.is_canceled() {
+                sender.send(cancel_response(id).into()).unwrap();
+            } else {
+                sender
+                    .send(lsp_server::Response::new_ok(id, item).into())
+                    .unwrap();
+            }
+        });
+        Ok(())
+    }
+
+    fn folding_range(
+        &self,
+        id: RequestId,
+        params: FoldingRangeParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, find_foldings)?;
+        Ok(())
+    }
+
+    fn references(
+        &self,
+        id: RequestId,
+        params: ReferenceParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, find_all_references)?;
+        Ok(())
+    }
+
+    fn hover(
+        &self,
+        id: RequestId,
+        params: HoverParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position_params
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, find_hover)?;
+        Ok(())
+    }
+
+    fn goto_definition(
+        &self,
+        id: RequestId,
+        params: GotoDefinitionParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position_params
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, goto_definition)?;
+        Ok(())
+    }
+
+    fn prepare_rename(
+        &self,
+        id: RequestId,
+        params: TextDocumentPositionParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, prepare_rename_all)?;
+        Ok(())
+    }
+
+    fn rename(
+        &self,
+        id: RequestId,
+        params: RenameParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, rename_all)?;
+        Ok(())
+    }
+
+    fn document_highlight(
+        &self,
+        id: RequestId,
+        params: DocumentHighlightParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(
+            params
+                .text_document_position_params
+                .text_document
+                .uri
+                .clone()
+                .into(),
+        );
+        self.handle_feature_request(id, params, uri, token, find_document_highlights)?;
+        Ok(())
+    }
+
+    fn formatting(
+        &self,
+        id: RequestId,
+        params: DocumentFormattingParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(id, params, uri, token, format_source_code)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "semantic")]
+    fn semantic_tokens_range(
+        &self,
+        id: RequestId,
+        params: SemanticTokensRangeParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(
+            id,
+            params,
+            uri,
+            token,
+            crate::features::find_semantic_tokens_range,
+        )?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "semantic"))]
+    fn semantic_tokens_range(
+        &self,
+        _id: RequestId,
+        _params: SemanticTokensRangeParams,
+        _token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    fn build(
+        &self,
+        id: RequestId,
+        params: BuildParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        let lsp_sender = self.connection.sender.clone();
+        self.handle_feature_request(id, params, uri, token, |request, token| {
+            let (log_sender, log_receiver) = crossbeam_channel::unbounded();
+
+            thread::spawn(move || {
+                for message in &log_receiver {
+                    send_notification::<LogMessage>(
+                        &lsp_sender,
+                        LogMessageParams {
+                            message,
+                            typ: MessageType::Log,
+                        },
+                    )
+                    .unwrap();
+                }
+            });
+
+            build_document(request, token, log_sender)
+        })?;
+        Ok(())
+    }
+
+    fn forward_search(
+        &self,
+        id: RequestId,
+        params: TextDocumentPositionParams,
+        token: &Arc<CancellationToken>,
+    ) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone().into());
+        self.handle_feature_request(
+            id,
+            params,
+            uri,
+            token,
+            crate::features::execute_forward_search,
+        )?;
+        Ok(())
+    }
+
+    fn process_messages(&self) -> Result<()> {
+        for msg in &self.connection.receiver {
+            match msg {
+                Message::Request(request) => {
+                    if self.connection.handle_shutdown(&request)? {
+                        return Ok(());
+                    }
+
+                    let token = self.register_incoming_request(request.id.clone());
+                    if let Some(response) = RequestDispatcher::new(request)
+                        .on::<DocumentLinkRequest, _>(|id, params| {
+                            self.document_link(id, params, &token)
+                        })?
+                        .on::<FoldingRangeRequest, _>(|id, params| {
+                            self.folding_range(id, params, &token)
+                        })?
+                        .on::<References, _>(|id, params| self.references(id, params, &token))?
+                        .on::<HoverRequest, _>(|id, params| self.hover(id, params, &token))?
+                        .on::<DocumentSymbolRequest, _>(|id, params| {
+                            self.document_symbols(id, params, &token)
+                        })?
+                        .on::<WorkspaceSymbol, _>(|id, params| {
+                            self.workspace_symbols(id, params, &token)
+                        })?
+                        .on::<Completion, _>(|id, params| {
+                            #[cfg(feature = "completion")]
+                            self.completion(id, params, &token)?;
+                            Ok(())
+                        })?
+                        .on::<ResolveCompletionItem, _>(|id, params| {
+                            #[cfg(feature = "completion")]
+                            self.completion_resolve(id, params, &token)?;
+                            Ok(())
+                        })?
+                        .on::<GotoDefinition, _>(|id, params| {
+                            self.goto_definition(id, params, &token)
+                        })?
+                        .on::<PrepareRenameRequest, _>(|id, params| {
+                            self.prepare_rename(id, params, &token)
+                        })?
+                        .on::<Rename, _>(|id, params| self.rename(id, params, &token))?
+                        .on::<DocumentHighlightRequest, _>(|id, params| {
+                            self.document_highlight(id, params, &token)
+                        })?
+                        .on::<Formatting, _>(|id, params| self.formatting(id, params, &token))?
+                        .on::<BuildRequest, _>(|id, params| self.build(id, params, &token))?
+                        .on::<ForwardSearchRequest, _>(|id, params| {
+                            self.forward_search(id, params, &token)
+                        })?
+                        .on::<SemanticTokensRangeRequest, _>(|id, params| {
+                            self.semantic_tokens_range(id, params, &token)
+                        })?
+                        .default()
+                    {
+                        self.connection.sender.send(response.into())?;
+                    }
+                }
+                Message::Notification(notification) => {
+                    NotificationDispatcher::new(notification)
+                        .on::<Cancel, _>(|params| self.cancel(params))?
+                        .on::<DidChangeConfiguration, _>(|params| {
+                            self.did_change_configuration(params)
+                        })?
+                        .on::<DidOpenTextDocument, _>(|params| self.did_open(params))?
+                        .on::<DidChangeTextDocument, _>(|params| self.did_change(params))?
+                        .on::<DidSaveTextDocument, _>(|params| self.did_save(params))?
+                        .on::<DidCloseTextDocument, _>(|params| self.did_close(params))?
+                        .default();
+                }
+                Message::Response(response) => {
+                    let mut req_queue = self.req_queue.lock().unwrap();
+                    let data = req_queue.outgoing.complete(response.id);
+                    let result = match response.result {
+                        Some(result) => Ok(result),
+                        None => Err(response
+                            .error
+                            .expect("response without result or error received")),
+                    };
+                    data.sender.send(result)?;
+                }
             }
         }
+        Ok(())
+    }
+
+    pub fn run(mut self) -> Result<()> {
+        self.initialize()?;
+        self.process_messages()?;
+        drop(self.static_debouncer);
+        drop(self.chktex_debouncer);
+        self.pool.join();
+        Ok(())
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum LintReason {
-    Change,
-    Save,
+fn create_static_debouncer(
+    manager: Arc<Mutex<DiagnosticsManager>>,
+    conn: &Connection,
+    context: Arc<ServerContext>,
+) -> DiagnosticsDebouncer {
+    let sender = conn.sender.clone();
+    DiagnosticsDebouncer::launch(context, move |workspace, document| {
+        let mut manager = manager.lock().unwrap();
+        manager.update_static(workspace.as_ref(), Arc::clone(&document.uri));
+        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+            warn!("Failed to publish diagnostics: {}", why);
+        }
+    })
 }
 
-#[derive(Debug, PartialEq, Clone)]
-enum Action {
-    LoadDistribution,
-    RegisterCapabilities,
-    PullConfiguration,
-    DetectRoot(Uri),
-    PublishDiagnostics,
-    Build(Uri),
-    RunLinter(Uri, LintReason),
+fn create_chktex_debouncer(
+    manager: Arc<Mutex<DiagnosticsManager>>,
+    conn: &Connection,
+    context: Arc<ServerContext>,
+) -> DiagnosticsDebouncer {
+    let sender = conn.sender.clone();
+    DiagnosticsDebouncer::launch(Arc::clone(&context), move |workspace, document| {
+        let options = { context.options.read().unwrap().clone() };
+        let mut manager = manager.lock().unwrap();
+        manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri), &options);
+        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+            warn!("Failed to publish diagnostics: {}", why);
+        }
+    })
 }
 
-#[derive(Debug, Default)]
-struct ActionManager {
-    actions: Mutex<Vec<Action>>,
-}
-
-impl ActionManager {
-    pub async fn push(&self, action: Action) {
-        let mut actions = self.actions.lock().await;
-        actions.push(action);
+fn publish_diagnostics(
+    sender: &Sender<lsp_server::Message>,
+    workspace: &dyn Workspace,
+    diag_manager: &DiagnosticsManager,
+) -> Result<()> {
+    for document in workspace.documents() {
+        let diagnostics = diag_manager.publish(Arc::clone(&document.uri));
+        send_notification::<PublishDiagnostics>(
+            sender,
+            PublishDiagnosticsParams {
+                uri: document.uri.as_ref().clone().into(),
+                version: None,
+                diagnostics,
+            },
+        )?;
     }
+    Ok(())
+}
 
-    pub async fn take(&self) -> Vec<Action> {
-        let mut actions = self.actions.lock().await;
-        mem::replace(&mut *actions, Vec::new())
-    }
+fn cancel_response(id: RequestId) -> lsp_server::Response {
+    lsp_server::Response::new_err(
+        id,
+        ErrorCode::RequestCanceled as i32,
+        "canceled by client".to_string(),
+    )
+}
+
+struct BuildRequest;
+
+impl lsp_types::request::Request for BuildRequest {
+    type Params = BuildParams;
+
+    type Result = BuildResult;
+
+    const METHOD: &'static str = "textDocument/build";
+}
+
+struct ForwardSearchRequest;
+
+impl lsp_types::request::Request for ForwardSearchRequest {
+    type Params = TextDocumentPositionParams;
+
+    type Result = ForwardSearchResult;
+
+    const METHOD: &'static str = "textDocument/forwardSearch";
 }

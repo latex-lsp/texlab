@@ -1,86 +1,89 @@
-use indoc::indoc;
-use texlab::{
-    protocol::{HoverContents, MarkupContent, MarkupKind},
-    test::{TestBedBuilder, PULL_CAPABILITIES},
-};
+use anyhow::Result;
+use insta::assert_json_snapshot;
+use lsp_types::ClientCapabilities;
 
-#[tokio::test]
-async fn label_theorem_child_file() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                    \documentclass{article}
-                    \newtheorem{lemma}{Lemma}
-                    \include{child}
-                    \ref{thm:foo}
-                "#
-            ),
-        )
-        .file(
-            "child.tex",
-            indoc!(
-                r#"
-                    \begin{lemma}\label{thm:foo}
-                        1 + 1 = 2
-                    \end{lemma}
-                "#
-            ),
-        )
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+use crate::common::ServerTester;
 
-    let actual_hover = test_bed.hover("main.tex", 3, 8).await.unwrap().unwrap();
-    assert_eq!(
-        actual_hover.contents,
-        HoverContents::Markup(MarkupContent {
-            kind: MarkupKind::PlainText,
-            value: "Lemma".into()
-        })
-    );
+#[test]
+fn test_empty_bibtex_document() -> Result<()> {
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+    let uri = server.open("main.bib", "", "bibtex", false)?;
+    assert_json_snapshot!(server.hover(uri, 0, 0)?);
+    Ok(())
 }
 
-#[tokio::test]
-async fn label_theorem_child_file_number() {
-    let mut test_bed = TestBedBuilder::new()
-        .file(
-            "main.tex",
-            indoc!(
-                r#"
-                \documentclass{article}
-                \newtheorem{lemma}{Lemma}
-                \include{child}
-                \ref{thm:foo}
-            "#
-            ),
-        )
-        .file(
-            "child.tex",
-            indoc!(
-                r#"
-                \begin{lemma}[Foo]\label{thm:foo}
-                    1 + 1 = 2
-                \end{lemma}
-            "#
-            ),
-        )
-        .file("child.aux", r#"\newlabel{thm:foo}{{1}{1}{Foo}{lemma.1}{}}"#)
-        .build()
-        .await;
-    test_bed.spawn();
-    test_bed.initialize(PULL_CAPABILITIES.clone()).await;
-    test_bed.open("main.tex").await;
+#[test]
+fn test_empty_labtex_document() -> Result<()> {
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+    let uri = server.open("main.tex", "", "latex", false)?;
+    assert_json_snapshot!(server.hover(uri, 0, 0)?);
+    Ok(())
+}
 
-    let actual_hover = test_bed.hover("main.tex", 3, 8).await.unwrap().unwrap();
-    assert_eq!(
-        actual_hover.contents,
-        HoverContents::Markup(MarkupContent {
-            kind: MarkupKind::PlainText,
-            value: "Lemma 1 (Foo)".into()
-        })
-    );
+#[test]
+fn test_label_theorem_child_file() -> Result<()> {
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+    let uri = server.open(
+        "main.tex",
+        r#"
+            \documentclass{article}
+            \newtheorem{lemma}{Lemma}
+            \include{child}
+            \ref{thm:foo}
+        "#,
+        "latex",
+        false,
+    )?;
+    server.open(
+        "child.tex",
+        r#"
+            \begin{lemma}\label{thm:foo}
+                1 + 1 = 2
+            \end{lemma}
+        "#,
+        "latex",
+        false,
+    )?;
+
+    assert_json_snapshot!(server.hover(uri, 3, 8)?);
+    Ok(())
+}
+
+#[test]
+fn test_label_theorem_child_file_mumber() -> Result<()> {
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+    let uri = server.open(
+        "main.tex",
+        r#"
+            \documentclass{article}
+            \newtheorem{lemma}{Lemma}
+            \include{child}
+            \ref{thm:foo}
+        "#,
+        "latex",
+        false,
+    )?;
+    server.open(
+        "child.tex",
+        r#"
+            \begin{lemma}[Foo]\label{thm:foo}
+                1 + 1 = 2
+            \end{lemma}
+        "#,
+        "latex",
+        false,
+    )?;
+    server.open(
+        "child.aux",
+        r#"\newlabel{thm:foo}{{1}{1}{Foo}{lemma.1}{}}"#,
+        "latex",
+        false,
+    )?;
+
+    assert_json_snapshot!(server.hover(uri, 3, 8)?);
+    Ok(())
 }
