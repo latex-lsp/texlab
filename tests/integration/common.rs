@@ -213,6 +213,29 @@ impl ServerTester {
         Ok(result)
     }
 
+    pub fn hover(&self, uri: Url, line: u32, character: u32) -> Result<Option<Hover>> {
+        let request_id = RequestId::from(self.request_id.fetch_add(1, Ordering::SeqCst));
+
+        self.client.sender.send(
+            lsp_server::Request::new(
+                request_id.clone(),
+                request::HoverRequest::METHOD.to_string(),
+                HoverParams {
+                    text_document_position_params: TextDocumentPositionParams::new(
+                        TextDocumentIdentifier::new(uri),
+                        Position::new(line, character),
+                    ),
+                    work_done_progress_params: WorkDoneProgressParams::default(),
+                },
+            )
+            .into(),
+        )?;
+
+        let response = self.wait_for_response(request_id)?;
+        let hover = serde_json::from_value(response.result.expect("hover request failed"))?;
+        Ok(hover)
+    }
+
     pub fn find_document_symbols(&self, uri: Url) -> Result<DocumentSymbolResponse> {
         let request_id = RequestId::from(self.request_id.fetch_add(1, Ordering::SeqCst));
 
