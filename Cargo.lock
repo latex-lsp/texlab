@@ -963,7 +963,7 @@ dependencies = [
  "docopt",
  "ena",
  "itertools 0.8.2",
- "lalrpop-util",
+ "lalrpop-util 0.18.1",
  "petgraph 0.4.13",
  "regex",
  "regex-syntax",
@@ -983,6 +983,12 @@ checksum = "7d6e9bc1801eb54529fd6a020aaf9514e8193bb6b42d96d0fe7da99187efa93d"
 dependencies = [
  "regex",
 ]
+
+[[package]]
+name = "lalrpop-util"
+version = "0.19.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a708007b751af124d09e9c5d97515257902bc6b486a56b40bcafd939e8ff467"
 
 [[package]]
 name = "lasso"
@@ -2288,7 +2294,7 @@ dependencies = [
  "insta",
  "itertools 0.10.0",
  "lalrpop",
- "lalrpop-util",
+ "lalrpop-util 0.19.5",
  "log",
  "logos",
  "lsp-server",
