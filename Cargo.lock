@@ -489,9 +489,9 @@ dependencies = [
 
 [[package]]
 name = "cstree"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb576fcf6e75386b0cc92aaccf14a7408c9b0d89dfeed879129b821f3fc2ec80"
+checksum = "88c3cc8aae0153c915c6752c6a8ab5ea741930f32011b1fe453bdf5c57e9c1ed"
 dependencies = [
  "fxhash",
  "lasso",
