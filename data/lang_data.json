@@ -2198,6 +2198,8 @@
     "eqnarray*",
     "equation",
     "equation*",
+    "subequations",
+    "subequations*",
     "gather",
     "gather*",
     "gathered",
