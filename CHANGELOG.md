@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 16.05.2021
+
+### Added
+
+- Basic error analysis for LaTeX files ([#323](https://github.com/latex-lsp/texlab/issues/323))
+- Parse LaTeX3 commands correctly ([#410](https://github.com/latex-lsp/texlab/issues/410))
+- Allow configuring ChkTeX using a `chktexrc` file ([#309](https://github.com/latex-lsp/texlab/issues/309))
+- Implement goto definition for includes ([#386](https://github.com/latex-lsp/texlab/issues/386))
+- Provide completion for `\citeA{...}` ([#409](https://github.com/latex-lsp/texlab/issues/409))
+- Allow passing additional arguments to `latexindent` ([#365](https://github.com/latex-lsp/texlab/issues/365))
+- Document symbols and label completion now correctly handle `subequations`.
+
+### Changed
+
+- _BREAKING_: The configuration format has changed.
+  Every setting is now under the `texlab` scope instead of the two scopes `latex` and `bibtex`. For a list of possible options, please see [here](docs/options.md).
+  The `latex.build.onSave` setting has been removed in favor of `-pvc` of `latexmk`. In the VSCode extension, the `latex.build.onSave` setting is still available along with the `latex.build.forwardSearchAfter` setting. The reasoning is that that `latex.build.forwardSearchAfter` cannot reliably implemented in the server because it requires the current cursor position, which the LSP spec does not offer. In previous versions, TexLab had to guess the cursor position. We encourage editor extensions, to still support these settings under the `texlab` scope.
+- _BREAKING_: Previewing equations has been removed for now until
+  a better solution is found. The existing approach is way too slow and does not work reliably.
+- Distribution detection no longer produces an error message in the client.
+  Instead, a log message is generated. A TeX distribution is only required to compile documents.
+- Improve compile times a bit.
+
+### Fixed
+
+- Do not send snippets if the client does not support them ([#413](https://github.com/latex-lsp/texlab/issues/413))
+- Fix protocol violation when exiting the server ([#310](https://github.com/latex-lsp/texlab/issues/310))
+- Fix reporting compile-time diagnostics using file watching ([#339](https://github.com/latex-lsp/texlab/issues/339))
+- Fix compilation warnings ([#359](https://github.com/latex-lsp/texlab/issues/359))
+- Fix crash when exiting with NeoVim LSP client ([#405](https://github.com/latex-lsp/texlab/issues/405))
+- Hopefully fixes the ChkTeX spamming issue ([#186](https://github.com/latex-lsp/texlab/issues/186))
+- Reduce CPU-load when idle ([#400](https://github.com/latex-lsp/texlab/issues/400))
+
 ## [2.2.2] - 10.01.2021
 
 ### Fixed

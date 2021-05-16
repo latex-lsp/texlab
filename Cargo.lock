@@ -2179,7 +2179,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "2.2.2"
+version = "3.0.0"
 dependencies = [
  "anyhow",
  "bibutils-sys",
