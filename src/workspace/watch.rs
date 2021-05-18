@@ -55,7 +55,8 @@ impl<W: Workspace> Workspace for DocumentWatcher<W> {
     ) -> Arc<Document> {
         let document = self.workspace.open(uri, text, language, source);
         if document.uri.scheme() == "file" {
-            if let Ok(path) = document.uri.to_file_path() {
+            if let Ok(mut path) = document.uri.to_file_path() {
+                path.pop();
                 let mut watched_paths = self.watched_paths.lock().unwrap();
                 if !watched_paths.contains(&path) {
                     if let Err(why) = self
@@ -64,7 +65,10 @@ impl<W: Workspace> Workspace for DocumentWatcher<W> {
                         .unwrap()
                         .watch(&path, RecursiveMode::NonRecursive)
                     {
-                        warn!("Failed to watch document \"{}\": {}", document.uri, why);
+                        warn!(
+                            "Failed to watch folder of document \"{}\": {}",
+                            document.uri, why
+                        );
                     }
                     watched_paths.insert(path);
                 }
