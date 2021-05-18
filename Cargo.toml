@@ -39,7 +39,7 @@ encoding_rs_io = "0.1.7"
 fern = "0.6"
 fnv = { version = "1.0", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
-html2md = { version = "0.2.10", optional = true }
+html2md = { version = "0.2.11", optional = true }
 itertools = "0.10.0"
 lalrpop-util = { version = "0.19.5", optional = true }
 log = "0.4.14"
