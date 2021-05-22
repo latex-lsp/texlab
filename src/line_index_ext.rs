@@ -1,7 +1,7 @@
 use cstree::{TextRange, TextSize};
 use lsp_types::{Position, Range};
 
-use crate::{LineCol, LineIndex};
+use crate::{LineColUtf16, LineIndex};
 
 pub trait LineIndexExt {
     fn offset_lsp(&self, line_col: Position) -> TextSize;
@@ -15,11 +15,11 @@ pub trait LineIndexExt {
 
 impl LineIndexExt for LineIndex {
     fn offset_lsp(&self, line_col: Position) -> TextSize {
-        let line_col = LineCol {
+        let line_col = LineColUtf16 {
             line: line_col.line,
             col: line_col.character,
         };
-        self.offset(line_col)
+        self.offset(self.to_utf8(line_col))
     }
 
     fn offset_lsp_range(&self, line_col: Range) -> TextRange {
@@ -29,7 +29,8 @@ impl LineIndexExt for LineIndex {
     }
 
     fn line_col_lsp(&self, offset: TextSize) -> Position {
-        let LineCol { line, col } = self.line_col(offset);
+        let position = self.line_col(offset);
+        let LineColUtf16 { line , col } = self.to_utf16(position);
         Position::new(line, col)
     }
 
