@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use cstree::TextRange;
-use lsp_types::{Diagnostic, DiagnosticSeverity};
+use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
 use multimap::MultiMap;
 
 use crate::{
@@ -42,7 +42,7 @@ fn analyze_entry(
                     .line_index
                     .line_col_lsp_range(entry.ty()?.text_range()),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(4)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Expecting a curly bracket: \"{\"".to_string(),
@@ -62,7 +62,7 @@ fn analyze_entry(
                     .line_index
                     .line_col_lsp_range(entry.left_delimiter()?.text_range()),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(5)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Expecting a key".to_string(),
@@ -82,7 +82,7 @@ fn analyze_entry(
                     .line_index
                     .line_col_lsp_range(entry.right_delimiter()?.text_range()),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(6)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Expecting a curly bracket: \"}\"".to_string(),
@@ -111,7 +111,7 @@ fn analyze_field(
                     .line_index
                     .line_col_lsp_range(TextRange::empty(field.name()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(7)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Expecting an equality sign: \"=\"".to_string(),
@@ -131,7 +131,7 @@ fn analyze_field(
                     field.equality_sign()?.text_range().end(),
                 )),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(8)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Expecting a field value".to_string(),

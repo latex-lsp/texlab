@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use cstree::TextRange;
-use lsp_types::{Diagnostic, DiagnosticSeverity};
+use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
 use multimap::MultiMap;
 
 use crate::{
@@ -31,7 +31,7 @@ pub fn analyze_latex_static(
                         Diagnostic {
                             range: document.line_index.line_col_lsp_range(node.text_range()),
                             severity: Some(DiagnosticSeverity::Error),
-                            code: None,
+                            code: Some(NumberOrString::Number(1)),
                             code_description: None,
                             source: Some("texlab".to_string()),
                             message: "Unexpected \"}\"".to_string(),
@@ -64,7 +64,7 @@ fn analyze_environment(
             Diagnostic {
                 range: document.line_index.line_col_lsp_range(name1.small_range()),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(3)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Mismatched environment".to_string(),
@@ -116,7 +116,7 @@ fn analyze_curly_group(
                     .line_index
                     .line_col_lsp_range(TextRange::empty(node.text_range().end())),
                 severity: Some(DiagnosticSeverity::Error),
-                code: None,
+                code: Some(NumberOrString::Number(2)),
                 code_description: None,
                 source: Some("texlab".to_string()),
                 message: "Missing \"}\" inserted".to_string(),
