@@ -23,22 +23,22 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: &latex::SyntaxN
         ExplicitLinkKind::Class => &["cls"],
     };
 
-    for path in include.path_list()?.words() {
-        let stem = path.text();
-        let mut targets = vec![Arc::new(context.base_uri.join(stem).ok()?.into())];
+    for path in include.path_list()?.keys() {
+        let stem = path.to_string();
+        let mut targets = vec![Arc::new(context.base_uri.join(&stem).ok()?.into())];
         for extension in extensions {
             let path = format!("{}.{}", stem, extension);
             targets.push(Arc::new(context.base_uri.join(&path).ok()?.into()));
         }
 
-        resolve_distro_file(&context.inner.resolver.lock().unwrap(), stem, extensions)
+        resolve_distro_file(&context.inner.resolver.lock().unwrap(), &stem, extensions)
             .into_iter()
             .for_each(|target| targets.push(Arc::new(target)));
 
         context.extras.explicit_links.push(ExplicitLink {
             kind,
             stem: stem.into(),
-            stem_range: path.text_range(),
+            stem_range: path.small_range(),
             targets,
         });
     }
@@ -52,19 +52,19 @@ pub fn analyze_import(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNo
     let mut targets = Vec::new();
     let directory = context
         .base_uri
-        .join(import.directory()?.word()?.text())
+        .join(&import.directory()?.key()?.to_string())
         .ok()?;
 
-    let file = import.file()?.word()?;
-    let stem = file.text();
-    targets.push(Arc::new(directory.join(stem).ok()?.into()));
+    let file = import.file()?.key()?;
+    let stem = file.to_string();
+    targets.push(Arc::new(directory.join(&stem).ok()?.into()));
     targets.push(Arc::new(
         directory.join(&format!("{}.tex", stem)).ok()?.into(),
     ));
 
     context.extras.explicit_links.push(ExplicitLink {
         stem: stem.into(),
-        stem_range: file.text_range(),
+        stem_range: file.small_range(),
         targets,
         kind: ExplicitLinkKind::Latex,
     });

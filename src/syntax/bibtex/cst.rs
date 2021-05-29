@@ -1,4 +1,5 @@
 use cstree::TextRange;
+use itertools::{EitherOrBoth, Itertools};
 
 use crate::syntax::CstNode;
 
@@ -159,15 +160,42 @@ impl<'a> HasType<'a> for Entry<'a> {}
 impl<'a> HasDelimiters<'a> for Entry<'a> {}
 
 impl<'a> Entry<'a> {
-    pub fn key(&self) -> Option<&'a SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == WORD)
+    pub fn key(&self) -> Option<Key<'a>> {
+        self.syntax().children().find_map(Key::cast)
     }
 
     pub fn fields(&self) -> impl Iterator<Item = Field<'a>> {
         self.syntax().children().filter_map(Field::cast)
+    }
+}
+
+cst_node!(Key, KEY);
+
+impl<'a> Key<'a> {
+    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .filter(|node| node.kind() == WORD)
+    }
+}
+
+impl<'a> PartialEq for Key<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.words()
+            .zip_longest(other.words())
+            .all(|result| match result {
+                EitherOrBoth::Both(left, right) => left.text() == right.text(),
+                EitherOrBoth::Left(_) | EitherOrBoth::Right(_) => false,
+            })
+    }
+}
+
+impl<'a> Eq for Key<'a> {}
+
+impl<'a> ToString for Key<'a> {
+    fn to_string(&self) -> std::string::String {
+        self.words().map(|word| word.text()).join(" ")
     }
 }
 

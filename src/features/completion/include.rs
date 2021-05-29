@@ -25,15 +25,8 @@ pub fn complete_includes<'a>(
         return None;
     }
 
-    let token = context.cursor.as_latex()?;
-    let (path_text, path_range) = if token.kind() == latex::WORD {
-        (token.text(), token.text_range())
-    } else {
-        ("", TextRange::empty(context.offset))
-    };
+    let (path_text, path_range, group) = context.find_curly_group_word_list()?;
 
-    let group = latex::CurlyGroupWordList::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
     let include = group.syntax().parent()?;
     let (include_extension, extensions): (bool, &[&str]) = match include.kind() {
         latex::PACKAGE_INCLUDE => (false, &["sty"]),
@@ -62,7 +55,7 @@ pub fn complete_includes<'a>(
         TextRange::new(start, path_range.end())
     };
 
-    let current_dir = current_dir(context, path_text)?;
+    let current_dir = current_dir(context, &path_text)?;
     for entry in fs::read_dir(current_dir).ok()?.filter_map(Result::ok) {
         let mut path = entry.path();
 

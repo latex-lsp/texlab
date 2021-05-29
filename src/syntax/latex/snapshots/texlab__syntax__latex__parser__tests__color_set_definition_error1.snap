@@ -9,21 +9,26 @@ ROOT@0..39
       COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
       BRACK_GROUP_WORD@15..19
         L_BRACK@15..16 "["
-        WORD@16..18 "ty"
+        KEY@16..18
+          WORD@16..18 "ty"
         R_BRACK@18..19 "]"
       CURLY_GROUP_WORD_LIST@19..29
         L_CURLY@19..20 "{"
-        WORD@20..23 "rgb"
+        KEY@20..23
+          WORD@20..23 "rgb"
         COMMA@23..24 ","
-        WORD@24..28 "HTML"
+        KEY@24..28
+          WORD@24..28 "HTML"
         R_CURLY@28..29 "}"
       CURLY_GROUP_WORD@29..34
         L_CURLY@29..30 "{"
-        WORD@30..33 "foo"
+        KEY@30..33
+          WORD@30..33 "foo"
         R_CURLY@33..34 "}"
       CURLY_GROUP_WORD@34..39
         L_CURLY@34..35 "{"
-        WORD@35..38 "bar"
+        KEY@35..38
+          WORD@35..38 "bar"
         R_CURLY@38..39 "}"
       MISSING@39..39 ""
 

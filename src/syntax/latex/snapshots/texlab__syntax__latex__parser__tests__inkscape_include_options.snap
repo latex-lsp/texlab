@@ -20,6 +20,7 @@ ROOT@0..30
         R_BRACK@20..21 "]"
       CURLY_GROUP_WORD_LIST@21..30
         L_CURLY@21..22 "{"
-        WORD@22..29 "foo/bar"
+        KEY@22..29
+          WORD@22..29 "foo/bar"
         R_CURLY@29..30 "}"
 

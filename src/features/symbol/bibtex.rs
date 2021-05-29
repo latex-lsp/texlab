@@ -68,7 +68,7 @@ pub fn find_bibtex_symbols(
                         .unwrap_or(BibtexEntryTypeCategory::Misc);
 
                     buf.push(InternalSymbol {
-                        name: key.text().to_string(),
+                        name: key.to_string(),
                         label: None,
                         kind: InternalSymbolKind::Entry(category),
                         deprecated: false,
@@ -77,7 +77,7 @@ pub fn find_bibtex_symbols(
                             .line_col_lsp_range(entry.small_range()),
                         selection_range: main_document
                             .line_index
-                            .line_col_lsp_range(key.text_range()),
+                            .line_col_lsp_range(key.small_range()),
                         children,
                     });
                 }

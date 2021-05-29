@@ -18,15 +18,7 @@ pub fn complete_color_models<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
-
-    check_color_definition(context, token)
-        .or_else(|| check_color_definition_set(context, token))?;
+    let range = check_color_definition(context).or_else(|| check_color_definition_set(context))?;
 
     for name in MODEL_NAMES {
         items.push(InternalCompletionItem::new(
@@ -38,30 +30,23 @@ pub fn complete_color_models<'a>(
     Some(())
 }
 
-fn check_color_definition(
-    context: &CursorContext<CompletionParams>,
-    token: &latex::SyntaxToken,
-) -> Option<()> {
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
+fn check_color_definition(context: &CursorContext<CompletionParams>) -> Option<TextRange> {
+    let (_, range, group) = context.find_curly_group_word()?;
+
     let definition = latex::ColorDefinition::cast(group.syntax().parent()?)?;
     definition
         .model()
         .filter(|model| model.syntax().text_range() == group.syntax().text_range())?;
-    Some(())
+    Some(range)
 }
 
-fn check_color_definition_set(
-    context: &CursorContext<CompletionParams>,
-    token: &latex::SyntaxToken,
-) -> Option<()> {
-    let group = latex::CurlyGroupWordList::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
+fn check_color_definition_set(context: &CursorContext<CompletionParams>) -> Option<TextRange> {
+    let (_, range, group) = context.find_curly_group_word_list()?;
     let definition = latex::ColorSetDefinition::cast(group.syntax().parent()?)?;
     definition
         .model_list()
         .filter(|model| model.syntax().text_range() == group.syntax().text_range())?;
-    Some(())
+    Some(range)
 }
 
 #[cfg(test)]

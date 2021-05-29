@@ -1,5 +1,4 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 use rustc_hash::FxHashSet;
 use smol_str::SmolStr;
@@ -17,15 +16,7 @@ pub fn complete_imports<'a>(
     items: &mut Vec<InternalCompletionItem<'a>>,
     cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    let token = context.cursor.as_latex()?;
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
-
-    let group = latex::CurlyGroupWordList::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
+    let (_, range, group) = context.find_curly_group_word_list()?;
 
     let (extension, mut factory): (
         &str,
@@ -76,6 +67,8 @@ pub fn complete_imports<'a>(
 
 #[cfg(test)]
 mod tests {
+    use cstree::TextRange;
+
     use crate::features::testing::FeatureTester;
 
     use super::*;

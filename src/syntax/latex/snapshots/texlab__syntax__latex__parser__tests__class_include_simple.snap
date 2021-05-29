@@ -9,6 +9,7 @@ ROOT@0..23
       CLASS_INCLUDE_NAME@0..14 "\\documentclass"
       CURLY_GROUP_WORD_LIST@14..23
         L_CURLY@14..15 "{"
-        WORD@15..22 "article"
+        KEY@15..22
+          WORD@15..22 "article"
         R_CURLY@22..23 "}"
 

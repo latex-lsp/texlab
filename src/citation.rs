@@ -67,7 +67,7 @@ fn convert_to_ris(root: &bibtex::SyntaxNode, key: &str) -> Option<RisReference> 
     let entry = root
         .children()
         .filter_map(bibtex::Entry::cast)
-        .find(|entry| entry.key().map(|key| key.text()) == Some(key))?;
+        .find(|entry| entry.key().map(|key| key.to_string()).as_deref() == Some(key))?;
     bib_code.push_str(&entry.syntax().to_string());
 
     bib_code = bib_code.replace("\\hypen", "-");

@@ -1,11 +1,7 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::features::cursor::CursorContext;
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -16,18 +12,7 @@ pub fn complete_user_environments<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
-    if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
-        return None;
-    }
-
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
+    let (name, range) = context.find_environment_name()?;
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
@@ -35,7 +20,7 @@ pub fn complete_user_environments<'a>(
                 .extras
                 .environment_names
                 .iter()
-                .filter(|name| name.as_str() != token.text())
+                .filter(|n| n.as_str() != name)
             {
                 cancellation_token.result().ok()?;
                 items.push(InternalCompletionItem::new(

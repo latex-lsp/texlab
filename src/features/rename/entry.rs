@@ -4,7 +4,7 @@ use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
 
 use crate::{
-    features::cursor::{Cursor, CursorContext, HasPosition},
+    features::cursor::{CursorContext, HasPosition},
     syntax::{bibtex, latex, CstNode},
     DocumentData, LineIndexExt,
 };
@@ -13,18 +13,9 @@ pub fn prepare_entry_rename<P: HasPosition>(
     context: &CursorContext<P>,
     _cancellation_token: &CancellationToken,
 ) -> Option<Range> {
-    let range = match &context.cursor {
-        Cursor::Latex(token) if token.kind() == latex::WORD => {
-            let group = latex::CurlyGroupWordList::cast(token.parent())?;
-            latex::Citation::cast(group.syntax().parent()?)?;
-            token.text_range()
-        }
-        Cursor::Bibtex(token) if token.kind() == bibtex::WORD => {
-            bibtex::Entry::cast(token.parent())?;
-            token.text_range()
-        }
-        _ => return None,
-    };
+    let (_, range) = context
+        .find_citation_key_word()
+        .or_else(|| context.find_entry_key())?;
 
     Some(
         context
@@ -41,11 +32,9 @@ pub fn rename_entry(
 ) -> Option<WorkspaceEdit> {
     cancellation_token.result().ok()?;
     prepare_entry_rename(context, cancellation_token)?;
-    let key_text = context
-        .cursor
-        .as_latex()
-        .map(|token| token.text())
-        .or_else(|| context.cursor.as_bibtex().map(|token| token.text()))?;
+    let (key_text, _) = context
+        .find_citation_key_word()
+        .or_else(|| context.find_entry_key())?;
 
     let mut changes = HashMap::new();
     for document in &context.request.subset.documents {
@@ -57,9 +46,9 @@ pub fn rename_entry(
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
-                    .flat_map(|keys| keys.words())
-                    .filter(|key| key.text() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .flat_map(|keys| keys.keys())
+                    .filter(|key| key.to_string() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone().into(), edits);
@@ -70,8 +59,8 @@ pub fn rename_entry(
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())
-                    .filter(|key| key.text() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .filter(|key| key.to_string() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone().into(), edits);

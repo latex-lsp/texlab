@@ -18,26 +18,7 @@ pub fn complete_labels<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let is_math = latex::CurlyGroupWordList::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))
-        .and_then(|group| group.syntax().parent())
-        .and_then(|reference| latex::LabelReference::cast(reference))
-        .and_then(|refernce| refernce.command())
-        .map(|reference| reference.text() == "\\eqref")
-        .or_else(|| {
-            latex::CurlyGroupWord::cast(token.parent())
-                .filter(|group| context.is_inside_latex_curly(group))
-                .and_then(|group| group.syntax().parent())
-                .and_then(|reference| latex::LabelReferenceRange::cast(reference))
-                .map(|_| false)
-        })?;
-
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
+    let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
@@ -49,10 +30,10 @@ pub fn complete_labels<'a>(
             {
                 if let Some(name) = label
                     .name()
-                    .and_then(|name| name.word())
-                    .map(|name| name.text())
+                    .and_then(|name| name.key())
+                    .map(|name| name.to_string())
                 {
-                    match render_label(&context.request.subset, name, Some(label)) {
+                    match render_label(&context.request.subset, &name, Some(label)) {
                         Some(rendered_label) => {
                             let kind = match &rendered_label.object {
                                 LabelledObject::Section { .. } => Structure::Section,
@@ -110,6 +91,19 @@ pub fn complete_labels<'a>(
     }
 
     Some(())
+}
+
+fn find_reference(context: &CursorContext<CompletionParams>) -> Option<(TextRange, bool)> {
+    let (_, range, group) = context.find_curly_group_word_list()?;
+    let reference = latex::LabelReference::cast(group.syntax().parent()?)?;
+    let is_math = reference.command()?.text() == "\\eqref";
+    Some((range, is_math))
+}
+
+fn find_reference_range(context: &CursorContext<CompletionParams>) -> Option<(TextRange, bool)> {
+    let (_, range, group) = context.find_curly_group_word()?;
+    latex::LabelReferenceRange::cast(group.syntax().parent()?)?;
+    Some((range, false))
 }
 
 #[cfg(test)]
@@ -191,6 +185,26 @@ mod tests {
         assert!(!actual_items.is_empty());
         for item in actual_items {
             assert_eq!(item.range, TextRange::new(11.into(), 11.into()));
+        }
+    }
+
+    #[test]
+    fn test_multi_word() {
+        let request = FeatureTester::builder()
+            .files(vec![("main.tex", "\\ref{foo}\\label{foo bar}")])
+            .main("main.tex")
+            .line(0)
+            .character(8)
+            .build()
+            .completion();
+
+        let context = CursorContext::new(request);
+        let mut actual_items = Vec::new();
+        complete_labels(&context, &mut actual_items, CancellationToken::none());
+
+        assert!(!actual_items.is_empty());
+        for item in actual_items {
+            assert_eq!(item.range, TextRange::new(5.into(), 8.into()));
         }
     }
 }

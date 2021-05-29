@@ -9,13 +9,16 @@ ROOT@0..30
       COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
       CURLY_GROUP_WORD_LIST@15..25
         L_CURLY@15..16 "{"
-        WORD@16..19 "rgb"
+        KEY@16..19
+          WORD@16..19 "rgb"
         COMMA@19..20 ","
-        WORD@20..24 "HTML"
+        KEY@20..24
+          WORD@20..24 "HTML"
         R_CURLY@24..25 "}"
       CURLY_GROUP_WORD@25..30
         L_CURLY@25..26 "{"
-        WORD@26..29 "foo"
+        KEY@26..29
+          WORD@26..29 "foo"
         R_CURLY@29..30 "}"
       MISSING@30..30 ""
       MISSING@30..30 ""

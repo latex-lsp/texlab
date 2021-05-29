@@ -19,6 +19,8 @@ mod user_command;
 mod user_environment;
 mod util;
 
+use std::borrow::Cow;
+
 use cancellation::CancellationToken;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use lsp_types::{
@@ -144,15 +146,29 @@ fn dedup(items: Vec<InternalCompletionItem>) -> Vec<InternalCompletionItem> {
 }
 
 fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalCompletionItem>) {
-    let pattern = match &context.cursor {
-        Cursor::Latex(token) if token.kind().is_command_name() => token.text().trim_end(),
-        Cursor::Latex(token) if token.kind() == latex::WORD => token.text(),
-        Cursor::Latex(_) => "",
-        Cursor::Bibtex(token) if token.kind().is_type() => token.text(),
-        Cursor::Bibtex(token) if token.kind() == bibtex::WORD => token.text(),
-        Cursor::Bibtex(token) if token.kind() == bibtex::COMMAND_NAME => token.text().trim_end(),
-        Cursor::Bibtex(_) => "",
-        Cursor::Nothing => "",
+    let pattern: Cow<str> = match &context.cursor {
+        Cursor::Latex(token) if token.kind().is_command_name() => token.text().trim_end().into(),
+        Cursor::Latex(token) if token.kind() == latex::WORD => {
+            if let Some(key) = latex::Key::cast(token.parent()) {
+                key.to_string().into()
+            } else {
+                token.text().into()
+            }
+        }
+        Cursor::Latex(_) => "".into(),
+        Cursor::Bibtex(token) if token.kind().is_type() => token.text().into(),
+        Cursor::Bibtex(token) if token.kind() == bibtex::WORD => {
+            if let Some(key) = bibtex::Key::cast(token.parent()) {
+                key.to_string().into()
+            } else {
+                token.text().into()
+            }
+        }
+        Cursor::Bibtex(token) if token.kind() == bibtex::COMMAND_NAME => {
+            token.text().trim_end().into()
+        }
+        Cursor::Bibtex(_) => "".into(),
+        Cursor::Nothing => "".into(),
     };
 
     let file_pattern = pattern.split('/').last().unwrap();
@@ -211,7 +227,7 @@ fn preselect(
     let group = latex::CurlyGroupWord::cast(name.parent())?;
     let end = latex::End::cast(group.syntax().parent()?)?;
     let environment = latex::Environment::cast(end.syntax().parent()?)?;
-    let name = environment.begin()?.name()?.word()?.text();
+    let name = environment.begin()?.name()?.key()?.to_string();
 
     for item in items {
         if item.data.label() == name {

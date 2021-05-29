@@ -10,7 +10,8 @@ ROOT@0..39
         BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..14
           L_CURLY@6..7 "{"
-          WORD@7..13 "figure"
+          KEY@7..13
+            WORD@7..13 "figure"
           R_CURLY@13..14 "}"
       CAPTION@14..27
         CAPTION_NAME@14..22 "\\caption"
@@ -23,6 +24,7 @@ ROOT@0..39
         END_ENVIRONMENT_NAME@27..31 "\\end"
         CURLY_GROUP_WORD@31..39
           L_CURLY@31..32 "{"
-          WORD@32..38 "figure"
+          KEY@32..38
+            WORD@32..38 "figure"
           R_CURLY@38..39 "}"
 

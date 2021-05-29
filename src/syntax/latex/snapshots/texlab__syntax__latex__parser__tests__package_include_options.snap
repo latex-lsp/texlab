@@ -32,6 +32,7 @@ ROOT@0..41
         R_BRACK@31..32 "]"
       CURLY_GROUP_WORD_LIST@32..41
         L_CURLY@32..33 "{"
-        WORD@33..40 "amsmath"
+        KEY@33..40
+          WORD@33..40 "amsmath"
         R_CURLY@40..41 "}"
 

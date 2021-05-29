@@ -157,8 +157,9 @@ pub fn find_label_definition<'a>(
         .find(|label| {
             label
                 .name()
-                .and_then(|name| name.word())
-                .map(|name| name.text())
+                .and_then(|name| name.key())
+                .map(|name| name.to_string())
+                .as_deref()
                 == Some(label_name)
         })
 }
@@ -178,7 +179,7 @@ fn render_label_float(
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let environment = latex::Environment::cast(parent)?;
-    let environment_name = environment.begin()?.name()?.word()?.text();
+    let environment_name = environment.begin()?.name()?.key()?.to_string();
     let kind = LabelledFloatKind::from_str(&environment_name).ok()?;
     let caption = find_caption_by_parent(&parent)?;
     Some(RenderedLabel {
@@ -235,12 +236,12 @@ fn render_label_equation(
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let environment = latex::Environment::cast(parent)?;
-    let environment_name = environment.begin()?.name()?.word()?.text();
+    let environment_name = environment.begin()?.name()?.key()?.to_string();
 
     if !LANGUAGE_DATA
         .math_environments
         .iter()
-        .any(|name| name == environment_name)
+        .any(|name| name == &environment_name)
     {
         return None;
     }
@@ -261,7 +262,7 @@ fn render_label_theorem(
     let begin = environment.begin()?;
     let description = begin.options().and_then(|options| options.content_text());
 
-    let environment_name = begin.name()?.word()?.text();
+    let environment_name = begin.name()?.key()?.to_string();
 
     let theorem = subset.documents.iter().find_map(|document| {
         document.data.as_latex().and_then(|data| {

@@ -9,6 +9,7 @@ ROOT@0..27
       VERBATIM_INCLUDE_NAME@0..14 "\\verbatiminput"
       CURLY_GROUP_WORD_LIST@14..27
         L_CURLY@14..15 "{"
-        WORD@15..26 "foo/bar.txt"
+        KEY@15..26
+          WORD@15..26 "foo/bar.txt"
         R_CURLY@26..27 "}"
 

@@ -10,7 +10,8 @@ ROOT@0..23
       MISSING@11..11 ""
       BRACK_GROUP_WORD@11..14
         L_BRACK@11..12 "["
-        WORD@12..13 "1"
+        KEY@12..13
+          WORD@12..13 "1"
         R_BRACK@13..14 "]"
       CURLY_GROUP@14..19
         L_CURLY@14..15 "{"

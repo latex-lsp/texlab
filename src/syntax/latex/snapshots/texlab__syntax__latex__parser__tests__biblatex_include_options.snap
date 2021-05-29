@@ -25,6 +25,7 @@ ROOT@0..42
         R_BRACK@28..29 "]"
       CURLY_GROUP_WORD_LIST@29..42
         L_CURLY@29..30 "{"
-        WORD@30..41 "foo/bar.bib"
+        KEY@30..41
+          WORD@30..41 "foo/bar.bib"
         R_CURLY@41..42 "}"
 

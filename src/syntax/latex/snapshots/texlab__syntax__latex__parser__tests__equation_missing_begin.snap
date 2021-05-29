@@ -10,7 +10,8 @@ ROOT@0..28
         BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..10
           L_CURLY@6..7 "{"
-          WORD@7..8 "a"
+          KEY@7..8
+            WORD@7..8 "a"
           R_CURLY@8..9 "}"
           WHITESPACE@9..10 " "
       TEXT@10..18
@@ -25,6 +26,7 @@ ROOT@0..28
         END_ENVIRONMENT_NAME@21..25 "\\end"
         CURLY_GROUP_WORD@25..28
           L_CURLY@25..26 "{"
-          WORD@26..27 "b"
+          KEY@26..27
+            WORD@26..27 "b"
           R_CURLY@27..28 "}"
 

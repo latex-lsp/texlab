@@ -7,7 +7,7 @@ pub fn analyze_label_number(
     node: &latex::SyntaxNode,
 ) -> Option<()> {
     let number = latex::LabelNumber::cast(node)?;
-    let name = number.name()?.word()?.text().into();
+    let name = number.name()?.key()?.to_string();
     let text = number
         .text()?
         .syntax()

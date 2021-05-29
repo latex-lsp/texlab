@@ -32,6 +32,7 @@ ROOT@0..44
         R_BRACK@34..35 "]"
       CURLY_GROUP_WORD_LIST@35..44
         L_CURLY@35..36 "{"
-        WORD@36..43 "article"
+        KEY@36..43
+          WORD@36..43 "article"
         R_CURLY@43..44 "}"
 

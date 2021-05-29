@@ -26,7 +26,7 @@ pub fn complete_fields<'a>(
 
     let parent = token.parent();
     if let Some(entry) = bibtex::Entry::cast(parent) {
-        if entry.key()?.text_range() == token.text_range() {
+        if entry.key()?.small_range() == token.text_range() {
             return None;
         }
     } else {

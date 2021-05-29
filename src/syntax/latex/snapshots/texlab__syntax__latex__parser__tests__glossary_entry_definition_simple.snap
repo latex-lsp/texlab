@@ -9,7 +9,8 @@ ROOT@0..39
       GLOSSARY_ENTRY_DEFINITION_NAME@0..17 "\\newglossaryentry"
       CURLY_GROUP_WORD@17..22
         L_CURLY@17..18 "{"
-        WORD@18..21 "foo"
+        KEY@18..21
+          WORD@18..21 "foo"
         R_CURLY@21..22 "}"
       CURLY_GROUP_KEY_VALUE@22..39
         L_CURLY@22..23 "{"

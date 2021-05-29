@@ -10,7 +10,8 @@ ROOT@0..12
       CURLY_GROUP_WORD_LIST@5..12
         L_CURLY@5..6 "{"
         COMMA@6..7 ","
-        WORD@7..10 "foo"
+        KEY@7..10
+          WORD@7..10 "foo"
         COMMA@10..11 ","
         R_CURLY@11..12 "}"
 

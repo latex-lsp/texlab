@@ -10,7 +10,7 @@ pub fn analyze_theorem_definition(
     node: &latex::SyntaxNode,
 ) -> Option<()> {
     let theorem = latex::TheoremDefinition::cast(node)?;
-    let name = theorem.name()?.word()?.text().into();
+    let name = theorem.name()?.key()?.to_string();
     let description = theorem.description()?;
     let description = description.content_text()?;
 

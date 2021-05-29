@@ -9,7 +9,8 @@ ROOT@0..21
       THEOREM_DEFINITION_NAME@0..11 "\\newtheorem"
       CURLY_GROUP_WORD@11..16
         L_CURLY@11..12 "{"
-        WORD@12..15 "foo"
+        KEY@12..15
+          WORD@12..15 "foo"
         R_CURLY@15..16 "}"
       CURLY_GROUP@16..21
         L_CURLY@16..17 "{"

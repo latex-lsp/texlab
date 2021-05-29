@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
             self.builder.finish_node();
             return;
         }
-        self.eat();
+        self.key();
 
         while let Some(kind) = self.peek() {
             match kind {
@@ -187,6 +187,18 @@ impl<'a> Parser<'a> {
 
         self.right_delimiter_or_missing();
 
+        self.builder.finish_node();
+    }
+
+    fn key(&mut self) {
+        self.builder.start_node(KEY.into());
+        while self
+            .peek()
+            .filter(|&kind| matches!(kind, WORD | WHITESPACE))
+            .is_some()
+        {
+            self.eat();
+        }
         self.builder.finish_node();
     }
 

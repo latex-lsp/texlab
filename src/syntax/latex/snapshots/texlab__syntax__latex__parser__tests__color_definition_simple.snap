@@ -9,11 +9,13 @@ ROOT@0..33
       COLOR_DEFINITION_NAME@0..12 "\\definecolor"
       CURLY_GROUP_WORD@12..17
         L_CURLY@12..13 "{"
-        WORD@13..16 "foo"
+        KEY@13..16
+          WORD@13..16 "foo"
         R_CURLY@16..17 "}"
       CURLY_GROUP_WORD@17..22
         L_CURLY@17..18 "{"
-        WORD@18..21 "rgb"
+        KEY@18..21
+          WORD@18..21 "rgb"
         R_CURLY@21..22 "}"
       CURLY_GROUP@22..33
         L_CURLY@22..23 "{"

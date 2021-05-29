@@ -1,12 +1,7 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
-use crate::{
-    component_db::COMPONENT_DATABASE,
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -17,18 +12,7 @@ pub fn complete_component_environments<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
-    if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
-        return None;
-    }
-
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
+    let (_, range) = context.find_environment_name()?;
 
     for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
         cancellation_token.result().ok()?;

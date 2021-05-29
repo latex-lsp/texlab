@@ -9,6 +9,7 @@ ROOT@0..17
       LATEX_INCLUDE_NAME@0..8 "\\include"
       CURLY_GROUP_WORD_LIST@8..17
         L_CURLY@8..9 "{"
-        WORD@9..16 "foo/bar"
+        KEY@9..16
+          WORD@9..16 "foo/bar"
         R_CURLY@16..17 "}"
 

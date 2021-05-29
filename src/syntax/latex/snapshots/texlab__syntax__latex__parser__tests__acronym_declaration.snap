@@ -9,7 +9,8 @@ ROOT@0..64
       ACRONYM_DECLARATION_NAME@0..15 "\\DeclareAcronym"
       CURLY_GROUP_WORD@15..19
         L_CURLY@15..16 "{"
-        WORD@16..18 "eg"
+        KEY@16..18
+          WORD@16..18 "eg"
         R_CURLY@18..19 "}"
       CURLY_GROUP_KEY_VALUE@19..64
         L_CURLY@19..20 "{"

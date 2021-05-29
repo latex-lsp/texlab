@@ -1,5 +1,4 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
 use crate::{
@@ -16,15 +15,8 @@ pub fn complete_glossary_entries<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
+    let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
@@ -33,8 +25,8 @@ pub fn complete_glossary_entries<'a>(
 
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node)
                     .and_then(|entry| entry.name())
-                    .and_then(|name| name.word())
-                    .map(|name| name.text())
+                    .and_then(|name| name.key())
+                    .map(|name| name.to_string())
                 {
                     items.push(InternalCompletionItem::new(
                         range,
@@ -42,8 +34,8 @@ pub fn complete_glossary_entries<'a>(
                     ));
                 } else if let Some(name) = latex::AcronymDefinition::cast(node)
                     .and_then(|entry| entry.name())
-                    .and_then(|name| name.word())
-                    .map(|name| name.text())
+                    .and_then(|name| name.key())
+                    .map(|name| name.to_string())
                 {
                     items.push(InternalCompletionItem::new(
                         range,

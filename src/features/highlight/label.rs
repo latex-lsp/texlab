@@ -2,48 +2,32 @@ use cancellation::CancellationToken;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams};
 
 use crate::{
-    features::FeatureRequest,
+    features::cursor::CursorContext,
     syntax::{latex, CstNode},
     LineIndexExt,
 };
 
 pub fn find_label_highlights(
-    request: &FeatureRequest<DocumentHighlightParams>,
-    token: &CancellationToken,
+    context: &CursorContext<DocumentHighlightParams>,
+    cancellation_token: &CancellationToken,
 ) -> Option<Vec<DocumentHighlight>> {
-    let main_document = request.main_document();
+    let (name_text, _) = context.find_label_name_key()?;
 
-    let offset = main_document
-        .line_index
-        .offset_lsp(request.params.text_document_position_params.position);
-
+    let main_document = context.request.main_document();
     let data = main_document.data.as_latex()?;
-    let name = data.root.token_at_offset(offset).right_biased()?;
-    if name.kind() != latex::WORD {
-        return None;
-    }
-
-    if !matches!(
-        name.parent().parent()?.kind(),
-        latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
-    ) {
-        return None;
-    }
 
     let mut highlights = Vec::new();
     for node in data.root.descendants() {
-        if token.is_canceled() {
-            return None;
-        }
+        cancellation_token.result().ok()?;
 
         if let Some(label_name) = latex::LabelDefinition::cast(node)
             .and_then(|label| label.name())
-            .and_then(|label_name| label_name.word())
-            .filter(|label_name| label_name.text() == name.text())
+            .and_then(|label_name| label_name.key())
+            .filter(|label_name| label_name.to_string() == name_text)
         {
             let range = main_document
                 .line_index
-                .line_col_lsp_range(label_name.text_range());
+                .line_col_lsp_range(label_name.small_range());
 
             highlights.push(DocumentHighlight {
                 range,
@@ -53,12 +37,12 @@ pub fn find_label_highlights(
             for label_name in label
                 .name_list()
                 .into_iter()
-                .flat_map(|name| name.words())
-                .filter(|label_name| label_name.text() == name.text())
+                .flat_map(|name| name.keys())
+                .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.text_range());
+                    .line_col_lsp_range(label_name.small_range());
 
                 highlights.push(DocumentHighlight {
                     range,
@@ -68,12 +52,12 @@ pub fn find_label_highlights(
         } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
             if let Some(label_name) = label
                 .from()
-                .and_then(|label_name| label_name.word())
-                .filter(|label_name| label_name.text() == name.text())
+                .and_then(|label_name| label_name.key())
+                .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.text_range());
+                    .line_col_lsp_range(label_name.small_range());
 
                 highlights.push(DocumentHighlight {
                     range,
@@ -83,12 +67,12 @@ pub fn find_label_highlights(
 
             if let Some(label_name) = label
                 .to()
-                .and_then(|label_name| label_name.word())
-                .filter(|label_name| label_name.text() == name.text())
+                .and_then(|label_name| label_name.key())
+                .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.text_range());
+                    .line_col_lsp_range(label_name.small_range());
 
                 highlights.push(DocumentHighlight {
                     range,
@@ -118,8 +102,9 @@ mod tests {
             .character(0)
             .build()
             .highlight();
+        let context = CursorContext::new(request);
 
-        let actual_links = find_label_highlights(&request, CancellationToken::none());
+        let actual_links = find_label_highlights(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }
@@ -133,8 +118,9 @@ mod tests {
             .character(0)
             .build()
             .highlight();
+        let context = CursorContext::new(request);
 
-        let actual_links = find_label_highlights(&request, CancellationToken::none());
+        let actual_links = find_label_highlights(&context, CancellationToken::none());
 
         assert!(actual_links.is_none());
     }
@@ -148,8 +134,9 @@ mod tests {
             .character(7)
             .build();
         let request = tester.highlight();
+        let context = CursorContext::new(request);
 
-        let actual_highlights = find_label_highlights(&request, CancellationToken::none()).unwrap();
+        let actual_highlights = find_label_highlights(&context, CancellationToken::none()).unwrap();
 
         let expected_highlights = vec![
             DocumentHighlight {

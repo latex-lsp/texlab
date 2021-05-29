@@ -9,6 +9,7 @@ ROOT@0..28
       BIBLATEX_INCLUDE_NAME@0..15 "\\addbibresource"
       CURLY_GROUP_WORD_LIST@15..28
         L_CURLY@15..16 "{"
-        WORD@16..27 "foo/bar.bib"
+        KEY@16..27
+          WORD@16..27 "foo/bar.bib"
         R_CURLY@27..28 "}"
 

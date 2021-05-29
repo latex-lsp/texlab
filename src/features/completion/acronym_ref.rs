@@ -1,5 +1,4 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
 use crate::{
@@ -16,17 +15,8 @@ pub fn complete_acronyms<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
-
+    let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
-
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
@@ -35,8 +25,8 @@ pub fn complete_acronyms<'a>(
                 .descendants()
                 .filter_map(latex::AcronymDefinition::cast)
                 .filter_map(|node| node.name())
-                .filter_map(|name| name.word())
-                .map(|name| name.text())
+                .filter_map(|name| name.key())
+                .map(|name| name.to_string())
             {
                 items.push(InternalCompletionItem::new(
                     range,

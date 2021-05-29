@@ -1,7 +1,7 @@
 use cstree::{TextRange, TextSize};
 use lsp_types::{
-    CompletionParams, GotoDefinitionParams, HoverParams, Position, ReferenceParams, RenameParams,
-    TextDocumentPositionParams,
+    CompletionParams, DocumentHighlightParams, GotoDefinitionParams, HoverParams, Position,
+    ReferenceParams, RenameParams, TextDocumentPositionParams,
 };
 
 use crate::{
@@ -39,6 +39,14 @@ impl Cursor {
         }
 
         if right.kind().is_command_name() {
+            return Some(Self::Latex(right));
+        }
+
+        if left.kind() == latex::WHITESPACE && left.parent().kind() == latex::KEY {
+            return Some(Self::Latex(left));
+        }
+
+        if right.kind() == latex::WHITESPACE && right.parent().kind() == latex::KEY {
             return Some(Self::Latex(right));
         }
 
@@ -149,65 +157,115 @@ impl<P: HasPosition> CursorContext<P> {
         group.small_range().contains(self.offset) || group.right_curly().is_none()
     }
 
-    pub fn find_citation_key_word(&self) -> Option<(&str, TextRange)> {
-        let key = self
+    pub fn find_citation_key_word(&self) -> Option<(String, TextRange)> {
+        let word = self
             .cursor
             .as_latex()
             .filter(|token| token.kind() == latex::WORD)?;
 
-        let group = latex::CurlyGroupWordList::cast(key.parent())?;
+        let key = latex::Key::cast(word.parent())?;
+
+        let group = latex::CurlyGroupWordList::cast(key.syntax().parent()?)?;
         latex::Citation::cast(group.syntax().parent()?)?;
-        Some((key.text(), key.text_range()))
+        Some((key.to_string(), key.small_range()))
     }
 
-    pub fn find_citation_key_command(&self) -> Option<(&str, TextRange)> {
+    pub fn find_citation_key_command(&self) -> Option<(String, TextRange)> {
         let command = self.cursor.as_latex()?;
 
         let citation = latex::Citation::cast(command.parent())?;
-        let key = citation.key_list()?.words().next()?;
-        Some((key.text(), key.text_range()))
+        let key = citation.key_list()?.keys().next()?;
+        Some((key.to_string(), key.small_range()))
     }
 
-    pub fn find_entry_key(&self) -> Option<(&str, TextRange)> {
-        let key = self
+    pub fn find_entry_key(&self) -> Option<(String, TextRange)> {
+        let word = self
             .cursor
             .as_bibtex()
             .filter(|token| token.kind() == bibtex::WORD)?;
 
-        bibtex::Entry::cast(key.parent())?;
-        Some((key.text(), key.text_range()))
+        let key = bibtex::Key::cast(word.parent())?;
+
+        bibtex::Entry::cast(key.syntax().parent()?)?;
+        Some((key.to_string(), key.small_range()))
     }
 
-    pub fn find_label_name_word(&self) -> Option<(&str, TextRange)> {
+    pub fn find_label_name_key(&self) -> Option<(String, TextRange)> {
         let name = self
             .cursor
             .as_latex()
             .filter(|token| token.kind() == latex::WORD)?;
 
+        let key = latex::Key::cast(name.parent())?;
+
         if matches!(
-            name.parent().parent()?.kind(),
+            key.syntax().parent()?.parent()?.kind(),
             latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
         ) {
-            Some((name.text(), name.text_range()))
+            Some((key.to_string(), key.small_range()))
         } else {
             None
         }
     }
 
-    pub fn find_label_name_command(&self) -> Option<(&str, TextRange)> {
+    pub fn find_label_name_command(&self) -> Option<(String, TextRange)> {
         let node = self.cursor.as_latex()?.parent();
         if let Some(label) = latex::LabelDefinition::cast(node) {
-            let name = label.name()?.word()?;
-            Some((name.text(), name.text_range()))
+            let name = label.name()?.key()?;
+            Some((name.to_string(), name.small_range()))
         } else if let Some(label) = latex::LabelReference::cast(node) {
-            let name = label.name_list()?.words().next()?;
-            Some((name.text(), name.text_range()))
+            let name = label.name_list()?.keys().next()?;
+            Some((name.to_string(), name.small_range()))
         } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
-            let name = label.from()?.word()?;
-            Some((name.text(), name.text_range()))
+            let name = label.from()?.key()?;
+            Some((name.to_string(), name.small_range()))
         } else {
             None
         }
+    }
+
+    pub fn find_environment_name(&self) -> Option<(String, TextRange)> {
+        let (name, range, group) = self.find_curly_group_word()?;
+
+        if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
+            return None;
+        }
+
+        Some((name, range))
+    }
+
+    pub fn find_curly_group_word(&self) -> Option<(String, TextRange, latex::CurlyGroupWord)> {
+        let token = self.cursor.as_latex()?;
+        let key = latex::Key::cast(token.parent());
+
+        let group = key
+            .as_ref()
+            .and_then(|key| key.syntax().parent())
+            .unwrap_or(token.parent());
+
+        let group =
+            latex::CurlyGroupWord::cast(group).filter(|group| self.is_inside_latex_curly(group))?;
+
+        key.map(|key| (key.to_string(), key.small_range(), group))
+            .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
+    }
+
+    pub fn find_curly_group_word_list(
+        &self,
+    ) -> Option<(String, TextRange, latex::CurlyGroupWordList)> {
+        let token = self.cursor.as_latex()?;
+        let key = latex::Key::cast(token.parent());
+
+        let group = key
+            .as_ref()
+            .and_then(|key| key.syntax().parent())
+            .unwrap_or(token.parent());
+
+        let group = latex::CurlyGroupWordList::cast(group)
+            .filter(|group| self.is_inside_latex_curly(group))?;
+
+        key.map(|key| (key.to_string(), key.small_range(), group))
+            .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
     }
 }
 
@@ -246,6 +304,12 @@ impl HasPosition for HoverParams {
 }
 
 impl HasPosition for GotoDefinitionParams {
+    fn position(&self) -> Position {
+        self.text_document_position_params.position
+    }
+}
+
+impl HasPosition for DocumentHighlightParams {
     fn position(&self) -> Position {
         self.text_document_position_params.position
     }

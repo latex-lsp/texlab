@@ -26,9 +26,9 @@ pub fn find_entry_references(
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
-                    .flat_map(|keys| keys.words())
-                    .filter(|key| key.text() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .flat_map(|keys| keys.keys())
+                    .filter(|key| key.to_string() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
                     .for_each(|range| {
                         references.push(Location::new(document.uri.as_ref().clone().into(), range));
                     });
@@ -38,8 +38,8 @@ pub fn find_entry_references(
                     .children()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())
-                    .filter(|key| key.text() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .filter(|key| key.to_string() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
                     .for_each(|range| {
                         references.push(Location::new(document.uri.as_ref().clone().into(), range));
                     });

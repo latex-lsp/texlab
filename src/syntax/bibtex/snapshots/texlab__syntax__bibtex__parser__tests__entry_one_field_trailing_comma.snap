@@ -7,7 +7,8 @@ ROOT@0..34
   ENTRY@0..34
     ENTRY_TYPE@0..8 "@article"
     L_CURLY@8..9 "{"
-    WORD@9..12 "foo"
+    KEY@9..12
+      WORD@9..12 "foo"
     COMMA@12..13 ","
     WHITESPACE@13..14 " "
     FIELD@14..32

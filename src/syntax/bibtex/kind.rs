@@ -26,6 +26,7 @@ pub enum SyntaxKind {
     STRING,
     COMMENT,
     ENTRY,
+    KEY,
     FIELD,
     VALUE,
     TOKEN,

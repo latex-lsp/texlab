@@ -10,7 +10,8 @@ ROOT@0..60
         BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..18
           L_CURLY@6..7 "{"
-          WORD@7..16 "enumerate"
+          KEY@7..16
+            WORD@7..16 "enumerate"
           R_CURLY@16..17 "}"
           WHITESPACE@17..18 " "
       ENUM_ITEM@18..26
@@ -40,6 +41,7 @@ ROOT@0..60
         END_ENVIRONMENT_NAME@45..49 "\\end"
         CURLY_GROUP_WORD@49..60
           L_CURLY@49..50 "{"
-          WORD@50..59 "enumerate"
+          KEY@50..59
+            WORD@50..59 "enumerate"
           R_CURLY@59..60 "}"
 

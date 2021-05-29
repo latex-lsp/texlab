@@ -173,20 +173,6 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn group_with_token(
-        &mut self,
-        node_kind: SyntaxKind,
-        content_kind: SyntaxKind,
-        right_kind: SyntaxKind,
-    ) {
-        self.builder.start_node(node_kind.into());
-        self.eat();
-        self.trivia();
-        self.expect(content_kind);
-        self.expect(right_kind);
-        self.builder.finish_node();
-    }
-
     fn curly_group(&mut self) {
         self.builder.start_node(CURLY_GROUP.into());
         self.eat();
@@ -219,7 +205,23 @@ impl<'a> Parser<'a> {
     }
 
     fn curly_group_word(&mut self) {
-        self.group_with_token(CURLY_GROUP_WORD, WORD, R_CURLY);
+        self.builder.start_node(CURLY_GROUP_WORD.into());
+        self.eat();
+        self.trivia();
+        match self.peek() {
+            Some(WORD) => {
+                self.key();
+            }
+            Some(PARAMETER) => {
+                self.eat();
+                self.trivia();
+            }
+            Some(_) | None => {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+        self.expect(R_CURLY);
+        self.builder.finish_node();
     }
 
     fn curly_group_word_list(&mut self) {
@@ -228,10 +230,14 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
+            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA | PARAMETER))
             .is_some()
         {
-            self.eat();
+            if self.peek() == Some(WORD) {
+                self.key();
+            } else {
+                self.eat();
+            }
         }
 
         self.expect(R_CURLY);
@@ -239,7 +245,24 @@ impl<'a> Parser<'a> {
     }
 
     fn curly_group_command(&mut self) {
-        self.group_with_token(CURLY_GROUP_COMMAND, GENERIC_COMMAND_NAME, R_CURLY);
+        self.builder.start_node(CURLY_GROUP_COMMAND.into());
+        self.eat();
+        self.trivia();
+        match self.peek() {
+            Some(kind) if kind.is_command_name() => {
+                self.eat();
+                self.trivia();
+            }
+            Some(PARAMETER) => {
+                self.eat();
+                self.trivia();
+            }
+            Some(_) | None => {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+        self.expect(R_CURLY);
+        self.builder.finish_node();
     }
 
     fn brack_group(&mut self) {
@@ -271,37 +294,24 @@ impl<'a> Parser<'a> {
     }
 
     fn brack_group_word(&mut self) {
-        self.group_with_token(BRACK_GROUP_WORD, WORD, R_BRACK);
+        self.builder.start_node(BRACK_GROUP_WORD.into());
+        self.eat();
+        self.trivia();
+        match self.peek() {
+            Some(WORD) => {
+                self.key();
+            }
+            Some(PARAMETER) => {
+                self.eat();
+                self.trivia();
+            }
+            Some(_) | None => {
+                self.builder.token(MISSING.into(), "");
+            }
+        }
+        self.expect(R_BRACK);
+        self.builder.finish_node();
     }
-
-    // fn paren_group(&mut self) {
-    //     self.builder.start_node(PAREN_GROUP.into());
-    //     self.eat();
-    //     while self
-    //         .peek()
-    //         .filter(|&kind| {
-    //             !matches!(
-    //                 kind,
-    //                 R_CURLY
-    //                     | R_BRACK
-    //                     | R_PAREN
-    //                     | PART_NAME
-    //                     | CHAPTER_NAME
-    //                     | SECTION_NAME
-    //                     | SUBSECTION_NAME
-    //                     | PARAGRAPH_NAME
-    //                     | SUBPARAGRAPH_NAME
-    //                     | ENUM_ITEM_NAME
-    //                     | END_ENVIRONMENT_NAME
-    //             )
-    //         })
-    //         .is_some()
-    //     {
-    //         self.content();
-    //     }
-    //     self.expect(R_PAREN);
-    //     self.builder.finish_node();
-    // }
 
     fn mixed_group(&mut self) {
         self.builder.start_node(MIXED_GROUP.into());

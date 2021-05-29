@@ -9,6 +9,7 @@ ROOT@0..10
       CITATION_NAME@0..7 "\\nocite"
       CURLY_GROUP_WORD_LIST@7..10
         L_CURLY@7..8 "{"
-        WORD@8..9 "*"
+        KEY@8..9
+          WORD@8..9 "*"
         R_CURLY@9..10 "}"
 

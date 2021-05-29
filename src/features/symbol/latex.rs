@@ -59,25 +59,25 @@ fn visit(context: &mut Context, node: &latex::SyntaxNode) -> Vec<InternalSymbol>
         latex::ENVIRONMENT => latex::Environment::cast(node)
             .and_then(|env| env.begin())
             .and_then(|begin| begin.name())
-            .and_then(|name| name.word())
-            .map(|name| name.text())
+            .and_then(|name| name.key())
+            .map(|name| name.to_string())
             .and_then(|name| {
                 if LANGUAGE_DATA
                     .math_environments
                     .iter()
-                    .any(|env| env == name)
+                    .any(|env| env == &name)
                 {
                     visit_equation_environment(context, node)
                 } else if LANGUAGE_DATA
                     .enum_environments
                     .iter()
-                    .any(|env| env == name)
+                    .any(|env| env == &name)
                 {
-                    visit_enumeration(context, node, name)
-                } else if let Ok(float_kind) = LabelledFloatKind::from_str(name) {
+                    visit_enumeration(context, node, &name)
+                } else if let Ok(float_kind) = LabelledFloatKind::from_str(&name) {
                     visit_float(context, node, float_kind)
                 } else {
-                    visit_theorem(context, node, name)
+                    visit_theorem(context, node, &name)
                 }
             }),
         _ => None,
@@ -161,12 +161,12 @@ fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<In
         .filter_map(latex::Environment::cast)
         .filter_map(|environment| environment.begin())
         .filter_map(|begin| begin.name())
-        .filter_map(|name| name.word())
+        .filter_map(|name| name.key())
         .any(|name| {
             LANGUAGE_DATA
                 .enum_environments
                 .iter()
-                .any(|e| e == name.text())
+                .any(|e| e == &name.to_string())
         })
     {
         return None;
@@ -471,7 +471,7 @@ fn find_label_by_parent(
 ) -> Option<NumberedLabel> {
     let node = parent.children().find_map(latex::LabelDefinition::cast)?;
 
-    let name = node.name()?.word()?.text();
+    let name = node.name()?.key()?.to_string();
     let range = context
         .subset
         .documents
@@ -479,7 +479,7 @@ fn find_label_by_parent(
         .line_index
         .line_col_lsp_range(node.small_range());
 
-    let number = find_label_number(&context.subset, name);
+    let number = find_label_number(&context.subset, &name);
     Some(NumberedLabel {
         name: name.to_string(),
         range,

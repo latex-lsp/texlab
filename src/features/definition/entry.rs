@@ -13,29 +13,31 @@ pub fn goto_entry_definition(
 ) -> Option<Vec<LocationLink>> {
     let main_document = context.request.main_document();
 
-    let key = context
+    let word = context
         .cursor
         .as_latex()
         .filter(|token| token.kind() == latex::WORD)?;
 
-    latex::Citation::cast(key.parent().parent()?)?;
+    let key = latex::Key::cast(word.parent())?;
+
+    latex::Citation::cast(key.syntax().parent()?.parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
-        .line_col_lsp_range(key.text_range());
+        .line_col_lsp_range(key.small_range());
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
             for entry in data.root.children().filter_map(bibtex::Entry::cast) {
                 cancellation_token.result().ok()?;
 
-                if let Some(key) = entry.key().filter(|k| k.text() == key.text()) {
+                if let Some(key) = entry.key().filter(|k| k.to_string() == key.to_string()) {
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),
                         target_uri: document.uri.as_ref().clone().into(),
                         target_selection_range: document
                             .line_index
-                            .line_col_lsp_range(key.text_range()),
+                            .line_col_lsp_range(key.small_range()),
                         target_range: document.line_index.line_col_lsp_range(entry.small_range()),
                     }]);
                 }

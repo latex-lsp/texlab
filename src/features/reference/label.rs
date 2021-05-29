@@ -11,7 +11,7 @@ pub fn find_label_references(
     cancellation_token.result().ok()?;
 
     let (name_text, _) = context
-        .find_label_name_word()
+        .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
     for document in &context.request.subset.documents {

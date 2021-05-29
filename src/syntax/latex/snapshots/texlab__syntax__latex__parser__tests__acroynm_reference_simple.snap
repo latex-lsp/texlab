@@ -9,6 +9,7 @@ ROOT@0..19
       ACRONYM_REFERENCE_NAME@0..9 "\\acrshort"
       CURLY_GROUP_WORD@9..19
         L_CURLY@9..10 "{"
-        WORD@10..18 "fpsLabel"
+        KEY@10..18
+          WORD@10..18 "fpsLabel"
         R_CURLY@18..19 "}"
 

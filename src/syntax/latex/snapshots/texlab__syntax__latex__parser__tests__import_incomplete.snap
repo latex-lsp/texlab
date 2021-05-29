@@ -9,7 +9,8 @@ ROOT@0..11
       IMPORT_NAME@0..7 "\\import"
       CURLY_GROUP_WORD@7..11
         L_CURLY@7..8 "{"
-        WORD@8..11 "foo"
+        KEY@8..11
+          WORD@8..11 "foo"
         MISSING@11..11 ""
       MISSING@11..11 ""
 

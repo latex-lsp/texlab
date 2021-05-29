@@ -1,11 +1,7 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::features::cursor::CursorContext;
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -18,18 +14,7 @@ pub fn complete_theorem_environments<'a>(
         return None;
     }
 
-    let token = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
-    if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
-        return None;
-    }
-
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
+    let (_, range) = context.find_environment_name()?;
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
@@ -49,6 +34,8 @@ pub fn complete_theorem_environments<'a>(
 
 #[cfg(test)]
 mod tests {
+    use cstree::TextRange;
+
     use crate::features::testing::FeatureTester;
 
     use super::*;

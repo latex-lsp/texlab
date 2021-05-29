@@ -9,6 +9,7 @@ ROOT@0..9
       LABEL_REFERENCE_NAME@0..4 "\\ref"
       CURLY_GROUP_WORD_LIST@4..9
         L_CURLY@4..5 "{"
-        WORD@5..8 "foo"
+        KEY@5..8
+          WORD@5..8 "foo"
         R_CURLY@8..9 "}"
 

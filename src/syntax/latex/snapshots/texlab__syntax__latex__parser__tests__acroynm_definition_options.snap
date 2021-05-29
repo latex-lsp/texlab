@@ -27,7 +27,8 @@ ROOT@0..76
         R_BRACK@42..43 "]"
       CURLY_GROUP_WORD@43..53
         L_CURLY@43..44 "{"
-        WORD@44..52 "fpsLabel"
+        KEY@44..52
+          WORD@44..52 "fpsLabel"
         R_CURLY@52..53 "}"
       CURLY_GROUP@53..58
         L_CURLY@53..54 "{"

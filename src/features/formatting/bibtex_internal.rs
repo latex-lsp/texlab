@@ -148,7 +148,7 @@ impl<'a> Formatter<'a> {
                 self.visit_token_lowercase(entry.ty().unwrap());
                 self.output.push('{');
                 if let Some(key) = entry.key() {
-                    self.output.push_str(key.text());
+                    self.output.push_str(&key.to_string());
                     self.output.push(',');
                     self.output.push('\n');
                     for field in entry.fields() {

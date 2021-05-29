@@ -10,7 +10,8 @@ ROOT@0..43
         BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..12
           L_CURLY@6..7 "{"
-          WORD@7..10 "foo"
+          KEY@7..10
+            WORD@7..10 "foo"
           R_CURLY@10..11 "}"
           WHITESPACE@11..12 " "
       ENVIRONMENT@12..34
@@ -18,20 +19,23 @@ ROOT@0..43
           BEGIN_ENVIRONMENT_NAME@12..18 "\\begin"
           CURLY_GROUP_WORD@18..24
             L_CURLY@18..19 "{"
-            WORD@19..22 "qux"
+            KEY@19..22
+              WORD@19..22 "qux"
             R_CURLY@22..23 "}"
             WHITESPACE@23..24 " "
         END@24..34
           END_ENVIRONMENT_NAME@24..28 "\\end"
           CURLY_GROUP_WORD@28..34
             L_CURLY@28..29 "{"
-            WORD@29..32 "baz"
+            KEY@29..32
+              WORD@29..32 "baz"
             R_CURLY@32..33 "}"
             WHITESPACE@33..34 " "
       END@34..43
         END_ENVIRONMENT_NAME@34..38 "\\end"
         CURLY_GROUP_WORD@38..43
           L_CURLY@38..39 "{"
-          WORD@39..42 "bar"
+          KEY@39..42
+            WORD@39..42 "bar"
           R_CURLY@42..43 "}"
 

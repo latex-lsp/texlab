@@ -56,13 +56,13 @@ fn analyze_environment(
     node: &latex::SyntaxNode,
 ) -> Option<()> {
     let environment = latex::Environment::cast(node)?;
-    let name1 = environment.begin()?.name()?.word()?;
-    let name2 = environment.end()?.name()?.word()?;
-    if name1.text() != name2.text() {
+    let name1 = environment.begin()?.name()?.key()?;
+    let name2 = environment.end()?.name()?.key()?;
+    if name1 != name2 {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
-                range: document.line_index.line_col_lsp_range(name1.text_range()),
+                range: document.line_index.line_col_lsp_range(name1.small_range()),
                 severity: Some(DiagnosticSeverity::Error),
                 code: None,
                 code_description: None,
@@ -98,8 +98,10 @@ fn analyze_curly_group(
         .filter_map(latex::Environment::cast)
         .filter_map(|env| env.begin())
         .filter_map(|begin| begin.name())
-        .filter_map(|name| name.word())
-        .any(|name| ["asy", "lstlisting", "minted", "verbatim"].contains(&name.text()));
+        .filter_map(|name| name.key())
+        .any(|name| {
+            ["asy", "lstlisting", "minted", "verbatim"].contains(&name.to_string().as_str())
+        });
 
     if !is_inside_verbatim_environment
         && !node

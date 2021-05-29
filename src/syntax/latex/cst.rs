@@ -1,4 +1,5 @@
 use cstree::TextRange;
+use itertools::{EitherOrBoth, Itertools};
 
 use crate::syntax::CstNode;
 
@@ -6,7 +7,7 @@ use super::{Language, SyntaxKind::*, SyntaxNode, SyntaxToken};
 
 macro_rules! cst_node {
     ($name:ident, $($kind:pat),+) => {
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         #[repr(transparent)]
         pub struct $name<'a>(&'a SyntaxNode);
 
@@ -44,6 +45,15 @@ macro_rules! cst_node {
 }
 
 cst_node!(Text, TEXT);
+
+impl<'a> Text<'a> {
+    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+            .filter(|node| node.kind() == WORD)
+    }
+}
 
 pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
     fn left_curly(&self) -> Option<&'a SyntaxToken> {
@@ -168,11 +178,8 @@ cst_node!(CurlyGroupWord, CURLY_GROUP_WORD);
 impl<'a> HasCurly<'a> for CurlyGroupWord<'a> {}
 
 impl<'a> CurlyGroupWord<'a> {
-    pub fn word(&self) -> Option<&'a SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == WORD)
+    pub fn key(&self) -> Option<Key<'a>> {
+        self.syntax().children().find_map(Key::cast)
     }
 }
 
@@ -181,11 +188,8 @@ cst_node!(BrackGroupWord, BRACK_GROUP_WORD);
 impl<'a> HasBrack<'a> for BrackGroupWord<'a> {}
 
 impl<'a> BrackGroupWord<'a> {
-    pub fn word(&self) -> Option<&'a SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == WORD)
+    pub fn key(&self) -> Option<Key<'a>> {
+        self.syntax().children().find_map(Key::cast)
     }
 }
 
@@ -194,11 +198,8 @@ cst_node!(CurlyGroupWordList, CURLY_GROUP_WORD_LIST);
 impl<'a> HasCurly<'a> for CurlyGroupWordList<'a> {}
 
 impl<'a> CurlyGroupWordList<'a> {
-    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(|node| node.into_token())
-            .filter(|node| node.kind() == WORD)
+    pub fn keys(&self) -> impl Iterator<Item = Key<'a>> {
+        self.syntax().children().filter_map(Key::cast)
     }
 }
 
@@ -223,6 +224,25 @@ impl<'a> Key<'a> {
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .filter(|node| node.kind() == WORD)
+    }
+}
+
+impl<'a> PartialEq for Key<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.words()
+            .zip_longest(other.words())
+            .all(|result| match result {
+                EitherOrBoth::Both(left, right) => left.text() == right.text(),
+                EitherOrBoth::Left(_) | EitherOrBoth::Right(_) => false,
+            })
+    }
+}
+
+impl<'a> Eq for Key<'a> {}
+
+impl<'a> ToString for Key<'a> {
+    fn to_string(&self) -> String {
+        self.words().map(|word| word.text()).join(" ")
     }
 }
 

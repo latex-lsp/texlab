@@ -7,6 +7,7 @@ ROOT@0..13
   ENTRY@0..13
     ENTRY_TYPE@0..8 "@article"
     L_CURLY@8..9 "{"
-    WORD@9..12 "foo"
+    KEY@9..12
+      WORD@9..12 "foo"
     R_CURLY@12..13 "}"
 

@@ -1,5 +1,4 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 
 use crate::{
@@ -17,15 +16,7 @@ pub fn complete_colors<'a>(
 ) -> Option<()> {
     cancellation_token.result().ok()?;
 
-    let token = context.cursor.as_latex()?;
-    let range = if token.kind() == latex::WORD {
-        token.text_range()
-    } else {
-        TextRange::empty(context.offset)
-    };
-
-    let group = latex::CurlyGroupWord::cast(token.parent())
-        .filter(|group| context.is_inside_latex_curly(group))?;
+    let (_, range, group) = context.find_curly_group_word()?;
     latex::ColorReference::cast(group.syntax().parent()?)?;
 
     for name in &LANGUAGE_DATA.colors {

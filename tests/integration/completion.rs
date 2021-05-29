@@ -239,6 +239,40 @@ mod latex {
     }
 
     #[test]
+    fn test_citation_multi_word() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let tex_uri = server.open(
+            "main.tex",
+            r#"
+                \documentclass{article}
+                \bibliography{main}
+                \begin{document}
+                \cite{foo 2
+                \end{document}
+            "#,
+            "latex",
+            false,
+        )?;
+        server.open(
+            "main.bib",
+            r#"
+                @article{foo 2019,
+                    author = {Foo Bar},
+                    title = {Baz Qux},
+                    year = {2019},
+                }
+
+                @article{bar:2005,}
+            "#,
+            "bibtex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 6)?);
+        Ok(())
+    }
+
+    #[test]
     fn test_citation_after() -> Result<()> {
         let server = ServerTester::launch_new_instance()?;
         server.initialize(ClientCapabilities::default(), None)?;

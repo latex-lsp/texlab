@@ -40,7 +40,7 @@ pub enum InternalCompletionItemData<'a> {
     BeginCommand,
     Citation {
         uri: Arc<Uri>,
-        key: &'a str,
+        key: String,
         text: String,
         ty: Structure,
     },
@@ -67,10 +67,10 @@ pub enum InternalCompletionItemData<'a> {
         name: &'a str,
     },
     Acronym {
-        name: &'a str,
+        name: String,
     },
     GlossaryEntry {
-        name: &'a str,
+        name: String,
     },
     File {
         name: SmolStr,
@@ -79,7 +79,7 @@ pub enum InternalCompletionItemData<'a> {
         name: SmolStr,
     },
     Label {
-        name: &'a str,
+        name: String,
         kind: Structure,
         header: Option<String>,
         footer: Option<String>,
