@@ -35,6 +35,12 @@ pub fn format_with_latexindent(
             }
         })
         .unwrap_or_else(|| ".".into());
+
+    let local = match &options.latexindent.local {
+        Some(local) => format!("--local={}", local),
+        None => "-l".to_string(),
+    };
+
     drop(options);
 
     let path = directory.path();
@@ -60,7 +66,7 @@ pub fn format_with_latexindent(
     fs::write(directory.path().join(name), &document.text).ok()?;
 
     let output = Command::new("latexindent")
-        .args(&["-l", name])
+        .args(&[&local, name])
         .current_dir(current_dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

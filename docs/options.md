@@ -143,3 +143,27 @@ Possible values are either `texlab` or `latexindent`.
 **Type:** `string`
 
 **Default value:** `texlab`
+
+---
+
+## texlab.latexFormatter
+
+Defines the formatter to use for LaTeX formatting.
+Possible values are either `texlab` or `latexindent`.
+Note that `texlab` is not implemented yet.
+
+**Type:** `string`
+
+**Default value:** `latexindent`
+
+---
+
+## texlab.latexindent.local
+
+Defines the path of a file containing the `latexindent` configuration.
+This corresponds to the `--local=file.yaml` flag of `latexindent`.
+By default the configuration inside the project root directory is used.
+
+**Type:** `string`
+
+**Default value:** `null`

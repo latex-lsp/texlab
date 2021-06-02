@@ -12,6 +12,9 @@ pub struct Options {
     #[serde(default)]
     pub bibtex_formatter: BibtexFormatter,
 
+    #[serde(default)]
+    pub latex_formatter: LatexFormatter,
+
     pub formatter_line_length: Option<i32>,
 
     pub diagnostics_delay: Option<u64>,
@@ -21,6 +24,9 @@ pub struct Options {
 
     #[serde(default)]
     pub chktex: ChktexOptions,
+
+    #[serde(default)]
+    pub latexindent: LatexindentOptions,
 
     pub forward_search: Option<ForwardSearchOptions>,
 }
@@ -36,6 +42,25 @@ impl Default for BibtexFormatter {
     fn default() -> Self {
         Self::Texlab
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum LatexFormatter {
+    Texlab,
+    Latexindent,
+}
+
+impl Default for LatexFormatter {
+    fn default() -> Self {
+        Self::Latexindent
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LatexindentOptions {
+    pub local: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
