@@ -20,3 +20,16 @@ jobs:
         with:
           command: test
           args: --locked
+  build_freebsd:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rustup
+        with:
+          run: |
+            curl https://sh.rustup.rs -sSf | sh
+            rustup default stable
+      - name: Run tests
+        with:
+          run: |
+            cargo test --locked
