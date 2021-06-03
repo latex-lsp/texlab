@@ -20,16 +20,3 @@ jobs:
         with:
           command: test
           args: --locked
-  build_freebsd:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run tests
-        id: test
-        uses: vmactions/freebsd-vm@v0.1.4
-        with:
-          usesh: true
-          prepare: pkg install -y curl
-          run: |
-            curl https://sh.rustup.rs -sSf | sh
-            cargo test --locked
