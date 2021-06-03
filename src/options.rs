@@ -61,6 +61,9 @@ impl Default for LatexFormatter {
 #[serde(rename_all = "camelCase")]
 pub struct LatexindentOptions {
     pub local: Option<String>,
+
+    #[serde(default)]
+    pub modify_line_breaks: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

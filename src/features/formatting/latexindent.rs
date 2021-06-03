@@ -41,6 +41,8 @@ pub fn format_with_latexindent(
         None => "-l".to_string(),
     };
 
+    let modify_line_breaks = options.latexindent.modify_line_breaks;
+
     drop(options);
 
     let path = directory.path();
@@ -65,8 +67,15 @@ pub fn format_with_latexindent(
 
     fs::write(directory.path().join(name), &document.text).ok()?;
 
+    let mut args = Vec::new();
+    if modify_line_breaks {
+        args.push("--modifylinebreaks");
+    }
+    args.push(&local);
+    args.push(name);
+
     let output = Command::new("latexindent")
-        .args(&[&local, name])
+        .args(&args)
         .current_dir(current_dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

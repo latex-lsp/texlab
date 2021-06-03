@@ -167,3 +167,15 @@ By default the configuration inside the project root directory is used.
 **Type:** `string`
 
 **Default value:** `null`
+
+---
+
+## texlab.latexindent.modifyLineBreaks
+
+Modifies linebreaks before, during, and at the end of code blocks
+when formatting with `latexindent`.
+This corresponds to the `--modifylinebreaks` flag of `latexindent`.
+
+**Type:** `boolean`
+
+**Default value:** `false`
