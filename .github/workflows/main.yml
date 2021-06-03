@@ -24,12 +24,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rustup
+      - name: Run tests
+        id: test
+        uses: vmactions/freebsd-vm@v0.1.4
         with:
+          usesh: true
+          prepare: pkg install -y curl
           run: |
             curl https://sh.rustup.rs -sSf | sh
-            rustup default stable
-      - name: Run tests
-        with:
-          run: |
             cargo test --locked
