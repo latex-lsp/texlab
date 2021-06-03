@@ -30,7 +30,7 @@ impl LineIndexExt for LineIndex {
 
     fn line_col_lsp(&self, offset: TextSize) -> Position {
         let position = self.line_col(offset);
-        let LineColUtf16 { line , col } = self.to_utf16(position);
+        let LineColUtf16 { line, col } = self.to_utf16(position);
         Position::new(line, col)
     }
 

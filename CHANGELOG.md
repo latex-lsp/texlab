@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 03.06.2021
+
+### Added
+
+- Add `texlab.latexFormatter` setting to allow turning off `latexindent`.
+  At the moment, `texlab.latexFormatter: texlab` is not implemented yet and does nothing.
+- Expose the `--local` flag of `latexindent` via `texlab.latexindent.local` setting ([#365](https://github.com/latex-lsp/texlab/issues/365))
+- Expose the `--modfiylinebreaks` flag of `latexindent` via `texlab.latexindent.modifyLineBreaks` setting ([#365](https://github.com/latex-lsp/texlab/issues/365))
+- Assign (unique) error codes to static analysis diagnostics.
+
+### Fixed
+
+- Avoid creating defunct `latexindent` processes which clear out the document ([#437](https://github.com/latex-lsp/texlab/issues/437))
+- Allow whitespace in LaTeX identifiers like labels ([#433](https://github.com/latex-lsp/texlab/issues/433))
+- Run CI on Ubuntu 18.04 to allow an older `glibc` version ([#439](https://github.com/latex-lsp/texlab/issues/439)).
+
+### Fixed
+
 ## [3.0.1] - 22.05.2021
 
 ### Fixed
