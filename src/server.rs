@@ -1,18 +1,17 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
-    thread,
 };
 
 use anyhow::Result;
 use cancellation::{CancellationToken, CancellationTokenSource};
 use crossbeam_channel::Sender;
-use log::{info, warn};
+use log::{error, info, warn};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{
     notification::{
         Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
-        DidSaveTextDocument, LogMessage, PublishDiagnostics,
+        DidSaveTextDocument, PublishDiagnostics,
     },
     request::{
         DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
@@ -37,10 +36,10 @@ use crate::{
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
-        build_document, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
-        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildParams,
-        BuildResult, FeatureRequest, ForwardSearchResult,
+        find_all_references, find_document_highlights, find_document_links, find_document_symbols,
+        find_foldings, find_hover, find_workspace_symbols, format_source_code, goto_definition,
+        prepare_rename_all, rename_all, BuildEngine, BuildParams, BuildResult, BuildStatus,
+        FeatureRequest, ForwardSearchResult,
     },
     req_queue::{IncomingData, ReqQueue},
     DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -55,6 +54,7 @@ pub struct Server {
     chktex_debouncer: DiagnosticsDebouncer,
     pool: ThreadPool,
     load_resolver: bool,
+    build_engine: Arc<BuildEngine>,
 }
 
 impl Server {
@@ -83,6 +83,7 @@ impl Server {
             chktex_debouncer,
             pool: threadpool::Builder::new().build(),
             load_resolver,
+            build_engine: Arc::default(),
         })
     }
 
@@ -635,23 +636,16 @@ impl Server {
     ) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
         let lsp_sender = self.connection.sender.clone();
-        self.handle_feature_request(id, params, uri, token, |request, token| {
-            let (log_sender, log_receiver) = crossbeam_channel::unbounded();
-
-            thread::spawn(move || {
-                for message in &log_receiver {
-                    send_notification::<LogMessage>(
-                        &lsp_sender,
-                        LogMessageParams {
-                            message,
-                            typ: MessageType::Log,
-                        },
-                    )
-                    .unwrap();
-                }
-            });
-
-            build_document(request, token, log_sender)
+        let build_engine = Arc::clone(&self.build_engine);
+        self.handle_feature_request(id, params, uri, token, move |request, _token| {
+            build_engine
+                .build(request, &lsp_sender)
+                .unwrap_or_else(|why| {
+                    error!("Build failed: {}", why);
+                    BuildResult {
+                        status: BuildStatus::FAILURE,
+                    }
+                })
         })?;
         Ok(())
     }

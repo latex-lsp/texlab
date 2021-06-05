@@ -75,6 +75,12 @@ pub struct BuildOptions {
 
     #[serde(default)]
     pub is_continuous: bool,
+
+    #[serde(default)]
+    pub on_save: bool,
+
+    #[serde(default)]
+    pub forward_search_after: bool,
 }
 
 impl BuildOptions {
@@ -95,6 +101,17 @@ impl BuildOptions {
             ]
         })
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewerOptions {
+    #[serde(default)]
+    pub enabled: bool,
+
+    pub executable: Option<String>,
+
+    pub args: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

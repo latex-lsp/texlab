@@ -15,10 +15,10 @@ use super::FeatureRequest;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum ForwardSearchStatus {
-    Success = 0,
-    Error = 1,
-    Failure = 2,
-    Unconfigured = 3,
+    SUCCESS = 0,
+    ERROR = 1,
+    FAILURE = 2,
+    UNCONFIGURED = 3,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub fn execute_forward_search(
 
     if options.executable.is_none() || options.args.is_none() {
         return Some(ForwardSearchResult {
-            status: ForwardSearchStatus::Unconfigured,
+            status: ForwardSearchStatus::UNCONFIGURED,
         });
     }
 
@@ -87,10 +87,10 @@ pub fn execute_forward_search(
         .collect();
 
     let status = match run_process(options.executable.unwrap(), args) {
-        Ok(()) => ForwardSearchStatus::Success,
+        Ok(()) => ForwardSearchStatus::SUCCESS,
         Err(why) => {
             error!("Unable to execute forward search: {}", why);
-            ForwardSearchStatus::Failure
+            ForwardSearchStatus::FAILURE
         }
     };
     Some(ForwardSearchResult { status })

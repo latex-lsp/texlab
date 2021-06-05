@@ -25,7 +25,7 @@ pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
 #[cfg(feature = "semantic")]
 pub use self::semantic::{find_semantic_tokens_range, legend};
 pub use self::{
-    build::{build_document, BuildParams, BuildResult, BuildStatus},
+    build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
     definition::goto_definition,
     folding::find_foldings,
     formatting::format_source_code,
