@@ -46,9 +46,19 @@ The placeholder `%f` will be replaced by the server.
 
 ---
 
-## texlab.build.isContinuous
+## texlab.build.forwardSearchAfter
 
-Set this property to true if the build arguments imply a continous build (like `latexmk -pvc`).
+Set this property to `true` if you want to execute a forward search after a build.
+
+**Type:** `boolean`
+
+**Default value:** `false`
+
+---
+
+## texlab.build.onSave
+
+Set this property to `true` if you want to compile the project after saving a file.
 
 **Type:** `boolean`
 

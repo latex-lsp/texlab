@@ -19,8 +19,8 @@ You can quickly get started by changing `.vscode/settings.json` in your workspac
     // uncomment the following line.
     //"--outdir out",
   ]
-  // OPTIONAL: The extension needs to be configured
+  // OPTIONAL: The server needs to be configured
   // to read the logs from the out directory as well.
-  // "latex.build.outputDirectory": "out",
+  // "texlab.auxDirectory": "out",
 }
 ```

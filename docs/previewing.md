@@ -1,19 +1,25 @@
 # Previewing
 
-We believe that previewing should be a concern of the build system.
-With [`latexmk`](https://ctan.org/pkg/latexmk?lang=en), you can enable the preview feature by adding the `-pv` flag
-to the [`texlab.build.args`](/docs/reference/configuration/#latexbuildargs) setting.
-After that, the configured previewer will start on each rebuild of the document.
-Alternatively, use the `-pvc` flag to tell the previewer to continuously check for updates,
-instead of opening a new window each time a build completes.
+`texlab` supports compiling LaTeX using a custom request (`textDocument/build`)
+and by building a document after saving if configured to do so.
+To enable building on save, simply set `texlab.build.onSave` to true.
+Previewing can be configured in a variety of ways:
 
-If you want to use [SyncTeX](http://www.tug.org/TUGboat/tb29-3/tb93laurens.pdf),
-you need to configure the settings in the [`texlab.forwardSearch`](/docs/reference/configuration#latexforwardsearchexecutable) section
-and configure your previewer to call your editor correctly.
-A forward search can then be executed by invoking the [`texlab.forwardSearch`](/docs/reference/commands#latexforwardsearch) command.
+1. If you are using `latexmk`, you can create a `.latexmkrc` file and call your viewer accordingly.
+   Afterwards, you can add the `-pv` flag to your `texlab.build.args`.
 
-In the following sections, we will give configurations for popular viewers with `latexmk` and Visual Studio Code.
-For other build systems and editors, please refer to their respective manuals.
+2. If you want the PDF viewer to stay synchronized with the cursor position in your editor,
+   you can instruct `texlab` to execute a forward search after every build (`texlab.build.forwardSearchAfter`).
+   To do so, you need to enable [SyncTeX](http://www.tug.org/TUGboat/tb29-3/tb93laurens.pdf)
+   and update the `texlab.forwardSearch` configuration.
+   If you want to use this feature, we do _not_ recommend the `-pvc` flag
+   because `texlab` does not get notified by `latexmk` when a document gets built.
+   Instead, you can use `texlab.build.onSave`.
+
+In the following sections, we will give forward search configurations for several popular viewers
+and Visual Studio Code.
+However, these settings can easily be adapted to other editors.
+If your viewer is not listed here, you can send us a pull request or create an issue.
 
 ---
 
@@ -21,11 +27,6 @@ For other build systems and editors, please refer to their respective manuals.
 
 We highly recommend [SumatraPDF](https://www.sumatrapdfreader.org) on Windows
 because Adobe Reader locks the opened PDF file and will therefore prevent further builds.
-To use [SumatraPDF](https://www.sumatrapdfreader.org) as previewer, add the following line to your `%USERPROFILE%/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'start "C:\Program Files\SumatraPDF\SumatraPDF.exe" %O %S';
-```
 
 ### Forward Search
 
@@ -33,7 +34,7 @@ Add the following lines to your editor config:
 
 ```json
 {
-  "texlab.forwardSearch.executable": "C:/Program Files/SumatraPDF/SumatraPDF.exe",
+  "texlab.forwardSearch.executable": "C:/Users/{User}/AppData/Local/SumatraPDF/SumatraPDF.exe",
   "texlab.forwardSearch.args": [
     "-reuse-instance",
     "%p",
@@ -62,11 +63,6 @@ You can execute the search by pressing `Alt+DoubleClick` in the PDF document.
 
 The SyncTeX feature of [Evince](https://wiki.gnome.org/Apps/Evince) requires communication via D-Bus.
 In order to use it from the command line, install the [evince-synctex](https://github.com/latex-lsp/evince-synctex) script.
-Then add the following line to your `~/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'start evince-synctex %S "code -g %f:%l"';
-```
 
 ### Forward Search
 
@@ -87,12 +83,6 @@ You can execute the search by pressing `Ctrl+Click` in the PDF document.
 ---
 
 ## Okular
-
-To use [Okular](https://okular.kde.org/) as previewer, add the following line to your `~/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'start okular';
-```
 
 ### Forward Search
 
@@ -119,12 +109,6 @@ You can execute the search by pressing `Shift+Click` in the PDF document.
 
 ## Zathura
 
-To use [Zathura](https://pwmt.org/projects/zathura/) as previewer, add the following line to your `~/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'start zathura';
-```
-
 ### Forward Search
 
 Add the following lines to your editor config:
@@ -150,12 +134,6 @@ You can execute the search by pressing `Alt+Click` in the PDF document.
 ---
 
 ## qpdfview
-
-To use [qpdfview](https://launchpad.net/qpdfview) as previewer, add the following line to your `~/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'start qpdfview --unique %S';
-```
 
 ### Forward Search
 
@@ -185,14 +163,6 @@ You can execute the search by pressing `Modifier+Click` in the PDF document.
 ## Skim
 
 We recommend [Skim](https://skim-app.sourceforge.io/) on macOS since it is the only native viewer that supports SyncTeX.
-To use [Skim](https://skim-app.sourceforge.io/) as previewer, add the following line to your `~/.latexmkrc` file:
-
-```perl
-$pdf_previewer = 'open -a Skim';
-```
-
-If you want Skim to stay in the background after building,
-you can add the `-g` option to the `open` arguments.
 
 Additionally, enable the "Reload automatically" setting in the Skim preferences (Skim -> Preferences -> Sync -> Check for file changes).
 
@@ -209,9 +179,11 @@ Add the following lines to your editor config:
 
 If you want Skim to stay in the background after
 executing the forward search, you can add the `-g` option
-to `latex.forwardSearch.args`.
+to `texlab.forwardSearch.args`.
 
 ### Inverse Search
 
 Select the Visual Studio Code preset in the Skim preferences (Skim -> Preferences -> Sync -> PDF-TeX Sync support).
 You can execute the search by pressing `Shift+⌘+Click` in the PDF document.
+
+---
