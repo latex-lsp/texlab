@@ -321,10 +321,11 @@ impl Server {
                 })
         {
             let lsp_sender = self.connection.sender.clone();
+            let req_queue = Arc::clone(&self.req_queue);
             let build_engine = Arc::clone(&self.build_engine);
             self.pool.execute(move || {
                 build_engine
-                    .build(request, CancellationToken::none(), &lsp_sender)
+                    .build(request, CancellationToken::none(), &req_queue, &lsp_sender)
                     .unwrap_or_else(|why| {
                         error!("Build failed: {}", why);
                         BuildResult {
@@ -692,10 +693,11 @@ impl Server {
     ) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
         let lsp_sender = self.connection.sender.clone();
+        let req_queue = Arc::clone(&self.req_queue);
         let build_engine = Arc::clone(&self.build_engine);
         self.handle_feature_request(id, params, uri, token, move |request, token| {
             build_engine
-                .build(request, token, &lsp_sender)
+                .build(request, token, &req_queue, &lsp_sender)
                 .unwrap_or_else(|why| {
                     error!("Build failed: {}", why);
                     BuildResult {
@@ -795,11 +797,9 @@ impl Server {
                 Message::Response(response) => {
                     let mut req_queue = self.req_queue.lock().unwrap();
                     let data = req_queue.outgoing.complete(response.id);
-                    let result = match response.result {
-                        Some(result) => Ok(result),
-                        None => Err(response
-                            .error
-                            .expect("response without result or error received")),
+                    let result = match response.error {
+                        Some(error) => Err(error),
+                        None => Ok(response.result.unwrap_or_default()),
                     };
                     data.sender.send(result)?;
                 }

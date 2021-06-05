@@ -15,12 +15,12 @@ use lsp_types::{
     notification::{LogMessage, Progress},
     LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
     TextDocumentIdentifier, TextDocumentPositionParams, WorkDoneProgress, WorkDoneProgressBegin,
-    WorkDoneProgressEnd,
+    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{client, Uri};
+use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, Uri};
 
 use super::{forward_search, FeatureRequest};
 
@@ -37,13 +37,64 @@ pub enum BuildStatus {
     ERROR = 1,
     FAILURE = 2,
     CANCELLED = 3,
-    BUSY = 4,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildResult {
     pub status: BuildStatus,
+}
+
+struct ProgressReporter<'a> {
+    supports_progress: bool,
+    req_queue: &'a Mutex<ReqQueue>,
+    lsp_sender: Sender<lsp_server::Message>,
+    token: &'a str,
+}
+
+impl<'a> ProgressReporter<'a> {
+    pub fn start(&self, uri: &Uri) -> Result<()> {
+        if self.supports_progress {
+            client::send_request::<lsp_types::request::WorkDoneProgressCreate>(
+                self.req_queue,
+                &self.lsp_sender,
+                WorkDoneProgressCreateParams {
+                    token: NumberOrString::String(self.token.to_string()),
+                },
+            )?;
+            client::send_notification::<Progress>(
+                &self.lsp_sender,
+                ProgressParams {
+                    token: NumberOrString::String(self.token.to_string()),
+                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                        WorkDoneProgressBegin {
+                            title: "Building".to_string(),
+                            message: Some(uri.as_str().to_string()),
+                            cancellable: Some(false),
+                            percentage: None,
+                        },
+                    )),
+                },
+            )?;
+        };
+        Ok(())
+    }
+}
+
+impl<'a> Drop for ProgressReporter<'a> {
+    fn drop(&mut self) {
+        if self.supports_progress {
+            let _ = client::send_notification::<Progress>(
+                &self.lsp_sender,
+                ProgressParams {
+                    token: NumberOrString::String(self.token.to_string()),
+                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(
+                        WorkDoneProgressEnd { message: None },
+                    )),
+                },
+            );
+        }
+    }
 }
 
 #[derive(Default)]
@@ -57,6 +108,7 @@ impl BuildEngine {
         &self,
         request: FeatureRequest<BuildParams>,
         cancellation_token: &CancellationToken,
+        req_queue: &Mutex<ReqQueue>,
         lsp_sender: &Sender<lsp_server::Message>,
     ) -> Result<BuildResult> {
         let lock = self.lock.lock().unwrap();
@@ -88,30 +140,16 @@ impl BuildEngine {
                 .client_capabilities
                 .lock()
                 .unwrap()
-                .window
-                .as_ref()
-                .and_then(|window| window.work_done_progress)
-                .unwrap_or_default()
+                .has_work_done_progress_support()
         };
 
-        let token = "texlab-build";
-
-        if supports_progress {
-            client::send_notification::<Progress>(
-                lsp_sender,
-                ProgressParams {
-                    token: NumberOrString::String(token.to_string()),
-                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                        WorkDoneProgressBegin {
-                            title: "Building".to_string(),
-                            message: Some(document.uri.as_str().to_string()),
-                            cancellable: Some(false),
-                            percentage: None,
-                        },
-                    )),
-                },
-            )?;
-        }
+        let progress_reporter = ProgressReporter {
+            supports_progress,
+            req_queue,
+            lsp_sender: lsp_sender.clone(),
+            token: "texlab-build",
+        };
+        progress_reporter.start(&document.uri)?;
 
         let options = { request.context.options.read().unwrap().clone() };
 
@@ -146,17 +184,7 @@ impl BuildEngine {
             BuildStatus::ERROR
         };
 
-        if supports_progress {
-            client::send_notification::<Progress>(
-                lsp_sender,
-                ProgressParams {
-                    token: NumberOrString::String(token.to_string()),
-                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(
-                        WorkDoneProgressEnd { message: None },
-                    )),
-                },
-            )?;
-        }
+        drop(progress_reporter);
         drop(lock);
 
         if options.build.forward_search_after {
