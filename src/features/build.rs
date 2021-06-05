@@ -2,24 +2,27 @@ use std::{
     io::{BufRead, BufReader, Read},
     path::Path,
     process::{Command, Stdio},
-    sync::Mutex,
+    sync::{Arc, Mutex},
     thread::{self, JoinHandle},
 };
 
 use anyhow::Result;
+use cancellation::CancellationToken;
+use chashmap::CHashMap;
 use crossbeam_channel::Sender;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use lsp_types::{
     notification::{LogMessage, Progress},
-    LogMessageParams, NumberOrString, ProgressParams, ProgressParamsValue, TextDocumentIdentifier,
-    WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
+    LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
+    TextDocumentIdentifier, TextDocumentPositionParams, WorkDoneProgress, WorkDoneProgressBegin,
+    WorkDoneProgressEnd,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::client;
+use crate::{client, Uri};
 
-use super::FeatureRequest;
+use super::{forward_search, FeatureRequest};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -46,12 +49,14 @@ pub struct BuildResult {
 #[derive(Default)]
 pub struct BuildEngine {
     lock: Mutex<()>,
+    pub positions_by_uri: CHashMap<Arc<Uri>, Position>,
 }
 
 impl BuildEngine {
     pub fn build(
         &self,
         request: FeatureRequest<BuildParams>,
+        cancellation_token: &CancellationToken,
         lsp_sender: &Sender<lsp_server::Message>,
     ) -> Result<BuildResult> {
         let lock = self.lock.lock().unwrap();
@@ -117,27 +122,7 @@ impl BuildEngine {
             .current_dir(build_dir)
             .spawn()?;
 
-        let (log_sender, log_receiver) = crossbeam_channel::unbounded();
-
-        track_output(process.stdout.take().unwrap(), log_sender.clone());
-        track_output(process.stderr.take().unwrap(), log_sender);
-
-        let log_handle = {
-            let lsp_sender = lsp_sender.clone();
-            thread::spawn(move || {
-                for message in &log_receiver {
-                    client::send_notification::<LogMessage>(
-                        &lsp_sender,
-                        LogMessageParams {
-                            message,
-                            typ: lsp_types::MessageType::Log,
-                        },
-                    )
-                    .unwrap();
-                }
-            })
-        };
-
+        let log_handle = capture_output(&mut process, lsp_sender);
         let success = process.wait().map(|status| status.success())?;
         log_handle.join().unwrap();
         let status = if success {
@@ -155,10 +140,54 @@ impl BuildEngine {
                 })),
             },
         )?;
-
         drop(lock);
+
+        if options.build.forward_search_after {
+            let request = FeatureRequest {
+                params: TextDocumentPositionParams {
+                    position: self
+                        .positions_by_uri
+                        .get(&request.main_document().uri)
+                        .map(|guard| guard.clone())
+                        .unwrap_or_default(),
+                    text_document: TextDocumentIdentifier::new(
+                        request.main_document().uri.as_ref().clone().into(),
+                    ),
+                },
+                context: request.context,
+                workspace: request.workspace,
+                subset: request.subset,
+            };
+            forward_search::execute_forward_search(request, cancellation_token);
+        }
+
         Ok(BuildResult { status })
     }
+}
+
+fn capture_output(
+    process: &mut std::process::Child,
+    lsp_sender: &Sender<lsp_server::Message>,
+) -> JoinHandle<()> {
+    let (log_sender, log_receiver) = crossbeam_channel::unbounded();
+    track_output(process.stdout.take().unwrap(), log_sender.clone());
+    track_output(process.stderr.take().unwrap(), log_sender);
+    let log_handle = {
+        let lsp_sender = lsp_sender.clone();
+        thread::spawn(move || {
+            for message in &log_receiver {
+                client::send_notification::<LogMessage>(
+                    &lsp_sender,
+                    LogMessageParams {
+                        message,
+                        typ: lsp_types::MessageType::Log,
+                    },
+                )
+                .unwrap();
+            }
+        })
+    };
+    log_handle
 }
 
 fn replace_placeholder(arg: String, file: &Path) -> String {

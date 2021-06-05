@@ -258,7 +258,24 @@ impl Server {
     fn did_change(&self, mut params: DidChangeTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri.into();
         assert_eq!(params.content_changes.len(), 1);
-        let text = params.content_changes.pop().unwrap().text;
+        let old_document = self.workspace.get(&uri);
+        let old_text = old_document.as_ref().map(|document| document.text.as_str());
+        let new_text = params.content_changes.pop().unwrap().text;
+
+        let uri = Arc::new(uri);
+
+        let line = match old_text {
+            Some(old_text) => old_text
+                .lines()
+                .zip(new_text.lines())
+                .position(|(a, b)| a != b)
+                .unwrap_or_default() as u32,
+            None => 0,
+        };
+        self.build_engine
+            .positions_by_uri
+            .insert(Arc::clone(&uri), Position::new(line, 0));
+
         let language = self
             .workspace
             .get(&uri)
@@ -267,7 +284,7 @@ impl Server {
 
         let document = self
             .workspace
-            .open(Arc::new(uri), text, language, WorkspaceSource::Client);
+            .open(uri, new_text, language, WorkspaceSource::Client);
 
         let should_lint = { self.context.options.read().unwrap().chktex.on_edit };
         if let Some(document) = self
@@ -307,7 +324,7 @@ impl Server {
             let build_engine = Arc::clone(&self.build_engine);
             self.pool.execute(move || {
                 build_engine
-                    .build(request, &lsp_sender)
+                    .build(request, CancellationToken::none(), &lsp_sender)
                     .unwrap_or_else(|why| {
                         error!("Build failed: {}", why);
                         BuildResult {
@@ -460,6 +477,11 @@ impl Server {
                 .clone()
                 .into(),
         );
+
+        self.build_engine
+            .positions_by_uri
+            .insert(Arc::clone(&uri), params.text_document_position.position);
+
         self.handle_feature_request(id, params, uri, token, crate::features::complete)?;
         Ok(())
     }
@@ -549,6 +571,11 @@ impl Server {
                 .clone()
                 .into(),
         );
+        self.build_engine.positions_by_uri.insert(
+            Arc::clone(&uri),
+            params.text_document_position_params.position,
+        );
+
         self.handle_feature_request(id, params, uri, token, find_hover)?;
         Ok(())
     }
@@ -666,9 +693,9 @@ impl Server {
         let uri = Arc::new(params.text_document.uri.clone().into());
         let lsp_sender = self.connection.sender.clone();
         let build_engine = Arc::clone(&self.build_engine);
-        self.handle_feature_request(id, params, uri, token, move |request, _token| {
+        self.handle_feature_request(id, params, uri, token, move |request, token| {
             build_engine
-                .build(request, &lsp_sender)
+                .build(request, token, &lsp_sender)
                 .unwrap_or_else(|why| {
                     error!("Build failed: {}", why);
                     BuildResult {
