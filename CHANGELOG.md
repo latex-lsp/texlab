@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `texlab.latexFormatter` setting to allow turning off `latexindent`.
   At the moment, `texlab.latexFormatter: texlab` is not implemented yet and does nothing.
 - Expose the `--local` flag of `latexindent` via `texlab.latexindent.local` setting ([#365](https://github.com/latex-lsp/texlab/issues/365))
-- Expose the `--modfiylinebreaks` flag of `latexindent` via `texlab.latexindent.modifyLineBreaks` setting ([#365](https://github.com/latex-lsp/texlab/issues/365))
+- Expose the `--modifylinebreaks` flag of `latexindent` via `texlab.latexindent.modifyLineBreaks` setting ([#365](https://github.com/latex-lsp/texlab/issues/365))
 - Assign (unique) error codes to static analysis diagnostics.
 
 ### Fixed
