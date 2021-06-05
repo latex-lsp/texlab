@@ -82,21 +82,36 @@ impl BuildEngine {
         }
         let path = document.uri.to_file_path().unwrap();
 
+        let supports_progress = {
+            request
+                .context
+                .client_capabilities
+                .lock()
+                .unwrap()
+                .window
+                .as_ref()
+                .and_then(|window| window.work_done_progress)
+                .unwrap_or_default()
+        };
+
         let token = "texlab-build";
-        client::send_notification::<Progress>(
-            lsp_sender,
-            ProgressParams {
-                token: NumberOrString::String(token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                    WorkDoneProgressBegin {
-                        title: "Building".to_string(),
-                        message: Some(document.uri.as_str().to_string()),
-                        cancellable: Some(false),
-                        percentage: None,
-                    },
-                )),
-            },
-        )?;
+
+        if supports_progress {
+            client::send_notification::<Progress>(
+                lsp_sender,
+                ProgressParams {
+                    token: NumberOrString::String(token.to_string()),
+                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                        WorkDoneProgressBegin {
+                            title: "Building".to_string(),
+                            message: Some(document.uri.as_str().to_string()),
+                            cancellable: Some(false),
+                            percentage: None,
+                        },
+                    )),
+                },
+            )?;
+        }
 
         let options = { request.context.options.read().unwrap().clone() };
 
@@ -131,15 +146,17 @@ impl BuildEngine {
             BuildStatus::ERROR
         };
 
-        client::send_notification::<Progress>(
-            lsp_sender,
-            ProgressParams {
-                token: NumberOrString::String(token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
-                    message: None,
-                })),
-            },
-        )?;
+        if supports_progress {
+            client::send_notification::<Progress>(
+                lsp_sender,
+                ProgressParams {
+                    token: NumberOrString::String(token.to_string()),
+                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(
+                        WorkDoneProgressEnd { message: None },
+                    )),
+                },
+            )?;
+        }
         drop(lock);
 
         if options.build.forward_search_after {
