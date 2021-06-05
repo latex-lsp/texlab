@@ -288,6 +288,35 @@ impl Server {
 
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri.into();
+
+        let should_build = { self.context.options.read().unwrap().build.on_save };
+        if let Some(request) =
+            self.workspace
+                .get(&uri)
+                .filter(|_| should_build)
+                .and_then(|document| {
+                    self.feature_request(
+                        Arc::clone(&document.uri),
+                        BuildParams {
+                            text_document: TextDocumentIdentifier::new(uri.clone().into()),
+                        },
+                    )
+                })
+        {
+            let lsp_sender = self.connection.sender.clone();
+            let build_engine = Arc::clone(&self.build_engine);
+            self.pool.execute(move || {
+                build_engine
+                    .build(request, &lsp_sender)
+                    .unwrap_or_else(|why| {
+                        error!("Build failed: {}", why);
+                        BuildResult {
+                            status: BuildStatus::FAILURE,
+                        }
+                    });
+            });
+        }
+
         let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
         if let Some(document) = self.workspace.get(&uri).filter(|_| should_lint) {
             self.chktex_debouncer
