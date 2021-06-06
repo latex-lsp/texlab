@@ -1,4 +1,4 @@
-#[cfg(feature = "citeproc")]
+#[cfg(feature = "citation")]
 mod citation;
 mod component;
 mod entry_type;
