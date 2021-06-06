@@ -452,7 +452,7 @@ impl Server {
                         .documentation(&item.label)
                         .map(Documentation::MarkupContent);
                 }
-                #[cfg(feature = "citeproc")]
+                #[cfg(feature = "citation")]
                 crate::features::CompletionItemData::Citation { uri, key } => {
                     if let Some(document) = workspace.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
