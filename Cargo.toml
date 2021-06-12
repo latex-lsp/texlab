@@ -72,6 +72,7 @@ tempfile = "3.2.0"
 threadpool = "1.8.1"
 titlecase = "1.1.0"
 url = "2.2.2"
+uuid = { version = "0.8.2", features = ["v4"] }
 
 [dev-dependencies]
 indoc = "1.0.3"

@@ -19,6 +19,7 @@ use lsp_types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use uuid::Uuid;
 
 use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, DocumentLanguage, Uri};
 
@@ -149,11 +150,12 @@ impl BuildEngine {
                 .has_work_done_progress_support()
         };
 
+        let token = format!("texlab-build-{}", Uuid::new_v4());
         let progress_reporter = ProgressReporter {
             supports_progress,
             req_queue,
             lsp_sender: lsp_sender.clone(),
-            token: "texlab-build",
+            token: &token,
         };
         progress_reporter.start(&document.uri)?;
 
