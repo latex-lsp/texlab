@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 12.06.2021
+
+### Added
+
+- Re-introduce `texlab.build.forwardSearchAfter` with a more reliable way of detecting the current line number.
+- Re-introduce `texlab.build.onSave` due to popular request ([#427](https://github.com/latex-lsp/texlab/issues/427)).
+- Re-introduce work done progress notifications for building.
+
+### Changed
+
+- Recommend `texlab.build.onSave` instead of `-pvc` in documentation.
+- Do not rely on `.latexmkrc` for previewing anymore,
+  instead `texlab.build.forwardSearchAfter` can be used ([#440](https://github.com/latex-lsp/texlab/issues/440), [#436](https://github.com/latex-lsp/texlab/issues/436)).
+- Deprecate `texlab.build.isContinuous` setting
+
+### Fixed
+
+- Fix conditional compilation of the `citation` feature.
+
 ## [3.1.0] - 03.06.2021
 
 ### Added
