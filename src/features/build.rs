@@ -20,7 +20,7 @@ use lsp_types::{
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, Uri};
+use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, DocumentLanguage, Uri};
 
 use super::{forward_search, FeatureRequest};
 
@@ -126,6 +126,12 @@ impl BuildEngine {
             })
             .map(|document| document.as_ref())
             .unwrap_or_else(|| request.main_document());
+
+        if document.language() != DocumentLanguage::Latex {
+            return Ok(BuildResult {
+                status: BuildStatus::SUCCESS,
+            });
+        }
 
         if document.uri.scheme() != "file" {
             return Ok(BuildResult {
