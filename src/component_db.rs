@@ -1,3 +1,6 @@
+use std::io::Read;
+
+use flate2::read::GzDecoder;
 use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
@@ -131,7 +134,11 @@ pub struct ComponentMetadata {
     pub description: Option<String>,
 }
 
-const JSON: &str = include_str!("../data/components.json");
+const JSON_GZ: &[u8] = include_bytes!("../data/components.json.gz");
 
-pub static COMPONENT_DATABASE: Lazy<ComponentDatabase> =
-    Lazy::new(|| serde_json::from_str(JSON).unwrap());
+pub static COMPONENT_DATABASE: Lazy<ComponentDatabase> = Lazy::new(|| {
+    let mut decoder = GzDecoder::new(JSON_GZ);
+    let mut buf = String::new();
+    decoder.read_to_string(&mut buf).unwrap();
+    serde_json::from_str(&buf).unwrap()
+});
