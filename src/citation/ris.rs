@@ -1,12 +1,10 @@
 // Ported from: https://github.com/michel-kraemer/citeproc-java/tree/master/citeproc-java/templates
 // Michel Kraemer
 // Apache License 2.0
-use citeproc_io::{Date, DateOrRange, Name, NumericValue, Reference};
+use citeproc_io::{unicode::is_latin_cyrillic, Date, DateOrRange, Name, NumberLike, Reference};
 use csl::*;
 use fnv::FnvHashMap;
 use serde::{Deserialize, Serialize};
-
-use super::name;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -303,7 +301,7 @@ impl Into<Reference> for RisReference {
         let csl_type = self.ty.expect("RIS type is missing").csl();
         let mut date: FnvHashMap<DateVariable, DateOrRange> = FnvHashMap::default();
         let mut name: FnvHashMap<NameVariable, Vec<Name>> = FnvHashMap::default();
-        let mut number: FnvHashMap<NumberVariable, NumericValue> = FnvHashMap::default();
+        let mut number: FnvHashMap<NumberVariable, NumberLike> = FnvHashMap::default();
         let mut ordinary: FnvHashMap<Variable, String> = FnvHashMap::default();
 
         if let Some(access_date) = self.access_date {
@@ -389,7 +387,7 @@ impl Into<Reference> for RisReference {
             (Some(start_page), Some(end_page)) => {
                 number.insert(
                     NumberVariable::Page,
-                    NumericValue::Str(format!("{}-{}", start_page, end_page)),
+                    NumberLike::Str(format!("{}-{}", start_page, end_page).into()),
                 );
             }
             (Some(page), None) | (None, Some(page)) => {
@@ -434,24 +432,30 @@ impl Into<Reference> for RisReference {
     }
 }
 
-fn parse_number(value: String) -> NumericValue {
+fn parse_number(value: String) -> NumberLike {
     match value.parse() {
-        Ok(value) => NumericValue::num(value),
-        Err(_) => NumericValue::Str(value),
+        Ok(value) => NumberLike::Num(value),
+        Err(_) => NumberLike::Str(value.into()),
     }
 }
 
 fn parse_authors(authors: Vec<String>) -> Vec<Name> {
     authors
         .into_iter()
-        .flat_map(|author| name::parse(&author))
+        .map(|author| Name::Literal {
+            is_latin_cyrillic: is_latin_cyrillic(&author),
+            literal: author.into(),
+        })
         .collect()
 }
 
 fn parse_date_or_range(value: String) -> DateOrRange {
     parse_date(&value)
         .map(DateOrRange::Single)
-        .unwrap_or_else(|| DateOrRange::Literal(value))
+        .unwrap_or_else(|| DateOrRange::Literal {
+            literal: value.into(),
+            circa: false,
+        })
 }
 
 fn parse_date(value: &str) -> Option<Date> {

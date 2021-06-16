@@ -1,12 +1,11 @@
 mod bibutils;
-mod name;
 mod ris;
 
 use std::sync::Arc;
 
-use citeproc::{prelude::SupportedFormat, ClusterPosition, Processor};
+use citeproc::{prelude::SupportedFormat, ClusterPosition, InitOptions, Processor};
 use citeproc_db::PredefinedLocales;
-use citeproc_io::{Cite, Cluster, Reference};
+use citeproc_io::{Cite, Reference};
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -67,7 +66,9 @@ fn convert_to_ris(root: &bibtex::SyntaxNode, key: &str) -> Option<RisReference> 
     let entry = root
         .children()
         .filter_map(bibtex::Entry::cast)
-        .find(|entry| entry.key().map(|key| key.to_string()).as_deref() == Some(key))?;
+        .find(|entry| entry.key().map(|key| key.to_string()).as_deref() == Some(key))
+        .filter(|entry| entry.fields().next().is_some())?;
+
     bib_code.push_str(&entry.syntax().to_string());
 
     bib_code = bib_code.replace("\\hypen", "-");
@@ -88,22 +89,24 @@ fn get_doi_url_markdown(ris_reference: &RisReference) -> Option<String> {
 }
 
 fn generate_bibliography(reference: Reference) -> Option<String> {
-    let locales = Arc::new(PredefinedLocales::bundled_en_us());
-    let mut processor = Processor::new(APA_STYLE, locales, false, SupportedFormat::Html).unwrap();
+    let mut processor = Processor::new(InitOptions {
+        style: APA_STYLE,
+        format: SupportedFormat::Html,
+        fetcher: Some(Arc::new(PredefinedLocales::bundled_en_us())),
+        ..InitOptions::default()
+    })
+    .ok()?;
     let cite = Cite::basic(&reference.id);
-    let cluster = Cluster {
-        id: 1,
-        cites: vec![cite],
-    };
+    let cluster_id = processor.new_cluster("texlab");
     processor.insert_reference(reference);
-    processor.init_clusters(vec![cluster]);
+    processor.insert_cites(cluster_id, &[cite]);
     processor
         .set_cluster_order(&[ClusterPosition {
-            id: 1,
+            id: cluster_id,
             note: Some(1),
         }])
         .unwrap();
-    processor.get_bibliography().pop()
+    Some(processor.get_bibliography().pop()?.value.to_string())
 }
 
 #[cfg(test)]
@@ -126,7 +129,7 @@ mod tests {
 
         let expected_md = MarkupContent {
             kind: MarkupKind::Markdown,
-            value: "Bar, F. (2020). *Baz Qux*.".into(),
+            value: "Bar, Foo. (2020). *Baz Qux*.".into(),
         };
 
         assert_eq!(actual_md, expected_md);
@@ -148,7 +151,7 @@ mod tests {
 
         let expected_md = MarkupContent {
             kind: MarkupKind::Markdown,
-            value: "Bar, F. (2020). *Baz Qux*.".into(),
+            value: "Bar, Foo. (2020). *Baz Qux*.".into(),
         };
 
         assert_eq!(actual_md, expected_md);

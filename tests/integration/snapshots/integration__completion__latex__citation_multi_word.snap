@@ -11,7 +11,7 @@ expression: "complete_and_resolve(&server, tex_uri, 3, 6)?"
       "kind": 1,
       "documentation": {
         "kind": "markdown",
-        "value": "Bar, F. (2019). *Baz Qux*."
+        "value": "Bar, Foo. (2019). *Baz Qux*."
       },
       "preselect": false,
       "sortText": "00 foo 2019 @articlefoo 2019 author Foo Bar title Baz Qux year 2019",

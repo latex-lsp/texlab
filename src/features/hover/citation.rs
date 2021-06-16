@@ -95,7 +95,7 @@ mod tests {
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: "Bar, F. (1337). *Baz Qux*.".into(),
+                value: "Bar, Foo. (1337). *Baz Qux*.".into(),
             }),
             range: Some(Range::new_simple(1, 6, 1, 9)),
         };
@@ -124,7 +124,7 @@ mod tests {
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: "Bar, F. (1337). *Baz Qux*.".into(),
+                value: "Bar, Foo. (1337). *Baz Qux*.".into(),
             }),
             range: Some(Range::new_simple(0, 9, 0, 12)),
         };
