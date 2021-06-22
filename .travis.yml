@@ -1,0 +1,6 @@
+os: freebsd
+language: rust
+rust:
+  - stable
+jobs:
+  fast_finish: true
