@@ -200,7 +200,7 @@ mod latex {
         let server = ServerTester::launch_new_instance()?;
         server.initialize(ClientCapabilities::default(), None)?;
         let uri = server.open("main.tex", r#"\b"#, "latex", false)?;
-        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 2)?);
         Ok(())
     }
 
@@ -411,7 +411,7 @@ mod latex {
             "latex",
             false,
         )?;
-        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 1)?);
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 2)?);
         Ok(())
     }
 
