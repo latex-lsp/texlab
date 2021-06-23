@@ -22,6 +22,7 @@ mod util;
 use std::borrow::Cow;
 
 use cancellation::CancellationToken;
+use cstree::TextSize;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use lsp_types::{
     CompletionItem, CompletionList, CompletionParams, CompletionTextEdit, Documentation,
@@ -147,7 +148,15 @@ fn dedup(items: Vec<InternalCompletionItem>) -> Vec<InternalCompletionItem> {
 
 fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalCompletionItem>) {
     let pattern: Cow<str> = match &context.cursor {
-        Cursor::Latex(token) if token.kind().is_command_name() => token.text().trim_end().into(),
+        Cursor::Latex(token) if token.kind().is_command_name() => {
+            if token.text_range().start() + TextSize::from(1) == context.offset {
+                // Handle cases similar to this one correctly:
+                // $\|$ % (| is the cursor)
+                "\\".into()
+            } else {
+                token.text().trim_end().into()
+            }
+        }
         Cursor::Latex(token) if token.kind() == latex::WORD => {
             if let Some(key) = latex::Key::cast(token.parent()) {
                 key.to_string().into()
