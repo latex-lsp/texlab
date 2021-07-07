@@ -358,12 +358,8 @@ impl Server {
         let sender = self.connection.sender.clone();
         let cx = Arc::clone(&self.context);
         self.pool.execute(move || {
-            pull_config(
-                &req_queue,
-                &sender,
-                &cx.options,
-                &cx.client_capabilities.lock().unwrap(),
-            );
+            let client_capabilities = &cx.client_capabilities.lock().unwrap().clone();
+            pull_config(&req_queue, &sender, &cx.options, &client_capabilities);
         });
 
         Some(FeatureRequest {
