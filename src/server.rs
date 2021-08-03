@@ -42,7 +42,7 @@ use crate::{
         FeatureRequest, ForwardSearchResult,
     },
     req_queue::{IncomingData, ReqQueue},
-    DocumentLanguage, ServerContext, Uri, Workspace, WorkspaceSource,
+    Document, DocumentLanguage, LineIndexExt, ServerContext, Uri, Workspace, WorkspaceSource,
 };
 
 pub struct Server {
@@ -92,7 +92,7 @@ impl Server {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
                     open_close: Some(true),
-                    change: Some(TextDocumentSyncKind::Full),
+                    change: Some(TextDocumentSyncKind::Incremental),
                     will_save: None,
                     will_save_wait_until: None,
                     save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
@@ -257,17 +257,35 @@ impl Server {
 
     fn did_change(&self, mut params: DidChangeTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri.into();
-        assert_eq!(params.content_changes.len(), 1);
         let old_document = self.workspace.get(&uri);
         let old_text = old_document.as_ref().map(|document| document.text.as_str());
-        let new_text = params.content_changes.pop().unwrap().text;
-
         let uri = Arc::new(uri);
+
+        let language = self
+            .workspace
+            .get(&uri)
+            .map(|document| document.data.language())
+            .unwrap_or(DocumentLanguage::Latex);
+
+        let new_document = match &old_document {
+            Some(old_document) => params
+                .content_changes
+                .into_iter()
+                .fold(Arc::clone(&old_document), |old_document, change| {
+                    self.merge_text_changes(&old_document, language, change)
+                }),
+            None => self.workspace.open(
+                Arc::clone(&uri),
+                params.content_changes.pop().unwrap().text,
+                language,
+                WorkspaceSource::Client,
+            ),
+        };
 
         let line = match old_text {
             Some(old_text) => old_text
                 .lines()
-                .zip(new_text.lines())
+                .zip(new_document.text.lines())
                 .position(|(a, b)| a != b)
                 .unwrap_or_default() as u32,
             None => 0,
@@ -276,31 +294,43 @@ impl Server {
             .positions_by_uri
             .insert(Arc::clone(&uri), Position::new(line, 0));
 
-        let language = self
-            .workspace
-            .get(&uri)
-            .map(|document| document.data.language())
-            .unwrap_or(DocumentLanguage::Latex);
-
-        let document = self
-            .workspace
-            .open(uri, new_text, language, WorkspaceSource::Client);
-
         let should_lint = { self.context.options.read().unwrap().chktex.on_edit };
-        if let Some(document) = self
-            .workspace
-            .get(document.uri.as_ref())
-            .filter(|_| should_lint)
-        {
+        if should_lint {
             self.chktex_debouncer
                 .sender
                 .send(DiagnosticsMessage::Analyze {
                     workspace: Arc::clone(&self.workspace),
-                    document,
+                    document: new_document,
                 })?;
         };
 
         Ok(())
+    }
+
+    fn merge_text_changes(
+        &self,
+        old_document: &Document,
+        new_language: DocumentLanguage,
+        change: TextDocumentContentChangeEvent,
+    ) -> Arc<Document> {
+        let new_text = match change.range {
+            Some(range) => {
+                let range = old_document.line_index.offset_lsp_range(range);
+                let mut new_text = String::new();
+                new_text.push_str(&old_document.text[..range.start().into()]);
+                new_text.push_str(&change.text);
+                new_text.push_str(&old_document.text[range.end().into()..]);
+                new_text
+            }
+            None => change.text,
+        };
+
+        self.workspace.open(
+            Arc::clone(&old_document.uri),
+            new_text,
+            new_language,
+            WorkspaceSource::Client,
+        )
     }
 
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
