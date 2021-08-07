@@ -176,6 +176,7 @@ impl Server {
         let req_queue = Arc::clone(&self.req_queue);
         let sender = self.connection.sender.clone();
         let context = Arc::clone(&self.context);
+        let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
             register_config_capability(&req_queue, &sender, &context.client_capabilities);
             pull_config(
@@ -184,6 +185,15 @@ impl Server {
                 &context.options,
                 &context.client_capabilities.lock().unwrap(),
             );
+
+            for document in workspace.documents() {
+                workspace.open(
+                    Arc::clone(&document.uri),
+                    document.text.clone(),
+                    document.language(),
+                    WorkspaceSource::Client,
+                );
+            }
         });
         Ok(())
     }
@@ -387,6 +397,7 @@ impl Server {
         let req_queue = Arc::clone(&self.req_queue);
         let sender = self.connection.sender.clone();
         let cx = Arc::clone(&self.context);
+        let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
             let client_capabilities = &cx.client_capabilities.lock().unwrap().clone();
             pull_config(&req_queue, &sender, &cx.options, &client_capabilities);
