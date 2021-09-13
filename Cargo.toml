@@ -74,7 +74,7 @@ uuid = { version="0.8.2", features=["v4"] }
 
 [dev-dependencies]
 indoc = "1.0.3"
-insta = "1.7.2"
+insta = "1.8.0"
 typed-builder = "0.9.0"
 unindent = "0.1.7"
 
