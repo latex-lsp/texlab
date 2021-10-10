@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 10.10.2021
+
+### Added
+
+- Enable incremental text synchronization to reduce serialization overhead ([#460](https://github.com/latex-lsp/texlab/issues/460))
+
+### Changed
+
+- Reduce size of executable by compressing the completion database
+
+### Fixed
+
+- Fix completion of commands near delimiters ([#449](https://github.com/latex-lsp/texlab/issues/449))
+- Prevent `texlab` from hanging because of unanswered configuration requests sent to Emacs ([#456](https://github.com/latex-lsp/texlab/issues/456))
+- Re-analyze the workspace if the initial configuration has been received late
+
 ## [3.2.0] - 12.06.2021
 
 ### Added
