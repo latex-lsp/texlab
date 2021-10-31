@@ -3,6 +3,7 @@ use lsp_types::{
     CompletionParams, DocumentHighlightParams, GotoDefinitionParams, HoverParams, Position,
     ReferenceParams, RenameParams, TextDocumentPositionParams,
 };
+use rustc_hash::FxHashSet;
 
 use crate::{
     syntax::{bibtex, latex, CstNode},
@@ -25,32 +26,42 @@ impl Cursor {
     ) -> Option<Self> {
         let left = left?;
         let right = right?;
+        let is_left_verbatim =
+            is_child_of_verbatim_environment(latex::SyntaxElementRef::Token(&left));
+        let is_right_verbatim =
+            is_child_of_verbatim_environment(latex::SyntaxElementRef::Token(&right));
 
-        if left.kind().is_command_name() {
+        if !is_left_verbatim && left.kind().is_command_name() {
             return Some(Self::Latex(left));
         }
 
-        if right.kind() == latex::WORD {
+        if !is_right_verbatim && right.kind() == latex::WORD {
             return Some(Self::Latex(right));
         }
 
-        if left.kind() == latex::WORD {
+        if !is_left_verbatim && left.kind() == latex::WORD {
             return Some(Self::Latex(left));
         }
 
-        if right.kind().is_command_name() {
+        if !is_right_verbatim && right.kind().is_command_name() {
             return Some(Self::Latex(right));
         }
 
-        if left.kind() == latex::WHITESPACE && left.parent().kind() == latex::KEY {
+        if !is_left_verbatim
+            && left.kind() == latex::WHITESPACE
+            && left.parent().kind() == latex::KEY
+        {
             return Some(Self::Latex(left));
         }
 
-        if right.kind() == latex::WHITESPACE && right.parent().kind() == latex::KEY {
+        if !is_right_verbatim
+            && right.kind() == latex::WHITESPACE
+            && right.parent().kind() == latex::KEY
+        {
             return Some(Self::Latex(right));
         }
 
-        Some(Self::Latex(right))
+        Some(Self::Latex(right)).filter(|_| !is_right_verbatim)
     }
 
     pub fn new_bibtex(
@@ -117,6 +128,40 @@ impl Cursor {
                     .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
             })
     }
+}
+
+static VERBATIM_ENVIRONMENTS: &[&str] = &[
+    "asy",
+    "asycode",
+    "luacode",
+    "lstlisting",
+    "minted",
+    "verbatim",
+];
+
+pub fn is_child_of_verbatim_environment(elem: latex::SyntaxElementRef) -> bool {
+    let mut nodes = FxHashSet::default();
+
+    elem.ancestors().any(|parent| {
+        nodes.insert(parent.syntax().green());
+        latex::Environment::cast(parent)
+            .filter(|env| {
+                env.begin()
+                    .and_then(|begin| begin.name())
+                    .and_then(|name| name.key())
+                    .filter(|key| VERBATIM_ENVIRONMENTS.contains(&key.to_string().as_str()))
+                    .is_some()
+                    && env
+                        .begin()
+                        .map(|begin| !nodes.contains(&begin.syntax().green()))
+                        .unwrap_or(true)
+                    && env
+                        .end()
+                        .map(|end| !nodes.contains(&end.syntax().green()))
+                        .unwrap_or(true)
+            })
+            .is_some()
+    })
 }
 
 pub struct CursorContext<P> {

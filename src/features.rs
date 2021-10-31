@@ -26,6 +26,7 @@ pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
 pub use self::semantic::{find_semantic_tokens_range, legend};
 pub use self::{
     build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
+    cursor::is_child_of_verbatim_environment,
     definition::goto_definition,
     folding::find_foldings,
     formatting::format_source_code,

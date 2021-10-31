@@ -793,4 +793,42 @@ mod latex {
         assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 7)?);
         Ok(())
     }
+
+    #[test]
+    fn test_verbatim_environment() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
+            "main.tex",
+            r#"
+                \documentclass{article}
+                \begin{verbatim}
+                \
+                \end{verbatim}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 2, 1)?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_verbatim_environment_name() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
+            "main.tex",
+            r#"
+                \documentclass{article}
+                \begin{verbatim}
+                \
+                \end{verbatim}
+            "#,
+            "latex",
+            false,
+        )?;
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 1, 10)?);
+        Ok(())
+    }
 }

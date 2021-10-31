@@ -5,6 +5,7 @@ use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
 use multimap::MultiMap;
 
 use crate::{
+    features::is_child_of_verbatim_environment,
     syntax::{latex, CstNode},
     Document, LineIndexExt, Uri, Workspace,
 };
@@ -93,15 +94,8 @@ fn analyze_curly_group(
         return None;
     }
 
-    let is_inside_verbatim_environment = node
-        .ancestors()
-        .filter_map(latex::Environment::cast)
-        .filter_map(|env| env.begin())
-        .filter_map(|begin| begin.name())
-        .filter_map(|name| name.key())
-        .any(|name| {
-            ["asy", "lstlisting", "minted", "verbatim"].contains(&name.to_string().as_str())
-        });
+    let is_inside_verbatim_environment =
+        is_child_of_verbatim_environment(latex::SyntaxElementRef::Node(node));
 
     if !is_inside_verbatim_environment
         && !node
