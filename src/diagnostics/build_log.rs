@@ -15,11 +15,13 @@ pub fn analyze_build_log_static(
 
     let root_document = workspace.documents().into_iter().find(|document| {
         if let Some(data) = document.data.as_latex() {
-            data.extras
-                .implicit_links
-                .log
-                .iter()
-                .any(|u| u.as_ref() == build_log_uri)
+            !document.uri.as_str().ends_with(".aux")
+                && data
+                    .extras
+                    .implicit_links
+                    .log
+                    .iter()
+                    .any(|u| u.as_ref() == build_log_uri)
         } else {
             false
         }

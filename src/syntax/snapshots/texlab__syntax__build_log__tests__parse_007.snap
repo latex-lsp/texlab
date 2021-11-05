@@ -1,0 +1,15 @@
+---
+source: src/syntax/build_log.rs
+expression: parse(&log).errors
+
+---
+[
+    BuildError {
+        relative_path: "/some/folder/a.tex",
+        level: Error,
+        message: "Undefined control sequence.",
+        line: Some(
+            3,
+        ),
+    },
+]
