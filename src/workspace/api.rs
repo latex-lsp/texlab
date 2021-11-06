@@ -33,7 +33,7 @@ pub trait Workspace: Send + Sync {
     fn reload(&self, path: PathBuf) -> Result<Option<Arc<Document>>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
 
-        if self.is_open(&uri) {
+        if self.is_open(&uri) && !uri.as_str().ends_with(".log") {
             return Ok(self.get(&uri));
         }
 
