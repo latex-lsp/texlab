@@ -5,5 +5,6 @@ expression: "setup(r#\"#\"#)"
 ---
 ROOT@0..1
   PREAMBLE@0..1
-    PARAMETER@0..1 "#"
+    TEXT@0..1
+      WORD@0..1 "#"
 

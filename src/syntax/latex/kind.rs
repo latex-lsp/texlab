@@ -13,7 +13,6 @@ pub enum SyntaxKind {
     R_BRACK,
     L_PAREN,
     R_PAREN,
-    PARAMETER,
     COMMA,
     EQUALITY_SIGN,
     WORD,

@@ -20,6 +20,7 @@ ROOT@0..23
         R_CURLY@18..19 "}"
     CURLY_GROUP@19..23
       L_CURLY@19..20 "{"
-      PARAMETER@20..22 "#1"
+      TEXT@20..22
+        WORD@20..22 "#1"
       R_CURLY@22..23 "}"
 

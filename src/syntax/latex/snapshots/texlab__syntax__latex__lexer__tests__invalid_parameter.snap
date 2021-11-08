@@ -5,7 +5,7 @@ expression: "verify(r#\"#\"#)"
 ---
 [
     (
-        PARAMETER,
+        WORD,
         "#",
     ),
 ]

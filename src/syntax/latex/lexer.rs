@@ -30,16 +30,13 @@ enum Token {
     #[token(")")]
     R_PAREN,
 
-    #[regex(r"#\d?")]
-    PARAMETER,
-
     #[token(",")]
     COMMA,
 
     #[token("=")]
     EQUALITY_SIGN,
 
-    #[regex(r"[^\s\\%\{\},\$\[\]\(\)=\#]+")]
+    #[regex(r"[^\s\\%\{\},\$\[\]\(\)=]+")]
     #[error]
     WORD,
 

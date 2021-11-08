@@ -105,7 +105,6 @@ impl<'a> Parser<'a> {
                 self.eat();
                 self.builder.finish_node();
             }
-            PARAMETER => self.eat(),
             WORD | COMMA => self.text(context),
             EQUALITY_SIGN => self.eat(),
             DOLLAR => self.formula(),
@@ -212,10 +211,6 @@ impl<'a> Parser<'a> {
             Some(WORD) => {
                 self.key();
             }
-            Some(PARAMETER) => {
-                self.eat();
-                self.trivia();
-            }
             Some(_) | None => {
                 self.builder.token(MISSING.into(), "");
             }
@@ -230,7 +225,7 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA | PARAMETER))
+            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
             .is_some()
         {
             if self.peek() == Some(WORD) {
@@ -250,10 +245,6 @@ impl<'a> Parser<'a> {
         self.trivia();
         match self.peek() {
             Some(kind) if kind.is_command_name() => {
-                self.eat();
-                self.trivia();
-            }
-            Some(PARAMETER) => {
                 self.eat();
                 self.trivia();
             }
@@ -300,10 +291,6 @@ impl<'a> Parser<'a> {
         match self.peek() {
             Some(WORD) => {
                 self.key();
-            }
-            Some(PARAMETER) => {
-                self.eat();
-                self.trivia();
             }
             Some(_) | None => {
                 self.builder.token(MISSING.into(), "");

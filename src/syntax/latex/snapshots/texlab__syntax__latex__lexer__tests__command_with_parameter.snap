@@ -37,7 +37,7 @@ expression: "verify(r#\"\\newcommand{\\id}[1]{#1}\"#)"
         "{",
     ),
     (
-        PARAMETER,
+        WORD,
         "#1",
     ),
     (
