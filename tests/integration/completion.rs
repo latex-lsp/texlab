@@ -268,7 +268,7 @@ mod latex {
             "bibtex",
             false,
         )?;
-        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 6)?);
+        assert_json_snapshot!(complete_and_resolve(&server, tex_uri, 3, 7)?);
         Ok(())
     }
 
@@ -549,7 +549,7 @@ mod latex {
             "latex",
             false,
         )?;
-        assert_json_snapshot!(complete_and_resolve(&server, uri, 5, 5)?);
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 5, 6)?);
         Ok(())
     }
 
@@ -732,7 +732,7 @@ mod latex {
             "latex",
             false,
         )?;
-        assert_json_snapshot!(complete_and_resolve(&server, uri, 3, 7)?);
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 3, 8)?);
         Ok(())
     }
 
@@ -790,7 +790,7 @@ mod latex {
             "latex",
             false,
         )?;
-        assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 7)?);
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 8)?);
         Ok(())
     }
 }

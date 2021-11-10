@@ -39,3 +39,23 @@ fn test_408_parent_expansion() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[cfg(feature = "completion")]
+fn test_510_completion_with_unmatched_braces() -> Result<()> {
+    use insta::assert_debug_snapshot;
+
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+
+    let uri = server.open(
+        "main.tex",
+        "\\label{eq:foo}\n\\ref{eq is a \\emph{useful} identity.",
+        "latex",
+        false,
+    )?;
+
+    assert_debug_snapshot!(server.complete(uri, 1, 7)?);
+
+    Ok(())
+}
