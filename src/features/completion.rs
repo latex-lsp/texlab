@@ -163,6 +163,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                 key.words()
                     .take_while(|word| word.text_range() != token.text_range())
                     .chain(std::iter::once(token))
+                    .take(10)
                     .join(" ")
                     .into()
             } else {

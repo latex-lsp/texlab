@@ -267,9 +267,9 @@ impl<P: HasPosition> CursorContext<P> {
         key.map(|key| {
             let range = if group
                 .syntax()
-                .children_with_tokens()
-                .filter_map(|elem| elem.into_token())
-                .any(|tok| tok.kind() == latex::MISSING)
+                .last_token()
+                .filter(|tok| tok.kind() == latex::MISSING)
+                .is_some()
             {
                 TextRange::new(key.small_range().start(), token.text_range().end())
             } else {
