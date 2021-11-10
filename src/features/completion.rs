@@ -24,6 +24,7 @@ use std::borrow::Cow;
 use cancellation::CancellationToken;
 use cstree::TextSize;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use itertools::Itertools;
 use lsp_types::{
     CompletionItem, CompletionList, CompletionParams, CompletionTextEdit, Documentation,
     InsertTextFormat, MarkupContent, MarkupKind, TextEdit,
@@ -159,7 +160,11 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
         }
         Cursor::Latex(token) if token.kind() == latex::WORD => {
             if let Some(key) = latex::Key::cast(token.parent()) {
-                key.to_string().into()
+                key.words()
+                    .take_while(|word| word.text_range() != token.text_range())
+                    .chain(std::iter::once(token))
+                    .join(" ")
+                    .into()
             } else {
                 token.text().into()
             }

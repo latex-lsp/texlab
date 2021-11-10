@@ -264,8 +264,21 @@ impl<P: HasPosition> CursorContext<P> {
         let group = latex::CurlyGroupWordList::cast(group)
             .filter(|group| self.is_inside_latex_curly(group))?;
 
-        key.map(|key| (key.to_string(), key.small_range(), group))
-            .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
+        key.map(|key| {
+            let range = if group
+                .syntax()
+                .children_with_tokens()
+                .filter_map(|elem| elem.into_token())
+                .any(|tok| tok.kind() == latex::MISSING)
+            {
+                TextRange::new(key.small_range().start(), token.text_range().end())
+            } else {
+                key.small_range()
+            };
+
+            (key.to_string(), range, group)
+        })
+        .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
     }
 }
 

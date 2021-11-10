@@ -1531,6 +1531,11 @@ mod tests {
     }
 
     #[test]
+    fn test_label_reference_incomplete() {
+        assert_debug_snapshot!(setup(r#"Equation \eqref{eq is a \emph{useful} identity."#));
+    }
+
+    #[test]
     fn test_equation_label_reference_simple() {
         assert_debug_snapshot!(setup(r#"\eqref{foo}"#));
     }
