@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1] - 10.11.2021
+
+### Fixed
+
+- Fix completion for symbols in commands with incomplete braces ([#510](https://github.com/latex-lsp/texlab/issues/510))
+- Do not produce syntax errors for macro parameters inside special command arguments ([#508](https://github.com/latex-lsp/texlab/issues/508))
+- Fix a bug that sometimes causes the `aux` file to pick up the diagnostics of the `tex` file ([#502](https://github.com/latex-lsp/texlab/issues/502))
+- Fix a bug that sometimes prevents `log` files from being reanalyzed ([#502](https://github.com/latex-lsp/texlab/issues/502))
+
 ## [3.3.0] - 10.10.2021
 
 ### Added
