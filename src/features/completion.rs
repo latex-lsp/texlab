@@ -164,6 +164,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                     .take_while(|word| word.text_range() != token.text_range())
                     .chain(std::iter::once(token))
                     .take(10)
+                    .filter(|word| word.text_range().start() < context.offset)
                     .join(" ")
                     .into()
             } else {
