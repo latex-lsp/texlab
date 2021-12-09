@@ -129,7 +129,7 @@ set synctex true
 set synctex-editor-command "code -g %{input}:%{line}"
 ```
 
-You can execute the search by pressing `Alt+Click` in the PDF document.
+You can execute the search by pressing `Ctrl+Click` in the PDF document.
 
 ---
 
