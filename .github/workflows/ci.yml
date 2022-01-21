@@ -1,0 +1,64 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+      - feature/*
+env:
+  CARGO_INCREMENTAL: 0
+  CI: 1
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings"
+  RUSTUP_MAX_RETRIES: 10
+jobs:
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      - name: Collect
+        uses: actions-rs/tarpaulin@v0.1
+      - name: Upload
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+  server:
+    name: LSP Server
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            toolchain: stable
+          - os: ubuntu-18.04
+            toolchain: 1.53
+          - os: windows-latest
+            toolchain: stable
+          - os: macos-latest
+            toolchain: stable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          override: true
+          components: rustfmt
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+      - name: Compile
+        run: cargo test --no-run --locked
+      - name: Test
+        run: cargo test -- --nocapture --quiet
