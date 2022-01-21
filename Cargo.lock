@@ -31,7 +31,7 @@ checksum = "43bb833f0bf979d8475d38fbf09ed3b8a55e1885fe93ad3f93239fc6a4f17b98"
 dependencies = [
  "getrandom 0.2.3",
  "once_cell",
- "version_check 0.9.3",
+ "version_check",
 ]
 
 [[package]]
@@ -130,25 +130,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "buf-min"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6ae7069aad07c7cdefe6a22a671f00650728bd2331a4cc62e1e5d0becdf9ca4"
-dependencies = [
- "bytes 0.5.6",
-]
-
-[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
-
-[[package]]
-name = "bytes"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e4cec68f03f32e44924783795810fa50a7035d8c8ebe78580ad7e6c703fba38"
 
 [[package]]
 name = "bytes"
@@ -212,7 +197,7 @@ dependencies = [
 [[package]]
 name = "citeproc"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3#5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cfg-if 0.1.10",
  "citeproc-db",
@@ -224,10 +209,8 @@ dependencies = [
  "log",
  "parking_lot",
  "rand",
- "rayon",
  "salsa",
  "serde",
- "serde_derive",
  "string-interner",
  "thiserror",
 ]
@@ -235,7 +218,7 @@ dependencies = [
 [[package]]
 name = "citeproc-db"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3#5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cfg-if 0.1.10",
  "citeproc-io",
@@ -252,7 +235,7 @@ dependencies = [
 [[package]]
 name = "citeproc-io"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3#5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cervine",
  "csl",
@@ -262,8 +245,9 @@ dependencies = [
  "lazy-transform-str",
  "log",
  "markup5ever_rcdom",
- "nom 6.1.2",
+ "nom",
  "once_cell",
+ "percent-encoding",
  "phf",
  "regex",
  "serde",
@@ -273,13 +257,13 @@ dependencies = [
  "ucd-trie",
  "unic-segment",
  "unic-ucd-category",
- "v_htmlescape",
+ "url",
 ]
 
 [[package]]
 name = "citeproc-proc"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3#5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
@@ -292,9 +276,8 @@ dependencies = [
  "lazy_static",
  "lexical-sort",
  "log",
- "nom 6.1.2",
+ "nom",
  "petgraph 0.5.1",
- "rayon",
  "salsa",
  "serde",
  "serde_derive",
@@ -326,7 +309,7 @@ version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2d47c1b11006b87e492b53b313bb699ce60e16613c4dddaa91f8f7c220ab2fa"
 dependencies = [
- "bytes 1.0.1",
+ "bytes",
  "memchr",
 ]
 
@@ -415,12 +398,12 @@ dependencies = [
 [[package]]
 name = "csl"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3#5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3"
+source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "chrono",
  "fnv",
  "log",
- "nom 6.1.2",
+ "nom",
  "roxmltree",
  "semver 0.11.0",
  "serde",
@@ -1077,16 +1060,6 @@ checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
 name = "nom"
-version = "4.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ad2a91a8e869eeb30b9cb3119ae87773a8f4ae617f41b1eb9c154b2905f7bd6"
-dependencies = [
- "memchr",
- "version_check 0.1.5",
-]
-
-[[package]]
-name = "nom"
 version = "6.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7413f999671bd4745a7b624bd370a569fb6bc574b23c83a3c5ed2e453f3d5e2"
@@ -1094,7 +1067,7 @@ dependencies = [
  "bitvec",
  "funty",
  "memchr",
- "version_check 0.9.3",
+ "version_check",
 ]
 
 [[package]]
@@ -1310,7 +1283,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "version_check 0.9.3",
+ "version_check",
 ]
 
 [[package]]
@@ -1321,7 +1294,7 @@ checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
 dependencies = [
  "proc-macro2",
  "quote",
- "version_check 0.9.3",
+ "version_check",
 ]
 
 [[package]]
@@ -2123,48 +2096,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "v_escape"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "039a44473286eb84e4e74f90165feff67c802dbeced7ee4c5b00d719b0d0475e"
-dependencies = [
- "buf-min",
- "v_escape_derive",
-]
-
-[[package]]
-name = "v_escape_derive"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c860ad1273f4eee7006cee05db20c9e60e5d24cba024a32e1094aa8e574f3668"
-dependencies = [
- "nom 4.2.3",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "v_htmlescape"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11d7c2a33ed7cf0dc1b42bcf39e01b6512f9df08f09e1cd8a49d9dc49a6a9482"
-dependencies = [
- "cfg-if 1.0.0",
- "v_escape",
-]
-
-[[package]]
 name = "vec_map"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
-
-[[package]]
-name = "version_check"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "914b1a6776c4c929a602fafd8bc742e06365d4bcbe48c30f9cca5824f70dc9dd"
 
 [[package]]
 name = "version_check"

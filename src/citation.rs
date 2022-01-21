@@ -97,12 +97,12 @@ fn generate_bibliography(reference: Reference) -> Option<String> {
     })
     .ok()?;
     let cite = Cite::basic(&reference.id);
-    let cluster_id = processor.new_cluster("texlab");
+    let cluster_id = processor.cluster_id("texlab");
     processor.insert_reference(reference);
     processor.insert_cites(cluster_id, &[cite]);
     processor
         .set_cluster_order(&[ClusterPosition {
-            id: cluster_id,
+            id: Some(cluster_id),
             note: Some(1),
         }])
         .unwrap();
