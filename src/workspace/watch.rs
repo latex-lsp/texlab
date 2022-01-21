@@ -32,7 +32,7 @@ where
     }
 
     fn create_watcher(workspace: Arc<W>) -> Result<RecommendedWatcher> {
-        let watcher = Watcher::new_immediate(move |event: notify::Result<notify::Event>| {
+        let watcher = notify::recommended_watcher(move |event: notify::Result<notify::Event>| {
             if let Ok(event) = event {
                 if event.kind.is_modify() {
                     for path in event.paths {
