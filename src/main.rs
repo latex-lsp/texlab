@@ -1,29 +1,29 @@
 use std::{env, fs::OpenOptions, io, path::PathBuf};
 
 use anyhow::Result;
+use clap::Parser;
 use log::LevelFilter;
 use lsp_server::Connection;
-use structopt::StructOpt;
 use texlab::Server;
 
 /// An implementation of the Language Server Protocol for LaTeX
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opts {
     /// Increase message verbosity (-vvvv for max verbosity)
-    #[structopt(short, long, parse(from_occurrences))]
+    #[clap(short, long, parse(from_occurrences))]
     verbosity: u8,
 
     /// No output printed to stderr
-    #[structopt(short, long)]
+    #[clap(short, long)]
     quiet: bool,
 
     /// Write the logging output to FILE
-    #[structopt(long, name = "FILE", parse(from_os_str))]
+    #[clap(long, name = "FILE", parse(from_os_str))]
     log_file: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
-    let opts = Opts::from_args();
+    let opts = Opts::parse();
     setup_logger(opts);
 
     let (connection, threads) = Connection::stdio();
