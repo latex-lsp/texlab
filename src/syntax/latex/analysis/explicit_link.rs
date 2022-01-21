@@ -50,10 +50,10 @@ pub fn analyze_import(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNo
     let import = latex::Import::cast(node)?;
 
     let mut targets = Vec::new();
-    let directory = context
-        .base_uri
-        .join(&import.directory()?.key()?.to_string())
-        .ok()?;
+    let directory = match import.directory().and_then(|dir| dir.key()) {
+        Some(dir) => Arc::new(context.base_uri.join(&dir.to_string()).ok()?.into()),
+        None => Arc::clone(&context.base_uri),
+    };
 
     let file = import.file()?.key()?;
     let stem = file.to_string();

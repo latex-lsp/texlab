@@ -59,3 +59,23 @@ fn test_510_completion_with_unmatched_braces() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[cfg(feature = "completion")]
+fn test_540_subimport_link() -> Result<()> {
+    let server = ServerTester::launch_new_instance()?;
+    server.initialize(ClientCapabilities::default(), None)?;
+
+    server.open("stuff.tex", "\\usepackage{lipsum}", "latex", false)?;
+    let uri = server.open("main.tex", "\\subimport{}{stuff}\n\\lipsu", "latex", false)?;
+
+    let success = server
+        .complete(uri, 1, 4)?
+        .items
+        .into_iter()
+        .any(|item| item.label == "lipsum");
+
+    assert!(success);
+
+    Ok(())
+}
