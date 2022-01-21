@@ -1,6 +1,6 @@
 [![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
 [![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
-[![Rust](https://img.shields.io/badge/rustc-1.51%2B-blue)](https://blog.rust-lang.org/2021/03/25/Rust-1.51.0.html)
+[![Rust](https://img.shields.io/badge/rustc-1.53%2B-blue)](https://blog.rust-lang.org/2021/06/17/Rust-1.53.0.html)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
@@ -9,6 +9,8 @@
 [![NixOS Unstable](https://repology.org/badge/version-for-repo/nix_unstable/texlab.svg?header=nixos%20unstable)](https://nixos.org/nixos/packages.html?channel=nixpkgs-unstable&query=texlab)
 [![Homebrew](https://repology.org/badge/version-for-repo/homebrew/texlab.svg?header=homebrew)](https://formulae.brew.sh/formula/texlab)
 [![Scoop](https://repology.org/badge/version-for-repo/scoop/texlab.svg?header=scoop)](https://scoop.sh/)
+[![FreeBSD](https://repology.org/badge/version-for-repo/freebsd/texlab.svg?header=freebsd)](https://www.freshports.org/devel/texlab)
+[![NetBSD](https://repology.org/badge/version-for-repo/pkgsrc_current/texlab.svg?header=netbsd)](https://pkgsrc.se/print/texlab)
 
 # TexLab
 
@@ -40,7 +42,7 @@ On Windows, you may need to install [Microsoft Visual C++ Redistributable for Vi
 
 You will need to install the following dependencies to compile the server:
 
-- A recent, stable version of [Rust](https://rustup.rs/) (>= 1.51)
+- A recent, stable version of [Rust](https://rustup.rs/) (>= 1.53)
 
 Then run the following command in the project folder:
 
