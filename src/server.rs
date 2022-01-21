@@ -41,8 +41,9 @@ use crate::{
         prepare_rename_all, rename_all, BuildEngine, BuildParams, BuildResult, BuildStatus,
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
-    req_queue::{IncomingData, ReqQueue},
-    Document, DocumentLanguage, LineIndexExt, ServerContext, Uri, Workspace, WorkspaceSource,
+    req_queue::{self, IncomingData, ReqQueue},
+    ClientCapabilitiesExt, Document, DocumentLanguage, LineIndexExt, ServerContext, Uri, Workspace,
+    WorkspaceSource,
 };
 
 pub struct Server {
@@ -179,22 +180,9 @@ impl Server {
         let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
             register_config_capability(&req_queue, &sender, &context.client_capabilities);
-            pull_config(
-                &req_queue,
-                &sender,
-                &context.options,
-                &context.client_capabilities.lock().unwrap(),
-            );
-
-            for document in workspace.documents() {
-                workspace.open(
-                    Arc::clone(&document.uri),
-                    document.text.clone(),
-                    document.language(),
-                    WorkspaceSource::Client,
-                );
-            }
+            pull_and_reparse(req_queue, sender, context, workspace);
         });
+
         Ok(())
     }
 
@@ -235,7 +223,19 @@ impl Server {
     }
 
     fn did_change_configuration(&self, params: DidChangeConfigurationParams) -> Result<()> {
-        push_config(&self.context.options, params.settings);
+        let client_capabilities = { self.context.client_capabilities.lock().unwrap().clone() };
+        if client_capabilities.has_pull_configuration_support() {
+            let req_queue = Arc::clone(&self.req_queue);
+            let sender = self.connection.sender.clone();
+            let context = Arc::clone(&self.context);
+            let workspace = Arc::clone(&self.workspace);
+            self.pool.execute(move || {
+                pull_and_reparse(req_queue, sender, context, workspace);
+            });
+        } else {
+            push_config(&self.context.options, params.settings);
+        }
+
         Ok(())
     }
 
@@ -394,14 +394,6 @@ impl Server {
     }
 
     fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> Option<FeatureRequest<P>> {
-        let req_queue = Arc::clone(&self.req_queue);
-        let sender = self.connection.sender.clone();
-        let cx = Arc::clone(&self.context);
-        self.pool.execute(move || {
-            let client_capabilities = &cx.client_capabilities.lock().unwrap().clone();
-            pull_config(&req_queue, &sender, &cx.options, &client_capabilities);
-        });
-
         Some(FeatureRequest {
             context: Arc::clone(&self.context),
             params,
@@ -851,6 +843,24 @@ impl Server {
         drop(self.chktex_debouncer);
         self.pool.join();
         Ok(())
+    }
+}
+
+fn pull_and_reparse(
+    req_queue: Arc<Mutex<lsp_server::ReqQueue<IncomingData, req_queue::OutgoingData>>>,
+    sender: Sender<Message>,
+    context: Arc<ServerContext>,
+    workspace: Arc<dyn Workspace>,
+) {
+    let client_capabilities = { context.client_capabilities.lock().unwrap().clone() };
+    pull_config(&req_queue, &sender, &context.options, &client_capabilities);
+    for document in workspace.documents() {
+        workspace.open(
+            Arc::clone(&document.uri),
+            document.text.clone(),
+            document.language(),
+            WorkspaceSource::Client,
+        );
     }
 }
 

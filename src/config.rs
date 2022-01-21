@@ -17,9 +17,7 @@ pub fn register_config_capability(
     client_capabilities: &Mutex<ClientCapabilities>,
 ) {
     let client_capabilities = client_capabilities.lock().unwrap();
-    if !client_capabilities.has_pull_configuration_support()
-        && client_capabilities.has_push_configuration_support()
-    {
+    if client_capabilities.has_push_configuration_support() {
         drop(client_capabilities);
         let reg = Registration {
             id: "pull-config".to_string(),
