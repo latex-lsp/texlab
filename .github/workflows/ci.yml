@@ -27,6 +27,8 @@ jobs:
           override: true
       - name: Collect
         uses: actions-rs/tarpaulin@v0.1
+        with:
+          args: "--avoid-cfg-tarpaulin"
       - name: Upload
         uses: codecov/codecov-action@v2
         with:
