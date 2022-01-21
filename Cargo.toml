@@ -30,15 +30,15 @@ semantic = []
 
 [dependencies]
 anyhow = "1.0.51"
-bibutils-sys = { version="0.1.1", optional=true }
+bibutils-sys = { version = "0.1.1", optional = true }
 byteorder = "1.4.3"
 cancellation = "0.1"
 cfg-if = "1.0.0"
 chashmap = "2.2.2"
-citeproc = { git="https://github.com/cormacrelf/citeproc-rs", rev="5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional=true }
-citeproc-db = { git="https://github.com/cormacrelf/citeproc-rs", rev="5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional=true }
-citeproc-io = { git="https://github.com/cormacrelf/citeproc-rs", rev="5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional=true }
-csl = { git="https://github.com/cormacrelf/citeproc-rs", rev="5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional=true }
+citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
+citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
+citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
+csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
 crossbeam-channel = "0.5.1"
 cstree = "0.6.1"
 derive_more = "0.99.17"
@@ -46,10 +46,10 @@ encoding_rs = "0.8.30"
 encoding_rs_io = "0.1.7"
 flate2 = "1.0.22"
 fern = "0.6"
-fnv = { version="1.0", optional=true }
-fuzzy-matcher = { version="0.3.7", optional=true }
-html2md = { version="0.2.13", optional=true }
-itertools = "0.10.3"
+fnv = { version = "1.0", optional = true }
+fuzzy-matcher = { version = "0.3.7", optional = true }
+html2md = { version = "0.2.13", optional = true }
+itertools = "0.10.1"
 log = "0.4.14"
 logos = "0.12.0"
 lsp-server = "0.5"
@@ -64,17 +64,17 @@ rustc-hash = "1.1.0"
 serde = "1.0.130"
 serde_json = "1.0.72"
 serde_repr = "0.1.7"
-smol_str = { version="0.1.21", features=["serde"] }
+smol_str = { version = "0.1.21", features = ["serde"] }
 structopt = "0.3"
 tempfile = "3.2.0"
 threadpool = "1.8.1"
 titlecase = "1.1.0"
 url = "2.2.2"
-uuid = { version="0.8.2", features=["v4"] }
+uuid = { version = "0.8.2", features = ["v4"] }
 
 [dev-dependencies]
 indoc = "1.0.3"
-insta = "1.8.0"
+insta = { version = "1.8.0", features = ["backtrace"] }
 typed-builder = "0.9.1"
 unindent = "0.1.7"
 
