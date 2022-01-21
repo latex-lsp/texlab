@@ -34,13 +34,13 @@ bibutils-sys = { version = "0.1.1", optional = true }
 byteorder = "1.4.3"
 cancellation = "0.1"
 cfg-if = "1.0.0"
-chashmap = "2.2.2"
 citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
 citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
 citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "5252fbd8d2046a5a7d5cdcee6c6cb39bd0f1a7f3", optional = true }
 crossbeam-channel = "0.5.2"
 cstree = "0.6.1"
+dashmap = "5.0.0"
 derive_more = "0.99.17"
 encoding_rs = "0.8.30"
 encoding_rs_io = "0.1.7"

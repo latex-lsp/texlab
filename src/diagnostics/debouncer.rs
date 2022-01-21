@@ -4,8 +4,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use chashmap::CHashMap;
 use crossbeam_channel::Sender;
+use dashmap::DashMap;
 
 use crate::{Document, ServerContext, Uri, Workspace};
 
@@ -31,7 +31,7 @@ impl DiagnosticsDebouncer {
 
         let handle = thread::spawn(move || {
             let pool = threadpool::Builder::new().build();
-            let last_task_time_by_uri: Arc<CHashMap<Arc<Uri>, Instant>> = Arc::default();
+            let last_task_time_by_uri: Arc<DashMap<Arc<Uri>, Instant>> = Arc::default();
             while let Ok(DiagnosticsMessage::Analyze {
                 workspace,
                 document,

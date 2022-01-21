@@ -8,8 +8,8 @@ use std::{
 
 use anyhow::Result;
 use cancellation::CancellationToken;
-use chashmap::CHashMap;
 use crossbeam_channel::Sender;
+use dashmap::DashMap;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use lsp_types::{
     notification::{LogMessage, Progress},
@@ -101,7 +101,7 @@ impl<'a> Drop for ProgressReporter<'a> {
 #[derive(Default)]
 pub struct BuildEngine {
     lock: Mutex<()>,
-    pub positions_by_uri: CHashMap<Arc<Uri>, Position>,
+    pub positions_by_uri: DashMap<Arc<Uri>, Position>,
 }
 
 impl BuildEngine {
