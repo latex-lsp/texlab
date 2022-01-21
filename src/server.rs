@@ -39,7 +39,7 @@ use crate::{
         find_all_references, find_document_highlights, find_document_links, find_document_symbols,
         find_foldings, find_hover, find_workspace_symbols, format_source_code, goto_definition,
         prepare_rename_all, rename_all, BuildEngine, BuildParams, BuildResult, BuildStatus,
-        FeatureRequest, ForwardSearchResult,
+        FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
     Document, DocumentLanguage, LineIndexExt, ServerContext, Uri, Workspace, WorkspaceSource,
@@ -751,13 +751,13 @@ impl Server {
         token: &Arc<CancellationToken>,
     ) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
-        self.handle_feature_request(
-            id,
-            params,
-            uri,
-            token,
-            crate::features::execute_forward_search,
-        )?;
+        self.handle_feature_request(id, params, uri, token, |req, token| {
+            crate::features::execute_forward_search(req, token).unwrap_or_else(|| {
+                ForwardSearchResult {
+                    status: ForwardSearchStatus::ERROR,
+                }
+            })
+        })?;
         Ok(())
     }
 
