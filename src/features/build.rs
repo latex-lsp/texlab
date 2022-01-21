@@ -233,7 +233,7 @@ fn capture_output(
                     &lsp_sender,
                     LogMessageParams {
                         message,
-                        typ: lsp_types::MessageType::Log,
+                        typ: lsp_types::MessageType::LOG,
                     },
                 )
                 .unwrap();

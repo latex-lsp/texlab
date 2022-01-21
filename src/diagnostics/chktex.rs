@@ -83,9 +83,9 @@ fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
         let message = captures[6].into();
         let range = Range::new_simple(line, character, line, character + digit);
         let severity = match kind {
-            "Message" => DiagnosticSeverity::Information,
-            "Warning" => DiagnosticSeverity::Warning,
-            _ => DiagnosticSeverity::Error,
+            "Message" => DiagnosticSeverity::INFORMATION,
+            "Warning" => DiagnosticSeverity::WARNING,
+            _ => DiagnosticSeverity::ERROR,
         };
 
         diagnostics.push(Diagnostic {

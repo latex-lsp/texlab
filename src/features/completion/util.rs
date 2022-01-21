@@ -62,5 +62,5 @@ pub fn adjust_kind(
             return kind;
         }
     }
-    CompletionItemKind::Text
+    CompletionItemKind::TEXT
 }

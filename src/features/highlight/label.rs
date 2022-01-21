@@ -31,7 +31,7 @@ pub fn find_label_highlights(
 
             highlights.push(DocumentHighlight {
                 range,
-                kind: Some(DocumentHighlightKind::Write),
+                kind: Some(DocumentHighlightKind::WRITE),
             });
         } else if let Some(label) = latex::LabelReference::cast(node) {
             for label_name in label
@@ -46,7 +46,7 @@ pub fn find_label_highlights(
 
                 highlights.push(DocumentHighlight {
                     range,
-                    kind: Some(DocumentHighlightKind::Read),
+                    kind: Some(DocumentHighlightKind::READ),
                 });
             }
         } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
@@ -61,7 +61,7 @@ pub fn find_label_highlights(
 
                 highlights.push(DocumentHighlight {
                     range,
-                    kind: Some(DocumentHighlightKind::Read),
+                    kind: Some(DocumentHighlightKind::READ),
                 });
             }
 
@@ -76,7 +76,7 @@ pub fn find_label_highlights(
 
                 highlights.push(DocumentHighlight {
                     range,
-                    kind: Some(DocumentHighlightKind::Read),
+                    kind: Some(DocumentHighlightKind::READ),
                 });
             }
         }
@@ -141,11 +141,11 @@ mod tests {
         let expected_highlights = vec![
             DocumentHighlight {
                 range: Range::new_simple(0, 7, 0, 10),
-                kind: Some(DocumentHighlightKind::Write),
+                kind: Some(DocumentHighlightKind::WRITE),
             },
             DocumentHighlight {
                 range: Range::new_simple(1, 5, 1, 8),
-                kind: Some(DocumentHighlightKind::Read),
+                kind: Some(DocumentHighlightKind::READ),
             },
         ];
 

@@ -30,7 +30,7 @@ pub fn analyze_latex_static(
                         Arc::clone(&document.uri),
                         Diagnostic {
                             range: document.line_index.line_col_lsp_range(node.text_range()),
-                            severity: Some(DiagnosticSeverity::Error),
+                            severity: Some(DiagnosticSeverity::ERROR),
                             code: Some(NumberOrString::Number(1)),
                             code_description: None,
                             source: Some("texlab".to_string()),
@@ -63,7 +63,7 @@ fn analyze_environment(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document.line_index.line_col_lsp_range(name1.small_range()),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(3)),
                 code_description: None,
                 source: Some("texlab".to_string()),
@@ -115,7 +115,7 @@ fn analyze_curly_group(
                 range: document
                     .line_index
                     .line_col_lsp_range(TextRange::empty(node.text_range().end())),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(2)),
                 code_description: None,
                 source: Some("texlab".to_string()),

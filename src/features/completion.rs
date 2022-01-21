@@ -333,7 +333,7 @@ fn convert_internal_items(
                     )),
                     data: Some(serde_json::to_value(CompletionItemData::CommandSnippet).unwrap()),
                     insert_text: Some("begin{$1}\n\t$0\n\\end{$1}".into()),
-                    insert_text_format: Some(InsertTextFormat::Snippet),
+                    insert_text_format: Some(InsertTextFormat::SNIPPET),
                     ..CompletionItem::new_simple("begin".into(), component_detail(&[]))
                 }
             } else {

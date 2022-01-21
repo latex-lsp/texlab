@@ -32,8 +32,8 @@ pub fn analyze_build_log_static(
     for error in &parse.errors {
         let pos = Position::new(error.line.unwrap_or(0), 0);
         let severity = match error.level {
-            BuildErrorLevel::Error => DiagnosticSeverity::Error,
-            BuildErrorLevel::Warning => DiagnosticSeverity::Warning,
+            BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
+            BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         };
         let range = Range::new(pos, pos);
         let diagnostic = Diagnostic {

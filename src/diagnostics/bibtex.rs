@@ -41,7 +41,7 @@ fn analyze_entry(
                 range: document
                     .line_index
                     .line_col_lsp_range(entry.ty()?.text_range()),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(4)),
                 code_description: None,
                 source: Some("texlab".to_string()),
@@ -61,7 +61,7 @@ fn analyze_entry(
                 range: document
                     .line_index
                     .line_col_lsp_range(entry.left_delimiter()?.text_range()),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(5)),
                 code_description: None,
                 source: Some("texlab".to_string()),
@@ -81,7 +81,7 @@ fn analyze_entry(
                 range: document
                     .line_index
                     .line_col_lsp_range(entry.right_delimiter()?.text_range()),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(6)),
                 code_description: None,
                 source: Some("texlab".to_string()),
@@ -110,7 +110,7 @@ fn analyze_field(
                 range: document
                     .line_index
                     .line_col_lsp_range(TextRange::empty(field.name()?.text_range().end())),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(7)),
                 code_description: None,
                 source: Some("texlab".to_string()),
@@ -130,7 +130,7 @@ fn analyze_field(
                 range: document.line_index.line_col_lsp_range(TextRange::empty(
                     field.equality_sign()?.text_range().end(),
                 )),
-                severity: Some(DiagnosticSeverity::Error),
+                severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(8)),
                 code_description: None,
                 source: Some("texlab".to_string()),
