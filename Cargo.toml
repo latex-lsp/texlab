@@ -10,6 +10,7 @@ authors = [
 ]
 edition = "2018"
 homepage = "https://texlab.netlify.app"
+resolver = "2"
 
 [lib]
 doctest = false
