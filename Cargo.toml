@@ -38,7 +38,6 @@ cfg-if = "1.0.0"
 citeproc = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "2ab195a1e6f84f0ff284813ece61dc62096abbfe", optional = true }
 citeproc-db = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "2ab195a1e6f84f0ff284813ece61dc62096abbfe", optional = true }
 citeproc-io = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "2ab195a1e6f84f0ff284813ece61dc62096abbfe", optional = true }
-clap = { version = "3.0.10", features = ["derive"] }
 csl = { git = "https://github.com/cormacrelf/citeproc-rs", rev = "2ab195a1e6f84f0ff284813ece61dc62096abbfe", optional = true }
 crossbeam-channel = "0.5.2"
 cstree = "0.6.1"
@@ -67,6 +66,7 @@ serde = "1.0.134"
 serde_json = "1.0.75"
 serde_repr = "0.1.7"
 smol_str = { version = "0.1.21", features = ["serde"] }
+structopt = "0.3"
 tempfile = "3.3.0"
 threadpool = "1.8.1"
 titlecase = "1.1.0"
