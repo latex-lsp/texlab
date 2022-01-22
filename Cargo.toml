@@ -9,7 +9,7 @@ authors = [
     "Patrick Förster <patrick.foerster@outlook.de>",
 ]
 edition = "2018"
-homepage = "https://texlab.netlify.app"
+homepage = "https://github.com/latex-lsp/texlab"
 resolver = "2"
 
 [lib]
