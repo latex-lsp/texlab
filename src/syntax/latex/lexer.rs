@@ -166,7 +166,7 @@ enum Token {
     #[regex(r"\\usepgflibrary|\\usetikzlibrary")]
     TIKZ_LIBRARY_IMPORT_NAME,
 
-    #[regex(r"\\newenvironment|\\newenvironment*")]
+    #[regex(r"\\newenvironment|\\newenvironment*|\\renewenvironment|\\renewenvironment*")]
     ENVIRONMENT_DEFINITION_NAME,
 }
 
