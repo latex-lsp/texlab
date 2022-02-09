@@ -211,6 +211,9 @@ impl<'a> Parser<'a> {
             Some(WORD) => {
                 self.key();
             }
+            Some(kind) if kind.is_command_name() => {
+                self.content(ParserContext::default());
+            }
             Some(_) | None => {
                 self.builder.token(MISSING.into(), "");
             }
