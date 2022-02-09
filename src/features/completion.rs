@@ -326,13 +326,14 @@ fn convert_internal_items(
                 .and_then(|cap| cap.snippet_support)
                 == Some(true)
             {
+                let text_edit = TextEdit::new(range, "begin{$1}\n\t$0\n\\end{$1}".into());
                 CompletionItem {
                     kind: Some(adjust_kind(
                         &context.request,
                         Structure::Snippet.completion_kind(),
                     )),
                     data: Some(serde_json::to_value(CompletionItemData::CommandSnippet).unwrap()),
-                    insert_text: Some("begin{$1}\n\t$0\n\\end{$1}".into()),
+                    text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                     insert_text_format: Some(InsertTextFormat::SNIPPET),
                     ..CompletionItem::new_simple("begin".into(), component_detail(&[]))
                 }
