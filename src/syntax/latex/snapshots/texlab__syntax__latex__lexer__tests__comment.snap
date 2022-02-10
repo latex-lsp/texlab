@@ -1,5 +1,6 @@
 ---
 source: src/syntax/latex/lexer.rs
+assertion_line: 248
 expression: "verify(\"hello %world\\r\\ntest %test\")"
 
 ---
@@ -17,7 +18,7 @@ expression: "verify(\"hello %world\\r\\ntest %test\")"
         "%world",
     ),
     (
-        WHITESPACE,
+        LINE_BREAK,
         "\r\n",
     ),
     (

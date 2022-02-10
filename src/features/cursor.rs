@@ -46,7 +46,9 @@ impl Cursor {
             return Some(Self::Latex(left));
         }
 
-        if right.kind() == latex::WHITESPACE && right.parent().kind() == latex::KEY {
+        if matches!(right.kind(), latex::WHITESPACE | latex::LINE_BREAK)
+            && right.parent().kind() == latex::KEY
+        {
             return Some(Self::Latex(right));
         }
 

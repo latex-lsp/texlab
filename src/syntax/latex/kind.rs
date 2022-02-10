@@ -5,6 +5,7 @@ pub enum SyntaxKind {
     ERROR = 0,
     MISSING,
 
+    LINE_BREAK,
     WHITESPACE,
     COMMENT,
     L_CURLY,

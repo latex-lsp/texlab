@@ -33,7 +33,7 @@ macro_rules! cst_node {
                 let start = full_range.start();
                 let mut token = self.syntax().last_token();
                 while let Some(current) = token {
-                    if !matches!(current.kind(), WHITESPACE | COMMENT) {
+                    if !matches!(current.kind(), LINE_BREAK | WHITESPACE | COMMENT) {
                         return TextRange::new(start, current.text_range().end());
                     }
                     token = current.prev_token();

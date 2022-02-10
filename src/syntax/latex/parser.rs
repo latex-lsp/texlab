@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
     fn trivia(&mut self) {
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT))
+            .filter(|&kind| matches!(kind, LINE_BREAK | WHITESPACE | COMMENT))
             .is_some()
         {
             self.eat();
@@ -96,7 +96,7 @@ impl<'a> Parser<'a> {
 
     fn content(&mut self, context: ParserContext) {
         match self.peek().unwrap() {
-            WHITESPACE | COMMENT => self.eat(),
+            LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
             L_CURLY if context.allow_environment => self.curly_group(),
             L_CURLY => self.curly_group_without_environments(),
             L_BRACK | L_PAREN => self.mixed_group(),
@@ -162,7 +162,7 @@ impl<'a> Parser<'a> {
         while self
             .peek()
             .filter(|&kind| {
-                matches!(kind, WHITESPACE | COMMENT | WORD | COMMA)
+                matches!(kind, LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA)
                     && (context.allow_comma || kind != COMMA)
             })
             .is_some()
@@ -228,7 +228,7 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | COMMA))
+            .filter(|&kind| matches!(kind, LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA))
             .is_some()
         {
             if self.peek() == Some(WORD) {
@@ -343,6 +343,8 @@ impl<'a> Parser<'a> {
         {
             self.eat();
         }
+
+        self.trivia();
         self.builder.finish_node();
     }
 
@@ -384,7 +386,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(KEY_VALUE_BODY.into());
         while let Some(kind) = self.peek() {
             match kind {
-                WHITESPACE | COMMENT => self.eat(),
+                LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
                 WORD => {
                     self.key_value_pair();
                     if self.peek() == Some(COMMA) {
@@ -436,7 +438,7 @@ impl<'a> Parser<'a> {
         self.eat();
         while let Some(kind) = self.peek() {
             match kind {
-                WHITESPACE | COMMENT => self.eat(),
+                LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
                 L_CURLY => self.curly_group(),
                 L_BRACK | L_PAREN => self.mixed_group(),
                 _ => break,
@@ -1710,5 +1712,10 @@ mod tests {
         assert_debug_snapshot!(setup(
             r#"\DeclareAcronym{eg}{short = e.g,long = for example,tag = abbrev}"#
         ));
+    }
+
+    #[test]
+    fn test_label_definition_line_break() {
+        assert_debug_snapshot!(setup("\\label{hello\nworld}"));
     }
 }

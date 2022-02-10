@@ -1,0 +1,21 @@
+---
+source: src/syntax/latex/parser.rs
+assertion_line: 1719
+expression: "setup(\"\\\\label{hello\\nworld}\")"
+
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    LABEL_DEFINITION@0..13
+      LABEL_DEFINITION_NAME@0..6 "\\label"
+      CURLY_GROUP_WORD@6..13
+        L_CURLY@6..7 "{"
+        KEY@7..13
+          WORD@7..12 "hello"
+          LINE_BREAK@12..13 "\n"
+        MISSING@13..13 ""
+    TEXT@13..18
+      WORD@13..18 "world"
+    ERROR@18..19
+      R_CURLY@18..19 "}"
+

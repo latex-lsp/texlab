@@ -6,8 +6,11 @@ use super::kind::SyntaxKind;
 #[allow(non_camel_case_types)]
 #[repr(u16)]
 enum Token {
-    #[regex(r"\s+")]
-    WHITESPACE = 2,
+    #[regex(r"[\r\n]+", priority = 2)]
+    LINE_BREAK = 2,
+
+    #[regex(r"\s+", priority = 1)]
+    WHITESPACE,
 
     #[regex(r"%[^\r\n]*")]
     COMMENT,
@@ -248,5 +251,10 @@ mod tests {
     #[test]
     fn test_invalid_parameter() {
         assert_debug_snapshot!(verify(r#"#"#))
+    }
+
+    #[test]
+    fn test_line_break() {
+        assert_debug_snapshot!(verify("hello\nworld"));
     }
 }

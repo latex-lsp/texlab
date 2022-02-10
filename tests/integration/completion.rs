@@ -793,4 +793,25 @@ mod latex {
         assert_json_snapshot!(complete_and_resolve(&server, uri, 4, 8)?);
         Ok(())
     }
+
+    #[test]
+    fn test_multi_line_key() -> Result<()> {
+        let server = ServerTester::launch_new_instance()?;
+        server.initialize(ClientCapabilities::default(), None)?;
+        let uri = server.open(
+            "main.tex",
+            r#"
+                \begin{verb
+                Velit tri-tip fig1n shoulder buffalo pariatur porkchop magna chuck sausage,
+                sed hamburger fatback ribeye biltong id lorem culpa cow, frankfurter
+                deserunt shortloin pancetta dolor et veniam aliqua andouille, pork fugiat eu
+                pig landjaeger proident aliquip voluptate.
+            "#,
+            "latex",
+            false,
+        )?;
+
+        assert_json_snapshot!(complete_and_resolve(&server, uri, 0, 11)?);
+        Ok(())
+    }
 }

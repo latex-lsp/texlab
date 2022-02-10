@@ -1,0 +1,20 @@
+---
+source: src/syntax/latex/lexer.rs
+assertion_line: 258
+expression: "verify(\"hello\\nworld\")"
+
+---
+[
+    (
+        WORD,
+        "hello",
+    ),
+    (
+        LINE_BREAK,
+        "\n",
+    ),
+    (
+        WORD,
+        "world",
+    ),
+]
