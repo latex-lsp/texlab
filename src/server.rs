@@ -20,6 +20,7 @@ use lsp_types::{
     *,
 };
 use notification::DidCloseTextDocument;
+use notify::RecursiveMode;
 use request::{
     Completion, DocumentHighlightRequest, DocumentSymbolRequest, HoverRequest,
     ResolveCompletionItem, WorkspaceSymbol,
@@ -180,7 +181,7 @@ impl Server {
         let workspace = Arc::clone(&self.workspace);
         self.pool.execute(move || {
             register_config_capability(&req_queue, &sender, &context.client_capabilities);
-            pull_and_reparse(req_queue, sender, context, workspace);
+            pull_and_reparse_all(req_queue, sender, context, workspace);
         });
 
         Ok(())
@@ -230,10 +231,18 @@ impl Server {
             let context = Arc::clone(&self.context);
             let workspace = Arc::clone(&self.workspace);
             self.pool.execute(move || {
-                pull_and_reparse(req_queue, sender, context, workspace);
+                pull_and_reparse_all(req_queue, sender, context, workspace);
             });
         } else {
             push_config(&self.context.options, params.settings);
+            if let Some(path) = { self.context.options.read().unwrap().aux_directory.clone() } {
+                let _ = self.workspace.watch(path, RecursiveMode::NonRecursive);
+            }
+
+            let workspace = Arc::clone(&self.workspace);
+            self.pool.execute(move || {
+                reparse_all(workspace.as_ref());
+            });
         }
 
         Ok(())
@@ -846,7 +855,7 @@ impl Server {
     }
 }
 
-fn pull_and_reparse(
+fn pull_and_reparse_all(
     req_queue: Arc<Mutex<lsp_server::ReqQueue<IncomingData, req_queue::OutgoingData>>>,
     sender: Sender<Message>,
     context: Arc<ServerContext>,
@@ -854,6 +863,14 @@ fn pull_and_reparse(
 ) {
     let client_capabilities = { context.client_capabilities.lock().unwrap().clone() };
     pull_config(&req_queue, &sender, &context.options, &client_capabilities);
+    if let Some(path) = { context.options.read().unwrap().aux_directory.clone() } {
+        let _ = workspace.watch(path, RecursiveMode::NonRecursive);
+    }
+
+    reparse_all(workspace.as_ref());
+}
+
+fn reparse_all(workspace: &dyn Workspace) {
     for document in workspace.documents() {
         workspace.open(
             Arc::clone(&document.uri),

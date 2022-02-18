@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
+use notify::RecursiveMode;
 
 use crate::{DocumentLanguage, Uri};
 
@@ -37,9 +38,9 @@ pub trait Workspace: Send + Sync {
             return Ok(self.get(&uri));
         }
 
-        let data = fs::read(&path)?;
-        let text = String::from_utf8_lossy(&data).into_owned();
         if let Some(language) = DocumentLanguage::by_path(&path) {
+            let data = fs::read(&path)?;
+            let text = String::from_utf8_lossy(&data).into_owned();
             Ok(Some(self.open(
                 uri,
                 text,
@@ -83,4 +84,6 @@ pub trait Workspace: Send + Sync {
     fn is_open(&self, uri: &Uri) -> bool;
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset>;
+
+    fn watch(&self, path: PathBuf, mode: RecursiveMode) -> Result<()>;
 }

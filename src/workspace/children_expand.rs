@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
+use anyhow::Result;
+use notify::RecursiveMode;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
@@ -88,5 +90,9 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {
         self.workspace.subset(uri)
+    }
+
+    fn watch(&self, path: PathBuf, mode: RecursiveMode) -> Result<()> {
+        self.workspace.watch(path, mode)
     }
 }

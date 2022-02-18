@@ -57,20 +57,11 @@ impl<W: Workspace> Workspace for DocumentWatcher<W> {
         if document.uri.scheme() == "file" {
             if let Ok(mut path) = document.uri.to_file_path() {
                 path.pop();
-                let mut watched_paths = self.watched_paths.lock().unwrap();
-                if !watched_paths.contains(&path) {
-                    if let Err(why) = self
-                        .watcher
-                        .lock()
-                        .unwrap()
-                        .watch(&path, RecursiveMode::NonRecursive)
-                    {
-                        warn!(
-                            "Failed to watch folder of document \"{}\": {}",
-                            document.uri, why
-                        );
-                    }
-                    watched_paths.insert(path);
+                if let Err(why) = self.watch(path, RecursiveMode::NonRecursive) {
+                    warn!(
+                        "Failed to watch folder of document \"{}\": {}",
+                        document.uri, why
+                    );
                 }
             }
         }
@@ -103,5 +94,15 @@ impl<W: Workspace> Workspace for DocumentWatcher<W> {
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {
         self.workspace.subset(uri)
+    }
+
+    fn watch(&self, path: PathBuf, mode: RecursiveMode) -> Result<()> {
+        let mut watched_paths = self.watched_paths.lock().unwrap();
+        if !watched_paths.contains(&path) {
+            self.watcher.lock().unwrap().watch(&path, mode)?;
+            watched_paths.insert(path);
+        }
+
+        Ok(())
     }
 }

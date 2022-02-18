@@ -1,5 +1,7 @@
-use std::{fs, sync::Arc};
+use std::{fs, path::PathBuf, sync::Arc};
 
+use anyhow::Result;
+use notify::RecursiveMode;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rustc_hash::FxHashSet;
 
@@ -95,6 +97,10 @@ where
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {
         self.workspace.subset(uri)
+    }
+
+    fn watch(&self, path: PathBuf, mode: RecursiveMode) -> Result<()> {
+        self.workspace.watch(path, mode)
     }
 }
 

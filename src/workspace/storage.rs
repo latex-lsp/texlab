@@ -1,5 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
+use anyhow::Result;
+use notify::RecursiveMode;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -132,5 +137,9 @@ impl Workspace for Storage {
         }
 
         Some(WorkspaceSubset { documents })
+    }
+
+    fn watch(&self, _path: PathBuf, _mode: RecursiveMode) -> Result<()> {
+        Ok(())
     }
 }
