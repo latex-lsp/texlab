@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::syntax::{latex, CstNode};
 
 use super::LatexAnalyzerContext;
@@ -8,5 +10,17 @@ pub fn analyze_command(context: &mut LatexAnalyzerContext, node: &latex::SyntaxN
         .extras
         .command_names
         .insert(command.name()?.text().into());
+    Some(())
+}
+
+pub fn analyze_command_definition(
+    context: &mut LatexAnalyzerContext,
+    node: &latex::SyntaxNode,
+) -> Option<()> {
+    let definition = latex::CommandDefinition::cast(node)?;
+    context
+        .extras
+        .command_names
+        .insert(definition.name()?.command()?.text().into());
     Some(())
 }

@@ -12,7 +12,7 @@ use crate::syntax::latex;
 
 pub use self::types::*;
 use self::{
-    command::analyze_command,
+    command::{analyze_command, analyze_command_definition},
     environment::analyze_begin,
     explicit_link::{analyze_import, analyze_include},
     implicit_link::analyze_implicit_links,
@@ -25,6 +25,7 @@ pub fn analyze(context: &mut LatexAnalyzerContext, root: &latex::SyntaxNode) {
     analyze_implicit_links(context);
     for node in root.descendants() {
         analyze_command(context, node)
+            .or_else(|| analyze_command_definition(context, node))
             .or_else(|| analyze_begin(context, node))
             .or_else(|| analyze_include(context, node))
             .or_else(|| analyze_import(context, node))
