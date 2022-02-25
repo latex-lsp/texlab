@@ -937,6 +937,10 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_BRACK) {
             self.brack_group_word();
+
+            if self.lexer.peek() == Some(L_BRACK) {
+                self.brack_group();
+            }
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
@@ -1568,6 +1572,11 @@ mod tests {
     #[test]
     fn test_command_definition_simple() {
         assert_debug_snapshot!(setup(r#"\newcommand[1]{\id}{#1}"#));
+    }
+
+    #[test]
+    fn test_command_definition_optional() {
+        assert_debug_snapshot!(setup(r#"\newcommand{\foo}[1][def]{#1}"#));
     }
 
     #[test]

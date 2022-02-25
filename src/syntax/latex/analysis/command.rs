@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::syntax::{latex, CstNode};
 
 use super::LatexAnalyzerContext;
