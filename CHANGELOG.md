@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 26.02.2022
+
+### Fixed
+
+- Parse command definitions with optional arguments correctly
+- Fix detection of command definitions in completion ([latex-lsp/texlab-vscode#618](https://github.com/latex-lsp/texlab-vscode/issues/618))
+- Watch aux directory by default for changes ([#563](https://github.com/latex-lsp/texlab/issues/563))
+- Do not allow multi-line keys in the grammar ([#559](https://github.com/latex-lsp/texlab/issues/559))
+- Use `textEdit` property for snippets ([#558](https://github.com/latex-lsp/texlab/issues/558))
+- Allow simple commands as text argument for most commands ([#557](https://github.com/latex-lsp/texlab/issues/557))
+- Treat `\renewcommand` as an environment definition ([#556](https://github.com/latex-lsp/texlab/issues/556))
+- Do not return `null` from forward search request
+- Make directory path in `\import` optional ([#540](https://github.com/latex-lsp/texlab/issues/540))
+- Do not spam workspace/configuration requests ([#533](https://github.com/latex-lsp/texlab/issues/533))
+
 ## [3.3.1] - 10.11.2021
 
 ### Fixed
