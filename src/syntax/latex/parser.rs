@@ -806,11 +806,51 @@ impl<'a> Parser<'a> {
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
-            self.curly_group_word_list();
+            self.curly_group_path_list();
         } else {
             self.builder.token(MISSING.into(), "");
         }
 
+        self.builder.finish_node();
+    }
+
+    fn curly_group_path_list(&mut self) {
+        self.builder.start_node(CURLY_GROUP_WORD_LIST.into());
+        self.eat();
+
+        while self
+            .peek()
+            .filter(|&kind| {
+                matches!(
+                    kind,
+                    LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA | EQUALITY_SIGN
+                )
+            })
+            .is_some()
+        {
+            if self.peek() == Some(WORD) {
+                self.path();
+            } else {
+                self.eat();
+            }
+        }
+
+        self.expect(R_CURLY);
+        self.builder.finish_node();
+    }
+
+    fn path(&mut self) {
+        self.builder.start_node(KEY.into());
+        self.eat();
+        while self
+            .peek()
+            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | EQUALITY_SIGN))
+            .is_some()
+        {
+            self.eat();
+        }
+
+        self.trivia();
         self.builder.finish_node();
     }
 
@@ -1457,6 +1497,11 @@ mod tests {
     #[test]
     fn test_latex_include_simple() {
         assert_debug_snapshot!(setup(r#"\include{foo/bar}"#));
+    }
+
+    #[test]
+    fn test_latex_include_equality_sign() {
+        assert_debug_snapshot!(setup(r#"\include{foo=bar}"#));
     }
 
     #[test]
