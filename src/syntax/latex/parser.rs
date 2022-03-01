@@ -1235,6 +1235,9 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_BRACK) {
             self.brack_group_word();
+            if self.lexer.peek() == Some(L_BRACK) {
+                self.brack_group();
+            }
         }
 
         for _ in 0..2 {
@@ -1759,6 +1762,11 @@ mod tests {
     #[test]
     fn test_environment_definition() {
         assert_debug_snapshot!(setup(r#"\newenvironment{bar}[1]{\begin{foo}}{\end{foo}}"#));
+    }
+
+    #[test]
+    fn test_environment_definition_optional_arg() {
+        assert_debug_snapshot!(setup(r#"\newenvironment{foo}[1][default]{begin}{end}"#));
     }
 
     #[test]
