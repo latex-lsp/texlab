@@ -21,7 +21,7 @@ jobs:
             archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/release texlab
             archive_type: application/gzip
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -42,7 +42,7 @@ jobs:
   ctan:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: git archive --prefix=texlab/ -o texlab.zip HEAD
       - id: get-version
         run: |
