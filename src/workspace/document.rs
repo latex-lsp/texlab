@@ -90,11 +90,15 @@ impl Document {
                 let root = latex::parse(&text).root;
 
                 let base_uri = match &context.options.read().unwrap().root_directory {
-                    Some(root_dir) => Uri::from_directory_path(root_dir)
-                        .map(Arc::new)
-                        .unwrap_or_else(|()| Arc::clone(&uri)),
+                    Some(root_dir) => {
+                        let root_dir = context.current_directory.join(&root_dir);
+                        Uri::from_directory_path(root_dir)
+                            .map(Arc::new)
+                            .unwrap_or_else(|()| Arc::clone(&uri))
+                    }
                     None => Arc::clone(&uri),
                 };
+
                 let mut context = LatexAnalyzerContext {
                     inner: context,
                     extras: latex::Extras::default(),
