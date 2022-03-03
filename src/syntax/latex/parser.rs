@@ -350,10 +350,15 @@ impl<'a> Parser<'a> {
 
     fn value(&mut self) {
         self.builder.start_node(VALUE.into());
-        self.content(ParserContext {
-            allow_environment: true,
-            allow_comma: false,
-        });
+        while let Some(kind) = self.lexer.peek() {
+            match kind {
+                COMMA | R_BRACK | R_CURLY => break,
+                _ => self.content(ParserContext {
+                    allow_environment: true,
+                    allow_comma: false,
+                }),
+            };
+        }
         self.builder.finish_node();
     }
 
@@ -1535,6 +1540,11 @@ mod tests {
     #[test]
     fn test_graphics_include_options() {
         assert_debug_snapshot!(setup(r#"\includegraphics[scale=.5]{foo/bar.pdf}"#));
+    }
+
+    #[test]
+    fn test_graphics_include_complicated_options() {
+        assert_debug_snapshot!(setup(r#"\includegraphics[width=0.5\textwidth]{}"#));
     }
 
     #[test]
