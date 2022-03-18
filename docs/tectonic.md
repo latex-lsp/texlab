@@ -1,26 +1,48 @@
-### Example: Using `tectonic`
+# Usage with `tectonic`
 
-[`tectonic`](https://tectonic-typesetting.github.io/) is an alternative to `latexmk`, built in Rust.
-You can quickly get started by changing `.vscode/settings.json` in your workspace to include the following:
+[`tectonic`](https://tectonic-typesetting.github.io/) is a modernized, alternative TeX engine.
+Most features of `texlab` work out of the box when using `tectonic`.
+To compile documents through `texlab`, you need to change the configuration.
+See `tectonic --help` for more information about the flags.
 
-```jsonc
+---
+
+**Hint:**
+
+Please make sure to set `texlab.auxDirectory` if you change the build directory with the `--outdir` argument.
+
+Also, `--keep-intermediates` is recommended because they allow `texlab`
+to find out the section numbers and show them in the completion.
+Without the `--keep-logs` flag, `texlab` won't be able to report compilation warnings.
+
+---
+
+## V2 CLI
+
+```json
 {
-  // See `tectonic --help` for the format
   "texlab.build.executable": "tectonic",
   "texlab.build.args": [
-    // Input
+    "-X",
+    "compile"
     "%f",
-    // Flags
     "--synctex",
     "--keep-logs",
     "--keep-intermediates"
-    // Options
-    // OPTIONAL: If you want a custom out directory,
-    // uncomment the following line.
-    //"--outdir out",
   ]
-  // OPTIONAL: The server needs to be configured
-  // to read the logs from the out directory as well.
-  // "texlab.auxDirectory": "out",
+}
+```
+
+## V1 CLI
+
+```json
+{
+  "texlab.build.executable": "tectonic",
+  "texlab.build.args": [
+    "%f",
+    "--synctex",
+    "--keep-logs",
+    "--keep-intermediates"
+  ]
 }
 ```
