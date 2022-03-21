@@ -16,10 +16,16 @@ Previewing can be configured in a variety of ways:
    because `texlab` does not get notified by `latexmk` when a document gets built.
    Instead, you can use `texlab.build.onSave`.
 
-In the following sections, we will give forward search configurations for several popular viewers
-and Visual Studio Code.
-However, these settings can easily be adapted to other editors.
+In the following sections, we will give forward search configurations for several popular viewers.
 If your viewer is not listed here, you can send us a pull request or create an issue.
+
+The inverse search configuration depends on the editor.
+In this section, we will give instructions for [Visual Studio Code](https://code.visualstudio.com/).
+However, these settings can easily be adapted to other editors.
+Some plugins can help with setting up inverse search:
+
+- `Neovim`: [`f3fora/nvim-texlabconfig`](https://github.com/f3fora/nvim-texlabconfig)
+- `Emacs`: [`ROCKTAKEY/lsp-latex`](https://github.com/ROCKTAKEY/lsp-latex#inverse-search)
 
 ---
 
