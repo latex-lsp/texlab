@@ -17,7 +17,7 @@ use self::{
     ris::{RisLibrary, RisReference},
 };
 
-static APA_STYLE: &str = include_str!("citation/apa.csl");
+static APA_STYLE: &str = include_str!("apa.csl");
 
 static DOI_URL_PATTERN: &str = r#"https://doi.org/\[.*\]\(.*\)"#;
 
