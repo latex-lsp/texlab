@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::Result;
 use cancellation::CancellationToken;
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 use dashmap::DashMap;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use lsp_types::{
@@ -183,8 +183,12 @@ impl BuildEngine {
             .current_dir(build_dir)
             .spawn()?;
 
-        let log_handle = capture_output(&mut process, lsp_sender);
+        let (exit_sender, exit_receiver) = crossbeam_channel::bounded(1);
+        let log_handle = capture_output(&mut process, lsp_sender, exit_receiver);
         let success = process.wait().map(|status| status.success())?;
+        exit_sender.send(())?;
+        drop(exit_sender);
+
         log_handle.join().unwrap();
         let status = if success {
             BuildStatus::SUCCESS
@@ -221,6 +225,7 @@ impl BuildEngine {
 fn capture_output(
     process: &mut std::process::Child,
     lsp_sender: &Sender<lsp_server::Message>,
+    exit_receiver: Receiver<()>,
 ) -> JoinHandle<()> {
     let (log_sender, log_receiver) = crossbeam_channel::unbounded();
     track_output(process.stdout.take().unwrap(), log_sender.clone());
@@ -228,15 +233,25 @@ fn capture_output(
     let log_handle = {
         let lsp_sender = lsp_sender.clone();
         thread::spawn(move || {
-            for message in &log_receiver {
-                client::send_notification::<LogMessage>(
-                    &lsp_sender,
-                    LogMessageParams {
-                        message,
-                        typ: lsp_types::MessageType::LOG,
+            // Build a list of operations.
+            let mut sel = crossbeam_channel::Select::new();
+            sel.recv(&log_receiver);
+            sel.recv(&exit_receiver);
+
+            loop {
+                crossbeam_channel::select! {
+                    recv(&log_receiver) -> message => {
+                        client::send_notification::<LogMessage>(
+                            &lsp_sender,
+                            LogMessageParams {
+                                message: message.unwrap(),
+                                typ: lsp_types::MessageType::LOG,
+                            },
+                        )
+                        .unwrap();
                     },
-                )
-                .unwrap();
+                    recv(&exit_receiver) -> _ => break,
+                };
             }
         })
     };
