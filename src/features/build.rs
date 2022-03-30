@@ -232,27 +232,22 @@ fn capture_output(
     track_output(process.stderr.take().unwrap(), log_sender);
     let log_handle = {
         let lsp_sender = lsp_sender.clone();
-        thread::spawn(move || {
-            // Build a list of operations.
-            let mut sel = crossbeam_channel::Select::new();
-            sel.recv(&log_receiver);
-            sel.recv(&exit_receiver);
-
-            loop {
-                crossbeam_channel::select! {
-                    recv(&log_receiver) -> message => {
+        thread::spawn(move || loop {
+            crossbeam_channel::select! {
+                recv(&log_receiver) -> message => {
+                    if let Ok(message) = message {
                         client::send_notification::<LogMessage>(
                             &lsp_sender,
                             LogMessageParams {
-                                message: message.unwrap(),
+                                message,
                                 typ: lsp_types::MessageType::LOG,
                             },
                         )
                         .unwrap();
-                    },
-                    recv(&exit_receiver) -> _ => break,
-                };
-            }
+                    }
+                },
+                recv(&exit_receiver) -> _ => break,
+            };
         })
     };
     log_handle
