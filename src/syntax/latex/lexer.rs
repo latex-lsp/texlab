@@ -49,127 +49,319 @@ enum Token {
     #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
     GENERIC_COMMAND_NAME,
 
-    #[regex(r"\\begin")]
+    #[token("\\begin")]
     BEGIN_ENVIRONMENT_NAME,
 
-    #[regex(r"\\end")]
+    #[token("\\end")]
     END_ENVIRONMENT_NAME,
 
-    #[regex(r"\\\[")]
+    #[token("\\[")]
     BEGIN_EQUATION_NAME,
 
-    #[regex(r"\\\]")]
+    #[token("\\]")]
     END_EQUATION_NAME,
 
-    #[regex(r"\\part\*?")]
+    #[token("\\part")]
+    #[token("\\part*")]
     PART_NAME,
 
-    #[regex(r"\\chapter\*?")]
+    #[token("\\chapter")]
+    #[token("\\chapter*")]
     CHAPTER_NAME,
 
-    #[regex(r"\\section\*?")]
+    #[token("\\section")]
+    #[token("\\section*")]
     SECTION_NAME,
 
-    #[regex(r"\\subsection\*?")]
+    #[token("\\subsection")]
+    #[token("\\subsection*")]
     SUBSECTION_NAME,
 
-    #[regex(r"\\subsubsection\*?")]
+    #[token("\\subsubsection")]
+    #[token("\\subsubsection*")]
     SUBSUBSECTION_NAME,
 
-    #[regex(r"\\paragraph\*?")]
+    #[token("\\paragraph")]
+    #[token("\\paragraph*")]
     PARAGRAPH_NAME,
 
-    #[regex(r"\\subparagraph\*?")]
+    #[token("\\subparagraph")]
+    #[token("\\subparagraph*")]
     SUBPARAGRAPH_NAME,
 
-    #[regex(r"\\item")]
+    #[token("\\item")]
     ENUM_ITEM_NAME,
 
-    #[regex(r"\\caption")]
+    #[token("\\caption")]
     CAPTION_NAME,
 
-    #[regex(r"\\cite|\\cite\*|\\Cite|\\nocite|\\citet|\\citep|\\citet\*|\\citep\*|\\citeauthor|\\citeauthor\*|\\Citeauthor|\\Citeauthor\*|\\citetitle|\\citetitle\*|\\citeyear|\\citeyear\*|\\citedate|\\citedate\*|\\citeurl|\\fullcite|\\citeyearpar|\\citealt|\\citealp|\\citetext|\\parencite|\\parencite\*|\\Parencite|\\footcite|\\footfullcite|\\footcitetext|\\textcite|\\Textcite|\\smartcite|\\Smartcite|\\supercite|\\autocite|\\Autocite|\\autocite\*|\\Autocite\*|\\volcite|\\Volcite|\\pvolcite|\\Pvolcite|\\fvolcite|\\ftvolcite|\\svolcite|\\Svolcite|\\tvolcite|\\Tvolcite|\\avolcite|\\Avolcite|\\notecite|\\notecite|\\pnotecite|\\Pnotecite|\\fnotecite|\\citeA|\\citeA\*")]
+    #[token("\\cite")]
+    #[token("\\cite*")]
+    #[token("\\Cite")]
+    #[token("\\nocite")]
+    #[token("\\citet")]
+    #[token("\\citet*")]
+    #[token("\\citep")]
+    #[token("\\citep*")]
+    #[token("\\citeauthor")]
+    #[token("\\citeauthor*")]
+    #[token("\\Citeauthor")]
+    #[token("\\Citeauthor*")]
+    #[token("\\citetitle")]
+    #[token("\\citetitle*")]
+    #[token("\\citeyear")]
+    #[token("\\citeyear*")]
+    #[token("\\citedate")]
+    #[token("\\citedate*")]
+    #[token("\\citeurl")]
+    #[token("\\fullcite")]
+    #[token("\\citeyearpar")]
+    #[token("\\citealt")]
+    #[token("\\citealp")]
+    #[token("\\citetext")]
+    #[token("\\parencite")]
+    #[token("\\parencite*")]
+    #[token("\\Parencite")]
+    #[token("\\footcite")]
+    #[token("\\footfullcite")]
+    #[token("\\footcitetext")]
+    #[token("\\textcite")]
+    #[token("\\Textcite")]
+    #[token("\\smartcite")]
+    #[token("\\supercite")]
+    #[token("\\autocite")]
+    #[token("\\autocite*")]
+    #[token("\\Autocite")]
+    #[token("\\Autocite*")]
+    #[token("\\volcite")]
+    #[token("\\Volcite")]
+    #[token("\\pvolcite")]
+    #[token("\\Pvolcite")]
+    #[token("\\fvolcite")]
+    #[token("\\ftvolcite")]
+    #[token("\\svolcite")]
+    #[token("\\Svolcite")]
+    #[token("\\tvolcite")]
+    #[token("\\Tvolcite")]
+    #[token("\\avolcite")]
+    #[token("\\Avolcite")]
+    #[token("\\notecite")]
+    #[token("\\pnotecite")]
+    #[token("\\Pnotecite")]
+    #[token("\\fnotecite")]
+    #[token("\\citeA")]
+    #[token("\\citeA*")]
     CITATION_NAME,
 
-    #[regex(r"\\usepackage|\\RequirePackage")]
+    #[token("\\usepackage")]
+    #[token("\\RequirePackage")]
     PACKAGE_INCLUDE_NAME,
 
-    #[regex(r"\\documentclass")]
+    #[token("\\documentclass")]
     CLASS_INCLUDE_NAME,
 
-    #[regex(r"\\include|\\subfileinclude|\\input|\\subfile")]
+    #[token("\\include")]
+    #[token("\\subfileinclude")]
+    #[token("\\input")]
+    #[token("\\subfile")]
     LATEX_INCLUDE_NAME,
 
-    #[regex(r"\\addbibresource")]
+    #[token("\\addbibresource")]
     BIBLATEX_INCLUDE_NAME,
 
-    #[regex(r"\\bibliography")]
+    #[token("\\bibliography")]
     BIBTEX_INCLUDE_NAME,
 
-    #[regex(r"\\includegraphics")]
+    #[token("\\includegraphics")]
     GRAPHICS_INCLUDE_NAME,
 
-    #[regex(r"\\includesvg")]
+    #[token("\\includesvg")]
     SVG_INCLUDE_NAME,
 
-    #[regex(r"\\includeinkscape")]
+    #[token("\\includeinkscape")]
     INKSCAPE_INCLUDE_NAME,
 
-    #[regex(r"\\verbatiminput|\\VerbatimInput")]
+    #[token("\\verbatiminput")]
+    #[token("\\VerbatimInput")]
     VERBATIM_INCLUDE_NAME,
 
-    #[regex(r"\\import|\\subimport|\\inputfrom|\\subimportfrom|\\includefrom|\\subincludefrom")]
+    #[token("\\import")]
+    #[token("\\subimport")]
+    #[token("\\inputfrom")]
+    #[token("\\subimportfrom")]
+    #[token("\\includefrom")]
+    #[token("\\subincludefrom")]
     IMPORT_NAME,
 
-    #[regex(r"\\label")]
+    #[token("\\label")]
     LABEL_DEFINITION_NAME,
 
-    #[regex(r"\\ref|\\vref|\\Vref|\\autoref|\\pageref|\\cref|\\Cref|\\cref*|\\Cref*|\\namecref|\\nameCref|\\lcnamecref|\\namecrefs|\\nameCrefs|\\lcnamecrefs|\\labelcref|\\labelcpageref|\\eqref")]
+    #[token("\\ref")]
+    #[token("\\vref")]
+    #[token("\\Vref")]
+    #[token("\\autoref")]
+    #[token("\\pageref")]
+    #[token("\\cref")]
+    #[token("\\cref*")]
+    #[token("\\Cref")]
+    #[token("\\Cref*")]
+    #[token("\\namecref")]
+    #[token("\\nameCref")]
+    #[token("\\lcnamecref")]
+    #[token("\\namecrefs")]
+    #[token("\\nameCrefs")]
+    #[token("\\lcnamecrefs")]
+    #[token("\\labelcref")]
+    #[token("\\labelcpageref")]
+    #[token("\\eqref")]
     LABEL_REFERENCE_NAME,
 
-    #[regex(r"\\crefrange\*?|\\Crefrange\*?")]
+    #[token("\\crefrange")]
+    #[token("\\crefrange*")]
+    #[token("\\Crefrange")]
+    #[token("\\Crefrange*")]
     LABEL_REFERENCE_RANGE_NAME,
 
-    #[regex(r"\\newlabel")]
+    #[token("\\newlabel")]
     LABEL_NUMBER_NAME,
 
-    #[regex(r"\\newcommand\*?|\\renewcommand|\\DeclareRobustCommand")]
+    #[token("\\newcommand")]
+    #[token("\\newcommand*")]
+    #[token("\\renewcommand")]
+    #[token("\\renewcommand*")]
+    #[token("\\DeclareRobustCommand")]
+    #[token("\\DeclareRobustCommand*")]
     COMMAND_DEFINITION_NAME,
 
-    #[regex(r"\\DeclareMathOperator\*?")]
+    #[token("\\DeclareMathOperator")]
+    #[token("\\DeclareMathOperator*")]
     MATH_OPERATOR_NAME,
 
-    #[regex(r"\\newglossaryentry")]
+    #[token("\\newglossaryentry")]
     GLOSSARY_ENTRY_DEFINITION_NAME,
 
-    #[regex(r"\\gls|\\Gls|\\GLS|\\glspl|\\Glspl|\\GLSpl|\\glsdisp|\\glslink|\\glstext|\\Glstext|\\GLStext|\\glsfirst|\\Glsfirst|\\GLSfirst|\\glsplural|\\Glsplural|\\GLSplural|\\glsfirstplural|\\Glsfirstplural|\\GLSfirstplural|\\glsname|\\Glsname|\\GLSname|\\glssymbol|\\Glssymbol|\\glsdesc|\\Glsdesc|\\GLSdesc|\\glsuseri|\\Glsuseri|\\GLSuseri|\\glsuserii|\\Glsuserii|\\GLSuserii|\\glsuseriii|\\Glsuseriii|\\GLSuseriii|\\glsuseriv|\\Glsuseriv|\\GLSuseriv|\\glsuserv|\\Glsuserv|\\GLSuserv|\\glsuservi|\\Glsuservi|\\GLSuservi")]
+    #[token("\\gls")]
+    #[token("\\Gls")]
+    #[token("\\GLS")]
+    #[token("\\glspl")]
+    #[token("\\Glspl")]
+    #[token("\\GLSpl")]
+    #[token("\\glsdisp")]
+    #[token("\\glslink")]
+    #[token("\\glstext")]
+    #[token("\\Glstext")]
+    #[token("\\GLStext")]
+    #[token("\\glsfirst")]
+    #[token("\\Glsfirst")]
+    #[token("\\GLSfirst")]
+    #[token("\\glsplural")]
+    #[token("\\Glsplural")]
+    #[token("\\GLSplural")]
+    #[token("\\glsfirstplural")]
+    #[token("\\Glsfirstplural")]
+    #[token("\\GLSfirstplural")]
+    #[token("\\glsname")]
+    #[token("\\Glsname")]
+    #[token("\\GLSname")]
+    #[token("\\glssymbol")]
+    #[token("\\Glssymbol")]
+    #[token("\\glsdesc")]
+    #[token("\\Glsdesc")]
+    #[token("\\GLSdesc")]
+    #[token("\\glsuseri")]
+    #[token("\\Glsuseri")]
+    #[token("\\GLSuseri")]
+    #[token("\\glsuserii")]
+    #[token("\\Glsuserii")]
+    #[token("\\glsuseriii")]
+    #[token("\\glsuseriv")]
+    #[token("\\Glsuseriv")]
+    #[token("\\GLSuseriv")]
+    #[token("\\glsuserv")]
+    #[token("\\Glsuserv")]
+    #[token("\\GLSuserv")]
+    #[token("\\glsuservi")]
+    #[token("\\Glsuservi")]
+    #[token("\\GLSuservi")]
     GLOSSARY_ENTRY_REFERENCE_NAME,
 
-    #[regex(r"\\newacronym")]
+    #[token("\\newacronym")]
     ACRONYM_DEFINITION_NAME,
 
-    #[regex(r"\\DeclareAcronym")]
+    #[token("\\DeclareAcronym")]
     ACRONYM_DECLARATION_NAME,
 
-    #[regex(r"\\acrshort|\\Acrshort|\\ACRshort|\\acrshortpl|\\Acrshortpl|\\ACRshortpl|\\acrlong|\\Acrlong|\\ACRlong|\\acrlongpl|\\Acrlongpl|\\ACRlongpl|\\acrfull|\\Acrfull|\\ACRfull|\\acrfullpl|\\Acrfullpl|\\ACRfullpl|\\acs|\\Acs|\\acsp|\\Acsp|\\acl|\\Acl|\\aclp|\\Aclp|\\acf|\\Acf|\\acfp|\\Acfp|\\ac|\\Ac|\\acp|\\glsentrylong|\\Glsentrylong|\\glsentrylongpl|\\Glsentrylongpl|\\glsentryshort|\\Glsentryshort|\\glsentryshortpl|\\Glsentryshortpl|\\glsentryfullpl|\\Glsentryfullpl")]
+    #[token("\\acrshort")]
+    #[token("\\Acrshort")]
+    #[token("\\ACRshort")]
+    #[token("\\acrshortpl")]
+    #[token("\\Acrshortpl")]
+    #[token("\\ACRshortpl")]
+    #[token("\\acrlong")]
+    #[token("\\Acrlong")]
+    #[token("\\ACRlong")]
+    #[token("\\acrlongpl")]
+    #[token("\\Acrlongpl")]
+    #[token("\\ACRlongpl")]
+    #[token("\\acrfull")]
+    #[token("\\Acrfull")]
+    #[token("\\ACRfull")]
+    #[token("\\acrfullpl")]
+    #[token("\\Acrfullpl")]
+    #[token("\\ACRfullpl")]
+    #[token("\\acs")]
+    #[token("\\Acs")]
+    #[token("\\acsp")]
+    #[token("\\Acsp")]
+    #[token("\\acl")]
+    #[token("\\Acl")]
+    #[token("\\aclp")]
+    #[token("\\Aclp")]
+    #[token("\\acf")]
+    #[token("\\Acf")]
+    #[token("\\acfp")]
+    #[token("\\Acfp")]
+    #[token("\\ac")]
+    #[token("\\Ac")]
+    #[token("\\acp")]
+    #[token("\\glsentrylong")]
+    #[token("\\Glsentrylong")]
+    #[token("\\glsentrylongpl")]
+    #[token("\\Glsentrylongpl")]
+    #[token("\\glsentryshort")]
+    #[token("\\Glsentryshort")]
+    #[token("\\glsentryshortpl")]
+    #[token("\\Glsentryshortpl")]
+    #[token("\\glsentryfullpl")]
+    #[token("\\Glsentryfullpl")]
     ACRONYM_REFERENCE_NAME,
 
-    #[regex(r"\\newtheorem|\\declaretheorem")]
+    #[token("\\newtheorem")]
+    #[token("\\newtheorem*")]
+    #[token("\\declaretheorem")]
+    #[token("\\declaretheorem*")]
     THEOREM_DEFINITION_NAME,
 
-    #[regex(r"\\color|\\colorbox|\\textcolor|\\pagecolor")]
+    #[token("\\color")]
+    #[token("\\colorbox")]
+    #[token("\\textcolor")]
+    #[token("\\pagecolor")]
     COLOR_REFERENCE_NAME,
 
-    #[regex(r"\\definecolor")]
+    #[token("\\definecolor")]
     COLOR_DEFINITION_NAME,
 
-    #[regex(r"\\definecolorset")]
+    #[token("\\definecolorset")]
     COLOR_SET_DEFINITION_NAME,
 
-    #[regex(r"\\usepgflibrary|\\usetikzlibrary")]
+    #[token("\\usepgflibrary")]
+    #[token("\\usetikzlibrary")]
     TIKZ_LIBRARY_IMPORT_NAME,
 
-    #[regex(r"\\newenvironment|\\newenvironment*|\\renewenvironment|\\renewenvironment*")]
+    #[token("\\newenvironment")]
+    #[token("\\newenvironment*")]
+    #[token("\\renewenvironment")]
+    #[token("\\renewenvironment*")]
     ENVIRONMENT_DEFINITION_NAME,
 }
 
