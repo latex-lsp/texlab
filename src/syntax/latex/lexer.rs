@@ -51,6 +51,13 @@ enum RootToken {
 
     #[token("\\iffalse")]
     BeginBlockComment,
+
+    #[token("\\begin{asy}")]
+    #[token("\\begin{verbatim}")]
+    #[token("\\begin{lstlisting}")]
+    #[token("\\begin{minted}")]
+    #[token("\\begin{pycode}")]
+    BeginVerbatimEnvironment,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
@@ -381,7 +388,22 @@ enum CommandNameToken {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
 enum BlockCommentToken {
     #[token("\\fi")]
-    Fi,
+    End,
+
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
+    #[regex(r"[^\\]+")]
+    #[error]
+    Verbatim,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
+enum VerbatimEnvironmentToken {
+    #[token("\\end{asy}")]
+    #[token("\\end{verbatim}")]
+    #[token("\\end{lstlisting}")]
+    #[token("\\end{minted}")]
+    #[token("\\end{pycode}")]
+    End,
 
     #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
     #[regex(r"[^\\]+")]
@@ -464,6 +486,17 @@ fn tokenize<'a>(input: &'a str, tokens: &mut Vec<(SyntaxKind, &'a str)>) {
                 let end = lexer.span().end;
                 lexer = RootToken::lexer(tokenize_block_comment(&lexer.source()[end..], tokens));
             }
+            RootToken::BeginVerbatimEnvironment => {
+                tokens.push((SyntaxKind::BEGIN_ENVIRONMENT_NAME, "\\begin"));
+                tokens.push((SyntaxKind::L_CURLY, "{"));
+                tokens.push((SyntaxKind::WORD, &text["\\begin{".len()..text.len() - 1]));
+                tokens.push((SyntaxKind::R_CURLY, "}"));
+                let end = lexer.span().end;
+                lexer = RootToken::lexer(tokenize_verbatim_environment(
+                    &lexer.source()[end..],
+                    tokens,
+                ));
+            }
         }
     }
 }
@@ -525,7 +558,32 @@ fn tokenize_block_comment<'a>(input: &'a str, tokens: &mut Vec<(SyntaxKind, &'a 
             BlockCommentToken::Verbatim => {
                 end = lexer.span().end;
             }
-            BlockCommentToken::Fi => {
+            BlockCommentToken::End => {
+                end = lexer.span().start;
+                break;
+            }
+        };
+    }
+
+    if end > 0 {
+        tokens.push((SyntaxKind::VERBATIM, &input[..end]));
+    }
+
+    &input[end..]
+}
+
+fn tokenize_verbatim_environment<'a>(
+    input: &'a str,
+    tokens: &mut Vec<(SyntaxKind, &'a str)>,
+) -> &'a str {
+    let mut lexer = VerbatimEnvironmentToken::lexer(input);
+    let mut end = 0;
+    while let Some(kind) = lexer.next() {
+        match kind {
+            VerbatimEnvironmentToken::Verbatim => {
+                end = lexer.span().end;
+            }
+            VerbatimEnvironmentToken::End => {
                 end = lexer.span().start;
                 break;
             }
@@ -599,5 +657,14 @@ mod tests {
     #[test]
     fn test_block_comment() {
         assert_debug_snapshot!(verify("Foo\\iffalse\n\\Bar{Baz}\n\\fi\\Qux"));
+    }
+
+    #[test]
+    fn test_asymptote() {
+        assert_debug_snapshot!(verify(
+            r#"\begin{asy}
+    printf("Hello World\n");
+\end{asy}"#
+        ));
     }
 }

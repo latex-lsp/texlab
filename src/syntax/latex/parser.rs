@@ -96,7 +96,7 @@ impl<'a> Parser<'a> {
 
     fn content(&mut self, context: ParserContext) {
         match self.peek().unwrap() {
-            LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
+            LINE_BREAK | WHITESPACE | COMMENT | VERBATIM => self.eat(),
             L_CURLY if context.allow_environment => self.curly_group(),
             L_CURLY => self.curly_group_without_environments(),
             L_BRACK | L_PAREN => self.mixed_group(),
@@ -1821,6 +1821,15 @@ Bar
 \fii
 \fi
 Baz"#
+        ));
+    }
+
+    #[test]
+    fn test_asymptote() {
+        assert_debug_snapshot!(setup(
+            r#"\begin{asy}
+    printf("Hello World\n");
+\end{asy}"#
         ));
     }
 }
