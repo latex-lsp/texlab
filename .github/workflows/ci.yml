@@ -89,6 +89,3 @@ jobs:
         id: rust_test_native
         if: matrix.transpile_target == null
         run: cargo test -- --nocapture --quiet
-      - name: Test with a cross compile
-        if: steps.rust_test_native.conclusion == 'skipped'
-        run: cargo test --target ${{ matrix.transpile_target }} -- --nocapture --quiet
