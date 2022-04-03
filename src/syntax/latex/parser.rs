@@ -153,6 +153,7 @@ impl<'a> Parser<'a> {
             TIKZ_LIBRARY_IMPORT_NAME => self.tikz_library_import(),
             ENVIRONMENT_DEFINITION_NAME => self.environment_definition(),
             BEGIN_BLOCK_COMMENT_NAME => self.block_comment(),
+            END_BLOCK_COMMENT_NAME => self.generic_command(),
             _ => unreachable!(),
         }
     }
