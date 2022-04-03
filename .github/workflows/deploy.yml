@@ -9,26 +9,44 @@ jobs:
       matrix:
         include:
           - os: ubuntu-18.04
+            transpile_target: null
             archive_file: texlab-x86_64-linux.tar.gz
             archive_cmd: tar -czvf {0} -C target/release texlab
             archive_type: application/gzip
           - os: windows-latest
+            transpile_target: null
             archive_file: texlab-x86_64-windows.zip
             archive_cmd: Compress-Archive target/release/texlab.exe {0}
             archive_type: application/zip
           - os: macos-latest
+            transpile_target: null
             archive_file: texlab-x86_64-macos.tar.gz
+            archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/release texlab
+            archive_type: application/gzip
+          - os: macos-11
+            transpile_target: aarch64-apple-darwin
+            archive_file: texlab-aarch64-macos.tar.gz
             archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/release texlab
             archive_type: application/gzip
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
+        id: rust_toolchain_native
+        if: matrix.transpile_target == null
         with:
           toolchain: stable
+          target: matrix.transpile_target
       - uses: actions-rs/cargo@v1
+        id: rust_build_native
+        if: matrix.transpile_target == null
         with:
           command: build
           args: --release --locked
+      - uses: actions-rs/cargo@v1
+        if: steps.rust_toolchain_native.conclusion == 'skipped'
+        with:
+          command: build
+          args: --release --locked --target ${{ matrix.transpile_target }}
       - run: ${{ format(matrix.archive_cmd, matrix.archive_file) }}
         name: "Compress release binary"
       - uses: actions/upload-release-asset@v1
