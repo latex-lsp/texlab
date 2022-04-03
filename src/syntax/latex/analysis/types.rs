@@ -24,6 +24,7 @@ pub struct Extras {
     pub label_names: Vec<LabelName>,
     pub label_numbers_by_name: FxHashMap<String, String>,
     pub theorem_environments: Vec<TheoremEnvironment>,
+    pub graphics_paths: FxHashSet<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Hash)]

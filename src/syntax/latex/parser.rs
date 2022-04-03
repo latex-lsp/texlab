@@ -154,6 +154,7 @@ impl<'a> Parser<'a> {
             ENVIRONMENT_DEFINITION_NAME => self.environment_definition(),
             BEGIN_BLOCK_COMMENT_NAME => self.block_comment(),
             END_BLOCK_COMMENT_NAME => self.generic_command(),
+            GRAPHICS_PATH_NAME => self.graphics_path(),
             _ => unreachable!(),
         }
     }
@@ -838,6 +839,17 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
+    fn curly_group_path(&mut self) {
+        self.builder.start_node(CURLY_GROUP_WORD.into());
+        self.eat();
+        while matches!(self.peek(), Some(WORD)) {
+            self.path();
+        }
+
+        self.expect(R_CURLY);
+        self.builder.finish_node();
+    }
+
     fn curly_group_path_list(&mut self) {
         self.builder.start_node(CURLY_GROUP_WORD_LIST.into());
         self.eat();
@@ -1272,6 +1284,26 @@ impl<'a> Parser<'a> {
             }
         }
 
+        self.builder.finish_node();
+    }
+
+    fn graphics_path(&mut self) {
+        self.builder.start_node(GRAPHICS_PATH.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(L_CURLY) {
+            self.eat();
+            self.trivia();
+
+            while matches!(self.lexer.peek(), Some(L_CURLY)) {
+                self.curly_group_path();
+            }
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
+        self.expect(R_CURLY);
         self.builder.finish_node();
     }
 }
@@ -1832,5 +1864,10 @@ Baz"#
     printf("Hello World\n");
 \end{asy}"#
         ));
+    }
+
+    #[test]
+    fn test_graphics_path() {
+        assert_debug_snapshot!(setup(r#"\graphicspath{{../figures/}}"#));
     }
 }

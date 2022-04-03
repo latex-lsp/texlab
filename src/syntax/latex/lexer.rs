@@ -377,6 +377,9 @@ enum CommandNameToken {
     #[token("\\renewenvironment*")]
     EnvironmentDefinition,
 
+    #[token("\\graphicspath")]
+    GraphicsPath,
+
     #[token("\\fi")]
     EndBlockComment,
 
@@ -546,6 +549,7 @@ fn tokenize_command_name(text: &str) -> SyntaxKind {
         CommandNameToken::TikzLibraryImport => SyntaxKind::TIKZ_LIBRARY_IMPORT_NAME,
         CommandNameToken::EnvironmentDefinition => SyntaxKind::ENVIRONMENT_DEFINITION_NAME,
         CommandNameToken::EndBlockComment => SyntaxKind::END_BLOCK_COMMENT_NAME,
+        CommandNameToken::GraphicsPath => SyntaxKind::GRAPHICS_PATH_NAME,
         CommandNameToken::Generic => SyntaxKind::GENERIC_COMMAND_NAME,
     }
 }

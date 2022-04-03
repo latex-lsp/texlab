@@ -55,8 +55,24 @@ pub fn complete_includes<'a>(
         TextRange::new(start, path_range.end())
     };
 
-    let current_dir = current_dir(context, &path_text)?;
-    for entry in fs::read_dir(current_dir).ok()?.filter_map(Result::ok) {
+    let mut dirs = vec![current_dir(context, &path_text, None)];
+    if include.kind() == latex::GRAPHICS_INCLUDE {
+        for document in &context.request.subset.documents {
+            if let Some(data) = document.data.as_latex() {
+                for graphics_path in &data.extras.graphics_paths {
+                    dirs.push(current_dir(context, &path_text, Some(&graphics_path)));
+                }
+            }
+        }
+    }
+
+    for entry in dirs
+        .into_iter()
+        .flatten()
+        .filter_map(|dir| fs::read_dir(dir).ok())
+        .flatten()
+        .flatten()
+    {
         let mut path = entry.path();
 
         let file_type = entry.file_type().ok()?;
@@ -79,7 +95,11 @@ pub fn complete_includes<'a>(
     Some(())
 }
 
-fn current_dir(context: &CursorContext<CompletionParams>, path_text: &str) -> Option<PathBuf> {
+fn current_dir(
+    context: &CursorContext<CompletionParams>,
+    path_text: &str,
+    graphics_path: Option<&str>,
+) -> Option<PathBuf> {
     let mut path = context
         .request
         .context
@@ -103,6 +123,10 @@ fn current_dir(context: &CursorContext<CompletionParams>, path_text: &str) -> Op
 
     path = PathBuf::from(path.to_str()?.replace('\\', "/"));
     if !path_text.is_empty() {
+        if let Some(graphics_path) = graphics_path {
+            path.push(graphics_path);
+        }
+
         path.push(&path_text);
         if !path_text.ends_with('/') {
             path.pop();

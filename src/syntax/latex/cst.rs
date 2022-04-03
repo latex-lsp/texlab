@@ -657,3 +657,15 @@ impl<'a> TikzLibraryImport<'a> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
+
+cst_node!(GraphicsPath, GRAPHICS_PATH);
+
+impl<'a> GraphicsPath<'a> {
+    pub fn command(&self) -> Option<&'a SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord<'a>> + 'a {
+        self.syntax().children().filter_map(CurlyGroupWord::cast)
+    }
+}
