@@ -1,12 +1,12 @@
 ---
 source: src/syntax/latex/parser.rs
+assertion_line: 1792
 expression: "setup(r#\"\\newenvironment{bar}[1]{\\begin{foo}}{\\end{foo}}\"#)"
-
 ---
 ROOT@0..47
   PREAMBLE@0..47
     ENVIRONMENT_DEFINITION@0..47
-      ENVIRONMENT_DEFINIITION_NAME@0..15 "\\newenvironment"
+      ENVIRONMENT_DEFINITION_NAME@0..15 "\\newenvironment"
       CURLY_GROUP_WORD@15..20
         L_CURLY@15..16 "{"
         KEY@16..19

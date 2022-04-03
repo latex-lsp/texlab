@@ -5,95 +5,101 @@ use super::kind::SyntaxKind;
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
 #[allow(non_camel_case_types)]
 #[repr(u16)]
-enum Token {
+enum RootToken {
     #[regex(r"[\r\n]+", priority = 2)]
-    LINE_BREAK = 2,
+    LineBreak = 2,
 
     #[regex(r"\s+", priority = 1)]
-    WHITESPACE,
+    Whitespace,
 
     #[regex(r"%[^\r\n]*")]
-    COMMENT,
+    LineComment,
 
     #[token("{")]
-    L_CURLY,
+    LCurly,
 
     #[token("}")]
-    R_CURLY,
+    RCurly,
 
     #[token("[")]
-    L_BRACK,
+    LBrack,
 
     #[token("]")]
-    R_BRACK,
+    RBrack,
 
     #[token("(")]
-    L_PAREN,
+    LParen,
 
     #[token(")")]
-    R_PAREN,
+    RParen,
 
     #[token(",")]
-    COMMA,
+    Comma,
 
     #[token("=")]
-    EQUALITY_SIGN,
+    Eq,
 
     #[regex(r"[^\s\\%\{\},\$\[\]\(\)=]+")]
     #[error]
-    WORD,
+    Word,
 
     #[regex(r"\$\$?")]
-    DOLLAR,
+    Dollar,
 
     #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
-    GENERIC_COMMAND_NAME,
+    CommandName,
 
+    #[token("\\iffalse")]
+    BeginBlockComment,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
+enum CommandNameToken {
     #[token("\\begin")]
-    BEGIN_ENVIRONMENT_NAME,
+    BeginEnvironment,
 
     #[token("\\end")]
-    END_ENVIRONMENT_NAME,
+    EndEnvironment,
 
     #[token("\\[")]
-    BEGIN_EQUATION_NAME,
+    BeginEquation,
 
     #[token("\\]")]
-    END_EQUATION_NAME,
+    EndEquation,
 
     #[token("\\part")]
     #[token("\\part*")]
-    PART_NAME,
+    Part,
 
     #[token("\\chapter")]
     #[token("\\chapter*")]
-    CHAPTER_NAME,
+    Chapter,
 
     #[token("\\section")]
     #[token("\\section*")]
-    SECTION_NAME,
+    Section,
 
     #[token("\\subsection")]
     #[token("\\subsection*")]
-    SUBSECTION_NAME,
+    Subsection,
 
     #[token("\\subsubsection")]
     #[token("\\subsubsection*")]
-    SUBSUBSECTION_NAME,
+    Subsubsection,
 
     #[token("\\paragraph")]
     #[token("\\paragraph*")]
-    PARAGRAPH_NAME,
+    Paragraph,
 
     #[token("\\subparagraph")]
     #[token("\\subparagraph*")]
-    SUBPARAGRAPH_NAME,
+    Subparagraph,
 
     #[token("\\item")]
-    ENUM_ITEM_NAME,
+    EnumItem,
 
     #[token("\\caption")]
-    CAPTION_NAME,
+    Caption,
 
     #[token("\\cite")]
     #[token("\\cite*")]
@@ -151,39 +157,39 @@ enum Token {
     #[token("\\fnotecite")]
     #[token("\\citeA")]
     #[token("\\citeA*")]
-    CITATION_NAME,
+    Citation,
 
     #[token("\\usepackage")]
     #[token("\\RequirePackage")]
-    PACKAGE_INCLUDE_NAME,
+    PackageInclude,
 
     #[token("\\documentclass")]
-    CLASS_INCLUDE_NAME,
+    ClassInclude,
 
     #[token("\\include")]
     #[token("\\subfileinclude")]
     #[token("\\input")]
     #[token("\\subfile")]
-    LATEX_INCLUDE_NAME,
+    LatexInclude,
 
     #[token("\\addbibresource")]
-    BIBLATEX_INCLUDE_NAME,
+    BiblatexInclude,
 
     #[token("\\bibliography")]
-    BIBTEX_INCLUDE_NAME,
+    BibtexInclude,
 
     #[token("\\includegraphics")]
-    GRAPHICS_INCLUDE_NAME,
+    GraphicsInclude,
 
     #[token("\\includesvg")]
-    SVG_INCLUDE_NAME,
+    SvgInclude,
 
     #[token("\\includeinkscape")]
-    INKSCAPE_INCLUDE_NAME,
+    InkscapeInclude,
 
     #[token("\\verbatiminput")]
     #[token("\\VerbatimInput")]
-    VERBATIM_INCLUDE_NAME,
+    VerbatimInclude,
 
     #[token("\\import")]
     #[token("\\subimport")]
@@ -191,10 +197,10 @@ enum Token {
     #[token("\\subimportfrom")]
     #[token("\\includefrom")]
     #[token("\\subincludefrom")]
-    IMPORT_NAME,
+    Import,
 
     #[token("\\label")]
-    LABEL_DEFINITION_NAME,
+    LabelDefinition,
 
     #[token("\\ref")]
     #[token("\\vref")]
@@ -214,16 +220,16 @@ enum Token {
     #[token("\\labelcref")]
     #[token("\\labelcpageref")]
     #[token("\\eqref")]
-    LABEL_REFERENCE_NAME,
+    LabelReference,
 
     #[token("\\crefrange")]
     #[token("\\crefrange*")]
     #[token("\\Crefrange")]
     #[token("\\Crefrange*")]
-    LABEL_REFERENCE_RANGE_NAME,
+    LabelReferenceRange,
 
     #[token("\\newlabel")]
-    LABEL_NUMBER_NAME,
+    LabelNumber,
 
     #[token("\\newcommand")]
     #[token("\\newcommand*")]
@@ -231,14 +237,14 @@ enum Token {
     #[token("\\renewcommand*")]
     #[token("\\DeclareRobustCommand")]
     #[token("\\DeclareRobustCommand*")]
-    COMMAND_DEFINITION_NAME,
+    CommandDefinition,
 
     #[token("\\DeclareMathOperator")]
     #[token("\\DeclareMathOperator*")]
-    MATH_OPERATOR_NAME,
+    MathOperator,
 
     #[token("\\newglossaryentry")]
-    GLOSSARY_ENTRY_DEFINITION_NAME,
+    GlossaryEntryDefinition,
 
     #[token("\\gls")]
     #[token("\\Gls")]
@@ -283,13 +289,13 @@ enum Token {
     #[token("\\glsuservi")]
     #[token("\\Glsuservi")]
     #[token("\\GLSuservi")]
-    GLOSSARY_ENTRY_REFERENCE_NAME,
+    GlossaryEntryReference,
 
     #[token("\\newacronym")]
-    ACRONYM_DEFINITION_NAME,
+    AcronymDefinition,
 
     #[token("\\DeclareAcronym")]
-    ACRONYM_DECLARATION_NAME,
+    AcronymDeclaration,
 
     #[token("\\acrshort")]
     #[token("\\Acrshort")]
@@ -334,35 +340,53 @@ enum Token {
     #[token("\\Glsentryshortpl")]
     #[token("\\glsentryfullpl")]
     #[token("\\Glsentryfullpl")]
-    ACRONYM_REFERENCE_NAME,
+    AcronymReference,
 
     #[token("\\newtheorem")]
     #[token("\\newtheorem*")]
     #[token("\\declaretheorem")]
     #[token("\\declaretheorem*")]
-    THEOREM_DEFINITION_NAME,
+    TheoremDefinition,
 
     #[token("\\color")]
     #[token("\\colorbox")]
     #[token("\\textcolor")]
     #[token("\\pagecolor")]
-    COLOR_REFERENCE_NAME,
+    ColorReference,
 
     #[token("\\definecolor")]
-    COLOR_DEFINITION_NAME,
+    ColorDefinition,
 
     #[token("\\definecolorset")]
-    COLOR_SET_DEFINITION_NAME,
+    ColorSetDefinition,
 
     #[token("\\usepgflibrary")]
     #[token("\\usetikzlibrary")]
-    TIKZ_LIBRARY_IMPORT_NAME,
+    TikzLibraryImport,
 
     #[token("\\newenvironment")]
     #[token("\\newenvironment*")]
     #[token("\\renewenvironment")]
     #[token("\\renewenvironment*")]
-    ENVIRONMENT_DEFINITION_NAME,
+    EnvironmentDefinition,
+
+    #[token("\\fi")]
+    EndBlockComment,
+
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
+    #[error]
+    Generic,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
+enum BlockCommentToken {
+    #[token("\\fi")]
+    Fi,
+
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
+    #[regex(r"[^\\]+")]
+    #[error]
+    Verbatim,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -371,15 +395,9 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(text: &'a str) -> Self {
+    pub fn new(input: &'a str) -> Self {
         let mut tokens = Vec::new();
-        let mut lexer = Token::lexer(text);
-        while let Some(kind) = lexer.next() {
-            tokens.push((
-                unsafe { std::mem::transmute::<Token, SyntaxKind>(kind) },
-                lexer.slice(),
-            ));
-        }
+        tokenize(input, &mut tokens);
         tokens.reverse();
         Self { tokens }
     }
@@ -391,6 +409,134 @@ impl<'a> Lexer<'a> {
     pub fn eat(&mut self) -> Option<(SyntaxKind, &'a str)> {
         self.tokens.pop()
     }
+}
+
+fn tokenize<'a>(input: &'a str, tokens: &mut Vec<(SyntaxKind, &'a str)>) {
+    let mut lexer = RootToken::lexer(input);
+    while let Some(kind) = lexer.next() {
+        let text = lexer.slice();
+        match kind {
+            RootToken::LineBreak => {
+                tokens.push((SyntaxKind::LINE_BREAK, text));
+            }
+            RootToken::Whitespace => {
+                tokens.push((SyntaxKind::WHITESPACE, text));
+            }
+            RootToken::LineComment => {
+                tokens.push((SyntaxKind::COMMENT, text));
+            }
+            RootToken::LCurly => {
+                tokens.push((SyntaxKind::L_CURLY, text));
+            }
+            RootToken::RCurly => {
+                tokens.push((SyntaxKind::R_CURLY, text));
+            }
+            RootToken::LBrack => {
+                tokens.push((SyntaxKind::L_BRACK, text));
+            }
+            RootToken::RBrack => {
+                tokens.push((SyntaxKind::R_BRACK, text));
+            }
+            RootToken::LParen => {
+                tokens.push((SyntaxKind::L_PAREN, text));
+            }
+            RootToken::RParen => {
+                tokens.push((SyntaxKind::R_PAREN, text));
+            }
+            RootToken::Comma => {
+                tokens.push((SyntaxKind::COMMA, text));
+            }
+            RootToken::Eq => {
+                tokens.push((SyntaxKind::EQUALITY_SIGN, text));
+            }
+            RootToken::Word => {
+                tokens.push((SyntaxKind::WORD, text));
+            }
+            RootToken::Dollar => {
+                tokens.push((SyntaxKind::DOLLAR, text));
+            }
+            RootToken::CommandName => {
+                let kind = tokenize_command_name(text);
+                tokens.push((kind, text));
+            }
+            RootToken::BeginBlockComment => {
+                tokens.push((SyntaxKind::BEGIN_BLOCK_COMMENT_NAME, text));
+                let end = lexer.span().end;
+                lexer = RootToken::lexer(tokenize_block_comment(&lexer.source()[end..], tokens));
+            }
+        }
+    }
+}
+
+fn tokenize_command_name(text: &str) -> SyntaxKind {
+    let mut lexer = CommandNameToken::lexer(text);
+    match lexer.next().unwrap() {
+        CommandNameToken::BeginEnvironment => SyntaxKind::BEGIN_ENVIRONMENT_NAME,
+        CommandNameToken::EndEnvironment => SyntaxKind::END_ENVIRONMENT_NAME,
+        CommandNameToken::BeginEquation => SyntaxKind::BEGIN_EQUATION_NAME,
+        CommandNameToken::EndEquation => SyntaxKind::END_EQUATION_NAME,
+        CommandNameToken::Part => SyntaxKind::PART_NAME,
+        CommandNameToken::Chapter => SyntaxKind::CHAPTER_NAME,
+        CommandNameToken::Section => SyntaxKind::SECTION_NAME,
+        CommandNameToken::Subsection => SyntaxKind::SUBSECTION_NAME,
+        CommandNameToken::Subsubsection => SyntaxKind::SUBSUBSECTION_NAME,
+        CommandNameToken::Paragraph => SyntaxKind::PARAGRAPH_NAME,
+        CommandNameToken::Subparagraph => SyntaxKind::SUBPARAGRAPH_NAME,
+        CommandNameToken::EnumItem => SyntaxKind::ENUM_ITEM_NAME,
+        CommandNameToken::Caption => SyntaxKind::CAPTION_NAME,
+        CommandNameToken::Citation => SyntaxKind::CITATION_NAME,
+        CommandNameToken::PackageInclude => SyntaxKind::PACKAGE_INCLUDE_NAME,
+        CommandNameToken::ClassInclude => SyntaxKind::CLASS_INCLUDE_NAME,
+        CommandNameToken::LatexInclude => SyntaxKind::LATEX_INCLUDE_NAME,
+        CommandNameToken::BiblatexInclude => SyntaxKind::BIBLATEX_INCLUDE_NAME,
+        CommandNameToken::BibtexInclude => SyntaxKind::BIBTEX_INCLUDE_NAME,
+        CommandNameToken::GraphicsInclude => SyntaxKind::GRAPHICS_INCLUDE_NAME,
+        CommandNameToken::SvgInclude => SyntaxKind::SVG_INCLUDE_NAME,
+        CommandNameToken::InkscapeInclude => SyntaxKind::INKSCAPE_INCLUDE_NAME,
+        CommandNameToken::VerbatimInclude => SyntaxKind::VERBATIM_INCLUDE_NAME,
+        CommandNameToken::Import => SyntaxKind::IMPORT_NAME,
+        CommandNameToken::LabelDefinition => SyntaxKind::LABEL_DEFINITION_NAME,
+        CommandNameToken::LabelReference => SyntaxKind::LABEL_REFERENCE_NAME,
+        CommandNameToken::LabelReferenceRange => SyntaxKind::LABEL_REFERENCE_RANGE_NAME,
+        CommandNameToken::LabelNumber => SyntaxKind::LABEL_NUMBER_NAME,
+        CommandNameToken::CommandDefinition => SyntaxKind::COMMAND_DEFINITION_NAME,
+        CommandNameToken::MathOperator => SyntaxKind::MATH_OPERATOR_NAME,
+        CommandNameToken::GlossaryEntryDefinition => SyntaxKind::GLOSSARY_ENTRY_DEFINITION_NAME,
+        CommandNameToken::GlossaryEntryReference => SyntaxKind::GLOSSARY_ENTRY_REFERENCE_NAME,
+        CommandNameToken::AcronymDefinition => SyntaxKind::ACRONYM_DEFINITION_NAME,
+        CommandNameToken::AcronymDeclaration => SyntaxKind::ACRONYM_DECLARATION_NAME,
+        CommandNameToken::AcronymReference => SyntaxKind::ACRONYM_REFERENCE_NAME,
+        CommandNameToken::TheoremDefinition => SyntaxKind::THEOREM_DEFINITION_NAME,
+        CommandNameToken::ColorReference => SyntaxKind::COLOR_REFERENCE_NAME,
+        CommandNameToken::ColorDefinition => SyntaxKind::COLOR_DEFINITION_NAME,
+        CommandNameToken::ColorSetDefinition => SyntaxKind::COLOR_SET_DEFINITION_NAME,
+        CommandNameToken::TikzLibraryImport => SyntaxKind::TIKZ_LIBRARY_IMPORT_NAME,
+        CommandNameToken::EnvironmentDefinition => SyntaxKind::ENVIRONMENT_DEFINITION_NAME,
+        CommandNameToken::EndBlockComment => SyntaxKind::END_BLOCK_COMMENT_NAME,
+        CommandNameToken::Generic => SyntaxKind::GENERIC_COMMAND_NAME,
+    }
+}
+
+fn tokenize_block_comment<'a>(input: &'a str, tokens: &mut Vec<(SyntaxKind, &'a str)>) -> &'a str {
+    let mut lexer = BlockCommentToken::lexer(input);
+    let mut end = 0;
+    while let Some(kind) = lexer.next() {
+        match kind {
+            BlockCommentToken::Verbatim => {
+                end = lexer.span().end;
+            }
+            BlockCommentToken::Fi => {
+                end = lexer.span().start;
+                break;
+            }
+        };
+    }
+
+    if end > 0 {
+        tokens.push((SyntaxKind::VERBATIM, &input[..end]));
+    }
+
+    &input[end..]
 }
 
 #[cfg(test)]
@@ -448,5 +594,10 @@ mod tests {
     #[test]
     fn test_line_break() {
         assert_debug_snapshot!(verify("hello\nworld"));
+    }
+
+    #[test]
+    fn test_block_comment() {
+        assert_debug_snapshot!(verify("Foo\\iffalse\n\\Bar{Baz}\n\\fi\\Qux"));
     }
 }

@@ -151,7 +151,8 @@ impl<'a> Parser<'a> {
             COLOR_DEFINITION_NAME => self.color_definition(),
             COLOR_SET_DEFINITION_NAME => self.color_set_definition(),
             TIKZ_LIBRARY_IMPORT_NAME => self.tikz_library_import(),
-            ENVIRONMENT_DEFINIITION_NAME => self.environment_definition(),
+            ENVIRONMENT_DEFINITION_NAME => self.environment_definition(),
+            BEGIN_BLOCK_COMMENT_NAME => self.block_comment(),
             _ => unreachable!(),
         }
     }
@@ -762,6 +763,23 @@ impl<'a> Parser<'a> {
         {
             self.content(ParserContext::default());
         }
+        self.builder.finish_node();
+    }
+
+    fn block_comment(&mut self) {
+        self.builder.start_node(BLOCK_COMMENT.into());
+        self.eat();
+
+        if self.peek() == Some(VERBATIM) {
+            self.eat();
+        }
+
+        if self.peek() == Some(END_BLOCK_COMMENT_NAME) {
+            self.eat();
+        } else {
+            self.builder.token(MISSING.into(), "");
+        }
+
         self.builder.finish_node();
     }
 
@@ -1789,5 +1807,20 @@ mod tests {
     #[test]
     fn test_label_definition_line_break() {
         assert_debug_snapshot!(setup("\\label{hello\nworld}"));
+    }
+
+    #[test]
+    fn test_block_comments() {
+        assert_debug_snapshot!(setup(
+            r#"Foo
+\iffalse
+Test1
+\fi
+Bar
+\iffalse
+\fii
+\fi
+Baz"#
+        ));
     }
 }
