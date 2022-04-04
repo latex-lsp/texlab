@@ -173,7 +173,7 @@ dependencies = [
 [[package]]
 name = "citeproc"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
+source = "git+https://github.com/zotero/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cfg-if 0.1.10",
  "citeproc-db",
@@ -194,7 +194,7 @@ dependencies = [
 [[package]]
 name = "citeproc-db"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
+source = "git+https://github.com/zotero/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cfg-if 0.1.10",
  "citeproc-io",
@@ -211,7 +211,7 @@ dependencies = [
 [[package]]
 name = "citeproc-io"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
+source = "git+https://github.com/zotero/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "cervine",
  "csl",
@@ -239,7 +239,7 @@ dependencies = [
 [[package]]
 name = "citeproc-proc"
 version = "0.1.0"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
+source = "git+https://github.com/zotero/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
@@ -374,7 +374,7 @@ dependencies = [
 [[package]]
 name = "csl"
 version = "0.0.1"
-source = "git+https://github.com/cormacrelf/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
+source = "git+https://github.com/zotero/citeproc-rs?rev=2ab195a1e6f84f0ff284813ece61dc62096abbfe#2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 dependencies = [
  "chrono",
  "fnv",
