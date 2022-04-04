@@ -393,15 +393,25 @@ dependencies = [
 
 [[package]]
 name = "cstree"
-version = "0.6.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "032b71bfa953cd1eb921ac105edb854a94ac038ee1d3da8948a70f22eca40ac1"
+checksum = "7bf4a3976f4d42d42de79d204288642e11de87e9fe0c6c8821ebde0832f746e2"
 dependencies = [
  "fxhash",
  "lasso",
  "parking_lot 0.11.2",
  "text-size",
  "triomphe",
+]
+
+[[package]]
+name = "dashmap"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e77a43b28d0668df09411cb0bc9a8c2adc40f9a048afe863e05fd43251e8e39c"
+dependencies = [
+ "cfg-if 1.0.0",
+ "num_cpus",
 ]
 
 [[package]]
@@ -808,10 +818,11 @@ dependencies = [
 
 [[package]]
 name = "lasso"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8647c8a01e5f7878eacb2c323c4c949fdb63773110f0686c7810769874b7e0a"
+checksum = "aeb7b21a526375c5ca55f1a6dfd4e1fad9fa4edd750f530252a718a44b2608f0"
 dependencies = [
+ "dashmap 4.0.2",
  "hashbrown 0.11.2",
 ]
 
@@ -1775,7 +1786,7 @@ dependencies = [
  "crossbeam-channel",
  "csl",
  "cstree",
- "dashmap",
+ "dashmap 5.2.0",
  "derive_more",
  "encoding_rs",
  "encoding_rs_io",
