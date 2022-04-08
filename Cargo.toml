@@ -8,10 +8,9 @@ authors = [
     "Eric Förster <eric.foerster@outlook.com>",
     "Patrick Förster <patrick.foerster@outlook.de>",
 ]
-edition = "2018"
-homepage = "https://github.com/latex-lsp/texlab"
-resolver = "2"
+edition = "2021"
 rust-version = "1.56.0"
+homepage = "https://github.com/latex-lsp/texlab"
 
 [lib]
 doctest = false
