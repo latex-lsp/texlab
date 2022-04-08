@@ -1,20 +1,42 @@
-use cstree::TextRange;
 use itertools::{EitherOrBoth, Itertools};
+use rowan::{ast::AstNode, TextRange};
 
-use crate::syntax::CstNode;
+use super::{
+    BibtexLanguage,
+    SyntaxKind::{self, *},
+    SyntaxNode, SyntaxToken,
+};
 
-use super::{Language, SyntaxKind::*, SyntaxNode, SyntaxToken};
+pub fn small_range(node: &dyn AstNode<Language = BibtexLanguage>) -> TextRange {
+    let full_range = node.syntax().text_range();
+    let start = full_range.start();
+    let mut token = node.syntax().last_token();
+    while let Some(current) = token {
+        if !matches!(current.kind(), WHITESPACE | JUNK) {
+            return TextRange::new(start, current.text_range().end());
+        }
+        token = current.prev_token();
+    }
+    TextRange::new(start, start)
+}
 
 macro_rules! cst_node {
     ($name:ident, $($kind:pat),+) => {
         #[derive(Clone)]
         #[repr(transparent)]
-        pub struct $name<'a>(&'a SyntaxNode);
+        pub struct $name(SyntaxNode);
 
-        impl<'a> CstNode<'a> for $name<'a> {
-            type Lang = Language;
+        impl AstNode for $name {
+            type Language = BibtexLanguage;
 
-            fn cast(node: &'a cstree::ResolvedNode<Self::Lang>) -> Option<Self>
+            fn can_cast(kind: SyntaxKind) -> bool {
+                match kind {
+                    $($kind => true,)+
+                    _ => false,
+                }
+            }
+
+            fn cast(node: SyntaxNode) -> Option<Self>
             where
                 Self: Sized,
             {
@@ -24,35 +46,22 @@ macro_rules! cst_node {
                 }
             }
 
-            fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang> {
+            fn syntax(&self) -> &SyntaxNode {
                 &self.0
-            }
-
-            fn small_range(&self) -> TextRange {
-                let full_range = self.syntax().text_range();
-                let start = full_range.start();
-                let mut token = self.syntax().last_token();
-                while let Some(current) = token {
-                    if !matches!(current.kind(), WHITESPACE | JUNK) {
-                        return TextRange::new(start, current.text_range().end());
-                    }
-                    token = current.prev_token();
-                }
-                TextRange::new(start, start)
             }
         }
     };
 }
 
-pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
-    fn left_curly(&self) -> Option<&'a SyntaxToken> {
+pub trait HasCurly: AstNode<Language = BibtexLanguage> {
+    fn left_curly(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_CURLY.into())
     }
 
-    fn right_curly(&self) -> Option<&'a SyntaxToken> {
+    fn right_curly(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -60,15 +69,15 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
     }
 }
 
-pub trait HasQuotes<'a>: CstNode<'a, Lang = Language> {
-    fn left_quote(&self) -> Option<&'a SyntaxToken> {
+pub trait HasQuotes: AstNode<Language = BibtexLanguage> {
+    fn left_quote(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == QUOTE.into())
     }
 
-    fn right_quote(&self) -> Option<&'a SyntaxToken> {
+    fn right_quote(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -77,15 +86,15 @@ pub trait HasQuotes<'a>: CstNode<'a, Lang = Language> {
     }
 }
 
-pub trait HasDelimiters<'a>: CstNode<'a, Lang = Language> {
-    fn left_delimiter(&self) -> Option<&'a SyntaxToken> {
+pub trait HasDelimiters: AstNode<Language = BibtexLanguage> {
+    fn left_delimiter(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| matches!(node.kind(), L_CURLY | L_PAREN))
     }
 
-    fn right_delimiter(&self) -> Option<&'a SyntaxToken> {
+    fn right_delimiter(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -93,8 +102,8 @@ pub trait HasDelimiters<'a>: CstNode<'a, Lang = Language> {
     }
 }
 
-pub trait HasType<'a>: CstNode<'a, Lang = Language> {
-    fn ty(&self) -> Option<&'a SyntaxToken> {
+pub trait HasType: AstNode<Language = BibtexLanguage> {
+    fn ty(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -113,66 +122,66 @@ cst_node!(Junk, JUNK);
 
 cst_node!(Comment, COMMENT);
 
-impl<'a> HasType<'a> for Comment<'a> {}
+impl HasType for Comment {}
 
 cst_node!(Preamble, PREAMBLE);
 
-impl<'a> HasType<'a> for Preamble<'a> {}
+impl HasType for Preamble {}
 
-impl<'a> HasDelimiters<'a> for Preamble<'a> {}
+impl HasDelimiters for Preamble {}
 
-impl<'a> Preamble<'a> {
-    pub fn value(&self) -> Option<Value<'a>> {
+impl Preamble {
+    pub fn value(&self) -> Option<Value> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
 cst_node!(String, STRING);
 
-impl<'a> HasType<'a> for String<'a> {}
+impl HasType for String {}
 
-impl<'a> HasDelimiters<'a> for String<'a> {}
+impl HasDelimiters for String {}
 
-impl<'a> String<'a> {
-    pub fn name(&self) -> Option<&'a SyntaxToken> {
+impl String {
+    pub fn name(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == WORD)
     }
 
-    pub fn equality_sign(&self) -> Option<&'a SyntaxToken> {
+    pub fn equality_sign(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == EQUALITY_SIGN)
     }
 
-    pub fn value(&self) -> Option<Value<'a>> {
+    pub fn value(&self) -> Option<Value> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
 cst_node!(Entry, ENTRY);
 
-impl<'a> HasType<'a> for Entry<'a> {}
+impl HasType for Entry {}
 
-impl<'a> HasDelimiters<'a> for Entry<'a> {}
+impl HasDelimiters for Entry {}
 
-impl<'a> Entry<'a> {
-    pub fn key(&self) -> Option<Key<'a>> {
+impl Entry {
+    pub fn key(&self) -> Option<Key> {
         self.syntax().children().find_map(Key::cast)
     }
 
-    pub fn fields(&self) -> impl Iterator<Item = Field<'a>> {
+    pub fn fields(&self) -> impl Iterator<Item = Field> {
         self.syntax().children().filter_map(Field::cast)
     }
 }
 
 cst_node!(Key, KEY);
 
-impl<'a> Key<'a> {
-    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+impl Key {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -180,7 +189,7 @@ impl<'a> Key<'a> {
     }
 }
 
-impl<'a> PartialEq for Key<'a> {
+impl PartialEq for Key {
     fn eq(&self, other: &Self) -> bool {
         self.words()
             .zip_longest(other.words())
@@ -191,40 +200,47 @@ impl<'a> PartialEq for Key<'a> {
     }
 }
 
-impl<'a> Eq for Key<'a> {}
+impl Eq for Key {}
 
-impl<'a> ToString for Key<'a> {
+impl ToString for Key {
     fn to_string(&self) -> std::string::String {
-        self.words().map(|word| word.text()).join(" ")
+        let mut buf = std::string::String::new();
+        for word in self.words() {
+            buf.push_str(word.text());
+            buf.push(' ');
+        }
+
+        buf.pop().unwrap();
+        buf
     }
 }
 
 cst_node!(Field, FIELD);
 
-impl<'a> Field<'a> {
-    pub fn name(&self) -> Option<&'a SyntaxToken> {
+impl Field {
+    pub fn name(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == WORD)
     }
 
-    pub fn equality_sign(&self) -> Option<&'a SyntaxToken> {
+    pub fn equality_sign(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == EQUALITY_SIGN)
     }
 
-    pub fn value(&self) -> Option<Value<'a>> {
+    pub fn value(&self) -> Option<Value> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
 cst_node!(Value, VALUE);
 
-impl<'a> Value<'a> {
-    pub fn tokens(&self) -> impl Iterator<Item = Token<'a>> {
+impl Value {
+    pub fn tokens(&self) -> impl Iterator<Item = Token> {
         self.syntax().children().filter_map(Token::cast)
     }
 }
@@ -233,8 +249,8 @@ cst_node!(Token, TOKEN);
 
 cst_node!(BraceGroup, BRACE_GROUP);
 
-impl<'a> HasCurly<'a> for BraceGroup<'a> {}
+impl HasCurly for BraceGroup {}
 
 cst_node!(QuoteGroup, QUOTE_GROUP);
 
-impl<'a> HasQuotes<'a> for QuoteGroup<'a> {}
+impl HasQuotes for QuoteGroup {}

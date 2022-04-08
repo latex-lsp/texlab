@@ -5,13 +5,10 @@ use std::{
 };
 
 use cancellation::CancellationToken;
-use cstree::{TextRange, TextSize};
 use lsp_types::CompletionParams;
+use rowan::{ast::AstNode, TextRange, TextSize};
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -32,7 +29,7 @@ pub fn complete_includes<'a>(
         latex::PACKAGE_INCLUDE => (false, &["sty"]),
         latex::CLASS_INCLUDE => (false, &["cls"]),
         latex::LATEX_INCLUDE => {
-            let include = latex::Include::cast(include)?;
+            let include = latex::Include::cast(include.clone())?;
             (
                 matches!(include.command()?.text(), "\\input" | "\\subfile"),
                 &["tex"],

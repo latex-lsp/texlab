@@ -1,9 +1,10 @@
 use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
+use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::{bibtex, latex, CstNode},
+    syntax::{bibtex, latex},
     LineIndexExt,
 };
 
@@ -18,17 +19,20 @@ pub fn goto_entry_definition(
         .as_latex()
         .filter(|token| token.kind() == latex::WORD)?;
 
-    let key = latex::Key::cast(word.parent())?;
+    let key = latex::Key::cast(word.parent()?)?;
 
     latex::Citation::cast(key.syntax().parent()?.parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
-        .line_col_lsp_range(key.small_range());
+        .line_col_lsp_range(latex::small_range(&key));
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in data.root.children().filter_map(bibtex::Entry::cast) {
+            for entry in bibtex::SyntaxNode::new_root(data.root.clone())
+                .children()
+                .filter_map(bibtex::Entry::cast)
+            {
                 cancellation_token.result().ok()?;
 
                 if let Some(key) = entry.key().filter(|k| k.to_string() == key.to_string()) {
@@ -37,8 +41,10 @@ pub fn goto_entry_definition(
                         target_uri: document.uri.as_ref().clone().into(),
                         target_selection_range: document
                             .line_index
-                            .line_col_lsp_range(key.small_range()),
-                        target_range: document.line_index.line_col_lsp_range(entry.small_range()),
+                            .line_col_lsp_range(bibtex::small_range(&key)),
+                        target_range: document
+                            .line_index
+                            .line_col_lsp_range(bibtex::small_range(&entry)),
                     }]);
                 }
             }

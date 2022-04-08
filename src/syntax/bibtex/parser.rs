@@ -1,19 +1,18 @@
-use cstree::GreenNodeBuilder;
+use rowan::{GreenNode, GreenNodeBuilder};
 
 use super::{
     lexer::Lexer,
     SyntaxKind::{self, *},
-    SyntaxNode,
 };
 
 #[derive(Debug, Clone)]
 pub struct Parse {
-    pub root: SyntaxNode,
+    pub green: GreenNode,
 }
 
 struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: GreenNodeBuilder<'static, 'static>,
+    builder: GreenNodeBuilder<'static>,
 }
 
 impl<'a> Parser<'a> {
@@ -54,10 +53,8 @@ impl<'a> Parser<'a> {
             }
         }
         self.builder.finish_node();
-        let (green, resolver) = self.builder.finish();
-        Parse {
-            root: SyntaxNode::new_root_with_resolver(green, resolver.unwrap()),
-        }
+        let green = self.builder.finish();
+        Parse { green }
     }
 
     fn trivia(&mut self) {
@@ -321,10 +318,12 @@ pub fn parse(text: &str) -> Parse {
 mod tests {
     use insta::assert_debug_snapshot;
 
+    use crate::syntax::bibtex;
+
     use super::*;
 
-    fn setup(text: &str) -> SyntaxNode {
-        parse(&text.trim().replace("\r", "")).root
+    fn setup(text: &str) -> bibtex::SyntaxNode {
+        bibtex::SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green)
     }
 
     #[test]

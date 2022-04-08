@@ -1,6 +1,6 @@
 use cancellation::CancellationToken;
-use cstree::{TextRange, TextSize};
 use lsp_types::CompletionParams;
+use rowan::{TextRange, TextSize};
 
 use crate::{features::cursor::CursorContext, LANGUAGE_DATA};
 

@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
+use rowan::{ast::AstNode, TextRange};
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -51,7 +48,7 @@ fn check_color_definition_set(context: &CursorContext<CompletionParams>) -> Opti
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

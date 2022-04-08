@@ -9,8 +9,9 @@ use citeproc_io::{Cite, Reference};
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use rowan::ast::AstNode;
 
-use crate::syntax::{bibtex, CstNode};
+use crate::syntax::bibtex;
 
 use self::{
     bibutils::*,
@@ -125,7 +126,8 @@ mod tests {
             "#,
         );
 
-        let actual_md = render_citation(&document.root, "foo").unwrap();
+        let actual_md =
+            render_citation(&bibtex::SyntaxNode::new_root(document.green), "foo").unwrap();
 
         let expected_md = MarkupContent {
             kind: MarkupKind::Markdown,
@@ -147,7 +149,8 @@ mod tests {
                 }
             "#,
         );
-        let actual_md = render_citation(&document.root, "foo").unwrap();
+        let actual_md =
+            render_citation(&bibtex::SyntaxNode::new_root(document.green), "foo").unwrap();
 
         let expected_md = MarkupContent {
             kind: MarkupKind::Markdown,
@@ -161,7 +164,7 @@ mod tests {
     fn test_unknown_key() {
         let document = bibtex::parse("");
 
-        let actual_md = render_citation(&document.root, "foo");
+        let actual_md = render_citation(&bibtex::SyntaxNode::new_root(document.green), "foo");
 
         assert_eq!(actual_md, None);
     }

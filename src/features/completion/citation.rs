@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     features::{cursor::CursorContext, lsp_kinds::Structure},
     syntax::{
         bibtex::{self, HasType},
-        latex, CstNode,
+        latex,
     },
     BibtexEntryTypeCategory, Document, LANGUAGE_DATA,
 };
@@ -26,9 +26,14 @@ pub fn complete_citations<'a>(
     let token = context.cursor.as_latex()?;
 
     let range = if token.kind() == latex::WORD {
-        latex::Key::cast(token.parent())
-            .map(|key| key.small_range())
-            .or_else(|| latex::Text::cast(token.parent()).map(|text| text.small_range()))?
+        latex::Key::cast(token.parent()?)
+            .map(|key| latex::small_range(&key))
+            .or_else(|| {
+                token
+                    .parent()
+                    .and_then(latex::Text::cast)
+                    .map(|text| latex::small_range(&text))
+            })?
     } else {
         TextRange::empty(context.offset)
     };
@@ -36,7 +41,10 @@ pub fn complete_citations<'a>(
     check_citation(context).or_else(|| check_acronym(context))?;
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in data.root.children().filter_map(bibtex::Entry::cast) {
+            for entry in bibtex::SyntaxNode::new_root(data.root.clone())
+                .children()
+                .filter_map(bibtex::Entry::cast)
+            {
                 cancellation_token.result().ok()?;
                 if let Some(item) = make_item(document, entry, range) {
                     items.push(item);
@@ -68,7 +76,7 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
 
 fn make_item<'a>(
     document: &'a Document,
-    entry: bibtex::Entry<'a>,
+    entry: bibtex::Entry,
     range: TextRange,
 ) -> Option<InternalCompletionItem<'a>> {
     let key = entry.key()?.to_string();

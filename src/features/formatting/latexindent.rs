@@ -4,8 +4,8 @@ use std::{
 };
 
 use cancellation::CancellationToken;
-use cstree::{TextLen, TextRange};
 use lsp_types::{DocumentFormattingParams, TextEdit};
+use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
 use crate::{features::FeatureRequest, DocumentLanguage, LineIndexExt};

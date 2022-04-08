@@ -1,13 +1,10 @@
 use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
+use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use smol_str::SmolStr;
 
-use crate::{
-    component_db::COMPONENT_DATABASE,
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -67,7 +64,7 @@ pub fn complete_imports<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

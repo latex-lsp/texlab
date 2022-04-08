@@ -1,12 +1,8 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
+use rowan::{ast::AstNode, TextRange};
 
-use crate::{
-    component_db::COMPONENT_DATABASE,
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -25,8 +21,13 @@ pub fn complete_arguments<'a>(
         TextRange::empty(context.offset)
     };
 
-    let group = latex::CurlyGroup::cast(token.parent())
-        .or_else(|| token.parent().parent().and_then(latex::CurlyGroup::cast))
+    let group = latex::CurlyGroup::cast(token.parent()?)
+        .or_else(|| {
+            token
+                .parent()
+                .and_then(|node| node.parent())
+                .and_then(latex::CurlyGroup::cast)
+        })
         .filter(|group| context.is_inside_latex_curly(group))?;
 
     let command = latex::GenericCommand::cast(group.syntax().parent()?)?;
@@ -37,7 +38,8 @@ pub fn complete_arguments<'a>(
         .filter_map(latex::CurlyGroup::cast)
         .position(|g| g.syntax().text_range() == group.syntax().text_range())?;
 
-    let command_name = &command.name()?.text()[1..];
+    let command_name = command.name()?;
+    let command_name = &command_name.text()[1..];
 
     for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
         for component_command in component
@@ -70,7 +72,7 @@ pub fn complete_arguments<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

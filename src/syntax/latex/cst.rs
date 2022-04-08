@@ -1,20 +1,43 @@
-use cstree::TextRange;
 use itertools::{EitherOrBoth, Itertools};
+use rowan::{ast::AstNode, TextRange};
 
-use crate::syntax::CstNode;
+use super::{
+    LatexLanguage,
+    SyntaxKind::{self, *},
+    SyntaxNode, SyntaxToken,
+};
 
-use super::{Language, SyntaxKind::*, SyntaxNode, SyntaxToken};
+pub fn small_range(node: &dyn AstNode<Language = LatexLanguage>) -> TextRange {
+    let full_range = node.syntax().text_range();
+    let start = full_range.start();
+    let mut token = node.syntax().last_token();
+    while let Some(current) = token {
+        if !matches!(current.kind(), LINE_BREAK | WHITESPACE | COMMENT) {
+            return TextRange::new(start, current.text_range().end());
+        }
+        token = current.prev_token();
+    }
+
+    TextRange::new(start, start)
+}
 
 macro_rules! cst_node {
     ($name:ident, $($kind:pat),+) => {
-        #[derive(Clone, Copy)]
+        #[derive(Clone)]
         #[repr(transparent)]
-        pub struct $name<'a>(&'a SyntaxNode);
+        pub struct $name(SyntaxNode);
 
-        impl<'a> CstNode<'a> for $name<'a> {
-            type Lang = Language;
+        impl AstNode for $name {
+            type Language = LatexLanguage;
 
-            fn cast(node: &'a cstree::ResolvedNode<Self::Lang>) -> Option<Self>
+            fn can_cast(kind: SyntaxKind) -> bool {
+                match kind {
+                    $($kind => true,)+
+                    _ => false,
+                }
+            }
+
+            fn cast(node: SyntaxNode) -> Option<Self>
             where
                 Self: Sized,
             {
@@ -24,21 +47,8 @@ macro_rules! cst_node {
                 }
             }
 
-            fn syntax(&self) -> &'a cstree::ResolvedNode<Self::Lang> {
+            fn syntax(&self) -> &SyntaxNode {
                 &self.0
-            }
-
-            fn small_range(&self) -> TextRange {
-                let full_range = self.syntax().text_range();
-                let start = full_range.start();
-                let mut token = self.syntax().last_token();
-                while let Some(current) = token {
-                    if !matches!(current.kind(), LINE_BREAK | WHITESPACE | COMMENT) {
-                        return TextRange::new(start, current.text_range().end());
-                    }
-                    token = current.prev_token();
-                }
-                TextRange::new(start, start)
             }
         }
     };
@@ -46,8 +56,8 @@ macro_rules! cst_node {
 
 cst_node!(Text, TEXT);
 
-impl<'a> Text<'a> {
-    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+impl Text {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -55,15 +65,15 @@ impl<'a> Text<'a> {
     }
 }
 
-pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
-    fn left_curly(&self) -> Option<&'a SyntaxToken> {
+pub trait HasCurly: AstNode<Language = LatexLanguage> {
+    fn left_curly(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_CURLY)
     }
 
-    fn right_curly(&self) -> Option<&'a SyntaxToken> {
+    fn right_curly(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -91,19 +101,19 @@ pub trait HasCurly<'a>: CstNode<'a, Lang = Language> {
 
 cst_node!(CurlyGroup, CURLY_GROUP);
 
-impl<'a> HasCurly<'a> for CurlyGroup<'a> {}
+impl HasCurly for CurlyGroup {}
 
-impl<'a> CurlyGroup<'a> {}
+impl CurlyGroup {}
 
-pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
-    fn left_brack(&self) -> Option<&'a SyntaxToken> {
+pub trait HasBrack: AstNode<Language = LatexLanguage> {
+    fn left_brack(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_BRACK)
     }
 
-    fn right_brack(&self) -> Option<&'a SyntaxToken> {
+    fn right_brack(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -131,19 +141,19 @@ pub trait HasBrack<'a>: CstNode<'a, Lang = Language> {
 
 cst_node!(BrackGroup, BRACK_GROUP);
 
-impl<'a> BrackGroup<'a> {}
+impl BrackGroup {}
 
-impl<'a> HasBrack<'a> for BrackGroup<'a> {}
+impl HasBrack for BrackGroup {}
 
-pub trait HasParen<'a>: CstNode<'a, Lang = Language> {
-    fn left_paren(&self) -> Option<&'a SyntaxToken> {
+pub trait HasParen: AstNode<Language = LatexLanguage> {
+    fn left_paren(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| node.kind() == L_PAREN)
     }
 
-    fn right_paren(&self) -> Option<&'a SyntaxToken> {
+    fn right_paren(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -153,19 +163,19 @@ pub trait HasParen<'a>: CstNode<'a, Lang = Language> {
 
 cst_node!(ParenGroup, PAREN_GROUP);
 
-impl<'a> HasParen<'a> for ParenGroup<'a> {}
+impl HasParen for ParenGroup {}
 
 cst_node!(MixedGroup, MIXED_GROUP);
 
-impl<'a> MixedGroup<'a> {
-    pub fn left_delim(&self) -> Option<&'a SyntaxToken> {
+impl MixedGroup {
+    pub fn left_delim(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
             .find(|node| matches!(node.kind().into(), L_BRACK | L_PAREN))
     }
 
-    pub fn right_delim(&self) -> Option<&'a SyntaxToken> {
+    pub fn right_delim(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -175,40 +185,40 @@ impl<'a> MixedGroup<'a> {
 
 cst_node!(CurlyGroupWord, CURLY_GROUP_WORD);
 
-impl<'a> HasCurly<'a> for CurlyGroupWord<'a> {}
+impl HasCurly for CurlyGroupWord {}
 
-impl<'a> CurlyGroupWord<'a> {
-    pub fn key(&self) -> Option<Key<'a>> {
+impl CurlyGroupWord {
+    pub fn key(&self) -> Option<Key> {
         self.syntax().children().find_map(Key::cast)
     }
 }
 
 cst_node!(BrackGroupWord, BRACK_GROUP_WORD);
 
-impl<'a> HasBrack<'a> for BrackGroupWord<'a> {}
+impl HasBrack for BrackGroupWord {}
 
-impl<'a> BrackGroupWord<'a> {
-    pub fn key(&self) -> Option<Key<'a>> {
+impl BrackGroupWord {
+    pub fn key(&self) -> Option<Key> {
         self.syntax().children().find_map(Key::cast)
     }
 }
 
 cst_node!(CurlyGroupWordList, CURLY_GROUP_WORD_LIST);
 
-impl<'a> HasCurly<'a> for CurlyGroupWordList<'a> {}
+impl HasCurly for CurlyGroupWordList {}
 
-impl<'a> CurlyGroupWordList<'a> {
-    pub fn keys(&self) -> impl Iterator<Item = Key<'a>> {
+impl CurlyGroupWordList {
+    pub fn keys(&self) -> impl Iterator<Item = Key> {
         self.syntax().children().filter_map(Key::cast)
     }
 }
 
 cst_node!(CurlyGroupCommand, CURLY_GROUP_COMMAND);
 
-impl<'a> HasCurly<'a> for CurlyGroupCommand<'a> {}
+impl HasCurly for CurlyGroupCommand {}
 
-impl<'a> CurlyGroupCommand<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl CurlyGroupCommand {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -218,8 +228,8 @@ impl<'a> CurlyGroupCommand<'a> {
 
 cst_node!(Key, KEY);
 
-impl<'a> Key<'a> {
-    pub fn words(&self) -> impl Iterator<Item = &'a SyntaxToken> {
+impl Key {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -227,7 +237,7 @@ impl<'a> Key<'a> {
     }
 }
 
-impl<'a> PartialEq for Key<'a> {
+impl PartialEq for Key {
     fn eq(&self, other: &Self) -> bool {
         self.words()
             .zip_longest(other.words())
@@ -238,11 +248,18 @@ impl<'a> PartialEq for Key<'a> {
     }
 }
 
-impl<'a> Eq for Key<'a> {}
+impl Eq for Key {}
 
-impl<'a> ToString for Key<'a> {
+impl ToString for Key {
     fn to_string(&self) -> String {
-        self.words().map(|word| word.text()).join(" ")
+        let mut buf = String::new();
+        for word in self.words() {
+            buf.push_str(word.text());
+            buf.push(' ');
+        }
+
+        buf.pop().unwrap();
+        buf
     }
 }
 
@@ -250,48 +267,48 @@ cst_node!(Value, VALUE);
 
 cst_node!(KeyValuePair, KEY_VALUE_PAIR);
 
-impl<'a> KeyValuePair<'a> {
-    pub fn key(&self) -> Option<Key<'a>> {
+impl KeyValuePair {
+    pub fn key(&self) -> Option<Key> {
         self.syntax().children().find_map(Key::cast)
     }
 
-    pub fn value(&self) -> Option<Value<'a>> {
+    pub fn value(&self) -> Option<Value> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
 cst_node!(KeyValueBody, KEY_VALUE_BODY);
 
-impl<'a> KeyValueBody<'a> {
-    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair<'a>> {
+impl KeyValueBody {
+    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair> {
         self.syntax().children().filter_map(KeyValuePair::cast)
     }
 }
 
-pub trait HasKeyValueBody<'a>: CstNode<'a, Lang = Language> {
-    fn body(&self) -> Option<KeyValueBody<'a>> {
+pub trait HasKeyValueBody: AstNode<Language = LatexLanguage> {
+    fn body(&self) -> Option<KeyValueBody> {
         self.syntax().children().find_map(KeyValueBody::cast)
     }
 }
 
 cst_node!(CurlyGroupKeyValue, CURLY_GROUP_KEY_VALUE);
 
-impl<'a> HasCurly<'a> for CurlyGroupKeyValue<'a> {}
+impl HasCurly for CurlyGroupKeyValue {}
 
-impl<'a> HasKeyValueBody<'a> for CurlyGroupKeyValue<'a> {}
+impl HasKeyValueBody for CurlyGroupKeyValue {}
 
 cst_node!(BrackGroupKeyValue, BRACK_GROUP_KEY_VALUE);
 
-impl<'a> HasBrack<'a> for BrackGroupKeyValue<'a> {}
+impl HasBrack for BrackGroupKeyValue {}
 
-impl<'a> HasKeyValueBody<'a> for BrackGroupKeyValue<'a> {}
+impl HasKeyValueBody for BrackGroupKeyValue {}
 
 cst_node!(Formula, FORMULA);
 
 cst_node!(GenericCommand, GENERIC_COMMAND);
 
-impl<'a> GenericCommand<'a> {
-    pub fn name(&self) -> Option<&'a SyntaxToken> {
+impl GenericCommand {
+    pub fn name(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -303,40 +320,40 @@ cst_node!(Equation, EQUATION);
 
 cst_node!(Begin, BEGIN);
 
-impl<'a> Begin<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Begin {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn options(&self) -> Option<BrackGroup<'a>> {
+    pub fn options(&self) -> Option<BrackGroup> {
         self.syntax().children().find_map(BrackGroup::cast)
     }
 }
 
 cst_node!(End, END);
 
-impl<'a> End<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl End {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(Environment, ENVIRONMENT);
 
-impl<'a> Environment<'a> {
-    pub fn begin(&self) -> Option<Begin<'a>> {
+impl Environment {
+    pub fn begin(&self) -> Option<Begin> {
         self.syntax().children().find_map(Begin::cast)
     }
 
-    pub fn end(&self) -> Option<End<'a>> {
+    pub fn end(&self) -> Option<End> {
         self.syntax().children().find_map(End::cast)
     }
 }
@@ -352,60 +369,60 @@ cst_node!(
     SUBPARAGRAPH
 );
 
-impl<'a> Section<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Section {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroup<'a>> {
+    pub fn name(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(EnumItem, ENUM_ITEM);
 
-impl<'a> EnumItem<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl EnumItem {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn label(&self) -> Option<BrackGroup<'a>> {
+    pub fn label(&self) -> Option<BrackGroup> {
         self.syntax().children().find_map(BrackGroup::cast)
     }
 }
 
 cst_node!(Caption, CAPTION);
 
-impl<'a> Caption<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Caption {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn short(&self) -> Option<BrackGroup<'a>> {
+    pub fn short(&self) -> Option<BrackGroup> {
         self.syntax().children().find_map(BrackGroup::cast)
     }
 
-    pub fn long(&self) -> Option<CurlyGroup<'a>> {
+    pub fn long(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(Citation, CITATION);
 
-impl<'a> Citation<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Citation {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn prenote(&self) -> Option<BrackGroup<'a>> {
+    pub fn prenote(&self) -> Option<BrackGroup> {
         self.syntax().children().find_map(BrackGroup::cast)
     }
 
-    pub fn postnote(&self) -> Option<BrackGroup<'a>> {
+    pub fn postnote(&self) -> Option<BrackGroup> {
         self.syntax().children().filter_map(BrackGroup::cast).nth(1)
     }
 
-    pub fn key_list(&self) -> Option<CurlyGroupWordList<'a>> {
+    pub fn key_list(&self) -> Option<CurlyGroupWordList> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
@@ -423,28 +440,28 @@ cst_node!(
     VERBATIM_INCLUDE
 );
 
-impl<'a> Include<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Include {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn path_list(&self) -> Option<CurlyGroupWordList<'a>> {
+    pub fn path_list(&self) -> Option<CurlyGroupWordList> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
 
 cst_node!(Import, IMPORT);
 
-impl<'a> Import<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl Import {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn directory(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn directory(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn file(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn file(&self) -> Option<CurlyGroupWord> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
@@ -454,40 +471,40 @@ impl<'a> Import<'a> {
 
 cst_node!(LabelDefinition, LABEL_DEFINITION);
 
-impl<'a> LabelDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl LabelDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(LabelReference, LABEL_REFERENCE);
 
-impl<'a> LabelReference<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl LabelReference {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name_list(&self) -> Option<CurlyGroupWordList<'a>> {
+    pub fn name_list(&self) -> Option<CurlyGroupWordList> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
 
 cst_node!(LabelReferenceRange, LABEL_REFERENCE_RANGE);
 
-impl<'a> LabelReferenceRange<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl LabelReferenceRange {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn from(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn from(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn to(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn to(&self) -> Option<CurlyGroupWord> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
@@ -497,175 +514,175 @@ impl<'a> LabelReferenceRange<'a> {
 
 cst_node!(LabelNumber, LABEL_NUMBER);
 
-impl<'a> LabelNumber<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl LabelNumber {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn text(&self) -> Option<CurlyGroup<'a>> {
+    pub fn text(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(TheoremDefinition, THEOREM_DEFINITION);
 
-impl<'a> TheoremDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl TheoremDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn description(&self) -> Option<CurlyGroup<'a>> {
+    pub fn description(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(CommandDefinition, COMMAND_DEFINITION, MATH_OPERATOR);
 
-impl<'a> CommandDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl CommandDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupCommand<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupCommand> {
         self.syntax().children().find_map(CurlyGroupCommand::cast)
     }
 
-    pub fn implementation(&self) -> Option<CurlyGroup<'a>> {
+    pub fn implementation(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(AcronymReference, ACRONYM_REFERENCE);
 
-impl<'a> AcronymReference<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl AcronymReference {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 }
 
 cst_node!(AcronymDefinition, ACRONYM_DEFINITION);
 
-impl<'a> AcronymDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl AcronymDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(AcronymDeclaration, ACRONYM_DECLARATION);
 
-impl<'a> AcronymDeclaration<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl AcronymDeclaration {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(ColorDefinition, COLOR_DEFINITION);
 
-impl<'a> ColorDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl ColorDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn model(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn model(&self) -> Option<CurlyGroupWord> {
         self.syntax()
             .children()
             .filter_map(CurlyGroupWord::cast)
             .nth(1)
     }
 
-    pub fn spec(&self) -> Option<CurlyGroup<'a>> {
+    pub fn spec(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }
 
 cst_node!(ColorSetDefinition, COLOR_SET_DEFINITION);
 
-impl<'a> ColorSetDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl ColorSetDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn model_list(&self) -> Option<CurlyGroupWordList<'a>> {
+    pub fn model_list(&self) -> Option<CurlyGroupWordList> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
 
 cst_node!(ColorReference, COLOR_REFERENCE);
 
-impl<'a> ColorReference<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl ColorReference {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(GlossaryEntryReference, GLOSSARY_ENTRY_REFERENCE);
 
-impl<'a> GlossaryEntryReference<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl GlossaryEntryReference {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(GlossaryEntryDefinition, GLOSSARY_ENTRY_DEFINITION);
 
-impl<'a> GlossaryEntryDefinition<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl GlossaryEntryDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord<'a>> {
+    pub fn name(&self) -> Option<CurlyGroupWord> {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
 
 cst_node!(TikzLibraryImport, TIKZ_LIBRARY_IMPORT);
 
-impl<'a> TikzLibraryImport<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl TikzLibraryImport {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn name_list(&self) -> Option<CurlyGroupWordList<'a>> {
+    pub fn name_list(&self) -> Option<CurlyGroupWordList> {
         self.syntax().children().find_map(CurlyGroupWordList::cast)
     }
 }
 
 cst_node!(GraphicsPath, GRAPHICS_PATH);
 
-impl<'a> GraphicsPath<'a> {
-    pub fn command(&self) -> Option<&'a SyntaxToken> {
+impl GraphicsPath {
+    pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
 
-    pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord<'a>> + 'a {
+    pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord> {
         self.syntax().children().filter_map(CurlyGroupWord::cast)
     }
 }

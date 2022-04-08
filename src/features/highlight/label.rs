@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, syntax::latex, LineIndexExt};
 
 pub fn find_label_highlights(
     context: &CursorContext<DocumentHighlightParams>,
@@ -17,23 +14,23 @@ pub fn find_label_highlights(
     let data = main_document.data.as_latex()?;
 
     let mut highlights = Vec::new();
-    for node in data.root.descendants() {
+    for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
         cancellation_token.result().ok()?;
 
-        if let Some(label_name) = latex::LabelDefinition::cast(node)
+        if let Some(label_name) = latex::LabelDefinition::cast(node.clone())
             .and_then(|label| label.name())
             .and_then(|label_name| label_name.key())
             .filter(|label_name| label_name.to_string() == name_text)
         {
             let range = main_document
                 .line_index
-                .line_col_lsp_range(label_name.small_range());
+                .line_col_lsp_range(latex::small_range(&label_name));
 
             highlights.push(DocumentHighlight {
                 range,
                 kind: Some(DocumentHighlightKind::WRITE),
             });
-        } else if let Some(label) = latex::LabelReference::cast(node) {
+        } else if let Some(label) = latex::LabelReference::cast(node.clone()) {
             for label_name in label
                 .name_list()
                 .into_iter()
@@ -42,14 +39,14 @@ pub fn find_label_highlights(
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.small_range());
+                    .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {
                     range,
                     kind: Some(DocumentHighlightKind::READ),
                 });
             }
-        } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
+        } else if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
             if let Some(label_name) = label
                 .from()
                 .and_then(|label_name| label_name.key())
@@ -57,7 +54,7 @@ pub fn find_label_highlights(
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.small_range());
+                    .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {
                     range,
@@ -72,7 +69,7 @@ pub fn find_label_highlights(
             {
                 let range = main_document
                     .line_index
-                    .line_col_lsp_range(label_name.small_range());
+                    .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {
                     range,

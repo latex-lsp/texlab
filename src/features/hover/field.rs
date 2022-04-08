@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{bibtex, CstNode},
-    LineIndexExt, LANGUAGE_DATA,
-};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt, LANGUAGE_DATA};
 
 pub fn find_field_hover(
     context: &CursorContext<HoverParams>,
@@ -18,7 +15,7 @@ pub fn find_field_hover(
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)?;
 
-    bibtex::Field::cast(name.parent())?;
+    bibtex::Field::cast(name.parent()?)?;
 
     let docs = LANGUAGE_DATA.field_documentation(&name.text())?;
     Some(Hover {

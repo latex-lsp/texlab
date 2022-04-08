@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cstree::TextRange;
+use rowan::TextRange;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 

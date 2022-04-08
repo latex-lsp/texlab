@@ -12,25 +12,23 @@ pub use self::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Language {}
+pub enum LatexLanguage {}
 
-impl cstree::Language for Language {
+impl rowan::Language for LatexLanguage {
     type Kind = SyntaxKind;
 
-    fn kind_from_raw(raw: cstree::SyntaxKind) -> Self::Kind {
+    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
         assert!(raw.0 <= ROOT as u16);
         unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
     }
 
-    fn kind_to_raw(kind: Self::Kind) -> cstree::SyntaxKind {
+    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
         kind.into()
     }
 }
 
-pub type SyntaxNode = cstree::ResolvedNode<Language>;
+pub type SyntaxNode = rowan::SyntaxNode<LatexLanguage>;
 
-pub type SyntaxToken = cstree::ResolvedToken<Language>;
+pub type SyntaxToken = rowan::SyntaxToken<LatexLanguage>;
 
-pub type SyntaxElement = cstree::ResolvedElement<Language>;
-
-pub type SyntaxElementRef<'a> = cstree::ResolvedElementRef<'a, Language>;
+pub type SyntaxElement = rowan::SyntaxElement<LatexLanguage>;

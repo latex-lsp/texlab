@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
+use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
-    syntax::{bibtex, latex, CstNode},
+    syntax::{bibtex, latex},
     DocumentData, LineIndexExt,
 };
 
@@ -41,26 +42,32 @@ pub fn rename_entry(
         cancellation_token.result().ok()?;
         match &document.data {
             DocumentData::Latex(data) => {
-                let edits: Vec<_> = data
-                    .root
+                let edits: Vec<_> = latex::SyntaxNode::new_root(data.root.clone())
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
                     .flat_map(|keys| keys.keys())
                     .filter(|key| key.to_string() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
+                    .map(|key| {
+                        document
+                            .line_index
+                            .line_col_lsp_range(latex::small_range(&key))
+                    })
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone().into(), edits);
             }
             DocumentData::Bibtex(data) => {
-                let edits: Vec<_> = data
-                    .root
+                let edits: Vec<_> = bibtex::SyntaxNode::new_root(data.root.clone())
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())
                     .filter(|key| key.to_string() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.small_range()))
+                    .map(|key| {
+                        document
+                            .line_index
+                            .line_col_lsp_range(bibtex::small_range(&key))
+                    })
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone().into(), edits);

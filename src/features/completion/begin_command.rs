@@ -22,7 +22,7 @@ pub fn complete_begin_command(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

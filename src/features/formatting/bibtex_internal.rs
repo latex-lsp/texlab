@@ -1,13 +1,10 @@
 use cancellation::CancellationToken;
-use cstree::NodeOrToken;
 use lsp_types::{DocumentFormattingParams, TextEdit};
+use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
     features::FeatureRequest,
-    syntax::{
-        bibtex::{self, HasType},
-        CstNode,
-    },
+    syntax::bibtex::{self, HasType},
     LineIndex, LineIndexExt,
 };
 
@@ -45,13 +42,13 @@ pub fn format_bibtex_internal(
     let data = document.data.as_bibtex()?;
     let mut edits = Vec::new();
 
-    for node in data.root.children() {
-        let range = if let Some(entry) = bibtex::Entry::cast(node) {
-            entry.small_range()
-        } else if let Some(string) = bibtex::String::cast(node) {
-            string.small_range()
-        } else if let Some(preamble) = bibtex::Preamble::cast(node) {
-            preamble.small_range()
+    for node in bibtex::SyntaxNode::new_root(data.root.clone()).children() {
+        let range = if let Some(entry) = bibtex::Entry::cast(node.clone()) {
+            bibtex::small_range(&entry)
+        } else if let Some(string) = bibtex::String::cast(node.clone()) {
+            bibtex::small_range(&string)
+        } else if let Some(preamble) = bibtex::Preamble::cast(node.clone()) {
+            bibtex::small_range(&preamble)
         } else {
             continue;
         };
@@ -115,13 +112,13 @@ impl<'a> Formatter<'a> {
             .count()
     }
 
-    fn visit_node(&mut self, parent: &bibtex::SyntaxNode) {
+    fn visit_node(&mut self, parent: bibtex::SyntaxNode) {
         match parent.kind() {
             bibtex::PREAMBLE => {
                 let preamble = bibtex::Preamble::cast(parent).unwrap();
-                self.visit_token_lowercase(preamble.ty().unwrap());
+                self.visit_token_lowercase(&preamble.ty().unwrap());
                 self.output.push('{');
-                if preamble.syntax().arity() > 0 {
+                if preamble.syntax().children().next().is_some() {
                     self.align.push(self.base_align());
                     for node in preamble.syntax().children() {
                         self.visit_node(node);
@@ -131,28 +128,28 @@ impl<'a> Formatter<'a> {
             }
             bibtex::STRING => {
                 let string = bibtex::String::cast(parent).unwrap();
-                self.visit_token_lowercase(string.ty().unwrap());
+                self.visit_token_lowercase(&string.ty().unwrap());
                 self.output.push('{');
                 if let Some(name) = string.name() {
                     self.output.push_str(name.text());
                     self.output.push_str(" = ");
                     if let Some(value) = string.value() {
                         self.align.push(self.base_align());
-                        self.visit_node(value.syntax());
+                        self.visit_node(value.syntax().clone());
                         self.output.push('}');
                     }
                 }
             }
             bibtex::ENTRY => {
                 let entry = bibtex::Entry::cast(parent).unwrap();
-                self.visit_token_lowercase(entry.ty().unwrap());
+                self.visit_token_lowercase(&entry.ty().unwrap());
                 self.output.push('{');
                 if let Some(key) = entry.key() {
                     self.output.push_str(&key.to_string());
                     self.output.push(',');
                     self.output.push('\n');
                     for field in entry.fields() {
-                        self.visit_node(field.syntax());
+                        self.visit_node(field.syntax().clone());
                     }
                     self.output.push('}');
                 }
@@ -166,7 +163,7 @@ impl<'a> Formatter<'a> {
                 if let Some(value) = field.value() {
                     let count = name.text().chars().count();
                     self.align.push(self.tab_size as usize + count + 3);
-                    self.visit_node(value.syntax());
+                    self.visit_node(value.syntax().clone());
                     self.output.push(',');
                     self.output.push('\n');
                 }
@@ -183,11 +180,11 @@ impl<'a> Formatter<'a> {
                 let align = self.align.pop().unwrap_or_default();
                 let mut length = align + tokens[0].text().chars().count();
                 for i in 1..tokens.len() {
-                    let previous = tokens[i - 1];
-                    let current = tokens[i];
+                    let previous = &tokens[i - 1];
+                    let current = &tokens[i];
                     let current_length = current.text().chars().count();
 
-                    let insert_space = self.should_insert_space(previous, current);
+                    let insert_space = self.should_insert_space(&previous, &current);
                     let space_length = if insert_space { 1 } else { 0 };
 
                     if length + current_length + space_length > self.line_length {

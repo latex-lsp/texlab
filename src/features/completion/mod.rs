@@ -22,17 +22,17 @@ mod util;
 use std::borrow::Cow;
 
 use cancellation::CancellationToken;
-use cstree::TextSize;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use lsp_types::{
     CompletionItem, CompletionList, CompletionParams, CompletionTextEdit, Documentation,
     InsertTextFormat, MarkupContent, MarkupKind, TextEdit,
 };
+use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    syntax::{bibtex, latex, CstNode},
+    syntax::{bibtex, latex},
     LineIndexExt,
 };
 
@@ -159,10 +159,10 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
             }
         }
         Cursor::Latex(token) if token.kind() == latex::WORD => {
-            if let Some(key) = latex::Key::cast(token.parent()) {
+            if let Some(key) = token.parent().and_then(latex::Key::cast) {
                 key.words()
                     .take_while(|word| word.text_range() != token.text_range())
-                    .chain(std::iter::once(token))
+                    .chain(std::iter::once(token.clone()))
                     .filter(|word| word.text_range().start() < context.offset)
                     .join(" ")
                     .into()
@@ -173,7 +173,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
         Cursor::Latex(_) => "".into(),
         Cursor::Bibtex(token) if token.kind().is_type() => token.text().into(),
         Cursor::Bibtex(token) if token.kind() == bibtex::WORD => {
-            if let Some(key) = bibtex::Key::cast(token.parent()) {
+            if let Some(key) = token.parent().and_then(bibtex::Key::cast) {
                 key.to_string().into()
             } else {
                 token.text().into()
@@ -239,7 +239,7 @@ fn preselect(
     items: &mut [InternalCompletionItem],
 ) -> Option<()> {
     let name = context.cursor.as_latex()?;
-    let group = latex::CurlyGroupWord::cast(name.parent())?;
+    let group = latex::CurlyGroupWord::cast(name.parent()?)?;
     let end = latex::End::cast(group.syntax().parent()?)?;
     let environment = latex::Environment::cast(end.syntax().parent()?)?;
     let name = environment.begin()?.name()?.key()?.to_string();

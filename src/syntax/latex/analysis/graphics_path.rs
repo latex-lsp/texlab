@@ -1,10 +1,12 @@
-use crate::syntax::{latex, CstNode};
+use rowan::ast::AstNode;
+
+use crate::syntax::latex;
 
 use super::LatexAnalyzerContext;
 
 pub fn analyze_graphics_path(
     context: &mut LatexAnalyzerContext,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
 ) -> Option<()> {
     let definition = latex::GraphicsPath::cast(node)?;
     for path in definition

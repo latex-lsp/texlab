@@ -13,13 +13,13 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct LatexDocumentData {
-    pub root: latex::SyntaxNode,
+    pub root: rowan::GreenNode,
     pub extras: latex::Extras,
 }
 
 #[derive(Debug, Clone)]
 pub struct BibtexDocumentData {
-    pub root: bibtex::SyntaxNode,
+    pub root: rowan::GreenNode,
 }
 
 #[derive(Debug, Clone, From)]
@@ -87,7 +87,7 @@ impl Document {
         let line_index = LineIndex::new(&text);
         let data = match language {
             DocumentLanguage::Latex => {
-                let root = latex::parse(&text).root;
+                let root = latex::SyntaxNode::new_root(latex::parse(&text).green);
 
                 let base_uri = match &context.options.read().unwrap().root_directory {
                     Some(root_dir) => {
@@ -108,10 +108,14 @@ impl Document {
                 latex::analyze(&mut context, &root);
                 let extras = context.extras;
 
-                LatexDocumentData { root, extras }.into()
+                LatexDocumentData {
+                    root: root.green().into_owned(),
+                    extras,
+                }
+                .into()
             }
             DocumentLanguage::Bibtex => {
-                let root = bibtex::parse(&text).root;
+                let root = bibtex::parse(&text).green;
                 BibtexDocumentData { root }.into()
             }
             DocumentLanguage::BuildLog => DocumentData::BuildLog(build_log::parse(&text)),

@@ -1,13 +1,10 @@
 use std::sync::Arc;
 
-use cstree::TextRange;
 use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
 use multimap::MultiMap;
+use rowan::{ast::AstNode, TextRange};
 
-use crate::{
-    syntax::{latex, CstNode},
-    Document, LineIndexExt, Uri, Workspace,
-};
+use crate::{syntax::latex, Document, LineIndexExt, Uri, Workspace};
 
 pub fn analyze_latex_static(
     workspace: &dyn Workspace,
@@ -21,9 +18,9 @@ pub fn analyze_latex_static(
 
     let data = document.data.as_latex()?;
 
-    for node in data.root.descendants() {
-        analyze_environment(&document, diagnostics_by_uri, node)
-            .or_else(|| analyze_curly_group(&document, diagnostics_by_uri, node))
+    for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+        analyze_environment(&document, diagnostics_by_uri, node.clone())
+            .or_else(|| analyze_curly_group(&document, diagnostics_by_uri, node.clone()))
             .or_else(|| {
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
                     diagnostics_by_uri.insert(
@@ -53,7 +50,7 @@ pub fn analyze_latex_static(
 fn analyze_environment(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
 ) -> Option<()> {
     let environment = latex::Environment::cast(node)?;
     let name1 = environment.begin()?.name()?.key()?;
@@ -62,7 +59,9 @@ fn analyze_environment(
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
-                range: document.line_index.line_col_lsp_range(name1.small_range()),
+                range: document
+                    .line_index
+                    .line_col_lsp_range(latex::small_range(&name1)),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(3)),
                 code_description: None,
@@ -80,7 +79,7 @@ fn analyze_environment(
 fn analyze_curly_group(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
 ) -> Option<()> {
     if !matches!(
         node.kind(),

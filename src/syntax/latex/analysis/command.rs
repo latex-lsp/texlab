@@ -1,8 +1,10 @@
-use crate::syntax::{latex, CstNode};
+use rowan::ast::AstNode;
+
+use crate::syntax::latex;
 
 use super::LatexAnalyzerContext;
 
-pub fn analyze_command(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNode) -> Option<()> {
+pub fn analyze_command(context: &mut LatexAnalyzerContext, node: latex::SyntaxNode) -> Option<()> {
     let command = latex::GenericCommand::cast(node)?;
     context
         .extras
@@ -13,7 +15,7 @@ pub fn analyze_command(context: &mut LatexAnalyzerContext, node: &latex::SyntaxN
 
 pub fn analyze_command_definition(
     context: &mut LatexAnalyzerContext,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
 ) -> Option<()> {
     let definition = latex::CommandDefinition::cast(node)?;
     context

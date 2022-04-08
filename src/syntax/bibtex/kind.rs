@@ -45,7 +45,7 @@ impl SyntaxKind {
     }
 }
 
-impl From<SyntaxKind> for cstree::SyntaxKind {
+impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         Self(kind as u16)
     }

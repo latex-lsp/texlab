@@ -1,10 +1,8 @@
 use cancellation::CancellationToken;
+use rowan::ast::AstNode;
 
 use crate::{
-    syntax::{
-        bibtex::{self, HasType},
-        CstNode,
-    },
+    syntax::bibtex::{self, HasType},
     BibtexEntryTypeCategory, LineIndexExt, WorkspaceSubset, LANGUAGE_DATA,
 };
 
@@ -18,12 +16,12 @@ pub fn find_bibtex_symbols(
     let main_document = subset.documents.first()?;
     let data = main_document.data.as_bibtex()?;
 
-    for node in data.root.children() {
+    for node in bibtex::SyntaxNode::new_root(data.root.clone()).children() {
         if token.is_canceled() {
             return None;
         }
 
-        if let Some(string) = bibtex::String::cast(node) {
+        if let Some(string) = bibtex::String::cast(node.clone()) {
             if let Some(name) = string.name() {
                 buf.push(InternalSymbol {
                     name: name.text().into(),
@@ -32,7 +30,7 @@ pub fn find_bibtex_symbols(
                     deprecated: false,
                     full_range: main_document
                         .line_index
-                        .line_col_lsp_range(string.small_range()),
+                        .line_col_lsp_range(bibtex::small_range(&string)),
                     selection_range: main_document
                         .line_index
                         .line_col_lsp_range(name.text_range()),
@@ -52,7 +50,7 @@ pub fn find_bibtex_symbols(
                                 deprecated: false,
                                 full_range: main_document
                                     .line_index
-                                    .line_col_lsp_range(field.small_range()),
+                                    .line_col_lsp_range(bibtex::small_range(&field)),
                                 selection_range: main_document
                                     .line_index
                                     .line_col_lsp_range(name.text_range()),
@@ -74,10 +72,10 @@ pub fn find_bibtex_symbols(
                         deprecated: false,
                         full_range: main_document
                             .line_index
-                            .line_col_lsp_range(entry.small_range()),
+                            .line_col_lsp_range(bibtex::small_range(&entry)),
                         selection_range: main_document
                             .line_index
-                            .line_col_lsp_range(key.small_range()),
+                            .line_col_lsp_range(bibtex::small_range(&key)),
                         children,
                     });
                 }

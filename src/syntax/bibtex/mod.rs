@@ -10,25 +10,23 @@ pub use self::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Language {}
+pub enum BibtexLanguage {}
 
-impl cstree::Language for Language {
+impl rowan::Language for BibtexLanguage {
     type Kind = SyntaxKind;
 
-    fn kind_from_raw(raw: cstree::SyntaxKind) -> Self::Kind {
+    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
         assert!(raw.0 <= ROOT as u16);
         unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
     }
 
-    fn kind_to_raw(kind: Self::Kind) -> cstree::SyntaxKind {
+    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
         kind.into()
     }
 }
 
-pub type SyntaxNode = cstree::ResolvedNode<Language>;
+pub type SyntaxNode = rowan::SyntaxNode<BibtexLanguage>;
 
-pub type SyntaxToken = cstree::ResolvedToken<Language>;
+pub type SyntaxToken = rowan::SyntaxToken<BibtexLanguage>;
 
-pub type SyntaxElement = cstree::ResolvedElement<Language>;
-
-pub type SyntaxElementRef<'a> = cstree::ResolvedElementRef<'a, Language>;
+pub type SyntaxElement = rowan::SyntaxElement<BibtexLanguage>;

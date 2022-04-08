@@ -1,5 +1,5 @@
-use cstree::{TextRange, TextSize};
 use lsp_types::{Position, Range};
+use rowan::{TextRange, TextSize};
 
 use crate::{LineColUtf16, LineIndex};
 

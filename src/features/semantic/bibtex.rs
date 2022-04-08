@@ -1,8 +1,8 @@
 use cancellation::CancellationToken;
-use cstree::{NodeOrToken, TextRange};
 use lsp_types::{
     SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokensRangeParams,
 };
+use rowan::{NodeOrToken, TextRange};
 
 use crate::{
     features::FeatureRequest,

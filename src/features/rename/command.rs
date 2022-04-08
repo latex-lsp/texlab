@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use cancellation::CancellationToken;
-use cstree::{TextRange, TextSize};
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
+use rowan::{TextRange, TextSize};
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
+    syntax::latex,
     LineIndexExt,
 };
 
@@ -34,8 +35,7 @@ pub fn rename_command(
         cancellation_token.result().ok()?;
 
         if let Some(data) = document.data.as_latex() {
-            let edits = data
-                .root
+            let edits = latex::SyntaxNode::new_root(data.root.clone())
                 .descendants_with_tokens()
                 .filter_map(|element| element.into_token())
                 .filter(|token| token.kind().is_command_name() && token.text() == name)

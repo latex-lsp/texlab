@@ -1,10 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -20,8 +18,7 @@ pub fn complete_acronyms<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for name in data
-                .root
+            for name in latex::SyntaxNode::new_root(data.root.clone())
                 .descendants()
                 .filter_map(latex::AcronymDefinition::cast)
                 .filter_map(|node| node.name())
@@ -40,7 +37,7 @@ pub fn complete_acronyms<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

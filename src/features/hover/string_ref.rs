@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{bibtex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
 pub fn find_string_reference_hover(
     context: &CursorContext<HoverParams>,
@@ -18,9 +15,17 @@ pub fn find_string_reference_hover(
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)
-        .filter(|name| matches!(name.parent().kind(), bibtex::TOKEN | bibtex::STRING))?;
+        .filter(|name| {
+            matches!(
+                name.parent().unwrap().kind(),
+                bibtex::TOKEN | bibtex::STRING
+            )
+        })?;
 
-    for string in data.root.children().filter_map(bibtex::String::cast) {
+    for string in bibtex::SyntaxNode::new_root(data.root.clone())
+        .children()
+        .filter_map(bibtex::String::cast)
+    {
         if cancellation_token.is_canceled() {
             return None;
         }

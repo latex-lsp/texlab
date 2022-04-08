@@ -34,7 +34,7 @@ pub fn complete_component_commands<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

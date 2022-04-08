@@ -1,14 +1,13 @@
-use cstree::GreenNodeBuilder;
+use rowan::{GreenNode, GreenNodeBuilder};
 
 use super::{
     lexer::Lexer,
     SyntaxKind::{self, *},
-    SyntaxNode,
 };
 
 #[derive(Clone)]
 pub struct Parse {
-    pub root: SyntaxNode,
+    pub green: GreenNode,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +28,7 @@ impl Default for ParserContext {
 #[derive(Debug)]
 struct Parser<'a> {
     lexer: Lexer<'a>,
-    builder: GreenNodeBuilder<'static, 'static>,
+    builder: GreenNodeBuilder<'static>,
 }
 
 impl<'a> Parser<'a> {
@@ -88,10 +87,8 @@ impl<'a> Parser<'a> {
             self.content(ParserContext::default());
         }
         self.builder.finish_node();
-        let (green_node, interner) = self.builder.finish();
-        Parse {
-            root: SyntaxNode::new_root_with_resolver(green_node, interner.unwrap()),
-        }
+        let green = self.builder.finish();
+        Parse { green }
     }
 
     fn content(&mut self, context: ParserContext) {
@@ -1331,10 +1328,12 @@ pub fn parse(text: &str) -> Parse {
 mod tests {
     use insta::assert_debug_snapshot;
 
+    use crate::syntax::latex;
+
     use super::*;
 
-    fn setup(text: &str) -> SyntaxNode {
-        parse(&text.trim().replace("\r", "")).root
+    fn setup(text: &str) -> latex::SyntaxNode {
+        latex::SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green)
     }
 
     #[test]

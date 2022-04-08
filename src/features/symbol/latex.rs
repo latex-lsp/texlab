@@ -2,15 +2,13 @@ use std::str::FromStr;
 
 use cancellation::CancellationToken;
 use lsp_types::Range;
+use rowan::ast::AstNode;
 use smol_str::SmolStr;
 use titlecase::titlecase;
 
 use crate::{
     find_caption_by_parent, find_label_number,
-    syntax::{
-        latex::{self, HasBrack, HasCurly},
-        CstNode,
-    },
+    syntax::latex::{self, HasBrack, HasCurly},
     LabelledFloatKind, LatexDocumentData, LineIndexExt, WorkspaceSubset, LANGUAGE_DATA,
 };
 
@@ -33,8 +31,8 @@ pub fn find_latex_symbols(
         token,
     };
 
-    let root = &context.data.root;
-    let mut symbols = visit(&mut context, root);
+    let root = context.data.root.clone();
+    let mut symbols = visit(&mut context, latex::SyntaxNode::new_root(root));
     buf.append(&mut symbols);
     Some(())
 }
@@ -45,7 +43,7 @@ struct Context<'a> {
     token: &'a CancellationToken,
 }
 
-fn visit(context: &mut Context, node: &latex::SyntaxNode) -> Vec<InternalSymbol> {
+fn visit(context: &mut Context, node: latex::SyntaxNode) -> Vec<InternalSymbol> {
     let symbol = match node.kind() {
         latex::PART
         | latex::CHAPTER
@@ -53,10 +51,10 @@ fn visit(context: &mut Context, node: &latex::SyntaxNode) -> Vec<InternalSymbol>
         | latex::SUBSECTION
         | latex::SUBSUBSECTION
         | latex::PARAGRAPH
-        | latex::SUBPARAGRAPH => visit_section(context, node),
-        latex::ENUM_ITEM => visit_enum_item(context, node),
-        latex::EQUATION => visit_equation(context, node),
-        latex::ENVIRONMENT => latex::Environment::cast(node)
+        | latex::SUBPARAGRAPH => visit_section(context, node.clone()),
+        latex::ENUM_ITEM => visit_enum_item(context, node.clone()),
+        latex::EQUATION => visit_equation(context, node.clone()),
+        latex::ENVIRONMENT => latex::Environment::cast(node.clone())
             .and_then(|env| env.begin())
             .and_then(|begin| begin.name())
             .and_then(|name| name.key())
@@ -67,17 +65,17 @@ fn visit(context: &mut Context, node: &latex::SyntaxNode) -> Vec<InternalSymbol>
                     .iter()
                     .any(|env| env == &name)
                 {
-                    visit_equation_environment(context, node)
+                    visit_equation_environment(context, node.clone())
                 } else if LANGUAGE_DATA
                     .enum_environments
                     .iter()
                     .any(|env| env == &name)
                 {
-                    visit_enumeration(context, node, &name)
+                    visit_enumeration(context, node.clone(), &name)
                 } else if let Ok(float_kind) = LabelledFloatKind::from_str(&name) {
-                    visit_float(context, node, float_kind)
+                    visit_float(context, node.clone(), float_kind)
                 } else {
-                    visit_theorem(context, node, &name)
+                    visit_theorem(context, node.clone(), &name)
                 }
             }),
         _ => None,
@@ -107,14 +105,14 @@ fn visit(context: &mut Context, node: &latex::SyntaxNode) -> Vec<InternalSymbol>
     }
 }
 
-fn visit_section(context: &mut Context, node: &latex::SyntaxNode) -> Option<InternalSymbol> {
+fn visit_section(context: &mut Context, node: latex::SyntaxNode) -> Option<InternalSymbol> {
     let section = latex::Section::cast(node)?;
     let full_range = context
         .subset
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(section.small_range());
+        .line_col_lsp_range(latex::small_range(&section));
 
     let group = section.name()?;
     let group_text = group.content_text()?;
@@ -153,8 +151,8 @@ fn visit_section(context: &mut Context, node: &latex::SyntaxNode) -> Option<Inte
     Some(symbol)
 }
 
-fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<InternalSymbol> {
-    let enum_item = latex::EnumItem::cast(node)?;
+fn visit_enum_item(context: &mut Context, node: latex::SyntaxNode) -> Option<InternalSymbol> {
+    let enum_item = latex::EnumItem::cast(node.clone())?;
     if !enum_item
         .syntax()
         .ancestors()
@@ -177,14 +175,14 @@ fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<In
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(enum_item.small_range());
+        .line_col_lsp_range(latex::small_range(&enum_item));
 
     let name = enum_item
         .label()
         .and_then(|label| label.content_text())
         .unwrap_or_else(|| "Item".to_string());
 
-    let symbol = match find_label_by_parent(context, node) {
+    let symbol = match find_label_by_parent(context, &node) {
         Some(NumberedLabel {
             name: label,
             range: selection_range,
@@ -211,7 +209,7 @@ fn visit_enum_item(context: &mut Context, node: &latex::SyntaxNode) -> Option<In
     Some(symbol)
 }
 
-fn visit_equation(context: &mut Context, node: &latex::SyntaxNode) -> Option<InternalSymbol> {
+fn visit_equation(context: &mut Context, node: latex::SyntaxNode) -> Option<InternalSymbol> {
     let equation = latex::Equation::cast(node)?;
 
     let full_range = context
@@ -219,14 +217,14 @@ fn visit_equation(context: &mut Context, node: &latex::SyntaxNode) -> Option<Int
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(equation.small_range());
+        .line_col_lsp_range(latex::small_range(&equation));
 
-    make_equation_symbol(context, node, full_range)
+    make_equation_symbol(context, equation.syntax(), full_range)
 }
 
 fn visit_equation_environment(
     context: &mut Context,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
 
@@ -235,14 +233,14 @@ fn visit_equation_environment(
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(environment.small_range());
+        .line_col_lsp_range(latex::small_range(&environment));
 
-    make_equation_symbol(context, node, full_range)
+    make_equation_symbol(context, environment.syntax(), full_range)
 }
 
 fn make_equation_symbol(
     context: &mut Context,
-    node: &cstree::ResolvedNode<latex::Language>,
+    node: &latex::SyntaxNode,
     full_range: Range,
 ) -> Option<InternalSymbol> {
     let symbol = match find_label_by_parent(context, node) {
@@ -281,7 +279,7 @@ fn make_equation_symbol(
 
 fn visit_enumeration(
     context: &mut Context,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
     env_name: &str,
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
@@ -290,7 +288,7 @@ fn visit_enumeration(
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(environment.small_range());
+        .line_col_lsp_range(latex::small_range(&environment));
 
     let name = titlecase(env_name);
     let symbol = match find_label_by_parent(context, environment.syntax()) {
@@ -329,7 +327,7 @@ fn visit_enumeration(
 
 fn visit_float(
     context: &mut Context,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
     float_kind: LabelledFloatKind,
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
@@ -338,7 +336,7 @@ fn visit_float(
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(environment.small_range());
+        .line_col_lsp_range(latex::small_range(&environment));
 
     let (float_kind, symbol_kind) = match float_kind {
         LabelledFloatKind::Algorithm => ("Algorithm", InternalSymbolKind::Algorithm),
@@ -385,7 +383,7 @@ fn visit_float(
 
 fn visit_theorem(
     context: &mut Context,
-    node: &latex::SyntaxNode,
+    node: latex::SyntaxNode,
     environment_name: &str,
 ) -> Option<InternalSymbol> {
     let definition = context
@@ -412,7 +410,7 @@ fn visit_theorem(
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(node.small_range());
+        .line_col_lsp_range(latex::small_range(&node));
 
     let symbol = match find_label_by_parent(context, node.syntax()) {
         Some(NumberedLabel {
@@ -477,7 +475,7 @@ fn find_label_by_parent(
         .documents
         .first()?
         .line_index
-        .line_col_lsp_range(node.small_range());
+        .line_col_lsp_range(latex::small_range(&node));
 
     let number = find_label_number(&context.subset, &name);
     Some(NumberedLabel {

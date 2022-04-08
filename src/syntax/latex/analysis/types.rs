@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cstree::TextRange;
+use rowan::TextRange;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smol_str::SmolStr;
 

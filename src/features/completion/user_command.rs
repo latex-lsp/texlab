@@ -38,7 +38,7 @@ pub fn complete_user_commands<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

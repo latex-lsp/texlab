@@ -1,13 +1,10 @@
 use std::str::FromStr;
 
-use cstree::TextRange;
 use lsp_types::{MarkupContent, MarkupKind};
+use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::{
-        latex::{self, HasBrack, HasCurly},
-        CstNode,
-    },
+    syntax::latex::{self, HasBrack, HasCurly},
     WorkspaceSubset, LANGUAGE_DATA,
 };
 
@@ -129,21 +126,23 @@ impl RenderedLabel {
 pub fn render_label<'a>(
     subset: &'a WorkspaceSubset,
     label_name: &str,
-    mut label: Option<latex::LabelDefinition<'a>>,
+    mut label: Option<latex::LabelDefinition>,
 ) -> Option<RenderedLabel> {
     let mut number = find_label_number(subset, label_name).map(ToString::to_string);
 
     for document in &subset.documents {
         if let Some(data) = document.data.as_latex() {
-            label = label.or_else(|| find_label_definition(&data.root, label_name));
+            label = label.or_else(|| {
+                find_label_definition(&latex::SyntaxNode::new_root(data.root.clone()), label_name)
+            });
         }
     }
 
     label?.syntax().ancestors().find_map(|parent| {
-        render_label_float(parent, &mut number)
-            .or_else(|| render_label_section(parent, &mut number))
-            .or_else(|| render_label_enum_item(parent, &mut number))
-            .or_else(|| render_label_equation(parent, &mut number))
+        render_label_float(parent.clone(), &mut number)
+            .or_else(|| render_label_section(parent.clone(), &mut number))
+            .or_else(|| render_label_enum_item(parent.clone(), &mut number))
+            .or_else(|| render_label_equation(parent.clone(), &mut number))
             .or_else(|| render_label_theorem(subset, parent, &mut number))
     })
 }
@@ -151,7 +150,7 @@ pub fn render_label<'a>(
 pub fn find_label_definition<'a>(
     root: &'a latex::SyntaxNode,
     label_name: &str,
-) -> Option<latex::LabelDefinition<'a>> {
+) -> Option<latex::LabelDefinition> {
     root.descendants()
         .filter_map(latex::LabelDefinition::cast)
         .find(|label| {
@@ -175,22 +174,22 @@ pub fn find_label_number<'a>(subset: &'a WorkspaceSubset, label_name: &str) -> O
 }
 
 fn render_label_float(
-    parent: &latex::SyntaxNode,
+    parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
-    let environment = latex::Environment::cast(parent)?;
+    let environment = latex::Environment::cast(parent.clone())?;
     let environment_name = environment.begin()?.name()?.key()?.to_string();
     let kind = LabelledFloatKind::from_str(&environment_name).ok()?;
     let caption = find_caption_by_parent(&parent)?;
     Some(RenderedLabel {
-        range: environment.small_range(),
+        range: latex::small_range(&environment),
         number: number.take(),
         object: LabelledObject::Float { caption, kind },
     })
 }
 
 fn render_label_section(
-    parent: &latex::SyntaxNode,
+    parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let section = latex::Section::cast(parent)?;
@@ -198,7 +197,7 @@ fn render_label_section(
     let text = text_group.content_text()?;
 
     Some(RenderedLabel {
-        range: section.small_range(),
+        range: latex::small_range(&section),
         number: number.take(),
         object: LabelledObject::Section {
             prefix: match section.syntax().kind() {
@@ -217,12 +216,12 @@ fn render_label_section(
 }
 
 fn render_label_enum_item(
-    parent: &latex::SyntaxNode,
+    parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let enum_item = latex::EnumItem::cast(parent)?;
     Some(RenderedLabel {
-        range: enum_item.small_range(),
+        range: latex::small_range(&enum_item),
         number: enum_item
             .label()
             .and_then(|number| number.content_text())
@@ -232,7 +231,7 @@ fn render_label_enum_item(
 }
 
 fn render_label_equation(
-    parent: &latex::SyntaxNode,
+    parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let environment = latex::Environment::cast(parent)?;
@@ -247,7 +246,7 @@ fn render_label_equation(
     }
 
     Some(RenderedLabel {
-        range: environment.small_range(),
+        range: latex::small_range(&environment),
         number: number.take(),
         object: LabelledObject::Equation,
     })
@@ -255,7 +254,7 @@ fn render_label_equation(
 
 fn render_label_theorem(
     subset: &WorkspaceSubset,
-    parent: &latex::SyntaxNode,
+    parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
     let environment = latex::Environment::cast(parent)?;
@@ -274,7 +273,7 @@ fn render_label_theorem(
     })?;
 
     Some(RenderedLabel {
-        range: environment.small_range(),
+        range: latex::small_range(&environment),
         number: number.take(),
         object: LabelledObject::Theorem {
             kind: theorem.description.clone(),

@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, syntax::latex, LineIndexExt};
 
 pub fn goto_command_definition(
     context: &CursorContext<GotoDefinitionParams>,
@@ -24,14 +21,13 @@ pub fn goto_command_definition(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for node in data.root.descendants() {
+            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
                 cancellation_token.result().ok()?;
 
                 if let Some(defintion) = latex::CommandDefinition::cast(node).filter(|def| {
                     def.name()
                         .and_then(|name| name.command())
-                        .map(|name| name.text())
-                        == Some(name.text())
+                        .map_or(false, |node| node.text() == name.text())
                 }) {
                     let target_selection_range = document
                         .line_index
@@ -39,7 +35,7 @@ pub fn goto_command_definition(
 
                     let target_range = document
                         .line_index
-                        .line_col_lsp_range(defintion.small_range());
+                        .line_col_lsp_range(latex::small_range(&defintion));
 
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),

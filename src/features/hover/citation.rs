@@ -1,7 +1,7 @@
 use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
-use crate::{citation, features::cursor::CursorContext, LineIndexExt};
+use crate::{citation, features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
 pub fn find_citation_hover(
     context: &CursorContext<HoverParams>,
@@ -21,10 +21,12 @@ pub fn find_citation_hover(
         .documents
         .iter()
         .find_map(|document| {
-            document
-                .data
-                .as_bibtex()
-                .and_then(|data| citation::render_citation(&data.root, &key_text))
+            document.data.as_bibtex().and_then(|data| {
+                citation::render_citation(
+                    &bibtex::SyntaxNode::new_root(data.root.clone()),
+                    &key_text,
+                )
+            })
         })?;
 
     Some(Hover {

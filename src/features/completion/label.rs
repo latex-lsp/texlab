@@ -1,11 +1,11 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
+use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     features::{cursor::CursorContext, lsp_kinds::Structure},
     render_label,
-    syntax::{latex, CstNode},
+    syntax::latex,
     LabelledObject,
 };
 
@@ -22,8 +22,7 @@ pub fn complete_labels<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for label in data
-                .root
+            for label in latex::SyntaxNode::new_root(data.root.clone())
                 .descendants()
                 .filter(|_| !cancellation_token.is_canceled())
                 .filter_map(latex::LabelDefinition::cast)
@@ -108,7 +107,7 @@ fn find_reference_range(context: &CursorContext<CompletionParams>) -> Option<(Te
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

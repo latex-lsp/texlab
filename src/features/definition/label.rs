@@ -2,7 +2,7 @@ use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 
 use crate::{
-    features::cursor::CursorContext, find_label_definition, render_label, syntax::CstNode,
+    features::cursor::CursorContext, find_label_definition, render_label, syntax::latex,
     LineIndexExt,
 };
 
@@ -21,8 +21,10 @@ pub fn goto_label_definition(
     for document in &context.request.subset.documents {
         cancellation_token.result().ok()?;
         if let Some(data) = document.data.as_latex() {
-            if let Some(definition) = find_label_definition(&data.root, &name_text) {
-                let target_selection_range = definition.name()?.key()?.small_range();
+            if let Some(definition) =
+                find_label_definition(&latex::SyntaxNode::new_root(data.root.clone()), &name_text)
+            {
+                let target_selection_range = latex::small_range(&definition.name()?.key()?);
                 let target_range =
                     render_label(&context.request.subset, &name_text, Some(definition))
                         .map(|label| label.range)

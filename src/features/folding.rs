@@ -1,8 +1,9 @@
 use cancellation::CancellationToken;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams, Range};
+use rowan::ast::AstNode;
 
 use crate::{
-    syntax::{bibtex, latex, CstNode},
+    syntax::{bibtex, latex},
     DocumentData, LineIndexExt,
 };
 
@@ -16,15 +17,17 @@ pub fn find_foldings(
     let main_document = request.main_document();
     match &main_document.data {
         DocumentData::Latex(data) => {
-            for node in data.root.descendants() {
+            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
                 if token.is_canceled() {
                     break;
                 }
 
-                if let Some(folding) = latex::Environment::cast(node)
-                    .map(|node| node.small_range())
-                    .or_else(|| latex::Section::cast(node).map(|node| node.small_range()))
-                    .or_else(|| latex::EnumItem::cast(node).map(|node| node.small_range()))
+                if let Some(folding) = latex::Environment::cast(node.clone())
+                    .map(|node| latex::small_range(&node))
+                    .or_else(|| {
+                        latex::Section::cast(node.clone()).map(|node| latex::small_range(&node))
+                    })
+                    .or_else(|| latex::EnumItem::cast(node).map(|node| latex::small_range(&node)))
                     .map(|node| main_document.line_index.line_col_lsp_range(node))
                     .map(create_range)
                 {
@@ -33,15 +36,19 @@ pub fn find_foldings(
             }
         }
         DocumentData::Bibtex(data) => {
-            for node in data.root.descendants() {
+            for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
                 if token.is_canceled() {
                     break;
                 }
 
-                if let Some(folding) = bibtex::Preamble::cast(node)
-                    .map(|node| node.small_range())
-                    .or_else(|| bibtex::String::cast(node).map(|node| node.small_range()))
-                    .or_else(|| bibtex::Entry::cast(node).map(|node| node.small_range()))
+                if let Some(folding) = bibtex::Preamble::cast(node.clone())
+                    .map(|node| bibtex::small_range(&node))
+                    .or_else(|| {
+                        bibtex::String::cast(node.clone()).map(|node| bibtex::small_range(&node))
+                    })
+                    .or_else(|| {
+                        bibtex::Entry::cast(node.clone()).map(|node| bibtex::small_range(&node))
+                    })
                     .map(|node| main_document.line_index.line_col_lsp_range(node))
                     .map(create_range)
                 {

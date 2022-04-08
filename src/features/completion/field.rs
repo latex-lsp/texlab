@@ -1,12 +1,8 @@
 use cancellation::CancellationToken;
-use cstree::TextRange;
 use lsp_types::CompletionParams;
+use rowan::{ast::AstNode, TextRange};
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{bibtex, CstNode},
-    LANGUAGE_DATA,
-};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LANGUAGE_DATA};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -24,9 +20,9 @@ pub fn complete_fields<'a>(
         TextRange::empty(context.offset)
     };
 
-    let parent = token.parent();
-    if let Some(entry) = bibtex::Entry::cast(parent) {
-        if entry.key()?.small_range() == token.text_range() {
+    let parent = token.parent()?;
+    if let Some(entry) = bibtex::Entry::cast(parent.clone()) {
+        if bibtex::small_range(&entry.key()?) == token.text_range() {
             return None;
         }
     } else {

@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
-use cstree::TextRange;
 use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
 use multimap::MultiMap;
+use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::{
-        bibtex::{self, HasDelimiters, HasType},
-        CstNode,
-    },
+    syntax::bibtex::{self, HasDelimiters, HasType},
     Document, LineIndexExt, Uri, Workspace,
 };
 
@@ -20,8 +17,8 @@ pub fn analyze_bibtex_static(
     let document = workspace.get(uri)?;
     let data = document.data.as_bibtex()?;
 
-    for node in data.root.descendants() {
-        analyze_entry(&document, diagnostics_by_uri, node)
+    for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
+        analyze_entry(&document, diagnostics_by_uri, node.clone())
             .or_else(|| analyze_field(&document, diagnostics_by_uri, node));
     }
 
@@ -31,7 +28,7 @@ pub fn analyze_bibtex_static(
 fn analyze_entry(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    node: &bibtex::SyntaxNode,
+    node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let entry = bibtex::Entry::cast(node)?;
     if entry.left_delimiter().is_none() {
@@ -100,7 +97,7 @@ fn analyze_entry(
 fn analyze_field(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    node: &bibtex::SyntaxNode,
+    node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let field = bibtex::Field::cast(node)?;
     if field.equality_sign().is_none() {

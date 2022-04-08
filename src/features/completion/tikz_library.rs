@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-    LANGUAGE_DATA,
-};
+use crate::{features::cursor::CursorContext, syntax::latex, LANGUAGE_DATA};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -41,7 +38,7 @@ pub fn complete_tikz_libraries<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

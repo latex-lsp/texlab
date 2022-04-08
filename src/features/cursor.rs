@@ -1,11 +1,11 @@
-use cstree::{TextRange, TextSize};
 use lsp_types::{
     CompletionParams, DocumentHighlightParams, GotoDefinitionParams, HoverParams, Position,
     ReferenceParams, RenameParams, TextDocumentPositionParams,
 };
+use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{
-    syntax::{bibtex, latex, CstNode},
+    syntax::{bibtex, latex},
     DocumentData, LineIndexExt,
 };
 
@@ -42,12 +42,12 @@ impl Cursor {
             return Some(Self::Latex(right));
         }
 
-        if left.kind() == latex::WHITESPACE && left.parent().kind() == latex::KEY {
+        if left.kind() == latex::WHITESPACE && left.parent()?.kind() == latex::KEY {
             return Some(Self::Latex(left));
         }
 
         if matches!(right.kind(), latex::WHITESPACE | latex::LINE_BREAK)
-            && right.parent().kind() == latex::KEY
+            && right.parent()?.kind() == latex::KEY
         {
             return Some(Self::Latex(right));
         }
@@ -136,13 +136,15 @@ impl<P: HasPosition> CursorContext<P> {
 
         let cursor = match &main_document.data {
             DocumentData::Latex(data) => {
-                let left = data.root.token_at_offset(offset).left_biased();
-                let right = data.root.token_at_offset(offset).right_biased();
+                let root = latex::SyntaxNode::new_root(data.root.clone());
+                let left = root.token_at_offset(offset).left_biased();
+                let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_latex(left, right)
             }
             DocumentData::Bibtex(data) => {
-                let left = data.root.token_at_offset(offset).left_biased();
-                let right = data.root.token_at_offset(offset).right_biased();
+                let root = bibtex::SyntaxNode::new_root(data.root.clone());
+                let left = root.token_at_offset(offset).left_biased();
+                let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_bibtex(left, right)
             }
             DocumentData::BuildLog(_) => None,
@@ -155,8 +157,8 @@ impl<P: HasPosition> CursorContext<P> {
         }
     }
 
-    pub fn is_inside_latex_curly<'a>(&self, group: &impl latex::HasCurly<'a>) -> bool {
-        group.small_range().contains(self.offset) || group.right_curly().is_none()
+    pub fn is_inside_latex_curly(&self, group: &impl latex::HasCurly) -> bool {
+        latex::small_range(group).contains(self.offset) || group.right_curly().is_none()
     }
 
     pub fn find_citation_key_word(&self) -> Option<(String, TextRange)> {
@@ -165,19 +167,19 @@ impl<P: HasPosition> CursorContext<P> {
             .as_latex()
             .filter(|token| token.kind() == latex::WORD)?;
 
-        let key = latex::Key::cast(word.parent())?;
+        let key = latex::Key::cast(word.parent()?)?;
 
         let group = latex::CurlyGroupWordList::cast(key.syntax().parent()?)?;
         latex::Citation::cast(group.syntax().parent()?)?;
-        Some((key.to_string(), key.small_range()))
+        Some((key.to_string(), latex::small_range(&key)))
     }
 
     pub fn find_citation_key_command(&self) -> Option<(String, TextRange)> {
         let command = self.cursor.as_latex()?;
 
-        let citation = latex::Citation::cast(command.parent())?;
+        let citation = latex::Citation::cast(command.parent()?)?;
         let key = citation.key_list()?.keys().next()?;
-        Some((key.to_string(), key.small_range()))
+        Some((key.to_string(), latex::small_range(&key)))
     }
 
     pub fn find_entry_key(&self) -> Option<(String, TextRange)> {
@@ -186,10 +188,10 @@ impl<P: HasPosition> CursorContext<P> {
             .as_bibtex()
             .filter(|token| token.kind() == bibtex::WORD)?;
 
-        let key = bibtex::Key::cast(word.parent())?;
+        let key = bibtex::Key::cast(word.parent()?)?;
 
         bibtex::Entry::cast(key.syntax().parent()?)?;
-        Some((key.to_string(), key.small_range()))
+        Some((key.to_string(), bibtex::small_range(&key)))
     }
 
     pub fn find_label_name_key(&self) -> Option<(String, TextRange)> {
@@ -198,29 +200,29 @@ impl<P: HasPosition> CursorContext<P> {
             .as_latex()
             .filter(|token| token.kind() == latex::WORD)?;
 
-        let key = latex::Key::cast(name.parent())?;
+        let key = latex::Key::cast(name.parent()?)?;
 
         if matches!(
             key.syntax().parent()?.parent()?.kind(),
             latex::LABEL_DEFINITION | latex::LABEL_REFERENCE | latex::LABEL_REFERENCE_RANGE
         ) {
-            Some((key.to_string(), key.small_range()))
+            Some((key.to_string(), latex::small_range(&key)))
         } else {
             None
         }
     }
 
     pub fn find_label_name_command(&self) -> Option<(String, TextRange)> {
-        let node = self.cursor.as_latex()?.parent();
-        if let Some(label) = latex::LabelDefinition::cast(node) {
+        let node = self.cursor.as_latex()?.parent()?;
+        if let Some(label) = latex::LabelDefinition::cast(node.clone()) {
             let name = label.name()?.key()?;
-            Some((name.to_string(), name.small_range()))
-        } else if let Some(label) = latex::LabelReference::cast(node) {
+            Some((name.to_string(), latex::small_range(&name)))
+        } else if let Some(label) = latex::LabelReference::cast(node.clone()) {
             let name = label.name_list()?.keys().next()?;
-            Some((name.to_string(), name.small_range()))
+            Some((name.to_string(), latex::small_range(&name)))
         } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
             let name = label.from()?.key()?;
-            Some((name.to_string(), name.small_range()))
+            Some((name.to_string(), latex::small_range(&name)))
         } else {
             None
         }
@@ -238,17 +240,17 @@ impl<P: HasPosition> CursorContext<P> {
 
     pub fn find_curly_group_word(&self) -> Option<(String, TextRange, latex::CurlyGroupWord)> {
         let token = self.cursor.as_latex()?;
-        let key = latex::Key::cast(token.parent());
+        let key = latex::Key::cast(token.parent()?);
 
         let group = key
             .as_ref()
             .and_then(|key| key.syntax().parent())
-            .unwrap_or(token.parent());
+            .unwrap_or(token.parent()?);
 
         let group =
             latex::CurlyGroupWord::cast(group).filter(|group| self.is_inside_latex_curly(group))?;
 
-        key.map(|key| (key.to_string(), key.small_range(), group))
+        key.map(|key| (key.to_string(), latex::small_range(&key), group.clone()))
             .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
     }
 
@@ -256,12 +258,12 @@ impl<P: HasPosition> CursorContext<P> {
         &self,
     ) -> Option<(String, TextRange, latex::CurlyGroupWordList)> {
         let token = self.cursor.as_latex()?;
-        let key = latex::Key::cast(token.parent());
+        let key = latex::Key::cast(token.parent()?);
 
         let group = key
             .as_ref()
             .and_then(|key| key.syntax().parent())
-            .unwrap_or(token.parent());
+            .unwrap_or(token.parent()?);
 
         let group = latex::CurlyGroupWordList::cast(group)
             .filter(|group| self.is_inside_latex_curly(group))?;
@@ -273,12 +275,12 @@ impl<P: HasPosition> CursorContext<P> {
                 .filter(|tok| tok.kind() == latex::MISSING)
                 .is_some()
             {
-                TextRange::new(key.small_range().start(), token.text_range().end())
+                TextRange::new(latex::small_range(&key).start(), token.text_range().end())
             } else {
-                key.small_range()
+                latex::small_range(&key)
             };
 
-            (key.to_string(), range, group)
+            (key.to_string(), range, group.clone())
         })
         .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
     }

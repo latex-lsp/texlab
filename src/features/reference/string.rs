@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{Location, ReferenceParams};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{bibtex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
 pub fn find_string_references(
     context: &CursorContext<ReferenceParams>,
@@ -16,14 +13,19 @@ pub fn find_string_references(
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)
-        .filter(|token| matches!(token.parent().kind(), bibtex::TOKEN | bibtex::STRING))?
+        .filter(|token| {
+            matches!(
+                token.parent().unwrap().kind(),
+                bibtex::TOKEN | bibtex::STRING
+            )
+        })?
         .text();
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
-    for node in data.root.descendants() {
+    for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
         cancellation_token.result().ok()?;
-        if let Some(name) = bibtex::String::cast(node)
+        if let Some(name) = bibtex::String::cast(node.clone())
             .and_then(|string| string.name())
             .filter(|name| {
                 context.request.params.context.include_declaration && name.text() == name_text

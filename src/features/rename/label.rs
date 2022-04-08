@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
+use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
-    syntax::{latex, CstNode},
+    syntax::latex,
     LineIndexExt,
 };
 
@@ -36,12 +37,16 @@ pub fn rename_label(
         cancellation_token.result().ok()?;
         if let Some(data) = document.data.as_latex() {
             let mut edits = Vec::new();
-            for node in data.root.descendants() {
-                if let Some(range) = latex::LabelDefinition::cast(node)
+            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+                if let Some(range) = latex::LabelDefinition::cast(node.clone())
                     .and_then(|label| label.name())
                     .and_then(|name| name.key())
                     .filter(|name| name.to_string() == name_text)
-                    .map(|name| document.line_index.line_col_lsp_range(name.small_range()))
+                    .map(|name| {
+                        document
+                            .line_index
+                            .line_col_lsp_range(latex::small_range(&name))
+                    })
                 {
                     edits.push(TextEdit::new(
                         range,
@@ -49,12 +54,16 @@ pub fn rename_label(
                     ));
                 }
 
-                latex::LabelReference::cast(node)
+                latex::LabelReference::cast(node.clone())
                     .and_then(|label| label.name_list())
                     .into_iter()
                     .flat_map(|label| label.keys())
                     .filter(|name| name.to_string() == name_text)
-                    .map(|name| document.line_index.line_col_lsp_range(name.small_range()))
+                    .map(|name| {
+                        document
+                            .line_index
+                            .line_col_lsp_range(latex::small_range(&name))
+                    })
                     .for_each(|range| {
                         edits.push(TextEdit::new(
                             range,
@@ -62,14 +71,16 @@ pub fn rename_label(
                         ));
                     });
 
-                if let Some(label) = latex::LabelReferenceRange::cast(node) {
+                if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
                     if let Some(name1) = label
                         .from()
                         .and_then(|name| name.key())
                         .filter(|name| name.to_string() == name_text)
                     {
                         edits.push(TextEdit::new(
-                            document.line_index.line_col_lsp_range(name1.small_range()),
+                            document
+                                .line_index
+                                .line_col_lsp_range(latex::small_range(&name1)),
                             context.request.params.new_name.clone(),
                         ));
                     }
@@ -80,7 +91,9 @@ pub fn rename_label(
                         .filter(|name| name.to_string() == name_text)
                     {
                         edits.push(TextEdit::new(
-                            document.line_index.line_col_lsp_range(name2.small_range()),
+                            document
+                                .line_index
+                                .line_col_lsp_range(latex::small_range(&name2)),
                             context.request.params.new_name.clone(),
                         ));
                     }

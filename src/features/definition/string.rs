@@ -1,11 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{bibtex, CstNode},
-    LineIndexExt,
-};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
 pub fn goto_string_definition(
     context: &CursorContext<GotoDefinitionParams>,
@@ -19,13 +16,16 @@ pub fn goto_string_definition(
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)?;
 
-    bibtex::Token::cast(name.parent())?;
+    bibtex::Token::cast(name.parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
         .line_col_lsp_range(name.text_range());
 
-    for string in data.root.children().filter_map(bibtex::String::cast) {
+    for string in bibtex::SyntaxNode::new_root(data.root.clone())
+        .children()
+        .filter_map(bibtex::String::cast)
+    {
         cancellation_token.result().ok()?;
 
         if let Some(string_name) = string.name().filter(|n| n.text() == name.text()) {
@@ -37,7 +37,7 @@ pub fn goto_string_definition(
                     .line_col_lsp_range(string_name.text_range()),
                 target_range: main_document
                     .line_index
-                    .line_col_lsp_range(string.small_range()),
+                    .line_col_lsp_range(bibtex::small_range(&string)),
             }]);
         }
     }

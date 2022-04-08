@@ -1,10 +1,8 @@
 use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
+use rowan::ast::AstNode;
 
-use crate::{
-    features::cursor::CursorContext,
-    syntax::{latex, CstNode},
-};
+use crate::{features::cursor::CursorContext, syntax::latex};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -20,10 +18,10 @@ pub fn complete_glossary_entries<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for node in data.root.descendants() {
+            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
                 cancellation_token.result().ok()?;
 
-                if let Some(name) = latex::GlossaryEntryDefinition::cast(node)
+                if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())
                     .and_then(|entry| entry.name())
                     .and_then(|name| name.key())
                     .map(|name| name.to_string())
@@ -51,7 +49,7 @@ pub fn complete_glossary_entries<'a>(
 
 #[cfg(test)]
 mod tests {
-    use cstree::TextRange;
+    use rowan::TextRange;
 
     use crate::features::testing::FeatureTester;
 

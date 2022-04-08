@@ -26,14 +26,14 @@ use self::{
 pub fn analyze(context: &mut LatexAnalyzerContext, root: &latex::SyntaxNode) {
     analyze_implicit_links(context);
     for node in root.descendants() {
-        analyze_command(context, node)
-            .or_else(|| analyze_command_definition(context, node))
-            .or_else(|| analyze_begin(context, node))
-            .or_else(|| analyze_include(context, node))
-            .or_else(|| analyze_import(context, node))
-            .or_else(|| analyze_label_name(context, node))
-            .or_else(|| analyze_label_number(context, node))
-            .or_else(|| analyze_theorem_definition(context, node))
+        analyze_command(context, node.clone())
+            .or_else(|| analyze_command_definition(context, node.clone()))
+            .or_else(|| analyze_begin(context, node.clone()))
+            .or_else(|| analyze_include(context, node.clone()))
+            .or_else(|| analyze_import(context, node.clone()))
+            .or_else(|| analyze_label_name(context, node.clone()))
+            .or_else(|| analyze_label_number(context, node.clone()))
+            .or_else(|| analyze_theorem_definition(context, node.clone()))
             .or_else(|| analyze_graphics_path(context, node));
     }
     context.extras.has_document_environment = context.extras.environment_names.contains("document");

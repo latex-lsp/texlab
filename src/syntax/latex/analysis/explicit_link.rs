@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use crate::syntax::{latex, CstNode};
+use rowan::ast::AstNode;
+
+use crate::syntax::latex;
 
 use super::{
     distro_file::resolve_distro_file, ExplicitLink, ExplicitLinkKind, LatexAnalyzerContext,
 };
 
-pub fn analyze_include(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNode) -> Option<()> {
+pub fn analyze_include(context: &mut LatexAnalyzerContext, node: latex::SyntaxNode) -> Option<()> {
     let include = latex::Include::cast(node)?;
     let kind = match include.syntax().kind() {
         latex::LATEX_INCLUDE => ExplicitLinkKind::Latex,
@@ -38,7 +40,7 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: &latex::SyntaxN
         context.extras.explicit_links.push(ExplicitLink {
             kind,
             stem: stem.into(),
-            stem_range: path.small_range(),
+            stem_range: latex::small_range(&path),
             targets,
         });
     }
@@ -46,7 +48,7 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: &latex::SyntaxN
     Some(())
 }
 
-pub fn analyze_import(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNode) -> Option<()> {
+pub fn analyze_import(context: &mut LatexAnalyzerContext, node: latex::SyntaxNode) -> Option<()> {
     let import = latex::Import::cast(node)?;
 
     let mut targets = Vec::new();
@@ -64,7 +66,7 @@ pub fn analyze_import(context: &mut LatexAnalyzerContext, node: &latex::SyntaxNo
 
     context.extras.explicit_links.push(ExplicitLink {
         stem: stem.into(),
-        stem_range: file.small_range(),
+        stem_range: latex::small_range(&file),
         targets,
         kind: ExplicitLinkKind::Latex,
     });

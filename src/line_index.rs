@@ -4,7 +4,7 @@
 //! representation.
 use std::iter;
 
-use cstree::{TextRange, TextSize};
+use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
