@@ -131,18 +131,6 @@ impl Server {
             })),
             document_highlight_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
-            #[cfg(feature = "semantic")]
-            semantic_tokens_provider: Some(
-                SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
-                    full: None,
-                    range: Some(true),
-                    legend: SemanticTokensLegend {
-                        token_types: crate::features::legend::SUPPORTED_TYPES.to_vec(),
-                        token_modifiers: crate::features::legend::SUPPORTED_MODIFIERS.to_vec(),
-                    },
-                    work_done_progress_options: WorkDoneProgressOptions::default(),
-                }),
-            ),
             ..ServerCapabilities::default()
         }
     }
@@ -697,25 +685,6 @@ impl Server {
         Ok(())
     }
 
-    #[cfg(feature = "semantic")]
-    fn semantic_tokens_range(
-        &self,
-        id: RequestId,
-        params: SemanticTokensRangeParams,
-        token: &Arc<CancellationToken>,
-    ) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
-        self.handle_feature_request(
-            id,
-            params,
-            uri,
-            token,
-            crate::features::find_semantic_tokens_range,
-        )?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "semantic"))]
     fn semantic_tokens_range(
         &self,
         _id: RequestId,

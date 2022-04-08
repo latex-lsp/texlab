@@ -28,7 +28,6 @@ citation = [
     "fnv",
     "html2md",
 ]
-semantic = []
 
 [dependencies]
 anyhow = "1.0.56"

@@ -12,8 +12,6 @@ mod link;
 mod lsp_kinds;
 mod reference;
 mod rename;
-#[cfg(feature = "semantic")]
-mod semantic;
 mod symbol;
 
 use std::sync::Arc;
@@ -22,8 +20,6 @@ use crate::{Document, ServerContext, Workspace, WorkspaceSubset};
 
 #[cfg(feature = "completion")]
 pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
-#[cfg(feature = "semantic")]
-pub use self::semantic::{find_semantic_tokens_range, legend};
 pub use self::{
     build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
     definition::goto_definition,
