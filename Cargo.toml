@@ -11,6 +11,7 @@ authors = [
 edition = "2018"
 homepage = "https://github.com/latex-lsp/texlab"
 resolver = "2"
+rust-version = "1.56.0"
 
 [lib]
 doctest = false
