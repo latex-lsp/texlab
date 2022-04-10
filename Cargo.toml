@@ -89,12 +89,19 @@ rev = "2ab195a1e6f84f0ff284813ece61dc62096abbfe"
 optional = true
 
 [dev-dependencies]
+criterion = { version = "0.3.5" }
 indoc = "1.0.4"
 insta = { version = "1.14.0", features = ["backtrace"] }
 typed-builder = "0.10.0"
 unindent = "0.1.8"
 
-[build-dependencies]
-
 [profile.release]
-lto = true
+lto = "fat"
+
+[profile.bench]
+lto = "thin"
+
+[[bench]]
+name = "bench_main"
+path = "benches/bench_main.rs"
+harness = false
