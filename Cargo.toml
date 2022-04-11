@@ -49,7 +49,7 @@ html2md = { version = "0.2.13", optional = true }
 itertools = "0.10.1"
 log = "0.4.16"
 logos = "0.12.0"
-lsp-server = "0.5"
+lsp-server = "0.6"
 lsp-types = "0.92.1"
 multimap = "0.8.3"
 notify = "5.0.0-pre.14"
