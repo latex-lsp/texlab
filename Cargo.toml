@@ -33,7 +33,6 @@ anyhow = "1.0.56"
 bibutils-sys = { version = "0.1.1", optional = true }
 byteorder = "1.4.3"
 cancellation = "0.1"
-cfg-if = "1.0.0"
 crossbeam-channel = "0.5.4"
 dashmap = "5.2.0"
 derive_more = "0.99.17"

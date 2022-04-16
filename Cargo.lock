@@ -1892,7 +1892,6 @@ dependencies = [
  "bibutils-sys",
  "byteorder",
  "cancellation",
- "cfg-if 1.0.0",
  "citeproc",
  "citeproc-db",
  "citeproc-io",
