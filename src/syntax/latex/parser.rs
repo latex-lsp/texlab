@@ -189,6 +189,21 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
+    fn curly_group_impl(&mut self) {
+        self.builder.start_node(CURLY_GROUP.into());
+        self.eat();
+        while let Some(kind) = self.peek() {
+            match kind {
+                R_CURLY => break,
+                BEGIN_ENVIRONMENT_NAME => self.begin(),
+                END_ENVIRONMENT_NAME => self.end(),
+                _ => self.content(ParserContext::default()),
+            };
+        }
+        self.expect(R_CURLY);
+        self.builder.finish_node();
+    }
+
     fn curly_group_without_environments(&mut self) {
         self.builder.start_node(CURLY_GROUP.into());
         self.eat();
@@ -1020,7 +1035,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
-            self.curly_group();
+            self.curly_group_impl();
         } else {
             self.builder.token(MISSING.into(), "");
         }
@@ -1040,7 +1055,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
-            self.curly_group();
+            self.curly_group_impl();
         } else {
             self.builder.token(MISSING.into(), "");
         }
@@ -1701,6 +1716,13 @@ mod tests {
     #[test]
     fn test_command_definition_no_impl_error() {
         assert_debug_snapshot!(setup(r#"\newcommand{\foo"#));
+    }
+
+    #[test]
+    fn test_command_definition_with_begin() {
+        assert_debug_snapshot!(setup(
+            r#"\newcommand{\CVSubHeadingListStart}{\begin{itemize}[leftmargin=0.5cm, label={}]}"#
+        ));
     }
 
     #[test]

@@ -155,4 +155,24 @@ mod tests {
             assert_eq!(item.range, TextRange::new(7.into(), 8.into()));
         }
     }
+
+    #[test]
+    fn test_command_definition() {
+        let request = FeatureTester::builder()
+            .files(vec![("main.tex", "\\newcommand{\\foo}{\\begin{\nd}")])
+            .main("main.tex")
+            .line(1)
+            .character(1)
+            .build()
+            .completion();
+
+        let context = CursorContext::new(request);
+        let mut actual_items = Vec::new();
+        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+
+        assert!(!actual_items.is_empty());
+        for item in actual_items {
+            assert_eq!(item.range, TextRange::new(26.into(), 27.into()));
+        }
+    }
 }
