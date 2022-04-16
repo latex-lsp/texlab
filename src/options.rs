@@ -28,7 +28,8 @@ pub struct Options {
     #[serde(default)]
     pub latexindent: LatexindentOptions,
 
-    pub forward_search: Option<ForwardSearchOptions>,
+    #[serde(default)]
+    pub forward_search: ForwardSearchOptions,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]

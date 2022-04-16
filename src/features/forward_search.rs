@@ -38,7 +38,6 @@ pub fn execute_forward_search(
             .unwrap()
             .forward_search
             .clone()
-            .unwrap_or_default()
     };
 
     if options.executable.is_none() || options.args.is_none() {
