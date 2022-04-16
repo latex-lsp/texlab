@@ -11,11 +11,11 @@ use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{
     notification::{
         Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
-        DidSaveTextDocument, PublishDiagnostics,
+        DidSaveTextDocument, Notification, PublishDiagnostics,
     },
     request::{
         DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
-        References, Rename, SemanticTokensRangeRequest,
+        References, RegisterCapability, Rename, SemanticTokensRangeRequest, WorkspaceConfiguration,
     },
     *,
 };
@@ -29,9 +29,8 @@ use serde::Serialize;
 use threadpool::ThreadPool;
 
 use crate::{
-    client::send_notification,
+    client::{send_notification, send_request},
     component_db::COMPONENT_DATABASE,
-    config::{pull_config, push_config, register_config_capability},
     create_workspace_full,
     diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
     dispatch::{NotificationDispatcher, RequestDispatcher},
@@ -42,19 +41,20 @@ use crate::{
         prepare_rename_all, rename_all, BuildEngine, BuildParams, BuildResult, BuildStatus,
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
-    req_queue::{self, IncomingData, ReqQueue},
-    ClientCapabilitiesExt, Document, DocumentLanguage, LineIndexExt, ServerContext, Uri, Workspace,
-    WorkspaceSource,
+    req_queue::{IncomingData, ReqQueue},
+    ClientCapabilitiesExt, Document, DocumentLanguage, LineIndexExt, Options, ServerContext, Uri,
+    Workspace, WorkspaceSource,
 };
 
+#[derive(Clone)]
 pub struct Server {
-    connection: Connection,
+    connection: Arc<Connection>,
     context: Arc<ServerContext>,
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Arc<dyn Workspace>,
-    static_debouncer: DiagnosticsDebouncer,
-    chktex_debouncer: DiagnosticsDebouncer,
-    pool: ThreadPool,
+    static_debouncer: Arc<DiagnosticsDebouncer>,
+    chktex_debouncer: Arc<DiagnosticsDebouncer>,
+    pool: Arc<Mutex<ThreadPool>>,
     load_resolver: bool,
     build_engine: Arc<BuildEngine>,
 }
@@ -70,23 +70,33 @@ impl Server {
         let workspace = Arc::new(create_workspace_full(Arc::clone(&context))?);
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
 
-        let static_debouncer =
-            create_static_debouncer(Arc::clone(&diag_manager), &connection, Arc::clone(&context));
+        let static_debouncer = Arc::new(create_static_debouncer(
+            Arc::clone(&diag_manager),
+            &connection,
+            Arc::clone(&context),
+        ));
 
-        let chktex_debouncer =
-            create_chktex_debouncer(diag_manager, &connection, Arc::clone(&context));
+        let chktex_debouncer = Arc::new(create_chktex_debouncer(
+            diag_manager,
+            &connection,
+            Arc::clone(&context),
+        ));
 
         Ok(Self {
-            connection,
+            connection: Arc::new(connection),
             context,
             req_queue,
             workspace,
             static_debouncer,
             chktex_debouncer,
-            pool: threadpool::Builder::new().build(),
+            pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
             load_resolver,
             build_engine: Arc::default(),
         })
+    }
+
+    fn spawn(&self, job: impl FnOnce() + Send + 'static) {
+        self.pool.lock().unwrap().execute(job);
     }
 
     fn capabilities(&self) -> ServerCapabilities {
@@ -154,7 +164,7 @@ impl Server {
 
         let cx = Arc::clone(&self.context);
         if self.load_resolver {
-            self.pool.execute(move || {
+            self.spawn(move || {
                 let distro = Distribution::detect();
                 info!("Detected distribution: {}", distro.kind);
                 *cx.resolver.lock().unwrap() = distro.resolver;
@@ -163,16 +173,39 @@ impl Server {
 
         self.register_diagnostics_handler();
 
-        let req_queue = Arc::clone(&self.req_queue);
-        let sender = self.connection.sender.clone();
-        let context = Arc::clone(&self.context);
-        let workspace = Arc::clone(&self.workspace);
-        self.pool.execute(move || {
-            register_config_capability(&req_queue, &sender, &context.client_capabilities);
-            pull_and_reparse_all(req_queue, sender, context, workspace);
+        let server = self.clone();
+        self.spawn(move || {
+            server.register_config_capability();
+            server.pull_and_reparse_all();
         });
 
         Ok(())
+    }
+
+    fn register_config_capability(&self) {
+        let client_capabilities = self.context.client_capabilities.lock().unwrap();
+        if client_capabilities.has_push_configuration_support() {
+            drop(client_capabilities);
+            let reg = Registration {
+                id: "pull-config".to_string(),
+                method: DidChangeConfiguration::METHOD.to_string(),
+                register_options: None,
+            };
+
+            let params = RegistrationParams {
+                registrations: vec![reg],
+            };
+
+            if let Err(why) =
+                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
+            {
+                error!(
+                    "Failed to register \"{}\" notification: {}",
+                    DidChangeConfiguration::METHOD,
+                    why
+                );
+            }
+        }
     }
 
     fn register_diagnostics_handler(&mut self) {
@@ -197,6 +230,48 @@ impl Server {
         token
     }
 
+    fn pull_config(&self) {
+        if !self
+            .context
+            .client_capabilities
+            .lock()
+            .unwrap()
+            .has_pull_configuration_support()
+        {
+            return;
+        }
+
+        let params = ConfigurationParams {
+            items: vec![ConfigurationItem {
+                section: Some("texlab".to_string()),
+                scope_uri: None,
+            }],
+        };
+
+        match send_request::<WorkspaceConfiguration>(
+            &self.req_queue,
+            &self.connection.sender,
+            params,
+        ) {
+            Ok(mut json) => {
+                let value = json.pop().expect("invalid configuration request");
+                let new_options = match serde_json::from_value(value) {
+                    Ok(new_options) => new_options,
+                    Err(why) => {
+                        warn!("Invalid configuration section \"texlab\": {}", why);
+                        Options::default()
+                    }
+                };
+
+                let mut options = self.context.options.write().unwrap();
+                *options = new_options;
+            }
+            Err(why) => {
+                error!("Retrieving configuration failed: {}", why);
+            }
+        };
+    }
+
     fn cancel(&self, params: CancelParams) -> Result<()> {
         let id = match params.id {
             NumberOrString::Number(id) => RequestId::from(id),
@@ -214,22 +289,27 @@ impl Server {
     fn did_change_configuration(&self, params: DidChangeConfigurationParams) -> Result<()> {
         let client_capabilities = { self.context.client_capabilities.lock().unwrap().clone() };
         if client_capabilities.has_pull_configuration_support() {
-            let req_queue = Arc::clone(&self.req_queue);
-            let sender = self.connection.sender.clone();
-            let context = Arc::clone(&self.context);
-            let workspace = Arc::clone(&self.workspace);
-            self.pool.execute(move || {
-                pull_and_reparse_all(req_queue, sender, context, workspace);
+            let server = self.clone();
+            self.spawn(move || {
+                server.pull_and_reparse_all();
             });
         } else {
-            push_config(&self.context.options, params.settings);
+            match serde_json::from_value(params.settings) {
+                Ok(new_options) => {
+                    *self.context.options.write().unwrap() = new_options;
+                }
+                Err(why) => {
+                    error!("Invalid configuration: {}", why);
+                }
+            };
+
             if let Some(path) = { self.context.options.read().unwrap().aux_directory.clone() } {
                 let _ = self.workspace.watch(path, RecursiveMode::NonRecursive);
             }
 
-            let workspace = Arc::clone(&self.workspace);
-            self.pool.execute(move || {
-                reparse_all(workspace.as_ref());
+            let server = self.clone();
+            self.spawn(move || {
+                server.reparse_all();
             });
         }
 
@@ -360,7 +440,7 @@ impl Server {
             let lsp_sender = self.connection.sender.clone();
             let req_queue = Arc::clone(&self.req_queue);
             let build_engine = Arc::clone(&self.build_engine);
-            self.pool.execute(move || {
+            self.spawn(move || {
                 build_engine
                     .build(request, CancellationToken::none(), &req_queue, &lsp_sender)
                     .unwrap_or_else(|why| {
@@ -426,7 +506,7 @@ impl Server {
             Some(req) => {
                 let sender = self.connection.sender.clone();
                 let token = Arc::clone(token);
-                self.pool.execute(move || {
+                self.spawn(move || {
                     let result = handler(req, &token);
                     if token.is_canceled() {
                         sender.send(cancel_response(id).into()).unwrap();
@@ -475,7 +555,7 @@ impl Server {
         let sender = self.connection.sender.clone();
         let workspace = Arc::clone(&self.workspace);
         let token = Arc::clone(token);
-        self.pool.execute(move || {
+        self.spawn(move || {
             let result = find_workspace_symbols(workspace.as_ref(), &params, &token);
             if token.is_canceled() {
                 sender.send(cancel_response(id).into()).unwrap();
@@ -522,7 +602,7 @@ impl Server {
         let sender = self.connection.sender.clone();
         let token = Arc::clone(token);
         let workspace = Arc::clone(&self.workspace);
-        self.pool.execute(move || {
+        self.spawn(move || {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 crate::features::CompletionItemData::Package
                 | crate::features::CompletionItemData::Class => {
@@ -734,6 +814,27 @@ impl Server {
         Ok(())
     }
 
+    fn pull_and_reparse_all(&self) {
+        self.pull_config();
+
+        if let Some(path) = { self.context.options.read().unwrap().aux_directory.clone() } {
+            let _ = self.workspace.watch(path, RecursiveMode::NonRecursive);
+        }
+
+        self.reparse_all();
+    }
+
+    fn reparse_all(&self) {
+        for document in self.workspace.documents() {
+            self.workspace.open(
+                Arc::clone(&document.uri),
+                document.text.clone(),
+                document.language(),
+                WorkspaceSource::Client,
+            );
+        }
+    }
+
     fn process_messages(&self) -> Result<()> {
         for msg in &self.connection.receiver {
             match msg {
@@ -822,34 +923,8 @@ impl Server {
         self.process_messages()?;
         drop(self.static_debouncer);
         drop(self.chktex_debouncer);
-        self.pool.join();
+        self.pool.lock().unwrap().join();
         Ok(())
-    }
-}
-
-fn pull_and_reparse_all(
-    req_queue: Arc<Mutex<lsp_server::ReqQueue<IncomingData, req_queue::OutgoingData>>>,
-    sender: Sender<Message>,
-    context: Arc<ServerContext>,
-    workspace: Arc<dyn Workspace>,
-) {
-    let client_capabilities = { context.client_capabilities.lock().unwrap().clone() };
-    pull_config(&req_queue, &sender, &context.options, &client_capabilities);
-    if let Some(path) = { context.options.read().unwrap().aux_directory.clone() } {
-        let _ = workspace.watch(path, RecursiveMode::NonRecursive);
-    }
-
-    reparse_all(workspace.as_ref());
-}
-
-fn reparse_all(workspace: &dyn Workspace) {
-    for document in workspace.documents() {
-        workspace.open(
-            Arc::clone(&document.uri),
-            document.text.clone(),
-            document.language(),
-            WorkspaceSource::Client,
-        );
     }
 }
 

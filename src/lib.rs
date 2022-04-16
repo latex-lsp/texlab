@@ -3,7 +3,6 @@ mod capabilities;
 pub mod citation;
 mod client;
 pub mod component_db;
-mod config;
 mod context;
 pub mod diagnostics;
 mod dispatch;
