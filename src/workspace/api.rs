@@ -1,7 +1,6 @@
 use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
-use notify::RecursiveMode;
 
 use crate::{DocumentLanguage, Uri};
 
@@ -81,9 +80,9 @@ pub trait Workspace: Send + Sync {
 
     fn close(&self, uri: &Uri);
 
+    fn delete(&self, uri: &Uri);
+
     fn is_open(&self, uri: &Uri) -> bool;
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset>;
-
-    fn watch(&self, path: PathBuf, mode: RecursiveMode) -> Result<()>;
 }

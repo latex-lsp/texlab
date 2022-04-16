@@ -8,23 +8,7 @@ use cancellation::{CancellationToken, CancellationTokenSource};
 use crossbeam_channel::Sender;
 use log::{error, info, warn};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
-use lsp_types::{
-    notification::{
-        Cancel, DidChangeConfiguration, DidChangeTextDocument, DidOpenTextDocument,
-        DidSaveTextDocument, Notification, PublishDiagnostics,
-    },
-    request::{
-        DocumentLinkRequest, FoldingRangeRequest, Formatting, GotoDefinition, PrepareRenameRequest,
-        References, RegisterCapability, Rename, SemanticTokensRangeRequest, WorkspaceConfiguration,
-    },
-    *,
-};
-use notification::DidCloseTextDocument;
-use notify::RecursiveMode;
-use request::{
-    Completion, DocumentHighlightRequest, DocumentSymbolRequest, HoverRequest,
-    ResolveCompletionItem, WorkspaceSymbol,
-};
+use lsp_types::{notification::*, request::*, *};
 use serde::Serialize;
 use threadpool::ThreadPool;
 
@@ -176,10 +160,48 @@ impl Server {
         let server = self.clone();
         self.spawn(move || {
             server.register_config_capability();
+            server.register_file_watching();
             server.pull_and_reparse_all();
         });
 
         Ok(())
+    }
+
+    fn register_file_watching(&self) {
+        if self
+            .context
+            .client_capabilities
+            .lock()
+            .unwrap()
+            .has_file_watching_support()
+        {
+            let options = DidChangeWatchedFilesRegistrationOptions {
+                watchers: vec![FileSystemWatcher {
+                    glob_pattern: "**/*.{aux,log}".into(),
+                    kind: Some(WatchKind::Create | WatchKind::Change | WatchKind::Delete),
+                }],
+            };
+
+            let reg = Registration {
+                id: "build-watch".to_string(),
+                method: DidChangeWatchedFiles::METHOD.to_string(),
+                register_options: Some(serde_json::to_value(options).unwrap()),
+            };
+
+            let params = RegistrationParams {
+                registrations: vec![reg],
+            };
+
+            if let Err(why) =
+                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
+            {
+                error!(
+                    "Failed to register \"{}\" notification: {}",
+                    DidChangeWatchedFiles::METHOD,
+                    why
+                );
+            }
+        }
     }
 
     fn register_config_capability(&self) {
@@ -286,6 +308,25 @@ impl Server {
         Ok(())
     }
 
+    fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) -> Result<()> {
+        for change in params.changes {
+            if let Ok(path) = change.uri.to_file_path() {
+                let uri = change.uri.into();
+                match change.typ {
+                    FileChangeType::CREATED | FileChangeType::CHANGED => {
+                        self.workspace.reload(path)?;
+                    }
+                    FileChangeType::DELETED => {
+                        self.workspace.delete(&uri);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn did_change_configuration(&self, params: DidChangeConfigurationParams) -> Result<()> {
         let client_capabilities = { self.context.client_capabilities.lock().unwrap().clone() };
         if client_capabilities.has_pull_configuration_support() {
@@ -302,10 +343,6 @@ impl Server {
                     error!("Invalid configuration: {}", why);
                 }
             };
-
-            if let Some(path) = { self.context.options.read().unwrap().aux_directory.clone() } {
-                let _ = self.workspace.watch(path, RecursiveMode::NonRecursive);
-            }
 
             let server = self.clone();
             self.spawn(move || {
@@ -816,11 +853,6 @@ impl Server {
 
     fn pull_and_reparse_all(&self) {
         self.pull_config();
-
-        if let Some(path) = { self.context.options.read().unwrap().aux_directory.clone() } {
-            let _ = self.workspace.watch(path, RecursiveMode::NonRecursive);
-        }
-
         self.reparse_all();
     }
 
@@ -897,6 +929,9 @@ impl Server {
                         .on::<Cancel, _>(|params| self.cancel(params))?
                         .on::<DidChangeConfiguration, _>(|params| {
                             self.did_change_configuration(params)
+                        })?
+                        .on::<DidChangeWatchedFiles, _>(|params| {
+                            self.did_change_watched_files(params)
                         })?
                         .on::<DidOpenTextDocument, _>(|params| self.did_open(params))?
                         .on::<DidChangeTextDocument, _>(|params| self.did_change(params))?

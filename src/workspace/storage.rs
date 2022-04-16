@@ -1,10 +1,5 @@
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
-use notify::RecursiveMode;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -91,6 +86,10 @@ impl Workspace for Storage {
         self.opened_documents.lock().unwrap().remove(uri);
     }
 
+    fn delete(&self, uri: &Uri) {
+        self.documents_by_uri.lock().unwrap().remove(uri);
+    }
+
     fn is_open(&self, uri: &Uri) -> bool {
         self.opened_documents.lock().unwrap().contains(uri)
     }
@@ -137,9 +136,5 @@ impl Workspace for Storage {
         }
 
         Some(WorkspaceSubset { documents })
-    }
-
-    fn watch(&self, _path: PathBuf, _mode: RecursiveMode) -> Result<()> {
-        Ok(())
     }
 }
