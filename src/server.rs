@@ -24,7 +24,7 @@ use crate::{
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, Document, DocumentLanguage, DocumentVisibility, LineIndexExt, Options,
+    ClientCapabilitiesExt, DocumentLanguage, DocumentVisibility, LineIndex, LineIndexExt, Options,
     ServerContext, Uri, Workspace, WorkspaceEvent,
 };
 
@@ -379,87 +379,52 @@ impl Server {
         Ok(())
     }
 
-    fn did_change(&mut self, mut params: DidChangeTextDocumentParams) -> Result<()> {
-        let uri = params.text_document.uri.into();
-        let old_document = self.workspace.documents_by_uri.get(&uri).cloned();
-        let old_text = old_document.as_ref().map(|document| document.text.as_str());
-        let uri = Arc::new(uri);
+    fn did_change(&mut self, params: DidChangeTextDocumentParams) -> Result<()> {
+        let uri = Arc::new(Uri::from(params.text_document.uri));
+        match self.workspace.documents_by_uri.get(&uri).cloned() {
+            Some(old_document) => {
+                let mut text = old_document.text.to_string();
+                apply_document_edit(&mut text, params.content_changes);
+                let language = old_document.data.language();
+                let new_document = self.workspace.open(
+                    &self.context,
+                    Arc::clone(&uri),
+                    Arc::new(text),
+                    language,
+                    DocumentVisibility::Visible,
+                )?;
 
-        let language = self
-            .workspace
-            .documents_by_uri
-            .get(&uri)
-            .map(|document| document.data.language())
-            .unwrap_or(DocumentLanguage::Latex);
+                self.build_engine.positions_by_uri.insert(
+                    Arc::clone(&uri),
+                    Position::new(
+                        old_document
+                            .text
+                            .lines()
+                            .zip(new_document.text.lines())
+                            .position(|(a, b)| a != b)
+                            .unwrap_or_default() as u32,
+                        0,
+                    ),
+                );
 
-        let new_document = match &old_document {
-            Some(old_document) => params
-                .content_changes
-                .into_iter()
-                .fold(old_document.clone(), |old_document, change| {
-                    self.merge_text_changes(&old_document, language, change)
-                }),
-            None => self.workspace.open(
-                &self.context,
-                Arc::clone(&uri),
-                Arc::new(params.content_changes.pop().unwrap().text),
-                language,
-                DocumentVisibility::Visible,
-            )?,
-        };
-
-        let line = match old_text {
-            Some(old_text) => old_text
-                .lines()
-                .zip(new_document.text.lines())
-                .position(|(a, b)| a != b)
-                .unwrap_or_default() as u32,
-            None => 0,
-        };
-        self.build_engine
-            .positions_by_uri
-            .insert(Arc::clone(&uri), Position::new(line, 0));
-
-        let should_lint = { self.context.options.read().unwrap().chktex.on_edit };
-        if should_lint {
-            self.chktex_debouncer
-                .sender
-                .send(DiagnosticsMessage::Analyze {
-                    workspace: self.workspace.clone(),
-                    document: new_document,
-                })?;
+                if self.context.options.read().unwrap().chktex.on_edit {
+                    self.chktex_debouncer
+                        .sender
+                        .send(DiagnosticsMessage::Analyze {
+                            workspace: self.workspace.clone(),
+                            document: new_document,
+                        })?;
+                };
+            }
+            None => match uri.to_file_path() {
+                Ok(path) => {
+                    self.workspace.load(&self.context, path)?;
+                }
+                Err(_) => return Ok(()),
+            },
         };
 
         Ok(())
-    }
-
-    fn merge_text_changes(
-        &mut self,
-        old_document: &Document,
-        new_language: DocumentLanguage,
-        change: TextDocumentContentChangeEvent,
-    ) -> Document {
-        let new_text = match change.range {
-            Some(range) => {
-                let range = old_document.line_index.offset_lsp_range(range);
-                let mut new_text = String::new();
-                new_text.push_str(&old_document.text[..range.start().into()]);
-                new_text.push_str(&change.text);
-                new_text.push_str(&old_document.text[range.end().into()..]);
-                new_text
-            }
-            None => change.text,
-        };
-
-        self.workspace
-            .open(
-                &self.context,
-                Arc::clone(&old_document.uri),
-                Arc::new(new_text),
-                new_language,
-                DocumentVisibility::Visible,
-            )
-            .unwrap()
     }
 
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
@@ -927,6 +892,23 @@ fn publish_diagnostics(
         )?;
     }
     Ok(())
+}
+
+fn apply_document_edit(old_text: &mut String, changes: Vec<TextDocumentContentChangeEvent>) {
+    let mut line_index = LineIndex::new(old_text);
+    for change in changes {
+        match change.range {
+            Some(range) => {
+                let range = std::ops::Range::<usize>::from(line_index.offset_lsp_range(range));
+                old_text.replace_range(range, &change.text);
+            }
+            None => {
+                *old_text = change.text;
+            }
+        };
+
+        line_index = LineIndex::new(old_text);
+    }
 }
 
 struct BuildRequest;
