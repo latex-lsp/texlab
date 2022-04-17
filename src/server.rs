@@ -387,7 +387,7 @@ impl Server {
             Some(old_document) => params
                 .content_changes
                 .into_iter()
-                .fold(Arc::clone(old_document), |old_document, change| {
+                .fold(old_document.clone(), |old_document, change| {
                     self.merge_text_changes(&old_document, language, change)
                 }),
             None => self.workspace.open(
@@ -428,7 +428,7 @@ impl Server {
         old_document: &Document,
         new_language: DocumentLanguage,
         change: TextDocumentContentChangeEvent,
-    ) -> Arc<Document> {
+    ) -> Document {
         let new_text = match change.range {
             Some(range) => {
                 let range = old_document.line_index.offset_lsp_range(range);

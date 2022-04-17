@@ -123,7 +123,6 @@ impl BuildEngine {
                     false
                 }
             })
-            .map(|document| document.as_ref())
             .unwrap_or_else(|| request.main_document());
 
         if document.language() != DocumentLanguage::Latex {

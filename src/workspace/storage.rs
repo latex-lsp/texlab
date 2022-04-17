@@ -11,7 +11,7 @@ use crate::{
 #[derive(Clone)]
 pub struct Storage {
     context: Arc<ServerContext>,
-    documents_by_uri: Arc<Mutex<FxHashMap<Arc<Uri>, Arc<Document>>>>,
+    documents_by_uri: Arc<Mutex<FxHashMap<Arc<Uri>, Document>>>,
     opened_documents: Arc<Mutex<FxHashSet<Arc<Uri>>>>,
     open_handlers: Arc<Mutex<Vec<OpenHandler>>>,
 }
@@ -34,19 +34,14 @@ impl Workspace for Storage {
         text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
-    ) -> Arc<Document> {
+    ) -> Document {
         log::debug!("(Re)Loading document: {}", uri);
-        let document = Arc::new(Document::parse(
-            Arc::clone(&self.context),
-            Arc::clone(&uri),
-            text,
-            language,
-        ));
+        let document = Document::parse(Arc::clone(&self.context), Arc::clone(&uri), text, language);
         {
             self.documents_by_uri
                 .lock()
                 .unwrap()
-                .insert(Arc::clone(&uri), Arc::clone(&document));
+                .insert(Arc::clone(&uri), document.clone());
         }
 
         if source == WorkspaceSource::Client {
@@ -55,7 +50,7 @@ impl Workspace for Storage {
 
         let handlers = { self.open_handlers.lock().unwrap().clone() };
         for handler in handlers {
-            handler(Arc::new(self.clone()), Arc::clone(&document));
+            handler(Arc::new(self.clone()), document.clone());
         }
 
         document
@@ -65,7 +60,7 @@ impl Workspace for Storage {
         self.open_handlers.lock().unwrap().push(handler);
     }
 
-    fn documents(&self) -> Vec<Arc<Document>> {
+    fn documents(&self) -> Vec<Document> {
         self.documents_by_uri
             .lock()
             .unwrap()
@@ -78,7 +73,7 @@ impl Workspace for Storage {
         self.documents_by_uri.lock().unwrap().contains_key(uri)
     }
 
-    fn get(&self, uri: &Uri) -> Option<Arc<Document>> {
+    fn get(&self, uri: &Uri) -> Option<Document> {
         self.documents_by_uri.lock().unwrap().get(uri).cloned()
     }
 

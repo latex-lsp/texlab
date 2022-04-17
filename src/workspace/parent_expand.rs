@@ -27,7 +27,7 @@ where
         text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
-    ) -> Arc<Document> {
+    ) -> Document {
         let document = self
             .workspace
             .open(Arc::clone(&uri), text, language, source);
@@ -73,7 +73,7 @@ where
         self.workspace.register_open_handler(handler)
     }
 
-    fn documents(&self) -> Vec<Arc<Document>> {
+    fn documents(&self) -> Vec<Document> {
         self.workspace.documents()
     }
 
@@ -81,7 +81,7 @@ where
         self.workspace.has(uri)
     }
 
-    fn get(&self, uri: &Uri) -> Option<Arc<Document>> {
+    fn get(&self, uri: &Uri) -> Option<Document> {
         self.workspace.get(uri)
     }
 

@@ -17,7 +17,7 @@ where
 {
     pub fn new(workspace: Arc<W>) -> Self {
         workspace.register_open_handler(Arc::new(move |workspace, document| {
-            Self::expand(workspace.as_ref(), document.as_ref());
+            Self::expand(workspace.as_ref(), &document);
         }));
         Self { workspace }
     }
@@ -58,7 +58,7 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
         text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
-    ) -> Arc<Document> {
+    ) -> Document {
         self.workspace.open(uri, text, language, source)
     }
 
@@ -66,7 +66,7 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
         self.workspace.register_open_handler(handler)
     }
 
-    fn documents(&self) -> Vec<Arc<Document>> {
+    fn documents(&self) -> Vec<Document> {
         self.workspace.documents()
     }
 
@@ -74,7 +74,7 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
         self.workspace.has(uri)
     }
 
-    fn get(&self, uri: &Uri) -> Option<Arc<Document>> {
+    fn get(&self, uri: &Uri) -> Option<Document> {
         self.workspace.get(uri)
     }
 

@@ -14,10 +14,10 @@ pub enum WorkspaceSource {
 
 #[derive(Debug, Clone)]
 pub struct WorkspaceSubset {
-    pub documents: Vec<Arc<Document>>,
+    pub documents: Vec<Document>,
 }
 
-pub type OpenHandler = Arc<dyn Fn(Arc<dyn Workspace>, Arc<Document>) + Send + Sync + 'static>;
+pub type OpenHandler = Arc<dyn Fn(Arc<dyn Workspace>, Document) + Send + Sync + 'static>;
 
 pub trait Workspace: Send + Sync {
     fn open(
@@ -26,11 +26,11 @@ pub trait Workspace: Send + Sync {
         text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
-    ) -> Arc<Document>;
+    ) -> Document;
 
     fn register_open_handler(&self, handler: OpenHandler);
 
-    fn reload(&self, path: PathBuf) -> Result<Option<Arc<Document>>> {
+    fn reload(&self, path: PathBuf) -> Result<Option<Document>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
 
         if self.is_open(&uri) && !uri.as_str().ends_with(".log") {
@@ -51,7 +51,7 @@ pub trait Workspace: Send + Sync {
         }
     }
 
-    fn load(&self, path: PathBuf) -> Result<Option<Arc<Document>>> {
+    fn load(&self, path: PathBuf) -> Result<Option<Document>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
 
         if let Some(document) = self.get(&uri) {
@@ -72,11 +72,11 @@ pub trait Workspace: Send + Sync {
         }
     }
 
-    fn documents(&self) -> Vec<Arc<Document>>;
+    fn documents(&self) -> Vec<Document>;
 
     fn has(&self, uri: &Uri) -> bool;
 
-    fn get(&self, uri: &Uri) -> Option<Arc<Document>>;
+    fn get(&self, uri: &Uri) -> Option<Document>;
 
     fn close(&self, uri: &Uri);
 
