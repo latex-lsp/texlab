@@ -38,7 +38,7 @@ pub fn complete_citations<'a>(
     check_citation(context).or_else(|| check_acronym(context))?;
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in bibtex::SyntaxNode::new_root(data.root.clone())
+            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {

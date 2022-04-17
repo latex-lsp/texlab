@@ -25,7 +25,7 @@ pub fn rename_command(context: &CursorContext<RenameParams>) -> Option<Workspace
     let mut changes = HashMap::new();
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            let edits = latex::SyntaxNode::new_root(data.root.clone())
+            let edits = latex::SyntaxNode::new_root(data.green.clone())
                 .descendants_with_tokens()
                 .filter_map(|element| element.into_token())
                 .filter(|token| token.kind().is_command_name() && token.text() == name)

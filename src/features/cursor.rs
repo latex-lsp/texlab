@@ -136,13 +136,13 @@ impl<P: HasPosition> CursorContext<P> {
 
         let cursor = match &main_document.data {
             DocumentData::Latex(data) => {
-                let root = latex::SyntaxNode::new_root(data.root.clone());
+                let root = latex::SyntaxNode::new_root(data.green.clone());
                 let left = root.token_at_offset(offset).left_biased();
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_latex(left, right)
             }
             DocumentData::Bibtex(data) => {
-                let root = bibtex::SyntaxNode::new_root(data.root.clone());
+                let root = bibtex::SyntaxNode::new_root(data.green.clone());
                 let left = root.token_at_offset(offset).left_biased();
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_bibtex(left, right)

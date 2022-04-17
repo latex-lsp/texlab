@@ -27,7 +27,7 @@ pub fn goto_entry_definition(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in bibtex::SyntaxNode::new_root(data.root.clone())
+            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {

@@ -19,7 +19,7 @@ pub fn goto_label_definition(
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
             if let Some(definition) =
-                find_label_definition(&latex::SyntaxNode::new_root(data.root.clone()), &name_text)
+                find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), &name_text)
             {
                 let target_selection_range = latex::small_range(&definition.name()?.key()?);
                 let target_range =

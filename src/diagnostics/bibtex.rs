@@ -17,7 +17,7 @@ pub fn analyze_bibtex_static(
     let document = workspace.get(uri)?;
     let data = document.data.as_bibtex()?;
 
-    for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
         analyze_entry(&document, diagnostics_by_uri, node.clone())
             .or_else(|| analyze_field(&document, diagnostics_by_uri, node));
     }

@@ -18,7 +18,7 @@ pub fn find_string_reference_hover(context: &CursorContext<HoverParams>) -> Opti
             )
         })?;
 
-    for string in bibtex::SyntaxNode::new_root(data.root.clone())
+    for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
         .filter_map(bibtex::String::cast)
     {

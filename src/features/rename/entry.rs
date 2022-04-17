@@ -33,7 +33,7 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
     for document in &context.request.subset.documents {
         match &document.data {
             DocumentData::Latex(data) => {
-                let edits: Vec<_> = latex::SyntaxNode::new_root(data.root.clone())
+                let edits: Vec<_> = latex::SyntaxNode::new_root(data.green.clone())
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
@@ -49,7 +49,7 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                 changes.insert(document.uri.as_ref().clone().into(), edits);
             }
             DocumentData::Bibtex(data) => {
-                let edits: Vec<_> = bibtex::SyntaxNode::new_root(data.root.clone())
+                let edits: Vec<_> = bibtex::SyntaxNode::new_root(data.green.clone())
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())

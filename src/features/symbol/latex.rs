@@ -22,7 +22,7 @@ pub fn find_latex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol
     let data = main_document.data.as_latex()?;
     let mut context = Context { subset, data };
 
-    let root = context.data.root.clone();
+    let root = context.data.green.clone();
     let mut symbols = visit(&mut context, latex::SyntaxNode::new_root(root));
     buf.append(&mut symbols);
     Some(())

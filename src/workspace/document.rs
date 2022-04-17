@@ -13,13 +13,13 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct LatexDocumentData {
-    pub root: rowan::GreenNode,
+    pub green: rowan::GreenNode,
     pub extras: latex::Extras,
 }
 
 #[derive(Debug, Clone)]
 pub struct BibtexDocumentData {
-    pub root: rowan::GreenNode,
+    pub green: rowan::GreenNode,
 }
 
 #[derive(Debug, Clone, From)]
@@ -109,14 +109,14 @@ impl Document {
                 let extras = context.extras;
 
                 LatexDocumentData {
-                    root: root.green().into_owned(),
+                    green: root.green().into_owned(),
                     extras,
                 }
                 .into()
             }
             DocumentLanguage::Bibtex => {
                 let root = bibtex::parse(&text).green;
-                BibtexDocumentData { root }.into()
+                BibtexDocumentData { green: root }.into()
             }
             DocumentLanguage::BuildLog => DocumentData::BuildLog(build_log::parse(&text)),
         };

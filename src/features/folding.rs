@@ -13,7 +13,7 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
     let main_document = request.main_document();
     match &main_document.data {
         DocumentData::Latex(data) => {
-            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(folding) = latex::Environment::cast(node.clone())
                     .map(|node| latex::small_range(&node))
                     .or_else(|| {
@@ -28,7 +28,7 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
             }
         }
         DocumentData::Bibtex(data) => {
-            for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
+            for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(folding) = bibtex::Preamble::cast(node.clone())
                     .map(|node| bibtex::small_range(&node))
                     .or_else(|| {

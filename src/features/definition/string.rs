@@ -20,7 +20,7 @@ pub fn goto_string_definition(
         .line_index
         .line_col_lsp_range(name.text_range());
 
-    for string in bibtex::SyntaxNode::new_root(data.root.clone())
+    for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
         .filter_map(bibtex::String::cast)
     {

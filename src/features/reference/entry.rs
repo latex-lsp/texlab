@@ -19,7 +19,7 @@ pub fn find_entry_references(
     for document in &context.request.subset.documents {
         match &document.data {
             DocumentData::Latex(data) => {
-                latex::SyntaxNode::new_root(data.root.clone())
+                latex::SyntaxNode::new_root(data.green.clone())
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
@@ -35,7 +35,7 @@ pub fn find_entry_references(
                     });
             }
             DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
-                bibtex::SyntaxNode::new_root(data.root.clone())
+                bibtex::SyntaxNode::new_root(data.green.clone())
                     .children()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())

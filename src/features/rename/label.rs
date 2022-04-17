@@ -29,7 +29,7 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
             let mut edits = Vec::new();
-            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(range) = latex::LabelDefinition::cast(node.clone())
                     .and_then(|label| label.name())
                     .and_then(|name| name.key())

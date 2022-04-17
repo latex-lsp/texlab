@@ -133,7 +133,7 @@ pub fn render_label<'a>(
     for document in &subset.documents {
         if let Some(data) = document.data.as_latex() {
             label = label.or_else(|| {
-                find_label_definition(&latex::SyntaxNode::new_root(data.root.clone()), label_name)
+                find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), label_name)
             });
         }
     }

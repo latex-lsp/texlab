@@ -18,7 +18,7 @@ pub fn analyze_latex_static(
 
     let data = document.data.as_latex()?;
 
-    for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+    for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
         analyze_environment(&document, diagnostics_by_uri, node.clone())
             .or_else(|| analyze_curly_group(&document, diagnostics_by_uri, node.clone()))
             .or_else(|| {

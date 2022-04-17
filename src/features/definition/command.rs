@@ -19,7 +19,7 @@ pub fn goto_command_definition(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(defintion) = latex::CommandDefinition::cast(node).filter(|def| {
                     def.name()
                         .and_then(|name| name.command())

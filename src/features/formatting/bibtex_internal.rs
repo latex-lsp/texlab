@@ -40,7 +40,7 @@ pub fn format_bibtex_internal(
     let data = document.data.as_bibtex()?;
     let mut edits = Vec::new();
 
-    for node in bibtex::SyntaxNode::new_root(data.root.clone()).children() {
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
         let range = if let Some(entry) = bibtex::Entry::cast(node.clone()) {
             bibtex::small_range(&entry)
         } else if let Some(string) = bibtex::String::cast(node.clone()) {

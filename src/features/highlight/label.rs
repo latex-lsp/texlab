@@ -12,7 +12,7 @@ pub fn find_label_highlights(
     let data = main_document.data.as_latex()?;
 
     let mut highlights = Vec::new();
-    for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+    for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
         if let Some(label_name) = latex::LabelDefinition::cast(node.clone())
             .and_then(|label| label.name())
             .and_then(|label_name| label_name.key())

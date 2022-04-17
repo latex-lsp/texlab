@@ -21,7 +21,7 @@ pub fn find_string_references(
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
-    for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
         if let Some(name) = bibtex::String::cast(node.clone())
             .and_then(|string| string.name())
             .filter(|name| {

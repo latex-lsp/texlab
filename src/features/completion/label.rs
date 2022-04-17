@@ -18,7 +18,7 @@ pub fn complete_labels<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for label in latex::SyntaxNode::new_root(data.root.clone())
+            for label in latex::SyntaxNode::new_root(data.green.clone())
                 .descendants()
                 .filter_map(latex::LabelDefinition::cast)
             {

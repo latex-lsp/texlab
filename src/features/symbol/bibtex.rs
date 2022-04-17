@@ -11,7 +11,7 @@ pub fn find_bibtex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbo
     let main_document = subset.documents.first()?;
     let data = main_document.data.as_bibtex()?;
 
-    for node in bibtex::SyntaxNode::new_root(data.root.clone()).children() {
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
         if let Some(string) = bibtex::String::cast(node.clone()) {
             if let Some(name) = string.name() {
                 buf.push(InternalSymbol {

@@ -14,7 +14,7 @@ pub fn complete_acronyms<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for name in latex::SyntaxNode::new_root(data.root.clone())
+            for name in latex::SyntaxNode::new_root(data.green.clone())
                 .descendants()
                 .filter_map(latex::AcronymDefinition::cast)
                 .filter_map(|node| node.name())

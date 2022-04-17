@@ -14,7 +14,7 @@ pub fn complete_glossary_entries<'a>(
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
+            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())
                     .and_then(|entry| entry.name())
                     .and_then(|name| name.key())

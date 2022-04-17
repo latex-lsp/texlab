@@ -18,7 +18,7 @@ pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover
         .find_map(|document| {
             document.data.as_bibtex().and_then(|data| {
                 citation::render_citation(
-                    &bibtex::SyntaxNode::new_root(data.root.clone()),
+                    &bibtex::SyntaxNode::new_root(data.green.clone()),
                     &key_text,
                 )
             })
