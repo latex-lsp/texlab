@@ -24,8 +24,11 @@ impl NotificationDispatcher {
                     handler(params)?;
                     self.not = None;
                 }
-                Err(not) => {
+                Err(lsp_server::ExtractError::MethodMismatch(not)) => {
                     self.not = Some(not);
+                }
+                Err(lsp_server::ExtractError::JsonError { .. }) => {
+                    self.not = None;
                 }
             };
         }
@@ -60,8 +63,11 @@ impl RequestDispatcher {
                     handler(id, params)?;
                     self.req = None;
                 }
-                Err(req) => {
+                Err(lsp_server::ExtractError::MethodMismatch(req)) => {
                     self.req = Some(req);
+                }
+                Err(lsp_server::ExtractError::JsonError { .. }) => {
+                    self.req = None;
                 }
             }
         }

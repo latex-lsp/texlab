@@ -831,12 +831,13 @@ impl Server {
                 }
                 Message::Response(response) => {
                     let mut req_queue = self.req_queue.lock().unwrap();
-                    let data = req_queue.outgoing.complete(response.id);
-                    let result = match response.error {
-                        Some(error) => Err(error),
-                        None => Ok(response.result.unwrap_or_default()),
-                    };
-                    data.sender.send(result)?;
+                    if let Some(data) = req_queue.outgoing.complete(response.id) {
+                        let result = match response.error {
+                            Some(error) => Err(error),
+                            None => Ok(response.result.unwrap_or_default()),
+                        };
+                        data.sender.send(result)?;
+                    }
                 }
             }
         }
