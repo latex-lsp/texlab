@@ -42,7 +42,7 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
             .into_iter()
             .map(|symbol| symbol.into_symbol_info(req.main_document().uri.as_ref().clone()))
             .collect();
-        sort_symbols(req.workspace.as_ref(), &mut new_buf);
+        sort_symbols(&req.workspace, &mut new_buf);
         DocumentSymbolResponse::Flat(new_buf)
     }
 }
@@ -54,12 +54,12 @@ struct WorkspaceSymbol {
 }
 
 pub fn find_workspace_symbols(
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     params: &WorkspaceSymbolParams,
 ) -> Vec<SymbolInformation> {
     let mut symbols = Vec::new();
 
-    for document in workspace.documents() {
+    for document in workspace.documents_by_uri.values() {
         if let Some(subset) = workspace.subset(Arc::clone(&document.uri)) {
             let mut buf = Vec::new();
             find_latex_symbols(&subset, &mut buf);
@@ -102,7 +102,7 @@ pub fn find_workspace_symbols(
     filtered
 }
 
-fn sort_symbols(workspace: &dyn Workspace, symbols: &mut [SymbolInformation]) {
+fn sort_symbols(workspace: &Workspace, symbols: &mut [SymbolInformation]) {
     let ordering = ProjectOrdering::from(workspace);
     symbols.sort_by(|left, right| {
         let left_key = (

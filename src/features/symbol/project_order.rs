@@ -19,12 +19,12 @@ impl ProjectOrdering {
     }
 }
 
-impl From<&dyn Workspace> for ProjectOrdering {
-    fn from(workspace: &dyn Workspace) -> Self {
+impl From<&Workspace> for ProjectOrdering {
+    fn from(workspace: &Workspace) -> Self {
         let mut ordering = Vec::new();
         let uris: FxHashSet<Arc<Uri>> = workspace
-            .documents()
-            .into_iter()
+            .documents_by_uri
+            .values()
             .map(|document| Arc::clone(&document.uri))
             .collect();
 
@@ -42,7 +42,7 @@ impl From<&dyn Workspace> for ProjectOrdering {
                 }
 
                 ordering.push(Arc::clone(&uri));
-                if let Some(document) = workspace.get(&uri) {
+                if let Some(document) = workspace.documents_by_uri.get(&uri) {
                     if let Some(data) = document.data.as_latex() {
                         for link in data.extras.explicit_links.iter().rev() {
                             for target in &link.targets {
@@ -60,10 +60,10 @@ impl From<&dyn Workspace> for ProjectOrdering {
     }
 }
 
-fn connected_components(workspace: &dyn Workspace) -> Vec<WorkspaceSubset> {
+fn connected_components(workspace: &Workspace) -> Vec<WorkspaceSubset> {
     let mut components = Vec::new();
     let mut visited = FxHashSet::default();
-    for root_document in workspace.documents() {
+    for root_document in workspace.documents_by_uri.values() {
         if !visited.insert(Arc::clone(&root_document.uri)) {
             continue;
         }
@@ -108,38 +108,40 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{create_workspace, DocumentLanguage, DocumentVisibility, ServerContext};
+    use crate::{DocumentLanguage, DocumentVisibility, ServerContext};
 
     use super::*;
 
     #[test]
     fn test_no_cycles() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
-            ServerContext::new(std::env::temp_dir()),
-        ))?);
+        let context = ServerContext::new(std::env::temp_dir());
+        let mut workspace = Workspace::default();
 
         let a = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let b = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let c = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{b}\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
-        let ordering = ProjectOrdering::from(workspace.as_ref());
+        let ordering = ProjectOrdering::from(&workspace);
 
         assert_eq!(ordering.get(&a.uri), 2);
         assert_eq!(ordering.get(&b.uri), 1);
@@ -149,32 +151,34 @@ mod tests {
 
     #[test]
     fn test_cycles() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
-            ServerContext::new(std::env::temp_dir()),
-        ))?);
+        let context = ServerContext::new(std::env::temp_dir());
+        let mut workspace = Workspace::default();
 
         let a = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let b = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let c = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
-        let ordering = ProjectOrdering::from(workspace.as_ref());
+        let ordering = ProjectOrdering::from(&workspace);
 
         assert_eq!(ordering.get(&a.uri), 1);
         assert_eq!(ordering.get(&b.uri), 2);
@@ -184,39 +188,42 @@ mod tests {
 
     #[test]
     fn test_multiple_roots() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
-            ServerContext::new(std::env::temp_dir()),
-        ))?);
+        let context = ServerContext::new(std::env::temp_dir());
+        let mut workspace = Workspace::default();
 
         let a = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let b = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let c = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let d = workspace.open(
+            &context,
             Arc::new(Uri::parse("http://example.com/d.tex")?),
             Arc::new(r#"\include{c}"#.to_string()),
             DocumentLanguage::Latex,
             DocumentVisibility::Visible,
-        );
+        )?;
 
-        let ordering = ProjectOrdering::from(workspace.as_ref());
+        let ordering = ProjectOrdering::from(&workspace);
 
         assert!(ordering.get(&a.uri) < ordering.get(&b.uri));
         assert!(ordering.get(&d.uri) < ordering.get(&c.uri));

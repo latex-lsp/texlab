@@ -10,16 +10,16 @@ use crate::{
 };
 
 pub fn analyze_bibtex_static(
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     uri: &Uri,
 ) -> Option<()> {
-    let document = workspace.get(uri)?;
+    let document = workspace.documents_by_uri.get(uri)?;
     let data = document.data.as_bibtex()?;
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        analyze_entry(&document, diagnostics_by_uri, node.clone())
-            .or_else(|| analyze_field(&document, diagnostics_by_uri, node));
+        analyze_entry(document, diagnostics_by_uri, node.clone())
+            .or_else(|| analyze_field(document, diagnostics_by_uri, node));
     }
 
     Some(())

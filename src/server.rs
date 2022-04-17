@@ -14,7 +14,6 @@ use threadpool::ThreadPool;
 use crate::{
     client::{send_notification, send_request},
     component_db::COMPONENT_DATABASE,
-    create_workspace,
     diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
@@ -26,7 +25,7 @@ use crate::{
     },
     req_queue::{IncomingData, ReqQueue},
     ClientCapabilitiesExt, Document, DocumentLanguage, DocumentVisibility, LineIndexExt, Options,
-    ServerContext, Uri, Workspace,
+    ServerContext, Uri, Workspace, WorkspaceEvent,
 };
 
 #[derive(Clone)]
@@ -34,7 +33,7 @@ pub struct Server {
     connection: Arc<Connection>,
     context: Arc<ServerContext>,
     req_queue: Arc<Mutex<ReqQueue>>,
-    workspace: Arc<dyn Workspace>,
+    workspace: Workspace,
     static_debouncer: Arc<DiagnosticsDebouncer>,
     chktex_debouncer: Arc<DiagnosticsDebouncer>,
     pool: Arc<Mutex<ThreadPool>>,
@@ -50,7 +49,7 @@ impl Server {
     ) -> Result<Self> {
         let context = Arc::new(ServerContext::new(current_dir));
         let req_queue = Arc::default();
-        let workspace = Arc::new(create_workspace(Arc::clone(&context))?);
+        let workspace = Workspace::default();
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
 
         let static_debouncer = Arc::new(create_static_debouncer(
@@ -160,8 +159,10 @@ impl Server {
         self.spawn(move || {
             server.register_config_capability();
             server.register_file_watching();
-            server.pull_and_reparse_all();
         });
+
+        self.pull_config();
+        self.reparse_all()?;
 
         Ok(())
     }
@@ -230,15 +231,24 @@ impl Server {
     }
 
     fn register_diagnostics_handler(&mut self) {
-        let sender = self.static_debouncer.sender.clone();
-        self.workspace
-            .register_open_handler(Arc::new(move |workspace, document| {
-                let message = DiagnosticsMessage::Analyze {
-                    workspace,
-                    document,
+        let (event_sender, event_receiver) = crossbeam_channel::unbounded();
+        let diag_sender = self.static_debouncer.sender.clone();
+        std::thread::spawn(move || {
+            for event in event_receiver {
+                match event {
+                    WorkspaceEvent::Changed(workspace, document) => {
+                        let message = DiagnosticsMessage::Analyze {
+                            workspace,
+                            document,
+                        };
+
+                        diag_sender.send(message).unwrap();
+                    }
                 };
-                sender.send(message).unwrap();
-            }));
+            }
+        });
+
+        self.workspace.listeners.push_back(event_sender);
     }
 
     fn register_incoming_request(&self, id: RequestId) {
@@ -300,16 +310,16 @@ impl Server {
         Ok(())
     }
 
-    fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) -> Result<()> {
+    fn did_change_watched_files(&mut self, params: DidChangeWatchedFilesParams) -> Result<()> {
         for change in params.changes {
             if let Ok(path) = change.uri.to_file_path() {
-                let uri = change.uri.into();
+                let uri = Uri::from(change.uri);
                 match change.typ {
                     FileChangeType::CREATED | FileChangeType::CHANGED => {
-                        self.workspace.reload(path)?;
+                        self.workspace.reload(&self.context, path)?;
                     }
                     FileChangeType::DELETED => {
-                        self.workspace.delete(&uri);
+                        self.workspace.documents_by_uri.remove(&uri);
                     }
                     _ => {}
                 }
@@ -319,13 +329,11 @@ impl Server {
         Ok(())
     }
 
-    fn did_change_configuration(&self, params: DidChangeConfigurationParams) -> Result<()> {
+    fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
         let client_capabilities = { self.context.client_capabilities.lock().unwrap().clone() };
         if client_capabilities.has_pull_configuration_support() {
-            let server = self.clone();
-            self.spawn(move || {
-                server.pull_and_reparse_all();
-            });
+            self.pull_config();
+            self.reparse_all()?;
         } else {
             match serde_json::from_value(params.settings) {
                 Ok(new_options) => {
@@ -336,49 +344,50 @@ impl Server {
                 }
             };
 
-            let server = self.clone();
-            self.spawn(move || {
-                server.reparse_all();
-            });
+            self.reparse_all()?;
         }
 
         Ok(())
     }
 
-    fn did_open(&self, params: DidOpenTextDocumentParams) -> Result<()> {
+    fn did_open(&mut self, params: DidOpenTextDocumentParams) -> Result<()> {
         let language_id = &params.text_document.language_id;
         let language = DocumentLanguage::by_language_id(language_id);
         let document = self.workspace.open(
+            &self.context,
             Arc::new(params.text_document.uri.into()),
             Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
             DocumentVisibility::Visible,
-        );
+        )?;
 
         let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
         if let Some(document) = self
             .workspace
+            .documents_by_uri
             .get(document.uri.as_ref())
             .filter(|_| should_lint)
+            .cloned()
         {
             self.chktex_debouncer
                 .sender
                 .send(DiagnosticsMessage::Analyze {
-                    workspace: Arc::clone(&self.workspace),
+                    workspace: self.workspace.clone(),
                     document,
                 })?;
         };
         Ok(())
     }
 
-    fn did_change(&self, mut params: DidChangeTextDocumentParams) -> Result<()> {
+    fn did_change(&mut self, mut params: DidChangeTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri.into();
-        let old_document = self.workspace.get(&uri);
+        let old_document = self.workspace.documents_by_uri.get(&uri).cloned();
         let old_text = old_document.as_ref().map(|document| document.text.as_str());
         let uri = Arc::new(uri);
 
         let language = self
             .workspace
+            .documents_by_uri
             .get(&uri)
             .map(|document| document.data.language())
             .unwrap_or(DocumentLanguage::Latex);
@@ -391,11 +400,12 @@ impl Server {
                     self.merge_text_changes(&old_document, language, change)
                 }),
             None => self.workspace.open(
+                &self.context,
                 Arc::clone(&uri),
                 Arc::new(params.content_changes.pop().unwrap().text),
                 language,
                 DocumentVisibility::Visible,
-            ),
+            )?,
         };
 
         let line = match old_text {
@@ -415,7 +425,7 @@ impl Server {
             self.chktex_debouncer
                 .sender
                 .send(DiagnosticsMessage::Analyze {
-                    workspace: Arc::clone(&self.workspace),
+                    workspace: self.workspace.clone(),
                     document: new_document,
                 })?;
         };
@@ -424,7 +434,7 @@ impl Server {
     }
 
     fn merge_text_changes(
-        &self,
+        &mut self,
         old_document: &Document,
         new_language: DocumentLanguage,
         change: TextDocumentContentChangeEvent,
@@ -441,30 +451,34 @@ impl Server {
             None => change.text,
         };
 
-        self.workspace.open(
-            Arc::clone(&old_document.uri),
-            Arc::new(new_text),
-            new_language,
-            DocumentVisibility::Visible,
-        )
+        self.workspace
+            .open(
+                &self.context,
+                Arc::clone(&old_document.uri),
+                Arc::new(new_text),
+                new_language,
+                DocumentVisibility::Visible,
+            )
+            .unwrap()
     }
 
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
-        let uri = params.text_document.uri.into();
+        let uri = Uri::from(params.text_document.uri);
 
         let should_build = { self.context.options.read().unwrap().build.on_save };
-        if let Some(request) =
-            self.workspace
-                .get(&uri)
-                .filter(|_| should_build)
-                .and_then(|document| {
-                    self.feature_request(
-                        Arc::clone(&document.uri),
-                        BuildParams {
-                            text_document: TextDocumentIdentifier::new(uri.clone().into()),
-                        },
-                    )
-                })
+        if let Some(request) = self
+            .workspace
+            .documents_by_uri
+            .get(&uri)
+            .filter(|_| should_build)
+            .and_then(|document| {
+                self.feature_request(
+                    Arc::clone(&document.uri),
+                    BuildParams {
+                        text_document: TextDocumentIdentifier::new(uri.clone().into()),
+                    },
+                )
+            })
         {
             let lsp_sender = self.connection.sender.clone();
             let req_queue = Arc::clone(&self.req_queue);
@@ -482,18 +496,24 @@ impl Server {
         }
 
         let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
-        if let Some(document) = self.workspace.get(&uri).filter(|_| should_lint) {
+        if let Some(document) = self
+            .workspace
+            .documents_by_uri
+            .get(&uri)
+            .filter(|_| should_lint)
+            .cloned()
+        {
             self.chktex_debouncer
                 .sender
                 .send(DiagnosticsMessage::Analyze {
-                    workspace: Arc::clone(&self.workspace),
+                    workspace: self.workspace.clone(),
                     document,
                 })?;
         };
         Ok(())
     }
 
-    fn did_close(&self, params: DidCloseTextDocumentParams) -> Result<()> {
+    fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri.into();
         self.workspace.close(&uri);
         Ok(())
@@ -503,7 +523,7 @@ impl Server {
         Some(FeatureRequest {
             context: Arc::clone(&self.context),
             params,
-            workspace: Arc::clone(&self.workspace),
+            workspace: self.workspace.clone(),
             subset: self.workspace.subset(uri)?,
         })
     }
@@ -561,9 +581,9 @@ impl Server {
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
         let sender = self.connection.sender.clone();
-        let workspace = Arc::clone(&self.workspace);
+        let workspace = self.workspace.clone();
         self.spawn(move || {
-            let result = find_workspace_symbols(workspace.as_ref(), &params);
+            let result = find_workspace_symbols(&workspace, &params);
             sender
                 .send(lsp_server::Response::new_ok(id, result).into())
                 .unwrap();
@@ -593,7 +613,7 @@ impl Server {
     #[cfg(feature = "completion")]
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
         let sender = self.connection.sender.clone();
-        let workspace = Arc::clone(&self.workspace);
+        let workspace = self.workspace.clone();
         self.spawn(move || {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 crate::features::CompletionItemData::Package
@@ -604,7 +624,7 @@ impl Server {
                 }
                 #[cfg(feature = "citation")]
                 crate::features::CompletionItemData::Citation { uri, key } => {
-                    if let Some(document) = workspace.get(&uri) {
+                    if let Some(document) = workspace.documents_by_uri.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
                             let markup = crate::citation::render_citation(
                                 &crate::syntax::bibtex::SyntaxNode::new_root(data.green.clone()),
@@ -749,24 +769,29 @@ impl Server {
         Ok(())
     }
 
-    fn pull_and_reparse_all(&self) {
-        self.pull_config();
-        self.reparse_all();
-    }
-
-    fn reparse_all(&self) {
-        for document in self.workspace.documents() {
+    fn reparse_all(&mut self) -> Result<()> {
+        for document in self
+            .workspace
+            .documents_by_uri
+            .values()
+            .cloned()
+            .collect::<Vec<_>>()
+        {
             self.workspace.open(
+                &self.context,
                 Arc::clone(&document.uri),
                 document.text.clone(),
-                document.language(),
+                document.data.language(),
                 DocumentVisibility::Visible,
-            );
+            )?;
         }
+
+        Ok(())
     }
 
-    fn process_messages(&self) -> Result<()> {
-        for msg in &self.connection.receiver {
+    fn process_messages(&mut self) -> Result<()> {
+        let receiver = self.connection.receiver.clone();
+        for msg in &receiver {
             match msg {
                 Message::Request(request) => {
                     if self.connection.handle_shutdown(&request)? {
@@ -862,8 +887,8 @@ fn create_static_debouncer(
     let sender = conn.sender.clone();
     DiagnosticsDebouncer::launch(context, move |workspace, document| {
         let mut manager = manager.lock().unwrap();
-        manager.update_static(workspace.as_ref(), Arc::clone(&document.uri));
-        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+        manager.update_static(&workspace, Arc::clone(&document.uri));
+        if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
             warn!("Failed to publish diagnostics: {}", why);
         }
     })
@@ -878,8 +903,8 @@ fn create_chktex_debouncer(
     DiagnosticsDebouncer::launch(Arc::clone(&context), move |workspace, document| {
         let options = { context.options.read().unwrap().clone() };
         let mut manager = manager.lock().unwrap();
-        manager.update_chktex(workspace.as_ref(), Arc::clone(&document.uri), &options);
-        if let Err(why) = publish_diagnostics(&sender, workspace.as_ref(), &manager) {
+        manager.update_chktex(&workspace, Arc::clone(&document.uri), &options);
+        if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
             warn!("Failed to publish diagnostics: {}", why);
         }
     })
@@ -887,10 +912,10 @@ fn create_chktex_debouncer(
 
 fn publish_diagnostics(
     sender: &Sender<lsp_server::Message>,
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     diag_manager: &DiagnosticsManager,
 ) -> Result<()> {
-    for document in workspace.documents() {
+    for document in workspace.documents_by_uri.values() {
         let diagnostics = diag_manager.publish(Arc::clone(&document.uri));
         send_notification::<PublishDiagnostics>(
             sender,

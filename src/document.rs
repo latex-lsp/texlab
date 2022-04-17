@@ -86,7 +86,7 @@ impl fmt::Debug for Document {
 
 impl Document {
     pub fn parse(
-        context: Arc<ServerContext>,
+        context: &ServerContext,
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
@@ -135,9 +135,5 @@ impl Document {
             data,
             visibility,
         }
-    }
-
-    pub fn language(&self) -> DocumentLanguage {
-        self.data.language()
     }
 }

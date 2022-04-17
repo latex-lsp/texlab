@@ -7,8 +7,8 @@ use smol_str::SmolStr;
 use crate::{ServerContext, Uri};
 
 #[derive(Debug)]
-pub struct LatexAnalyzerContext {
-    pub inner: Arc<ServerContext>,
+pub struct LatexAnalyzerContext<'a> {
+    pub inner: &'a ServerContext,
     pub document_uri: Arc<Uri>,
     pub base_uri: Arc<Uri>,
     pub extras: Extras,

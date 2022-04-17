@@ -11,7 +11,7 @@ use crate::{Document, ServerContext, Uri, Workspace};
 
 pub enum DiagnosticsMessage {
     Analyze {
-        workspace: Arc<dyn Workspace>,
+        workspace: Workspace,
         document: Document,
     },
     Shutdown,
@@ -25,7 +25,7 @@ pub struct DiagnosticsDebouncer {
 impl DiagnosticsDebouncer {
     pub fn launch<A>(context: Arc<ServerContext>, action: A) -> Self
     where
-        A: Fn(Arc<dyn Workspace>, Document) + Send + Clone + 'static,
+        A: Fn(Workspace, Document) + Send + Clone + 'static,
     {
         let (sender, receiver) = crossbeam_channel::unbounded();
 

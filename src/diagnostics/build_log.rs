@@ -6,14 +6,14 @@ use multimap::MultiMap;
 use crate::{syntax::build_log::BuildErrorLevel, Uri, Workspace};
 
 pub fn analyze_build_log_static(
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     build_log_uri: &Uri,
 ) -> Option<()> {
-    let build_log_document = workspace.get(build_log_uri)?;
+    let build_log_document = workspace.documents_by_uri.get(build_log_uri)?;
     let parse = build_log_document.data.as_build_log()?;
 
-    let root_document = workspace.documents().into_iter().find(|document| {
+    let root_document = workspace.documents_by_uri.values().find(|document| {
         if let Some(data) = document.data.as_latex() {
             !document.uri.as_str().ends_with(".aux")
                 && data

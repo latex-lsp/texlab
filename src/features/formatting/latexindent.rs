@@ -57,7 +57,7 @@ pub fn format_with_latexindent(
         path.join("latexindent.yaml"),
     );
 
-    let name = if document.language() == DocumentLanguage::Bibtex {
+    let name = if document.data.language() == DocumentLanguage::Bibtex {
         "file.bib"
     } else {
         "file.tex"

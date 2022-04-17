@@ -26,7 +26,7 @@ pub struct DiagnosticsManager {
 }
 
 impl DiagnosticsManager {
-    pub fn update_static(&mut self, workspace: &dyn Workspace, uri: Arc<Uri>) {
+    pub fn update_static(&mut self, workspace: &Workspace, uri: Arc<Uri>) {
         let mut diagnostics_by_uri = MultiMap::new();
         analyze_build_log_static(workspace, &mut diagnostics_by_uri, &uri);
         analyze_bibtex_static(workspace, &mut diagnostics_by_uri, &uri);
@@ -34,7 +34,7 @@ impl DiagnosticsManager {
         self.static_diagnostics.insert(uri, diagnostics_by_uri);
     }
 
-    pub fn update_chktex(&mut self, workspace: &dyn Workspace, uri: Arc<Uri>, options: &Options) {
+    pub fn update_chktex(&mut self, workspace: &Workspace, uri: Arc<Uri>, options: &Options) {
         analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, &uri, options);
     }
 

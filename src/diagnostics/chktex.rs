@@ -14,12 +14,12 @@ use tempfile::tempdir;
 use crate::{Options, RangeExt, Uri, Workspace};
 
 pub fn analyze_latex_chktex(
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     uri: &Uri,
     options: &Options,
 ) -> Option<()> {
-    let document = workspace.get(uri)?;
+    let document = workspace.documents_by_uri.get(uri)?;
     document.data.as_latex()?;
 
     let current_dir = options

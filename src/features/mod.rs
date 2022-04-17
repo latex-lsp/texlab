@@ -38,7 +38,7 @@ pub use self::{
 pub struct FeatureRequest<P> {
     pub context: Arc<ServerContext>,
     pub params: P,
-    pub workspace: Arc<dyn Workspace>,
+    pub workspace: Workspace,
     pub subset: WorkspaceSubset,
 }
 
@@ -62,8 +62,8 @@ mod testing {
     use typed_builder::TypedBuilder;
 
     use crate::{
-        create_workspace, distro::Resolver, DocumentLanguage, DocumentVisibility, Options,
-        ServerContext, Uri, Workspace,
+        distro::Resolver, DocumentLanguage, DocumentVisibility, Options, ServerContext, Uri,
+        Workspace,
     };
 
     use super::*;
@@ -133,20 +133,24 @@ mod testing {
             Arc::new(cx)
         }
 
-        fn workspace(&self, cx: Arc<ServerContext>) -> Arc<dyn Workspace> {
-            let workspace = create_workspace(cx).unwrap();
+        fn workspace(&self, cx: Arc<ServerContext>) -> Workspace {
+            let mut workspace = Workspace::default();
             for (name, source_code) in &self.files {
                 let uri = self.uri(name);
                 let path = uri.to_file_path().unwrap();
                 let language = DocumentLanguage::by_path(&path).expect("unknown document language");
-                workspace.open(
-                    uri,
-                    Arc::new(source_code.trim().to_string()),
-                    language,
-                    DocumentVisibility::Visible,
-                );
+                workspace
+                    .open(
+                        &cx,
+                        uri,
+                        Arc::new(source_code.trim().to_string()),
+                        language,
+                        DocumentVisibility::Visible,
+                    )
+                    .unwrap();
             }
-            Arc::new(workspace)
+
+            workspace
         }
 
         fn request<P>(&self, params: P) -> FeatureRequest<P> {

@@ -125,7 +125,7 @@ impl BuildEngine {
             })
             .unwrap_or_else(|| request.main_document());
 
-        if document.language() != DocumentLanguage::Latex {
+        if document.data.language() != DocumentLanguage::Latex {
             return Ok(BuildResult {
                 status: BuildStatus::SUCCESS,
             });

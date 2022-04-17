@@ -7,6 +7,7 @@ mod context;
 pub mod diagnostics;
 mod dispatch;
 pub mod distro;
+mod document;
 pub mod features;
 mod label;
 mod lang_data;
@@ -24,6 +25,7 @@ mod workspace;
 pub use self::{
     capabilities::ClientCapabilitiesExt,
     context::ServerContext,
+    document::*,
     label::*,
     lang_data::*,
     language::DocumentLanguage,

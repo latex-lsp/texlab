@@ -7,11 +7,11 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{syntax::latex, Document, LineIndexExt, Uri, Workspace};
 
 pub fn analyze_latex_static(
-    workspace: &dyn Workspace,
+    workspace: &Workspace,
     diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
     uri: &Uri,
 ) -> Option<()> {
-    let document = workspace.get(uri)?;
+    let document = workspace.documents_by_uri.get(uri)?;
     if !document.uri.as_str().ends_with(".tex") {
         return None;
     }
@@ -19,8 +19,8 @@ pub fn analyze_latex_static(
     let data = document.data.as_latex()?;
 
     for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        analyze_environment(&document, diagnostics_by_uri, node.clone())
-            .or_else(|| analyze_curly_group(&document, diagnostics_by_uri, node.clone()))
+        analyze_environment(document, diagnostics_by_uri, node.clone())
+            .or_else(|| analyze_curly_group(document, diagnostics_by_uri, node.clone()))
             .or_else(|| {
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
                     diagnostics_by_uri.insert(
