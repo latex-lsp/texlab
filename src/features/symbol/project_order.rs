@@ -108,7 +108,7 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{create_workspace_fast, DocumentLanguage, ServerContext, WorkspaceSource};
+    use crate::{create_workspace_fast, DocumentLanguage, DocumentVisibility, ServerContext};
 
     use super::*;
 
@@ -122,21 +122,21 @@ mod tests {
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{b}\include{a}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let ordering = ProjectOrdering::from(workspace.as_ref());
@@ -157,21 +157,21 @@ mod tests {
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let ordering = ProjectOrdering::from(workspace.as_ref());
@@ -192,28 +192,28 @@ mod tests {
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let d = workspace.open(
             Arc::new(Uri::parse("http://example.com/d.tex")?),
             Arc::new(r#"\include{c}"#.to_string()),
             DocumentLanguage::Latex,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let ordering = ProjectOrdering::from(workspace.as_ref());

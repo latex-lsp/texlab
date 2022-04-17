@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use crate::{
-    Document, DocumentLanguage, OpenHandler, ServerContext, Uri, Workspace, WorkspaceSource,
+    Document, DocumentLanguage, DocumentVisibility, OpenHandler, ServerContext, Uri, Workspace,
     WorkspaceSubset,
 };
 
@@ -12,7 +12,6 @@ use crate::{
 pub struct Storage {
     context: Arc<ServerContext>,
     documents_by_uri: Arc<Mutex<FxHashMap<Arc<Uri>, Document>>>,
-    opened_documents: Arc<Mutex<FxHashSet<Arc<Uri>>>>,
     open_handlers: Arc<Mutex<Vec<OpenHandler>>>,
 }
 
@@ -21,7 +20,6 @@ impl Storage {
         Self {
             context,
             documents_by_uri: Arc::default(),
-            opened_documents: Arc::default(),
             open_handlers: Arc::default(),
         }
     }
@@ -33,20 +31,21 @@ impl Workspace for Storage {
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        source: WorkspaceSource,
+        visibility: DocumentVisibility,
     ) -> Document {
         log::debug!("(Re)Loading document: {}", uri);
-        let document = Document::parse(Arc::clone(&self.context), Arc::clone(&uri), text, language);
-        {
-            self.documents_by_uri
-                .lock()
-                .unwrap()
-                .insert(Arc::clone(&uri), document.clone());
-        }
+        let document = Document::parse(
+            Arc::clone(&self.context),
+            Arc::clone(&uri),
+            text,
+            language,
+            visibility,
+        );
 
-        if source == WorkspaceSource::Client {
-            self.opened_documents.lock().unwrap().insert(uri);
-        }
+        self.documents_by_uri
+            .lock()
+            .unwrap()
+            .insert(Arc::clone(&uri), document.clone());
 
         let handlers = { self.open_handlers.lock().unwrap().clone() };
         for handler in handlers {
@@ -78,7 +77,9 @@ impl Workspace for Storage {
     }
 
     fn close(&self, uri: &Uri) {
-        self.opened_documents.lock().unwrap().remove(uri);
+        if let Some(document) = self.documents_by_uri.lock().unwrap().get_mut(uri) {
+            document.visibility = DocumentVisibility::Hidden;
+        }
     }
 
     fn delete(&self, uri: &Uri) {
@@ -86,7 +87,13 @@ impl Workspace for Storage {
     }
 
     fn is_open(&self, uri: &Uri) -> bool {
-        self.opened_documents.lock().unwrap().contains(uri)
+        self.documents_by_uri
+            .lock()
+            .unwrap()
+            .get(uri)
+            .map_or(false, |document| {
+                document.visibility == DocumentVisibility::Visible
+            })
     }
 
     fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {

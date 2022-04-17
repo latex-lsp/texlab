@@ -63,12 +63,19 @@ impl DocumentData {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
+pub enum DocumentVisibility {
+    Visible,
+    Hidden,
+}
+
 #[derive(Clone)]
 pub struct Document {
     pub uri: Arc<Uri>,
     pub text: Arc<String>,
     pub line_index: Arc<LineIndex>,
     pub data: DocumentData,
+    pub visibility: DocumentVisibility,
 }
 
 impl fmt::Debug for Document {
@@ -83,6 +90,7 @@ impl Document {
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
+        visibility: DocumentVisibility,
     ) -> Self {
         let line_index = Arc::new(LineIndex::new(&text));
         let data = match language {
@@ -125,6 +133,7 @@ impl Document {
             text,
             line_index,
             data,
+            visibility,
         }
     }
 

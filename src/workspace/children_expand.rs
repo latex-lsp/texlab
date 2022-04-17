@@ -3,8 +3,8 @@ use std::sync::Arc;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    component_db::COMPONENT_DATABASE, Document, DocumentLanguage, OpenHandler, Uri, Workspace,
-    WorkspaceSource, WorkspaceSubset,
+    component_db::COMPONENT_DATABASE, Document, DocumentLanguage, DocumentVisibility, OpenHandler,
+    Uri, Workspace, WorkspaceSubset,
 };
 
 pub struct ChildrenExpander<W> {
@@ -57,9 +57,9 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        source: WorkspaceSource,
+        visibility: DocumentVisibility,
     ) -> Document {
-        self.workspace.open(uri, text, language, source)
+        self.workspace.open(uri, text, language, visibility)
     }
 
     fn register_open_handler(&self, handler: OpenHandler) {
@@ -79,11 +79,11 @@ impl<W: Workspace> Workspace for ChildrenExpander<W> {
     }
 
     fn close(&self, uri: &Uri) {
-        self.workspace.close(uri)
+        self.workspace.close(uri);
     }
 
     fn delete(&self, uri: &Uri) {
-        self.workspace.delete(uri)
+        self.workspace.delete(uri);
     }
 
     fn is_open(&self, uri: &Uri) -> bool {

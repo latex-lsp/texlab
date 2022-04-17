@@ -4,7 +4,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    Document, DocumentLanguage, OpenHandler, Uri, Workspace, WorkspaceSource, WorkspaceSubset,
+    Document, DocumentLanguage, DocumentVisibility, OpenHandler, Uri, Workspace, WorkspaceSubset,
 };
 
 pub struct ParentExpander<W> {
@@ -26,11 +26,11 @@ where
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        source: WorkspaceSource,
+        visibility: DocumentVisibility,
     ) -> Document {
         let document = self
             .workspace
-            .open(Arc::clone(&uri), text, language, source);
+            .open(Arc::clone(&uri), text, language, visibility);
 
         let all_current_paths = self
             .workspace
@@ -86,11 +86,11 @@ where
     }
 
     fn close(&self, uri: &Uri) {
-        self.workspace.close(uri)
+        self.workspace.close(uri);
     }
 
     fn delete(&self, uri: &Uri) {
-        self.workspace.delete(uri)
+        self.workspace.delete(uri);
     }
 
     fn is_open(&self, uri: &Uri) -> bool {

@@ -25,8 +25,8 @@ use crate::{
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, Document, DocumentLanguage, LineIndexExt, Options, ServerContext, Uri,
-    Workspace, WorkspaceSource,
+    ClientCapabilitiesExt, Document, DocumentLanguage, DocumentVisibility, LineIndexExt, Options,
+    ServerContext, Uri, Workspace,
 };
 
 #[derive(Clone)]
@@ -352,7 +352,7 @@ impl Server {
             Arc::new(params.text_document.uri.into()),
             Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         );
 
         let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
@@ -394,7 +394,7 @@ impl Server {
                 Arc::clone(&uri),
                 Arc::new(params.content_changes.pop().unwrap().text),
                 language,
-                WorkspaceSource::Client,
+                DocumentVisibility::Visible,
             ),
         };
 
@@ -445,7 +445,7 @@ impl Server {
             Arc::clone(&old_document.uri),
             Arc::new(new_text),
             new_language,
-            WorkspaceSource::Client,
+            DocumentVisibility::Visible,
         )
     }
 
@@ -760,7 +760,7 @@ impl Server {
                 Arc::clone(&document.uri),
                 document.text.clone(),
                 document.language(),
-                WorkspaceSource::Client,
+                DocumentVisibility::Visible,
             );
         }
     }

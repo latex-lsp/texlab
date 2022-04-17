@@ -2,15 +2,9 @@ use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 
-use crate::{DocumentLanguage, Uri};
+use crate::{DocumentLanguage, DocumentVisibility, Uri};
 
 use super::Document;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
-pub enum WorkspaceSource {
-    Client,
-    Server,
-}
 
 #[derive(Debug, Clone)]
 pub struct WorkspaceSubset {
@@ -25,7 +19,7 @@ pub trait Workspace: Send + Sync {
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        source: WorkspaceSource,
+        visibility: DocumentVisibility,
     ) -> Document;
 
     fn register_open_handler(&self, handler: OpenHandler);
@@ -44,7 +38,7 @@ pub trait Workspace: Send + Sync {
                 uri,
                 text,
                 language,
-                WorkspaceSource::Server,
+                DocumentVisibility::Hidden,
             )))
         } else {
             Ok(None)
@@ -65,7 +59,7 @@ pub trait Workspace: Send + Sync {
                 uri,
                 text,
                 language,
-                WorkspaceSource::Server,
+                DocumentVisibility::Hidden,
             )))
         } else {
             Ok(None)

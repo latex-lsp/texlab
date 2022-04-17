@@ -62,8 +62,8 @@ mod testing {
     use typed_builder::TypedBuilder;
 
     use crate::{
-        create_workspace_fast, distro::Resolver, DocumentLanguage, Options, ServerContext, Uri,
-        Workspace, WorkspaceSource,
+        create_workspace_fast, distro::Resolver, DocumentLanguage, DocumentVisibility, Options,
+        ServerContext, Uri, Workspace,
     };
 
     use super::*;
@@ -143,7 +143,7 @@ mod testing {
                     uri,
                     Arc::new(source_code.trim().to_string()),
                     language,
-                    WorkspaceSource::Client,
+                    DocumentVisibility::Visible,
                 );
             }
             Arc::new(workspace)
