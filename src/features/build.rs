@@ -7,7 +7,6 @@ use std::{
 };
 
 use anyhow::Result;
-use cancellation::CancellationToken;
 use crossbeam_channel::{Receiver, Sender};
 use dashmap::DashMap;
 use encoding_rs_io::DecodeReaderBytesBuilder;
@@ -108,7 +107,6 @@ impl BuildEngine {
     pub fn build(
         &self,
         request: FeatureRequest<BuildParams>,
-        cancellation_token: &CancellationToken,
         req_queue: &Mutex<ReqQueue>,
         lsp_sender: &Sender<lsp_server::Message>,
     ) -> Result<BuildResult> {
@@ -215,7 +213,7 @@ impl BuildEngine {
                 workspace: request.workspace,
                 subset: request.subset,
             };
-            forward_search::execute_forward_search(request, cancellation_token);
+            forward_search::execute_forward_search(request);
         }
 
         Ok(BuildResult { status })

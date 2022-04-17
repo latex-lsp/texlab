@@ -1,13 +1,9 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 use rowan::ast::AstNode;
 
 use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt, LANGUAGE_DATA};
 
-pub fn find_field_hover(
-    context: &CursorContext<HoverParams>,
-    _token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
 
     let name = context
@@ -50,7 +46,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_field_hover(&context, CancellationToken::none());
+        let actual_hover = find_field_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -66,7 +62,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_field_hover(&context, CancellationToken::none());
+        let actual_hover = find_field_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -82,7 +78,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_field_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_field_hover(&context).unwrap();
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
@@ -104,7 +100,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_field_hover(&context, CancellationToken::none());
+        let actual_hover = find_field_hover(&context);
         assert_eq!(actual_hover, None);
     }
 
@@ -119,7 +115,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_field_hover(&context, CancellationToken::none());
+        let actual_hover = find_field_hover(&context);
         assert_eq!(actual_hover, None);
     }
 }

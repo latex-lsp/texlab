@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use rowan::ast::AstNode;
 
 use crate::{
@@ -8,19 +7,11 @@ use crate::{
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_bibtex_symbols(
-    subset: &WorkspaceSubset,
-    buf: &mut Vec<InternalSymbol>,
-    token: &CancellationToken,
-) -> Option<()> {
+pub fn find_bibtex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol>) -> Option<()> {
     let main_document = subset.documents.first()?;
     let data = main_document.data.as_bibtex()?;
 
     for node in bibtex::SyntaxNode::new_root(data.root.clone()).children() {
-        if token.is_canceled() {
-            return None;
-        }
-
         if let Some(string) = bibtex::String::cast(node.clone()) {
             if let Some(name) = string.name() {
                 buf.push(InternalSymbol {

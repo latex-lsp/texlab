@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 
 use crate::features::cursor::CursorContext;
@@ -8,10 +7,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_user_environments<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let (name, range) = context.find_environment_name()?;
 
     for document in &context.request.subset.documents {
@@ -22,7 +18,6 @@ pub fn complete_user_environments<'a>(
                 .iter()
                 .filter(|n| n.as_str() != name)
             {
-                cancellation_token.result().ok()?;
                 items.push(InternalCompletionItem::new(
                     range,
                     InternalCompletionItemData::UserEnvironment { name },
@@ -54,7 +49,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_user_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_user_environments(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -71,7 +66,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_user_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_user_environments(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -91,7 +86,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_user_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_user_environments(&context, &mut actual_items);
 
         assert_eq!(actual_items.len(), 1);
         for item in actual_items {

@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{DocumentHighlight, DocumentHighlightKind, DocumentHighlightParams};
 use rowan::ast::AstNode;
 
@@ -6,7 +5,6 @@ use crate::{features::cursor::CursorContext, syntax::latex, LineIndexExt};
 
 pub fn find_label_highlights(
     context: &CursorContext<DocumentHighlightParams>,
-    cancellation_token: &CancellationToken,
 ) -> Option<Vec<DocumentHighlight>> {
     let (name_text, _) = context.find_label_name_key()?;
 
@@ -15,8 +13,6 @@ pub fn find_label_highlights(
 
     let mut highlights = Vec::new();
     for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
-        cancellation_token.result().ok()?;
-
         if let Some(label_name) = latex::LabelDefinition::cast(node.clone())
             .and_then(|label| label.name())
             .and_then(|label_name| label_name.key())
@@ -101,7 +97,7 @@ mod tests {
             .highlight();
         let context = CursorContext::new(request);
 
-        let actual_links = find_label_highlights(&context, CancellationToken::none());
+        let actual_links = find_label_highlights(&context);
 
         assert!(actual_links.is_none());
     }
@@ -117,7 +113,7 @@ mod tests {
             .highlight();
         let context = CursorContext::new(request);
 
-        let actual_links = find_label_highlights(&context, CancellationToken::none());
+        let actual_links = find_label_highlights(&context);
 
         assert!(actual_links.is_none());
     }
@@ -133,7 +129,7 @@ mod tests {
         let request = tester.highlight();
         let context = CursorContext::new(request);
 
-        let actual_highlights = find_label_highlights(&context, CancellationToken::none()).unwrap();
+        let actual_highlights = find_label_highlights(&context).unwrap();
 
         let expected_highlights = vec![
             DocumentHighlight {

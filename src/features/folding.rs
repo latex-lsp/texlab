@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams, Range};
 use rowan::ast::AstNode;
 
@@ -9,19 +8,12 @@ use crate::{
 
 use super::FeatureRequest;
 
-pub fn find_foldings(
-    request: FeatureRequest<FoldingRangeParams>,
-    token: &CancellationToken,
-) -> Vec<FoldingRange> {
+pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
     let mut foldings = Vec::new();
     let main_document = request.main_document();
     match &main_document.data {
         DocumentData::Latex(data) => {
             for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
-                if token.is_canceled() {
-                    break;
-                }
-
                 if let Some(folding) = latex::Environment::cast(node.clone())
                     .map(|node| latex::small_range(&node))
                     .or_else(|| {
@@ -37,10 +29,6 @@ pub fn find_foldings(
         }
         DocumentData::Bibtex(data) => {
             for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
-                if token.is_canceled() {
-                    break;
-                }
-
                 if let Some(folding) = bibtex::Preamble::cast(node.clone())
                     .map(|node| bibtex::small_range(&node))
                     .or_else(|| {
@@ -87,7 +75,7 @@ mod tests {
             .build()
             .folding();
 
-        let actual_foldings = find_foldings(request, CancellationToken::none());
+        let actual_foldings = find_foldings(request);
         assert!(actual_foldings.is_empty());
     }
 
@@ -99,7 +87,7 @@ mod tests {
             .build()
             .folding();
 
-        let actual_foldings = find_foldings(request, CancellationToken::none());
+        let actual_foldings = find_foldings(request);
         assert!(actual_foldings.is_empty());
     }
 
@@ -123,7 +111,7 @@ mod tests {
             .build()
             .folding();
 
-        let mut actual_foldings = find_foldings(req, CancellationToken::none());
+        let mut actual_foldings = find_foldings(req);
         actual_foldings.sort_by_key(|folding| (folding.start_line, folding.start_character));
 
         assert_eq!(actual_foldings.len(), 5);
@@ -206,7 +194,7 @@ mod tests {
             .build()
             .folding();
 
-        let mut actual_foldings = find_foldings(request, CancellationToken::none());
+        let mut actual_foldings = find_foldings(request);
         actual_foldings.sort_by_key(|folding| (folding.start_line, folding.start_character));
 
         assert_eq!(actual_foldings.len(), 3);

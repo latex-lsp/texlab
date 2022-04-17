@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
 use rowan::ast::AstNode;
 
@@ -10,10 +9,7 @@ use crate::{
     DocumentData, LineIndexExt,
 };
 
-pub fn prepare_entry_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-    _cancellation_token: &CancellationToken,
-) -> Option<Range> {
+pub fn prepare_entry_rename<P: HasPosition>(context: &CursorContext<P>) -> Option<Range> {
     let (_, range) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
@@ -27,19 +23,14 @@ pub fn prepare_entry_rename<P: HasPosition>(
     )
 }
 
-pub fn rename_entry(
-    context: &CursorContext<RenameParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<WorkspaceEdit> {
-    cancellation_token.result().ok()?;
-    prepare_entry_rename(context, cancellation_token)?;
+pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEdit> {
+    prepare_entry_rename(context)?;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = HashMap::new();
     for document in &context.request.subset.documents {
-        cancellation_token.result().ok()?;
         match &document.data {
             DocumentData::Latex(data) => {
                 let edits: Vec<_> = latex::SyntaxNode::new_root(data.root.clone())
@@ -105,7 +96,7 @@ mod tests {
         let request = tester.rename();
 
         let context = CursorContext::new(request);
-        let actual_edit = rename_entry(&context, CancellationToken::none()).unwrap();
+        let actual_edit = rename_entry(&context).unwrap();
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(
@@ -139,7 +130,7 @@ mod tests {
         let request = tester.rename();
 
         let context = CursorContext::new(request);
-        let actual_edit = rename_entry(&context, CancellationToken::none()).unwrap();
+        let actual_edit = rename_entry(&context).unwrap();
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(

@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{Location, ReferenceParams};
 use rowan::ast::AstNode;
 
@@ -10,7 +9,6 @@ use crate::{
 
 pub fn find_entry_references(
     context: &CursorContext<ReferenceParams>,
-    cancellation_token: &CancellationToken,
     references: &mut Vec<Location>,
 ) -> Option<()> {
     let (key_text, _) = context
@@ -19,8 +17,6 @@ pub fn find_entry_references(
         .or_else(|| context.find_entry_key())?;
 
     for document in &context.request.subset.documents {
-        cancellation_token.result().ok()?;
-
         match &document.data {
             DocumentData::Latex(data) => {
                 latex::SyntaxNode::new_root(data.root.clone())
@@ -79,7 +75,7 @@ mod tests {
 
         let mut actual_references = Vec::new();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }
@@ -96,7 +92,7 @@ mod tests {
 
         let mut actual_references = Vec::new();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }
@@ -117,7 +113,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
@@ -144,7 +140,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
@@ -169,7 +165,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
@@ -196,7 +192,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_entry_references(&context, CancellationToken::none(), &mut actual_references);
+        find_entry_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),

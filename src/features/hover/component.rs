@@ -1,21 +1,13 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
 use crate::{
     component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex, LineIndexExt,
 };
 
-pub fn find_component_hover(
-    context: &CursorContext<HoverParams>,
-    token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_component_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
     let data = main_document.data.as_latex()?;
     for link in &data.extras.explicit_links {
-        if token.is_canceled() {
-            break;
-        }
-
         if matches!(
             link.kind,
             latex::ExplicitLinkKind::Package | latex::ExplicitLinkKind::Class
@@ -50,7 +42,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_component_hover(&context, CancellationToken::none());
+        let actual_hover = find_component_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -66,7 +58,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_component_hover(&context, CancellationToken::none());
+        let actual_hover = find_component_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -82,7 +74,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_component_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_component_hover(&context).unwrap();
 
         assert_eq!(actual_hover.range.unwrap(), Range::new_simple(0, 12, 0, 19));
     }
@@ -98,7 +90,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_component_hover(&context, CancellationToken::none());
+        let actual_hover = find_component_hover(&context);
 
         assert_eq!(actual_hover, None);
     }

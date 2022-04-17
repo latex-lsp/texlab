@@ -3,7 +3,6 @@ use std::{
     process::{Command, Stdio},
 };
 
-use cancellation::CancellationToken;
 use lsp_types::{DocumentFormattingParams, TextEdit};
 use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
@@ -12,7 +11,6 @@ use crate::{features::FeatureRequest, DocumentLanguage, LineIndexExt};
 
 pub fn format_with_latexindent(
     request: &FeatureRequest<DocumentFormattingParams>,
-    _cancellation_token: &CancellationToken,
 ) -> Option<Vec<TextEdit>> {
     let directory = tempdir().ok()?;
     let document = request.main_document();

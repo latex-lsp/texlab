@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::{TextRange, TextSize};
 
@@ -9,12 +8,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_entry_types<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    if cancellation_token.is_canceled() {
-        return None;
-    }
-
     let range = context
         .cursor
         .as_bibtex()
@@ -50,7 +44,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -67,7 +61,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -84,7 +78,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -104,7 +98,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -124,7 +118,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -144,7 +138,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -164,7 +158,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -184,7 +178,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -204,7 +198,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -224,7 +218,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_entry_types(&context, &mut actual_items, CancellationToken::none());
+        complete_entry_types(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }

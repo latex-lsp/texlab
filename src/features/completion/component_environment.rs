@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 
 use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext};
@@ -8,14 +7,10 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_component_environments<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let (_, range) = context.find_environment_name()?;
 
     for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
-        cancellation_token.result().ok()?;
         for name in &component.environments {
             items.push(InternalCompletionItem::new(
                 range,
@@ -50,7 +45,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -67,7 +62,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -84,7 +79,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -104,7 +99,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -124,7 +119,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in &actual_items {
@@ -148,7 +143,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -168,7 +163,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_component_environments(&context, &mut actual_items, CancellationToken::none());
+        complete_component_environments(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

@@ -5,7 +5,6 @@ mod types;
 
 use std::{cmp::Reverse, sync::Arc};
 
-use cancellation::CancellationToken;
 use lsp_types::{
     DocumentSymbolParams, DocumentSymbolResponse, SymbolInformation, WorkspaceSymbolParams,
 };
@@ -18,13 +17,10 @@ use self::{
 
 use super::FeatureRequest;
 
-pub fn find_document_symbols(
-    req: FeatureRequest<DocumentSymbolParams>,
-    token: &CancellationToken,
-) -> DocumentSymbolResponse {
+pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> DocumentSymbolResponse {
     let mut buf = Vec::new();
-    find_latex_symbols(&req.subset, &mut buf, token);
-    find_bibtex_symbols(&req.subset, &mut buf, token);
+    find_latex_symbols(&req.subset, &mut buf);
+    find_bibtex_symbols(&req.subset, &mut buf);
     if req
         .context
         .client_capabilities
@@ -60,15 +56,14 @@ struct WorkspaceSymbol {
 pub fn find_workspace_symbols(
     workspace: &dyn Workspace,
     params: &WorkspaceSymbolParams,
-    token: &CancellationToken,
 ) -> Vec<SymbolInformation> {
     let mut symbols = Vec::new();
 
     for document in workspace.documents() {
         if let Some(subset) = workspace.subset(Arc::clone(&document.uri)) {
             let mut buf = Vec::new();
-            find_latex_symbols(&subset, &mut buf, token);
-            find_bibtex_symbols(&subset, &mut buf, token);
+            find_latex_symbols(&subset, &mut buf);
+            find_bibtex_symbols(&subset, &mut buf);
             let mut new_buf = Vec::new();
 
             for symbol in buf {

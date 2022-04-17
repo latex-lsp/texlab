@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 
 use crate::{
@@ -8,7 +7,6 @@ use crate::{
 
 pub fn goto_label_definition(
     context: &CursorContext<GotoDefinitionParams>,
-    cancellation_token: &CancellationToken,
 ) -> Option<Vec<LocationLink>> {
     let main_document = context.request.main_document();
 
@@ -19,7 +17,6 @@ pub fn goto_label_definition(
     let origin_selection_range = main_document.line_index.line_col_lsp_range(name_range);
 
     for document in &context.request.subset.documents {
-        cancellation_token.result().ok()?;
         if let Some(data) = document.data.as_latex() {
             if let Some(definition) =
                 find_label_definition(&latex::SyntaxNode::new_root(data.root.clone()), &name_text)
@@ -62,7 +59,7 @@ mod tests {
             .definition();
 
         let context = CursorContext::new(request);
-        let actual_links = goto_label_definition(&context, CancellationToken::none());
+        let actual_links = goto_label_definition(&context);
 
         assert!(actual_links.is_none());
     }
@@ -78,7 +75,7 @@ mod tests {
             .definition();
 
         let context = CursorContext::new(request);
-        let actual_links = goto_label_definition(&context, CancellationToken::none());
+        let actual_links = goto_label_definition(&context);
 
         assert!(actual_links.is_none());
     }

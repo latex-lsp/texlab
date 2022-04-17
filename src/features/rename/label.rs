@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
 use rowan::ast::AstNode;
 
@@ -10,10 +9,7 @@ use crate::{
     LineIndexExt,
 };
 
-pub fn prepare_label_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-    _cancellation_token: &CancellationToken,
-) -> Option<Range> {
+pub fn prepare_label_rename<P: HasPosition>(context: &CursorContext<P>) -> Option<Range> {
     let (_, range) = context.find_label_name_key()?;
 
     Some(
@@ -25,16 +21,12 @@ pub fn prepare_label_rename<P: HasPosition>(
     )
 }
 
-pub fn rename_label(
-    context: &CursorContext<RenameParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<WorkspaceEdit> {
-    prepare_label_rename(context, cancellation_token)?;
+pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEdit> {
+    prepare_label_rename(context)?;
     let (name_text, _) = context.find_label_name_key()?;
 
     let mut changes = HashMap::new();
     for document in &context.request.subset.documents {
-        cancellation_token.result().ok()?;
         if let Some(data) = document.data.as_latex() {
             let mut edits = Vec::new();
             for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
@@ -132,7 +124,7 @@ mod tests {
         let request = tester.rename();
 
         let context = CursorContext::new(request);
-        let actual_edit = rename_label(&context, CancellationToken::none()).unwrap();
+        let actual_edit = rename_label(&context).unwrap();
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(

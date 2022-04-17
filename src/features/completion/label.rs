@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
@@ -14,17 +13,13 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_labels<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
             for label in latex::SyntaxNode::new_root(data.root.clone())
                 .descendants()
-                .filter(|_| !cancellation_token.is_canceled())
                 .filter_map(latex::LabelDefinition::cast)
             {
                 if let Some(name) = label
@@ -125,7 +120,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_labels(&context, &mut actual_items, CancellationToken::none());
+        complete_labels(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -142,7 +137,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_labels(&context, &mut actual_items, CancellationToken::none());
+        complete_labels(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -159,7 +154,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_labels(&context, &mut actual_items, CancellationToken::none());
+        complete_labels(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -179,7 +174,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_labels(&context, &mut actual_items, CancellationToken::none());
+        complete_labels(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -199,7 +194,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_labels(&context, &mut actual_items, CancellationToken::none());
+        complete_labels(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

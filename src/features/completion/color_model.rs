@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
@@ -11,10 +10,7 @@ const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 pub fn complete_color_models<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let range = check_color_definition(context).or_else(|| check_color_definition_set(context))?;
 
     for name in MODEL_NAMES {
@@ -66,7 +62,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -83,7 +79,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -100,7 +96,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -120,7 +116,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -140,7 +136,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -160,7 +156,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_color_models(&context, &mut actual_items, CancellationToken::none());
+        complete_color_models(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

@@ -1,12 +1,8 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 
 use crate::{features::cursor::CursorContext, LineIndexExt, LANGUAGE_DATA};
 
-pub fn find_entry_type_hover(
-    context: &CursorContext<HoverParams>,
-    _token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_entry_type_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let name = context
         .cursor
         .as_bibtex()
@@ -47,7 +43,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
+        let actual_hover = find_entry_type_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -63,7 +59,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
+        let actual_hover = find_entry_type_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -79,7 +75,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_entry_type_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_entry_type_hover(&context).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -105,7 +101,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
+        let actual_hover = find_entry_type_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -121,7 +117,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_entry_type_hover(&context, CancellationToken::none());
+        let actual_hover = find_entry_type_hover(&context);
 
         assert_eq!(actual_hover, None);
     }

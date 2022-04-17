@@ -22,7 +22,6 @@ mod field;
 mod label;
 mod string_ref;
 
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverParams};
 
 use crate::features::{cursor::CursorContext, hover::citation::find_citation_hover};
@@ -34,16 +33,13 @@ use self::{
 
 use super::FeatureRequest;
 
-pub fn find_hover(
-    request: FeatureRequest<HoverParams>,
-    cabcellation_token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_hover(request: FeatureRequest<HoverParams>) -> Option<Hover> {
     let context = CursorContext::new(request);
     log::debug!("[Hover] Cursor: {:?}", context.cursor);
-    find_label_hover(&context, cabcellation_token)
-        .or_else(|| find_citation_hover(&context, cabcellation_token))
-        .or_else(|| find_component_hover(&context, cabcellation_token))
-        .or_else(|| find_string_reference_hover(&context, cabcellation_token))
-        .or_else(|| find_field_hover(&context, cabcellation_token))
-        .or_else(|| find_entry_type_hover(&context, cabcellation_token))
+    find_label_hover(&context)
+        .or_else(|| find_citation_hover(&context))
+        .or_else(|| find_component_hover(&context))
+        .or_else(|| find_string_reference_hover(&context))
+        .or_else(|| find_field_hover(&context))
+        .or_else(|| find_entry_type_hover(&context))
 }

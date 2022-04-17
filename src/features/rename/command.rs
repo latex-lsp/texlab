@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use cancellation::CancellationToken;
 use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
 use rowan::{TextRange, TextSize};
 
@@ -10,10 +9,7 @@ use crate::{
     LineIndexExt,
 };
 
-pub fn prepare_command_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-    _cancellation_token: &CancellationToken,
-) -> Option<Range> {
+pub fn prepare_command_rename<P: HasPosition>(context: &CursorContext<P>) -> Option<Range> {
     Some(
         context
             .request
@@ -23,17 +19,11 @@ pub fn prepare_command_rename<P: HasPosition>(
     )
 }
 
-pub fn rename_command(
-    context: &CursorContext<RenameParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<WorkspaceEdit> {
-    cancellation_token.result().ok()?;
-    prepare_command_rename(context, cancellation_token)?;
+pub fn rename_command(context: &CursorContext<RenameParams>) -> Option<WorkspaceEdit> {
+    prepare_command_rename(context)?;
     let name = context.cursor.as_latex()?.text();
     let mut changes = HashMap::new();
     for document in &context.request.subset.documents {
-        cancellation_token.result().ok()?;
-
         if let Some(data) = document.data.as_latex() {
             let edits = latex::SyntaxNode::new_root(data.root.clone())
                 .descendants_with_tokens()
@@ -80,7 +70,7 @@ mod tests {
         let req = tester.rename();
 
         let context = CursorContext::new(req);
-        let actual_edit = rename_command(&context, CancellationToken::none()).unwrap();
+        let actual_edit = rename_command(&context).unwrap();
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(

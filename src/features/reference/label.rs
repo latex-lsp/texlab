@@ -1,22 +1,17 @@
-use cancellation::CancellationToken;
 use lsp_types::{Location, ReferenceParams};
 
 use crate::{features::cursor::CursorContext, LineIndexExt};
 
 pub fn find_label_references(
     context: &CursorContext<ReferenceParams>,
-    cancellation_token: &CancellationToken,
     references: &mut Vec<Location>,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let (name_text, _) = context
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
-            cancellation_token.result().ok()?;
             for name in data
                 .extras
                 .label_names
@@ -61,7 +56,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
@@ -88,7 +83,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
@@ -115,7 +110,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
@@ -142,7 +137,7 @@ mod tests {
 
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
@@ -163,7 +158,7 @@ mod tests {
         let mut actual_references = Vec::new();
 
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }
@@ -180,7 +175,7 @@ mod tests {
         let mut actual_references = Vec::new();
 
         let context = CursorContext::new(request);
-        find_label_references(&context, CancellationToken::none(), &mut actual_references);
+        find_label_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }

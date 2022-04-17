@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
@@ -11,7 +10,6 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_imports<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
@@ -37,7 +35,6 @@ pub fn complete_imports<'a>(
         .flat_map(|comp| comp.file_names.iter())
         .filter(|file_name| file_name.ends_with(extension))
     {
-        cancellation_token.result().ok()?;
         file_names.insert(file_name);
         let stem = &file_name[0..file_name.len() - 4];
         let data = factory(stem.into());
@@ -51,8 +48,6 @@ pub fn complete_imports<'a>(
         .keys()
         .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))
     {
-        cancellation_token.result().ok()?;
-
         let stem = &file_name[0..file_name.len() - 4];
         let data = factory(stem.into());
         let item = InternalCompletionItem::new(range, data);
@@ -82,7 +77,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -99,7 +94,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -116,7 +111,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -136,7 +131,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -156,7 +151,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -176,7 +171,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_imports(&context, &mut actual_items, CancellationToken::none());
+        complete_imports(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 use rowan::ast::AstNode;
 
@@ -10,7 +9,6 @@ use crate::{
 
 pub fn goto_entry_definition(
     context: &CursorContext<GotoDefinitionParams>,
-    cancellation_token: &CancellationToken,
 ) -> Option<Vec<LocationLink>> {
     let main_document = context.request.main_document();
 
@@ -33,8 +31,6 @@ pub fn goto_entry_definition(
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                cancellation_token.result().ok()?;
-
                 if let Some(key) = entry.key().filter(|k| k.to_string() == key.to_string()) {
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),
@@ -74,7 +70,7 @@ mod tests {
             .definition();
 
         let context = CursorContext::new(request);
-        let actual_links = goto_entry_definition(&context, CancellationToken::none());
+        let actual_links = goto_entry_definition(&context);
 
         assert!(actual_links.is_none());
     }
@@ -90,7 +86,7 @@ mod tests {
             .definition();
 
         let context = CursorContext::new(request);
-        let actual_links = goto_entry_definition(&context, CancellationToken::none());
+        let actual_links = goto_entry_definition(&context);
 
         assert!(actual_links.is_none());
     }
@@ -119,7 +115,7 @@ mod tests {
 
         let request = tester.definition();
         let context = CursorContext::new(request);
-        let actual_links = goto_entry_definition(&context, CancellationToken::none()).unwrap();
+        let actual_links = goto_entry_definition(&context).unwrap();
 
         let expected_links = vec![LocationLink {
             origin_selection_range: Some(Range::new_simple(1, 6, 1, 9)),

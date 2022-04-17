@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use cancellation::CancellationToken;
 use lsp_types::Range;
 use rowan::ast::AstNode;
 use smol_str::SmolStr;
@@ -14,22 +13,14 @@ use crate::{
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_latex_symbols(
-    subset: &WorkspaceSubset,
-    buf: &mut Vec<InternalSymbol>,
-    token: &CancellationToken,
-) -> Option<()> {
+pub fn find_latex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol>) -> Option<()> {
     let main_document = subset
         .documents
         .first()
         .filter(|document| document.uri.as_str().ends_with(".tex"))?;
 
     let data = main_document.data.as_latex()?;
-    let mut context = Context {
-        subset,
-        data,
-        token,
-    };
+    let mut context = Context { subset, data };
 
     let root = context.data.root.clone();
     let mut symbols = visit(&mut context, latex::SyntaxNode::new_root(root));
@@ -40,7 +31,6 @@ pub fn find_latex_symbols(
 struct Context<'a> {
     subset: &'a WorkspaceSubset,
     data: &'a LatexDocumentData,
-    token: &'a CancellationToken,
 }
 
 fn visit(context: &mut Context, node: latex::SyntaxNode) -> Vec<InternalSymbol> {
@@ -84,10 +74,6 @@ fn visit(context: &mut Context, node: latex::SyntaxNode) -> Vec<InternalSymbol> 
     match symbol {
         Some(mut parent) => {
             for child in node.children() {
-                if context.token.is_canceled() {
-                    break;
-                }
-
                 parent.children.append(&mut visit(context, child));
             }
             vec![parent]
@@ -95,9 +81,6 @@ fn visit(context: &mut Context, node: latex::SyntaxNode) -> Vec<InternalSymbol> 
         None => {
             let mut symbols = Vec::new();
             for child in node.children() {
-                if context.token.is_canceled() {
-                    break;
-                }
                 symbols.append(&mut visit(context, child));
             }
             symbols

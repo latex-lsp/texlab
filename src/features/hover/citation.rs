@@ -1,13 +1,8 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
 use crate::{citation, features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
-pub fn find_citation_hover(
-    context: &CursorContext<HoverParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<Hover> {
-    cancellation_token.result().ok()?;
+pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
 
     let (key_text, key_range) = context
@@ -54,7 +49,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_citation_hover(&context, CancellationToken::none());
+        let actual_hover = find_citation_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -70,7 +65,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_citation_hover(&context, CancellationToken::none());
+        let actual_hover = find_citation_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -92,7 +87,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_citation_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_citation_hover(&context).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -121,7 +116,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_citation_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_citation_hover(&context).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {

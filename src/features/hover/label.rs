@@ -1,12 +1,8 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams};
 
 use crate::{features::cursor::CursorContext, render_label, LineIndexExt};
 
-pub fn find_label_hover(
-    context: &CursorContext<HoverParams>,
-    _token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_label_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
 
     let (name_text, name_range) = context
@@ -40,7 +36,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_label_hover(&context, CancellationToken::none());
+        let actual_hover = find_label_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -56,7 +52,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_label_hover(&context, CancellationToken::none());
+        let actual_hover = find_label_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -72,7 +68,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_label_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_label_hover(&context).unwrap();
 
         assert_eq!(actual_hover.range.unwrap(), Range::new_simple(0, 20, 0, 27));
     }

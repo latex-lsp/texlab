@@ -1,23 +1,15 @@
-use cancellation::CancellationToken;
 use lsp_types::{DocumentLink, DocumentLinkParams};
 
 use crate::LineIndexExt;
 
 use super::FeatureRequest;
 
-pub fn find_document_links(
-    request: FeatureRequest<DocumentLinkParams>,
-    cancellation_token: &CancellationToken,
-) -> Vec<DocumentLink> {
+pub fn find_document_links(request: FeatureRequest<DocumentLinkParams>) -> Vec<DocumentLink> {
     let mut links = Vec::new();
     let main_document = request.main_document();
     if let Some(data) = main_document.data.as_latex() {
         for include in &data.extras.explicit_links {
             for target in &include.targets {
-                if cancellation_token.is_canceled() {
-                    return links;
-                }
-
                 if request
                     .subset
                     .documents
@@ -56,7 +48,7 @@ mod tests {
             .build()
             .link();
 
-        let items = find_document_links(request, CancellationToken::none());
+        let items = find_document_links(request);
         assert!(items.is_empty());
     }
 
@@ -68,7 +60,7 @@ mod tests {
             .build()
             .link();
 
-        let items = find_document_links(request, CancellationToken::none());
+        let items = find_document_links(request);
         assert!(items.is_empty());
     }
 
@@ -80,7 +72,7 @@ mod tests {
             .build();
         let target = tester.uri("bar.tex");
 
-        let actual_items = find_document_links(tester.link(), CancellationToken::none());
+        let actual_items = find_document_links(tester.link());
 
         let expected_items = vec![DocumentLink {
             range: Range::new_simple(0, 7, 0, 14),
@@ -102,7 +94,7 @@ mod tests {
             .build();
         let target = tester.uri("bar/baz.tex");
 
-        let actual_items = find_document_links(tester.link(), CancellationToken::none());
+        let actual_items = find_document_links(tester.link());
 
         let expected_items = vec![DocumentLink {
             range: Range::new_simple(0, 14, 0, 17),

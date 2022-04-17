@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{Location, ReferenceParams};
 use rowan::ast::AstNode;
 
@@ -6,7 +5,6 @@ use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
 pub fn find_string_references(
     context: &CursorContext<ReferenceParams>,
-    cancellation_token: &CancellationToken,
     items: &mut Vec<Location>,
 ) -> Option<()> {
     let name_text = context
@@ -24,7 +22,6 @@ pub fn find_string_references(
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
     for node in bibtex::SyntaxNode::new_root(data.root.clone()).descendants() {
-        cancellation_token.result().ok()?;
         if let Some(name) = bibtex::String::cast(node.clone())
             .and_then(|string| string.name())
             .filter(|name| {
@@ -74,7 +71,7 @@ mod tests {
         let mut actual_references = Vec::new();
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
@@ -104,7 +101,7 @@ mod tests {
         let mut actual_references = Vec::new();
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri.as_ref().clone().into(), Range::new_simple(0, 8, 0, 11)),
@@ -133,7 +130,7 @@ mod tests {
         let mut actual_references = Vec::new();
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
@@ -163,7 +160,7 @@ mod tests {
         let mut actual_references = Vec::new();
         let request = tester.reference();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![
             Location::new(uri.as_ref().clone().into(), Range::new_simple(0, 8, 0, 11)),
@@ -184,7 +181,7 @@ mod tests {
 
         let mut actual_references = Vec::new();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }
@@ -201,7 +198,7 @@ mod tests {
 
         let mut actual_references = Vec::new();
         let context = CursorContext::new(request);
-        find_string_references(&context, CancellationToken::none(), &mut actual_references);
+        find_string_references(&context, &mut actual_references);
 
         assert!(actual_references.is_empty());
     }

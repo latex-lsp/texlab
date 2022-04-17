@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{GotoDefinitionParams, LocationLink};
 use rowan::ast::AstNode;
 
@@ -6,7 +5,6 @@ use crate::{features::cursor::CursorContext, syntax::latex, LineIndexExt};
 
 pub fn goto_command_definition(
     context: &CursorContext<GotoDefinitionParams>,
-    cancellation_token: &CancellationToken,
 ) -> Option<Vec<LocationLink>> {
     let main_document = context.request.main_document();
 
@@ -22,8 +20,6 @@ pub fn goto_command_definition(
     for document in &context.request.subset.documents {
         if let Some(data) = document.data.as_latex() {
             for node in latex::SyntaxNode::new_root(data.root.clone()).descendants() {
-                cancellation_token.result().ok()?;
-
                 if let Some(defintion) = latex::CommandDefinition::cast(node).filter(|def| {
                     def.name()
                         .and_then(|name| name.command())
@@ -72,7 +68,7 @@ mod tests {
 
         let context = CursorContext::new(request);
 
-        let actual_links = goto_command_definition(&context, CancellationToken::none());
+        let actual_links = goto_command_definition(&context);
 
         assert!(actual_links.is_none());
     }
@@ -88,7 +84,7 @@ mod tests {
             .definition();
 
         let context = CursorContext::new(request);
-        let actual_links = goto_command_definition(&context, CancellationToken::none());
+        let actual_links = goto_command_definition(&context);
 
         assert!(actual_links.is_none());
     }
@@ -113,7 +109,7 @@ mod tests {
 
         let request = tester.definition();
         let context = CursorContext::new(request);
-        let actual_links = goto_command_definition(&context, CancellationToken::none()).unwrap();
+        let actual_links = goto_command_definition(&context).unwrap();
 
         let expected_links = vec![LocationLink {
             origin_selection_range: Some(Range::new_simple(1, 0, 1, 4)),

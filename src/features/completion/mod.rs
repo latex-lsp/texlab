@@ -21,7 +21,6 @@ mod util;
 
 use std::borrow::Cow;
 
-use cancellation::CancellationToken;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use lsp_types::{
@@ -69,33 +68,28 @@ use super::{
 
 pub const COMPLETION_LIMIT: usize = 50;
 
-pub fn complete(
-    request: FeatureRequest<CompletionParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<CompletionList> {
+pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionList> {
     let mut items = Vec::new();
     let context = CursorContext::new(request);
     log::debug!("[Completion] Cursor: {:?}", context.cursor);
-    complete_entry_types(&context, &mut items, cancellation_token);
-    complete_fields(&context, &mut items, cancellation_token);
-    complete_arguments(&context, &mut items, cancellation_token);
-    complete_citations(&context, &mut items, cancellation_token);
-    complete_imports(&context, &mut items, cancellation_token);
-    complete_colors(&context, &mut items, cancellation_token);
-    complete_color_models(&context, &mut items, cancellation_token);
-    complete_acronyms(&context, &mut items, cancellation_token);
-    complete_glossary_entries(&context, &mut items, cancellation_token);
-    complete_includes(&context, &mut items, cancellation_token);
-    complete_labels(&context, &mut items, cancellation_token);
-    complete_tikz_libraries(&context, &mut items, cancellation_token);
-    complete_component_environments(&context, &mut items, cancellation_token);
-    complete_theorem_environments(&context, &mut items, cancellation_token);
-    complete_user_environments(&context, &mut items, cancellation_token);
-    complete_begin_command(&context, &mut items, cancellation_token);
-    complete_component_commands(&context, &mut items, cancellation_token);
-    complete_user_commands(&context, &mut items, cancellation_token);
-
-    cancellation_token.result().ok()?;
+    complete_entry_types(&context, &mut items);
+    complete_fields(&context, &mut items);
+    complete_arguments(&context, &mut items);
+    complete_citations(&context, &mut items);
+    complete_imports(&context, &mut items);
+    complete_colors(&context, &mut items);
+    complete_color_models(&context, &mut items);
+    complete_acronyms(&context, &mut items);
+    complete_glossary_entries(&context, &mut items);
+    complete_includes(&context, &mut items);
+    complete_labels(&context, &mut items);
+    complete_tikz_libraries(&context, &mut items);
+    complete_component_environments(&context, &mut items);
+    complete_theorem_environments(&context, &mut items);
+    complete_user_environments(&context, &mut items);
+    complete_begin_command(&context, &mut items);
+    complete_component_commands(&context, &mut items);
+    complete_user_commands(&context, &mut items);
 
     let mut items = dedup(items);
     preselect(&context, &mut items);

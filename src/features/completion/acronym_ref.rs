@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 
@@ -9,10 +8,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_acronyms<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
-
     let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
 
@@ -55,7 +51,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -72,7 +68,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -89,7 +85,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -109,7 +105,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -129,7 +125,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -146,7 +142,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_acronyms(&context, &mut actual_items, CancellationToken::none());
+        complete_acronyms(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 
 use crate::features::cursor::CursorContext;
@@ -8,9 +7,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_begin_command(
     context: &CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
     let range = context.cursor.command_range(context.offset)?;
 
     items.push(InternalCompletionItem::new(
@@ -40,7 +37,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_begin_command(&context, &mut actual_items, CancellationToken::none());
+        complete_begin_command(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -57,7 +54,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_begin_command(&context, &mut actual_items, CancellationToken::none());
+        complete_begin_command(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -74,7 +71,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_begin_command(&context, &mut actual_items, CancellationToken::none());
+        complete_begin_command(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

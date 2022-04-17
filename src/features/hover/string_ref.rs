@@ -1,13 +1,9 @@
-use cancellation::CancellationToken;
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
 use rowan::ast::AstNode;
 
 use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
-pub fn find_string_reference_hover(
-    context: &CursorContext<HoverParams>,
-    cancellation_token: &CancellationToken,
-) -> Option<Hover> {
+pub fn find_string_reference_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
     let data = main_document.data.as_bibtex()?;
 
@@ -26,10 +22,6 @@ pub fn find_string_reference_hover(
         .children()
         .filter_map(bibtex::String::cast)
     {
-        if cancellation_token.is_canceled() {
-            return None;
-        }
-
         if string.name().filter(|n| n.text() == name.text()).is_some() {
             let value = string.value()?.syntax().text().to_string();
             return Some(Hover {
@@ -69,7 +61,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
+        let actual_hover = find_string_reference_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -85,7 +77,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
+        let actual_hover = find_string_reference_hover(&context);
 
         assert_eq!(actual_hover, None);
     }
@@ -108,8 +100,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover =
-            find_string_reference_hover(&context, CancellationToken::none()).unwrap();
+        let actual_hover = find_string_reference_hover(&context).unwrap();
 
         let expected_hover = Hover {
             contents: HoverContents::Markup(MarkupContent {
@@ -140,7 +131,7 @@ mod tests {
             .hover();
 
         let context = CursorContext::new(request);
-        let actual_hover = find_string_reference_hover(&context, CancellationToken::none());
+        let actual_hover = find_string_reference_hover(&context);
         assert_eq!(actual_hover, None);
     }
 }

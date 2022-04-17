@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -20,9 +19,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_citations<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
     let token = context.cursor.as_latex()?;
 
     let range = if token.kind() == latex::WORD {
@@ -45,7 +42,6 @@ pub fn complete_citations<'a>(
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                cancellation_token.result().ok()?;
                 if let Some(item) = make_item(document, entry, range) {
                     items.push(item);
                 }
@@ -132,7 +128,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -149,7 +145,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -169,7 +165,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -192,7 +188,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -215,7 +211,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -238,7 +234,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -264,7 +260,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {
@@ -290,7 +286,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_citations(&context, &mut actual_items, CancellationToken::none());
+        complete_citations(&context, &mut actual_items);
 
         assert!(!actual_items.is_empty());
         for item in actual_items {

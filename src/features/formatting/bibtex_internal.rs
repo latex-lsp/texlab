@@ -1,4 +1,3 @@
-use cancellation::CancellationToken;
 use lsp_types::{DocumentFormattingParams, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 
@@ -10,7 +9,6 @@ use crate::{
 
 pub fn format_bibtex_internal(
     request: &FeatureRequest<DocumentFormattingParams>,
-    _cancellation_token: &CancellationToken,
 ) -> Option<Vec<TextEdit>> {
     let mut indent = String::new();
     if request.params.options.insert_spaces {
@@ -238,10 +236,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -257,7 +252,7 @@ mod tests {
             .build()
             .formatting();
 
-        let mut edits = format_bibtex_internal(&request, CancellationToken::none()).unwrap();
+        let mut edits = format_bibtex_internal(&request).unwrap();
         let edit2 = edits.pop().unwrap();
         let edit1 = edits.pop().unwrap();
 
@@ -272,10 +267,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -288,10 +280,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -304,10 +293,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -320,10 +306,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -336,10 +319,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -352,10 +332,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }
@@ -368,10 +345,7 @@ mod tests {
             .build()
             .formatting();
 
-        let edit = format_bibtex_internal(&request, CancellationToken::none())
-            .unwrap()
-            .pop()
-            .unwrap();
+        let edit = format_bibtex_internal(&request).unwrap().pop().unwrap();
 
         assert_display_snapshot!(edit.new_text);
     }

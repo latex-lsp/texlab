@@ -4,7 +4,6 @@ use std::{
     process::{Command, Stdio},
 };
 
-use cancellation::CancellationToken;
 use log::error;
 use lsp_types::TextDocumentPositionParams;
 use serde::{Deserialize, Serialize};
@@ -28,7 +27,6 @@ pub struct ForwardSearchResult {
 
 pub fn execute_forward_search(
     request: FeatureRequest<TextDocumentPositionParams>,
-    _cancellation_token: &CancellationToken,
 ) -> Option<ForwardSearchResult> {
     let options = {
         request

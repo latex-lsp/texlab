@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cancellation::CancellationToken;
 use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange, TextSize};
 
@@ -15,9 +14,7 @@ use super::types::{InternalCompletionItem, InternalCompletionItemData};
 pub fn complete_includes<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
-    cancellation_token: &CancellationToken,
 ) -> Option<()> {
-    cancellation_token.result().ok()?;
     if context.request.main_document().uri.scheme() != "file" {
         return None;
     }
@@ -171,7 +168,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_includes(&context, &mut actual_items, CancellationToken::none());
+        complete_includes(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
@@ -188,7 +185,7 @@ mod tests {
 
         let context = CursorContext::new(request);
         let mut actual_items = Vec::new();
-        complete_includes(&context, &mut actual_items, CancellationToken::none());
+        complete_includes(&context, &mut actual_items);
 
         assert!(actual_items.is_empty());
     }
