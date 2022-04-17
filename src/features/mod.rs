@@ -141,7 +141,7 @@ mod testing {
                 let language = DocumentLanguage::by_path(&path).expect("unknown document language");
                 workspace.open(
                     uri,
-                    source_code.trim().to_string(),
+                    Arc::new(source_code.trim().to_string()),
                     language,
                     WorkspaceSource::Client,
                 );

@@ -350,7 +350,7 @@ impl Server {
         let language = DocumentLanguage::by_language_id(language_id);
         let document = self.workspace.open(
             Arc::new(params.text_document.uri.into()),
-            params.text_document.text,
+            Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
             WorkspaceSource::Client,
         );
@@ -392,7 +392,7 @@ impl Server {
                 }),
             None => self.workspace.open(
                 Arc::clone(&uri),
-                params.content_changes.pop().unwrap().text,
+                Arc::new(params.content_changes.pop().unwrap().text),
                 language,
                 WorkspaceSource::Client,
             ),
@@ -443,7 +443,7 @@ impl Server {
 
         self.workspace.open(
             Arc::clone(&old_document.uri),
-            new_text,
+            Arc::new(new_text),
             new_language,
             WorkspaceSource::Client,
         )

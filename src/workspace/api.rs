@@ -23,7 +23,7 @@ pub trait Workspace: Send + Sync {
     fn open(
         &self,
         uri: Arc<Uri>,
-        text: String,
+        text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
     ) -> Arc<Document>;
@@ -39,7 +39,7 @@ pub trait Workspace: Send + Sync {
 
         if let Some(language) = DocumentLanguage::by_path(&path) {
             let data = fs::read(&path)?;
-            let text = String::from_utf8_lossy(&data).into_owned();
+            let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
             Ok(Some(self.open(
                 uri,
                 text,
@@ -59,7 +59,7 @@ pub trait Workspace: Send + Sync {
         }
 
         let data = fs::read(&path)?;
-        let text = String::from_utf8_lossy(&data).into_owned();
+        let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
         if let Some(language) = DocumentLanguage::by_path(&path) {
             Ok(Some(self.open(
                 uri,

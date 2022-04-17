@@ -24,7 +24,7 @@ where
     fn open(
         &self,
         uri: Arc<Uri>,
-        text: String,
+        text: Arc<String>,
         language: DocumentLanguage,
         source: WorkspaceSource,
     ) -> Arc<Document> {

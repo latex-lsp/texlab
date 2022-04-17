@@ -104,6 +104,8 @@ fn build_dependency_graph(subset: &WorkspaceSubset) -> Graph<usize, (), Directed
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use anyhow::Result;
 
     use crate::{create_workspace_fast, DocumentLanguage, ServerContext, WorkspaceSource};
@@ -118,21 +120,21 @@ mod tests {
 
         let a = workspace.open(
             Arc::new(Uri::parse("http://example.com/a.tex")?),
-            "".into(),
+            Arc::new(String::new()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
-            "".into(),
+            Arc::new(String::new()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
-            r#"\include{b}\include{a}"#.into(),
+            Arc::new(r#"\include{b}\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
@@ -153,21 +155,21 @@ mod tests {
 
         let a = workspace.open(
             Arc::new(Uri::parse("http://example.com/a.tex")?),
-            r#"\include{b}"#.into(),
+            Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
-            r#"\include{a}"#.into(),
+            Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
-            r#"\include{a}"#.into(),
+            Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
@@ -188,28 +190,28 @@ mod tests {
 
         let a = workspace.open(
             Arc::new(Uri::parse("http://example.com/a.tex")?),
-            r#"\include{b}"#.into(),
+            Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let b = workspace.open(
             Arc::new(Uri::parse("http://example.com/b.tex")?),
-            r#""#.into(),
+            Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let c = workspace.open(
             Arc::new(Uri::parse("http://example.com/c.tex")?),
-            r#""#.into(),
+            Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );
 
         let d = workspace.open(
             Arc::new(Uri::parse("http://example.com/d.tex")?),
-            r#"\include{c}"#.into(),
+            Arc::new(r#"\include{c}"#.to_string()),
             DocumentLanguage::Latex,
             WorkspaceSource::Client,
         );

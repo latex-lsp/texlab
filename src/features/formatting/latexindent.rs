@@ -63,7 +63,7 @@ pub fn format_with_latexindent(
         "file.tex"
     };
 
-    fs::write(directory.path().join(name), &document.text).ok()?;
+    fs::write(directory.path().join(name), document.text.as_str()).ok()?;
 
     let mut args = Vec::new();
     if modify_line_breaks {

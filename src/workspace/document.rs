@@ -14,7 +14,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct LatexDocumentData {
     pub green: rowan::GreenNode,
-    pub extras: latex::Extras,
+    pub extras: Arc<latex::Extras>,
 }
 
 #[derive(Debug, Clone)]
@@ -26,7 +26,7 @@ pub struct BibtexDocumentData {
 pub enum DocumentData {
     Latex(Box<LatexDocumentData>),
     Bibtex(BibtexDocumentData),
-    BuildLog(build_log::Parse),
+    BuildLog(Arc<build_log::Parse>),
 }
 
 impl DocumentData {
@@ -66,8 +66,8 @@ impl DocumentData {
 #[derive(Clone)]
 pub struct Document {
     pub uri: Arc<Uri>,
-    pub text: String,
-    pub line_index: LineIndex,
+    pub text: Arc<String>,
+    pub line_index: Arc<LineIndex>,
     pub data: DocumentData,
 }
 
@@ -81,13 +81,14 @@ impl Document {
     pub fn parse(
         context: Arc<ServerContext>,
         uri: Arc<Uri>,
-        text: String,
+        text: Arc<String>,
         language: DocumentLanguage,
     ) -> Self {
-        let line_index = LineIndex::new(&text);
+        let line_index = Arc::new(LineIndex::new(&text));
         let data = match language {
             DocumentLanguage::Latex => {
-                let root = latex::SyntaxNode::new_root(latex::parse(&text).green);
+                let green = latex::parse(&text).green;
+                let root = latex::SyntaxNode::new_root(green.clone());
 
                 let base_uri = match &context.options.read().unwrap().root_directory {
                     Some(root_dir) => {
@@ -106,19 +107,17 @@ impl Document {
                     base_uri,
                 };
                 latex::analyze(&mut context, &root);
-                let extras = context.extras;
-
-                Box::new(LatexDocumentData {
-                    green: root.green().into_owned(),
-                    extras,
-                })
-                .into()
+                let extras = Arc::new(context.extras);
+                DocumentData::Latex(Box::new(LatexDocumentData { green, extras }))
             }
             DocumentLanguage::Bibtex => {
-                let root = bibtex::parse(&text).green;
-                BibtexDocumentData { green: root }.into()
+                let green = bibtex::parse(&text).green;
+                DocumentData::Bibtex(BibtexDocumentData { green })
             }
-            DocumentLanguage::BuildLog => DocumentData::BuildLog(build_log::parse(&text)),
+            DocumentLanguage::BuildLog => {
+                let data = Arc::new(build_log::parse(&text));
+                DocumentData::BuildLog(data)
+            }
         };
 
         Self {
