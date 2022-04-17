@@ -108,13 +108,13 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{create_workspace_fast, DocumentLanguage, DocumentVisibility, ServerContext};
+    use crate::{create_workspace, DocumentLanguage, DocumentVisibility, ServerContext};
 
     use super::*;
 
     #[test]
     fn test_no_cycles() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace_fast(Arc::new(
+        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
             ServerContext::new(std::env::temp_dir()),
         ))?);
 
@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn test_cycles() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace_fast(Arc::new(
+        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
             ServerContext::new(std::env::temp_dir()),
         ))?);
 
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_multiple_roots() -> Result<()> {
-        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace_fast(Arc::new(
+        let workspace: Arc<dyn Workspace> = Arc::new(create_workspace(Arc::new(
             ServerContext::new(std::env::temp_dir()),
         ))?);
 

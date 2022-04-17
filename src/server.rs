@@ -14,7 +14,7 @@ use threadpool::ThreadPool;
 use crate::{
     client::{send_notification, send_request},
     component_db::COMPONENT_DATABASE,
-    create_workspace_full,
+    create_workspace,
     diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
@@ -50,7 +50,7 @@ impl Server {
     ) -> Result<Self> {
         let context = Arc::new(ServerContext::new(current_dir));
         let req_queue = Arc::default();
-        let workspace = Arc::new(create_workspace_full(Arc::clone(&context))?);
+        let workspace = Arc::new(create_workspace(Arc::clone(&context))?);
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
 
         let static_debouncer = Arc::new(create_static_debouncer(

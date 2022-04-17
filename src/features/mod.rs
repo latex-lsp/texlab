@@ -62,7 +62,7 @@ mod testing {
     use typed_builder::TypedBuilder;
 
     use crate::{
-        create_workspace_fast, distro::Resolver, DocumentLanguage, DocumentVisibility, Options,
+        create_workspace, distro::Resolver, DocumentLanguage, DocumentVisibility, Options,
         ServerContext, Uri, Workspace,
     };
 
@@ -134,7 +134,7 @@ mod testing {
         }
 
         fn workspace(&self, cx: Arc<ServerContext>) -> Arc<dyn Workspace> {
-            let workspace = create_workspace_fast(cx).unwrap();
+            let workspace = create_workspace(cx).unwrap();
             for (name, source_code) in &self.files {
                 let uri = self.uri(name);
                 let path = uri.to_file_path().unwrap();
