@@ -210,7 +210,7 @@ impl RisLibrary {
         let mut reference: RisReference = RisReference::default();
         for line in lines {
             let line = line.trim();
-            if line == "" {
+            if line.is_empty() {
                 continue;
             }
 
@@ -296,98 +296,98 @@ impl RisLibrary {
     }
 }
 
-impl Into<Reference> for RisReference {
-    fn into(self) -> Reference {
-        let csl_type = self.ty.expect("RIS type is missing").csl();
+impl From<RisReference> for Reference {
+    fn from(reference: RisReference) -> Self {
+        let csl_type = reference.ty.expect("RIS type is missing").csl();
         let mut date: FnvHashMap<DateVariable, DateOrRange> = FnvHashMap::default();
         let mut name: FnvHashMap<NameVariable, Vec<Name>> = FnvHashMap::default();
         let mut number: FnvHashMap<NumberVariable, NumberLike> = FnvHashMap::default();
         let mut ordinary: FnvHashMap<Variable, String> = FnvHashMap::default();
 
-        if let Some(access_date) = self.access_date {
+        if let Some(access_date) = reference.access_date {
             date.insert(DateVariable::Accessed, parse_date_or_range(access_date));
         }
 
-        name.insert(NameVariable::Author, parse_authors(self.authors));
-        name.insert(NameVariable::Editor, parse_authors(self.editors));
+        name.insert(NameVariable::Author, parse_authors(reference.authors));
+        name.insert(NameVariable::Editor, parse_authors(reference.editors));
 
-        if let Some(container_title) = self
+        if let Some(container_title) = reference
             .journal
-            .or(self.name_of_database)
-            .or(self.book_or_conference)
+            .or(reference.name_of_database)
+            .or(reference.book_or_conference)
         {
             ordinary.insert(Variable::ContainerTitle, container_title.clone());
             ordinary.insert(Variable::CollectionTitle, container_title);
         }
 
-        if let Some(value) = self.date.or(self.year) {
+        if let Some(value) = reference.date.or(reference.year) {
             let value = parse_date_or_range(value);
             date.insert(DateVariable::Issued, value.clone());
             date.insert(DateVariable::EventDate, value);
         }
 
-        if let Some(url) = self.url {
+        if let Some(url) = reference.url {
             ordinary.insert(Variable::URL, url);
         }
 
-        let notes = self.notes;
+        let notes = reference.notes;
         ordinary.insert(
             Variable::Note,
-            self.research_notes.unwrap_or_else(|| notes.join("\n")),
+            reference.research_notes.unwrap_or_else(|| notes.join("\n")),
         );
 
-        if let Some(issue) = self.issue {
+        if let Some(issue) = reference.issue {
             number.insert(NumberVariable::Issue, parse_number(issue));
         }
 
-        if let Some(num) = self.number {
+        if let Some(num) = reference.number {
             number.insert(NumberVariable::Number, parse_number(num));
         }
 
-        if let Some(place) = self.place {
+        if let Some(place) = reference.place {
             ordinary.insert(Variable::EventPlace, place.clone());
             ordinary.insert(Variable::PublisherPlace, place);
         }
 
-        if let Some(abstrct) = self.abstrct {
+        if let Some(abstrct) = reference.abstrct {
             ordinary.insert(Variable::Abstract, abstrct);
         }
 
-        if let Some(call_number) = self.call_number {
+        if let Some(call_number) = reference.call_number {
             ordinary.insert(Variable::CallNumber, call_number);
         }
 
-        if let Some(doi) = self.doi {
+        if let Some(doi) = reference.doi {
             ordinary.insert(Variable::DOI, doi);
         }
 
-        if let Some(edition) = self.edition {
+        if let Some(edition) = reference.edition {
             number.insert(NumberVariable::Edition, parse_number(edition));
         }
 
-        if let Some(isbn_or_issn) = self.isbn_or_issn {
+        if let Some(isbn_or_issn) = reference.isbn_or_issn {
             ordinary.insert(Variable::ISBN, isbn_or_issn.clone());
             ordinary.insert(Variable::ISSN, isbn_or_issn);
         }
 
-        ordinary.insert(Variable::Keyword, self.keywords.join(", "));
+        ordinary.insert(Variable::Keyword, reference.keywords.join(", "));
 
-        if let Some(number_of_volumes) = self.number_of_volumes {
+        if let Some(number_of_volumes) = reference.number_of_volumes {
             number.insert(
                 NumberVariable::NumberOfVolumes,
                 parse_number(number_of_volumes),
             );
         }
 
-        if let Some(original_publication) = self.original_publication {
+        if let Some(original_publication) = reference.original_publication {
             ordinary.insert(Variable::OriginalTitle, original_publication);
         }
 
-        match (self.start_page, self.end_page) {
+        match (reference.start_page, reference.end_page) {
             (Some(start_page), Some(end_page)) => {
                 number.insert(
                     NumberVariable::Page,
-                    NumberLike::Str(format!("{}-{}", start_page, end_page).into()),
+                    NumberLike::Str(format!("{}-{}", start_page, end_page)),
                 );
             }
             (Some(page), None) | (None, Some(page)) => {
@@ -396,32 +396,38 @@ impl Into<Reference> for RisReference {
             (None, None) => {}
         }
 
-        if let Some(publisher) = self.publisher {
+        if let Some(publisher) = reference.publisher {
             ordinary.insert(Variable::Publisher, publisher);
         }
 
-        if let Some(reviewed_item) = self.reviewed_item {
+        if let Some(reviewed_item) = reference.reviewed_item {
             ordinary.insert(Variable::ReviewedTitle, reviewed_item);
         }
 
-        if let Some(section) = self.section {
+        if let Some(section) = reference.section {
             ordinary.insert(Variable::Section, section);
         }
 
-        if let Some(short_title) = self.short_title {
+        if let Some(short_title) = reference.short_title {
             ordinary.insert(Variable::TitleShort, short_title);
         }
 
-        if let Some(title) = self.title {
+        if let Some(title) = reference.title {
             ordinary.insert(Variable::Title, title);
         }
 
-        if let Some(volume) = self.volume {
+        if let Some(volume) = reference.volume {
             number.insert(NumberVariable::Volume, parse_number(volume));
         }
 
         Reference {
-            id: Atom::from(self.id.or(self.label).expect("RIS id is missing").as_str()),
+            id: Atom::from(
+                reference
+                    .id
+                    .or(reference.label)
+                    .expect("RIS id is missing")
+                    .as_str(),
+            ),
             csl_type,
             language: None,
             name,
@@ -435,7 +441,7 @@ impl Into<Reference> for RisReference {
 fn parse_number(value: String) -> NumberLike {
     match value.parse() {
         Ok(value) => NumberLike::Num(value),
-        Err(_) => NumberLike::Str(value.into()),
+        Err(_) => NumberLike::Str(value),
     }
 }
 

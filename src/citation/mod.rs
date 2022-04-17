@@ -31,7 +31,7 @@ pub fn render_citation(root: &bibtex::SyntaxNode, key: &str) -> Option<MarkupCon
     let html = generate_bibliography(csl_reference)?;
 
     let mut markdown = html2md::parse_html(&html).trim().to_owned();
-    if markdown == "" {
+    if markdown.is_empty() {
         return None;
     }
 

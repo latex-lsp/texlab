@@ -323,7 +323,7 @@ mod tests {
     use super::*;
 
     fn setup(text: &str) -> bibtex::SyntaxNode {
-        bibtex::SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green)
+        bibtex::SyntaxNode::new_root(parse(&text.trim().replace('\r', "")).green)
     }
 
     #[test]

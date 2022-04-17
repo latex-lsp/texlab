@@ -35,7 +35,7 @@ impl ComponentDatabase {
         })
     }
 
-    pub fn linked_components<'a>(&self, subset: &WorkspaceSubset) -> Vec<&Component> {
+    pub fn linked_components(&self, subset: &WorkspaceSubset) -> Vec<&Component> {
         let mut start_components = vec![self.kernel()];
         for document in &subset.documents {
             if let Some(data) = document.data.as_latex() {
@@ -54,7 +54,7 @@ impl ComponentDatabase {
             component
                 .references
                 .iter()
-                .flat_map(|file| self.find(&file))
+                .flat_map(|file| self.find(file))
                 .for_each(|component| all_components.push(component))
         }
 

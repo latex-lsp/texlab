@@ -108,7 +108,7 @@ fn visit_section(context: &mut Context, node: latex::SyntaxNode) -> Option<Inter
         }) => {
             let name = match number {
                 Some(number) => format!("{} {}", number, group_text),
-                None => group_text.to_string(),
+                None => group_text,
             };
 
             InternalSymbol {
@@ -122,7 +122,7 @@ fn visit_section(context: &mut Context, node: latex::SyntaxNode) -> Option<Inter
             }
         }
         None => InternalSymbol {
-            name: group_text.to_string(),
+            name: group_text,
             label: None,
             kind: InternalSymbolKind::Section,
             deprecated: false,
@@ -180,7 +180,7 @@ fn visit_enum_item(context: &mut Context, node: latex::SyntaxNode) -> Option<Int
             children: Vec::new(),
         },
         None => InternalSymbol {
-            name: name.to_string(),
+            name,
             label: None,
             kind: InternalSymbolKind::EnumerationItem,
             deprecated: false,
@@ -407,7 +407,7 @@ fn visit_theorem(
                 }
                 (Some(number), None) => format!("{} {}", definition.description, number),
                 (None, Some(desc)) => format!("{} ({})", definition.description, desc),
-                (None, None) => definition.description.clone(),
+                (None, None) => definition.description,
             };
 
             InternalSymbol {
@@ -423,7 +423,7 @@ fn visit_theorem(
         None => {
             let name = match theorem_description {
                 Some(desc) => format!("{} ({})", definition.description, desc),
-                None => definition.description.to_string(),
+                None => definition.description,
             };
             InternalSymbol {
                 name,
@@ -460,7 +460,7 @@ fn find_label_by_parent(
         .line_index
         .line_col_lsp_range(latex::small_range(&node));
 
-    let number = find_label_number(&context.subset, &name);
+    let number = find_label_number(context.subset, &name);
     Some(NumberedLabel {
         name: name.to_string(),
         range,

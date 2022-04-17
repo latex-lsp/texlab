@@ -203,7 +203,7 @@ impl BuildEngine {
                     position: self
                         .positions_by_uri
                         .get(&request.main_document().uri)
-                        .map(|guard| guard.clone())
+                        .map(|guard| *guard)
                         .unwrap_or_default(),
                     text_document: TextDocumentIdentifier::new(
                         request.main_document().uri.as_ref().clone().into(),
@@ -228,27 +228,24 @@ fn capture_output(
     let (log_sender, log_receiver) = crossbeam_channel::unbounded();
     track_output(process.stdout.take().unwrap(), log_sender.clone());
     track_output(process.stderr.take().unwrap(), log_sender);
-    let log_handle = {
-        let lsp_sender = lsp_sender.clone();
-        thread::spawn(move || loop {
-            crossbeam_channel::select! {
-                recv(&log_receiver) -> message => {
-                    if let Ok(message) = message {
-                        client::send_notification::<LogMessage>(
-                            &lsp_sender,
-                            LogMessageParams {
-                                message,
-                                typ: lsp_types::MessageType::LOG,
-                            },
-                        )
-                        .unwrap();
-                    }
-                },
-                recv(&exit_receiver) -> _ => break,
-            };
-        })
-    };
-    log_handle
+    let lsp_sender = lsp_sender.clone();
+    thread::spawn(move || loop {
+        crossbeam_channel::select! {
+            recv(&log_receiver) -> message => {
+                if let Ok(message) = message {
+                    client::send_notification::<LogMessage>(
+                        &lsp_sender,
+                        LogMessageParams {
+                            message,
+                            typ: lsp_types::MessageType::LOG,
+                        },
+                    )
+                    .unwrap();
+                }
+            },
+            recv(&exit_receiver) -> _ => break,
+        };
+    })
 }
 
 fn replace_placeholder(arg: String, file: &Path) -> String {

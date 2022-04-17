@@ -74,7 +74,7 @@ fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
 
     let mut diagnostics = Vec::new();
     for line in String::from_utf8_lossy(&output.stdout).lines() {
-        let captures = LINE_REGEX.captures(&line).unwrap();
+        let captures = LINE_REGEX.captures(line).unwrap();
         let line = captures[1].parse::<u32>().unwrap() - 1;
         let character = captures[2].parse::<u32>().unwrap() - 1;
         let digit = captures[3].parse::<u32>().unwrap();

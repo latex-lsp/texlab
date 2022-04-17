@@ -32,8 +32,8 @@ fn parse_database(lines: Lines) -> io::Result<Vec<PathBuf>> {
     let mut directory = "";
 
     for line in lines.filter(|x| !x.trim().is_empty() && !x.starts_with('%')) {
-        if line.ends_with(':') {
-            directory = &line[..line.len() - 1];
+        if let Some(line) = line.strip_suffix(':') {
+            directory = line;
         } else {
             let path = PathBuf::from(directory).join(line);
             paths.push(path);

@@ -194,36 +194,34 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                 matcher.fuzzy_match(name, &pattern)
             }
             InternalCompletionItemData::BeginCommand => matcher.fuzzy_match("begin", &pattern[1..]),
-            InternalCompletionItemData::Citation { key, .. } => matcher.fuzzy_match(&key, &pattern),
+            InternalCompletionItemData::Citation { key, .. } => matcher.fuzzy_match(key, &pattern),
             InternalCompletionItemData::ComponentCommand { name, .. } => {
                 matcher.fuzzy_match(name, &pattern[1..])
             }
             InternalCompletionItemData::ComponentEnvironment { name, .. } => {
                 matcher.fuzzy_match(name, &pattern)
             }
-            InternalCompletionItemData::Class { name } => matcher.fuzzy_match(&name, &pattern),
-            InternalCompletionItemData::Package { name } => matcher.fuzzy_match(&name, &pattern),
-            InternalCompletionItemData::Color { name } => matcher.fuzzy_match(&name, &pattern),
-            InternalCompletionItemData::ColorModel { name } => matcher.fuzzy_match(&name, &pattern),
-            InternalCompletionItemData::Acronym { name } => matcher.fuzzy_match(&name, &pattern),
+            InternalCompletionItemData::Class { name } => matcher.fuzzy_match(name, &pattern),
+            InternalCompletionItemData::Package { name } => matcher.fuzzy_match(name, &pattern),
+            InternalCompletionItemData::Color { name } => matcher.fuzzy_match(name, &pattern),
+            InternalCompletionItemData::ColorModel { name } => matcher.fuzzy_match(name, &pattern),
+            InternalCompletionItemData::Acronym { name } => matcher.fuzzy_match(name, &pattern),
             InternalCompletionItemData::GlossaryEntry { name } => {
-                matcher.fuzzy_match(&name, &pattern)
+                matcher.fuzzy_match(name, &pattern)
             }
-            InternalCompletionItemData::File { name } => matcher.fuzzy_match(&name, file_pattern),
+            InternalCompletionItemData::File { name } => matcher.fuzzy_match(name, file_pattern),
             InternalCompletionItemData::Directory { name } => {
-                matcher.fuzzy_match(&name, file_pattern)
+                matcher.fuzzy_match(name, file_pattern)
             }
-            InternalCompletionItemData::Label { name, .. } => matcher.fuzzy_match(&name, &pattern),
+            InternalCompletionItemData::Label { name, .. } => matcher.fuzzy_match(name, &pattern),
             InternalCompletionItemData::UserCommand { name } => {
-                matcher.fuzzy_match(&name, &pattern[1..])
+                matcher.fuzzy_match(name, &pattern[1..])
             }
             InternalCompletionItemData::UserEnvironment { name } => {
-                matcher.fuzzy_match(&name, &pattern)
+                matcher.fuzzy_match(name, &pattern)
             }
-            InternalCompletionItemData::PgfLibrary { name } => matcher.fuzzy_match(&name, &pattern),
-            InternalCompletionItemData::TikzLibrary { name } => {
-                matcher.fuzzy_match(&name, &pattern)
-            }
+            InternalCompletionItemData::PgfLibrary { name } => matcher.fuzzy_match(name, &pattern),
+            InternalCompletionItemData::TikzLibrary { name } => matcher.fuzzy_match(name, &pattern),
         };
     }
 }
@@ -302,7 +300,7 @@ fn convert_internal_items(
                 data: Some(serde_json::to_value(CompletionItemData::Argument).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 documentation: image
-                    .and_then(|image| image_documentation(&context.request, &name, image)),
+                    .and_then(|image| image_documentation(&context.request, name, image)),
                 ..CompletionItem::default()
             }
         }
@@ -373,7 +371,7 @@ fn convert_internal_items(
                 |glyph| format!("{}, {}", glyph, component_detail(file_names)),
             );
             let documentation =
-                image.and_then(|img| image_documentation(&context.request, &name, img));
+                image.and_then(|img| image_documentation(&context.request, name, img));
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 kind: Some(adjust_kind(
@@ -453,7 +451,7 @@ fn convert_internal_items(
         InternalCompletionItemData::Acronym { name } => {
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                label: name.into(),
+                label: name,
                 kind: Some(adjust_kind(
                     &context.request,
                     Structure::GlossaryEntry.completion_kind(),
@@ -466,7 +464,7 @@ fn convert_internal_items(
         InternalCompletionItemData::GlossaryEntry { name } => {
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                label: name.into(),
+                label: name,
                 kind: Some(adjust_kind(
                     &context.request,
                     Structure::GlossaryEntry.completion_kind(),
@@ -511,7 +509,7 @@ fn convert_internal_items(
         } => {
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                label: name.into(),
+                label: name,
                 kind: Some(adjust_kind(&context.request, kind.completion_kind())),
                 detail: header,
                 documentation: footer.map(Documentation::String),

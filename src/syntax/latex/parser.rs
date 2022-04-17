@@ -1333,7 +1333,7 @@ mod tests {
     use super::*;
 
     fn setup(text: &str) -> latex::SyntaxNode {
-        latex::SyntaxNode::new_root(parse(&text.trim().replace("\r", "")).green)
+        latex::SyntaxNode::new_root(parse(&text.trim().replace('\r', "")).green)
     }
 
     #[test]

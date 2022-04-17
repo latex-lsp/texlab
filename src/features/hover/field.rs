@@ -13,7 +13,7 @@ pub fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
 
     bibtex::Field::cast(name.parent()?)?;
 
-    let docs = LANGUAGE_DATA.field_documentation(&name.text())?;
+    let docs = LANGUAGE_DATA.field_documentation(name.text())?;
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,

@@ -243,7 +243,7 @@ impl Server {
 
     fn register_incoming_request(&self, id: RequestId) {
         let mut req_queue = self.req_queue.lock().unwrap();
-        req_queue.incoming.register(id.clone(), IncomingData);
+        req_queue.incoming.register(id, IncomingData);
     }
 
     fn pull_config(&self) {
@@ -295,7 +295,7 @@ impl Server {
         };
 
         let mut req_queue = self.req_queue.lock().unwrap();
-        req_queue.incoming.complete(id.clone());
+        req_queue.incoming.complete(id);
 
         Ok(())
     }
@@ -387,7 +387,7 @@ impl Server {
             Some(old_document) => params
                 .content_changes
                 .into_iter()
-                .fold(Arc::clone(&old_document), |old_document, change| {
+                .fold(Arc::clone(old_document), |old_document, change| {
                     self.merge_text_changes(&old_document, language, change)
                 }),
             None => self.workspace.open(
@@ -742,7 +742,7 @@ impl Server {
     fn forward_search(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
         let uri = Arc::new(params.text_document.uri.clone().into());
         self.handle_feature_request(id, params, uri, |req| {
-            crate::features::execute_forward_search(req).unwrap_or_else(|| ForwardSearchResult {
+            crate::features::execute_forward_search(req).unwrap_or(ForwardSearchResult {
                 status: ForwardSearchStatus::ERROR,
             })
         })?;

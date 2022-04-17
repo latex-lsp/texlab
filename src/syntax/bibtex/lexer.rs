@@ -4,6 +4,7 @@ use super::kind::SyntaxKind;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
 #[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 #[repr(u16)]
 enum LogosToken {
     #[regex(r"\s+")]

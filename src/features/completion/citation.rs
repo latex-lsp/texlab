@@ -70,11 +70,11 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
     Some(())
 }
 
-fn make_item<'a>(
-    document: &'a Document,
+fn make_item(
+    document: &Document,
     entry: bibtex::Entry,
     range: TextRange,
-) -> Option<InternalCompletionItem<'a>> {
+) -> Option<InternalCompletionItem> {
     let key = entry.key()?.to_string();
     let ty = LANGUAGE_DATA
         .find_entry_type(&entry.ty()?.text()[1..])
@@ -91,7 +91,7 @@ fn make_item<'a>(
                     .replace('{', "")
                     .replace('}', "")
                     .replace(',', " ")
-                    .replace("=", " "),
+                    .replace('=', " "),
                 " "
             )
             .trim(),

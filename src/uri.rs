@@ -27,10 +27,12 @@ impl Uri {
         Url::parse(input).map(|url| url.into())
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn from_directory_path<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
         Url::from_directory_path(path).map(|url| url.into())
     }
 
+    #[allow(clippy::result_unit_err)]
     pub fn from_file_path<P: AsRef<Path>>(path: P) -> Result<Self, ()> {
         Url::from_file_path(path).map(|url| url.into())
     }
@@ -66,9 +68,9 @@ impl From<Url> for Uri {
     }
 }
 
-impl Into<Url> for Uri {
-    fn into(self) -> Url {
-        self.0
+impl From<Uri> for Url {
+    fn from(uri: Uri) -> Self {
+        uri.0
     }
 }
 

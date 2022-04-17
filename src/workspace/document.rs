@@ -24,7 +24,7 @@ pub struct BibtexDocumentData {
 
 #[derive(Debug, Clone, From)]
 pub enum DocumentData {
-    Latex(LatexDocumentData),
+    Latex(Box<LatexDocumentData>),
     Bibtex(BibtexDocumentData),
     BuildLog(build_log::Parse),
 }
@@ -108,10 +108,10 @@ impl Document {
                 latex::analyze(&mut context, &root);
                 let extras = context.extras;
 
-                LatexDocumentData {
+                Box::new(LatexDocumentData {
                     green: root.green().into_owned(),
                     extras,
-                }
+                })
                 .into()
             }
             DocumentLanguage::Bibtex => {

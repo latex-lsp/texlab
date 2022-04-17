@@ -9,7 +9,7 @@ fn run(query: &str) -> Result<Vec<SymbolInformation>> {
     server.initialize(ClientCapabilities::default(), None)?;
     let uri = Url::parse("http://www.example.com/main.tex")?;
     server.open_memory(
-        uri.clone(),
+        uri,
         r#"
         \documentclass{article}
         \usepackage{caption}

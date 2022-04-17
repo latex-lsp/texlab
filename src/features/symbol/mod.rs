@@ -38,7 +38,7 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
         for symbol in buf {
             symbol.flatten(&mut new_buf);
         }
-        let mut new_buf = new_buf
+        let mut new_buf: Vec<_> = new_buf
             .into_iter()
             .map(|symbol| symbol.into_symbol_info(req.main_document().uri.as_ref().clone()))
             .collect();
@@ -102,7 +102,7 @@ pub fn find_workspace_symbols(
     filtered
 }
 
-fn sort_symbols(workspace: &dyn Workspace, symbols: &mut Vec<SymbolInformation>) {
+fn sort_symbols(workspace: &dyn Workspace, symbols: &mut [SymbolInformation]) {
     let ordering = ProjectOrdering::from(workspace);
     symbols.sort_by(|left, right| {
         let left_key = (

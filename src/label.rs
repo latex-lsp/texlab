@@ -123,8 +123,8 @@ impl RenderedLabel {
     }
 }
 
-pub fn render_label<'a>(
-    subset: &'a WorkspaceSubset,
+pub fn render_label(
+    subset: &WorkspaceSubset,
     label_name: &str,
     mut label: Option<latex::LabelDefinition>,
 ) -> Option<RenderedLabel> {
@@ -147,8 +147,8 @@ pub fn render_label<'a>(
     })
 }
 
-pub fn find_label_definition<'a>(
-    root: &'a latex::SyntaxNode,
+pub fn find_label_definition(
+    root: &latex::SyntaxNode,
     label_name: &str,
 ) -> Option<latex::LabelDefinition> {
     root.descendants()

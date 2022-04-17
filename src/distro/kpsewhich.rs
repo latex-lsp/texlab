@@ -55,7 +55,7 @@ pub fn root_directories() -> Result<Vec<PathBuf>> {
     let texmf = run(&["-var-value", "TEXMF"])?;
     let expand_arg = format!("--expand-braces={}", texmf);
     let expanded = run(&[&expand_arg])?;
-    let directories = env::split_paths(&expanded.replace("!", ""))
+    let directories = env::split_paths(&expanded.replace('!', ""))
         .filter(|path| path.exists())
         .collect();
     Ok(directories)

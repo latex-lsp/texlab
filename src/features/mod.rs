@@ -112,14 +112,15 @@ mod testing {
         }
 
         fn options(&self) -> Options {
-            let mut options = Options::default();
-            options.aux_directory = self.aux_directory.clone();
-            options.root_directory = self.root_directory.clone();
-            options
+            Options {
+                aux_directory: self.aux_directory.clone(),
+                root_directory: self.root_directory.clone(),
+                ..Options::default()
+            }
         }
 
         fn identifier(&self) -> TextDocumentIdentifier {
-            let uri = self.uri(&self.main);
+            let uri = self.uri(self.main);
             TextDocumentIdentifier::new(uri.as_ref().clone().into())
         }
 

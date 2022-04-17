@@ -11,8 +11,7 @@ pub fn analyze_implicit_links(context: &mut LatexAnalyzerContext) {
 }
 
 fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<Vec<Arc<Uri>>> {
-    let mut targets: Vec<Arc<Uri>> = Vec::new();
-    targets.push(Arc::new(context.document_uri.with_extension(extension)?));
+    let mut targets = vec![Arc::new(context.document_uri.with_extension(extension)?)];
     if context.document_uri.scheme() == "file" {
         let file_path = context.document_uri.to_file_path().ok()?;
         let file_stem = file_path.file_stem()?;

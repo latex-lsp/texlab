@@ -106,7 +106,7 @@ impl<'a> InternalCompletionItemData<'a> {
             Self::Field { field } => &field.name,
             Self::Argument { name, .. } => name,
             Self::BeginCommand => "begin",
-            Self::Citation { key, .. } => &key,
+            Self::Citation { key, .. } => key,
             Self::ComponentCommand { name, .. } => name,
             Self::ComponentEnvironment { name, .. } => name,
             Self::Class { name } => name,

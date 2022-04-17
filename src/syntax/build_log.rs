@@ -65,7 +65,7 @@ fn extract_matches(
     level: BuildErrorLevel,
 ) -> Vec<BuildError> {
     let mut errors = Vec::new();
-    for result in regex.find_iter(&log) {
+    for result in regex.find_iter(log) {
         let captures = regex.captures(&log[result.start()..result.end()]).unwrap();
         let message = captures
             .name("msg")
@@ -81,7 +81,7 @@ fn extract_matches(
         if let Some(range) = ranges.iter().find(|range| range.contains(result.start())) {
             let line = captures
                 .name("line")
-                .map(|result| u32::from_str_radix(result.as_str(), 10).unwrap() - 1);
+                .map(|result| result.as_str().parse::<u32>().unwrap() - 1);
 
             errors.push(BuildError {
                 relative_path: range.path.clone(),
@@ -98,8 +98,8 @@ fn prepare_log(log: &str) -> String {
     let mut old_lines = log.lines();
     let mut new_lines: Vec<String> = Vec::new();
     while let Some(line) = old_lines.next() {
-        if PACKAGE_MESSAGE_REGEX.is_match(&line) {
-            let captures = PACKAGE_MESSAGE_REGEX.captures(&line).unwrap();
+        if PACKAGE_MESSAGE_REGEX.is_match(line) {
+            let captures = PACKAGE_MESSAGE_REGEX.captures(line).unwrap();
             if let Some(last_line) = new_lines.last_mut() {
                 last_line.push(' ');
                 last_line.push_str(captures.name("msg").unwrap().as_str());
@@ -107,7 +107,7 @@ fn prepare_log(log: &str) -> String {
         } else if line.ends_with("...") {
             let mut new_line = line[line.len() - 3..].to_owned();
             if let Some(old_line) = old_lines.next() {
-                new_line.push_str(&old_line);
+                new_line.push_str(old_line);
             }
             new_lines.push(new_line);
         } else if line.chars().count() == MAX_LINE_LENGTH {
@@ -275,7 +275,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![
                 BuildError {
                     relative_path: "./parent.tex".into(),
@@ -365,7 +365,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![BuildError {
                 relative_path: "./child.tex".into(),
                 level: BuildErrorLevel::Error,
@@ -447,7 +447,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![
                 BuildError {
                     relative_path: "./parent.tex".into(),
@@ -555,7 +555,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![
                 BuildError {
                     relative_path: "/TexLive/texmf-dist/tex/generic/babel/babel.sty".into(),
@@ -965,7 +965,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![
                 BuildError {
                     relative_path: "./parent.tex".into(),
@@ -1118,7 +1118,7 @@ mod tests {
         };
 
         assert_eq!(
-            parse(&log).errors,
+            parse(log).errors,
             vec![
                 BuildError {
                     relative_path: "./parent.tex".into(),
@@ -1342,6 +1342,6 @@ mod tests {
             1 words of extra memory for PDF output out of 10000 (max. 10000000)"#,
         };
 
-        assert_debug_snapshot!(parse(&log).errors);
+        assert_debug_snapshot!(parse(log).errors);
     }
 }

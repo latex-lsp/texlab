@@ -182,7 +182,7 @@ impl<'a> Formatter<'a> {
                     let current = &tokens[i];
                     let current_length = current.text().chars().count();
 
-                    let insert_space = self.should_insert_space(&previous, &current);
+                    let insert_space = self.should_insert_space(previous, current);
                     let space_length = if insert_space { 1 } else { 0 };
 
                     if length + current_length + space_length > self.line_length {

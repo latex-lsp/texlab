@@ -54,7 +54,7 @@ pub fn complete_includes<'a>(
         for document in &context.request.subset.documents {
             if let Some(data) = document.data.as_latex() {
                 for graphics_path in &data.extras.graphics_paths {
-                    dirs.push(current_dir(context, &path_text, Some(&graphics_path)));
+                    dirs.push(current_dir(context, &path_text, Some(graphics_path)));
                 }
             }
         }

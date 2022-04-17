@@ -51,7 +51,7 @@ where
                         .map(|entry| entry.path())
                         .filter(|path| {
                             matches!(
-                                DocumentLanguage::by_path(&path),
+                                DocumentLanguage::by_path(path),
                                 Some(DocumentLanguage::Latex)
                             )
                         })

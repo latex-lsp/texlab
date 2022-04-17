@@ -172,14 +172,14 @@ impl MixedGroup {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| matches!(node.kind().into(), L_BRACK | L_PAREN))
+            .find(|node| matches!(node.kind(), L_BRACK | L_PAREN))
     }
 
     pub fn right_delim(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| matches!(node.kind().into(), R_BRACK | R_PAREN))
+            .find(|node| matches!(node.kind(), R_BRACK | R_PAREN))
     }
 }
 

@@ -58,14 +58,14 @@ pub trait HasCurly: AstNode<Language = BibtexLanguage> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == L_CURLY.into())
+            .find(|node| node.kind() == L_CURLY)
     }
 
     fn right_curly(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == R_CURLY.into())
+            .find(|node| node.kind() == R_CURLY)
     }
 }
 
@@ -74,14 +74,14 @@ pub trait HasQuotes: AstNode<Language = BibtexLanguage> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == QUOTE.into())
+            .find(|node| node.kind() == QUOTE)
     }
 
     fn right_quote(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .filter(|node| node.kind() == QUOTE.into())
+            .filter(|node| node.kind() == QUOTE)
             .nth(1)
     }
 }
