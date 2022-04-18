@@ -67,11 +67,6 @@ fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
         .current_dir(directory.path())
         .output()?;
 
-    // let mut writer = BufWriter::new(process.stdin.take().unwrap());
-    // writer.write_all(text.as_bytes())?;
-    // // writer.flush()?;
-    // let output = process.wait_with_output()?;
-
     let mut diagnostics = Vec::new();
     for line in String::from_utf8_lossy(&output.stdout).lines() {
         let captures = LINE_REGEX.captures(line).unwrap();

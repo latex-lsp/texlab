@@ -893,8 +893,8 @@ fn publish_diagnostics(
 }
 
 fn apply_document_edit(old_text: &mut String, changes: Vec<TextDocumentContentChangeEvent>) {
-    let mut line_index = LineIndex::new(old_text);
     for change in changes {
+        let line_index = LineIndex::new(old_text);
         match change.range {
             Some(range) => {
                 let range = std::ops::Range::<usize>::from(line_index.offset_lsp_range(range));
@@ -904,8 +904,6 @@ fn apply_document_edit(old_text: &mut String, changes: Vec<TextDocumentContentCh
                 *old_text = change.text;
             }
         };
-
-        line_index = LineIndex::new(old_text);
     }
 }
 
