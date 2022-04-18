@@ -9,7 +9,7 @@ authors = [
     "Patrick Förster <patrick.foerster@outlook.de>",
 ]
 edition = "2021"
-rust-version = "1.56.0"
+rust-version = "1.58.1"
 homepage = "https://github.com/latex-lsp/texlab"
 
 [lib]

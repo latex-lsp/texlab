@@ -44,7 +44,7 @@ jobs:
             toolchain: stable
             transpile_target: null
           - os: ubuntu-18.04
-            toolchain: 1.56
+            toolchain: 1.58.1
             transpile_target: null
           - os: windows-latest
             toolchain: stable
