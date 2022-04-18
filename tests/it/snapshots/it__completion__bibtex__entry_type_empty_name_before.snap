@@ -1,0 +1,9 @@
+---
+source: tests/it/completion.rs
+assertion_line: 111
+expression: "complete_and_resolve(&server, uri, 0, 0)?"
+---
+{
+  "isIncomplete": false,
+  "items": []
+}

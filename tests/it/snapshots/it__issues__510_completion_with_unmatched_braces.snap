@@ -1,0 +1,57 @@
+---
+source: tests/it/issues.rs
+assertion_line: 58
+expression: "server.complete(uri, 1, 7)?"
+---
+CompletionList {
+    is_incomplete: false,
+    items: [
+        CompletionItem {
+            label: "eq:foo",
+            kind: Some(
+                Text,
+            ),
+            detail: None,
+            documentation: None,
+            deprecated: None,
+            preselect: Some(
+                false,
+            ),
+            sort_text: Some(
+                "00 eq:foo",
+            ),
+            filter_text: Some(
+                "eq:foo",
+            ),
+            insert_text: None,
+            insert_text_format: None,
+            insert_text_mode: None,
+            text_edit: Some(
+                Edit(
+                    TextEdit {
+                        range: Range {
+                            start: Position {
+                                line: 1,
+                                character: 5,
+                            },
+                            end: Position {
+                                line: 1,
+                                character: 7,
+                            },
+                        },
+                        new_text: "eq:foo",
+                    },
+                ),
+            ),
+            additional_text_edits: None,
+            command: None,
+            commit_characters: None,
+            data: Some(
+                String(
+                    "label",
+                ),
+            ),
+            tags: None,
+        },
+    ],
+}

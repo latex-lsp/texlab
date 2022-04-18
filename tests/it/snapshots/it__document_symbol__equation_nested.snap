@@ -1,0 +1,87 @@
+---
+source: tests/it/document_symbol.rs
+assertion_line: 130
+expression: server.find_document_symbols(uri)?
+---
+[
+  {
+    "name": "Equation (1)",
+    "detail": "eq:foo",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 4,
+        "character": 0
+      },
+      "end": {
+        "line": 6,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 4,
+        "character": 16
+      },
+      "end": {
+        "line": 4,
+        "character": 30
+      }
+    },
+    "children": []
+  },
+  {
+    "name": "Equation",
+    "detail": "eq:bar",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 8,
+        "character": 0
+      },
+      "end": {
+        "line": 10,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 8,
+        "character": 16
+      },
+      "end": {
+        "line": 8,
+        "character": 30
+      }
+    },
+    "children": []
+  },
+  {
+    "name": "Equation",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 12,
+        "character": 0
+      },
+      "end": {
+        "line": 14,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 12,
+        "character": 0
+      },
+      "end": {
+        "line": 14,
+        "character": 14
+      }
+    },
+    "children": []
+  }
+]

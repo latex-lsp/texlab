@@ -1,0 +1,79 @@
+---
+source: tests/it/workspace_symbol.rs
+assertion_line: 93
+expression: "run(\"section\")?"
+---
+[
+  {
+    "name": "1 Foo",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 7,
+          "character": 0
+        },
+        "end": {
+          "line": 11,
+          "character": 14
+        }
+      }
+    }
+  },
+  {
+    "name": "2 Bar",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 13,
+          "character": 0
+        },
+        "end": {
+          "line": 19,
+          "character": 12
+        }
+      }
+    }
+  },
+  {
+    "name": "3 Baz",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 21,
+          "character": 0
+        },
+        "end": {
+          "line": 27,
+          "character": 15
+        }
+      }
+    }
+  },
+  {
+    "name": "4 Qux",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 29,
+          "character": 0
+        },
+        "end": {
+          "line": 35,
+          "character": 11
+        }
+      }
+    }
+  }
+]

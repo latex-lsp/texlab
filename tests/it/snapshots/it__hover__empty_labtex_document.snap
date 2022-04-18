@@ -1,0 +1,6 @@
+---
+source: tests/it/hover.rs
+assertion_line: 21
+expression: "server.hover(uri, 0, 0)?"
+---
+null

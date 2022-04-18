@@ -1,0 +1,102 @@
+---
+source: tests/it/completion.rs
+assertion_line: 586
+expression: "complete_and_resolve(&server, uri, 1, 15)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "amsmath",
+      "kind": 1,
+      "documentation": {
+        "kind": "plaintext",
+        "value": "The package provides the principal packages in the AMS-LaTeX distribution. It adapts for use in LaTeX most of the mathematical features found in AMS-TeX; it is highly recommended as an adjunct to serious mathematical typesetting in LaTeX. When amsmath is loaded, AMS-LaTeX packages amsbsy (for bold symbols), amsopn (for operator names) and amstext (for text embedded in mathematics) are also loaded. amsmath is part of the LaTeX required distribution; however, several contributed packages add still further to its appeal; examples are empheq, which provides functions for decorating and highlighting mathematics, and ntheorem, for specifying theorem (and similar) definitions."
+      },
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 12
+          },
+          "end": {
+            "line": 1,
+            "character": 19
+          }
+        },
+        "newText": "amsmath"
+      }
+    },
+    {
+      "label": "lwarp-amsmath",
+      "kind": 1,
+      "documentation": {
+        "kind": "plaintext",
+        "value": "This package converts LaTeX to HTML by using LaTeX to process the user's document and generate HTML tags. External utility programs are only used for the final conversion of text and images. Math may be represented by SVG files or MathJax. Hundreds of LaTeX packages are supported, and their load order is automatically verified. Documents may be produced by LaTeX, LuaLaTeX, XeLaTeX, and by several CJK engines, classes, and packages. A texlua script automates compilation, index, glossary, and batch image processing, and also supports latexmk. Configuration is semi-automatic at the first manual compile. Support files are self-generated. Print and HTML versions of each document may coexist. Assistance is provided for HTML import into EPUB conversion software and word processors. Requirements include the commonly-available Poppler utilities, and Perl. Detailed installation instructions are included for each of the major operating systems and TeX distributions. A quick-start tutorial is provided."
+      },
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 12
+          },
+          "end": {
+            "line": 1,
+            "character": 19
+          }
+        },
+        "newText": "lwarp-amsmath"
+      }
+    },
+    {
+      "label": "simurgh-amsmath",
+      "kind": 1,
+      "documentation": {
+        "kind": "plaintext",
+        "value": "The package provides an automatic and unified interface for Parsi typesetting in LaTeX, using the LuaTeX engine. The project to produce this system is dedicated to Ferdowsi The Great."
+      },
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 12
+          },
+          "end": {
+            "line": 1,
+            "character": 19
+          }
+        },
+        "newText": "simurgh-amsmath"
+      }
+    },
+    {
+      "label": "onlyamsmath",
+      "kind": 1,
+      "documentation": {
+        "kind": "plaintext",
+        "value": "This package inhibits the usage of plain TeX and (on demand) of standard LaTeX mathematics environments. This is useful for class writers who want to encourage their users to use the environments provided by the amsmath package."
+      },
+      "preselect": false,
+      "sortText": "03",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 12
+          },
+          "end": {
+            "line": 1,
+            "character": 19
+          }
+        },
+        "newText": "onlyamsmath"
+      }
+    }
+  ]
+}

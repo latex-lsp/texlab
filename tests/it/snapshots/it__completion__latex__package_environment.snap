@@ -1,0 +1,150 @@
+---
+source: tests/it/completion.rs
+assertion_line: 552
+expression: "complete_and_resolve(&server, uri, 5, 6)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "align",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "align"
+      }
+    },
+    {
+      "label": "align*",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "align*"
+      }
+    },
+    {
+      "label": "alignat",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "alignat"
+      }
+    },
+    {
+      "label": "alignat*",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "03",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "alignat*"
+      }
+    },
+    {
+      "label": "aligned",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "04",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "aligned"
+      }
+    },
+    {
+      "label": "alignedat",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "05",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "alignedat"
+      }
+    },
+    {
+      "label": "flalign",
+      "kind": 1,
+      "detail": "amsmath.sty",
+      "preselect": false,
+      "sortText": "06",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 5
+          },
+          "end": {
+            "line": 5,
+            "character": 9
+          }
+        },
+        "newText": "flalign"
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+---
+source: tests/it/hover.rs
+assertion_line: 51
+expression: "server.hover(uri, 3, 8)?"
+---
+{
+  "contents": {
+    "kind": "plaintext",
+    "value": "Lemma"
+  },
+  "range": {
+    "start": {
+      "line": 3,
+      "character": 5
+    },
+    "end": {
+      "line": 3,
+      "character": 12
+    }
+  }
+}

@@ -1,0 +1,171 @@
+---
+source: tests/it/completion.rs
+assertion_line: 178
+expression: "complete_and_resolve(&server, uri, 1, 6)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "title",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "The title of the work."
+      },
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "title"
+      }
+    },
+    {
+      "label": "titleaddon",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An annex to the `title`, to be printed in a different font."
+      },
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "titleaddon"
+      }
+    },
+    {
+      "label": "booksubtitle",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "The subtitle related to the `booktitle`. If the subtitle field refers to a work which is part of a larger publication, a possible subtitle of the main work is given in this field. See also `subtitle`."
+      },
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "booksubtitle"
+      }
+    },
+    {
+      "label": "booktitle",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "If the `title` field indicates the title of a work which is part of a larger publication, the title of the main work is given in this field. See also `title`."
+      },
+      "preselect": false,
+      "sortText": "03",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "booktitle"
+      }
+    },
+    {
+      "label": "booktitleaddon",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An annex to the `booktitle`, to be printed in a different font."
+      },
+      "preselect": false,
+      "sortText": "04",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "booktitleaddon"
+      }
+    },
+    {
+      "label": "eventtitle",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "The title of a conference, a symposium, or some other event in `@proceedings` and `@inproceedings` entries. Note that this field holds the plain title of the event. Things like \"Proceedings of the Fifth XYZ Conference\" go into the `titleaddon` or `booktitleaddon` field, respectively. See also `eventdate` and `venue`."
+      },
+      "preselect": false,
+      "sortText": "05",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "eventtitle"
+      }
+    },
+    {
+      "label": "eventtitleaddon",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An annex to the `eventtitle` field. Can be used for known event acronyms, for example."
+      },
+      "preselect": false,
+      "sortText": "06",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 4
+          },
+          "end": {
+            "line": 1,
+            "character": 9
+          }
+        },
+        "newText": "eventtitleaddon"
+      }
+    }
+  ]
+}

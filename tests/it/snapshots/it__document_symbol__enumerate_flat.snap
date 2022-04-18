@@ -1,0 +1,97 @@
+---
+source: tests/it/document_symbol.rs
+assertion_line: 90
+expression: server.find_document_symbols(uri)?
+---
+[
+  {
+    "name": "Enumerate",
+    "kind": 10,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 9,
+          "character": 15
+        }
+      }
+    }
+  },
+  {
+    "name": "1",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 5,
+          "character": 4
+        },
+        "end": {
+          "line": 5,
+          "character": 27
+        }
+      }
+    }
+  },
+  {
+    "name": "Item",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 4
+        },
+        "end": {
+          "line": 6,
+          "character": 27
+        }
+      }
+    }
+  },
+  {
+    "name": "Baz",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 7,
+          "character": 4
+        },
+        "end": {
+          "line": 7,
+          "character": 18
+        }
+      }
+    }
+  },
+  {
+    "name": "2",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 8,
+          "character": 4
+        },
+        "end": {
+          "line": 8,
+          "character": 32
+        }
+      }
+    }
+  }
+]

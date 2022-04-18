@@ -1,9 +1,0 @@
----
-source: tests/integration/completion.rs
-expression: "complete_and_resolve(&server, tex_uri, 3, 7)?"
-
----
-{
-  "isIncomplete": false,
-  "items": []
-}

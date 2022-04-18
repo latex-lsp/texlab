@@ -1,0 +1,50 @@
+---
+source: tests/it/completion.rs
+assertion_line: 793
+expression: "complete_and_resolve(&server, uri, 4, 8)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "foo",
+      "kind": 1,
+      "detail": "user-defined",
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 4,
+            "character": 7
+          },
+          "end": {
+            "line": 4,
+            "character": 9
+          }
+        },
+        "newText": "foo"
+      }
+    },
+    {
+      "label": "filecontents",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 4,
+            "character": 7
+          },
+          "end": {
+            "line": 4,
+            "character": 9
+          }
+        },
+        "newText": "filecontents"
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+---
+source: tests/it/completion.rs
+assertion_line: 391
+expression: "complete_and_resolve(&server, uri, 2, 17)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "RGB",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 16
+          },
+          "end": {
+            "line": 2,
+            "character": 17
+          }
+        },
+        "newText": "RGB"
+      }
+    },
+    {
+      "label": "rgb",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 16
+          },
+          "end": {
+            "line": 2,
+            "character": 17
+          }
+        },
+        "newText": "rgb"
+      }
+    },
+    {
+      "label": "gray",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 2,
+            "character": 16
+          },
+          "end": {
+            "line": 2,
+            "character": 17
+          }
+        },
+        "newText": "gray"
+      }
+    }
+  ]
+}

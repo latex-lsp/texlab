@@ -1,0 +1,61 @@
+---
+source: tests/it/workspace_symbol.rs
+assertion_line: 105
+expression: "run(\"item\")?"
+---
+[
+  {
+    "name": "1",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 24,
+          "character": 4
+        },
+        "end": {
+          "line": 24,
+          "character": 28
+        }
+      }
+    }
+  },
+  {
+    "name": "2",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 25,
+          "character": 4
+        },
+        "end": {
+          "line": 25,
+          "character": 28
+        }
+      }
+    }
+  },
+  {
+    "name": "3",
+    "kind": 22,
+    "deprecated": false,
+    "location": {
+      "uri": "http://www.example.com/main.tex",
+      "range": {
+        "start": {
+          "line": 26,
+          "character": 4
+        },
+        "end": {
+          "line": 26,
+          "character": 28
+        }
+      }
+    }
+  }
+]

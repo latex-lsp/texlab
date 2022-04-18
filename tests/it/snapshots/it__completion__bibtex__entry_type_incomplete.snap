@@ -1,0 +1,79 @@
+---
+source: tests/it/completion.rs
+assertion_line: 127
+expression: "complete_and_resolve(&server, uri, 0, 1)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "article",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An article in a journal, magazine, newspaper, or other periodical which forms a \n self-contained unit with its own title. The title of the periodical is given in the \n journaltitle field. If the issue has its own title in addition to the main title of \n the periodical, it goes in the issuetitle field. Note that editor and related \n fields refer to the journal while translator and related fields refer to the article.\n\nRequired fields: `author`, `title`, `journaltitle`, `year/date`"
+      },
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 4
+          }
+        },
+        "newText": "article"
+      }
+    },
+    {
+      "label": "artwork",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "Works of the visual arts such as paintings, sculpture, and installations."
+      },
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 4
+          }
+        },
+        "newText": "artwork"
+      }
+    },
+    {
+      "label": "mastersthesis",
+      "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "Similar to `@thesis` except that the `type` field is optional and defaults to the\n localised term ‘Master’s thesis’. You may still use the `type` field to override that."
+      },
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 1
+          },
+          "end": {
+            "line": 0,
+            "character": 4
+          }
+        },
+        "newText": "mastersthesis"
+      }
+    }
+  ]
+}

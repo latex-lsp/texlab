@@ -1,0 +1,130 @@
+---
+source: tests/it/completion.rs
+assertion_line: 735
+expression: "complete_and_resolve(&server, uri, 3, 8)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "figure",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "figure"
+      }
+    },
+    {
+      "label": "filecontents",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "filecontents"
+      }
+    },
+    {
+      "label": "flushleft",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "flushleft"
+      }
+    },
+    {
+      "label": "flushright",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "03",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "flushright"
+      }
+    },
+    {
+      "label": "foo",
+      "kind": 1,
+      "detail": "user-defined",
+      "preselect": false,
+      "sortText": "04",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "foo"
+      }
+    },
+    {
+      "label": "proof",
+      "kind": 1,
+      "detail": "amsthm.sty",
+      "preselect": false,
+      "sortText": "05",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 3,
+            "character": 7
+          },
+          "end": {
+            "line": 3,
+            "character": 8
+          }
+        },
+        "newText": "proof"
+      }
+    }
+  ]
+}

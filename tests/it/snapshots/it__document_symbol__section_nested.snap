@@ -1,0 +1,88 @@
+---
+source: tests/it/document_symbol.rs
+assertion_line: 306
+expression: server.find_document_symbols(uri)?
+---
+[
+  {
+    "name": "Foo",
+    "kind": 2,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 4,
+        "character": 0
+      },
+      "end": {
+        "line": 4,
+        "character": 13
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 4,
+        "character": 0
+      },
+      "end": {
+        "line": 4,
+        "character": 13
+      }
+    },
+    "children": []
+  },
+  {
+    "name": "2 Bar",
+    "detail": "sec:bar",
+    "kind": 2,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 6,
+        "character": 0
+      },
+      "end": {
+        "line": 8,
+        "character": 31
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 6,
+        "character": 13
+      },
+      "end": {
+        "line": 6,
+        "character": 28
+      }
+    },
+    "children": [
+      {
+        "name": "Baz",
+        "detail": "sec:baz",
+        "kind": 2,
+        "deprecated": false,
+        "range": {
+          "start": {
+            "line": 8,
+            "character": 0
+          },
+          "end": {
+            "line": 8,
+            "character": 31
+          }
+        },
+        "selectionRange": {
+          "start": {
+            "line": 8,
+            "character": 16
+          },
+          "end": {
+            "line": 8,
+            "character": 31
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+]

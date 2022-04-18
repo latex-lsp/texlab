@@ -1,0 +1,50 @@
+---
+source: tests/it/completion.rs
+assertion_line: 814
+expression: "complete_and_resolve(&server, uri, 0, 11)?"
+---
+{
+  "isIncomplete": false,
+  "items": [
+    {
+      "label": "verbatim",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 7
+          },
+          "end": {
+            "line": 0,
+            "character": 11
+          }
+        },
+        "newText": "verbatim"
+      }
+    },
+    {
+      "label": "verbatim*",
+      "kind": 1,
+      "detail": "built-in",
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 7
+          },
+          "end": {
+            "line": 0,
+            "character": 11
+          }
+        },
+        "newText": "verbatim*"
+      }
+    }
+  ]
+}
