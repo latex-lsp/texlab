@@ -16,14 +16,14 @@ pub fn goto_label_definition(
 
     let origin_selection_range = main_document.line_index.line_col_lsp_range(name_range);
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             if let Some(definition) =
                 find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), &name_text)
             {
                 let target_selection_range = latex::small_range(&definition.name()?.key()?);
                 let target_range =
-                    render_label(&context.request.subset, &name_text, Some(definition))
+                    render_label(&context.request.workspace, &name_text, Some(definition))
                         .map(|label| label.range)
                         .unwrap_or(target_selection_range);
 

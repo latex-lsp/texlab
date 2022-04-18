@@ -10,7 +10,7 @@ pub fn find_label_references(
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for name in data
                 .extras
@@ -40,6 +40,14 @@ mod tests {
 
     use super::*;
 
+    fn sort_references(actual_references: &mut [Location]) {
+        actual_references.sort_by(|a, b| {
+            a.uri
+                .cmp(&b.uri)
+                .then_with(|| a.range.start.cmp(&b.range.start))
+        });
+    }
+
     #[test]
     fn test_definition() {
         let tester = FeatureTester::builder()
@@ -58,6 +66,7 @@ mod tests {
         let context = CursorContext::new(request);
         find_label_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
             Range::new_simple(0, 5, 0, 8),
@@ -77,17 +86,18 @@ mod tests {
             .character(9)
             .include_declaration(true)
             .build();
-        let uri1 = tester.uri("foo.tex");
-        let uri2 = tester.uri("bar.tex");
+        let uri1 = tester.uri("bar.tex");
+        let uri2 = tester.uri("foo.tex");
         let mut actual_references = Vec::new();
 
         let request = tester.reference();
         let context = CursorContext::new(request);
         find_label_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -112,6 +122,7 @@ mod tests {
         let context = CursorContext::new(request);
         find_label_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![
             Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
             Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
@@ -131,17 +142,18 @@ mod tests {
             .character(7)
             .include_declaration(true)
             .build();
-        let uri1 = tester.uri("foo.tex");
-        let uri2 = tester.uri("bar.tex");
+        let uri1 = tester.uri("bar.tex");
+        let uri2 = tester.uri("foo.tex");
         let mut actual_references = Vec::new();
 
         let request = tester.reference();
         let context = CursorContext::new(request);
         find_label_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
+            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
         ];
         assert_eq!(actual_references, expected_references);
     }

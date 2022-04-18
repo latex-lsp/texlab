@@ -51,7 +51,7 @@ pub fn complete_includes<'a>(
 
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in &context.request.subset.documents {
+        for document in context.request.workspace.documents_by_uri.values() {
             if let Some(data) = document.data.as_latex() {
                 for graphics_path in &data.extras.graphics_paths {
                     dirs.push(current_dir(context, &path_text, Some(graphics_path)));

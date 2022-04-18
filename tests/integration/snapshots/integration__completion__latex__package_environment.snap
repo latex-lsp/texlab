@@ -1,13 +1,13 @@
 ---
 source: tests/integration/completion.rs
-expression: "complete_and_resolve(&server, uri, 5, 5)?"
-
+assertion_line: 552
+expression: "complete_and_resolve(&server, uri, 5, 6)?"
 ---
 {
   "isIncomplete": false,
   "items": [
     {
-      "label": "alignedat",
+      "label": "align",
       "kind": 1,
       "detail": "amsmath.sty",
       "preselect": false,
@@ -23,11 +23,11 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
             "character": 9
           }
         },
-        "newText": "alignedat"
+        "newText": "align"
       }
     },
     {
-      "label": "aligned",
+      "label": "align*",
       "kind": 1,
       "detail": "amsmath.sty",
       "preselect": false,
@@ -43,7 +43,7 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
             "character": 9
           }
         },
-        "newText": "aligned"
+        "newText": "align*"
       }
     },
     {
@@ -67,7 +67,7 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
       }
     },
     {
-      "label": "align",
+      "label": "alignat*",
       "kind": 1,
       "detail": "amsmath.sty",
       "preselect": false,
@@ -83,11 +83,11 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
             "character": 9
           }
         },
-        "newText": "align"
+        "newText": "alignat*"
       }
     },
     {
-      "label": "align*",
+      "label": "aligned",
       "kind": 1,
       "detail": "amsmath.sty",
       "preselect": false,
@@ -103,11 +103,11 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
             "character": 9
           }
         },
-        "newText": "align*"
+        "newText": "aligned"
       }
     },
     {
-      "label": "alignat*",
+      "label": "alignedat",
       "kind": 1,
       "detail": "amsmath.sty",
       "preselect": false,
@@ -123,7 +123,7 @@ expression: "complete_and_resolve(&server, uri, 5, 5)?"
             "character": 9
           }
         },
-        "newText": "alignat*"
+        "newText": "alignedat"
       }
     },
     {

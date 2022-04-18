@@ -17,7 +17,7 @@ pub fn goto_command_definition(
         .line_index
         .line_col_lsp_range(name.text_range());
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(defintion) = latex::CommandDefinition::cast(node).filter(|def| {

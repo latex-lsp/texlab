@@ -10,7 +10,7 @@ pub fn complete_component_commands<'a>(
 ) -> Option<()> {
     let range = context.cursor.command_range(context.offset)?;
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
+    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
         for command in &component.commands {
             items.push(InternalCompletionItem::new(
                 range,

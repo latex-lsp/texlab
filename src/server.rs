@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use log::{error, info, warn};
-use lsp_server::{Connection, ErrorCode, Message, RequestId};
+use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use serde::Serialize;
 use threadpool::ThreadPool;
@@ -436,7 +436,7 @@ impl Server {
             .documents_by_uri
             .get(&uri)
             .filter(|_| should_build)
-            .and_then(|document| {
+            .map(|document| {
                 self.feature_request(
                     Arc::clone(&document.uri),
                     BuildParams {
@@ -484,23 +484,13 @@ impl Server {
         Ok(())
     }
 
-    fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> Option<FeatureRequest<P>> {
-        Some(FeatureRequest {
+    fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> FeatureRequest<P> {
+        FeatureRequest {
             context: Arc::clone(&self.context),
             params,
-            workspace: self.workspace.clone(),
-            subset: self.workspace.subset(uri)?,
-        })
-    }
-
-    fn send_feature_error(&self, id: RequestId) -> Result<()> {
-        let resp = lsp_server::Response::new_err(
-            id,
-            ErrorCode::InternalError as i32,
-            "unknown document URI".to_string(),
-        );
-        self.connection.sender.send(resp.into())?;
-        Ok(())
+            workspace: self.workspace.slice(&uri),
+            uri,
+        }
     }
 
     fn handle_feature_request<P, R, H>(
@@ -515,20 +505,15 @@ impl Server {
         R: Serialize,
         H: FnOnce(FeatureRequest<P>) -> R + Send + 'static,
     {
-        match self.feature_request(uri, params) {
-            Some(req) => {
-                let sender = self.connection.sender.clone();
-                self.spawn(move || {
-                    let result = handler(req);
-                    sender
-                        .send(lsp_server::Response::new_ok(id, result).into())
-                        .unwrap();
-                });
-            }
-            None => {
-                self.send_feature_error(id)?;
-            }
-        };
+        let request = self.feature_request(uri, params);
+        let sender = self.connection.sender.clone();
+        self.spawn(move || {
+            let result = handler(request);
+            sender
+                .send(lsp_server::Response::new_ok(id, result).into())
+                .unwrap();
+        });
+
         Ok(())
     }
 
@@ -546,9 +531,10 @@ impl Server {
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
         let sender = self.connection.sender.clone();
+        let context = Arc::clone(&self.context);
         let workspace = self.workspace.clone();
         self.spawn(move || {
-            let result = find_workspace_symbols(&workspace, &params);
+            let result = find_workspace_symbols(context, &workspace, &params);
             sender
                 .send(lsp_server::Response::new_ok(id, result).into())
                 .unwrap();

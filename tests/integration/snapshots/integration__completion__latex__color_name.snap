@@ -1,7 +1,7 @@
 ---
 source: tests/integration/completion.rs
+assertion_line: 355
 expression: "complete_and_resolve(&server, uri, 0, 9)?"
-
 ---
 {
   "isIncomplete": false,
@@ -26,7 +26,7 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
       }
     },
     {
-      "label": "RedOrange",
+      "label": "Red",
       "kind": 1,
       "preselect": false,
       "sortText": "01",
@@ -41,11 +41,11 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
             "character": 9
           }
         },
-        "newText": "RedOrange"
+        "newText": "Red"
       }
     },
     {
-      "label": "Red",
+      "label": "RedOrange",
       "kind": 1,
       "preselect": false,
       "sortText": "02",
@@ -60,7 +60,7 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
             "character": 9
           }
         },
-        "newText": "Red"
+        "newText": "RedOrange"
       }
     },
     {
@@ -83,10 +83,29 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
       }
     },
     {
-      "label": "OrangeRed",
+      "label": "BrickRed",
       "kind": 1,
       "preselect": false,
       "sortText": "04",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 0,
+            "character": 7
+          },
+          "end": {
+            "line": 0,
+            "character": 9
+          }
+        },
+        "newText": "BrickRed"
+      }
+    },
+    {
+      "label": "OrangeRed",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "05",
       "textEdit": {
         "range": {
           "start": {
@@ -102,26 +121,7 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
       }
     },
     {
-      "label": "VioletRed",
-      "kind": 1,
-      "preselect": false,
-      "sortText": "05",
-      "textEdit": {
-        "range": {
-          "start": {
-            "line": 0,
-            "character": 7
-          },
-          "end": {
-            "line": 0,
-            "character": 9
-          }
-        },
-        "newText": "VioletRed"
-      }
-    },
-    {
-      "label": "BrickRed",
+      "label": "RubineRed",
       "kind": 1,
       "preselect": false,
       "sortText": "06",
@@ -136,7 +136,7 @@ expression: "complete_and_resolve(&server, uri, 0, 9)?"
             "character": 9
           }
         },
-        "newText": "BrickRed"
+        "newText": "RubineRed"
       }
     }
   ]

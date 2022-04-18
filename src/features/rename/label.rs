@@ -26,7 +26,7 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
     let (name_text, _) = context.find_label_name_key()?;
 
     let mut changes = HashMap::new();
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             let mut edits = Vec::new();
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {

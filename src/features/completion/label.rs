@@ -16,7 +16,7 @@ pub fn complete_labels<'a>(
 ) -> Option<()> {
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for label in latex::SyntaxNode::new_root(data.green.clone())
                 .descendants()
@@ -27,7 +27,7 @@ pub fn complete_labels<'a>(
                     .and_then(|name| name.key())
                     .map(|name| name.to_string())
                 {
-                    match render_label(&context.request.subset, &name, Some(label)) {
+                    match render_label(&context.request.workspace, &name, Some(label)) {
                         Some(rendered_label) => {
                             let kind = match &rendered_label.object {
                                 LabelledObject::Section { .. } => Structure::Section,

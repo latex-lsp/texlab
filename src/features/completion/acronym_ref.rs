@@ -12,7 +12,7 @@ pub fn complete_acronyms<'a>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for name in latex::SyntaxNode::new_root(data.green.clone())
                 .descendants()

@@ -12,9 +12,9 @@ pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover
 
     let contents = context
         .request
-        .subset
-        .documents
-        .iter()
+        .workspace
+        .documents_by_uri
+        .values()
         .find_map(|document| {
             document.data.as_bibtex().and_then(|data| {
                 citation::render_citation(

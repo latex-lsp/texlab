@@ -16,7 +16,7 @@ pub fn find_entry_references(
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         match &document.data {
             DocumentData::Latex(data) => {
                 latex::SyntaxNode::new_root(data.green.clone())
@@ -62,6 +62,14 @@ mod tests {
     use crate::{features::testing::FeatureTester, RangeExt};
 
     use super::*;
+
+    fn sort_references(actual_references: &mut [Location]) {
+        actual_references.sort_by(|a, b| {
+            a.uri
+                .cmp(&b.uri)
+                .then_with(|| a.range.start.cmp(&b.range.start))
+        });
+    }
 
     #[test]
     fn test_empty_latex_document() {
@@ -115,6 +123,7 @@ mod tests {
         let context = CursorContext::new(request);
         find_entry_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
             Range::new_simple(0, 6, 0, 9),
@@ -134,17 +143,18 @@ mod tests {
             .character(11)
             .include_declaration(true)
             .build();
-        let uri1 = tester.uri("foo.bib");
-        let uri2 = tester.uri("bar.tex");
+        let uri1 = tester.uri("bar.tex");
+        let uri2 = tester.uri("foo.bib");
         let mut actual_references = Vec::new();
 
         let request = tester.reference();
         let context = CursorContext::new(request);
         find_entry_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
+            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
+            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -167,6 +177,7 @@ mod tests {
         let context = CursorContext::new(request);
         find_entry_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
             uri.as_ref().clone().into(),
             Range::new_simple(0, 6, 0, 9),
@@ -194,6 +205,7 @@ mod tests {
         let context = CursorContext::new(request);
         find_entry_references(&context, &mut actual_references);
 
+        sort_references(&mut actual_references);
         let expected_references = vec![
             Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
             Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),

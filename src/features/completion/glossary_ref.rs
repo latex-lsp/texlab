@@ -12,7 +12,7 @@ pub fn complete_glossary_entries<'a>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())

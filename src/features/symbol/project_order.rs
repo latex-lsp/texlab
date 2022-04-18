@@ -3,7 +3,7 @@ use std::{sync::Arc, usize};
 use petgraph::{algo::tarjan_scc, Directed, Graph};
 use rustc_hash::FxHashSet;
 
-use crate::{Uri, Workspace, WorkspaceSubset};
+use crate::{Document, Uri, Workspace};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering {
@@ -30,11 +30,11 @@ impl From<&Workspace> for ProjectOrdering {
 
         let comps = connected_components(workspace);
         for comp in comps {
-            let graph = build_dependency_graph(&comp);
+            let (graph, documents) = build_dependency_graph(&comp);
 
             let mut visited = FxHashSet::default();
             let root_index = *graph.node_weight(tarjan_scc(&graph)[0][0]).unwrap();
-            let mut stack = vec![Arc::clone(&comp.documents[root_index].uri)];
+            let mut stack = vec![Arc::clone(&documents[root_index].uri)];
 
             while let Some(uri) = stack.pop() {
                 if !visited.insert(Arc::clone(&uri)) {
@@ -60,7 +60,7 @@ impl From<&Workspace> for ProjectOrdering {
     }
 }
 
-fn connected_components(workspace: &Workspace) -> Vec<WorkspaceSubset> {
+fn connected_components(workspace: &Workspace) -> Vec<Workspace> {
     let mut components = Vec::new();
     let mut visited = FxHashSet::default();
     for root_document in workspace.documents_by_uri.values() {
@@ -68,27 +68,25 @@ fn connected_components(workspace: &Workspace) -> Vec<WorkspaceSubset> {
             continue;
         }
 
-        let subset = workspace.subset(Arc::clone(&root_document.uri)).unwrap();
-        for document in &subset.documents {
-            visited.insert(Arc::clone(&document.uri));
+        let slice = workspace.slice(&root_document.uri);
+        for uri in slice.documents_by_uri.keys() {
+            visited.insert(Arc::clone(uri));
         }
-        components.push(subset);
+        components.push(slice);
     }
     components
 }
 
-fn build_dependency_graph(subset: &WorkspaceSubset) -> Graph<usize, (), Directed> {
+fn build_dependency_graph(workspace: &Workspace) -> (Graph<usize, (), Directed>, Vec<&Document>) {
     let mut graph = Graph::new();
-    let nodes: Vec<_> = (0..subset.documents.len())
-        .map(|i| graph.add_node(i))
-        .collect();
+    let documents: Vec<_> = workspace.documents_by_uri.values().collect();
+    let nodes: Vec<_> = (0..documents.len()).map(|i| graph.add_node(i)).collect();
 
-    for (i, document) in subset.documents.iter().enumerate() {
+    for (i, document) in documents.iter().enumerate() {
         if let Some(data) = document.data.as_latex() {
             for link in &data.extras.explicit_links {
                 for target in &link.targets {
-                    if let Some(j) = subset
-                        .documents
+                    if let Some(j) = documents
                         .iter()
                         .position(|document| document.uri.as_ref() == target.as_ref())
                     {
@@ -99,7 +97,8 @@ fn build_dependency_graph(subset: &WorkspaceSubset) -> Graph<usize, (), Directed
             }
         }
     }
-    graph
+
+    (graph, documents)
 }
 
 #[cfg(test)]

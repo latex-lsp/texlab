@@ -11,7 +11,7 @@ pub fn complete_user_commands<'a>(
     let range = context.cursor.command_range(context.offset)?;
     let token = context.cursor.as_latex()?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for name in data
                 .extras

@@ -1,26 +1,25 @@
 use std::str::FromStr;
 
-use lsp_types::Range;
+use lsp_types::{DocumentSymbolParams, Range};
 use rowan::ast::AstNode;
 use smol_str::SmolStr;
 use titlecase::titlecase;
 
 use crate::{
+    features::FeatureRequest,
     find_caption_by_parent, find_label_number,
     syntax::latex::{self, HasBrack, HasCurly},
-    LabelledFloatKind, LatexDocumentData, LineIndexExt, WorkspaceSubset, LANGUAGE_DATA,
+    LabelledFloatKind, LatexDocumentData, LineIndexExt, LANGUAGE_DATA,
 };
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_latex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol>) -> Option<()> {
-    let main_document = subset
-        .documents
-        .first()
-        .filter(|document| document.uri.as_str().ends_with(".tex"))?;
-
-    let data = main_document.data.as_latex()?;
-    let mut context = Context { subset, data };
+pub fn find_latex_symbols(
+    request: &FeatureRequest<DocumentSymbolParams>,
+    buf: &mut Vec<InternalSymbol>,
+) -> Option<()> {
+    let data = request.main_document().data.as_latex()?;
+    let mut context = Context { request, data };
 
     let root = context.data.green.clone();
     let mut symbols = visit(&mut context, latex::SyntaxNode::new_root(root));
@@ -29,7 +28,7 @@ pub fn find_latex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol
 }
 
 struct Context<'a> {
-    subset: &'a WorkspaceSubset,
+    request: &'a FeatureRequest<DocumentSymbolParams>,
     data: &'a LatexDocumentData,
 }
 
@@ -91,9 +90,8 @@ fn visit(context: &mut Context, node: latex::SyntaxNode) -> Vec<InternalSymbol> 
 fn visit_section(context: &mut Context, node: latex::SyntaxNode) -> Option<InternalSymbol> {
     let section = latex::Section::cast(node)?;
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&section));
 
@@ -154,9 +152,8 @@ fn visit_enum_item(context: &mut Context, node: latex::SyntaxNode) -> Option<Int
     }
 
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&enum_item));
 
@@ -196,9 +193,8 @@ fn visit_equation(context: &mut Context, node: latex::SyntaxNode) -> Option<Inte
     let equation = latex::Equation::cast(node)?;
 
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&equation));
 
@@ -212,9 +208,8 @@ fn visit_equation_environment(
     let environment = latex::Environment::cast(node)?;
 
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -267,9 +262,8 @@ fn visit_enumeration(
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -315,9 +309,8 @@ fn visit_float(
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -370,9 +363,10 @@ fn visit_theorem(
     environment_name: &str,
 ) -> Option<InternalSymbol> {
     let definition = context
-        .subset
-        .documents
-        .iter()
+        .request
+        .workspace
+        .documents_by_uri
+        .values()
         .filter_map(|document| document.data.as_latex())
         .find_map(|data| {
             data.extras
@@ -389,9 +383,8 @@ fn visit_theorem(
         .and_then(|option| option.content_text());
 
     let full_range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&node));
 
@@ -454,13 +447,12 @@ fn find_label_by_parent(
 
     let name = node.name()?.key()?.to_string();
     let range = context
-        .subset
-        .documents
-        .first()?
+        .request
+        .main_document()
         .line_index
         .line_col_lsp_range(latex::small_range(&node));
 
-    let number = find_label_number(context.subset, &name);
+    let number = find_label_number(&context.request.workspace, &name);
     Some(NumberedLabel {
         name: name.to_string(),
         range,

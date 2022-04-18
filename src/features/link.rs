@@ -11,9 +11,9 @@ pub fn find_document_links(request: FeatureRequest<DocumentLinkParams>) -> Vec<D
         for include in &data.extras.explicit_links {
             for target in &include.targets {
                 if request
-                    .subset
-                    .documents
-                    .iter()
+                    .workspace
+                    .documents_by_uri
+                    .values()
                     .any(|document| document.uri.as_ref() == target.as_ref())
                 {
                     links.push(DocumentLink {

@@ -30,7 +30,7 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = HashMap::new();
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         match &document.data {
             DocumentData::Latex(data) => {
                 let edits: Vec<_> = latex::SyntaxNode::new_root(data.green.clone())

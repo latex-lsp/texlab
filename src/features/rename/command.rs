@@ -23,7 +23,7 @@ pub fn rename_command(context: &CursorContext<RenameParams>) -> Option<Workspace
     prepare_command_rename(context)?;
     let name = context.cursor.as_latex()?.text();
     let mut changes = HashMap::new();
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             let edits = latex::SyntaxNode::new_root(data.green.clone())
                 .descendants_with_tokens()

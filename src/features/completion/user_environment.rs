@@ -10,7 +10,7 @@ pub fn complete_user_environments<'a>(
 ) -> Option<()> {
     let (name, range) = context.find_environment_name()?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for name in data
                 .extras

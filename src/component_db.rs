@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::WorkspaceSubset;
+use crate::Workspace;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,9 +35,9 @@ impl ComponentDatabase {
         })
     }
 
-    pub fn linked_components(&self, subset: &WorkspaceSubset) -> Vec<&Component> {
+    pub fn linked_components(&self, workspace: &Workspace) -> Vec<&Component> {
         let mut start_components = vec![self.kernel()];
-        for document in &subset.documents {
+        for document in workspace.documents_by_uri.values() {
             if let Some(data) = document.data.as_latex() {
                 data.extras
                     .explicit_links

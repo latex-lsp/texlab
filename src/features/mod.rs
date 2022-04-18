@@ -16,7 +16,7 @@ mod symbol;
 
 use std::sync::Arc;
 
-use crate::{Document, ServerContext, Workspace, WorkspaceSubset};
+use crate::{Document, ServerContext, Uri, Workspace};
 
 #[cfg(feature = "completion")]
 pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
@@ -39,12 +39,12 @@ pub struct FeatureRequest<P> {
     pub context: Arc<ServerContext>,
     pub params: P,
     pub workspace: Workspace,
-    pub subset: WorkspaceSubset,
+    pub uri: Arc<Uri>,
 }
 
 impl<P> FeatureRequest<P> {
     pub fn main_document(&self) -> &Document {
-        &self.subset.documents[0]
+        &self.workspace.documents_by_uri[&self.uri]
     }
 }
 
@@ -133,7 +133,7 @@ mod testing {
             Arc::new(cx)
         }
 
-        fn workspace(&self, cx: Arc<ServerContext>) -> Workspace {
+        fn workspace(&self, cx: &ServerContext) -> Workspace {
             let mut workspace = Workspace::default();
             for (name, source_code) in &self.files {
                 let uri = self.uri(name);
@@ -141,7 +141,7 @@ mod testing {
                 let language = DocumentLanguage::by_path(&path).expect("unknown document language");
                 workspace
                     .open(
-                        &cx,
+                        cx,
                         uri,
                         Arc::new(source_code.trim().to_string()),
                         language,
@@ -154,14 +154,14 @@ mod testing {
         }
 
         fn request<P>(&self, params: P) -> FeatureRequest<P> {
-            let cx = self.context();
-            let workspace = self.workspace(Arc::clone(&cx));
-            let subset = workspace.subset(self.uri(self.main)).unwrap();
+            let context = self.context();
+            let workspace = self.workspace(&context);
+            let uri = self.uri(self.main);
             FeatureRequest {
-                context: cx,
-                workspace,
-                subset,
+                context,
                 params,
+                workspace: workspace.slice(&uri),
+                uri,
             }
         }
 

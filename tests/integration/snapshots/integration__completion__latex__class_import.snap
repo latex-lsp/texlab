@@ -1,7 +1,7 @@
 ---
 source: tests/integration/completion.rs
+assertion_line: 569
 expression: "complete_and_resolve(&server, uri, 0, 19)?"
-
 ---
 {
   "isIncomplete": false,
@@ -122,11 +122,11 @@ expression: "complete_and_resolve(&server, uri, 0, 19)?"
       }
     },
     {
-      "label": "caesar_book",
+      "label": "biditufte-book",
       "kind": 1,
       "documentation": {
         "kind": "plaintext",
-        "value": "The package allows typesetting of texts with notes, figures, citations, captions and tables in the margin. This is common (for example) in science text books."
+        "value": "A convenient interface for typesetting bidirectional texts with plain TeX and LaTeX. The package includes adaptations for use with many other commonly-used packages."
       },
       "preselect": false,
       "sortText": "05",
@@ -141,15 +141,15 @@ expression: "complete_and_resolve(&server, uri, 0, 19)?"
             "character": 19
           }
         },
-        "newText": "caesar_book"
+        "newText": "biditufte-book"
       }
     },
     {
-      "label": "tufte-book",
+      "label": "caesar_book",
       "kind": 1,
       "documentation": {
         "kind": "plaintext",
-        "value": "Provided are two classes inspired, respectively, by handouts and books created by Edward Tufte."
+        "value": "The package allows typesetting of texts with notes, figures, citations, captions and tables in the margin. This is common (for example) in science text books."
       },
       "preselect": false,
       "sortText": "06",
@@ -164,7 +164,7 @@ expression: "complete_and_resolve(&server, uri, 0, 19)?"
             "character": 19
           }
         },
-        "newText": "tufte-book"
+        "newText": "caesar_book"
       }
     }
   ]

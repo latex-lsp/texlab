@@ -6,10 +6,11 @@ mod types;
 use std::{cmp::Reverse, sync::Arc};
 
 use lsp_types::{
-    DocumentSymbolParams, DocumentSymbolResponse, SymbolInformation, WorkspaceSymbolParams,
+    DocumentSymbolParams, DocumentSymbolResponse, PartialResultParams, SymbolInformation,
+    TextDocumentIdentifier, WorkDoneProgressParams, WorkspaceSymbolParams,
 };
 
-use crate::{ClientCapabilitiesExt, Uri, Workspace};
+use crate::{ClientCapabilitiesExt, ServerContext, Uri, Workspace};
 
 use self::{
     bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
@@ -19,8 +20,8 @@ use super::FeatureRequest;
 
 pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> DocumentSymbolResponse {
     let mut buf = Vec::new();
-    find_latex_symbols(&req.subset, &mut buf);
-    find_bibtex_symbols(&req.subset, &mut buf);
+    find_latex_symbols(&req, &mut buf);
+    find_bibtex_symbols(&req, &mut buf);
     if req
         .context
         .client_capabilities
@@ -54,28 +55,38 @@ struct WorkspaceSymbol {
 }
 
 pub fn find_workspace_symbols(
+    context: Arc<ServerContext>,
     workspace: &Workspace,
     params: &WorkspaceSymbolParams,
 ) -> Vec<SymbolInformation> {
     let mut symbols = Vec::new();
 
     for document in workspace.documents_by_uri.values() {
-        if let Some(subset) = workspace.subset(Arc::clone(&document.uri)) {
-            let mut buf = Vec::new();
-            find_latex_symbols(&subset, &mut buf);
-            find_bibtex_symbols(&subset, &mut buf);
-            let mut new_buf = Vec::new();
+        let request = FeatureRequest {
+            context: Arc::clone(&context),
+            uri: Arc::clone(&document.uri),
+            params: DocumentSymbolParams {
+                text_document: TextDocumentIdentifier::new(document.uri.as_ref().clone().into()),
+                partial_result_params: PartialResultParams::default(),
+                work_done_progress_params: WorkDoneProgressParams::default(),
+            },
+            workspace: workspace.slice(&document.uri),
+        };
 
-            for symbol in buf {
-                symbol.flatten(&mut new_buf);
-            }
+        let mut buf = Vec::new();
+        find_latex_symbols(&request, &mut buf);
+        find_bibtex_symbols(&request, &mut buf);
+        let mut new_buf = Vec::new();
 
-            for symbol in new_buf {
-                symbols.push(WorkspaceSymbol {
-                    search_text: symbol.search_text(),
-                    info: symbol.into_symbol_info(document.uri.as_ref().clone()),
-                });
-            }
+        for symbol in buf {
+            symbol.flatten(&mut new_buf);
+        }
+
+        for symbol in new_buf {
+            symbols.push(WorkspaceSymbol {
+                search_text: symbol.search_text(),
+                info: symbol.into_symbol_info(document.uri.as_ref().clone()),
+            });
         }
     }
 

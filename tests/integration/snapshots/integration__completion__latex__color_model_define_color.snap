@@ -1,16 +1,73 @@
 ---
 source: tests/integration/completion.rs
+assertion_line: 373
 expression: "complete_and_resolve(&server, uri, 1, 18)?"
-
 ---
 {
   "isIncomplete": false,
   "items": [
     {
-      "label": "gray",
+      "label": "HTML",
       "kind": 1,
       "preselect": false,
       "sortText": "00",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 18
+          },
+          "end": {
+            "line": 1,
+            "character": 18
+          }
+        },
+        "newText": "HTML"
+      }
+    },
+    {
+      "label": "RGB",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "01",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 18
+          },
+          "end": {
+            "line": 1,
+            "character": 18
+          }
+        },
+        "newText": "RGB"
+      }
+    },
+    {
+      "label": "cmyk",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "02",
+      "textEdit": {
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 18
+          },
+          "end": {
+            "line": 1,
+            "character": 18
+          }
+        },
+        "newText": "cmyk"
+      }
+    },
+    {
+      "label": "gray",
+      "kind": 1,
+      "preselect": false,
+      "sortText": "03",
       "textEdit": {
         "range": {
           "start": {
@@ -29,63 +86,6 @@ expression: "complete_and_resolve(&server, uri, 1, 18)?"
       "label": "rgb",
       "kind": 1,
       "preselect": false,
-      "sortText": "01",
-      "textEdit": {
-        "range": {
-          "start": {
-            "line": 1,
-            "character": 18
-          },
-          "end": {
-            "line": 1,
-            "character": 18
-          }
-        },
-        "newText": "rgb"
-      }
-    },
-    {
-      "label": "RGB",
-      "kind": 1,
-      "preselect": false,
-      "sortText": "02",
-      "textEdit": {
-        "range": {
-          "start": {
-            "line": 1,
-            "character": 18
-          },
-          "end": {
-            "line": 1,
-            "character": 18
-          }
-        },
-        "newText": "RGB"
-      }
-    },
-    {
-      "label": "HTML",
-      "kind": 1,
-      "preselect": false,
-      "sortText": "03",
-      "textEdit": {
-        "range": {
-          "start": {
-            "line": 1,
-            "character": 18
-          },
-          "end": {
-            "line": 1,
-            "character": 18
-          }
-        },
-        "newText": "HTML"
-      }
-    },
-    {
-      "label": "cmyk",
-      "kind": 1,
-      "preselect": false,
       "sortText": "04",
       "textEdit": {
         "range": {
@@ -98,7 +98,7 @@ expression: "complete_and_resolve(&server, uri, 1, 18)?"
             "character": 18
           }
         },
-        "newText": "cmyk"
+        "newText": "rgb"
       }
     }
   ]

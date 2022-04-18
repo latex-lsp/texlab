@@ -36,7 +36,7 @@ pub fn complete_citations<'a>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_bibtex() {
             for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()

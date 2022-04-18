@@ -113,9 +113,9 @@ impl BuildEngine {
         let lock = self.lock.lock().unwrap();
 
         let document = request
-            .subset
-            .documents
-            .iter()
+            .workspace
+            .documents_by_uri
+            .values()
             .find(|document| {
                 if let Some(data) = document.data.as_latex() {
                     data.extras.has_document_environment
@@ -204,13 +204,11 @@ impl BuildEngine {
                         .get(&request.main_document().uri)
                         .map(|guard| *guard)
                         .unwrap_or_default(),
-                    text_document: TextDocumentIdentifier::new(
-                        request.main_document().uri.as_ref().clone().into(),
-                    ),
+                    text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone().into()),
                 },
+                uri: request.uri,
                 context: request.context,
                 workspace: request.workspace,
-                subset: request.subset,
             };
             forward_search::execute_forward_search(request);
         }

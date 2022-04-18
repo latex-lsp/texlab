@@ -1,14 +1,19 @@
+use lsp_types::DocumentSymbolParams;
 use rowan::ast::AstNode;
 
 use crate::{
+    features::FeatureRequest,
     syntax::bibtex::{self, HasType},
-    BibtexEntryTypeCategory, LineIndexExt, WorkspaceSubset, LANGUAGE_DATA,
+    BibtexEntryTypeCategory, LineIndexExt, LANGUAGE_DATA,
 };
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_bibtex_symbols(subset: &WorkspaceSubset, buf: &mut Vec<InternalSymbol>) -> Option<()> {
-    let main_document = subset.documents.first()?;
+pub fn find_bibtex_symbols(
+    request: &FeatureRequest<DocumentSymbolParams>,
+    buf: &mut Vec<InternalSymbol>,
+) -> Option<()> {
+    let main_document = request.main_document();
     let data = main_document.data.as_bibtex()?;
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {

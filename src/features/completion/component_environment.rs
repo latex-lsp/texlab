@@ -10,7 +10,7 @@ pub fn complete_component_environments<'a>(
 ) -> Option<()> {
     let (_, range) = context.find_environment_name()?;
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
+    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
         for name in &component.environments {
             items.push(InternalCompletionItem::new(
                 range,

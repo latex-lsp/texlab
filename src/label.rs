@@ -5,7 +5,7 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     syntax::latex::{self, HasBrack, HasCurly},
-    WorkspaceSubset, LANGUAGE_DATA,
+    Workspace, LANGUAGE_DATA,
 };
 
 use self::LabelledObject::*;
@@ -124,13 +124,13 @@ impl RenderedLabel {
 }
 
 pub fn render_label(
-    subset: &WorkspaceSubset,
+    workspace: &Workspace,
     label_name: &str,
     mut label: Option<latex::LabelDefinition>,
 ) -> Option<RenderedLabel> {
-    let mut number = find_label_number(subset, label_name).map(ToString::to_string);
+    let mut number = find_label_number(workspace, label_name).map(ToString::to_string);
 
-    for document in &subset.documents {
+    for document in workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             label = label.or_else(|| {
                 find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), label_name)
@@ -143,7 +143,7 @@ pub fn render_label(
             .or_else(|| render_label_section(parent.clone(), &mut number))
             .or_else(|| render_label_enum_item(parent.clone(), &mut number))
             .or_else(|| render_label_equation(parent.clone(), &mut number))
-            .or_else(|| render_label_theorem(subset, parent, &mut number))
+            .or_else(|| render_label_theorem(workspace, parent, &mut number))
     })
 }
 
@@ -163,8 +163,8 @@ pub fn find_label_definition(
         })
 }
 
-pub fn find_label_number<'a>(subset: &'a WorkspaceSubset, label_name: &str) -> Option<&'a str> {
-    subset.documents.iter().find_map(|document| {
+pub fn find_label_number<'a>(workspace: &'a Workspace, label_name: &str) -> Option<&'a str> {
+    workspace.documents_by_uri.values().find_map(|document| {
         document
             .data
             .as_latex()
@@ -253,7 +253,7 @@ fn render_label_equation(
 }
 
 fn render_label_theorem(
-    subset: &WorkspaceSubset,
+    workspace: &Workspace,
     parent: latex::SyntaxNode,
     number: &mut Option<String>,
 ) -> Option<RenderedLabel> {
@@ -263,7 +263,7 @@ fn render_label_theorem(
 
     let environment_name = begin.name()?.key()?.to_string();
 
-    let theorem = subset.documents.iter().find_map(|document| {
+    let theorem = workspace.documents_by_uri.values().find_map(|document| {
         document.data.as_latex().and_then(|data| {
             data.extras
                 .theorem_environments

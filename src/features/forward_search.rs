@@ -45,9 +45,9 @@ pub fn execute_forward_search(
     }
 
     let root_document = request
-        .subset
-        .documents
-        .iter()
+        .workspace
+        .documents_by_uri
+        .values()
         .find(|document| {
             if let Some(data) = document.data.as_latex() {
                 data.extras.has_document_environment

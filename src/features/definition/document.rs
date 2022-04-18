@@ -16,9 +16,9 @@ pub fn goto_document_definition(
             for target in &include.targets {
                 if context
                     .request
-                    .subset
-                    .documents
-                    .iter()
+                    .workspace
+                    .documents_by_uri
+                    .values()
                     .any(|document| document.uri.as_ref() == target.as_ref())
                 {
                     return Some(vec![LocationLink {

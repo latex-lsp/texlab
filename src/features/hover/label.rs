@@ -9,7 +9,7 @@ pub fn find_label_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    let label = render_label(&context.request.subset, &name_text, None)?;
+    let label = render_label(&context.request.workspace, &name_text, None)?;
 
     Some(Hover {
         range: Some(main_document.line_index.line_col_lsp_range(name_range)),

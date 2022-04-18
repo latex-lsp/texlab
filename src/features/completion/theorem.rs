@@ -10,7 +10,7 @@ pub fn complete_theorem_environments<'a>(
 ) -> Option<()> {
     let (_, range) = context.find_environment_name()?;
 
-    for document in &context.request.subset.documents {
+    for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             for environment in &data.extras.theorem_environments {
                 items.push(InternalCompletionItem::new(

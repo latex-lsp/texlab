@@ -95,7 +95,14 @@ pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionL
     preselect(&context, &mut items);
     score(&context, &mut items);
 
-    items.sort_by_key(|item| (!item.preselect, -item.score.unwrap_or(std::i64::MIN + 1)));
+    items.sort_by(|a, b| {
+        a.preselect
+            .cmp(&b.preselect)
+            .reverse()
+            .then_with(|| a.score.cmp(&b.score).reverse())
+            .then_with(|| a.data.label().cmp(b.data.label()))
+    });
+    // items.sort_by_key(|item| (!item.preselect, -item.score.unwrap_or(std::i64::MIN + 1)));
     let items: Vec<_> = items
         .into_iter()
         .take(COMPLETION_LIMIT)

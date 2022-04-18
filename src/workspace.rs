@@ -15,11 +15,6 @@ pub enum WorkspaceEvent {
     Changed(Workspace, Document),
 }
 
-#[derive(Debug, Clone)]
-pub struct WorkspaceSubset {
-    pub documents: Vec<Document>,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
     pub documents_by_uri: im::HashMap<Arc<Uri>, Document>,
@@ -106,57 +101,68 @@ impl Workspace {
         })
     }
 
-    pub fn subset(&self, uri: Arc<Uri>) -> Option<WorkspaceSubset> {
-        let all_current_uris: Vec<Arc<Uri>> = self.documents_by_uri.keys().cloned().collect();
+    pub fn slice(&self, uri: &Uri) -> Self {
+        let all_uris: Vec<_> = self.documents_by_uri.keys().cloned().collect();
 
-        let mut edges = Vec::new();
-        for (i, uri) in all_current_uris.iter().enumerate() {
-            let document = self.documents_by_uri.get(uri);
-            if let Some(data) = document
-                .as_ref()
-                .and_then(|document| document.data.as_latex())
-            {
-                let extras = &data.extras;
-                let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];
-                for link in &extras.explicit_links {
-                    all_targets.push(&link.targets);
-                }
+        all_uris
+            .iter()
+            .position(|u| u.as_ref() == uri)
+            .map(|start| {
+                let mut edges = Vec::new();
+                for (i, uri) in all_uris.iter().enumerate() {
+                    let document = self.documents_by_uri.get(uri);
+                    if let Some(data) = document
+                        .as_ref()
+                        .and_then(|document| document.data.as_latex())
+                    {
+                        let extras = &data.extras;
+                        let mut all_targets =
+                            vec![&extras.implicit_links.aux, &extras.implicit_links.log];
+                        for link in &extras.explicit_links {
+                            all_targets.push(&link.targets);
+                        }
 
-                for targets in all_targets {
-                    for target in targets {
-                        if let Some(j) = all_current_uris.iter().position(|uri| uri == target) {
-                            edges.push((i, j, ()));
-                            break;
+                        for targets in all_targets {
+                            for target in targets {
+                                if let Some(j) = all_uris.iter().position(|uri| uri == target) {
+                                    edges.push((i, j, ()));
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        let graph = UnGraphMap::from_edges(edges);
-        let start = all_current_uris.iter().position(|u| *u == uri)?;
-        let mut dfs = Dfs::new(&graph, start);
-        let mut documents = Vec::new();
-        while let Some(i) = dfs.next(&graph) {
-            documents.push(self.documents_by_uri.get(&all_current_uris[i]).cloned()?);
-        }
+                let mut slice = Workspace::default();
+                let graph = UnGraphMap::from_edges(edges);
+                let mut dfs = Dfs::new(&graph, start);
+                while let Some(i) = dfs.next(&graph) {
+                    let uri = &all_uris[i];
+                    let doc = self.documents_by_uri[uri].clone();
+                    slice.documents_by_uri.insert(Arc::clone(uri), doc);
+                }
 
-        Some(WorkspaceSubset { documents })
+                slice
+            })
+            .unwrap_or_default()
     }
 
-    fn has_parent(&self, uri: Arc<Uri>) -> Option<bool> {
-        let subset = self.subset(Arc::clone(&uri))?;
-        Some(subset.documents.iter().any(|document| {
-            document.data.as_latex().map_or(false, |data| {
-                data.extras.has_document_environment
-                    && !data
-                        .extras
-                        .explicit_links
-                        .iter()
-                        .filter_map(|link| link.as_component_name())
-                        .any(|name| name == "subfiles.cls")
+    fn has_parent(&self, uri: &Uri) -> Option<Document> {
+        self.slice(uri)
+            .documents_by_uri
+            .values()
+            .find(|document| {
+                document.data.as_latex().map_or(false, |data| {
+                    data.extras.has_document_environment
+                        && !data
+                            .extras
+                            .explicit_links
+                            .iter()
+                            .filter_map(|link| link.as_component_name())
+                            .any(|name| name == "subfiles.cls")
+                })
             })
-        }))
+            .cloned()
     }
 
     fn expand_parent(&mut self, context: &ServerContext, document: &Document) {
@@ -168,7 +174,7 @@ impl Workspace {
 
         if document.uri.scheme() == "file" {
             if let Ok(mut path) = document.uri.to_file_path() {
-                while path.pop() && !self.has_parent(Arc::clone(&document.uri)).unwrap_or(false) {
+                while path.pop() && self.has_parent(&document.uri).is_none() {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()

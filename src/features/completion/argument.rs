@@ -37,7 +37,7 @@ pub fn complete_arguments<'a>(
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.subset) {
+    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
         for component_command in component
             .commands
             .iter()

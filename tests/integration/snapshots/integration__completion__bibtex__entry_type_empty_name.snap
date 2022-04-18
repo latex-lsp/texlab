@@ -1,14 +1,18 @@
 ---
 source: tests/integration/completion.rs
+assertion_line: 95
 expression: "complete_and_resolve(&server, uri, 0, 1)?"
-
 ---
 {
   "isIncomplete": true,
   "items": [
     {
-      "label": "preamble",
+      "label": "article",
       "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "An article in a journal, magazine, newspaper, or other periodical which forms a \n self-contained unit with its own title. The title of the periodical is given in the \n journaltitle field. If the issue has its own title in addition to the main title of \n the periodical, it goes in the issuetitle field. Note that editor and related \n fields refer to the journal while translator and related fields refer to the article.\n\nRequired fields: `author`, `title`, `journaltitle`, `year/date`"
+      },
       "preselect": false,
       "sortText": "00",
       "textEdit": {
@@ -22,12 +26,16 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "preamble"
+        "newText": "article"
       }
     },
     {
-      "label": "string",
+      "label": "artwork",
       "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "Works of the visual arts such as paintings, sculpture, and installations."
+      },
       "preselect": false,
       "sortText": "01",
       "textEdit": {
@@ -41,12 +49,16 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "string"
+        "newText": "artwork"
       }
     },
     {
-      "label": "comment",
+      "label": "audio",
       "kind": 1,
+      "documentation": {
+        "kind": "markdown",
+        "value": "Audio recordings, typically on audio cd, dvd, audio cassette, or similar media. See\n also `@music`."
+      },
       "preselect": false,
       "sortText": "02",
       "textEdit": {
@@ -60,15 +72,15 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "comment"
+        "newText": "audio"
       }
     },
     {
-      "label": "article",
+      "label": "bibnote",
       "kind": 1,
       "documentation": {
         "kind": "markdown",
-        "value": "An article in a journal, magazine, newspaper, or other periodical which forms a \n self-contained unit with its own title. The title of the periodical is given in the \n journaltitle field. If the issue has its own title in addition to the main title of \n the periodical, it goes in the issuetitle field. Note that editor and related \n fields refer to the journal while translator and related fields refer to the article.\n\nRequired fields: `author`, `title`, `journaltitle`, `year/date`"
+        "value": "This special entry type is not meant to be used in the `bib` file like other types. It is\n provided for third-party packages like `notes2bib` which merge notes into the bibliography.\n The notes should go into the `note` field. Be advised that the `@bibnote`\n type is not related to the `defbibnote` command in any way. `defbibnote`\n is for adding comments at the beginning or the end of the bibliography, whereas\n the `@bibnote` type is meant for packages which render endnotes as bibliography\n entries."
       },
       "preselect": false,
       "sortText": "03",
@@ -83,7 +95,7 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "article"
+        "newText": "bibnote"
       }
     },
     {
@@ -110,11 +122,11 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
       }
     },
     {
-      "label": "mvbook",
+      "label": "bookinbook",
       "kind": 1,
       "documentation": {
         "kind": "markdown",
-        "value": "A multi-volume `@book`. For backwards compatibility, multi-volume books are also\n supported by the entry type `@book`. However, it is advisable to make use of the\n dedicated entry type `@mvbook`.\n\nRequired fields: `author`, `title`, `year/date`"
+        "value": "This type is similar to `@inbook` but intended for works originally published as a\n stand-alone book. A typical example are books reprinted in the collected works of\n an author."
       },
       "preselect": false,
       "sortText": "05",
@@ -129,15 +141,15 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "mvbook"
+        "newText": "bookinbook"
       }
     },
     {
-      "label": "inbook",
+      "label": "booklet",
       "kind": 1,
       "documentation": {
         "kind": "markdown",
-        "value": "A part of a book which forms a self-contained unit with its own title. Note that the\n profile of this entry type is different from standard BibTeX.\n\nRequired fields: `author`, `title`, `booktitle`, `year/date`"
+        "value": "A book-like work without a formal publisher or sponsoring institution. Use the field\n howpublished to supply publishing information in free format, if applicable. The\n field type may be useful as well.\n\nRequired fields: `author/editor`, `title`, `year/date`"
       },
       "preselect": false,
       "sortText": "06",
@@ -152,7 +164,7 @@ expression: "complete_and_resolve(&server, uri, 0, 1)?"
             "character": 1
           }
         },
-        "newText": "inbook"
+        "newText": "booklet"
       }
     }
   ]
