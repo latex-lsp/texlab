@@ -89,7 +89,7 @@ impl ComponentDatabase {
             .iter()
             .find(|metadata| metadata.name == name)?;
 
-        let desc = metadata.description.to_owned()?;
+        let desc = metadata.description.clone()?;
         Some(MarkupContent {
             kind: MarkupKind::PlainText,
             value: desc,

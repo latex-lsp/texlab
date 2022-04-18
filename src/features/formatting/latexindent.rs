@@ -15,7 +15,7 @@ pub fn format_with_latexindent(
     let directory = tempdir().ok()?;
     let document = request.main_document();
 
-    let options = request.context.options.read().unwrap();
+    let options = &request.workspace.options;
     let current_dir = options
         .root_directory
         .as_ref()
@@ -40,8 +40,6 @@ pub fn format_with_latexindent(
     };
 
     let modify_line_breaks = options.latexindent.modify_line_breaks;
-
-    drop(options);
 
     let path = directory.path();
     let _ = fs::copy(

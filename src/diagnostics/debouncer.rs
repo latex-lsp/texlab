@@ -7,7 +7,7 @@ use std::{
 use crossbeam_channel::Sender;
 use dashmap::DashMap;
 
-use crate::{Document, ServerContext, Uri, Workspace};
+use crate::{Document, Uri, Workspace};
 
 pub enum DiagnosticsMessage {
     Analyze {
@@ -23,7 +23,7 @@ pub struct DiagnosticsDebouncer {
 }
 
 impl DiagnosticsDebouncer {
-    pub fn launch<A>(context: Arc<ServerContext>, action: A) -> Self
+    pub fn launch<A>(action: A) -> Self
     where
         A: Fn(Workspace, Document) + Send + Clone + 'static,
     {
@@ -37,14 +37,7 @@ impl DiagnosticsDebouncer {
                 document,
             }) = receiver.recv()
             {
-                let delay = {
-                    context
-                        .options
-                        .read()
-                        .unwrap()
-                        .diagnostics_delay
-                        .unwrap_or(300)
-                };
+                let delay = workspace.options.diagnostics_delay.unwrap_or(300);
 
                 if let Some(time) = last_task_time_by_uri.get(&document.uri) {
                     if time.elapsed().as_millis() < delay as u128 {

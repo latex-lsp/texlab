@@ -96,16 +96,14 @@ fn current_dir(
 ) -> Option<PathBuf> {
     let mut path = context
         .request
-        .context
+        .workspace
         .options
-        .read()
-        .unwrap()
         .root_directory
         .as_ref()
         .map(|root_directory| {
             context
                 .request
-                .context
+                .workspace
                 .current_directory
                 .join(root_directory)
         })

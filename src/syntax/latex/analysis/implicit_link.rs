@@ -17,10 +17,10 @@ fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<
         let file_stem = file_path.file_stem()?;
         let aux_name = format!("{}.{}", file_stem.to_str()?, extension);
 
-        let options = context.inner.options.read().unwrap();
+        let options = &context.workspace.options;
         if let Some(root_dir) = options.root_directory.as_ref() {
             let path = context
-                .inner
+                .workspace
                 .current_directory
                 .join(root_dir)
                 .join(&aux_name);
@@ -29,7 +29,7 @@ fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<
 
         if let Some(build_dir) = options.aux_directory.as_ref() {
             let path = context
-                .inner
+                .workspace
                 .current_directory
                 .join(build_dir)
                 .join(&aux_name);

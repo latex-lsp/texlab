@@ -28,15 +28,7 @@ pub struct ForwardSearchResult {
 pub fn execute_forward_search(
     request: FeatureRequest<TextDocumentPositionParams>,
 ) -> Option<ForwardSearchResult> {
-    let options = {
-        request
-            .context
-            .options
-            .read()
-            .unwrap()
-            .forward_search
-            .clone()
-    };
+    let options = &request.workspace.options.forward_search;
 
     if options.executable.is_none() || options.args.is_none() {
         return Some(ForwardSearchResult {
@@ -76,14 +68,15 @@ pub fn execute_forward_search(
 
     let args: Vec<String> = options
         .args
+        .as_ref()
         .unwrap()
-        .into_iter()
+        .iter()
         .flat_map(|arg| {
             replace_placeholder(&tex_path, &pdf_path, request.params.position.line, arg)
         })
         .collect();
 
-    let status = match run_process(options.executable.unwrap(), args) {
+    let status = match run_process(options.executable.as_ref().unwrap(), args) {
         Ok(()) => ForwardSearchStatus::SUCCESS,
         Err(why) => {
             error!("Unable to execute forward search: {}", why);
@@ -97,10 +90,10 @@ fn replace_placeholder(
     tex_file: &Path,
     pdf_file: &Path,
     line_number: u32,
-    argument: String,
+    argument: &str,
 ) -> Option<String> {
     let result = if argument.starts_with('"') || argument.ends_with('"') {
-        argument
+        argument.to_string()
     } else {
         argument
             .replace("%f", tex_file.to_str()?)
@@ -110,7 +103,7 @@ fn replace_placeholder(
     Some(result)
 }
 
-fn run_process(executable: String, args: Vec<String>) -> io::Result<()> {
+fn run_process(executable: &str, args: Vec<String>) -> io::Result<()> {
     Command::new(executable)
         .args(args)
         .stdin(Stdio::null())

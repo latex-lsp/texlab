@@ -3,7 +3,6 @@ mod capabilities;
 pub mod citation;
 mod client;
 pub mod component_db;
-mod context;
 pub mod diagnostics;
 mod dispatch;
 pub mod distro;
@@ -24,7 +23,6 @@ mod workspace;
 
 pub use self::{
     capabilities::ClientCapabilitiesExt,
-    context::ServerContext,
     document::*,
     label::*,
     lang_data::*,

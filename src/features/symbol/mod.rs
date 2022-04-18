@@ -10,7 +10,7 @@ use lsp_types::{
     TextDocumentIdentifier, WorkDoneProgressParams, WorkspaceSymbolParams,
 };
 
-use crate::{ClientCapabilitiesExt, ServerContext, Uri, Workspace};
+use crate::{ClientCapabilitiesExt, Uri, Workspace};
 
 use self::{
     bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
@@ -23,10 +23,8 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
     find_latex_symbols(&req, &mut buf);
     find_bibtex_symbols(&req, &mut buf);
     if req
-        .context
+        .workspace
         .client_capabilities
-        .lock()
-        .unwrap()
         .has_hierarchical_document_symbol_support()
     {
         DocumentSymbolResponse::Nested(
@@ -55,7 +53,6 @@ struct WorkspaceSymbol {
 }
 
 pub fn find_workspace_symbols(
-    context: Arc<ServerContext>,
     workspace: &Workspace,
     params: &WorkspaceSymbolParams,
 ) -> Vec<SymbolInformation> {
@@ -63,7 +60,6 @@ pub fn find_workspace_symbols(
 
     for document in workspace.documents_by_uri.values() {
         let request = FeatureRequest {
-            context: Arc::clone(&context),
             uri: Arc::clone(&document.uri),
             params: DocumentSymbolParams {
                 text_document: TextDocumentIdentifier::new(document.uri.as_ref().clone().into()),

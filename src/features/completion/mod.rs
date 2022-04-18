@@ -114,14 +114,11 @@ pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionL
 
     let is_incomplete = if context
         .request
-        .context
+        .workspace
         .client_info
-        .lock()
-        .unwrap()
         .as_ref()
-        .map(|info| info.name.as_str())
-        .unwrap_or_default()
-        == "Visual Studio Code"
+        .as_ref()
+        .map_or(false, |info| info.name.as_str() == "Visual Studio Code")
     {
         true
     } else {
@@ -314,10 +311,8 @@ fn convert_internal_items(
         InternalCompletionItemData::BeginCommand => {
             if context
                 .request
-                .context
+                .workspace
                 .client_capabilities
-                .lock()
-                .unwrap()
                 .text_document
                 .as_ref()
                 .and_then(|cap| cap.completion.as_ref())

@@ -13,11 +13,11 @@ pub fn format_source_code(
     request: FeatureRequest<DocumentFormattingParams>,
 ) -> Option<Vec<TextEdit>> {
     let mut edits = None;
-    if request.context.options.read().unwrap().bibtex_formatter == BibtexFormatter::Texlab {
+    if request.workspace.options.bibtex_formatter == BibtexFormatter::Texlab {
         edits = edits.or_else(|| format_bibtex_internal(&request));
     }
 
-    if request.context.options.read().unwrap().latex_formatter == LatexFormatter::Texlab {
+    if request.workspace.options.latex_formatter == LatexFormatter::Texlab {
         edits = edits.or_else(|| Some(vec![]));
     }
 

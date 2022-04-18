@@ -16,7 +16,7 @@ mod symbol;
 
 use std::sync::Arc;
 
-use crate::{Document, ServerContext, Uri, Workspace};
+use crate::{Document, Uri, Workspace};
 
 #[cfg(feature = "completion")]
 pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
@@ -36,7 +36,6 @@ pub use self::{
 
 #[derive(Clone)]
 pub struct FeatureRequest<P> {
-    pub context: Arc<ServerContext>,
     pub params: P,
     pub workspace: Workspace,
     pub uri: Arc<Uri>,
@@ -61,10 +60,7 @@ mod testing {
     };
     use typed_builder::TypedBuilder;
 
-    use crate::{
-        distro::Resolver, DocumentLanguage, DocumentVisibility, Options, ServerContext, Uri,
-        Workspace,
-    };
+    use crate::{distro::Resolver, DocumentLanguage, DocumentVisibility, Options, Uri, Workspace};
 
     use super::*;
 
@@ -124,29 +120,22 @@ mod testing {
             TextDocumentIdentifier::new(uri.as_ref().clone().into())
         }
 
-        fn context(&self) -> Arc<ServerContext> {
-            let cx = ServerContext::new(self.current_directory.clone());
-            *cx.client_capabilities.lock().unwrap() = self.client_capabilities.clone();
-            *cx.client_info.lock().unwrap() = self.client_info.clone();
-            *cx.options.write().unwrap() = self.options();
-            *cx.resolver.lock().unwrap() = self.resolver.clone();
-            Arc::new(cx)
-        }
+        fn workspace(&self) -> Workspace {
+            let mut workspace = Workspace {
+                client_capabilities: Arc::new(self.client_capabilities.clone()),
+                client_info: Arc::new(self.client_info.clone()),
+                options: Arc::new(self.options()),
+                resolver: Arc::new(self.resolver.clone()),
+                ..Workspace::default()
+            };
 
-        fn workspace(&self, cx: &ServerContext) -> Workspace {
-            let mut workspace = Workspace::default();
             for (name, source_code) in &self.files {
                 let uri = self.uri(name);
                 let path = uri.to_file_path().unwrap();
+                let text = Arc::new(source_code.trim().to_string());
                 let language = DocumentLanguage::by_path(&path).expect("unknown document language");
                 workspace
-                    .open(
-                        cx,
-                        uri,
-                        Arc::new(source_code.trim().to_string()),
-                        language,
-                        DocumentVisibility::Visible,
-                    )
+                    .open(uri, text, language, DocumentVisibility::Visible)
                     .unwrap();
             }
 
@@ -154,11 +143,9 @@ mod testing {
         }
 
         fn request<P>(&self, params: P) -> FeatureRequest<P> {
-            let context = self.context();
-            let workspace = self.workspace(&context);
+            let workspace = self.workspace();
             let uri = self.uri(self.main);
             FeatureRequest {
-                context,
                 params,
                 workspace: workspace.slice(&uri),
                 uri,

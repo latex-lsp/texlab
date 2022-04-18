@@ -138,14 +138,10 @@ impl BuildEngine {
         }
         let path = document.uri.to_file_path().unwrap();
 
-        let supports_progress = {
-            request
-                .context
-                .client_capabilities
-                .lock()
-                .unwrap()
-                .has_work_done_progress_support()
-        };
+        let supports_progress = request
+            .workspace
+            .client_capabilities
+            .has_work_done_progress_support();
 
         let token = format!("texlab-build-{}", Uuid::new_v4());
         let progress_reporter = ProgressReporter {
@@ -156,7 +152,7 @@ impl BuildEngine {
         };
         progress_reporter.start(&document.uri)?;
 
-        let options = { request.context.options.read().unwrap().clone() };
+        let options = &request.workspace.options;
 
         let build_dir = options
             .root_directory
@@ -207,7 +203,6 @@ impl BuildEngine {
                     text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone().into()),
                 },
                 uri: request.uri,
-                context: request.context,
                 workspace: request.workspace,
             };
             forward_search::execute_forward_search(request);

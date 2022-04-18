@@ -2,12 +2,13 @@ use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
+use lsp_types::{ClientCapabilities, ClientInfo};
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    component_db::COMPONENT_DATABASE, Document, DocumentLanguage, DocumentVisibility,
-    ServerContext, Uri,
+    component_db::COMPONENT_DATABASE, distro::Resolver, Document, DocumentLanguage,
+    DocumentVisibility, Options, Uri,
 };
 
 #[derive(Debug, Clone)]
@@ -19,19 +20,23 @@ pub enum WorkspaceEvent {
 pub struct Workspace {
     pub documents_by_uri: im::HashMap<Arc<Uri>, Document>,
     pub listeners: im::Vector<Sender<WorkspaceEvent>>,
+    pub current_directory: Arc<PathBuf>,
+    pub client_capabilities: Arc<ClientCapabilities>,
+    pub client_info: Arc<Option<ClientInfo>>,
+    pub options: Arc<Options>,
+    pub resolver: Arc<Resolver>,
 }
 
 impl Workspace {
     pub fn open(
         &mut self,
-        context: &ServerContext,
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
         visibility: DocumentVisibility,
     ) -> Result<Document> {
         log::debug!("(Re)Loading document: {}", uri);
-        let document = Document::parse(context, Arc::clone(&uri), text, language, visibility);
+        let document = Document::parse(self, Arc::clone(&uri), text, language, visibility);
 
         self.documents_by_uri
             .insert(Arc::clone(&uri), document.clone());
@@ -40,12 +45,12 @@ impl Workspace {
             listener.send(WorkspaceEvent::Changed(self.clone(), document.clone()))?;
         }
 
-        self.expand_parent(context, &document);
-        self.expand_children(context, &document);
+        self.expand_parent(&document);
+        self.expand_children(&document);
         Ok(document)
     }
 
-    pub fn reload(&mut self, context: &ServerContext, path: PathBuf) -> Result<Option<Document>> {
+    pub fn reload(&mut self, path: PathBuf) -> Result<Option<Document>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
 
         if self.is_open(&uri) && !uri.as_str().ends_with(".log") {
@@ -56,7 +61,6 @@ impl Workspace {
             let data = fs::read(&path)?;
             let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
             Ok(Some(self.open(
-                context,
                 uri,
                 text,
                 language,
@@ -67,7 +71,7 @@ impl Workspace {
         }
     }
 
-    pub fn load(&mut self, context: &ServerContext, path: PathBuf) -> Result<Option<Document>> {
+    pub fn load(&mut self, path: PathBuf) -> Result<Option<Document>> {
         let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
 
         if let Some(document) = self.documents_by_uri.get(&uri).cloned() {
@@ -78,7 +82,6 @@ impl Workspace {
         let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
         if let Some(language) = DocumentLanguage::by_path(&path) {
             Ok(Some(self.open(
-                context,
                 uri,
                 text,
                 language,
@@ -133,7 +136,8 @@ impl Workspace {
                     }
                 }
 
-                let mut slice = Workspace::default();
+                let mut slice = self.clone();
+                slice.documents_by_uri = im::HashMap::new();
                 let graph = UnGraphMap::from_edges(edges);
                 let mut dfs = Dfs::new(&graph, start);
                 while let Some(i) = dfs.next(&graph) {
@@ -165,7 +169,7 @@ impl Workspace {
             .cloned()
     }
 
-    fn expand_parent(&mut self, context: &ServerContext, document: &Document) {
+    fn expand_parent(&mut self, document: &Document) {
         let all_current_paths = self
             .documents_by_uri
             .values()
@@ -189,14 +193,14 @@ impl Workspace {
                         })
                         .filter(|path| !all_current_paths.contains(path))
                         .for_each(|path| {
-                            let _ = self.load(context, path);
+                            let _ = self.load(path);
                         });
                 }
             }
         }
     }
 
-    fn expand_children(&mut self, context: &ServerContext, document: &Document) {
+    fn expand_children(&mut self, document: &Document) {
         if let Some(data) = document.data.as_latex() {
             let extras = &data.extras;
             let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];
@@ -216,7 +220,7 @@ impl Workspace {
                     .filter(|uri| uri.scheme() == "file" && uri.fragment().is_none())
                     .filter_map(|uri| uri.to_file_path().ok())
                 {
-                    if self.load(context, path).is_ok() {
+                    if self.load(path).is_ok() {
                         break;
                     }
                 }

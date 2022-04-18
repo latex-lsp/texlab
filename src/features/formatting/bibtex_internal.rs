@@ -21,10 +21,8 @@ pub fn format_bibtex_internal(
 
     let line_length = {
         request
-            .context
+            .workspace
             .options
-            .read()
-            .unwrap()
             .formatter_line_length
             .map(|value| {
                 if value <= 0 {

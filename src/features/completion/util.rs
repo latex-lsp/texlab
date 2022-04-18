@@ -31,10 +31,8 @@ pub fn image_documentation(
 
 fn supports_images(request: &FeatureRequest<CompletionParams>) -> bool {
     request
-        .context
+        .workspace
         .client_capabilities
-        .lock()
-        .unwrap()
         .text_document
         .as_ref()
         .and_then(|cap| cap.completion.as_ref())
@@ -48,10 +46,8 @@ pub fn adjust_kind(
     kind: CompletionItemKind,
 ) -> CompletionItemKind {
     if let Some(value_set) = request
-        .context
+        .workspace
         .client_capabilities
-        .lock()
-        .unwrap()
         .text_document
         .as_ref()
         .and_then(|cap| cap.completion.as_ref())

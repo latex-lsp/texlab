@@ -107,17 +107,18 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::{DocumentLanguage, DocumentVisibility, ServerContext};
+    use crate::{DocumentLanguage, DocumentVisibility};
 
     use super::*;
 
     #[test]
     fn test_no_cycles() -> Result<()> {
-        let context = ServerContext::new(std::env::temp_dir());
-        let mut workspace = Workspace::default();
+        let mut workspace = Workspace {
+            current_directory: Arc::new(std::env::temp_dir()),
+            ..Workspace::default()
+        };
 
         let a = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
@@ -125,7 +126,6 @@ mod tests {
         )?;
 
         let b = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
@@ -133,7 +133,6 @@ mod tests {
         )?;
 
         let c = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{b}\include{a}"#.to_string()),
             DocumentLanguage::Latex,
@@ -150,11 +149,12 @@ mod tests {
 
     #[test]
     fn test_cycles() -> Result<()> {
-        let context = ServerContext::new(std::env::temp_dir());
-        let mut workspace = Workspace::default();
+        let mut workspace = Workspace {
+            current_directory: Arc::new(std::env::temp_dir()),
+            ..Workspace::default()
+        };
 
         let a = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
@@ -162,7 +162,6 @@ mod tests {
         )?;
 
         let b = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
@@ -170,7 +169,6 @@ mod tests {
         )?;
 
         let c = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
@@ -187,11 +185,12 @@ mod tests {
 
     #[test]
     fn test_multiple_roots() -> Result<()> {
-        let context = ServerContext::new(std::env::temp_dir());
-        let mut workspace = Workspace::default();
+        let mut workspace = Workspace {
+            current_directory: Arc::new(std::env::temp_dir()),
+            ..Workspace::default()
+        };
 
         let a = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
@@ -199,7 +198,6 @@ mod tests {
         )?;
 
         let b = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/b.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
@@ -207,7 +205,6 @@ mod tests {
         )?;
 
         let c = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/c.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
@@ -215,7 +212,6 @@ mod tests {
         )?;
 
         let d = workspace.open(
-            &context,
             Arc::new(Uri::parse("http://example.com/d.tex")?),
             Arc::new(r#"\include{c}"#.to_string()),
             DocumentLanguage::Latex,

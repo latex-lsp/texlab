@@ -8,7 +8,7 @@ use crate::{
         bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
     },
-    DocumentLanguage, ServerContext, Uri,
+    DocumentLanguage, Uri, Workspace,
 };
 
 #[derive(Debug, Clone)]
@@ -86,7 +86,7 @@ impl fmt::Debug for Document {
 
 impl Document {
     pub fn parse(
-        context: &ServerContext,
+        workspace: &Workspace,
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
@@ -98,9 +98,9 @@ impl Document {
                 let green = latex::parse(&text).green;
                 let root = latex::SyntaxNode::new_root(green.clone());
 
-                let base_uri = match &context.options.read().unwrap().root_directory {
+                let base_uri = match &workspace.options.root_directory {
                     Some(root_dir) => {
-                        let root_dir = context.current_directory.join(&root_dir);
+                        let root_dir = workspace.current_directory.join(&root_dir);
                         Uri::from_directory_path(root_dir)
                             .map(Arc::new)
                             .unwrap_or_else(|()| Arc::clone(&uri))
@@ -109,7 +109,7 @@ impl Document {
                 };
 
                 let mut context = LatexAnalyzerContext {
-                    inner: context,
+                    workspace,
                     extras: latex::Extras::default(),
                     document_uri: Arc::clone(&uri),
                     base_uri,

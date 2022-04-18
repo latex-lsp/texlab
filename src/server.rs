@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 use log::{error, info, warn};
 use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
@@ -25,13 +25,20 @@ use crate::{
     },
     req_queue::{IncomingData, ReqQueue},
     ClientCapabilitiesExt, DocumentLanguage, DocumentVisibility, LineIndex, LineIndexExt, Options,
-    ServerContext, Uri, Workspace, WorkspaceEvent,
+    Uri, Workspace, WorkspaceEvent,
 };
+
+#[derive(Debug)]
+enum InternalMessage {
+    SetDistro(Distribution),
+    SetOptions(Options),
+}
 
 #[derive(Clone)]
 pub struct Server {
     connection: Arc<Connection>,
-    context: Arc<ServerContext>,
+    internal_tx: Sender<InternalMessage>,
+    internal_rx: Receiver<InternalMessage>,
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Workspace,
     static_debouncer: Arc<DiagnosticsDebouncer>,
@@ -47,26 +54,26 @@ impl Server {
         current_dir: PathBuf,
         load_resolver: bool,
     ) -> Result<Self> {
-        let context = Arc::new(ServerContext::new(current_dir));
         let req_queue = Arc::default();
-        let workspace = Workspace::default();
+        let workspace = Workspace {
+            current_directory: Arc::new(current_dir),
+            ..Workspace::default()
+        };
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
 
         let static_debouncer = Arc::new(create_static_debouncer(
             Arc::clone(&diag_manager),
             &connection,
-            Arc::clone(&context),
         ));
 
-        let chktex_debouncer = Arc::new(create_chktex_debouncer(
-            diag_manager,
-            &connection,
-            Arc::clone(&context),
-        ));
+        let chktex_debouncer = Arc::new(create_chktex_debouncer(diag_manager, &connection));
+
+        let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
 
         Ok(Self {
             connection: Arc::new(connection),
-            context,
+            internal_tx,
+            internal_rx,
             req_queue,
             workspace,
             static_debouncer,
@@ -77,8 +84,9 @@ impl Server {
         })
     }
 
-    fn spawn(&self, job: impl FnOnce() + Send + 'static) {
-        self.pool.lock().unwrap().execute(job);
+    fn spawn(&self, job: impl FnOnce(Self) + Send + 'static) {
+        let server = self.clone();
+        self.pool.lock().unwrap().execute(move || job(server));
     }
 
     fn capabilities(&self) -> ServerCapabilities {
@@ -131,8 +139,8 @@ impl Server {
         let (id, params) = self.connection.initialize_start()?;
         let params: InitializeParams = serde_json::from_value(params)?;
 
-        *self.context.client_capabilities.lock().unwrap() = params.capabilities;
-        *self.context.client_info.lock().unwrap() = params.client_info;
+        self.workspace.client_capabilities = Arc::new(params.capabilities);
+        self.workspace.client_info = Arc::new(params.client_info);
 
         let result = InitializeResult {
             capabilities: self.capabilities(),
@@ -144,35 +152,33 @@ impl Server {
         self.connection
             .initialize_finish(id, serde_json::to_value(result)?)?;
 
-        let cx = Arc::clone(&self.context);
         if self.load_resolver {
-            self.spawn(move || {
+            self.spawn(move |server| {
                 let distro = Distribution::detect();
                 info!("Detected distribution: {}", distro.kind);
-                *cx.resolver.lock().unwrap() = distro.resolver;
+
+                server
+                    .internal_tx
+                    .send(InternalMessage::SetDistro(distro))
+                    .unwrap();
             });
         }
 
         self.register_diagnostics_handler();
 
-        let server = self.clone();
-        self.spawn(move || {
+        self.spawn(move |server| {
             server.register_config_capability();
             server.register_file_watching();
+            server.pull_config();
         });
-
-        self.pull_config();
-        self.reparse_all()?;
 
         Ok(())
     }
 
     fn register_file_watching(&self) {
         if self
-            .context
+            .workspace
             .client_capabilities
-            .lock()
-            .unwrap()
             .has_file_watching_support()
         {
             let options = DidChangeWatchedFilesRegistrationOptions {
@@ -205,9 +211,11 @@ impl Server {
     }
 
     fn register_config_capability(&self) {
-        let client_capabilities = self.context.client_capabilities.lock().unwrap();
-        if client_capabilities.has_push_configuration_support() {
-            drop(client_capabilities);
+        if self
+            .workspace
+            .client_capabilities
+            .has_push_configuration_support()
+        {
             let reg = Registration {
                 id: "pull-config".to_string(),
                 method: DidChangeConfiguration::METHOD.to_string(),
@@ -258,10 +266,8 @@ impl Server {
 
     fn pull_config(&self) {
         if !self
-            .context
+            .workspace
             .client_capabilities
-            .lock()
-            .unwrap()
             .has_pull_configuration_support()
         {
             return;
@@ -281,7 +287,7 @@ impl Server {
         ) {
             Ok(mut json) => {
                 let value = json.pop().expect("invalid configuration request");
-                let new_options = match serde_json::from_value(value) {
+                let options = match serde_json::from_value(value) {
                     Ok(new_options) => new_options,
                     Err(why) => {
                         warn!("Invalid configuration section \"texlab\": {}", why);
@@ -289,8 +295,9 @@ impl Server {
                     }
                 };
 
-                let mut options = self.context.options.write().unwrap();
-                *options = new_options;
+                self.internal_tx
+                    .send(InternalMessage::SetOptions(options))
+                    .unwrap();
             }
             Err(why) => {
                 error!("Retrieving configuration failed: {}", why);
@@ -316,7 +323,7 @@ impl Server {
                 let uri = Uri::from(change.uri);
                 match change.typ {
                     FileChangeType::CREATED | FileChangeType::CHANGED => {
-                        self.workspace.reload(&self.context, path)?;
+                        self.workspace.reload(path)?;
                     }
                     FileChangeType::DELETED => {
                         self.workspace.documents_by_uri.remove(&uri);
@@ -330,14 +337,18 @@ impl Server {
     }
 
     fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
-        let client_capabilities = { self.context.client_capabilities.lock().unwrap().clone() };
-        if client_capabilities.has_pull_configuration_support() {
-            self.pull_config();
-            self.reparse_all()?;
+        if self
+            .workspace
+            .client_capabilities
+            .has_pull_configuration_support()
+        {
+            self.spawn(move |server| {
+                server.pull_config();
+            });
         } else {
             match serde_json::from_value(params.settings) {
-                Ok(new_options) => {
-                    *self.context.options.write().unwrap() = new_options;
+                Ok(options) => {
+                    self.workspace.options = options;
                 }
                 Err(why) => {
                     error!("Invalid configuration: {}", why);
@@ -354,19 +365,17 @@ impl Server {
         let language_id = &params.text_document.language_id;
         let language = DocumentLanguage::by_language_id(language_id);
         let document = self.workspace.open(
-            &self.context,
             Arc::new(params.text_document.uri.into()),
             Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
             DocumentVisibility::Visible,
         )?;
 
-        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
         if let Some(document) = self
             .workspace
             .documents_by_uri
             .get(document.uri.as_ref())
-            .filter(|_| should_lint)
+            .filter(|_| self.workspace.options.chktex.on_open_and_save)
             .cloned()
         {
             self.chktex_debouncer
@@ -387,7 +396,6 @@ impl Server {
                 apply_document_edit(&mut text, params.content_changes);
                 let language = old_document.data.language();
                 let new_document = self.workspace.open(
-                    &self.context,
                     Arc::clone(&uri),
                     Arc::new(text),
                     language,
@@ -407,7 +415,7 @@ impl Server {
                     ),
                 );
 
-                if self.context.options.read().unwrap().chktex.on_edit {
+                if self.workspace.options.chktex.on_edit {
                     self.chktex_debouncer
                         .sender
                         .send(DiagnosticsMessage::Analyze {
@@ -418,7 +426,7 @@ impl Server {
             }
             None => match uri.to_file_path() {
                 Ok(path) => {
-                    self.workspace.load(&self.context, path)?;
+                    self.workspace.load(path)?;
                 }
                 Err(_) => return Ok(()),
             },
@@ -430,12 +438,11 @@ impl Server {
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
         let uri = Uri::from(params.text_document.uri);
 
-        let should_build = { self.context.options.read().unwrap().build.on_save };
         if let Some(request) = self
             .workspace
             .documents_by_uri
             .get(&uri)
-            .filter(|_| should_build)
+            .filter(|_| self.workspace.options.build.on_save)
             .map(|document| {
                 self.feature_request(
                     Arc::clone(&document.uri),
@@ -445,12 +452,10 @@ impl Server {
                 )
             })
         {
-            let lsp_sender = self.connection.sender.clone();
-            let req_queue = Arc::clone(&self.req_queue);
-            let build_engine = Arc::clone(&self.build_engine);
-            self.spawn(move || {
-                build_engine
-                    .build(request, &req_queue, &lsp_sender)
+            self.spawn(move |server| {
+                server
+                    .build_engine
+                    .build(request, &server.req_queue, &server.connection.sender)
                     .unwrap_or_else(|why| {
                         error!("Build failed: {}", why);
                         BuildResult {
@@ -460,12 +465,11 @@ impl Server {
             });
         }
 
-        let should_lint = { self.context.options.read().unwrap().chktex.on_open_and_save };
         if let Some(document) = self
             .workspace
             .documents_by_uri
             .get(&uri)
-            .filter(|_| should_lint)
+            .filter(|_| self.workspace.options.chktex.on_open_and_save)
             .cloned()
         {
             self.chktex_debouncer
@@ -486,7 +490,6 @@ impl Server {
 
     fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> FeatureRequest<P> {
         FeatureRequest {
-            context: Arc::clone(&self.context),
             params,
             workspace: self.workspace.slice(&uri),
             uri,
@@ -505,11 +508,12 @@ impl Server {
         R: Serialize,
         H: FnOnce(FeatureRequest<P>) -> R + Send + 'static,
     {
-        let request = self.feature_request(uri, params);
-        let sender = self.connection.sender.clone();
-        self.spawn(move || {
+        self.spawn(move |server| {
+            let request = server.feature_request(uri, params);
             let result = handler(request);
-            sender
+            server
+                .connection
+                .sender
                 .send(lsp_server::Response::new_ok(id, result).into())
                 .unwrap();
         });
@@ -530,12 +534,11 @@ impl Server {
     }
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
-        let sender = self.connection.sender.clone();
-        let context = Arc::clone(&self.context);
-        let workspace = self.workspace.clone();
-        self.spawn(move || {
-            let result = find_workspace_symbols(context, &workspace, &params);
-            sender
+        self.spawn(move |server| {
+            let result = find_workspace_symbols(&server.workspace, &params);
+            server
+                .connection
+                .sender
                 .send(lsp_server::Response::new_ok(id, result).into())
                 .unwrap();
         });
@@ -563,9 +566,7 @@ impl Server {
 
     #[cfg(feature = "completion")]
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
-        let sender = self.connection.sender.clone();
-        let workspace = self.workspace.clone();
-        self.spawn(move || {
+        self.spawn(move |server| {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 crate::features::CompletionItemData::Package
                 | crate::features::CompletionItemData::Class => {
@@ -575,7 +576,7 @@ impl Server {
                 }
                 #[cfg(feature = "citation")]
                 crate::features::CompletionItemData::Citation { uri, key } => {
-                    if let Some(document) = workspace.documents_by_uri.get(&uri) {
+                    if let Some(document) = server.workspace.documents_by_uri.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
                             let markup = crate::citation::render_citation(
                                 &crate::syntax::bibtex::SyntaxNode::new_root(data.green.clone()),
@@ -588,8 +589,9 @@ impl Server {
                 _ => {}
             };
 
-            drop(workspace);
-            sender
+            server
+                .connection
+                .sender
                 .send(lsp_server::Response::new_ok(id, item).into())
                 .unwrap();
         });
@@ -729,7 +731,6 @@ impl Server {
             .collect::<Vec<_>>()
         {
             self.workspace.open(
-                &self.context,
                 Arc::clone(&document.uri),
                 document.text.clone(),
                 document.data.language(),
@@ -741,83 +742,97 @@ impl Server {
     }
 
     fn process_messages(&mut self) -> Result<()> {
-        let receiver = self.connection.receiver.clone();
-        for msg in &receiver {
-            match msg {
-                Message::Request(request) => {
-                    if self.connection.handle_shutdown(&request)? {
-                        return Ok(());
-                    }
+        loop {
+            crossbeam_channel::select! {
+                recv(&self.connection.receiver) -> msg => {
+                    match msg? {
+                        Message::Request(request) => {
+                            if self.connection.handle_shutdown(&request)? {
+                                return Ok(());
+                            }
 
-                    self.register_incoming_request(request.id.clone());
-                    if let Some(response) = RequestDispatcher::new(request)
-                        .on::<DocumentLinkRequest, _>(|id, params| self.document_link(id, params))?
-                        .on::<FoldingRangeRequest, _>(|id, params| self.folding_range(id, params))?
-                        .on::<References, _>(|id, params| self.references(id, params))?
-                        .on::<HoverRequest, _>(|id, params| self.hover(id, params))?
-                        .on::<DocumentSymbolRequest, _>(|id, params| {
-                            self.document_symbols(id, params)
-                        })?
-                        .on::<WorkspaceSymbol, _>(|id, params| self.workspace_symbols(id, params))?
-                        .on::<Completion, _>(|id, params| {
-                            #[cfg(feature = "completion")]
-                            self.completion(id, params)?;
-                            Ok(())
-                        })?
-                        .on::<ResolveCompletionItem, _>(|id, params| {
-                            #[cfg(feature = "completion")]
-                            self.completion_resolve(id, params)?;
-                            Ok(())
-                        })?
-                        .on::<GotoDefinition, _>(|id, params| self.goto_definition(id, params))?
-                        .on::<PrepareRenameRequest, _>(|id, params| {
-                            self.prepare_rename(id, params)
-                        })?
-                        .on::<Rename, _>(|id, params| self.rename(id, params))?
-                        .on::<DocumentHighlightRequest, _>(|id, params| {
-                            self.document_highlight(id, params)
-                        })?
-                        .on::<Formatting, _>(|id, params| self.formatting(id, params))?
-                        .on::<BuildRequest, _>(|id, params| self.build(id, params))?
-                        .on::<ForwardSearchRequest, _>(|id, params| {
-                            self.forward_search(id, params)
-                        })?
-                        .on::<SemanticTokensRangeRequest, _>(|id, params| {
-                            self.semantic_tokens_range(id, params)
-                        })?
-                        .default()
-                    {
-                        self.connection.sender.send(response.into())?;
-                    }
+                            self.register_incoming_request(request.id.clone());
+                            if let Some(response) = RequestDispatcher::new(request)
+                                .on::<DocumentLinkRequest, _>(|id, params| self.document_link(id, params))?
+                                .on::<FoldingRangeRequest, _>(|id, params| self.folding_range(id, params))?
+                                .on::<References, _>(|id, params| self.references(id, params))?
+                                .on::<HoverRequest, _>(|id, params| self.hover(id, params))?
+                                .on::<DocumentSymbolRequest, _>(|id, params| {
+                                    self.document_symbols(id, params)
+                                })?
+                                .on::<WorkspaceSymbol, _>(|id, params| self.workspace_symbols(id, params))?
+                                .on::<Completion, _>(|id, params| {
+                                    #[cfg(feature = "completion")]
+                                    self.completion(id, params)?;
+                                    Ok(())
+                                })?
+                                .on::<ResolveCompletionItem, _>(|id, params| {
+                                    #[cfg(feature = "completion")]
+                                    self.completion_resolve(id, params)?;
+                                    Ok(())
+                                })?
+                                .on::<GotoDefinition, _>(|id, params| self.goto_definition(id, params))?
+                                .on::<PrepareRenameRequest, _>(|id, params| {
+                                    self.prepare_rename(id, params)
+                                })?
+                                .on::<Rename, _>(|id, params| self.rename(id, params))?
+                                .on::<DocumentHighlightRequest, _>(|id, params| {
+                                    self.document_highlight(id, params)
+                                })?
+                                .on::<Formatting, _>(|id, params| self.formatting(id, params))?
+                                .on::<BuildRequest, _>(|id, params| self.build(id, params))?
+                                .on::<ForwardSearchRequest, _>(|id, params| {
+                                    self.forward_search(id, params)
+                                })?
+                                .on::<SemanticTokensRangeRequest, _>(|id, params| {
+                                    self.semantic_tokens_range(id, params)
+                                })?
+                                .default()
+                            {
+                                self.connection.sender.send(response.into())?;
+                            }
+                        }
+                        Message::Notification(notification) => {
+                            NotificationDispatcher::new(notification)
+                                .on::<Cancel, _>(|params| self.cancel(params))?
+                                .on::<DidChangeConfiguration, _>(|params| {
+                                    self.did_change_configuration(params)
+                                })?
+                                .on::<DidChangeWatchedFiles, _>(|params| {
+                                    self.did_change_watched_files(params)
+                                })?
+                                .on::<DidOpenTextDocument, _>(|params| self.did_open(params))?
+                                .on::<DidChangeTextDocument, _>(|params| self.did_change(params))?
+                                .on::<DidSaveTextDocument, _>(|params| self.did_save(params))?
+                                .on::<DidCloseTextDocument, _>(|params| self.did_close(params))?
+                                .default();
+                        }
+                        Message::Response(response) => {
+                            let mut req_queue = self.req_queue.lock().unwrap();
+                            if let Some(data) = req_queue.outgoing.complete(response.id) {
+                                let result = match response.error {
+                                    Some(error) => Err(error),
+                                    None => Ok(response.result.unwrap_or_default()),
+                                };
+                                data.sender.send(result)?;
+                            }
+                        }
+                    };
+                },
+                recv(&self.internal_rx) -> msg => {
+                    match msg? {
+                        InternalMessage::SetDistro(distro) => {
+                            self.workspace.resolver = Arc::new(distro.resolver);
+                            self.reparse_all()?;
+                        }
+                        InternalMessage::SetOptions(options) => {
+                            self.workspace.options = Arc::new(options);
+                            self.reparse_all()?;
+                        }
+                    };
                 }
-                Message::Notification(notification) => {
-                    NotificationDispatcher::new(notification)
-                        .on::<Cancel, _>(|params| self.cancel(params))?
-                        .on::<DidChangeConfiguration, _>(|params| {
-                            self.did_change_configuration(params)
-                        })?
-                        .on::<DidChangeWatchedFiles, _>(|params| {
-                            self.did_change_watched_files(params)
-                        })?
-                        .on::<DidOpenTextDocument, _>(|params| self.did_open(params))?
-                        .on::<DidChangeTextDocument, _>(|params| self.did_change(params))?
-                        .on::<DidSaveTextDocument, _>(|params| self.did_save(params))?
-                        .on::<DidCloseTextDocument, _>(|params| self.did_close(params))?
-                        .default();
-                }
-                Message::Response(response) => {
-                    let mut req_queue = self.req_queue.lock().unwrap();
-                    if let Some(data) = req_queue.outgoing.complete(response.id) {
-                        let result = match response.error {
-                            Some(error) => Err(error),
-                            None => Ok(response.result.unwrap_or_default()),
-                        };
-                        data.sender.send(result)?;
-                    }
-                }
-            }
+            };
         }
-        Ok(())
     }
 
     pub fn run(mut self) -> Result<()> {
@@ -833,10 +848,9 @@ impl Server {
 fn create_static_debouncer(
     manager: Arc<Mutex<DiagnosticsManager>>,
     conn: &Connection,
-    context: Arc<ServerContext>,
 ) -> DiagnosticsDebouncer {
     let sender = conn.sender.clone();
-    DiagnosticsDebouncer::launch(context, move |workspace, document| {
+    DiagnosticsDebouncer::launch(move |workspace, document| {
         let mut manager = manager.lock().unwrap();
         manager.update_static(&workspace, Arc::clone(&document.uri));
         if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
@@ -848,13 +862,11 @@ fn create_static_debouncer(
 fn create_chktex_debouncer(
     manager: Arc<Mutex<DiagnosticsManager>>,
     conn: &Connection,
-    context: Arc<ServerContext>,
 ) -> DiagnosticsDebouncer {
     let sender = conn.sender.clone();
-    DiagnosticsDebouncer::launch(Arc::clone(&context), move |workspace, document| {
-        let options = { context.options.read().unwrap().clone() };
+    DiagnosticsDebouncer::launch(move |workspace, document| {
         let mut manager = manager.lock().unwrap();
-        manager.update_chktex(&workspace, Arc::clone(&document.uri), &options);
+        manager.update_chktex(&workspace, Arc::clone(&document.uri), &workspace.options);
         if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
             warn!("Failed to publish diagnostics: {}", why);
         }
