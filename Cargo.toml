@@ -11,6 +11,9 @@ authors = [
 edition = "2021"
 rust-version = "1.58.1"
 homepage = "https://github.com/latex-lsp/texlab"
+repository = "https://github.com/latex-lsp/texlab"
+keywords = ["lsp", "server", "latex", "bibtex"]
+categories = ["development-tools"]
 
 [lib]
 doctest = false
