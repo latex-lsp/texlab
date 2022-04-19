@@ -7,6 +7,7 @@ pub mod diagnostics;
 mod dispatch;
 pub mod distro;
 mod document;
+mod environment;
 pub mod features;
 mod label;
 mod lang_data;
@@ -24,6 +25,7 @@ mod workspace;
 pub use self::{
     capabilities::ClientCapabilitiesExt,
     document::*,
+    environment::Environment,
     label::*,
     lang_data::*,
     language::DocumentLanguage,
@@ -33,5 +35,5 @@ pub use self::{
     range::RangeExt,
     server::Server,
     uri::Uri,
-    workspace::*,
+    workspace::{Workspace, WorkspaceEvent},
 };

@@ -8,7 +8,7 @@ use crate::{
         bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
     },
-    DocumentLanguage, Uri, Workspace,
+    DocumentLanguage, Environment, Uri,
 };
 
 #[derive(Debug, Clone)]
@@ -63,19 +63,12 @@ impl DocumentData {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub enum DocumentVisibility {
-    Visible,
-    Hidden,
-}
-
 #[derive(Clone)]
 pub struct Document {
     pub uri: Arc<Uri>,
     pub text: Arc<String>,
     pub line_index: Arc<LineIndex>,
     pub data: DocumentData,
-    pub visibility: DocumentVisibility,
 }
 
 impl fmt::Debug for Document {
@@ -86,11 +79,10 @@ impl fmt::Debug for Document {
 
 impl Document {
     pub fn parse(
-        workspace: &Workspace,
+        environment: &Environment,
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        visibility: DocumentVisibility,
     ) -> Self {
         let line_index = Arc::new(LineIndex::new(&text));
         let data = match language {
@@ -98,9 +90,9 @@ impl Document {
                 let green = latex::parse(&text).green;
                 let root = latex::SyntaxNode::new_root(green.clone());
 
-                let base_uri = match &workspace.options.root_directory {
+                let base_uri = match &environment.options.root_directory {
                     Some(root_dir) => {
-                        let root_dir = workspace.current_directory.join(&root_dir);
+                        let root_dir = environment.current_directory.join(&root_dir);
                         Uri::from_directory_path(root_dir)
                             .map(Arc::new)
                             .unwrap_or_else(|()| Arc::clone(&uri))
@@ -109,7 +101,7 @@ impl Document {
                 };
 
                 let mut context = LatexAnalyzerContext {
-                    workspace,
+                    environment,
                     extras: latex::Extras::default(),
                     document_uri: Arc::clone(&uri),
                     base_uri,
@@ -133,7 +125,6 @@ impl Document {
             text,
             line_index,
             data,
-            visibility,
         }
     }
 }

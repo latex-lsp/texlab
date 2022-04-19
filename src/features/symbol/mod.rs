@@ -24,6 +24,7 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
     find_bibtex_symbols(&req, &mut buf);
     if req
         .workspace
+        .environment
         .client_capabilities
         .has_hierarchical_document_symbol_support()
     {

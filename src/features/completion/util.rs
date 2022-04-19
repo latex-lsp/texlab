@@ -32,6 +32,7 @@ pub fn image_documentation(
 fn supports_images(request: &FeatureRequest<CompletionParams>) -> bool {
     request
         .workspace
+        .environment
         .client_capabilities
         .text_document
         .as_ref()
@@ -47,6 +48,7 @@ pub fn adjust_kind(
 ) -> CompletionItemKind {
     if let Some(value_set) = request
         .workspace
+        .environment
         .client_capabilities
         .text_document
         .as_ref()

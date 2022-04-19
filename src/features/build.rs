@@ -140,6 +140,7 @@ impl BuildEngine {
 
         let supports_progress = request
             .workspace
+            .environment
             .client_capabilities
             .has_work_done_progress_support();
 
@@ -152,7 +153,7 @@ impl BuildEngine {
         };
         progress_reporter.start(&document.uri)?;
 
-        let options = &request.workspace.options;
+        let options = &request.workspace.environment.options;
 
         let build_dir = options
             .root_directory

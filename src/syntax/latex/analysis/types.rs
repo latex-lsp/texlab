@@ -4,11 +4,11 @@ use rowan::TextRange;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smol_str::SmolStr;
 
-use crate::{Uri, Workspace};
+use crate::{Environment, Uri};
 
 #[derive(Debug)]
 pub struct LatexAnalyzerContext<'a> {
-    pub workspace: &'a Workspace,
+    pub environment: &'a Environment,
     pub document_uri: Arc<Uri>,
     pub base_uri: Arc<Uri>,
     pub extras: Extras,

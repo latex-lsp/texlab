@@ -42,7 +42,7 @@ pub fn complete_imports<'a>(
         items.push(item);
     }
 
-    let resolver = &context.request.workspace.resolver;
+    let resolver = &context.request.workspace.environment.resolver;
     for file_name in resolver
         .files_by_name
         .keys()

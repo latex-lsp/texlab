@@ -2,14 +2,10 @@ use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
-use lsp_types::{ClientCapabilities, ClientInfo};
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::FxHashSet;
 
-use crate::{
-    component_db::COMPONENT_DATABASE, distro::Resolver, Document, DocumentLanguage,
-    DocumentVisibility, Options, Uri,
-};
+use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment, Uri};
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceEvent {
@@ -19,24 +15,29 @@ pub enum WorkspaceEvent {
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
     pub documents_by_uri: im::HashMap<Arc<Uri>, Document>,
+    pub viewport: im::HashSet<Arc<Uri>>,
     pub listeners: im::Vector<Sender<WorkspaceEvent>>,
-    pub current_directory: Arc<PathBuf>,
-    pub client_capabilities: Arc<ClientCapabilities>,
-    pub client_info: Arc<Option<ClientInfo>>,
-    pub options: Arc<Options>,
-    pub resolver: Arc<Resolver>,
+    pub environment: Environment,
 }
 
 impl Workspace {
+    pub fn new(environment: Environment) -> Self {
+        Self {
+            documents_by_uri: im::HashMap::new(),
+            viewport: im::HashSet::new(),
+            listeners: im::Vector::new(),
+            environment,
+        }
+    }
+
     pub fn open(
         &mut self,
         uri: Arc<Uri>,
         text: Arc<String>,
         language: DocumentLanguage,
-        visibility: DocumentVisibility,
     ) -> Result<Document> {
         log::debug!("(Re)Loading document: {}", uri);
-        let document = Document::parse(self, Arc::clone(&uri), text, language, visibility);
+        let document = Document::parse(&self.environment, Arc::clone(&uri), text, language);
 
         self.documents_by_uri
             .insert(Arc::clone(&uri), document.clone());
@@ -60,12 +61,7 @@ impl Workspace {
         if let Some(language) = DocumentLanguage::by_path(&path) {
             let data = fs::read(&path)?;
             let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
-            Ok(Some(self.open(
-                uri,
-                text,
-                language,
-                DocumentVisibility::Hidden,
-            )?))
+            Ok(Some(self.open(uri, text, language)?))
         } else {
             Ok(None)
         }
@@ -81,27 +77,18 @@ impl Workspace {
         let data = fs::read(&path)?;
         let text = Arc::new(String::from_utf8_lossy(&data).into_owned());
         if let Some(language) = DocumentLanguage::by_path(&path) {
-            Ok(Some(self.open(
-                uri,
-                text,
-                language,
-                DocumentVisibility::Hidden,
-            )?))
+            Ok(Some(self.open(uri, text, language)?))
         } else {
             Ok(None)
         }
     }
 
     pub fn close(&mut self, uri: &Uri) {
-        if let Some(document) = self.documents_by_uri.get_mut(uri) {
-            document.visibility = DocumentVisibility::Hidden;
-        }
+        self.viewport.remove(uri);
     }
 
     pub fn is_open(&self, uri: &Uri) -> bool {
-        self.documents_by_uri.get(uri).map_or(false, |document| {
-            document.visibility == DocumentVisibility::Visible
-        })
+        self.viewport.contains(uri)
     }
 
     pub fn slice(&self, uri: &Uri) -> Self {
@@ -151,7 +138,7 @@ impl Workspace {
             .unwrap_or_default()
     }
 
-    fn has_parent(&self, uri: &Uri) -> Option<Document> {
+    fn find_parent(&self, uri: &Uri) -> Option<Document> {
         self.slice(uri)
             .documents_by_uri
             .values()
@@ -178,7 +165,7 @@ impl Workspace {
 
         if document.uri.scheme() == "file" {
             if let Ok(mut path) = document.uri.to_file_path() {
-                while path.pop() && self.has_parent(&document.uri).is_none() {
+                while path.pop() && self.find_parent(&document.uri).is_none() {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()

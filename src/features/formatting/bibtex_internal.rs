@@ -22,6 +22,7 @@ pub fn format_bibtex_internal(
     let line_length = {
         request
             .workspace
+            .environment
             .options
             .formatter_line_length
             .map(|value| {

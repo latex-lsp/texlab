@@ -33,7 +33,7 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: latex::SyntaxNo
             targets.push(Arc::new(context.base_uri.join(&path).ok()?.into()));
         }
 
-        resolve_distro_file(&context.workspace.resolver, &stem, extensions)
+        resolve_distro_file(&context.environment.resolver, &stem, extensions)
             .into_iter()
             .for_each(|target| targets.push(Arc::new(target)));
 

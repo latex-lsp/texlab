@@ -24,8 +24,8 @@ use crate::{
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, DocumentLanguage, DocumentVisibility, LineIndex, LineIndexExt, Options,
-    Uri, Workspace, WorkspaceEvent,
+    ClientCapabilitiesExt, DocumentLanguage, Environment, LineIndex, LineIndexExt, Options, Uri,
+    Workspace, WorkspaceEvent,
 };
 
 #[derive(Debug)]
@@ -55,10 +55,7 @@ impl Server {
         load_resolver: bool,
     ) -> Result<Self> {
         let req_queue = Arc::default();
-        let workspace = Workspace {
-            current_directory: Arc::new(current_dir),
-            ..Workspace::default()
-        };
+        let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
 
         let static_debouncer = Arc::new(create_static_debouncer(
@@ -139,8 +136,8 @@ impl Server {
         let (id, params) = self.connection.initialize_start()?;
         let params: InitializeParams = serde_json::from_value(params)?;
 
-        self.workspace.client_capabilities = Arc::new(params.capabilities);
-        self.workspace.client_info = Arc::new(params.client_info);
+        self.workspace.environment.client_capabilities = Arc::new(params.capabilities);
+        self.workspace.environment.client_info = params.client_info.map(Arc::new);
 
         let result = InitializeResult {
             capabilities: self.capabilities(),
@@ -178,6 +175,7 @@ impl Server {
     fn register_file_watching(&self) {
         if self
             .workspace
+            .environment
             .client_capabilities
             .has_file_watching_support()
         {
@@ -213,6 +211,7 @@ impl Server {
     fn register_config_capability(&self) {
         if self
             .workspace
+            .environment
             .client_capabilities
             .has_push_configuration_support()
         {
@@ -267,6 +266,7 @@ impl Server {
     fn pull_config(&self) {
         if !self
             .workspace
+            .environment
             .client_capabilities
             .has_pull_configuration_support()
         {
@@ -339,6 +339,7 @@ impl Server {
     fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
         if self
             .workspace
+            .environment
             .client_capabilities
             .has_pull_configuration_support()
         {
@@ -348,7 +349,7 @@ impl Server {
         } else {
             match serde_json::from_value(params.settings) {
                 Ok(options) => {
-                    self.workspace.options = options;
+                    self.workspace.environment.options = options;
                 }
                 Err(why) => {
                     error!("Invalid configuration: {}", why);
@@ -368,23 +369,19 @@ impl Server {
             Arc::new(params.text_document.uri.into()),
             Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
-            DocumentVisibility::Visible,
         )?;
 
-        if let Some(document) = self
-            .workspace
-            .documents_by_uri
-            .get(document.uri.as_ref())
-            .filter(|_| self.workspace.options.chktex.on_open_and_save)
-            .cloned()
-        {
+        self.workspace.viewport.insert(Arc::clone(&document.uri));
+
+        if self.workspace.environment.options.chktex.on_open_and_save {
             self.chktex_debouncer
                 .sender
                 .send(DiagnosticsMessage::Analyze {
                     workspace: self.workspace.clone(),
                     document,
                 })?;
-        };
+        }
+
         Ok(())
     }
 
@@ -395,12 +392,12 @@ impl Server {
                 let mut text = old_document.text.to_string();
                 apply_document_edit(&mut text, params.content_changes);
                 let language = old_document.data.language();
-                let new_document = self.workspace.open(
-                    Arc::clone(&uri),
-                    Arc::new(text),
-                    language,
-                    DocumentVisibility::Visible,
-                )?;
+                let new_document =
+                    self.workspace
+                        .open(Arc::clone(&uri), Arc::new(text), language)?;
+                self.workspace
+                    .viewport
+                    .insert(Arc::clone(&new_document.uri));
 
                 self.build_engine.positions_by_uri.insert(
                     Arc::clone(&uri),
@@ -415,7 +412,7 @@ impl Server {
                     ),
                 );
 
-                if self.workspace.options.chktex.on_edit {
+                if self.workspace.environment.options.chktex.on_edit {
                     self.chktex_debouncer
                         .sender
                         .send(DiagnosticsMessage::Analyze {
@@ -442,7 +439,7 @@ impl Server {
             .workspace
             .documents_by_uri
             .get(&uri)
-            .filter(|_| self.workspace.options.build.on_save)
+            .filter(|_| self.workspace.environment.options.build.on_save)
             .map(|document| {
                 self.feature_request(
                     Arc::clone(&document.uri),
@@ -469,7 +466,7 @@ impl Server {
             .workspace
             .documents_by_uri
             .get(&uri)
-            .filter(|_| self.workspace.options.chktex.on_open_and_save)
+            .filter(|_| self.workspace.environment.options.chktex.on_open_and_save)
             .cloned()
         {
             self.chktex_debouncer
@@ -734,7 +731,6 @@ impl Server {
                 Arc::clone(&document.uri),
                 document.text.clone(),
                 document.data.language(),
-                DocumentVisibility::Visible,
             )?;
         }
 
@@ -822,11 +818,11 @@ impl Server {
                 recv(&self.internal_rx) -> msg => {
                     match msg? {
                         InternalMessage::SetDistro(distro) => {
-                            self.workspace.resolver = Arc::new(distro.resolver);
+                            self.workspace.environment.resolver = Arc::new(distro.resolver);
                             self.reparse_all()?;
                         }
                         InternalMessage::SetOptions(options) => {
-                            self.workspace.options = Arc::new(options);
+                            self.workspace.environment.options = Arc::new(options);
                             self.reparse_all()?;
                         }
                     };
@@ -866,7 +862,11 @@ fn create_chktex_debouncer(
     let sender = conn.sender.clone();
     DiagnosticsDebouncer::launch(move |workspace, document| {
         let mut manager = manager.lock().unwrap();
-        manager.update_chktex(&workspace, Arc::clone(&document.uri), &workspace.options);
+        manager.update_chktex(
+            &workspace,
+            Arc::clone(&document.uri),
+            &workspace.environment.options,
+        );
         if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
             warn!("Failed to publish diagnostics: {}", why);
         }

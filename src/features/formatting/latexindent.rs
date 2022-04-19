@@ -15,7 +15,7 @@ pub fn format_with_latexindent(
     let directory = tempdir().ok()?;
     let document = request.main_document();
 
-    let options = &request.workspace.options;
+    let options = &request.workspace.environment.options;
     let current_dir = options
         .root_directory
         .as_ref()

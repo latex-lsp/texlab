@@ -97,6 +97,7 @@ fn current_dir(
     let mut path = context
         .request
         .workspace
+        .environment
         .options
         .root_directory
         .as_ref()
@@ -104,6 +105,7 @@ fn current_dir(
             context
                 .request
                 .workspace
+                .environment
                 .current_directory
                 .join(root_directory)
         })

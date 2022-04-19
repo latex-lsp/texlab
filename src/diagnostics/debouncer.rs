@@ -37,7 +37,11 @@ impl DiagnosticsDebouncer {
                 document,
             }) = receiver.recv()
             {
-                let delay = workspace.options.diagnostics_delay.unwrap_or(300);
+                let delay = workspace
+                    .environment
+                    .options
+                    .diagnostics_delay
+                    .unwrap_or(300);
 
                 if let Some(time) = last_task_time_by_uri.get(&document.uri) {
                     if time.elapsed().as_millis() < delay as u128 {

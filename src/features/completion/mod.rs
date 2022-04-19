@@ -115,6 +115,7 @@ pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionL
     let is_incomplete = if context
         .request
         .workspace
+        .environment
         .client_info
         .as_ref()
         .as_ref()
@@ -312,6 +313,7 @@ fn convert_internal_items(
             if context
                 .request
                 .workspace
+                .environment
                 .client_capabilities
                 .text_document
                 .as_ref()

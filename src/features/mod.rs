@@ -60,7 +60,7 @@ mod testing {
     };
     use typed_builder::TypedBuilder;
 
-    use crate::{distro::Resolver, DocumentLanguage, DocumentVisibility, Options, Uri, Workspace};
+    use crate::{distro::Resolver, DocumentLanguage, Environment, Options, Uri, Workspace};
 
     use super::*;
 
@@ -121,22 +121,21 @@ mod testing {
         }
 
         fn workspace(&self) -> Workspace {
-            let mut workspace = Workspace {
+            let mut workspace = Workspace::new(Environment {
                 client_capabilities: Arc::new(self.client_capabilities.clone()),
-                client_info: Arc::new(self.client_info.clone()),
+                client_info: self.client_info.clone().map(Arc::new),
                 options: Arc::new(self.options()),
                 resolver: Arc::new(self.resolver.clone()),
-                ..Workspace::default()
-            };
+                ..Environment::default()
+            });
 
             for (name, source_code) in &self.files {
                 let uri = self.uri(name);
                 let path = uri.to_file_path().unwrap();
                 let text = Arc::new(source_code.trim().to_string());
                 let language = DocumentLanguage::by_path(&path).expect("unknown document language");
-                workspace
-                    .open(uri, text, language, DocumentVisibility::Visible)
-                    .unwrap();
+                let document = workspace.open(uri, text, language).unwrap();
+                workspace.viewport.insert(document.uri);
             }
 
             workspace

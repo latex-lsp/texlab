@@ -28,7 +28,7 @@ pub struct ForwardSearchResult {
 pub fn execute_forward_search(
     request: FeatureRequest<TextDocumentPositionParams>,
 ) -> Option<ForwardSearchResult> {
-    let options = &request.workspace.options.forward_search;
+    let options = &request.workspace.environment.options.forward_search;
 
     if options.executable.is_none() || options.args.is_none() {
         return Some(ForwardSearchResult {
