@@ -3,15 +3,11 @@ mod citation;
 
 #[cfg(not(feature = "citation"))]
 mod citation {
-    use cancellation::CancellationToken;
     use lsp_types::{Hover, HoverParams};
 
     use crate::features::cursor::CursorContext;
 
-    pub fn find_citation_hover(
-        context: &CursorContext<HoverParams>,
-        cancellation_token: &CancellationToken,
-    ) -> Option<Hover> {
+    pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
         None
     }
 }

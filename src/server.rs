@@ -13,7 +13,6 @@ use threadpool::ThreadPool;
 
 use crate::{
     client::{send_notification, send_request},
-    component_db::COMPONENT_DATABASE,
     diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
@@ -349,7 +348,7 @@ impl Server {
         } else {
             match serde_json::from_value(params.settings) {
                 Ok(options) => {
-                    self.workspace.environment.options = options;
+                    self.workspace.environment.options = Arc::new(options);
                 }
                 Err(why) => {
                     error!("Invalid configuration: {}", why);
@@ -567,7 +566,7 @@ impl Server {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 crate::features::CompletionItemData::Package
                 | crate::features::CompletionItemData::Class => {
-                    item.documentation = COMPONENT_DATABASE
+                    item.documentation = crate::component_db::COMPONENT_DATABASE
                         .documentation(&item.label)
                         .map(Documentation::MarkupContent);
                 }
