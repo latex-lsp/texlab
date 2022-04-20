@@ -1848,7 +1848,6 @@ dependencies = [
  "multimap",
  "once_cell",
  "petgraph 0.6.0",
- "rayon",
  "regex",
  "rowan",
  "rustc-hash",
