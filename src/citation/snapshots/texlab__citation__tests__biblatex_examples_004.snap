@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 219
+expression: "render_simple(r#\"\n@article{baez/article,\n    author       = {Baez, John C. and Lauda, Aaron D.},\n    title        = {Higher-Dimensional Algebra {V}: 2-Groups},\n    journaltitle = {Theory and Applications of Categories},\n    date         = 2004,\n    volume       = 12,\n    pages        = {423-491},\n    version      = 3,\n    eprint       = {math/0307200v3},\n    eprinttype   = {arxiv},\n    langid       = {english},\n    langidopts   = {variant=american},\n    annotation   = {An \\texttt{article} with \\texttt{eprint} and\n                    \\texttt{eprinttype} fields. Note that the arXiv reference is\n                    transformed into a clickable link if \\texttt{hyperref} support\n                    has been enabled.  Compare \\texttt{baez\\slash online}, which\n                    is the same item given as an \\texttt{online} entry},\n}\"#)"
+---
+Baez, John C., & Lauda, Aaron D. (n.d.). Higher-Dimensional Algebra V: 2-Groups. *Theory and Applications of Categories*, *12*, 423–491. Retrieved from [http://arxiv.org/abs/math/0307200v3](http://arxiv.org/abs/math/0307200v3)

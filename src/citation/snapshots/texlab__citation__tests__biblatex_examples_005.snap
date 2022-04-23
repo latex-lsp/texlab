@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 244
+expression: "render_simple(r#\"\n@string{jams    = {J.~Amer. Math. Soc.}}\n\n@article{bertram,\n    author       = {Bertram, Aaron and Wentworth, Richard},\n    title        = {Gromov invariants for holomorphic maps on {Riemann} surfaces},\n    journaltitle = jams,\n    date         = 1996,\n    volume       = 9,\n    number       = 2,\n    pages        = {529-571},\n    langid       = {english},\n    langidopts   = {variant=american},\n    shorttitle   = {Gromov invariants},\n    annotation   = {An \\texttt{article} entry with a \\texttt{volume} and a\n                    \\texttt{number} field},\n}\"#)"
+---
+Bertram, Aaron, & Wentworth, Richard. (n.d.). Gromov invariants for holomorphic maps on Riemann surfaces. *J. Amer. Math. Soc.*, *9*(2), 529–571.

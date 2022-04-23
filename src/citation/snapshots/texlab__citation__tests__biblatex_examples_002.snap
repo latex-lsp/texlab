@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 174
+expression: "render_simple(r#\"\n@string{jomch   = {J.~Organomet. Chem.}}\n\n@article{aksin,\n  author       = {Aks{\\i}n, {\\\"O}zge and T{\\\"u}rkmen, Hayati and Artok, Levent\n                  and {\\c{C}}etinkaya, Bekir and Ni, Chaoying and\n                  B{\\\"u}y{\\\"u}kg{\\\"u}ng{\\\"o}r, Orhan and {\\\"O}zkal, Erhan},\n  title        = {Effect of immobilization on catalytic characteristics of\n                  saturated {Pd-N}-heterocyclic carbenes in {Mizoroki-Heck}\n                  reactions},\n  journaltitle = jomch,\n  date         = 2006,\n  volume       = 691,\n  number       = 13,\n  pages        = {3027-3036},\n  indextitle   = {Effect of immobilization on catalytic characteristics},\n}\"#)"
+---
+Aksın, Özge, Türkmen, Hayati, Artok, Levent, \\cCetinkaya, Bekir, Ni, Chaoying, Büyükgüngör, Orhan, & Özkal, Erhan. (n.d.). Effect of immobilization on catalytic characteristics of saturated Pd-N-heterocyclic carbenes in Mizoroki-Heck reactions. *J. Organomet. Chem.*, *691*(13), 3027–3036.

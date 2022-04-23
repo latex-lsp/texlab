@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 267
+expression: "render_simple(r#\"\n@article{doody,\n    author       = {Doody, Terrence},\n    title        = {Hemingway's Style and {Jake's} Narration},\n    year         = 1974,\n    volume       = 4,\n    number       = 3,\n    pages        = {212-225},\n    langid       = {english},\n    langidopts   = {variant=american},\n    related      = {matuz:doody},\n    relatedstring= {\\autocap{e}xcerpt in},\n    journal      = {The Journal of Narrative Technique},\n    annotation   = {An \\texttt{article} entry cited as an excerpt from a\n                    \\texttt{collection} entry. Note the format of the\n                    \\texttt{related} and \\texttt{relatedstring} fields},\n}\"#)"
+---
+Doody, Terrence. (1974). Hemingway’s Style and Jake’s Narration. *The Journal of Narrative Technique*, *4*(3), 212–225.

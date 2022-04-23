@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 327
+expression: "render_simple(r#\"\n@string{anch-ie = {Angew.~Chem. Int.~Ed.}}\n\n@article{herrmann,\n    author       = {Herrmann, Wolfgang A. and {\\\"O}fele, Karl and Schneider,\n                    Sabine K.  and Herdtweck, Eberhardt and Hoffmann, Stephan D.},\n    title        = {A carbocyclic carbene as an efficient catalyst ligand for {C--C}\n                    coupling reactions},\n    journaltitle = anch-ie,\n    date         = 2006,\n    volume       = 45,\n    number       = 23,\n    pages        = {3859-3862},\n    indextitle   = {Carbocyclic carbene as an efficient catalyst, A},\n}\"#)"
+---
+Herrmann, Wolfgang A., Öfele, Karl, Schneider, Sabine K., Herdtweck, Eberhardt, & Hoffmann, Stephan D. (n.d.). A carbocyclic carbene as an efficient catalyst ligand for C–C coupling reactions. *Angew. Chem. Int. Ed.*, *45*(23), 3859–3862.

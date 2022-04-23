@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 197
+expression: "render_simple(r#\"\n@article{angenendt,\n    author       = {Angenendt, Arnold},\n    title        = {In Honore Salvatoris~-- Vom Sinn und Unsinn der\n                    Patrozinienkunde},\n    journaltitle = {Revue d'Histoire Eccl{\\'e}siastique},\n    date         = 2002,\n    volume       = 97,\n    pages        = {431--456, 791--823},\n    langid       = {german},\n    indextitle   = {In Honore Salvatoris},\n    shorttitle   = {In Honore Salvatoris},\n    annotation   = {A German article in a French journal. Apart from that, a\n                    typical \\texttt{article} entry. Note the \\texttt{indextitle}\n                    field},\n}\"#)"
+---
+Angenendt, Arnold. (n.d.). In Honore Salvatoris – Vom Sinn und Unsinn der Patrozinienkunde. *Revue d’Histoire Ecclésiastique*, *97*, 431–456,.

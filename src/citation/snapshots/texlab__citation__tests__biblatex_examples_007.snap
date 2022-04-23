@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 290
+expression: "render_simple(r#\"\n@article{gillies,\n    author       = {Gillies, Alexander},\n    title        = {Herder and the Preparation of {Goethe's} Idea of World\n                    Literature},\n    journaltitle = {Publications of the English Goethe Society},\n    date         = 1933,\n    series       = {newseries},\n    volume       = 9,\n    pages        = {46-67},\n    langid       = {english},\n    langidopts   = {variant=british},\n    annotation   = {An \\texttt{article} entry with a \\texttt{series} and a\n                    \\texttt{volume} field. Note that format of the \\texttt{series}\n                    field in the database file},\n}\"#)"
+---
+Gillies, Alexander. (n.d.). Herder and the Preparation of Goethe’s Idea of World Literature. *Publications of the English Goethe Society*, *9*, 46–67.

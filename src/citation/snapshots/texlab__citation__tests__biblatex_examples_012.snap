@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 427
+expression: "render_simple(r#\"\n@article{reese,\n    author       = {Reese, Trevor R.},\n    title        = {Georgia in {Anglo-Spanish} Diplomacy, 1736--1739},\n    journaltitle = {William and Mary Quarterly},\n    date         = 1958,\n    series       = 3,\n    volume       = 15,\n    pages        = {168-190},\n    langid       = {english},\n    langidopts   = {variant=american},\n    annotation   = {An \\texttt{article} entry with a \\texttt{series} and a\n                    \\texttt{volume} field. Note the format of the series. If the\n                    value of the \\texttt{series} field is an integer, this number\n                    is printed as an ordinal and the string \\enquote*{series} is\n                    appended automatically},\n}\"#)"
+---
+Reese, Trevor R. (n.d.). Georgia in Anglo-Spanish Diplomacy, 1736–1739. *William and Mary Quarterly*, *15*, 168–190.

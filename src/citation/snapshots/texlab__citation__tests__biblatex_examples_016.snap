@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 530
+expression: "render_simple(r#\"\n@article{spiegelberg,\n    author       = {Spiegelberg, Herbert},\n    title        = {\\mkbibquote{Intention} und \\mkbibquote{Intentionalit{\\\"a}t} in\n                    der Scholastik, bei Brentano und Husserl},\n    journaltitle = {Studia Philosophica},\n    date         = 1969,\n    volume       = 29,\n    pages        = {189-216},\n    langid       = {german},\n    sorttitle    = {Intention und Intentionalitat in der Scholastik, bei Brentano\n                    und Husserl},\n    indexsorttitle= {Intention und Intentionalitat in der Scholastik, bei Brentano\n                    und Husserl},\n    shorttitle   = {Intention und Intentionalit{\\\"a}t},\n    annotation   = {An \\texttt{article} entry. Note the \\texttt{sorttitle} and\n                    \\texttt{indexsorttitle} fields and the markup of the quotes in\n                    the database file},\n}\"#)"
+---
+Spiegelberg, Herbert. (n.d.). Intention und Intentionalität in der Scholastik, bei Brentano und Husserl. *Studia Philosophica*, *29*, 189–216.

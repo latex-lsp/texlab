@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 312
+expression: "render_simple(r#\"\n@article{glashow,\n    author       = {Glashow, Sheldon},\n    title        = {Partial Symmetries of Weak Interactions},\n    journaltitle = {Nucl.~Phys.},\n    date         = 1961,\n    volume       = 22,\n    pages        = {579-588},\n}\"#)"
+---
+Glashow, Sheldon. (n.d.). Partial Symmetries of Weak Interactions. *Nucl. Phys.*, *22*, 579–588.

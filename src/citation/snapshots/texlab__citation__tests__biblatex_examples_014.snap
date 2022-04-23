@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 469
+expression: "render_simple(r#\"\n@article{shore,\n    author       = {Shore, Bradd},\n    title        = {Twice-Born, Once Conceived},\n    journaltitle = {American Anthropologist},\n    date         = {1991-03},\n    subtitle     = {Meaning Construction and Cultural Cognition},\n    series       = {newseries},\n    volume       = 93,\n    number       = 1,\n    pages        = {9-27},\n    annotation   = {An \\texttt{article} entry with \\texttt{series},\n                    \\texttt{volume}, and \\texttt{number} fields. Note the format\n                    of the \\texttt{series} which is a localization key},\n}\"#)"
+---
+Shore, Bradd. (n.d.). Twice-Born, Once Conceived: Meaning Construction and Cultural Cognition. *American Anthropologist*, *93*(1), 9–27.

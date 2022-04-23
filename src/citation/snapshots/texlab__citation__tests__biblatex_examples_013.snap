@@ -1,0 +1,6 @@
+---
+source: src/citation/mod.rs
+assertion_line: 450
+expression: "render_simple(r#\"\n@article{sarfraz,\n    author       = {M. Sarfraz and M. F. A. Razzak},\n    title        = {Technical section: {An} algorithm for automatic capturing of\n                    the font outlines},\n    year         = 2002,\n    volume       = 26,\n    number       = 5,\n    pages        = {795-804},\n    issn         = {0097-8493},\n    journal      = {Computers and Graphics},\n    annotation   = {An \\texttt{article} entry with an \\texttt{issn} field},\n}\"#)"
+---
+Sarfraz, M., & Razzak, M. F. A. (2002). Technical section: An algorithm for automatic capturing of the font outlines. *Computers and Graphics*, *26*(5), 795–804.
