@@ -17,6 +17,7 @@ pub fn complete_user_environments<'a>(
                 .environment_names
                 .iter()
                 .filter(|n| n.as_str() != name)
+                .cloned()
             {
                 items.push(InternalCompletionItem::new(
                     range,

@@ -86,10 +86,10 @@ pub enum InternalCompletionItemData<'a> {
         text: String,
     },
     UserCommand {
-        name: &'a str,
+        name: SmolStr,
     },
     UserEnvironment {
-        name: &'a str,
+        name: String,
     },
     PgfLibrary {
         name: &'a str,

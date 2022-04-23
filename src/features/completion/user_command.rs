@@ -18,7 +18,7 @@ pub fn complete_user_commands<'a>(
                 .command_names
                 .iter()
                 .filter(|name| name.as_str() != token.text())
-                .map(|name| &name[1..])
+                .cloned()
             {
                 items.push(InternalCompletionItem::new(
                     range,

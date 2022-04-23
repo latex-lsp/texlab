@@ -16,7 +16,7 @@ pub fn complete_theorem_environments<'a>(
                 items.push(InternalCompletionItem::new(
                     range,
                     InternalCompletionItemData::UserEnvironment {
-                        name: &environment.name,
+                        name: environment.name.clone(),
                     },
                 ));
             }
