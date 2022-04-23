@@ -13,14 +13,14 @@ use encoding_rs_io::DecodeReaderBytesBuilder;
 use lsp_types::{
     notification::{LogMessage, Progress},
     LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
-    TextDocumentIdentifier, TextDocumentPositionParams, WorkDoneProgress, WorkDoneProgressBegin,
-    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
+    TextDocumentIdentifier, TextDocumentPositionParams, Url, WorkDoneProgress,
+    WorkDoneProgressBegin, WorkDoneProgressCreateParams, WorkDoneProgressEnd,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use uuid::Uuid;
 
-use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, DocumentLanguage, Uri};
+use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, DocumentLanguage};
 
 use super::{forward_search, FeatureRequest};
 
@@ -53,7 +53,7 @@ struct ProgressReporter<'a> {
 }
 
 impl<'a> ProgressReporter<'a> {
-    pub fn start(&self, uri: &Uri) -> Result<()> {
+    pub fn start(&self, uri: &Url) -> Result<()> {
         if self.supports_progress {
             client::send_request::<lsp_types::request::WorkDoneProgressCreate>(
                 self.req_queue,
@@ -100,7 +100,7 @@ impl<'a> Drop for ProgressReporter<'a> {
 #[derive(Default)]
 pub struct BuildEngine {
     lock: Mutex<()>,
-    pub positions_by_uri: DashMap<Arc<Uri>, Position>,
+    pub positions_by_uri: DashMap<Arc<Url>, Position>,
 }
 
 impl BuildEngine {
@@ -201,7 +201,7 @@ impl BuildEngine {
                         .get(&request.main_document().uri)
                         .map(|guard| *guard)
                         .unwrap_or_default(),
-                    text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone().into()),
+                    text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone()),
                 },
                 uri: request.uri,
                 workspace: request.workspace,

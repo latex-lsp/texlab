@@ -1,6 +1,6 @@
-use lsp_types::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind};
+use lsp_types::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, Url};
 
-use crate::{features::lsp_kinds::Structure, BibtexEntryTypeCategory, Uri};
+use crate::{features::lsp_kinds::Structure, BibtexEntryTypeCategory};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum InternalSymbolKind {
@@ -95,13 +95,13 @@ impl InternalSymbol {
         }
     }
 
-    pub fn into_symbol_info(self, uri: Uri) -> SymbolInformation {
+    pub fn into_symbol_info(self, uri: Url) -> SymbolInformation {
         #[allow(deprecated)]
         SymbolInformation {
             name: self.name,
             kind: self.kind.into_symbol_kind(),
             deprecated: Some(self.deprecated),
-            location: Location::new(uri.into(), self.full_range),
+            location: Location::new(uri, self.full_range),
             container_name: None,
             tags: None,
         }

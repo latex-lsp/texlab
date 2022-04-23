@@ -46,7 +46,7 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                     })
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
-                changes.insert(document.uri.as_ref().clone().into(), edits);
+                changes.insert(document.uri.as_ref().clone(), edits);
             }
             DocumentData::Bibtex(data) => {
                 let edits: Vec<_> = bibtex::SyntaxNode::new_root(data.green.clone())
@@ -61,7 +61,7 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                     })
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
-                changes.insert(document.uri.as_ref().clone().into(), edits);
+                changes.insert(document.uri.as_ref().clone(), edits);
             }
             DocumentData::BuildLog(_) => {}
         }
@@ -100,11 +100,11 @@ mod tests {
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(
-            uri1.as_ref().clone().into(),
+            uri1.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
         expected_changes.insert(
-            uri2.as_ref().clone().into(),
+            uri2.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
         let expected_edit = WorkspaceEdit::new(expected_changes);
@@ -134,11 +134,11 @@ mod tests {
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(
-            uri1.as_ref().clone().into(),
+            uri1.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 9, 0, 12), "qux".into())],
         );
         expected_changes.insert(
-            uri2.as_ref().clone().into(),
+            uri2.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(1, 6, 1, 9), "qux".into())],
         );
         let expected_edit = WorkspaceEdit::new(expected_changes);

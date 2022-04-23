@@ -29,7 +29,7 @@ pub fn goto_label_definition(
 
                 return Some(vec![LocationLink {
                     origin_selection_range: Some(origin_selection_range),
-                    target_uri: document.uri.as_ref().clone().into(),
+                    target_uri: document.uri.as_ref().clone(),
                     target_range: document.line_index.line_col_lsp_range(target_range),
                     target_selection_range: document
                         .line_index

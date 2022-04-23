@@ -1,6 +1,8 @@
-use crate::{distro::Resolver, Uri};
+use lsp_types::Url;
 
-pub fn resolve_distro_file(resolver: &Resolver, stem: &str, extensions: &[&str]) -> Option<Uri> {
+use crate::distro::Resolver;
+
+pub fn resolve_distro_file(resolver: &Resolver, stem: &str, extensions: &[&str]) -> Option<Url> {
     let mut document = resolver.files_by_name.get(stem);
     for extension in extensions {
         document = document.or_else(|| {
@@ -8,7 +10,7 @@ pub fn resolve_distro_file(resolver: &Resolver, stem: &str, extensions: &[&str])
             resolver.files_by_name.get(full_name.as_str())
         });
     }
-    document.and_then(|path| Uri::from_file_path(path).ok())
+    document.and_then(|path| Url::from_file_path(path).ok())
 }
 
 #[cfg(test)]
@@ -31,12 +33,12 @@ mod tests {
 
         assert_eq!(
             resolve_distro_file(&resolver, "foo", &["tex"]),
-            Some(Uri::from_file_path("C:/distro/foo.tex").unwrap())
+            Some(Url::from_file_path("C:/distro/foo.tex").unwrap())
         );
 
         assert_eq!(
             resolve_distro_file(&resolver, "foo", &["sty"]),
-            Some(Uri::from_file_path("C:/distro/foo.sty").unwrap())
+            Some(Url::from_file_path("C:/distro/foo.sty").unwrap())
         );
 
         assert_eq!(resolve_distro_file(&resolver, "foo", &["cls"]), None);
@@ -58,12 +60,12 @@ mod tests {
 
         assert_eq!(
             resolve_distro_file(&resolver, "foo", &["tex"]),
-            Some(Uri::from_file_path("/distro/foo.tex").unwrap())
+            Some(Url::from_file_path("/distro/foo.tex").unwrap())
         );
 
         assert_eq!(
             resolve_distro_file(&resolver, "foo", &["sty"]),
-            Some(Uri::from_file_path("/distro/foo.sty").unwrap())
+            Some(Url::from_file_path("/distro/foo.sty").unwrap())
         );
 
         assert_eq!(resolve_distro_file(&resolver, "foo", &["cls"]), None);

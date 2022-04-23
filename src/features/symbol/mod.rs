@@ -10,7 +10,7 @@ use lsp_types::{
     TextDocumentIdentifier, WorkDoneProgressParams, WorkspaceSymbolParams,
 };
 
-use crate::{ClientCapabilitiesExt, Uri, Workspace};
+use crate::{ClientCapabilitiesExt, Workspace};
 
 use self::{
     bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
@@ -63,7 +63,7 @@ pub fn find_workspace_symbols(
         let request = FeatureRequest {
             uri: Arc::clone(&document.uri),
             params: DocumentSymbolParams {
-                text_document: TextDocumentIdentifier::new(document.uri.as_ref().clone().into()),
+                text_document: TextDocumentIdentifier::new(document.uri.as_ref().clone()),
                 partial_result_params: PartialResultParams::default(),
                 work_done_progress_params: WorkDoneProgressParams::default(),
             },
@@ -114,12 +114,12 @@ fn sort_symbols(workspace: &Workspace, symbols: &mut [SymbolInformation]) {
     let ordering = ProjectOrdering::from(workspace);
     symbols.sort_by(|left, right| {
         let left_key = (
-            ordering.get(&Uri::from(left.location.uri.clone())),
+            ordering.get(&left.location.uri),
             left.location.range.start,
             Reverse(left.location.range.end),
         );
         let right_key = (
-            ordering.get(&Uri::from(right.location.uri.clone())),
+            ordering.get(&right.location.uri),
             right.location.range.start,
             Reverse(right.location.range.end),
         );

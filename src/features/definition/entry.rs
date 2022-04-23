@@ -34,7 +34,7 @@ pub fn goto_entry_definition(
                 if let Some(key) = entry.key().filter(|k| k.to_string() == key.to_string()) {
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),
-                        target_uri: document.uri.as_ref().clone().into(),
+                        target_uri: document.uri.as_ref().clone(),
                         target_selection_range: document
                             .line_index
                             .line_col_lsp_range(bibtex::small_range(&key)),
@@ -111,7 +111,7 @@ mod tests {
             .line(1)
             .character(6)
             .build();
-        let target_uri = tester.uri("baz.bib").as_ref().clone().into();
+        let target_uri = tester.uri("baz.bib").as_ref().clone();
 
         let request = tester.definition();
         let context = CursorContext::new(request);

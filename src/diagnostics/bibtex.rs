@@ -1,18 +1,18 @@
 use std::sync::Arc;
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
+use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Url};
 use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     syntax::bibtex::{self, HasDelimiters, HasType},
-    Document, LineIndexExt, Uri, Workspace,
+    Document, LineIndexExt, Workspace,
 };
 
 pub fn analyze_bibtex_static(
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    uri: &Uri,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
+    uri: &Url,
 ) -> Option<()> {
     let document = workspace.documents_by_uri.get(uri)?;
     let data = document.data.as_bibtex()?;
@@ -27,7 +27,7 @@ pub fn analyze_bibtex_static(
 
 fn analyze_entry(
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let entry = bibtex::Entry::cast(node)?;
@@ -96,7 +96,7 @@ fn analyze_entry(
 
 fn analyze_field(
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let field = bibtex::Field::cast(node)?;

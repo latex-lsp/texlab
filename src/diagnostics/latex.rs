@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString};
+use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Url};
 use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
-use crate::{syntax::latex, Document, LineIndexExt, Uri, Workspace};
+use crate::{syntax::latex, Document, LineIndexExt, Workspace};
 
 pub fn analyze_latex_static(
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    uri: &Uri,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
+    uri: &Url,
 ) -> Option<()> {
     let document = workspace.documents_by_uri.get(uri)?;
     if !document.uri.as_str().ends_with(".tex") {
@@ -49,7 +49,7 @@ pub fn analyze_latex_static(
 
 fn analyze_environment(
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: latex::SyntaxNode,
 ) -> Option<()> {
     let environment = latex::Environment::cast(node)?;
@@ -78,7 +78,7 @@ fn analyze_environment(
 
 fn analyze_curly_group(
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: latex::SyntaxNode,
 ) -> Option<()> {
     if !matches!(

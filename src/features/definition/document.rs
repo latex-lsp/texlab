@@ -27,7 +27,7 @@ pub fn goto_document_definition(
                                 .line_index
                                 .line_col_lsp_range(include.stem_range),
                         ),
-                        target_uri: target.as_ref().clone().into(),
+                        target_uri: target.as_ref().clone(),
                         target_range: Range::new_simple(0, 0, 0, 0),
                         target_selection_range: Range::new_simple(0, 0, 0, 0),
                     }]);
@@ -90,7 +90,7 @@ mod tests {
             .line(0)
             .character(18)
             .build();
-        let target_uri = tester.uri("baz.bib").as_ref().clone().into();
+        let target_uri = tester.uri("baz.bib").as_ref().clone();
 
         let request = tester.definition();
         let context = CursorContext::new(request);

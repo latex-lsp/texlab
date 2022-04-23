@@ -16,7 +16,9 @@ mod symbol;
 
 use std::sync::Arc;
 
-use crate::{Document, Uri, Workspace};
+use lsp_types::Url;
+
+use crate::{Document, Workspace};
 
 #[cfg(feature = "completion")]
 pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
@@ -38,7 +40,7 @@ pub use self::{
 pub struct FeatureRequest<P> {
     pub params: P,
     pub workspace: Workspace,
-    pub uri: Arc<Uri>,
+    pub uri: Arc<Url>,
 }
 
 impl<P> FeatureRequest<P> {
@@ -60,7 +62,7 @@ mod testing {
     };
     use typed_builder::TypedBuilder;
 
-    use crate::{distro::Resolver, DocumentLanguage, Environment, Options, Uri, Workspace};
+    use crate::{distro::Resolver, DocumentLanguage, Environment, Options, Workspace};
 
     use super::*;
 
@@ -102,9 +104,9 @@ mod testing {
     }
 
     impl<'a> FeatureTester<'a> {
-        pub fn uri(&self, name: &str) -> Arc<Uri> {
+        pub fn uri(&self, name: &str) -> Arc<Url> {
             let path = self.current_directory.join(name);
-            Arc::new(Uri::from_file_path(path).unwrap())
+            Arc::new(Url::from_file_path(path).unwrap())
         }
 
         fn options(&self) -> Options {
@@ -117,7 +119,7 @@ mod testing {
 
         fn identifier(&self) -> TextDocumentIdentifier {
             let uri = self.uri(self.main);
-            TextDocumentIdentifier::new(uri.as_ref().clone().into())
+            TextDocumentIdentifier::new(uri.as_ref().clone())
         }
 
         fn workspace(&self) -> Workspace {

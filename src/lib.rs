@@ -19,7 +19,6 @@ mod range;
 mod req_queue;
 mod server;
 pub mod syntax;
-mod uri;
 mod workspace;
 
 pub use self::{
@@ -34,6 +33,5 @@ pub use self::{
     options::*,
     range::RangeExt,
     server::Server,
-    uri::Uri,
     workspace::{Workspace, WorkspaceEvent},
 };

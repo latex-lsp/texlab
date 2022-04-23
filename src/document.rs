@@ -1,6 +1,7 @@
 use std::{fmt, sync::Arc};
 
 use derive_more::From;
+use lsp_types::Url;
 
 use crate::{
     line_index::LineIndex,
@@ -8,7 +9,7 @@ use crate::{
         bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
     },
-    DocumentLanguage, Environment, Uri,
+    DocumentLanguage, Environment,
 };
 
 #[derive(Debug, Clone)]
@@ -65,7 +66,7 @@ impl DocumentData {
 
 #[derive(Clone)]
 pub struct Document {
-    pub uri: Arc<Uri>,
+    pub uri: Arc<Url>,
     pub text: Arc<String>,
     pub line_index: Arc<LineIndex>,
     pub data: DocumentData,
@@ -80,7 +81,7 @@ impl fmt::Debug for Document {
 impl Document {
     pub fn parse(
         environment: &Environment,
-        uri: Arc<Uri>,
+        uri: Arc<Url>,
         text: Arc<String>,
         language: DocumentLanguage,
     ) -> Self {
@@ -93,7 +94,7 @@ impl Document {
                 let base_uri = match &environment.options.root_directory {
                     Some(root_dir) => {
                         let root_dir = environment.current_directory.join(&root_dir);
-                        Uri::from_directory_path(root_dir)
+                        Url::from_directory_path(root_dir)
                             .map(Arc::new)
                             .unwrap_or_else(|()| Arc::clone(&uri))
                     }

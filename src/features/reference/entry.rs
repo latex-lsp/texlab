@@ -31,7 +31,7 @@ pub fn find_entry_references(
                             .line_col_lsp_range(latex::small_range(&key))
                     })
                     .for_each(|range| {
-                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
+                        references.push(Location::new(document.uri.as_ref().clone(), range));
                     });
             }
             DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
@@ -46,7 +46,7 @@ pub fn find_entry_references(
                             .line_col_lsp_range(bibtex::small_range(&key))
                     })
                     .for_each(|range| {
-                        references.push(Location::new(document.uri.as_ref().clone().into(), range));
+                        references.push(Location::new(document.uri.as_ref().clone(), range));
                     });
             }
             DocumentData::Bibtex(_) | DocumentData::BuildLog(_) => {}
@@ -125,7 +125,7 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
-            uri.as_ref().clone().into(),
+            uri.as_ref().clone(),
             Range::new_simple(0, 6, 0, 9),
         )];
         assert_eq!(actual_references, expected_references);
@@ -153,8 +153,8 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
+            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 6, 0, 9)),
+            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 9, 0, 12)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -179,7 +179,7 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
-            uri.as_ref().clone().into(),
+            uri.as_ref().clone(),
             Range::new_simple(0, 6, 0, 9),
         )];
         assert_eq!(actual_references, expected_references);
@@ -207,8 +207,8 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 6, 0, 9)),
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 9, 0, 12)),
+            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 6, 0, 9)),
+            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 9, 0, 12)),
         ];
         assert_eq!(actual_references, expected_references);
     }

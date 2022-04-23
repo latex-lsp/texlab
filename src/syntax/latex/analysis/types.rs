@@ -1,16 +1,17 @@
 use std::sync::Arc;
 
+use lsp_types::Url;
 use rowan::TextRange;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smol_str::SmolStr;
 
-use crate::{Environment, Uri};
+use crate::Environment;
 
 #[derive(Debug)]
 pub struct LatexAnalyzerContext<'a> {
     pub environment: &'a Environment,
-    pub document_uri: Arc<Uri>,
-    pub base_uri: Arc<Uri>,
+    pub document_uri: Arc<Url>,
+    pub base_uri: Arc<Url>,
     pub extras: Extras,
 }
 
@@ -29,9 +30,9 @@ pub struct Extras {
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Hash)]
 pub struct ImplicitLinks {
-    pub aux: Vec<Arc<Uri>>,
-    pub log: Vec<Arc<Uri>>,
-    pub pdf: Vec<Arc<Uri>>,
+    pub aux: Vec<Arc<Url>>,
+    pub log: Vec<Arc<Url>>,
+    pub pdf: Vec<Arc<Url>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
@@ -46,7 +47,7 @@ pub enum ExplicitLinkKind {
 pub struct ExplicitLink {
     pub stem: SmolStr,
     pub stem_range: TextRange,
-    pub targets: Vec<Arc<Uri>>,
+    pub targets: Vec<Arc<Url>>,
     pub kind: ExplicitLinkKind,
 }
 

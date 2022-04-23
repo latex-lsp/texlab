@@ -5,18 +5,18 @@ use std::{
     sync::Arc,
 };
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Range};
+use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, Url};
 use multimap::MultiMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use tempfile::tempdir;
 
-use crate::{Options, RangeExt, Uri, Workspace};
+use crate::{Options, RangeExt, Workspace};
 
 pub fn analyze_latex_chktex(
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    uri: &Uri,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
+    uri: &Url,
     options: &Options,
 ) -> Option<()> {
     let document = workspace.documents_by_uri.get(uri)?;

@@ -64,7 +64,6 @@ smol_str = { version = "0.1.21", features = ["serde"] }
 tempfile = "3.3.0"
 threadpool = "1.8.1"
 titlecase = "1.1.0"
-url = "2.2.2"
 uuid = { version = "1.0.0", features = ["v4"] }
 
 [dependencies.clap]

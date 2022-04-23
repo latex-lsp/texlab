@@ -27,10 +27,10 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: latex::SyntaxNo
 
     for path in include.path_list()?.keys() {
         let stem = path.to_string();
-        let mut targets = vec![Arc::new(context.base_uri.join(&stem).ok()?.into())];
+        let mut targets = vec![Arc::new(context.base_uri.join(&stem).ok()?)];
         for extension in extensions {
             let path = format!("{}.{}", stem, extension);
-            targets.push(Arc::new(context.base_uri.join(&path).ok()?.into()));
+            targets.push(Arc::new(context.base_uri.join(&path).ok()?));
         }
 
         resolve_distro_file(&context.environment.resolver, &stem, extensions)
@@ -53,16 +53,14 @@ pub fn analyze_import(context: &mut LatexAnalyzerContext, node: latex::SyntaxNod
 
     let mut targets = Vec::new();
     let directory = match import.directory().and_then(|dir| dir.key()) {
-        Some(dir) => Arc::new(context.base_uri.join(&dir.to_string()).ok()?.into()),
+        Some(dir) => Arc::new(context.base_uri.join(&dir.to_string()).ok()?),
         None => Arc::clone(&context.base_uri),
     };
 
     let file = import.file()?.key()?;
     let stem = file.to_string();
-    targets.push(Arc::new(directory.join(&stem).ok()?.into()));
-    targets.push(Arc::new(
-        directory.join(&format!("{}.tex", stem)).ok()?.into(),
-    ));
+    targets.push(Arc::new(directory.join(&stem).ok()?));
+    targets.push(Arc::new(directory.join(&format!("{}.tex", stem)).ok()?));
 
     context.extras.explicit_links.push(ExplicitLink {
         stem: stem.into(),

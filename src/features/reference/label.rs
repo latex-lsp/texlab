@@ -22,7 +22,7 @@ pub fn find_label_references(
                 })
             {
                 references.push(Location::new(
-                    document.uri.as_ref().clone().into(),
+                    document.uri.as_ref().clone(),
                     document.line_index.line_col_lsp_range(name.range),
                 ));
             }
@@ -68,7 +68,7 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![Location::new(
-            uri.as_ref().clone().into(),
+            uri.as_ref().clone(),
             Range::new_simple(0, 5, 0, 8),
         )];
         assert_eq!(actual_references, expected_references);
@@ -96,8 +96,8 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
+            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 7, 0, 10)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -124,8 +124,8 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 5, 0, 8)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -152,8 +152,8 @@ mod tests {
 
         sort_references(&mut actual_references);
         let expected_references = vec![
-            Location::new(uri1.as_ref().clone().into(), Range::new_simple(0, 5, 0, 8)),
-            Location::new(uri2.as_ref().clone().into(), Range::new_simple(0, 7, 0, 10)),
+            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 5, 0, 8)),
+            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 7, 0, 10)),
         ];
         assert_eq!(actual_references, expected_references);
     }

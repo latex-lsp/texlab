@@ -1,17 +1,18 @@
 use std::{sync::Arc, usize};
 
+use lsp_types::Url;
 use petgraph::{algo::tarjan_scc, Directed, Graph};
 use rustc_hash::FxHashSet;
 
-use crate::{Document, Uri, Workspace};
+use crate::{Document, Workspace};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering {
-    ordering: Vec<Arc<Uri>>,
+    ordering: Vec<Arc<Url>>,
 }
 
 impl ProjectOrdering {
-    pub fn get(&self, uri: &Uri) -> usize {
+    pub fn get(&self, uri: &Url) -> usize {
         self.ordering
             .iter()
             .position(|u| u.as_ref() == uri)
@@ -22,7 +23,7 @@ impl ProjectOrdering {
 impl From<&Workspace> for ProjectOrdering {
     fn from(workspace: &Workspace) -> Self {
         let mut ordering = Vec::new();
-        let uris: FxHashSet<Arc<Uri>> = workspace
+        let uris: FxHashSet<Arc<Url>> = workspace
             .documents_by_uri
             .values()
             .map(|document| Arc::clone(&document.uri))
@@ -116,19 +117,19 @@ mod tests {
         let mut workspace = Workspace::default();
 
         let a = workspace.open(
-            Arc::new(Uri::parse("http://example.com/a.tex")?),
+            Arc::new(Url::parse("http://example.com/a.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
         )?;
 
         let b = workspace.open(
-            Arc::new(Uri::parse("http://example.com/b.tex")?),
+            Arc::new(Url::parse("http://example.com/b.tex")?),
             Arc::new(String::new()),
             DocumentLanguage::Latex,
         )?;
 
         let c = workspace.open(
-            Arc::new(Uri::parse("http://example.com/c.tex")?),
+            Arc::new(Url::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{b}\include{a}"#.to_string()),
             DocumentLanguage::Latex,
         )?;
@@ -146,19 +147,19 @@ mod tests {
         let mut workspace = Workspace::default();
 
         let a = workspace.open(
-            Arc::new(Uri::parse("http://example.com/a.tex")?),
+            Arc::new(Url::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
         )?;
 
         let b = workspace.open(
-            Arc::new(Uri::parse("http://example.com/b.tex")?),
+            Arc::new(Url::parse("http://example.com/b.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
         )?;
 
         let c = workspace.open(
-            Arc::new(Uri::parse("http://example.com/c.tex")?),
+            Arc::new(Url::parse("http://example.com/c.tex")?),
             Arc::new(r#"\include{a}"#.to_string()),
             DocumentLanguage::Latex,
         )?;
@@ -176,25 +177,25 @@ mod tests {
         let mut workspace = Workspace::default();
 
         let a = workspace.open(
-            Arc::new(Uri::parse("http://example.com/a.tex")?),
+            Arc::new(Url::parse("http://example.com/a.tex")?),
             Arc::new(r#"\include{b}"#.to_string()),
             DocumentLanguage::Latex,
         )?;
 
         let b = workspace.open(
-            Arc::new(Uri::parse("http://example.com/b.tex")?),
+            Arc::new(Url::parse("http://example.com/b.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
         )?;
 
         let c = workspace.open(
-            Arc::new(Uri::parse("http://example.com/c.tex")?),
+            Arc::new(Url::parse("http://example.com/c.tex")?),
             Arc::new(r#""#.to_string()),
             DocumentLanguage::Latex,
         )?;
 
         let d = workspace.open(
-            Arc::new(Uri::parse("http://example.com/d.tex")?),
+            Arc::new(Url::parse("http://example.com/d.tex")?),
             Arc::new(r#"\include{c}"#.to_string()),
             DocumentLanguage::Latex,
         )?;

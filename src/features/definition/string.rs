@@ -27,7 +27,7 @@ pub fn goto_string_definition(
         if let Some(string_name) = string.name().filter(|n| n.text() == name.text()) {
             return Some(vec![LocationLink {
                 origin_selection_range: Some(origin_selection_range),
-                target_uri: main_document.uri.as_ref().clone().into(),
+                target_uri: main_document.uri.as_ref().clone(),
                 target_selection_range: main_document
                     .line_index
                     .line_col_lsp_range(string_name.text_range()),
@@ -98,7 +98,7 @@ mod tests {
             .line(1)
             .character(24)
             .build();
-        let target_uri = tester.uri("main.bib").as_ref().clone().into();
+        let target_uri = tester.uri("main.bib").as_ref().clone();
 
         let request = tester.definition();
         let context = CursorContext::new(request);
@@ -130,7 +130,7 @@ mod tests {
             .line(1)
             .character(24)
             .build();
-        let target_uri = tester.uri("main.bib").as_ref().clone().into();
+        let target_uri = tester.uri("main.bib").as_ref().clone();
 
         let request = tester.definition();
         let context = CursorContext::new(request);

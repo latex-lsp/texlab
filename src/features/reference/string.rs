@@ -34,7 +34,7 @@ pub fn find_string_references(
             })
         {
             items.push(Location::new(
-                document.uri.as_ref().clone().into(),
+                document.uri.as_ref().clone(),
                 document.line_index.line_col_lsp_range(name.text_range()),
             ));
         }
@@ -74,7 +74,7 @@ mod tests {
         find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
-            uri.as_ref().clone().into(),
+            uri.as_ref().clone(),
             Range::new_simple(2, 23, 2, 26),
         )];
         assert_eq!(actual_references, expected_references);
@@ -104,8 +104,8 @@ mod tests {
         find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![
-            Location::new(uri.as_ref().clone().into(), Range::new_simple(0, 8, 0, 11)),
-            Location::new(uri.as_ref().clone().into(), Range::new_simple(2, 23, 2, 26)),
+            Location::new(uri.as_ref().clone(), Range::new_simple(0, 8, 0, 11)),
+            Location::new(uri.as_ref().clone(), Range::new_simple(2, 23, 2, 26)),
         ];
         assert_eq!(actual_references, expected_references);
     }
@@ -133,7 +133,7 @@ mod tests {
         find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![Location::new(
-            uri.as_ref().clone().into(),
+            uri.as_ref().clone(),
             Range::new_simple(2, 23, 2, 26),
         )];
         assert_eq!(actual_references, expected_references);
@@ -163,8 +163,8 @@ mod tests {
         find_string_references(&context, &mut actual_references);
 
         let expected_references = vec![
-            Location::new(uri.as_ref().clone().into(), Range::new_simple(0, 8, 0, 11)),
-            Location::new(uri.as_ref().clone().into(), Range::new_simple(2, 23, 2, 26)),
+            Location::new(uri.as_ref().clone(), Range::new_simple(0, 8, 0, 11)),
+            Location::new(uri.as_ref().clone(), Range::new_simple(2, 23, 2, 26)),
         ];
         assert_eq!(actual_references, expected_references);
     }

@@ -23,7 +23,7 @@ use crate::{
         FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, DocumentLanguage, Environment, LineIndex, LineIndexExt, Options, Uri,
+    ClientCapabilitiesExt, DocumentLanguage, Environment, LineIndex, LineIndexExt, Options,
     Workspace, WorkspaceEvent,
 };
 
@@ -319,13 +319,12 @@ impl Server {
     fn did_change_watched_files(&mut self, params: DidChangeWatchedFilesParams) -> Result<()> {
         for change in params.changes {
             if let Ok(path) = change.uri.to_file_path() {
-                let uri = Uri::from(change.uri);
                 match change.typ {
                     FileChangeType::CREATED | FileChangeType::CHANGED => {
                         self.workspace.reload(path)?;
                     }
                     FileChangeType::DELETED => {
-                        self.workspace.documents_by_uri.remove(&uri);
+                        self.workspace.documents_by_uri.remove(&change.uri);
                     }
                     _ => {}
                 }
@@ -365,7 +364,7 @@ impl Server {
         let language_id = &params.text_document.language_id;
         let language = DocumentLanguage::by_language_id(language_id);
         let document = self.workspace.open(
-            Arc::new(params.text_document.uri.into()),
+            Arc::new(params.text_document.uri),
             Arc::new(params.text_document.text),
             language.unwrap_or(DocumentLanguage::Latex),
         )?;
@@ -385,7 +384,7 @@ impl Server {
     }
 
     fn did_change(&mut self, params: DidChangeTextDocumentParams) -> Result<()> {
-        let uri = Arc::new(Uri::from(params.text_document.uri));
+        let uri = Arc::new(params.text_document.uri);
         match self.workspace.documents_by_uri.get(&uri).cloned() {
             Some(old_document) => {
                 let mut text = old_document.text.to_string();
@@ -432,7 +431,7 @@ impl Server {
     }
 
     fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
-        let uri = Uri::from(params.text_document.uri);
+        let uri = params.text_document.uri;
 
         if let Some(request) = self
             .workspace
@@ -443,7 +442,7 @@ impl Server {
                 self.feature_request(
                     Arc::clone(&document.uri),
                     BuildParams {
-                        text_document: TextDocumentIdentifier::new(uri.clone().into()),
+                        text_document: TextDocumentIdentifier::new(uri.clone()),
                     },
                 )
             })
@@ -479,12 +478,11 @@ impl Server {
     }
 
     fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
-        let uri = params.text_document.uri.into();
-        self.workspace.close(&uri);
+        self.workspace.close(&params.text_document.uri);
         Ok(())
     }
 
-    fn feature_request<P>(&self, uri: Arc<Uri>, params: P) -> FeatureRequest<P> {
+    fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
         FeatureRequest {
             params,
             workspace: self.workspace.slice(&uri),
@@ -496,7 +494,7 @@ impl Server {
         &self,
         id: RequestId,
         params: P,
-        uri: Arc<Uri>,
+        uri: Arc<Url>,
         handler: H,
     ) -> Result<()>
     where
@@ -518,13 +516,13 @@ impl Server {
     }
 
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_document_links)?;
         Ok(())
     }
 
     fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_document_symbols)?;
         Ok(())
     }
@@ -543,14 +541,7 @@ impl Server {
 
     #[cfg(feature = "completion")]
     fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
-        let uri = Arc::new(
-            params
-                .text_document_position
-                .text_document
-                .uri
-                .clone()
-                .into(),
-        );
+        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
 
         self.build_engine
             .positions_by_uri
@@ -595,20 +586,13 @@ impl Server {
     }
 
     fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_foldings)?;
         Ok(())
     }
 
     fn references(&self, id: RequestId, params: ReferenceParams) -> Result<()> {
-        let uri = Arc::new(
-            params
-                .text_document_position
-                .text_document
-                .uri
-                .clone()
-                .into(),
-        );
+        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_all_references)?;
         Ok(())
     }
@@ -619,8 +603,7 @@ impl Server {
                 .text_document_position_params
                 .text_document
                 .uri
-                .clone()
-                .into(),
+                .clone(),
         );
         self.build_engine.positions_by_uri.insert(
             Arc::clone(&uri),
@@ -637,28 +620,20 @@ impl Server {
                 .text_document_position_params
                 .text_document
                 .uri
-                .clone()
-                .into(),
+                .clone(),
         );
         self.handle_feature_request(id, params, uri, goto_definition)?;
         Ok(())
     }
 
     fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, prepare_rename_all)?;
         Ok(())
     }
 
     fn rename(&self, id: RequestId, params: RenameParams) -> Result<()> {
-        let uri = Arc::new(
-            params
-                .text_document_position
-                .text_document
-                .uri
-                .clone()
-                .into(),
-        );
+        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, rename_all)?;
         Ok(())
     }
@@ -669,15 +644,14 @@ impl Server {
                 .text_document_position_params
                 .text_document
                 .uri
-                .clone()
-                .into(),
+                .clone(),
         );
         self.handle_feature_request(id, params, uri, find_document_highlights)?;
         Ok(())
     }
 
     fn formatting(&self, id: RequestId, params: DocumentFormattingParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, format_source_code)?;
         Ok(())
     }
@@ -691,7 +665,7 @@ impl Server {
     }
 
     fn build(&self, id: RequestId, params: BuildParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         let lsp_sender = self.connection.sender.clone();
         let req_queue = Arc::clone(&self.req_queue);
         let build_engine = Arc::clone(&self.build_engine);
@@ -709,7 +683,7 @@ impl Server {
     }
 
     fn forward_search(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
-        let uri = Arc::new(params.text_document.uri.clone().into());
+        let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, |req| {
             crate::features::execute_forward_search(req).unwrap_or(ForwardSearchResult {
                 status: ForwardSearchStatus::ERROR,
@@ -882,7 +856,7 @@ fn publish_diagnostics(
         send_notification::<PublishDiagnostics>(
             sender,
             PublishDiagnosticsParams {
-                uri: document.uri.as_ref().clone().into(),
+                uri: document.uri.as_ref().clone(),
                 version: None,
                 diagnostics,
             },

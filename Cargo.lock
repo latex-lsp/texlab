@@ -1860,7 +1860,6 @@ dependencies = [
  "titlecase",
  "typed-builder",
  "unindent",
- "url",
  "uuid",
 ]
 

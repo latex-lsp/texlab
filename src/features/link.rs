@@ -20,7 +20,7 @@ pub fn find_document_links(request: FeatureRequest<DocumentLinkParams>) -> Vec<D
                         range: main_document
                             .line_index
                             .line_col_lsp_range(include.stem_range),
-                        target: Some(target.as_ref().clone().into()),
+                        target: Some(target.as_ref().clone()),
                         tooltip: None,
                         data: None,
                     });
@@ -76,7 +76,7 @@ mod tests {
 
         let expected_items = vec![DocumentLink {
             range: Range::new_simple(0, 7, 0, 14),
-            target: Some(target.as_ref().clone().into()),
+            target: Some(target.as_ref().clone()),
             tooltip: None,
             data: None,
         }];
@@ -98,7 +98,7 @@ mod tests {
 
         let expected_items = vec![DocumentLink {
             range: Range::new_simple(0, 14, 0, 17),
-            target: Some(target.as_ref().clone().into()),
+            target: Some(target.as_ref().clone()),
             tooltip: None,
             data: None,
         }];

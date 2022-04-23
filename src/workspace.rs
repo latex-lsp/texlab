@@ -2,10 +2,11 @@ use std::{fs, path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
+use lsp_types::Url;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::FxHashSet;
 
-use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment, Uri};
+use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment};
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceEvent {
@@ -14,8 +15,8 @@ pub enum WorkspaceEvent {
 
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
-    pub documents_by_uri: im::HashMap<Arc<Uri>, Document>,
-    pub viewport: im::HashSet<Arc<Uri>>,
+    pub documents_by_uri: im::HashMap<Arc<Url>, Document>,
+    pub viewport: im::HashSet<Arc<Url>>,
     pub listeners: im::Vector<Sender<WorkspaceEvent>>,
     pub environment: Environment,
 }
@@ -32,7 +33,7 @@ impl Workspace {
 
     pub fn open(
         &mut self,
-        uri: Arc<Uri>,
+        uri: Arc<Url>,
         text: Arc<String>,
         language: DocumentLanguage,
     ) -> Result<Document> {
@@ -52,7 +53,7 @@ impl Workspace {
     }
 
     pub fn reload(&mut self, path: PathBuf) -> Result<Option<Document>> {
-        let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
+        let uri = Arc::new(Url::from_file_path(path.clone()).unwrap());
 
         if self.is_open(&uri) && !uri.as_str().ends_with(".log") {
             return Ok(self.documents_by_uri.get(&uri).cloned());
@@ -68,7 +69,7 @@ impl Workspace {
     }
 
     pub fn load(&mut self, path: PathBuf) -> Result<Option<Document>> {
-        let uri = Arc::new(Uri::from_file_path(path.clone()).unwrap());
+        let uri = Arc::new(Url::from_file_path(path.clone()).unwrap());
 
         if let Some(document) = self.documents_by_uri.get(&uri).cloned() {
             return Ok(Some(document));
@@ -83,15 +84,15 @@ impl Workspace {
         }
     }
 
-    pub fn close(&mut self, uri: &Uri) {
+    pub fn close(&mut self, uri: &Url) {
         self.viewport.remove(uri);
     }
 
-    pub fn is_open(&self, uri: &Uri) -> bool {
+    pub fn is_open(&self, uri: &Url) -> bool {
         self.viewport.contains(uri)
     }
 
-    pub fn slice(&self, uri: &Uri) -> Self {
+    pub fn slice(&self, uri: &Url) -> Self {
         let all_uris: Vec<_> = self.documents_by_uri.keys().cloned().collect();
 
         all_uris
@@ -138,7 +139,7 @@ impl Workspace {
             .unwrap_or_default()
     }
 
-    fn find_parent(&self, uri: &Uri) -> Option<Document> {
+    fn find_parent(&self, uri: &Url) -> Option<Document> {
         self.slice(uri)
             .documents_by_uri
             .values()

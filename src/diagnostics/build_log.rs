@@ -1,14 +1,14 @@
 use std::{path::PathBuf, sync::Arc};
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range, Url};
 use multimap::MultiMap;
 
-use crate::{syntax::build_log::BuildErrorLevel, Uri, Workspace};
+use crate::{syntax::build_log::BuildErrorLevel, Workspace};
 
 pub fn analyze_build_log_static(
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Uri>, Diagnostic>,
-    build_log_uri: &Uri,
+    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
+    build_log_uri: &Url,
 ) -> Option<()> {
     let build_log_document = workspace.documents_by_uri.get(build_log_uri)?;
     let parse = build_log_document.data.as_build_log()?;

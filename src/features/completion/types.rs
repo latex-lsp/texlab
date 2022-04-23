@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
+use lsp_types::Url;
 use rowan::TextRange;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::{features::lsp_kinds::Structure, BibtexEntryTypeDoc, BibtexFieldDoc, Uri};
+use crate::{features::lsp_kinds::Structure, BibtexEntryTypeDoc, BibtexFieldDoc};
 
 #[derive(Debug, Clone)]
 pub struct InternalCompletionItem<'a> {
@@ -39,7 +40,7 @@ pub enum InternalCompletionItemData<'a> {
     },
     BeginCommand,
     Citation {
-        uri: Arc<Uri>,
+        uri: Arc<Url>,
         key: String,
         text: String,
         ty: Structure,
@@ -143,7 +144,7 @@ pub enum CompletionItemData {
     Class,
     EntryType,
     FieldName,
-    Citation { uri: Uri, key: SmolStr },
+    Citation { uri: Url, key: SmolStr },
     Argument,
     Acronym,
     GlossaryEntry,

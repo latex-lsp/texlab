@@ -6,8 +6,9 @@ use std::{
 
 use crossbeam_channel::Sender;
 use dashmap::DashMap;
+use lsp_types::Url;
 
-use crate::{Document, Uri, Workspace};
+use crate::{Document, Workspace};
 
 pub enum DiagnosticsMessage {
     Analyze {
@@ -31,7 +32,7 @@ impl DiagnosticsDebouncer {
 
         let handle = thread::spawn(move || {
             let pool = threadpool::Builder::new().build();
-            let last_task_time_by_uri: Arc<DashMap<Arc<Uri>, Instant>> = Arc::default();
+            let last_task_time_by_uri: Arc<DashMap<Arc<Url>, Instant>> = Arc::default();
             while let Ok(DiagnosticsMessage::Analyze {
                 workspace,
                 document,

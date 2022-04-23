@@ -39,7 +39,7 @@ pub fn rename_command(context: &CursorContext<RenameParams>) -> Option<Workspace
                 })
                 .collect();
 
-            changes.insert(document.uri.as_ref().clone().into(), edits);
+            changes.insert(document.uri.as_ref().clone(), edits);
         }
     }
 
@@ -74,11 +74,11 @@ mod tests {
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(
-            uri1.as_ref().clone().into(),
+            uri1.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 1, 0, 4), "qux".into())],
         );
         expected_changes.insert(
-            uri2.as_ref().clone().into(),
+            uri2.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 1, 0, 4), "qux".into())],
         );
         let expected_edit = WorkspaceEdit::new(expected_changes);

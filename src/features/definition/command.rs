@@ -35,7 +35,7 @@ pub fn goto_command_definition(
 
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),
-                        target_uri: document.uri.as_ref().clone().into(),
+                        target_uri: document.uri.as_ref().clone(),
                         target_range,
                         target_selection_range,
                     }]);
@@ -105,7 +105,7 @@ mod tests {
             .line(1)
             .character(2)
             .build();
-        let target_uri = tester.uri("main.tex").as_ref().clone().into();
+        let target_uri = tester.uri("main.tex").as_ref().clone();
 
         let request = tester.definition();
         let context = CursorContext::new(request);

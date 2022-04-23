@@ -92,7 +92,7 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                 }
             }
 
-            changes.insert(document.uri.as_ref().clone().into(), edits);
+            changes.insert(document.uri.as_ref().clone(), edits);
         }
     }
 
@@ -128,11 +128,11 @@ mod tests {
 
         let mut expected_changes = HashMap::new();
         expected_changes.insert(
-            uri1.as_ref().clone().into(),
+            uri1.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 7, 0, 10), "bar".into())],
         );
         expected_changes.insert(
-            uri2.as_ref().clone().into(),
+            uri2.as_ref().clone(),
             vec![TextEdit::new(Range::new_simple(0, 5, 0, 8), "bar".into())],
         );
         let expected_edit = WorkspaceEdit::new(expected_changes);
