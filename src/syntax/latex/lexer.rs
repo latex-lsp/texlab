@@ -201,7 +201,7 @@ enum CommandNameToken {
     #[token("\\import")]
     #[token("\\subimport")]
     #[token("\\inputfrom")]
-    #[token("\\subimportfrom")]
+    #[token("\\subinputfrom")]
     #[token("\\includefrom")]
     #[token("\\subincludefrom")]
     Import,
