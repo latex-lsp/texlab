@@ -40,7 +40,7 @@ dashmap = "5.2.0"
 derive_more = "0.99.17"
 encoding_rs = "0.8.30"
 encoding_rs_io = "0.1.7"
-flate2 = "1.0.22"
+flate2 = "1.0.23"
 fern = "0.6"
 fnv = { version = "1.0", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
