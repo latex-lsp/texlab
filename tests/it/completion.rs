@@ -257,7 +257,7 @@ mod latex {
         server.open(
             "main.bib",
             r#"
-                @article{foo 2019,
+                @article{foo,
                     author = {Foo Bar},
                     title = {Baz Qux},
                     year = {2019},

@@ -5,7 +5,10 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
-    syntax::{bibtex, latex},
+    syntax::{
+        biblatex::{self, HasKey, HasName},
+        latex,
+    },
     DocumentData, LineIndexExt,
 };
 
@@ -49,16 +52,13 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                 changes.insert(document.uri.as_ref().clone(), edits);
             }
             DocumentData::Bibtex(data) => {
-                let edits: Vec<_> = bibtex::SyntaxNode::new_root(data.green.clone())
+                let edits: Vec<_> = biblatex::SyntaxNode::new_root(data.green.clone())
                     .descendants()
-                    .filter_map(bibtex::Entry::cast)
+                    .filter_map(biblatex::Entry::cast)
                     .filter_map(|entry| entry.key())
-                    .filter(|key| key.to_string() == key_text)
-                    .map(|key| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(bibtex::small_range(&key))
-                    })
+                    .filter_map(|key| key.name())
+                    .filter(|key| key.text() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone(), edits);

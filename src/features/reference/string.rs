@@ -1,7 +1,11 @@
 use lsp_types::{Location, ReferenceParams};
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
+use crate::{
+    features::cursor::CursorContext,
+    syntax::biblatex::{self, HasKey, HasName},
+    LineIndexExt,
+};
 
 pub fn find_string_references(
     context: &CursorContext<ReferenceParams>,
@@ -10,25 +14,28 @@ pub fn find_string_references(
     let name_text = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)
+        .filter(|token| token.kind() == biblatex::WORD)
         .filter(|token| {
-            matches!(
-                token.parent().unwrap().kind(),
-                bibtex::TOKEN | bibtex::STRING
-            )
+            let parent = token.parent().unwrap();
+            biblatex::Value::can_cast(parent.kind())
+                || (biblatex::Key::can_cast(parent.kind())
+                    && parent
+                        .parent()
+                        .map_or(false, |node| biblatex::StringDef::can_cast(node.kind())))
         })?
         .text();
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
-    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        if let Some(name) = bibtex::String::cast(node.clone())
-            .and_then(|string| string.name())
+    for node in biblatex::SyntaxNode::new_root(data.green.clone()).descendants() {
+        if let Some(name) = biblatex::StringDef::cast(node.clone())
+            .and_then(|string| string.key())
+            .and_then(|key| key.name())
             .filter(|name| {
                 context.request.params.context.include_declaration && name.text() == name_text
             })
             .or_else(|| {
-                bibtex::Token::cast(node)
+                biblatex::Value::cast(node)
                     .and_then(|token| token.syntax().first_token())
                     .filter(|name| name.text() == name_text)
             })

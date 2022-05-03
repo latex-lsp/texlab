@@ -3,7 +3,10 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::{bibtex, latex},
+    syntax::{
+        biblatex::{self, HasKey, HasName},
+        latex,
+    },
     DocumentData, LineIndexExt,
 };
 
@@ -35,16 +38,13 @@ pub fn find_entry_references(
                     });
             }
             DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
-                bibtex::SyntaxNode::new_root(data.green.clone())
+                biblatex::SyntaxNode::new_root(data.green.clone())
                     .children()
-                    .filter_map(bibtex::Entry::cast)
+                    .filter_map(biblatex::Entry::cast)
                     .filter_map(|entry| entry.key())
-                    .filter(|key| key.to_string() == key_text)
-                    .map(|key| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(bibtex::small_range(&key))
-                    })
+                    .filter_map(|key| key.name())
+                    .filter(|key| key.text() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
                     .for_each(|range| {
                         references.push(Location::new(document.uri.as_ref().clone(), range));
                     });

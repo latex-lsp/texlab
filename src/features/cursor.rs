@@ -5,7 +5,7 @@ use lsp_types::{
 use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{
-    syntax::{bibtex, latex},
+    syntax::{biblatex, latex},
     DocumentData, LineIndexExt,
 };
 
@@ -14,7 +14,7 @@ use super::FeatureRequest;
 #[derive(Debug)]
 pub enum Cursor {
     Latex(latex::SyntaxToken),
-    Bibtex(bibtex::SyntaxToken),
+    Bibtex(biblatex::SyntaxToken),
     Nothing,
 }
 
@@ -56,33 +56,33 @@ impl Cursor {
     }
 
     pub fn new_bibtex(
-        left: Option<bibtex::SyntaxToken>,
-        right: Option<bibtex::SyntaxToken>,
+        left: Option<biblatex::SyntaxToken>,
+        right: Option<biblatex::SyntaxToken>,
     ) -> Option<Self> {
         let left = left?;
         let right = right?;
 
-        if right.kind().is_type() {
+        if right.kind() == biblatex::TYPE {
             return Some(Self::Bibtex(right));
         }
 
-        if left.kind().is_type() {
+        if left.kind() == biblatex::TYPE {
             return Some(Self::Bibtex(left));
         }
 
-        if left.kind() == bibtex::COMMAND_NAME {
+        if left.kind() == biblatex::COMMAND_NAME {
             return Some(Self::Bibtex(left));
         }
 
-        if right.kind() == bibtex::WORD {
+        if right.kind() == biblatex::WORD {
             return Some(Self::Bibtex(right));
         }
 
-        if left.kind() == bibtex::WORD {
+        if left.kind() == biblatex::WORD {
             return Some(Self::Bibtex(left));
         }
 
-        if right.kind() == bibtex::COMMAND_NAME {
+        if right.kind() == biblatex::COMMAND_NAME {
             return Some(Self::Bibtex(right));
         }
 
@@ -97,7 +97,7 @@ impl Cursor {
         }
     }
 
-    pub fn as_bibtex(&self) -> Option<&bibtex::SyntaxToken> {
+    pub fn as_bibtex(&self) -> Option<&biblatex::SyntaxToken> {
         if let Self::Bibtex(v) = self {
             Some(v)
         } else {
@@ -113,7 +113,7 @@ impl Cursor {
             .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
             .or_else(|| {
                 self.as_bibtex()
-                    .filter(|token| token.kind() == bibtex::COMMAND_NAME)
+                    .filter(|token| token.kind() == biblatex::COMMAND_NAME)
                     .filter(|token| token.text_range().start() != offset)
                     .map(|token| token.text_range())
                     .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
@@ -142,7 +142,7 @@ impl<P: HasPosition> CursorContext<P> {
                 Cursor::new_latex(left, right)
             }
             DocumentData::Bibtex(data) => {
-                let root = bibtex::SyntaxNode::new_root(data.green.clone());
+                let root = biblatex::SyntaxNode::new_root(data.green.clone());
                 let left = root.token_at_offset(offset).left_biased();
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_bibtex(left, right)
@@ -186,12 +186,12 @@ impl<P: HasPosition> CursorContext<P> {
         let word = self
             .cursor
             .as_bibtex()
-            .filter(|token| token.kind() == bibtex::WORD)?;
+            .filter(|token| token.kind() == biblatex::WORD)?;
 
-        let key = bibtex::Key::cast(word.parent()?)?;
+        let key = biblatex::Key::cast(word.parent()?)?;
 
-        bibtex::Entry::cast(key.syntax().parent()?)?;
-        Some((key.to_string(), bibtex::small_range(&key)))
+        biblatex::Entry::cast(key.syntax().parent()?)?;
+        Some((word.to_string(), biblatex::small_range(&key)))
     }
 
     pub fn find_label_name_key(&self) -> Option<(String, TextRange)> {

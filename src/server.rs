@@ -566,7 +566,7 @@ impl Server {
                     if let Some(document) = server.workspace.documents_by_uri.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
                             let markup = crate::citation::render_citation(
-                                &crate::syntax::bibtex::SyntaxNode::new_root(data.green.clone()),
+                                &crate::syntax::biblatex::SyntaxNode::new_root(data.green.clone()),
                                 &key,
                             );
                             item.documentation = markup.map(Documentation::MarkupContent);

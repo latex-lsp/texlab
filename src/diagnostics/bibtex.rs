@@ -5,7 +5,7 @@ use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::bibtex::{self, HasDelimiters, HasType},
+    syntax::biblatex::{self, HasDelimiters, HasEq, HasKey, HasName, HasType, HasValue},
     Document, LineIndexExt, Workspace,
 };
 
@@ -17,7 +17,7 @@ pub fn analyze_bibtex_static(
     let document = workspace.documents_by_uri.get(uri)?;
     let data = document.data.as_bibtex()?;
 
-    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
+    for node in biblatex::SyntaxNode::new_root(data.green.clone()).descendants() {
         analyze_entry(document, diagnostics_by_uri, node.clone())
             .or_else(|| analyze_field(document, diagnostics_by_uri, node));
     }
@@ -28,16 +28,16 @@ pub fn analyze_bibtex_static(
 fn analyze_entry(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
-    node: bibtex::SyntaxNode,
+    node: biblatex::SyntaxNode,
 ) -> Option<()> {
-    let entry = bibtex::Entry::cast(node)?;
+    let entry = biblatex::Entry::cast(node)?;
     if entry.left_delimiter().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(entry.ty()?.text_range()),
+                    .line_col_lsp_range(entry.type_()?.text_range()),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(4)),
                 code_description: None,
@@ -71,7 +71,7 @@ fn analyze_entry(
         return Some(());
     }
 
-    if entry.key().is_none() {
+    if entry.right_delimiter().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
@@ -97,10 +97,10 @@ fn analyze_entry(
 fn analyze_field(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
-    node: bibtex::SyntaxNode,
+    node: biblatex::SyntaxNode,
 ) -> Option<()> {
-    let field = bibtex::Field::cast(node)?;
-    if field.equality_sign().is_none() {
+    let field = biblatex::Field::cast(node)?;
+    if field.eq().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
@@ -124,9 +124,9 @@ fn analyze_field(
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
-                range: document.line_index.line_col_lsp_range(TextRange::empty(
-                    field.equality_sign()?.text_range().end(),
-                )),
+                range: document
+                    .line_index
+                    .line_col_lsp_range(TextRange::empty(field.eq()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(8)),
                 code_description: None,

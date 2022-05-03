@@ -1,6 +1,6 @@
 use lsp_types::{Hover, HoverContents, HoverParams};
 
-use crate::{citation, features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
+use crate::{citation, features::cursor::CursorContext, syntax::biblatex, LineIndexExt};
 
 pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
@@ -18,7 +18,7 @@ pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover
         .find_map(|document| {
             document.data.as_bibtex().and_then(|data| {
                 citation::render_citation(
-                    &bibtex::SyntaxNode::new_root(data.green.clone()),
+                    &biblatex::SyntaxNode::new_root(data.green.clone()),
                     &key_text,
                 )
             })

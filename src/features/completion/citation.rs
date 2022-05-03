@@ -8,7 +8,7 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{
     features::{cursor::CursorContext, lsp_kinds::Structure},
     syntax::{
-        bibtex::{self, HasType},
+        biblatex::{self, HasKey, HasName, HasType},
         latex,
     },
     BibtexEntryTypeCategory, Document, LANGUAGE_DATA,
@@ -38,9 +38,9 @@ pub fn complete_citations<'a>(
     check_citation(context).or_else(|| check_acronym(context))?;
     for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
+            for entry in biblatex::SyntaxNode::new_root(data.green.clone())
                 .children()
-                .filter_map(bibtex::Entry::cast)
+                .filter_map(biblatex::Entry::cast)
             {
                 if let Some(item) = make_item(document, entry, range) {
                     items.push(item);
@@ -72,12 +72,12 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
 
 fn make_item(
     document: &Document,
-    entry: bibtex::Entry,
+    entry: biblatex::Entry,
     range: TextRange,
 ) -> Option<InternalCompletionItem> {
-    let key = entry.key()?.to_string();
+    let key = entry.key()?.name()?.to_string();
     let ty = LANGUAGE_DATA
-        .find_entry_type(&entry.ty()?.text()[1..])
+        .find_entry_type(&entry.type_()?.text()[1..])
         .map(|ty| Structure::Entry(ty.category))
         .unwrap_or_else(|| Structure::Entry(BibtexEntryTypeCategory::Misc));
 
