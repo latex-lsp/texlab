@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-      - develop
-      - feature/*
 env:
   CARGO_INCREMENTAL: 0
   CI: 1
