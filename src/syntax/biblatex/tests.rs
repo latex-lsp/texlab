@@ -124,3 +124,14 @@ fn test_biblatex_examples_003() {
 }"#
     ));
 }
+
+// #[test]
+// fn foo() {
+//     panic!(
+//         "{:#?}",
+//         setup(
+//             r#"@article{foo,
+//     titl"#
+//         )
+//     )
+// }

@@ -5,7 +5,7 @@ use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::biblatex::{self, HasDelimiters, HasEq, HasKey, HasName, HasType, HasValue},
+    syntax::biblatex::{self, HasDelimiters, HasEq, HasKey, HasType, HasValue},
     Document, LineIndexExt, Workspace,
 };
 
@@ -106,7 +106,7 @@ fn analyze_field(
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(TextRange::empty(field.name()?.text_range().end())),
+                    .line_col_lsp_range(TextRange::empty(field.key()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(7)),
                 code_description: None,

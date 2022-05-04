@@ -113,8 +113,11 @@ pub trait HasDelimiters: AstNode<Language = Language> {
 }
 
 pub trait HasKey: AstNode<Language = Language> {
-    fn key(&self) -> Option<Key> {
-        self.syntax().children().find_map(Key::cast)
+    fn key(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| matches!(token.kind(), KEY))
     }
 }
 
@@ -133,15 +136,6 @@ pub trait HasComma: AstNode<Language = Language> {
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
             .find(|token| matches!(token.kind(), COMMA))
-    }
-}
-
-pub trait HasName: AstNode<Language = Language> {
-    fn name(&self) -> Option<SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), WORD))
     }
 }
 
@@ -195,17 +189,13 @@ impl HasType for Comment {}
 
 ast_node!(Field, FIELD);
 
-impl HasName for Field {}
+impl HasKey for Field {}
 
 impl HasEq for Field {}
 
 impl HasComma for Field {}
 
 impl HasValue for Field {}
-
-ast_node!(Key, KEY);
-
-impl HasName for Key {}
 
 ast_node_enum!(Value, Concat, CurlyGroup, QuoteGroup, Literal);
 

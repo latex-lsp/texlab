@@ -32,7 +32,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     syntax::{
-        biblatex::{self, HasName},
+        biblatex::{self},
         latex,
     },
     LineIndexExt,
@@ -173,20 +173,13 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
             }
         }
         Cursor::Latex(_) => "".into(),
-        Cursor::Bibtex(token) if token.kind() == biblatex::TYPE => token.text().into(),
-        Cursor::Bibtex(token) if token.kind() == biblatex::WORD => {
-            if let Some(key) = token
-                .parent()
-                .and_then(biblatex::Key::cast)
-                .and_then(|key| key.name())
-            {
-                key.to_string().into()
-            } else {
-                token.text().into()
-            }
-        }
-        Cursor::Bibtex(token) if token.kind() == biblatex::COMMAND_NAME => {
-            token.text().trim_end().into()
+        Cursor::Bibtex(token)
+            if matches!(
+                token.kind(),
+                biblatex::TYPE | biblatex::KEY | biblatex::WORD | biblatex::COMMAND_NAME
+            ) =>
+        {
+            token.text().into()
         }
         Cursor::Bibtex(_) => "".into(),
         Cursor::Nothing => "".into(),

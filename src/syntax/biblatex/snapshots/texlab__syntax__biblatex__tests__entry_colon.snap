@@ -7,12 +7,11 @@ ROOT@0..86
   ENTRY@0..86
     TYPE@0..8 "@article"
     L_CURLY@8..9 "{"
-    KEY@9..17
-      WORD@9..17 "foo:2019"
+    KEY@9..17 "foo:2019"
     COMMA@17..18 ","
     WHITESPACE@18..23 "\n    "
     FIELD@23..47
-      WORD@23..29 "author"
+      KEY@23..29 "author"
       WHITESPACE@29..30 " "
       EQ@30..31 "="
       WHITESPACE@31..32 " "
@@ -25,7 +24,7 @@ ROOT@0..86
       COMMA@41..42 ","
       WHITESPACE@42..47 "\n    "
     FIELD@47..70
-      WORD@47..52 "title"
+      KEY@47..52 "title"
       WHITESPACE@52..53 " "
       EQ@53..54 "="
       WHITESPACE@54..55 " "
@@ -38,7 +37,7 @@ ROOT@0..86
       COMMA@64..65 ","
       WHITESPACE@65..70 "\n    "
     FIELD@70..85
-      WORD@70..74 "year"
+      KEY@70..74 "year"
       WHITESPACE@74..75 " "
       EQ@75..76 "="
       WHITESPACE@76..77 " "

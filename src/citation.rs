@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rowan::ast::AstNode;
 
-use crate::syntax::biblatex::{self, HasKey, HasName};
+use crate::syntax::biblatex::{self, HasKey};
 
 use self::{
     bibutils::*,
@@ -67,12 +67,7 @@ fn convert_to_ris(root: &biblatex::SyntaxNode, key: &str) -> Option<RisReference
     let entry = root
         .children()
         .filter_map(biblatex::Entry::cast)
-        .find(|entry| {
-            entry
-                .key()
-                .and_then(|key| key.name())
-                .map_or(false, |word| word.text() == key)
-        })
+        .find(|entry| entry.key().map_or(false, |name| name.text() == key))
         .filter(|entry| entry.fields().next().is_some())?;
 
     bib_code.push_str(&entry.syntax().to_string());
@@ -127,7 +122,6 @@ mod tests {
             .children()
             .find_map(biblatex::Entry::cast)
             .and_then(|entry| entry.key())
-            .and_then(|key| key.name())
             .unwrap()
             .to_string();
 

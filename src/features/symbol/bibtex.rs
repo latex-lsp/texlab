@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::FeatureRequest,
-    syntax::biblatex::{self, HasKey, HasName, HasType},
+    syntax::biblatex::{self, HasKey, HasType},
     BibtexEntryTypeCategory, LineIndexExt, LANGUAGE_DATA,
 };
 
@@ -18,7 +18,7 @@ pub fn find_bibtex_symbols(
 
     for node in biblatex::SyntaxNode::new_root(data.green.clone()).children() {
         if let Some(string) = biblatex::StringDef::cast(node.clone()) {
-            if let Some(name) = string.key().and_then(|key| key.name()) {
+            if let Some(name) = string.key() {
                 buf.push(InternalSymbol {
                     name: name.text().into(),
                     label: None,
@@ -35,10 +35,10 @@ pub fn find_bibtex_symbols(
             }
         } else if let Some(entry) = biblatex::Entry::cast(node) {
             if let Some(ty) = entry.type_() {
-                if let Some(key) = entry.key().and_then(|key| key.name()) {
+                if let Some(key) = entry.key() {
                     let mut children = Vec::new();
                     for field in entry.fields() {
-                        if let Some(name) = field.name() {
+                        if let Some(name) = field.key() {
                             let symbol = InternalSymbol {
                                 name: name.text().to_string(),
                                 label: None,

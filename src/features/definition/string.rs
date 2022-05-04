@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::biblatex::{self, HasKey, HasName},
+    syntax::biblatex::{self, HasKey},
     LineIndexExt,
 };
 
@@ -28,11 +28,7 @@ pub fn goto_string_definition(
         .children()
         .filter_map(biblatex::StringDef::cast)
     {
-        if let Some(string_name) = string
-            .key()
-            .and_then(|key| key.name())
-            .filter(|k| k.text() == key.text())
-        {
+        if let Some(string_name) = string.key().filter(|k| k.text() == key.text()) {
             return Some(vec![LocationLink {
                 origin_selection_range: Some(origin_selection_range),
                 target_uri: main_document.uri.as_ref().clone(),

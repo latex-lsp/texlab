@@ -4,7 +4,7 @@ use crate::syntax::token_ptr::TokenPtr;
 
 use super::{
     lexer::{tokenize, Token, Type},
-    SyntaxKind::*,
+    SyntaxKind::{self, *},
 };
 
 struct Parser<'a> {
@@ -46,6 +46,16 @@ impl<'a> Parser<'a> {
         self.ast.token(kind.into(), text);
     }
 
+    fn bump_and_trivia(&mut self) {
+        self.bump();
+        self.trivia();
+    }
+
+    fn bump_and_remap(&mut self, new_kind: SyntaxKind) {
+        let (_, text) = self.ptr.bump();
+        self.ast.token(new_kind.into(), text);
+    }
+
     fn trivia(&mut self) {
         while self.ptr.at(Token::Whitespace) {
             self.bump();
@@ -64,8 +74,7 @@ impl<'a> Parser<'a> {
 
     fn comment(&mut self) {
         self.ast.start_node(COMMENT.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
 
         while self.ptr.at_cond(|kind| !matches!(kind, Token::Type(_))) {
             self.bump();
@@ -76,8 +85,7 @@ impl<'a> Parser<'a> {
 
     fn preamble(&mut self) {
         self.ast.start_node(PREAMBLE.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
         self.left_delimiter();
         self.value();
         self.right_delimiter();
@@ -86,8 +94,7 @@ impl<'a> Parser<'a> {
 
     fn string_def(&mut self) {
         self.ast.start_node(STRING.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
         self.left_delimiter();
         self.key();
         self.eq();
@@ -98,8 +105,7 @@ impl<'a> Parser<'a> {
 
     fn entry(&mut self) {
         self.ast.start_node(ENTRY.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
         self.left_delimiter();
         self.key();
         self.comma();
@@ -114,8 +120,7 @@ impl<'a> Parser<'a> {
         }
 
         self.ast.start_node(FIELD.into());
-        self.bump();
-        self.trivia();
+        self.key().unwrap();
         self.eq();
         self.value();
         self.comma();
@@ -128,10 +133,8 @@ impl<'a> Parser<'a> {
             return None;
         }
 
-        self.ast.start_node(KEY.into());
-        self.bump();
+        self.bump_and_remap(KEY);
         self.trivia();
-        self.ast.finish_node();
         Some(())
     }
 
@@ -156,8 +159,7 @@ impl<'a> Parser<'a> {
             return None;
         }
 
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
         Some(())
     }
 
@@ -179,8 +181,7 @@ impl<'a> Parser<'a> {
 
         if self.ptr.at(Token::Pound) {
             self.ast.start_node_at(checkpoint, CONCAT.into());
-            self.bump();
-            self.trivia();
+            self.bump_and_trivia();
             self.value();
             self.ast.finish_node();
         }
@@ -190,8 +191,7 @@ impl<'a> Parser<'a> {
 
     fn curly_group(&mut self) {
         self.ast.start_node(CURLY_GROUP.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
 
         while let Some(kind) = self.ptr.current() {
             match kind {
@@ -208,8 +208,7 @@ impl<'a> Parser<'a> {
                 Token::Quote => self.quote_group(),
                 Token::Pound => break,
                 Token::RCurly => {
-                    self.bump();
-                    self.trivia();
+                    self.bump_and_trivia();
                     break;
                 }
             };
@@ -220,8 +219,7 @@ impl<'a> Parser<'a> {
 
     fn quote_group(&mut self) {
         self.ast.start_node(QUOTE_GROUP.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
 
         while let Some(kind) = self.ptr.current() {
             match kind {
@@ -238,8 +236,7 @@ impl<'a> Parser<'a> {
                 Token::LCurly => self.curly_group(),
                 Token::Pound => break,
                 Token::Quote => {
-                    self.bump();
-                    self.trivia();
+                    self.bump_and_trivia();
                     break;
                 }
             };
@@ -250,8 +247,7 @@ impl<'a> Parser<'a> {
 
     fn literal(&mut self) {
         self.ast.start_node(LITERAL.into());
-        self.bump();
-        self.trivia();
+        self.bump_and_trivia();
         self.ast.finish_node();
     }
 }

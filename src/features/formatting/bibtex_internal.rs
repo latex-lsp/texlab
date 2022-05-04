@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
     features::FeatureRequest,
-    syntax::biblatex::{self, HasKey, HasName, HasType, HasValue},
+    syntax::biblatex::{self, HasKey, HasType, HasValue},
     LineIndex, LineIndexExt,
 };
 
@@ -125,7 +125,7 @@ impl<'a> Formatter<'a> {
                 let string = biblatex::StringDef::cast(parent).unwrap();
                 self.visit_token_lowercase(&string.type_().unwrap());
                 self.output.push('{');
-                if let Some(name) = string.key().and_then(|key| key.name()) {
+                if let Some(name) = string.key() {
                     self.output.push_str(name.text());
                     self.output.push_str(" = ");
                     if let Some(value) = string.value() {
@@ -139,7 +139,7 @@ impl<'a> Formatter<'a> {
                 let entry = biblatex::Entry::cast(parent).unwrap();
                 self.visit_token_lowercase(&entry.type_().unwrap());
                 self.output.push('{');
-                if let Some(key) = entry.key().and_then(|key| key.name()) {
+                if let Some(key) = entry.key() {
                     self.output.push_str(&key.to_string());
                     self.output.push(',');
                     self.output.push('\n');
@@ -152,7 +152,7 @@ impl<'a> Formatter<'a> {
             biblatex::FIELD => {
                 let field = biblatex::Field::cast(parent).unwrap();
                 self.output.push_str(&self.indent);
-                let name = field.name().unwrap();
+                let name = field.key().unwrap();
                 self.output.push_str(name.text());
                 self.output.push_str(" = ");
                 if let Some(value) = field.value() {

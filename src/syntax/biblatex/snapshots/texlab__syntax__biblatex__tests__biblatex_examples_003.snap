@@ -1,18 +1,17 @@
 ---
 source: src/syntax/biblatex/tests.rs
-assertion_line: 98
+assertion_line: 109
 expression: "setup(r#\"@article{angenendt,\n    author       = {Angenendt, Arnold},\n    title        = {In Honore Salvatoris~-- Vom Sinn und Unsinn der\n                    Patrozinienkunde},\n    journaltitle = {Revue d'Histoire Eccl{\\'e}siastique},\n    date         = 2002,\n    volume       = 97,\n    pages        = {431--456, 791--823},\n    langid       = {german},\n    indextitle   = {In Honore Salvatoris},\n    shorttitle   = {In Honore Salvatoris},\n    annotation   = {A German article in a French journal. Apart from that, a\n                    typical \\texttt{article} entry. Note the \\texttt{indextitle}\n                    field},\n}\"#)"
 ---
 ROOT@0..616
   ENTRY@0..616
     TYPE@0..8 "@article"
     L_CURLY@8..9 "{"
-    KEY@9..18
-      WORD@9..18 "angenendt"
+    KEY@9..18 "angenendt"
     COMMA@18..19 ","
     WHITESPACE@19..24 "\n    "
     FIELD@24..64
-      WORD@24..30 "author"
+      KEY@24..30 "author"
       WHITESPACE@30..37 "       "
       EQ@37..38 "="
       WHITESPACE@38..39 " "
@@ -26,7 +25,7 @@ ROOT@0..616
       COMMA@58..59 ","
       WHITESPACE@59..64 "\n    "
     FIELD@64..171
-      WORD@64..69 "title"
+      KEY@64..69 "title"
       WHITESPACE@69..77 "        "
       EQ@77..78 "="
       WHITESPACE@78..79 " "
@@ -53,7 +52,7 @@ ROOT@0..616
       COMMA@165..166 ","
       WHITESPACE@166..171 "\n    "
     FIELD@171..229
-      WORD@171..183 "journaltitle"
+      KEY@171..183 "journaltitle"
       WHITESPACE@183..184 " "
       EQ@184..185 "="
       WHITESPACE@185..186 " "
@@ -74,7 +73,7 @@ ROOT@0..616
       COMMA@223..224 ","
       WHITESPACE@224..229 "\n    "
     FIELD@229..254
-      WORD@229..233 "date"
+      KEY@229..233 "date"
       WHITESPACE@233..242 "         "
       EQ@242..243 "="
       WHITESPACE@243..244 " "
@@ -83,7 +82,7 @@ ROOT@0..616
       COMMA@248..249 ","
       WHITESPACE@249..254 "\n    "
     FIELD@254..277
-      WORD@254..260 "volume"
+      KEY@254..260 "volume"
       WHITESPACE@260..267 "       "
       EQ@267..268 "="
       WHITESPACE@268..269 " "
@@ -92,7 +91,7 @@ ROOT@0..616
       COMMA@271..272 ","
       WHITESPACE@272..277 "\n    "
     FIELD@277..318
-      WORD@277..282 "pages"
+      KEY@277..282 "pages"
       WHITESPACE@282..290 "        "
       EQ@290..291 "="
       WHITESPACE@291..292 " "
@@ -106,7 +105,7 @@ ROOT@0..616
       COMMA@312..313 ","
       WHITESPACE@313..318 "\n    "
     FIELD@318..347
-      WORD@318..324 "langid"
+      KEY@318..324 "langid"
       WHITESPACE@324..331 "       "
       EQ@331..332 "="
       WHITESPACE@332..333 " "
@@ -117,7 +116,7 @@ ROOT@0..616
       COMMA@341..342 ","
       WHITESPACE@342..347 "\n    "
     FIELD@347..390
-      WORD@347..357 "indextitle"
+      KEY@347..357 "indextitle"
       WHITESPACE@357..360 "   "
       EQ@360..361 "="
       WHITESPACE@361..362 " "
@@ -132,7 +131,7 @@ ROOT@0..616
       COMMA@384..385 ","
       WHITESPACE@385..390 "\n    "
     FIELD@390..433
-      WORD@390..400 "shorttitle"
+      KEY@390..400 "shorttitle"
       WHITESPACE@400..403 "   "
       EQ@403..404 "="
       WHITESPACE@404..405 " "
@@ -147,7 +146,7 @@ ROOT@0..616
       COMMA@427..428 ","
       WHITESPACE@428..433 "\n    "
     FIELD@433..615
-      WORD@433..443 "annotation"
+      KEY@433..443 "annotation"
       WHITESPACE@443..446 "   "
       EQ@446..447 "="
       WHITESPACE@447..448 " "

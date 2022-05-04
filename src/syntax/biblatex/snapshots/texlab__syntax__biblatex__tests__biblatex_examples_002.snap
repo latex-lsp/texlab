@@ -1,15 +1,14 @@
 ---
 source: src/syntax/biblatex/tests.rs
-assertion_line: 76
+assertion_line: 87
 expression: "setup(r#\"@string{jomch   = {J.~Organomet. Chem.}}\n\n@article{aksin,\n    author       = {Aks{\\i}n, {\\\"O}zge and T{\\\"u}rkmen, Hayati and Artok, Levent\n                    and {\\c{C}}etinkaya, Bekir and Ni, Chaoying and\n                    B{\\\"u}y{\\\"u}kg{\\\"u}ng{\\\"o}r, Orhan and {\\\"O}zkal, Erhan},\n    title        = {Effect of immobilization on catalytic characteristics of\n                    saturated {Pd-N}-heterocyclic carbenes in {Mizoroki-Heck}\n                    reactions},\n    journaltitle = jomch,\n    date         = 2006,\n    volume       = 691,\n    number       = 13,\n    pages        = {3027-3036},\n    indextitle   = {Effect of immobilization on catalytic characteristics},\n}\"#)"
 ---
 ROOT@0..679
   STRING@0..42
     TYPE@0..7 "@string"
     L_CURLY@7..8 "{"
-    KEY@8..16
-      WORD@8..13 "jomch"
-      WHITESPACE@13..16 "   "
+    KEY@8..13 "jomch"
+    WHITESPACE@13..16 "   "
     EQ@16..17 "="
     WHITESPACE@17..18 " "
     CURLY_GROUP@18..39
@@ -23,12 +22,11 @@ ROOT@0..679
   ENTRY@42..679
     TYPE@42..50 "@article"
     L_CURLY@50..51 "{"
-    KEY@51..56
-      WORD@51..56 "aksin"
+    KEY@51..56 "aksin"
     COMMA@56..57 ","
     WHITESPACE@57..62 "\n    "
     FIELD@62..289
-      WORD@62..68 "author"
+      KEY@62..68 "author"
       WHITESPACE@68..75 "       "
       EQ@75..76 "="
       WHITESPACE@76..77 " "
@@ -137,7 +135,7 @@ ROOT@0..679
       COMMA@283..284 ","
       WHITESPACE@284..289 "\n    "
     FIELD@289..476
-      WORD@289..294 "title"
+      KEY@289..294 "title"
       WHITESPACE@294..302 "        "
       EQ@302..303 "="
       WHITESPACE@303..304 " "
@@ -179,7 +177,7 @@ ROOT@0..679
       COMMA@470..471 ","
       WHITESPACE@471..476 "\n    "
     FIELD@476..502
-      WORD@476..488 "journaltitle"
+      KEY@476..488 "journaltitle"
       WHITESPACE@488..489 " "
       EQ@489..490 "="
       WHITESPACE@490..491 " "
@@ -188,7 +186,7 @@ ROOT@0..679
       COMMA@496..497 ","
       WHITESPACE@497..502 "\n    "
     FIELD@502..527
-      WORD@502..506 "date"
+      KEY@502..506 "date"
       WHITESPACE@506..515 "         "
       EQ@515..516 "="
       WHITESPACE@516..517 " "
@@ -197,7 +195,7 @@ ROOT@0..679
       COMMA@521..522 ","
       WHITESPACE@522..527 "\n    "
     FIELD@527..551
-      WORD@527..533 "volume"
+      KEY@527..533 "volume"
       WHITESPACE@533..540 "       "
       EQ@540..541 "="
       WHITESPACE@541..542 " "
@@ -206,7 +204,7 @@ ROOT@0..679
       COMMA@545..546 ","
       WHITESPACE@546..551 "\n    "
     FIELD@551..574
-      WORD@551..557 "number"
+      KEY@551..557 "number"
       WHITESPACE@557..564 "       "
       EQ@564..565 "="
       WHITESPACE@565..566 " "
@@ -215,7 +213,7 @@ ROOT@0..679
       COMMA@568..569 ","
       WHITESPACE@569..574 "\n    "
     FIELD@574..606
-      WORD@574..579 "pages"
+      KEY@574..579 "pages"
       WHITESPACE@579..587 "        "
       EQ@587..588 "="
       WHITESPACE@588..589 " "
@@ -226,7 +224,7 @@ ROOT@0..679
       COMMA@600..601 ","
       WHITESPACE@601..606 "\n    "
     FIELD@606..678
-      WORD@606..616 "indextitle"
+      KEY@606..616 "indextitle"
       WHITESPACE@616..619 "   "
       EQ@619..620 "="
       WHITESPACE@620..621 " "

@@ -1,4 +1,4 @@
-use std::{ffi::CString, fs, mem::MaybeUninit, path::Path};
+use std::{ffi::CString, fs, mem::MaybeUninit, path::Path, sync::Mutex};
 
 use bibutils_sys::{
     bibl, bibl_free, bibl_freeparams, bibl_init, bibl_initparams, bibl_read, bibl_write, fclose,
@@ -7,6 +7,7 @@ use bibutils_sys::{
     BIBL_MODSIN, BIBL_MODSOUT, BIBL_NBIBIN, BIBL_NBIBOUT, BIBL_OK, BIBL_RISIN, BIBL_RISOUT,
     BIBL_WORD2007OUT, BIBL_WORDIN, FILE,
 };
+use once_cell::sync::Lazy;
 use tempfile::tempdir;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -149,7 +150,11 @@ impl Drop for File {
 
 unsafe impl Send for File {}
 
+static GLOBAL_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+
 pub fn convert(input: &str, from: InputFormat, to: OutputFormat) -> Option<String> {
+    let guard = GLOBAL_LOCK.lock().unwrap();
+
     let mut context = Context::new();
     let mut params = Params::new(from, to);
     let dir = tempdir().expect("failed to create a temporary directory");
@@ -183,6 +188,8 @@ pub fn convert(input: &str, from: InputFormat, to: OutputFormat) -> Option<Strin
             return None;
         }
     }
+
+    drop(guard);
 
     // Remove BOM
     let data = fs::read(&output_path).ok()?;
