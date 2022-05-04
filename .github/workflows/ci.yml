@@ -23,13 +23,15 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-      - name: Collect
-        uses: actions-rs/tarpaulin@v0.1
+          components: llvm-tools-preview
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
         with:
-          args: "--avoid-cfg-tarpaulin"
-      - name: Upload
-        uses: codecov/codecov-action@v3
-        with:
+          files: lcov.info
           fail_ci_if_error: true
   server:
     name: LSP Server
