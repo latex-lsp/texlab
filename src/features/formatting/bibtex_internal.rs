@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
     features::FeatureRequest,
-    syntax::biblatex::{self, HasKey, HasType, HasValue},
+    syntax::bibtex::{self, HasKey, HasType, HasValue},
     LineIndex, LineIndexExt,
 };
 
@@ -37,13 +37,13 @@ pub fn format_bibtex_internal(
     let data = document.data.as_bibtex()?;
     let mut edits = Vec::new();
 
-    for node in biblatex::SyntaxNode::new_root(data.green.clone()).children() {
-        let range = if let Some(entry) = biblatex::Entry::cast(node.clone()) {
-            biblatex::small_range(&entry)
-        } else if let Some(string) = biblatex::StringDef::cast(node.clone()) {
-            biblatex::small_range(&string)
-        } else if let Some(preamble) = biblatex::Preamble::cast(node.clone()) {
-            biblatex::small_range(&preamble)
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
+        let range = if let Some(entry) = bibtex::Entry::cast(node.clone()) {
+            bibtex::small_range(&entry)
+        } else if let Some(string) = bibtex::StringDef::cast(node.clone()) {
+            bibtex::small_range(&string)
+        } else if let Some(preamble) = bibtex::Preamble::cast(node.clone()) {
+            bibtex::small_range(&preamble)
         } else {
             continue;
         };
@@ -86,14 +86,14 @@ impl<'a> Formatter<'a> {
         }
     }
 
-    fn visit_token_lowercase(&mut self, token: &biblatex::SyntaxToken) {
+    fn visit_token_lowercase(&mut self, token: &bibtex::SyntaxToken) {
         self.output.push_str(&token.text().to_lowercase());
     }
 
     fn should_insert_space(
         &self,
-        previous: &biblatex::SyntaxToken,
-        current: &biblatex::SyntaxToken,
+        previous: &bibtex::SyntaxToken,
+        current: &bibtex::SyntaxToken,
     ) -> bool {
         let previous_range = self.line_index.line_col_lsp_range(previous.text_range());
         let current_range = self.line_index.line_col_lsp_range(current.text_range());
@@ -107,10 +107,10 @@ impl<'a> Formatter<'a> {
             .count()
     }
 
-    fn visit_node(&mut self, parent: biblatex::SyntaxNode) {
+    fn visit_node(&mut self, parent: bibtex::SyntaxNode) {
         match parent.kind() {
-            biblatex::PREAMBLE => {
-                let preamble = biblatex::Preamble::cast(parent).unwrap();
+            bibtex::PREAMBLE => {
+                let preamble = bibtex::Preamble::cast(parent).unwrap();
                 self.visit_token_lowercase(&preamble.type_().unwrap());
                 self.output.push('{');
                 if preamble.syntax().children().next().is_some() {
@@ -121,8 +121,8 @@ impl<'a> Formatter<'a> {
                     self.output.push('}');
                 }
             }
-            biblatex::STRING => {
-                let string = biblatex::StringDef::cast(parent).unwrap();
+            bibtex::STRING => {
+                let string = bibtex::StringDef::cast(parent).unwrap();
                 self.visit_token_lowercase(&string.type_().unwrap());
                 self.output.push('{');
                 if let Some(name) = string.key() {
@@ -135,8 +135,8 @@ impl<'a> Formatter<'a> {
                     }
                 }
             }
-            biblatex::ENTRY => {
-                let entry = biblatex::Entry::cast(parent).unwrap();
+            bibtex::ENTRY => {
+                let entry = bibtex::Entry::cast(parent).unwrap();
                 self.visit_token_lowercase(&entry.type_().unwrap());
                 self.output.push('{');
                 if let Some(key) = entry.key() {
@@ -149,8 +149,8 @@ impl<'a> Formatter<'a> {
                     self.output.push('}');
                 }
             }
-            biblatex::FIELD => {
-                let field = biblatex::Field::cast(parent).unwrap();
+            bibtex::FIELD => {
+                let field = bibtex::Field::cast(parent).unwrap();
                 self.output.push_str(&self.indent);
                 let name = field.key().unwrap();
                 self.output.push_str(name.text());
@@ -163,11 +163,11 @@ impl<'a> Formatter<'a> {
                     self.output.push('\n');
                 }
             }
-            kind if biblatex::Value::can_cast(kind) => {
+            kind if bibtex::Value::can_cast(kind) => {
                 let tokens: Vec<_> = parent
                     .descendants_with_tokens()
                     .filter_map(|element| element.into_token())
-                    .filter(|token| token.kind() != biblatex::WHITESPACE)
+                    .filter(|token| token.kind() != bibtex::WHITESPACE)
                     .collect();
 
                 self.output.push_str(tokens[0].text());
@@ -197,7 +197,7 @@ impl<'a> Formatter<'a> {
                     length += current_length;
                 }
             }
-            biblatex::ROOT | biblatex::JUNK | biblatex::COMMENT => {
+            bibtex::ROOT | bibtex::JUNK | bibtex::COMMENT => {
                 for element in parent.children_with_tokens() {
                     match element {
                         NodeOrToken::Token(token) => {

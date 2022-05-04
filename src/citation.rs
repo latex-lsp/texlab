@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rowan::ast::AstNode;
 
-use crate::syntax::biblatex::{self, HasKey};
+use crate::syntax::bibtex::{self, HasKey};
 
 use self::{
     bibutils::*,
@@ -24,7 +24,7 @@ static DOI_URL_PATTERN: &str = r#"https://doi.org/\[.*\]\(.*\)"#;
 
 static DOI_URL_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(DOI_URL_PATTERN).unwrap());
 
-pub fn render_citation(root: &biblatex::SyntaxNode, key: &str) -> Option<MarkupContent> {
+pub fn render_citation(root: &bibtex::SyntaxNode, key: &str) -> Option<MarkupContent> {
     let ris_reference = convert_to_ris(root, key)?;
     let doi_url = get_doi_url_markdown(&ris_reference);
     let csl_reference: Reference = ris_reference.into();
@@ -54,11 +54,11 @@ pub fn render_citation(root: &biblatex::SyntaxNode, key: &str) -> Option<MarkupC
     Some(content)
 }
 
-fn convert_to_ris(root: &biblatex::SyntaxNode, key: &str) -> Option<RisReference> {
+fn convert_to_ris(root: &bibtex::SyntaxNode, key: &str) -> Option<RisReference> {
     let mut bib_code = String::new();
     for string in root
         .children()
-        .filter_map(biblatex::StringDef::cast)
+        .filter_map(bibtex::StringDef::cast)
         .filter(|string| string.key().is_some())
     {
         bib_code.push_str(&string.syntax().to_string());
@@ -66,7 +66,7 @@ fn convert_to_ris(root: &biblatex::SyntaxNode, key: &str) -> Option<RisReference
 
     let entry = root
         .children()
-        .filter_map(biblatex::Entry::cast)
+        .filter_map(bibtex::Entry::cast)
         .find(|entry| entry.key().map_or(false, |name| name.text() == key))
         .filter(|entry| entry.fields().next().is_some())?;
 
@@ -117,10 +117,10 @@ mod tests {
     use insta::assert_snapshot;
 
     fn render_simple(text: &str) -> String {
-        let root = biblatex::SyntaxNode::new_root(biblatex::parse(text));
+        let root = bibtex::SyntaxNode::new_root(bibtex::parse(text));
         let key = root
             .children()
-            .find_map(biblatex::Entry::cast)
+            .find_map(bibtex::Entry::cast)
             .and_then(|entry| entry.key())
             .unwrap()
             .to_string();

@@ -4,7 +4,7 @@ use rowan::ast::AstNode;
 use crate::{
     features::cursor::CursorContext,
     syntax::{
-        biblatex::{self, HasKey},
+        bibtex::{self, HasKey},
         latex,
     },
     LineIndexExt,
@@ -30,9 +30,9 @@ pub fn goto_entry_definition(
 
     for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in biblatex::SyntaxNode::new_root(data.green.clone())
+            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
-                .filter_map(biblatex::Entry::cast)
+                .filter_map(bibtex::Entry::cast)
             {
                 if let Some(key) = entry.key().filter(|k| k.text() == word.text()) {
                     return Some(vec![LocationLink {
@@ -43,7 +43,7 @@ pub fn goto_entry_definition(
                             .line_col_lsp_range(key.text_range()),
                         target_range: document
                             .line_index
-                            .line_col_lsp_range(biblatex::small_range(&entry)),
+                            .line_col_lsp_range(bibtex::small_range(&entry)),
                     }]);
                 }
             }

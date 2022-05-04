@@ -5,7 +5,7 @@ use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::biblatex::{self, HasDelimiters, HasEq, HasKey, HasType, HasValue},
+    syntax::bibtex::{self, HasDelimiters, HasEq, HasKey, HasType, HasValue},
     Document, LineIndexExt, Workspace,
 };
 
@@ -17,7 +17,7 @@ pub fn analyze_bibtex_static(
     let document = workspace.documents_by_uri.get(uri)?;
     let data = document.data.as_bibtex()?;
 
-    for node in biblatex::SyntaxNode::new_root(data.green.clone()).descendants() {
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
         analyze_entry(document, diagnostics_by_uri, node.clone())
             .or_else(|| analyze_field(document, diagnostics_by_uri, node));
     }
@@ -28,9 +28,9 @@ pub fn analyze_bibtex_static(
 fn analyze_entry(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
-    node: biblatex::SyntaxNode,
+    node: bibtex::SyntaxNode,
 ) -> Option<()> {
-    let entry = biblatex::Entry::cast(node)?;
+    let entry = bibtex::Entry::cast(node)?;
     if entry.left_delimiter().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
@@ -97,9 +97,9 @@ fn analyze_entry(
 fn analyze_field(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
-    node: biblatex::SyntaxNode,
+    node: bibtex::SyntaxNode,
 ) -> Option<()> {
-    let field = biblatex::Field::cast(node)?;
+    let field = bibtex::Field::cast(node)?;
     if field.eq().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),

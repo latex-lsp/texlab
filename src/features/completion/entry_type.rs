@@ -1,7 +1,7 @@
 use lsp_types::CompletionParams;
 use rowan::{TextRange, TextSize};
 
-use crate::{features::cursor::CursorContext, syntax::biblatex, LANGUAGE_DATA};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LANGUAGE_DATA};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -12,7 +12,7 @@ pub fn complete_entry_types<'a>(
     let range = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == biblatex::TYPE)
+        .filter(|token| token.kind() == bibtex::TYPE)
         .filter(|token| token.text_range().start() != context.offset)
         .map(|token| token.text_range())
         .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))?;

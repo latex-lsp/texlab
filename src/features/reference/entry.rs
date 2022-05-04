@@ -4,7 +4,7 @@ use rowan::ast::AstNode;
 use crate::{
     features::cursor::CursorContext,
     syntax::{
-        biblatex::{self, HasKey},
+        bibtex::{self, HasKey},
         latex,
     },
     DocumentData, LineIndexExt,
@@ -38,9 +38,9 @@ pub fn find_entry_references(
                     });
             }
             DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
-                biblatex::SyntaxNode::new_root(data.green.clone())
+                bibtex::SyntaxNode::new_root(data.green.clone())
                     .children()
-                    .filter_map(biblatex::Entry::cast)
+                    .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())
                     .filter(|key| key.text() == key_text)
                     .map(|key| document.line_index.line_col_lsp_range(key.text_range()))

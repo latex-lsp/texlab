@@ -2,7 +2,7 @@ use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams, Range};
 use rowan::ast::AstNode;
 
 use crate::{
-    syntax::{biblatex, latex},
+    syntax::{bibtex, latex},
     DocumentData, LineIndexExt,
 };
 
@@ -28,15 +28,14 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
             }
         }
         DocumentData::Bibtex(data) => {
-            for node in biblatex::SyntaxNode::new_root(data.green.clone()).descendants() {
-                if let Some(folding) = biblatex::Preamble::cast(node.clone())
-                    .map(|node| biblatex::small_range(&node))
+            for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
+                if let Some(folding) = bibtex::Preamble::cast(node.clone())
+                    .map(|node| bibtex::small_range(&node))
                     .or_else(|| {
-                        biblatex::StringDef::cast(node.clone())
-                            .map(|node| biblatex::small_range(&node))
+                        bibtex::StringDef::cast(node.clone()).map(|node| bibtex::small_range(&node))
                     })
                     .or_else(|| {
-                        biblatex::Entry::cast(node.clone()).map(|node| biblatex::small_range(&node))
+                        bibtex::Entry::cast(node.clone()).map(|node| bibtex::small_range(&node))
                     })
                     .map(|node| main_document.line_index.line_col_lsp_range(node))
                     .map(create_range)

@@ -8,7 +8,7 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{
     features::{cursor::CursorContext, lsp_kinds::Structure},
     syntax::{
-        biblatex::{self, HasKey, HasType},
+        bibtex::{self, HasKey, HasType},
         latex,
     },
     BibtexEntryTypeCategory, Document, LANGUAGE_DATA,
@@ -38,9 +38,9 @@ pub fn complete_citations<'a>(
     check_citation(context).or_else(|| check_acronym(context))?;
     for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_bibtex() {
-            for entry in biblatex::SyntaxNode::new_root(data.green.clone())
+            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
-                .filter_map(biblatex::Entry::cast)
+                .filter_map(bibtex::Entry::cast)
             {
                 if let Some(item) = make_item(document, entry, range) {
                     items.push(item);
@@ -72,7 +72,7 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
 
 fn make_item(
     document: &Document,
-    entry: biblatex::Entry,
+    entry: bibtex::Entry,
     range: TextRange,
 ) -> Option<InternalCompletionItem> {
     let key = entry.key()?.to_string();

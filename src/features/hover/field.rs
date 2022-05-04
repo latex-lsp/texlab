@@ -1,7 +1,7 @@
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::biblatex, LineIndexExt, LANGUAGE_DATA};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt, LANGUAGE_DATA};
 
 pub fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
@@ -9,9 +9,9 @@ pub fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let name = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == biblatex::KEY)?;
+        .filter(|token| token.kind() == bibtex::KEY)?;
 
-    biblatex::Field::cast(name.parent()?)?;
+    bibtex::Field::cast(name.parent()?)?;
 
     let docs = LANGUAGE_DATA.field_documentation(name.text())?;
     Some(Hover {

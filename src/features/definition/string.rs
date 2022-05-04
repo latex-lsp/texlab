@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::biblatex::{self, HasKey},
+    syntax::bibtex::{self, HasKey},
     LineIndexExt,
 };
 
@@ -16,17 +16,17 @@ pub fn goto_string_definition(
     let key = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == biblatex::WORD)?;
+        .filter(|token| token.kind() == bibtex::WORD)?;
 
-    biblatex::Value::cast(key.parent()?)?;
+    bibtex::Value::cast(key.parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
         .line_col_lsp_range(key.text_range());
 
-    for string in biblatex::SyntaxNode::new_root(data.green.clone())
+    for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
-        .filter_map(biblatex::StringDef::cast)
+        .filter_map(bibtex::StringDef::cast)
     {
         if let Some(string_name) = string.key().filter(|k| k.text() == key.text()) {
             return Some(vec![LocationLink {
@@ -37,7 +37,7 @@ pub fn goto_string_definition(
                     .line_col_lsp_range(string_name.text_range()),
                 target_range: main_document
                     .line_index
-                    .line_col_lsp_range(biblatex::small_range(&string)),
+                    .line_col_lsp_range(bibtex::small_range(&string)),
             }]);
         }
     }

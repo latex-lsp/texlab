@@ -6,7 +6,7 @@ use lsp_types::Url;
 use crate::{
     line_index::LineIndex,
     syntax::{
-        biblatex, build_log,
+        bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
     },
     DocumentLanguage, Environment,
@@ -112,7 +112,7 @@ impl Document {
                 DocumentData::Latex(Box::new(LatexDocumentData { green, extras }))
             }
             DocumentLanguage::Bibtex => {
-                let green = biblatex::parse(&text);
+                let green = bibtex::parse(&text);
                 DocumentData::Bibtex(BibtexDocumentData { green })
             }
             DocumentLanguage::BuildLog => {

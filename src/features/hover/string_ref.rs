@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::biblatex::{self, HasKey, HasValue},
+    syntax::bibtex::{self, HasKey, HasValue},
     LineIndexExt,
 };
 
@@ -13,13 +13,13 @@ pub fn find_string_reference_hover(context: &CursorContext<HoverParams>) -> Opti
 
     let key = context.cursor.as_bibtex().filter(|token| {
         let parent = token.parent().unwrap();
-        (token.kind() == biblatex::WORD && biblatex::Value::can_cast(parent.kind()))
-            || (token.kind() == biblatex::KEY && biblatex::StringDef::can_cast(parent.kind()))
+        (token.kind() == bibtex::WORD && bibtex::Value::can_cast(parent.kind()))
+            || (token.kind() == bibtex::KEY && bibtex::StringDef::can_cast(parent.kind()))
     })?;
 
-    for string in biblatex::SyntaxNode::new_root(data.green.clone())
+    for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
-        .filter_map(biblatex::StringDef::cast)
+        .filter_map(bibtex::StringDef::cast)
     {
         if string.key().filter(|k| k.text() == key.text()).is_some() {
             let value = string.value()?.syntax().text().to_string();

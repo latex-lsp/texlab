@@ -1,5 +1,5 @@
 ---
-source: src/syntax/biblatex/tests.rs
+source: src/syntax/bibtex/tests.rs
 assertion_line: 11
 expression: "setup(r#\"@preamble{\"Hello World!\"}\"#)"
 ---

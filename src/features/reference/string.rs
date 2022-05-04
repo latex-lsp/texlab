@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::biblatex::{self, HasKey},
+    syntax::bibtex::{self, HasKey},
     LineIndexExt,
 };
 
@@ -16,21 +16,21 @@ pub fn find_string_references(
         .as_bibtex()
         .filter(|token| {
             let parent = token.parent().unwrap();
-            (token.kind() == biblatex::WORD && biblatex::Value::can_cast(parent.kind()))
-                || (token.kind() == biblatex::KEY && biblatex::StringDef::can_cast(parent.kind()))
+            (token.kind() == bibtex::WORD && bibtex::Value::can_cast(parent.kind()))
+                || (token.kind() == bibtex::KEY && bibtex::StringDef::can_cast(parent.kind()))
         })?
         .text();
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
-    for node in biblatex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        if let Some(name) = biblatex::StringDef::cast(node.clone())
+    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
+        if let Some(name) = bibtex::StringDef::cast(node.clone())
             .and_then(|string| string.key())
             .filter(|name| {
                 context.request.params.context.include_declaration && name.text() == name_text
             })
             .or_else(|| {
-                biblatex::Value::cast(node)
+                bibtex::Value::cast(node)
                     .and_then(|token| token.syntax().first_token())
                     .filter(|name| name.text() == name_text)
             })

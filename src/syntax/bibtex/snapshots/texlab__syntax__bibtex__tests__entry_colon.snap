@@ -1,5 +1,5 @@
 ---
-source: src/syntax/biblatex/tests.rs
+source: src/syntax/bibtex/tests.rs
 assertion_line: 36
 expression: "setup(r#\"@article{foo:2019,\n    author = {Foo Bar},\n    title = {Baz Qux},\n    year = {2019},\n}\"#)"
 ---
