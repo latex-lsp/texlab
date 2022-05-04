@@ -248,7 +248,9 @@ impl Server {
                             document,
                         };
 
-                        diag_sender.send(message).unwrap();
+                        if diag_sender.send(message).is_err() {
+                            break;
+                        }
                     }
                 };
             }
