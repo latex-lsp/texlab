@@ -8,7 +8,7 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{
     features::{cursor::CursorContext, lsp_kinds::Structure},
     syntax::{
-        bibtex::{self, HasType},
+        bibtex::{self, HasKey, HasType},
         latex,
     },
     BibtexEntryTypeCategory, Document, LANGUAGE_DATA,
@@ -77,7 +77,7 @@ fn make_item(
 ) -> Option<InternalCompletionItem> {
     let key = entry.key()?.to_string();
     let ty = LANGUAGE_DATA
-        .find_entry_type(&entry.ty()?.text()[1..])
+        .find_entry_type(&entry.type_()?.text()[1..])
         .map(|ty| Structure::Entry(ty.category))
         .unwrap_or_else(|| Structure::Entry(BibtexEntryTypeCategory::Misc));
 

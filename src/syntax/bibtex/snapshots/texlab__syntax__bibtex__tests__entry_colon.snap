@@ -1,0 +1,51 @@
+---
+source: src/syntax/bibtex/tests.rs
+assertion_line: 36
+expression: "setup(r#\"@article{foo:2019,\n    author = {Foo Bar},\n    title = {Baz Qux},\n    year = {2019},\n}\"#)"
+---
+ROOT@0..86
+  ENTRY@0..86
+    TYPE@0..8 "@article"
+    L_CURLY@8..9 "{"
+    KEY@9..17 "foo:2019"
+    COMMA@17..18 ","
+    WHITESPACE@18..23 "\n    "
+    FIELD@23..47
+      KEY@23..29 "author"
+      WHITESPACE@29..30 " "
+      EQ@30..31 "="
+      WHITESPACE@31..32 " "
+      CURLY_GROUP@32..41
+        L_CURLY@32..33 "{"
+        WORD@33..36 "Foo"
+        WHITESPACE@36..37 " "
+        WORD@37..40 "Bar"
+        R_CURLY@40..41 "}"
+      COMMA@41..42 ","
+      WHITESPACE@42..47 "\n    "
+    FIELD@47..70
+      KEY@47..52 "title"
+      WHITESPACE@52..53 " "
+      EQ@53..54 "="
+      WHITESPACE@54..55 " "
+      CURLY_GROUP@55..64
+        L_CURLY@55..56 "{"
+        WORD@56..59 "Baz"
+        WHITESPACE@59..60 " "
+        WORD@60..63 "Qux"
+        R_CURLY@63..64 "}"
+      COMMA@64..65 ","
+      WHITESPACE@65..70 "\n    "
+    FIELD@70..85
+      KEY@70..74 "year"
+      WHITESPACE@74..75 " "
+      EQ@75..76 "="
+      WHITESPACE@76..77 " "
+      CURLY_GROUP@77..83
+        L_CURLY@77..78 "{"
+        INTEGER@78..82 "2019"
+        R_CURLY@82..83 "}"
+      COMMA@83..84 ","
+      WHITESPACE@84..85 "\n"
+    R_CURLY@85..86 "}"
+

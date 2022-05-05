@@ -9,7 +9,7 @@ pub fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let name = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)?;
+        .filter(|token| token.kind() == bibtex::KEY)?;
 
     bibtex::Field::cast(name.parent()?)?;
 

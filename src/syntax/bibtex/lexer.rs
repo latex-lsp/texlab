@@ -1,83 +1,104 @@
+use itertools::Itertools;
 use logos::Logos;
 
-use super::kind::SyntaxKind;
+use crate::syntax::token_ptr::TokenPtr;
+
+use super::SyntaxKind::{self, *};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
-#[allow(non_camel_case_types)]
-#[allow(clippy::upper_case_acronyms)]
-#[repr(u16)]
-enum LogosToken {
-    #[regex(r"\s+")]
-    WHITESPACE = 2,
-
+pub enum Type {
     #[regex(r"@[Pp][Rr][Ee][Aa][Mm][Bb][Ll][Ee]")]
-    PREAMBLE_TYPE,
+    Preamble,
 
     #[regex(r"@[Ss][Tt][Rr][Ii][Nn][Gg]")]
-    STRING_TYPE,
+    String,
 
     #[regex(r"@[Cc][Oo][Mm][Mm][Ee][Nn][Tt]")]
-    COMMENT_TYPE,
+    Comment,
 
-    #[regex(r"@[!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z][!\$\&\*\+\-\./:;<>\?@\[\]\\\^_`\|\~a-zA-Z0-9]*|@")]
-    ENTRY_TYPE,
+    #[error]
+    Entry,
+}
+
+impl<'a> From<&'a str> for Type {
+    fn from(input: &'a str) -> Self {
+        Type::lexer(input).next().unwrap_or(Self::Entry)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
+pub enum Token {
+    #[regex(r"\s+")]
+    Whitespace,
+
+    #[regex(r#"@[^\s\{\}\(\),#"=\\]*"#, |lex| Type::from(lex.slice()))]
+    Type(Type),
 
     #[regex(r#"[^\s\{\}\(\),#"=\\]+"#)]
     #[error]
-    WORD,
+    Word,
+
+    #[regex(r"\d+", priority = 2)]
+    Integer,
 
     #[token("{")]
-    L_CURLY,
+    LCurly,
 
     #[token("}")]
-    R_CURLY,
+    RCurly,
 
     #[token("(")]
-    L_PAREN,
+    LParen,
 
     #[token(")")]
-    R_PAREN,
+    RParen,
 
     #[token(",")]
-    COMMA,
+    Comma,
 
     #[token("#")]
-    HASH,
+    Pound,
 
     #[token("\"")]
-    QUOTE,
+    Quote,
 
     #[token("=")]
-    EQUALITY_SIGN,
+    Eq,
 
     #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
-    COMMAND_NAME,
+    CommandName,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Lexer<'a> {
-    tokens: Vec<(SyntaxKind, &'a str)>,
-}
-
-impl<'a> Lexer<'a> {
-    pub fn new(text: &'a str) -> Self {
-        let mut tokens = Vec::new();
-        let mut lexer = LogosToken::lexer(text);
-        while let Some(kind) = lexer.next() {
-            tokens.push((
-                unsafe { std::mem::transmute::<LogosToken, SyntaxKind>(kind) },
-                lexer.slice(),
-            ));
+impl From<Token> for SyntaxKind {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::Whitespace => WHITESPACE,
+            Token::Type(_) => TYPE,
+            Token::Word => WORD,
+            Token::Integer => INTEGER,
+            Token::LCurly => L_CURLY,
+            Token::RCurly => R_CURLY,
+            Token::LParen => L_PAREN,
+            Token::RParen => R_PAREN,
+            Token::Comma => COMMA,
+            Token::Pound => POUND,
+            Token::Quote => QUOTE,
+            Token::Eq => EQ,
+            Token::CommandName => COMMAND_NAME,
         }
-        tokens.reverse();
-        Self { tokens }
     }
+}
 
-    pub fn peek(&self) -> Option<SyntaxKind> {
-        self.tokens.last().map(|(kind, _)| *kind)
+impl From<Token> for rowan::SyntaxKind {
+    fn from(token: Token) -> Self {
+        SyntaxKind::from(token).into()
     }
+}
 
-    pub fn consume(&mut self) -> Option<(SyntaxKind, &'a str)> {
-        self.tokens.pop()
-    }
+pub fn tokenize(input: &str) -> TokenPtr<Token> {
+    Token::lexer(input)
+        .spanned()
+        .map(|(kind, range)| (kind, &input[range]))
+        .collect_vec()
+        .into()
 }

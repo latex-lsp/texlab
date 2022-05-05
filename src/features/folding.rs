@@ -32,7 +32,7 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
                 if let Some(folding) = bibtex::Preamble::cast(node.clone())
                     .map(|node| bibtex::small_range(&node))
                     .or_else(|| {
-                        bibtex::String::cast(node.clone()).map(|node| bibtex::small_range(&node))
+                        bibtex::StringDef::cast(node.clone()).map(|node| bibtex::small_range(&node))
                     })
                     .or_else(|| {
                         bibtex::Entry::cast(node.clone()).map(|node| bibtex::small_range(&node))

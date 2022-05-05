@@ -31,7 +31,10 @@ use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    syntax::{bibtex, latex},
+    syntax::{
+        bibtex::{self},
+        latex,
+    },
     LineIndexExt,
 };
 
@@ -170,16 +173,13 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
             }
         }
         Cursor::Latex(_) => "".into(),
-        Cursor::Bibtex(token) if token.kind().is_type() => token.text().into(),
-        Cursor::Bibtex(token) if token.kind() == bibtex::WORD => {
-            if let Some(key) = token.parent().and_then(bibtex::Key::cast) {
-                key.to_string().into()
-            } else {
-                token.text().into()
-            }
-        }
-        Cursor::Bibtex(token) if token.kind() == bibtex::COMMAND_NAME => {
-            token.text().trim_end().into()
+        Cursor::Bibtex(token)
+            if matches!(
+                token.kind(),
+                bibtex::TYPE | bibtex::KEY | bibtex::WORD | bibtex::COMMAND_NAME
+            ) =>
+        {
+            token.text().into()
         }
         Cursor::Bibtex(_) => "".into(),
         Cursor::Nothing => "".into(),

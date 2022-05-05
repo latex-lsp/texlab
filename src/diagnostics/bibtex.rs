@@ -5,7 +5,7 @@ use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::bibtex::{self, HasDelimiters, HasType},
+    syntax::bibtex::{self, HasDelimiters, HasEq, HasKey, HasType, HasValue},
     Document, LineIndexExt, Workspace,
 };
 
@@ -37,7 +37,7 @@ fn analyze_entry(
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(entry.ty()?.text_range()),
+                    .line_col_lsp_range(entry.type_()?.text_range()),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(4)),
                 code_description: None,
@@ -71,7 +71,7 @@ fn analyze_entry(
         return Some(());
     }
 
-    if entry.key().is_none() {
+    if entry.right_delimiter().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
@@ -100,13 +100,13 @@ fn analyze_field(
     node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let field = bibtex::Field::cast(node)?;
-    if field.equality_sign().is_none() {
+    if field.eq().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(TextRange::empty(field.name()?.text_range().end())),
+                    .line_col_lsp_range(TextRange::empty(field.key()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(7)),
                 code_description: None,
@@ -124,9 +124,9 @@ fn analyze_field(
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
-                range: document.line_index.line_col_lsp_range(TextRange::empty(
-                    field.equality_sign()?.text_range().end(),
-                )),
+                range: document
+                    .line_index
+                    .line_col_lsp_range(TextRange::empty(field.eq()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(8)),
                 code_description: None,

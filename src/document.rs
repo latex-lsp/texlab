@@ -112,7 +112,7 @@ impl Document {
                 DocumentData::Latex(Box::new(LatexDocumentData { green, extras }))
             }
             DocumentLanguage::Bibtex => {
-                let green = bibtex::parse(&text).green;
+                let green = bibtex::parse(&text);
                 DocumentData::Bibtex(BibtexDocumentData { green })
             }
             DocumentLanguage::BuildLog => {

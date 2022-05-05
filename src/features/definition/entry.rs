@@ -3,7 +3,10 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::{bibtex, latex},
+    syntax::{
+        bibtex::{self, HasKey},
+        latex,
+    },
     LineIndexExt,
 };
 
@@ -31,13 +34,13 @@ pub fn goto_entry_definition(
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(key) = entry.key().filter(|k| k.to_string() == key.to_string()) {
+                if let Some(key) = entry.key().filter(|k| k.text() == word.text()) {
                     return Some(vec![LocationLink {
                         origin_selection_range: Some(origin_selection_range),
                         target_uri: document.uri.as_ref().clone(),
                         target_selection_range: document
                             .line_index
-                            .line_col_lsp_range(bibtex::small_range(&key)),
+                            .line_col_lsp_range(key.text_range()),
                         target_range: document
                             .line_index
                             .line_col_lsp_range(bibtex::small_range(&entry)),

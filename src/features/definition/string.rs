@@ -1,7 +1,11 @@
 use lsp_types::{GotoDefinitionParams, LocationLink};
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
+use crate::{
+    features::cursor::CursorContext,
+    syntax::bibtex::{self, HasKey},
+    LineIndexExt,
+};
 
 pub fn goto_string_definition(
     context: &CursorContext<GotoDefinitionParams>,
@@ -9,22 +13,22 @@ pub fn goto_string_definition(
     let main_document = context.request.main_document();
 
     let data = main_document.data.as_bibtex()?;
-    let name = context
+    let key = context
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::WORD)?;
 
-    bibtex::Token::cast(name.parent()?)?;
+    bibtex::Value::cast(key.parent()?)?;
 
     let origin_selection_range = main_document
         .line_index
-        .line_col_lsp_range(name.text_range());
+        .line_col_lsp_range(key.text_range());
 
     for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
-        .filter_map(bibtex::String::cast)
+        .filter_map(bibtex::StringDef::cast)
     {
-        if let Some(string_name) = string.name().filter(|n| n.text() == name.text()) {
+        if let Some(string_name) = string.key().filter(|k| k.text() == key.text()) {
             return Some(vec![LocationLink {
                 origin_selection_range: Some(origin_selection_range),
                 target_uri: main_document.uri.as_ref().clone(),

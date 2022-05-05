@@ -62,11 +62,11 @@ impl Cursor {
         let left = left?;
         let right = right?;
 
-        if right.kind().is_type() {
+        if right.kind() == bibtex::TYPE {
             return Some(Self::Bibtex(right));
         }
 
-        if left.kind().is_type() {
+        if left.kind() == bibtex::TYPE {
             return Some(Self::Bibtex(left));
         }
 
@@ -74,11 +74,11 @@ impl Cursor {
             return Some(Self::Bibtex(left));
         }
 
-        if right.kind() == bibtex::WORD {
+        if matches!(right.kind(), bibtex::WORD | bibtex::KEY) {
             return Some(Self::Bibtex(right));
         }
 
-        if left.kind() == bibtex::WORD {
+        if matches!(left.kind(), bibtex::WORD | bibtex::KEY) {
             return Some(Self::Bibtex(left));
         }
 
@@ -183,15 +183,13 @@ impl<P: HasPosition> CursorContext<P> {
     }
 
     pub fn find_entry_key(&self) -> Option<(String, TextRange)> {
-        let word = self
+        let key = self
             .cursor
             .as_bibtex()
-            .filter(|token| token.kind() == bibtex::WORD)?;
+            .filter(|token| token.kind() == bibtex::KEY)?;
 
-        let key = bibtex::Key::cast(word.parent()?)?;
-
-        bibtex::Entry::cast(key.syntax().parent()?)?;
-        Some((key.to_string(), bibtex::small_range(&key)))
+        bibtex::Entry::cast(key.parent()?)?;
+        Some((key.to_string(), key.text_range()))
     }
 
     pub fn find_label_name_key(&self) -> Option<(String, TextRange)> {

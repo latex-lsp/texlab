@@ -1,12 +1,12 @@
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent};
 
-use crate::{features::cursor::CursorContext, LineIndexExt, LANGUAGE_DATA};
+use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt, LANGUAGE_DATA};
 
 pub fn find_entry_type_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let name = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind().is_type())?;
+        .filter(|token| token.kind() == bibtex::TYPE)?;
 
     let docs = LANGUAGE_DATA.entry_type_documentation(&name.text()[1..])?;
     Some(Hover {

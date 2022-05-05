@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::FeatureRequest,
-    syntax::bibtex::{self, HasType},
+    syntax::bibtex::{self, HasKey, HasType},
     BibtexEntryTypeCategory, LineIndexExt, LANGUAGE_DATA,
 };
 
@@ -17,8 +17,8 @@ pub fn find_bibtex_symbols(
     let data = main_document.data.as_bibtex()?;
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
-        if let Some(string) = bibtex::String::cast(node.clone()) {
-            if let Some(name) = string.name() {
+        if let Some(string) = bibtex::StringDef::cast(node.clone()) {
+            if let Some(name) = string.key() {
                 buf.push(InternalSymbol {
                     name: name.text().into(),
                     label: None,
@@ -34,11 +34,11 @@ pub fn find_bibtex_symbols(
                 })
             }
         } else if let Some(entry) = bibtex::Entry::cast(node) {
-            if let Some(ty) = entry.ty() {
+            if let Some(ty) = entry.type_() {
                 if let Some(key) = entry.key() {
                     let mut children = Vec::new();
                     for field in entry.fields() {
-                        if let Some(name) = field.name() {
+                        if let Some(name) = field.key() {
                             let symbol = InternalSymbol {
                                 name: name.text().to_string(),
                                 label: None,
@@ -71,7 +71,7 @@ pub fn find_bibtex_symbols(
                             .line_col_lsp_range(bibtex::small_range(&entry)),
                         selection_range: main_document
                             .line_index
-                            .line_col_lsp_range(bibtex::small_range(&key)),
+                            .line_col_lsp_range(key.text_range()),
                         children,
                     });
                 }

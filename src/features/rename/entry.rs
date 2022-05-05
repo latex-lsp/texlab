@@ -5,7 +5,10 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
-    syntax::{bibtex, latex},
+    syntax::{
+        bibtex::{self, HasKey},
+        latex,
+    },
     DocumentData, LineIndexExt,
 };
 
@@ -53,12 +56,8 @@ pub fn rename_entry(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.key())
-                    .filter(|key| key.to_string() == key_text)
-                    .map(|key| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(bibtex::small_range(&key))
-                    })
+                    .filter(|key| key.text() == key_text)
+                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
                     .map(|range| TextEdit::new(range, context.request.params.new_name.clone()))
                     .collect();
                 changes.insert(document.uri.as_ref().clone(), edits);

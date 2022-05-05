@@ -1,424 +1,260 @@
 use rowan::{GreenNode, GreenNodeBuilder};
 
+use crate::syntax::token_ptr::TokenPtr;
+
 use super::{
-    lexer::Lexer,
+    lexer::{tokenize, Token, Type},
     SyntaxKind::{self, *},
 };
 
-#[derive(Debug, Clone)]
-pub struct Parse {
-    pub green: GreenNode,
-}
-
 struct Parser<'a> {
-    lexer: Lexer<'a>,
-    builder: GreenNodeBuilder<'static>,
+    ptr: TokenPtr<'a, Token>,
+    ast: GreenNodeBuilder<'static>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(lexer: Lexer<'a>) -> Self {
-        Self {
-            lexer,
-            builder: GreenNodeBuilder::new(),
-        }
-    }
+    pub fn parse(mut self) -> GreenNode {
+        self.ast.start_node(ROOT.into());
 
-    fn peek(&self) -> Option<SyntaxKind> {
-        self.lexer.peek()
-    }
-
-    fn eat(&mut self) {
-        let (kind, text) = self.lexer.consume().unwrap();
-        self.builder.token(kind.into(), text);
-    }
-
-    fn expect(&mut self, kind: SyntaxKind) {
-        if self.peek() == Some(kind) {
-            self.eat();
-            self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-    }
-
-    pub fn parse(mut self) -> Parse {
-        self.builder.start_node(ROOT.into());
-        while let Some(kind) = self.peek() {
+        while let Some(kind) = self.ptr.current() {
             match kind {
-                PREAMBLE_TYPE => self.preamble(),
-                STRING_TYPE => self.string(),
-                COMMENT_TYPE => self.comment(),
-                ENTRY_TYPE => self.entry(),
-                _ => self.junk(),
-            }
+                Token::Whitespace => self.bump(),
+                Token::Type(Type::Preamble) => self.preamble(),
+                Token::Type(Type::String) => self.string_def(),
+                Token::Type(Type::Entry) => self.entry(),
+                Token::Type(Type::Comment) => self.comment(),
+                Token::Word
+                | Token::Integer
+                | Token::LCurly
+                | Token::RCurly
+                | Token::LParen
+                | Token::RParen
+                | Token::Comma
+                | Token::Pound
+                | Token::Quote
+                | Token::Eq
+                | Token::CommandName => self.junk(),
+            };
         }
-        self.builder.finish_node();
-        let green = self.builder.finish();
-        Parse { green }
+
+        self.ast.finish_node();
+        self.ast.finish()
+    }
+
+    fn bump(&mut self) {
+        let (kind, text) = self.ptr.bump();
+        self.ast.token(kind.into(), text);
+    }
+
+    fn bump_and_trivia(&mut self) {
+        self.bump();
+        self.trivia();
+    }
+
+    fn bump_and_remap(&mut self, new_kind: SyntaxKind) {
+        let (_, text) = self.ptr.bump();
+        self.ast.token(new_kind.into(), text);
     }
 
     fn trivia(&mut self) {
-        while self.peek() == Some(WHITESPACE) {
-            self.eat();
+        while self.ptr.at(Token::Whitespace) {
+            self.bump();
         }
     }
 
     fn junk(&mut self) {
-        self.builder.start_node(JUNK.into());
-        while self
-            .lexer
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    PREAMBLE_TYPE | STRING_TYPE | COMMENT_TYPE | ENTRY_TYPE,
-                )
-            })
-            .is_some()
-        {
-            self.eat();
+        self.ast.start_node(JUNK.into());
+
+        while self.ptr.at_cond(|kind| !matches!(kind, Token::Type(_))) {
+            self.bump();
         }
-        self.builder.finish_node();
-    }
 
-    fn left_delimiter_or_missing(&mut self) {
-        if self
-            .lexer
-            .peek()
-            .filter(|&kind| matches!(kind, L_CURLY | L_PAREN))
-            .is_some()
-        {
-            self.eat();
-            self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-    }
-
-    fn right_delimiter_or_missing(&mut self) {
-        if self
-            .lexer
-            .peek()
-            .filter(|&kind| matches!(kind, R_CURLY | R_PAREN))
-            .is_some()
-        {
-            self.eat();
-            self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-    }
-
-    fn value_or_missing(&mut self) {
-        if self
-            .lexer
-            .peek()
-            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
-            .is_some()
-        {
-            self.value();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-    }
-
-    fn preamble(&mut self) {
-        self.builder.start_node(PREAMBLE.into());
-        self.eat();
-        self.trivia();
-        self.left_delimiter_or_missing();
-        self.value_or_missing();
-        self.right_delimiter_or_missing();
-        self.builder.finish_node();
-    }
-
-    fn string(&mut self) {
-        self.builder.start_node(STRING.into());
-        self.eat();
-        self.trivia();
-        self.left_delimiter_or_missing();
-
-        if self.peek() != Some(WORD) {
-            self.builder.token(MISSING.into(), "");
-            self.builder.finish_node();
-            return;
-        }
-        self.eat();
-        self.trivia();
-        self.expect(EQUALITY_SIGN);
-
-        self.value_or_missing();
-
-        self.right_delimiter_or_missing();
-        self.builder.finish_node();
+        self.ast.finish_node();
     }
 
     fn comment(&mut self) {
-        self.builder.start_node(COMMENT.into());
-        self.eat();
-        self.builder.finish_node();
+        self.ast.start_node(COMMENT.into());
+        self.bump_and_trivia();
+
+        while self.ptr.at_cond(|kind| !matches!(kind, Token::Type(_))) {
+            self.bump();
+        }
+
+        self.ast.finish_node();
+    }
+
+    fn preamble(&mut self) {
+        self.ast.start_node(PREAMBLE.into());
+        self.bump_and_trivia();
+        self.left_delimiter();
+        self.value();
+        self.right_delimiter();
+        self.ast.finish_node();
+    }
+
+    fn string_def(&mut self) {
+        self.ast.start_node(STRING.into());
+        self.bump_and_trivia();
+        self.left_delimiter();
+        self.key();
+        self.eq();
+        self.value();
+        self.right_delimiter();
+        self.ast.finish_node();
     }
 
     fn entry(&mut self) {
-        self.builder.start_node(ENTRY.into());
-        self.eat();
-        self.trivia();
-
-        self.left_delimiter_or_missing();
-
-        if self.peek() != Some(WORD) {
-            self.builder.token(MISSING.into(), "");
-            self.builder.finish_node();
-            return;
-        }
+        self.ast.start_node(ENTRY.into());
+        self.bump_and_trivia();
+        self.left_delimiter();
         self.key();
-
-        while let Some(kind) = self.peek() {
-            match kind {
-                WHITESPACE => self.eat(),
-                WORD => self.field(),
-                COMMA => self.eat(),
-                _ => break,
-            };
-        }
-
-        self.right_delimiter_or_missing();
-
-        self.builder.finish_node();
+        self.comma();
+        while self.field().is_some() {}
+        self.right_delimiter();
+        self.ast.finish_node();
     }
 
-    fn key(&mut self) {
-        self.builder.start_node(KEY.into());
-        while self
-            .peek()
-            .filter(|&kind| matches!(kind, WORD | WHITESPACE))
-            .is_some()
-        {
-            self.eat();
+    fn field(&mut self) -> Option<()> {
+        if !self.ptr.at(Token::Word) {
+            return None;
         }
-        self.builder.finish_node();
+
+        self.ast.start_node(FIELD.into());
+        self.key().unwrap();
+        self.eq();
+        self.value();
+        self.comma();
+        self.ast.finish_node();
+        Some(())
     }
 
-    fn field(&mut self) {
-        self.builder.start_node(FIELD.into());
-        self.eat();
+    fn key(&mut self) -> Option<()> {
+        if !self.ptr.at(Token::Word) {
+            return None;
+        }
+
+        self.bump_and_remap(KEY);
         self.trivia();
-
-        if self.peek() == Some(EQUALITY_SIGN) {
-            self.eat();
-            self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-
-        if self
-            .lexer
-            .peek()
-            .filter(|&kind| matches!(kind, L_CURLY | QUOTE | WORD))
-            .is_some()
-        {
-            self.value();
-        } else {
-            self.builder.token(MISSING.into(), "");
-        }
-
-        self.builder.finish_node();
+        Some(())
     }
 
-    fn value(&mut self) {
-        self.builder.start_node(VALUE.into());
-        self.token();
-        while let Some(kind) = self.peek() {
-            match kind {
-                WHITESPACE => self.eat(),
-                L_CURLY | QUOTE | WORD => self.token(),
-                HASH => self.eat(),
-                _ => break,
-            }
-        }
-        self.builder.finish_node();
+    fn left_delimiter(&mut self) -> Option<()> {
+        self.token(|kind| matches!(kind, Token::LCurly | Token::LParen))
     }
 
-    fn token(&mut self) {
-        self.builder.start_node(TOKEN.into());
-        match self.peek().unwrap() {
-            L_CURLY => self.brace_group(),
-            QUOTE => self.quote_group(),
-            WORD => self.eat(),
-            _ => unreachable!(),
+    fn right_delimiter(&mut self) -> Option<()> {
+        self.token(|kind| matches!(kind, Token::RCurly | Token::RParen))
+    }
+
+    fn eq(&mut self) -> Option<()> {
+        self.token(|kind| kind == Token::Eq)
+    }
+
+    fn comma(&mut self) -> Option<()> {
+        self.token(|kind| kind == Token::Comma)
+    }
+
+    fn token(&mut self, predicate: impl FnOnce(Token) -> bool) -> Option<()> {
+        if !self.ptr.at_cond(predicate) {
+            return None;
+        }
+
+        self.bump_and_trivia();
+        Some(())
+    }
+
+    fn value(&mut self) -> Option<()> {
+        let checkpoint = self.ast.checkpoint();
+        match self.ptr.current()? {
+            Token::Whitespace
+            | Token::Type(_)
+            | Token::LParen
+            | Token::RParen
+            | Token::Comma
+            | Token::Pound
+            | Token::Eq
+            | Token::RCurly => return None,
+            Token::LCurly => self.curly_group(),
+            Token::Quote => self.quote_group(),
+            Token::Integer | Token::Word | Token::CommandName => self.literal(),
         };
-        self.builder.finish_node();
+
+        if self.ptr.at(Token::Pound) {
+            self.ast.start_node_at(checkpoint, CONCAT.into());
+            self.bump_and_trivia();
+            self.value();
+            self.ast.finish_node();
+        }
+
+        Some(())
     }
 
-    fn brace_group(&mut self) {
-        self.builder.start_node(BRACE_GROUP.into());
-        self.eat();
+    fn curly_group(&mut self) {
+        self.ast.start_node(CURLY_GROUP.into());
+        self.bump_and_trivia();
 
-        while let Some(kind) = self.peek() {
+        while let Some(kind) = self.ptr.current() {
             match kind {
-                WHITESPACE => self.eat(),
-                PREAMBLE_TYPE => break,
-                STRING_TYPE => break,
-                COMMENT_TYPE => break,
-                ENTRY_TYPE => break,
-                WORD => self.eat(),
-                L_CURLY => self.brace_group(),
-                R_CURLY => break,
-                L_PAREN => self.eat(),
-                R_PAREN => self.eat(),
-                COMMA => self.eat(),
-                HASH => self.eat(),
-                QUOTE => self.eat(),
-                EQUALITY_SIGN => self.eat(),
-                COMMAND_NAME => self.eat(),
-                _ => unreachable!(),
+                Token::Whitespace
+                | Token::Type(_)
+                | Token::Word
+                | Token::Integer
+                | Token::LParen
+                | Token::RParen
+                | Token::Comma
+                | Token::Eq
+                | Token::CommandName => self.bump(),
+                Token::LCurly => self.curly_group(),
+                Token::Quote => self.quote_group(),
+                Token::Pound => break,
+                Token::RCurly => {
+                    self.bump_and_trivia();
+                    break;
+                }
             };
         }
 
-        self.expect(R_CURLY);
-
-        self.builder.finish_node();
+        self.ast.finish_node();
     }
 
     fn quote_group(&mut self) {
-        self.builder.start_node(QUOTE_GROUP.into());
-        self.eat();
+        self.ast.start_node(QUOTE_GROUP.into());
+        self.bump_and_trivia();
 
-        while let Some(kind) = self.peek() {
+        while let Some(kind) = self.ptr.current() {
             match kind {
-                WHITESPACE => self.eat(),
-                PREAMBLE_TYPE => break,
-                STRING_TYPE => break,
-                COMMENT_TYPE => break,
-                ENTRY_TYPE => break,
-                WORD => self.eat(),
-                L_CURLY => self.brace_group(),
-                R_CURLY => break,
-                L_PAREN => self.eat(),
-                R_PAREN => self.eat(),
-                COMMA => self.eat(),
-                HASH => self.eat(),
-                QUOTE => break,
-                EQUALITY_SIGN => self.eat(),
-                COMMAND_NAME => self.eat(),
-                _ => unreachable!(),
+                Token::Whitespace
+                | Token::Type(_)
+                | Token::Word
+                | Token::Integer
+                | Token::LParen
+                | Token::RParen
+                | Token::Comma
+                | Token::Eq
+                | Token::CommandName
+                | Token::RCurly => self.bump(),
+                Token::LCurly => self.curly_group(),
+                Token::Pound => break,
+                Token::Quote => {
+                    self.bump_and_trivia();
+                    break;
+                }
             };
         }
 
-        self.expect(QUOTE);
-        self.builder.finish_node();
+        self.ast.finish_node();
+    }
+
+    fn literal(&mut self) {
+        self.ast.start_node(LITERAL.into());
+        self.bump_and_trivia();
+        self.ast.finish_node();
     }
 }
 
-pub fn parse(text: &str) -> Parse {
-    Parser::new(Lexer::new(text)).parse()
-}
-
-#[cfg(test)]
-mod tests {
-    use insta::assert_debug_snapshot;
-
-    use crate::syntax::bibtex;
-
-    use super::*;
-
-    fn setup(text: &str) -> bibtex::SyntaxNode {
-        bibtex::SyntaxNode::new_root(parse(&text.trim().replace('\r', "")).green)
-    }
-
-    #[test]
-    fn test_empty() {
-        assert_debug_snapshot!(setup(r#""#));
-    }
-
-    #[test]
-    fn test_junk() {
-        assert_debug_snapshot!(setup(r#"Hello World!"#));
-    }
-
-    #[test]
-    fn test_preamble_complete() {
-        assert_debug_snapshot!(setup(r#"@preamble{ "Hello World" }"#));
-    }
-
-    #[test]
-    fn test_preamble_missing_end() {
-        assert_debug_snapshot!(setup(r#"@preamble{ "Hello World" "#));
-    }
-
-    #[test]
-    fn test_preamble_casing() {
-        assert_debug_snapshot!(setup(r#"@preAmbLe{ "Hello World" }"#));
-    }
-
-    #[test]
-    fn test_string_complete() {
-        assert_debug_snapshot!(setup(r#"@string{foo = {Hello World}}"#));
-    }
-
-    #[test]
-    fn test_string_incomplete() {
-        assert_debug_snapshot!(setup(r#"@string{foo = {Hello World}"#));
-    }
-
-    #[test]
-    fn test_string_concatenation() {
-        assert_debug_snapshot!(setup(
-            r#"@string{foo = {Hello World}} @string{bar = foo # "!"}"#
-        ));
-    }
-
-    #[test]
-    fn test_string_casing() {
-        assert_debug_snapshot!(setup(r#"@STRING{foo = "Hello World"}"#));
-    }
-
-    #[test]
-    fn test_string_missing_quote() {
-        assert_debug_snapshot!(setup(r#"@STRING{foo = "Hello World}"#));
-    }
-
-    #[test]
-    fn test_entry_no_fields() {
-        assert_debug_snapshot!(setup(r#"@article{foo,}"#));
-    }
-
-    #[test]
-    fn test_entry_no_fields_missing_comma() {
-        assert_debug_snapshot!(setup(r#"@article{foo}"#));
-    }
-
-    #[test]
-    fn test_entry_one_field() {
-        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar}}"#));
-    }
-
-    #[test]
-    fn test_entry_one_field_number_key() {
-        assert_debug_snapshot!(setup(r#"@article{foo2021, author = {Foo Bar}}"#));
-    }
-
-    #[test]
-    fn test_entry_one_field_trailing_comma() {
-        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar},}"#));
-    }
-
-    #[test]
-    fn test_entry_two_fields() {
-        assert_debug_snapshot!(setup(
-            r#"@article{foo, author = {Foo Bar}, title = {Hello World}}"#
-        ));
-    }
-
-    #[test]
-    fn test_entry_two_fields_incomplete() {
-        assert_debug_snapshot!(setup(r#"@article{foo, author = {Foo Bar}, t}"#));
-    }
-
-    #[test]
-    fn test_entry_complete_parens() {
-        assert_debug_snapshot!(setup(
-            r#"@article(foo, author = {Foo Bar}, title = {Hello})"#
-        ));
-    }
+pub fn parse(input: &str) -> GreenNode {
+    let ptr = tokenize(input);
+    let ast = GreenNodeBuilder::new();
+    let parser = Parser { ptr, ast };
+    parser.parse()
 }

@@ -1,34 +1,33 @@
 use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
+use crate::{
+    features::cursor::CursorContext,
+    syntax::bibtex::{self, HasKey, HasValue},
+    LineIndexExt,
+};
 
 pub fn find_string_reference_hover(context: &CursorContext<HoverParams>) -> Option<Hover> {
     let main_document = context.request.main_document();
     let data = main_document.data.as_bibtex()?;
 
-    let name = context
-        .cursor
-        .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)
-        .filter(|name| {
-            matches!(
-                name.parent().unwrap().kind(),
-                bibtex::TOKEN | bibtex::STRING
-            )
-        })?;
+    let key = context.cursor.as_bibtex().filter(|token| {
+        let parent = token.parent().unwrap();
+        (token.kind() == bibtex::WORD && bibtex::Value::can_cast(parent.kind()))
+            || (token.kind() == bibtex::KEY && bibtex::StringDef::can_cast(parent.kind()))
+    })?;
 
     for string in bibtex::SyntaxNode::new_root(data.green.clone())
         .children()
-        .filter_map(bibtex::String::cast)
+        .filter_map(bibtex::StringDef::cast)
     {
-        if string.name().filter(|n| n.text() == name.text()).is_some() {
+        if string.key().filter(|k| k.text() == key.text()).is_some() {
             let value = string.value()?.syntax().text().to_string();
             return Some(Hover {
                 range: Some(
                     main_document
                         .line_index
-                        .line_col_lsp_range(name.text_range()),
+                        .line_col_lsp_range(key.text_range()),
                 ),
                 contents: HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::PlainText,

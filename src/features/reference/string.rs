@@ -1,7 +1,11 @@
 use lsp_types::{Location, ReferenceParams};
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
+use crate::{
+    features::cursor::CursorContext,
+    syntax::bibtex::{self, HasKey},
+    LineIndexExt,
+};
 
 pub fn find_string_references(
     context: &CursorContext<ReferenceParams>,
@@ -10,25 +14,23 @@ pub fn find_string_references(
     let name_text = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)
         .filter(|token| {
-            matches!(
-                token.parent().unwrap().kind(),
-                bibtex::TOKEN | bibtex::STRING
-            )
+            let parent = token.parent().unwrap();
+            (token.kind() == bibtex::WORD && bibtex::Value::can_cast(parent.kind()))
+                || (token.kind() == bibtex::KEY && bibtex::StringDef::can_cast(parent.kind()))
         })?
         .text();
 
     let document = context.request.main_document();
     let data = document.data.as_bibtex()?;
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        if let Some(name) = bibtex::String::cast(node.clone())
-            .and_then(|string| string.name())
+        if let Some(name) = bibtex::StringDef::cast(node.clone())
+            .and_then(|string| string.key())
             .filter(|name| {
                 context.request.params.context.include_declaration && name.text() == name_text
             })
             .or_else(|| {
-                bibtex::Token::cast(node)
+                bibtex::Value::cast(node)
                     .and_then(|token| token.syntax().first_token())
                     .filter(|name| name.text() == name_text)
             })

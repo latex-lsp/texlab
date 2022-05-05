@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
     features::FeatureRequest,
-    syntax::bibtex::{self, HasType},
+    syntax::bibtex::{self, HasKey, HasType, HasValue},
     LineIndex, LineIndexExt,
 };
 
@@ -19,21 +19,19 @@ pub fn format_bibtex_internal(
         indent.push('\t');
     }
 
-    let line_length = {
-        request
-            .workspace
-            .environment
-            .options
-            .formatter_line_length
-            .map(|value| {
-                if value <= 0 {
-                    usize::MAX
-                } else {
-                    value as usize
-                }
-            })
-            .unwrap_or(80)
-    };
+    let line_length = request
+        .workspace
+        .environment
+        .options
+        .formatter_line_length
+        .map(|value| {
+            if value <= 0 {
+                usize::MAX
+            } else {
+                value as usize
+            }
+        })
+        .unwrap_or(80);
 
     let document = request.main_document();
     let data = document.data.as_bibtex()?;
@@ -42,7 +40,7 @@ pub fn format_bibtex_internal(
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
         let range = if let Some(entry) = bibtex::Entry::cast(node.clone()) {
             bibtex::small_range(&entry)
-        } else if let Some(string) = bibtex::String::cast(node.clone()) {
+        } else if let Some(string) = bibtex::StringDef::cast(node.clone()) {
             bibtex::small_range(&string)
         } else if let Some(preamble) = bibtex::Preamble::cast(node.clone()) {
             bibtex::small_range(&preamble)
@@ -113,7 +111,7 @@ impl<'a> Formatter<'a> {
         match parent.kind() {
             bibtex::PREAMBLE => {
                 let preamble = bibtex::Preamble::cast(parent).unwrap();
-                self.visit_token_lowercase(&preamble.ty().unwrap());
+                self.visit_token_lowercase(&preamble.type_().unwrap());
                 self.output.push('{');
                 if preamble.syntax().children().next().is_some() {
                     self.align.push(self.base_align());
@@ -124,10 +122,10 @@ impl<'a> Formatter<'a> {
                 }
             }
             bibtex::STRING => {
-                let string = bibtex::String::cast(parent).unwrap();
-                self.visit_token_lowercase(&string.ty().unwrap());
+                let string = bibtex::StringDef::cast(parent).unwrap();
+                self.visit_token_lowercase(&string.type_().unwrap());
                 self.output.push('{');
-                if let Some(name) = string.name() {
+                if let Some(name) = string.key() {
                     self.output.push_str(name.text());
                     self.output.push_str(" = ");
                     if let Some(value) = string.value() {
@@ -139,7 +137,7 @@ impl<'a> Formatter<'a> {
             }
             bibtex::ENTRY => {
                 let entry = bibtex::Entry::cast(parent).unwrap();
-                self.visit_token_lowercase(&entry.ty().unwrap());
+                self.visit_token_lowercase(&entry.type_().unwrap());
                 self.output.push('{');
                 if let Some(key) = entry.key() {
                     self.output.push_str(&key.to_string());
@@ -154,7 +152,7 @@ impl<'a> Formatter<'a> {
             bibtex::FIELD => {
                 let field = bibtex::Field::cast(parent).unwrap();
                 self.output.push_str(&self.indent);
-                let name = field.name().unwrap();
+                let name = field.key().unwrap();
                 self.output.push_str(name.text());
                 self.output.push_str(" = ");
                 if let Some(value) = field.value() {
@@ -165,7 +163,7 @@ impl<'a> Formatter<'a> {
                     self.output.push('\n');
                 }
             }
-            bibtex::VALUE => {
+            kind if bibtex::Value::can_cast(kind) => {
                 let tokens: Vec<_> = parent
                     .descendants_with_tokens()
                     .filter_map(|element| element.into_token())
