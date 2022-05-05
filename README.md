@@ -42,7 +42,7 @@ On Windows, you may need to install [Microsoft Visual C++ Redistributable for Vi
 
 You will need to install the following dependencies to compile the server:
 
-- A recent, stable version of [Rust](https://rustup.rs/) (>= 1.53)
+- A recent, stable version of [Rust](https://rustup.rs/)
 
 Then run the following command in the project folder:
 

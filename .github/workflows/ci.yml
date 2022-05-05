@@ -11,18 +11,61 @@ env:
   RUSTFLAGS: "-D warnings"
   RUSTUP_MAX_RETRIES: 10
 jobs:
+  test:
+    name: Test (${{matrix.os}}, ${{matrix.toolchain}})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            toolchain: stable
+          - os: ubuntu-18.04
+            toolchain: 1.58.1
+          - os: windows-latest
+            toolchain: stable
+          - os: macos-latest
+            toolchain: stable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - name: Compile
+        run: cargo test --all-features --no-run --locked
+      - name: Test
+        run: cargo test --all-features -- --nocapture --quiet
+  cross:
+    name: Cross (${{matrix.target}}, ${{matrix.toolchain}})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            toolchain: stable
+            target: aarch64-apple-darwin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+      - name: Compile
+        run: cargo build --target ${{ matrix.target }}
   coverage:
-    name: Code Coverage
+    name: Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
         with:
-          toolchain: stable
-          profile: minimal
-          override: true
           components: llvm-tools-preview
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
@@ -33,59 +76,30 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
-  server:
-    name: LSP Server
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            toolchain: stable
-            transpile_target: null
-          - os: ubuntu-18.04
-            toolchain: 1.58.1
-            transpile_target: null
-          - os: windows-latest
-            toolchain: stable
-            transpile_target: null
-          - os: macos-latest
-            toolchain: stable
-            transpile_target: null
-          - os: macos-latest
-            toolchain: stable
-            transpile_target: aarch64-apple-darwin
+  format:
+    name: Format (Rustfmt)
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install Rust toolchain for a native compiler
-        uses: actions-rs/toolchain@v1
-        id: rust_toolchain_native
-        if: matrix.transpile_target == null
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
         with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-          override: true
           components: rustfmt
-      - name: Install Rust toolchain for a cross compiler
-        uses: actions-rs/toolchain@v1
-        if: steps.rust_toolchain_native.conclusion == 'skipped'
+      - name: Check formatting
+        run: cargo fmt --check
+  clippy:
+    name: Lint (Clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
         with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-          override: true
-          components: rustfmt
-          target: ${{ matrix.transpile_target }}
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v1
-      - name: Compile with a native compiler
-        id: rust_compile_native
-        if: matrix.transpile_target == null
-        run: cargo test --no-run --locked
-      - name: Compile with a cross compiler
-        if: steps.rust_compile_native.conclusion == 'skipped'
-        run: cargo test --target ${{ matrix.transpile_target }} --no-run --locked
-      - name: Test with a native compiler
-        id: rust_test_native
-        if: matrix.transpile_target == null
-        run: cargo test -- --nocapture --quiet
+          components: clippy
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
+          name: Lint (Clippy Results)
