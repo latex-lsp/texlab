@@ -252,7 +252,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn parse<'a>(input: &'a str) -> GreenNode {
+pub fn parse(input: &str) -> GreenNode {
     let ptr = tokenize(input);
     let ast = GreenNodeBuilder::new();
     let parser = Parser { ptr, ast };

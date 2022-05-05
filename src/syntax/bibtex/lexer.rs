@@ -95,7 +95,7 @@ impl From<Token> for rowan::SyntaxKind {
     }
 }
 
-pub fn tokenize<'a>(input: &'a str) -> TokenPtr<'a, Token> {
+pub fn tokenize(input: &str) -> TokenPtr<Token> {
     Token::lexer(input)
         .spanned()
         .map(|(kind, range)| (kind, &input[range]))
