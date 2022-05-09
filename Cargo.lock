@@ -784,12 +784,9 @@ checksum = "990980c3d268c9b99df35e813eca2b8d1ee08606f6d2bb325edbd0b0c68f9ffe"
 
 [[package]]
 name = "indoc"
-version = "1.0.4"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7906a9fababaeacb774f72410e497a1d18de916322e33797bb2cd29baa23c9e"
-dependencies = [
- "unindent",
-]
+checksum = "05a0bd019339e5d968b37855180087b7b9d512c5046fbd244cf8c95687927d6e"
 
 [[package]]
 name = "insta"
