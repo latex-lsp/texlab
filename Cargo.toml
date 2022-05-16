@@ -67,7 +67,7 @@ titlecase = "1.1.0"
 uuid = { version = "1.0.0", features = ["v4"] }
 
 [dependencies.clap]
-version = "3.1.17"
+version = "3.1.18"
 features = ["std", "derive"]
 default-features = false
 
