@@ -88,18 +88,3 @@ jobs:
           components: rustfmt
       - name: Check formatting
         run: cargo fmt --check
-  clippy:
-    name: Lint (Clippy)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
-        with:
-          components: clippy
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
-          name: Lint (Clippy Results)
