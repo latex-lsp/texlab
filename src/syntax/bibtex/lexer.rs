@@ -1,45 +1,85 @@
-use itertools::Itertools;
 use logos::Logos;
-
-use crate::syntax::token_ptr::TokenPtr;
 
 use super::SyntaxKind::{self, *};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
-pub enum Type {
-    #[regex(r"@[Pp][Rr][Ee][Aa][Mm][Bb][Ll][Ee]")]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Logos)]
+pub enum RootToken {
+    #[token(r"@preamble", ignore(ascii_case))]
     Preamble,
 
-    #[regex(r"@[Ss][Tt][Rr][Ii][Nn][Gg]")]
+    #[token(r"@string", ignore(ascii_case))]
     String,
 
-    #[regex(r"@[Cc][Oo][Mm][Mm][Ee][Nn][Tt]")]
+    #[token(r"@comment", ignore(ascii_case))]
     Comment,
 
-    #[error]
+    #[regex(r"@[a-zA-Z]*")]
     Entry,
+
+    #[regex(r"[^@]+")]
+    #[error]
+    Junk,
 }
 
-impl<'a> From<&'a str> for Type {
-    fn from(input: &'a str) -> Self {
-        Type::lexer(input).next().unwrap_or(Self::Entry)
+impl From<RootToken> for SyntaxKind {
+    fn from(token: RootToken) -> Self {
+        match token {
+            RootToken::Preamble | RootToken::String | RootToken::Comment | RootToken::Entry => TYPE,
+            RootToken::Junk => JUNK,
+        }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Logos)]
-pub enum Token {
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Logos)]
+pub enum BodyToken {
     #[regex(r"\s+")]
     Whitespace,
 
-    #[regex(r#"@[^\s\{\}\(\),#"=\\]*"#, |lex| Type::from(lex.slice()))]
-    Type(Type),
+    #[token("{")]
+    #[token("(")]
+    LDelim,
 
-    #[regex(r#"[^\s\{\}\(\),#"=\\]+"#)]
+    #[token("}")]
+    #[token(")")]
+    RDelim,
+
+    #[token(",")]
+    Comma,
+
+    #[token("=")]
+    Eq,
+
+    #[regex(r"[^\s\(\)\{\}@,=]+")]
+    Name,
+
     #[error]
-    Word,
+    Error,
+}
 
-    #[regex(r"\d+", priority = 2)]
-    Integer,
+impl From<BodyToken> for SyntaxKind {
+    fn from(token: BodyToken) -> Self {
+        match token {
+            BodyToken::Whitespace => WHITESPACE,
+            BodyToken::LDelim => L_DELIM,
+            BodyToken::RDelim => R_DELIM,
+            BodyToken::Comma => COMMA,
+            BodyToken::Eq => EQ,
+            BodyToken::Name => NAME,
+            BodyToken::Error => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Logos)]
+pub enum ValueToken {
+    #[regex(r"\s+")]
+    Whitespace,
+
+    #[token("#")]
+    Pound,
+
+    #[token(",")]
+    Comma,
 
     #[token("{")]
     LCurly,
@@ -47,58 +87,94 @@ pub enum Token {
     #[token("}")]
     RCurly,
 
-    #[token("(")]
-    LParen,
-
-    #[token(")")]
-    RParen,
-
-    #[token(",")]
-    Comma,
-
-    #[token("#")]
-    Pound,
-
     #[token("\"")]
     Quote,
 
-    #[token("=")]
-    Eq,
+    #[regex(r"\d+", priority = 2)]
+    Integer,
 
-    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
-    CommandName,
+    #[regex(r#"[^\s"\{\},]+"#)]
+    #[error]
+    Name,
 }
 
-impl From<Token> for SyntaxKind {
-    fn from(token: Token) -> Self {
+impl From<ValueToken> for SyntaxKind {
+    fn from(token: ValueToken) -> Self {
         match token {
-            Token::Whitespace => WHITESPACE,
-            Token::Type(_) => TYPE,
-            Token::Word => WORD,
-            Token::Integer => INTEGER,
-            Token::LCurly => L_CURLY,
-            Token::RCurly => R_CURLY,
-            Token::LParen => L_PAREN,
-            Token::RParen => R_PAREN,
-            Token::Comma => COMMA,
-            Token::Pound => POUND,
-            Token::Quote => QUOTE,
-            Token::Eq => EQ,
-            Token::CommandName => COMMAND_NAME,
+            ValueToken::Whitespace => WHITESPACE,
+            ValueToken::Pound => POUND,
+            ValueToken::Comma => COMMA,
+            ValueToken::LCurly => L_CURLY,
+            ValueToken::RCurly => R_CURLY,
+            ValueToken::Quote => QUOTE,
+            ValueToken::Integer => INTEGER,
+            ValueToken::Name => NAME,
         }
     }
 }
 
-impl From<Token> for rowan::SyntaxKind {
-    fn from(token: Token) -> Self {
-        SyntaxKind::from(token).into()
-    }
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Logos)]
+pub enum ContentToken {
+    #[regex(r"\s+")]
+    Whitespace,
+
+    #[token(",")]
+    Comma,
+
+    #[token("{")]
+    LCurly,
+
+    #[token("}")]
+    RCurly,
+
+    #[token("\"")]
+    Quote,
+
+    #[regex(r"\d+", priority = 2)]
+    Integer,
+
+    #[token(r#"~"#)]
+    Nbsp,
+
+    #[token(r#"\`"#)]
+    #[token(r#"\'"#)]
+    #[token(r#"\^"#)]
+    #[token(r#"\""#)]
+    #[token(r#"\H"#)]
+    #[token(r#"\~"#)]
+    #[token(r#"\c"#)]
+    #[token(r#"\k"#)]
+    #[token(r#"\="#)]
+    #[token(r#"\b"#)]
+    #[token(r#"\."#)]
+    #[token(r#"\d"#)]
+    #[token(r#"\r"#)]
+    #[token(r#"\u"#)]
+    #[token(r#"\v"#)]
+    #[token(r#"\t"#)]
+    AccentName,
+
+    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
+    CommandName,
+
+    #[regex(r#"[^\s"\{\}\\~,]+"#)]
+    #[error]
+    Word,
 }
 
-pub fn tokenize(input: &str) -> TokenPtr<Token> {
-    Token::lexer(input)
-        .spanned()
-        .map(|(kind, range)| (kind, &input[range]))
-        .collect_vec()
-        .into()
+impl From<ContentToken> for SyntaxKind {
+    fn from(token: ContentToken) -> Self {
+        match token {
+            ContentToken::Whitespace => WHITESPACE,
+            ContentToken::Comma => COMMA,
+            ContentToken::LCurly => L_CURLY,
+            ContentToken::RCurly => R_CURLY,
+            ContentToken::Quote => QUOTE,
+            ContentToken::Integer => INTEGER,
+            ContentToken::Nbsp => NBSP,
+            ContentToken::AccentName => ACCENT_NAME,
+            ContentToken::CommandName => COMMAND_NAME,
+            ContentToken::Word => WORD,
+        }
+    }
 }

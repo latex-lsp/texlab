@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rowan::ast::AstNode;
 
-use crate::syntax::bibtex::{self, HasKey};
+use crate::syntax::bibtex::{self, HasName};
 
 use self::{
     bibutils::*,
@@ -59,18 +59,20 @@ fn convert_to_ris(root: &bibtex::SyntaxNode, key: &str) -> Option<RisReference> 
     for string in root
         .children()
         .filter_map(bibtex::StringDef::cast)
-        .filter(|string| string.key().is_some())
+        .filter(|string| string.name_token().is_some())
     {
         bib_code.push_str(&string.syntax().to_string());
+        bib_code.push('\n');
     }
 
     let entry = root
         .children()
         .filter_map(bibtex::Entry::cast)
-        .find(|entry| entry.key().map_or(false, |name| name.text() == key))
+        .find(|entry| entry.name_token().map_or(false, |name| name.text() == key))
         .filter(|entry| entry.fields().next().is_some())?;
 
     bib_code.push_str(&entry.syntax().to_string());
+    bib_code.push('\n');
 
     bib_code = bib_code.replace("\\hypen", "-");
 
@@ -121,7 +123,7 @@ mod tests {
         let key = root
             .children()
             .find_map(bibtex::Entry::cast)
-            .and_then(|entry| entry.key())
+            .and_then(|entry| entry.name_token())
             .unwrap()
             .to_string();
 

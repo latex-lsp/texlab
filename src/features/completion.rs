@@ -176,7 +176,11 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
         Cursor::Bibtex(token)
             if matches!(
                 token.kind(),
-                bibtex::TYPE | bibtex::KEY | bibtex::WORD | bibtex::COMMAND_NAME
+                bibtex::TYPE
+                    | bibtex::NAME
+                    | bibtex::WORD
+                    | bibtex::COMMAND_NAME
+                    | bibtex::ACCENT_NAME
             ) =>
         {
             token.text().into()

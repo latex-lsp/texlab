@@ -1,35 +1,20 @@
-use derive_more::From;
-use rowan::{ast::AstNode, NodeOrToken, TextRange};
+use rowan::{ast::AstNode, NodeOrToken};
 
 use super::{
-    Language,
+    Lang,
     SyntaxKind::{self, *},
     SyntaxNode, SyntaxToken,
 };
 
-pub fn small_range(node: &dyn AstNode<Language = Language>) -> TextRange {
-    let full_range = node.syntax().text_range();
-    let start = full_range.start();
-    let mut token = node.syntax().last_token();
-    while let Some(current) = token {
-        if !matches!(current.kind(), WHITESPACE) {
-            return TextRange::new(start, current.text_range().end());
+macro_rules! ast_node {
+    (name: $name:ident, kinds: [$($kind:pat),+], traits: [$($trait: ident),*]) => {
+        #[derive(Clone)]
+        pub struct $name {
+            node: SyntaxNode,
         }
 
-        token = current.prev_token();
-    }
-
-    TextRange::new(start, start)
-}
-
-macro_rules! ast_node {
-    ($name:ident, $($kind:pat),+) => {
-        #[derive(Clone)]
-        #[repr(transparent)]
-        pub struct $name(SyntaxNode);
-
         impl AstNode for $name {
-            type Language = Language;
+            type Language = Lang;
 
             fn can_cast(kind: SyntaxKind) -> bool {
                 match kind {
@@ -43,52 +28,62 @@ macro_rules! ast_node {
                 Self: Sized,
             {
                 match node.kind() {
-                    $($kind => Some(Self(node)),)+
+                    $($kind => Some(Self { node}),)+
                     _ => None,
                 }
             }
 
             fn syntax(&self) -> &SyntaxNode {
-                &self.0
+                &self.node
             }
         }
+
+        $(
+            impl $trait for $name { }
+        )*
     };
 }
 
 macro_rules! ast_node_enum {
-    ($name:ident, $first:ident, $($other:ident),*) => {
-        #[derive(Clone, From)]
+    (name: $name:ident, variants: [$($variant:ident),+]) => {
+        #[derive(Clone)]
         pub enum $name {
-            $first($first),
-            $($other($other),)*
+            $($variant($variant),)*
         }
 
         impl AstNode for $name {
-            type Language = Language;
+            type Language = Lang;
 
             fn can_cast(kind: SyntaxKind) -> bool {
-                $first::can_cast(kind) $(|| $other::can_cast(kind))*
+                false $(|| $variant::can_cast(kind))+
             }
 
             fn cast(node: SyntaxNode) -> Option<Self>
             where
                 Self: Sized,
             {
-                $first::cast(node.clone()).map(Self::from) $(.or_else(|| $other::cast(node.clone()).map(Self::from)))*
+                None $(.or_else(|| $variant::cast(node.clone()).map(Self::$variant)))*
             }
 
             fn syntax(&self) -> &SyntaxNode {
                 match self {
-                    Self::$first(node) => node.syntax(),
-                    $(Self::$other(node) => node.syntax(),)*
+                    $(Self::$variant(node) => node.syntax(),)*
                 }
             }
         }
+
+        $(
+            impl From<$variant> for $name {
+                fn from(node: $variant) -> Self {
+                    Self::$variant(node)
+                }
+            }
+        )*
     };
 }
 
-pub trait HasType: AstNode<Language = Language> {
-    fn type_(&self) -> Option<SyntaxToken> {
+pub trait HasType: AstNode<Language = Lang> {
+    fn type_token(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
@@ -96,78 +91,117 @@ pub trait HasType: AstNode<Language = Language> {
     }
 }
 
-pub trait HasDelimiters: AstNode<Language = Language> {
-    fn left_delimiter(&self) -> Option<SyntaxToken> {
+pub trait HasDelims: AstNode<Language = Lang> {
+    fn left_delim_token(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), L_CURLY | L_PAREN))
+            .find(|token| token.kind() == L_DELIM)
     }
 
-    fn right_delimiter(&self) -> Option<SyntaxToken> {
+    fn right_delim_token(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), R_CURLY | R_PAREN))
-    }
-}
-
-pub trait HasKey: AstNode<Language = Language> {
-    fn key(&self) -> Option<SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), KEY))
+            .find(|token| token.kind() == R_DELIM)
     }
 }
 
-pub trait HasEq: AstNode<Language = Language> {
-    fn eq(&self) -> Option<SyntaxToken> {
+pub trait HasName: AstNode<Language = Lang> {
+    fn name_token(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), EQ))
+            .find(|token| token.kind() == NAME)
     }
 }
 
-pub trait HasComma: AstNode<Language = Language> {
-    fn comma(&self) -> Option<SyntaxToken> {
+pub trait HasEq: AstNode<Language = Lang> {
+    fn eq_token(&self) -> Option<SyntaxToken> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
-            .find(|token| matches!(token.kind(), COMMA))
+            .find(|token| token.kind() == NAME)
     }
 }
 
-pub trait HasValue: AstNode<Language = Language> {
+pub trait HasComma: AstNode<Language = Lang> {
+    fn comma_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == COMMA)
+    }
+}
+
+pub trait HasPound: AstNode<Language = Lang> {
+    fn pound_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == POUND)
+    }
+}
+
+pub trait HasInteger: AstNode<Language = Lang> {
+    fn integer_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == INTEGER)
+    }
+}
+
+pub trait HasCommandName: AstNode<Language = Lang> {
+    fn command_name_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == COMMAND_NAME)
+    }
+}
+
+pub trait HasAccentName: AstNode<Language = Lang> {
+    fn accent_name_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == ACCENT_NAME)
+    }
+}
+
+pub trait HasWord: AstNode<Language = Lang> {
+    fn word_token(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(NodeOrToken::into_token)
+            .find(|token| token.kind() == WORD)
+    }
+}
+
+pub trait HasValue: AstNode<Language = Lang> {
     fn value(&self) -> Option<Value> {
         self.syntax().children().find_map(Value::cast)
     }
 }
 
-ast_node!(Root, ROOT);
+ast_node!(name: Root, kinds: [ROOT], traits: []);
 
-ast_node!(Preamble, PREAMBLE);
+impl Root {
+    pub fn strings(&self) -> impl Iterator<Item = StringDef> {
+        self.syntax().children().filter_map(StringDef::cast)
+    }
 
-impl HasType for Preamble {}
+    pub fn entries(&self) -> impl Iterator<Item = Entry> {
+        self.syntax().children().filter_map(Entry::cast)
+    }
+}
 
-impl HasDelimiters for Preamble {}
+ast_node!(name: Preamble, kinds: [PREAMBLE], traits: [HasType, HasDelims, HasValue]);
 
-impl HasValue for Preamble {}
+ast_node!(name: StringDef, kinds: [STRING], traits: [HasType, HasDelims, HasName, HasEq, HasValue]);
 
-ast_node!(StringDef, STRING);
-
-impl HasType for StringDef {}
-
-impl HasDelimiters for StringDef {}
-
-impl HasKey for StringDef {}
-
-impl HasEq for StringDef {}
-
-impl HasValue for StringDef {}
-
-ast_node!(Entry, ENTRY);
+ast_node!(name: Entry, kinds: [ENTRY], traits: [HasType, HasDelims, HasName, HasComma]);
 
 impl Entry {
     pub fn fields(&self) -> impl Iterator<Item = Field> {
@@ -175,58 +209,28 @@ impl Entry {
     }
 }
 
-impl HasType for Entry {}
+ast_node!(name: Field, kinds: [FIELD], traits: [HasName, HasEq, HasValue, HasComma]);
 
-impl HasDelimiters for Entry {}
+ast_node_enum!(name: Value, variants: [Literal,  CurlyGroup, QuoteGroup, Join, Accent, Command]);
 
-impl HasKey for Entry {}
+ast_node!(name: Literal, kinds: [LITERAL], traits: [HasName, HasInteger]);
 
-impl HasComma for Entry {}
+ast_node!(name: CurlyGroup, kinds: [CURLY_GROUP], traits: []);
 
-ast_node!(Comment, COMMENT);
+ast_node!(name: QuoteGroup, kinds: [QUOTE_GROUP], traits: []);
 
-impl HasType for Comment {}
+ast_node!(name: Join, kinds: [JOIN], traits: [HasPound]);
 
-ast_node!(Field, FIELD);
+impl Join {
+    pub fn left_value(&self) -> Option<Value> {
+        self.syntax().children().find_map(Value::cast)
+    }
 
-impl HasKey for Field {}
-
-impl HasEq for Field {}
-
-impl HasComma for Field {}
-
-impl HasValue for Field {}
-
-ast_node_enum!(Value, Concat, CurlyGroup, QuoteGroup, Literal);
-
-ast_node!(Concat, CONCAT);
-
-impl Concat {
-    pub fn values(&self) -> impl Iterator<Item = Value> {
-        self.syntax().children().filter_map(Value::cast)
+    pub fn right_value(&self) -> Option<Value> {
+        self.syntax().children().filter_map(Value::cast).nth(1)
     }
 }
 
-ast_node!(CurlyGroup, CURLY_GROUP);
+ast_node!(name: Accent, kinds: [ACCENT], traits: [HasAccentName, HasWord]);
 
-impl HasDelimiters for CurlyGroup {}
-
-ast_node!(QuoteGroup, QUOTE_GROUP);
-
-impl HasDelimiters for QuoteGroup {
-    fn left_delimiter(&self) -> Option<SyntaxToken> {
-        self.syntax()
-            .first_token()
-            .filter(|token| matches!(token.kind(), QUOTE))
-    }
-
-    fn right_delimiter(&self) -> Option<SyntaxToken> {
-        self.syntax()
-            .children_with_tokens()
-            .filter_map(NodeOrToken::into_token)
-            .skip(1)
-            .find(|token| matches!(token.kind(), QUOTE))
-    }
-}
-
-ast_node!(Literal, LITERAL);
+ast_node!(name: Command, kinds: [COMMAND], traits: [HasCommandName]);

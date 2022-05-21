@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::bibtex::{self, HasKey},
+    syntax::bibtex::{self, HasName},
     LANGUAGE_DATA,
 };
 
@@ -15,7 +15,7 @@ pub fn complete_fields<'a>(
 ) -> Option<()> {
     let token = context.cursor.as_bibtex()?;
 
-    let range = if token.kind() == bibtex::KEY {
+    let range = if token.kind() == bibtex::NAME {
         token.text_range()
     } else {
         TextRange::empty(context.offset)
@@ -23,7 +23,7 @@ pub fn complete_fields<'a>(
 
     let parent = token.parent()?;
     if let Some(entry) = bibtex::Entry::cast(parent.clone()) {
-        if entry.key()?.text_range() == token.text_range() {
+        if entry.name_token()?.text_range() == token.text_range() {
             return None;
         }
     } else {

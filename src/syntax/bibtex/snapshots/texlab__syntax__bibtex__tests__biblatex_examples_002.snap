@@ -4,29 +4,31 @@ assertion_line: 87
 expression: "setup(r#\"@string{jomch   = {J.~Organomet. Chem.}}\n\n@article{aksin,\n    author       = {Aks{\\i}n, {\\\"O}zge and T{\\\"u}rkmen, Hayati and Artok, Levent\n                    and {\\c{C}}etinkaya, Bekir and Ni, Chaoying and\n                    B{\\\"u}y{\\\"u}kg{\\\"u}ng{\\\"o}r, Orhan and {\\\"O}zkal, Erhan},\n    title        = {Effect of immobilization on catalytic characteristics of\n                    saturated {Pd-N}-heterocyclic carbenes in {Mizoroki-Heck}\n                    reactions},\n    journaltitle = jomch,\n    date         = 2006,\n    volume       = 691,\n    number       = 13,\n    pages        = {3027-3036},\n    indextitle   = {Effect of immobilization on catalytic characteristics},\n}\"#)"
 ---
 ROOT@0..679
-  STRING@0..42
+  STRING@0..40
     TYPE@0..7 "@string"
-    L_CURLY@7..8 "{"
-    KEY@8..13 "jomch"
+    L_DELIM@7..8 "{"
+    NAME@8..13 "jomch"
     WHITESPACE@13..16 "   "
     EQ@16..17 "="
     WHITESPACE@17..18 " "
     CURLY_GROUP@18..39
       L_CURLY@18..19 "{"
-      WORD@19..32 "J.~Organomet."
+      WORD@19..21 "J."
+      NBSP@21..22 "~"
+      WORD@22..32 "Organomet."
       WHITESPACE@32..33 " "
       WORD@33..38 "Chem."
       R_CURLY@38..39 "}"
-    R_CURLY@39..40 "}"
-    WHITESPACE@40..42 "\n\n"
+    R_DELIM@39..40 "}"
+  JUNK@40..42 "\n\n"
   ENTRY@42..679
     TYPE@42..50 "@article"
-    L_CURLY@50..51 "{"
-    KEY@51..56 "aksin"
+    L_DELIM@50..51 "{"
+    NAME@51..56 "aksin"
     COMMA@56..57 ","
     WHITESPACE@57..62 "\n    "
-    FIELD@62..289
-      KEY@62..68 "author"
+    FIELD@62..284
+      NAME@62..68 "author"
       WHITESPACE@68..75 "       "
       EQ@75..76 "="
       WHITESPACE@76..77 " "
@@ -35,15 +37,17 @@ ROOT@0..679
         WORD@78..81 "Aks"
         CURLY_GROUP@81..85
           L_CURLY@81..82 "{"
-          COMMAND_NAME@82..84 "\\i"
+          COMMAND@82..84
+            COMMAND_NAME@82..84 "\\i"
           R_CURLY@84..85 "}"
         WORD@85..86 "n"
         COMMA@86..87 ","
         WHITESPACE@87..88 " "
         CURLY_GROUP@88..93
           L_CURLY@88..89 "{"
-          COMMAND_NAME@89..91 "\\\""
-          WORD@91..92 "O"
+          ACCENT@89..92
+            ACCENT_NAME@89..91 "\\\""
+            WORD@91..92 "O"
           R_CURLY@92..93 "}"
         WORD@93..96 "zge"
         WHITESPACE@96..97 " "
@@ -52,8 +56,9 @@ ROOT@0..679
         WORD@101..102 "T"
         CURLY_GROUP@102..107
           L_CURLY@102..103 "{"
-          COMMAND_NAME@103..105 "\\\""
-          WORD@105..106 "u"
+          ACCENT@103..106
+            ACCENT_NAME@103..105 "\\\""
+            WORD@105..106 "u"
           R_CURLY@106..107 "}"
         WORD@107..112 "rkmen"
         COMMA@112..113 ","
@@ -71,8 +76,8 @@ ROOT@0..679
         WHITESPACE@162..163 " "
         CURLY_GROUP@163..170
           L_CURLY@163..164 "{"
-          COMMAND_NAME@164..166 "\\c"
-          CURLY_GROUP@166..169
+          ACCENT@164..169
+            ACCENT_NAME@164..166 "\\c"
             L_CURLY@166..167 "{"
             WORD@167..168 "C"
             R_CURLY@168..169 "}"
@@ -94,26 +99,30 @@ ROOT@0..679
         WORD@227..228 "B"
         CURLY_GROUP@228..233
           L_CURLY@228..229 "{"
-          COMMAND_NAME@229..231 "\\\""
-          WORD@231..232 "u"
+          ACCENT@229..232
+            ACCENT_NAME@229..231 "\\\""
+            WORD@231..232 "u"
           R_CURLY@232..233 "}"
         WORD@233..234 "y"
         CURLY_GROUP@234..239
           L_CURLY@234..235 "{"
-          COMMAND_NAME@235..237 "\\\""
-          WORD@237..238 "u"
+          ACCENT@235..238
+            ACCENT_NAME@235..237 "\\\""
+            WORD@237..238 "u"
           R_CURLY@238..239 "}"
         WORD@239..241 "kg"
         CURLY_GROUP@241..246
           L_CURLY@241..242 "{"
-          COMMAND_NAME@242..244 "\\\""
-          WORD@244..245 "u"
+          ACCENT@242..245
+            ACCENT_NAME@242..244 "\\\""
+            WORD@244..245 "u"
           R_CURLY@245..246 "}"
         WORD@246..248 "ng"
         CURLY_GROUP@248..253
           L_CURLY@248..249 "{"
-          COMMAND_NAME@249..251 "\\\""
-          WORD@251..252 "o"
+          ACCENT@249..252
+            ACCENT_NAME@249..251 "\\\""
+            WORD@251..252 "o"
           R_CURLY@252..253 "}"
         WORD@253..254 "r"
         COMMA@254..255 ","
@@ -124,8 +133,9 @@ ROOT@0..679
         WHITESPACE@265..266 " "
         CURLY_GROUP@266..271
           L_CURLY@266..267 "{"
-          COMMAND_NAME@267..269 "\\\""
-          WORD@269..270 "O"
+          ACCENT@267..270
+            ACCENT_NAME@267..269 "\\\""
+            WORD@269..270 "O"
           R_CURLY@270..271 "}"
         WORD@271..275 "zkal"
         COMMA@275..276 ","
@@ -133,9 +143,9 @@ ROOT@0..679
         WORD@277..282 "Erhan"
         R_CURLY@282..283 "}"
       COMMA@283..284 ","
-      WHITESPACE@284..289 "\n    "
-    FIELD@289..476
-      KEY@289..294 "title"
+    WHITESPACE@284..289 "\n    "
+    FIELD@289..471
+      NAME@289..294 "title"
       WHITESPACE@294..302 "        "
       EQ@302..303 "="
       WHITESPACE@303..304 " "
@@ -167,53 +177,53 @@ ROOT@0..679
         WHITESPACE@420..421 " "
         WORD@421..423 "in"
         WHITESPACE@423..424 " "
-        CURLY_GROUP@424..460
+        CURLY_GROUP@424..439
           L_CURLY@424..425 "{"
           WORD@425..438 "Mizoroki-Heck"
           R_CURLY@438..439 "}"
-          WHITESPACE@439..460 "\n                    "
+        WHITESPACE@439..460 "\n                    "
         WORD@460..469 "reactions"
         R_CURLY@469..470 "}"
       COMMA@470..471 ","
-      WHITESPACE@471..476 "\n    "
-    FIELD@476..502
-      KEY@476..488 "journaltitle"
+    WHITESPACE@471..476 "\n    "
+    FIELD@476..497
+      NAME@476..488 "journaltitle"
       WHITESPACE@488..489 " "
       EQ@489..490 "="
       WHITESPACE@490..491 " "
       LITERAL@491..496
-        WORD@491..496 "jomch"
+        NAME@491..496 "jomch"
       COMMA@496..497 ","
-      WHITESPACE@497..502 "\n    "
-    FIELD@502..527
-      KEY@502..506 "date"
+    WHITESPACE@497..502 "\n    "
+    FIELD@502..522
+      NAME@502..506 "date"
       WHITESPACE@506..515 "         "
       EQ@515..516 "="
       WHITESPACE@516..517 " "
       LITERAL@517..521
         INTEGER@517..521 "2006"
       COMMA@521..522 ","
-      WHITESPACE@522..527 "\n    "
-    FIELD@527..551
-      KEY@527..533 "volume"
+    WHITESPACE@522..527 "\n    "
+    FIELD@527..546
+      NAME@527..533 "volume"
       WHITESPACE@533..540 "       "
       EQ@540..541 "="
       WHITESPACE@541..542 " "
       LITERAL@542..545
         INTEGER@542..545 "691"
       COMMA@545..546 ","
-      WHITESPACE@546..551 "\n    "
-    FIELD@551..574
-      KEY@551..557 "number"
+    WHITESPACE@546..551 "\n    "
+    FIELD@551..569
+      NAME@551..557 "number"
       WHITESPACE@557..564 "       "
       EQ@564..565 "="
       WHITESPACE@565..566 " "
       LITERAL@566..568
         INTEGER@566..568 "13"
       COMMA@568..569 ","
-      WHITESPACE@569..574 "\n    "
-    FIELD@574..606
-      KEY@574..579 "pages"
+    WHITESPACE@569..574 "\n    "
+    FIELD@574..601
+      NAME@574..579 "pages"
       WHITESPACE@579..587 "        "
       EQ@587..588 "="
       WHITESPACE@588..589 " "
@@ -222,9 +232,9 @@ ROOT@0..679
         WORD@590..599 "3027-3036"
         R_CURLY@599..600 "}"
       COMMA@600..601 ","
-      WHITESPACE@601..606 "\n    "
-    FIELD@606..678
-      KEY@606..616 "indextitle"
+    WHITESPACE@601..606 "\n    "
+    FIELD@606..677
+      NAME@606..616 "indextitle"
       WHITESPACE@616..619 "   "
       EQ@619..620 "="
       WHITESPACE@620..621 " "
@@ -243,6 +253,6 @@ ROOT@0..679
         WORD@660..675 "characteristics"
         R_CURLY@675..676 "}"
       COMMA@676..677 ","
-      WHITESPACE@677..678 "\n"
-    R_CURLY@678..679 "}"
+    WHITESPACE@677..678 "\n"
+    R_DELIM@678..679 "}"
 

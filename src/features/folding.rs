@@ -29,18 +29,15 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
         }
         DocumentData::Bibtex(data) => {
             for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
-                if let Some(folding) = bibtex::Preamble::cast(node.clone())
-                    .map(|node| bibtex::small_range(&node))
-                    .or_else(|| {
-                        bibtex::StringDef::cast(node.clone()).map(|node| bibtex::small_range(&node))
-                    })
-                    .or_else(|| {
-                        bibtex::Entry::cast(node.clone()).map(|node| bibtex::small_range(&node))
-                    })
-                    .map(|node| main_document.line_index.line_col_lsp_range(node))
-                    .map(create_range)
-                {
-                    foldings.push(folding);
+                if matches!(
+                    node.kind(),
+                    bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
+                ) {
+                    foldings.push(create_range(
+                        main_document
+                            .line_index
+                            .line_col_lsp_range(node.text_range()),
+                    ));
                 }
             }
         }

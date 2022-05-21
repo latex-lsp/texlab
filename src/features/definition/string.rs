@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::cursor::CursorContext,
-    syntax::bibtex::{self, HasKey},
+    syntax::bibtex::{self, HasName},
     LineIndexExt,
 };
 
@@ -16,7 +16,7 @@ pub fn goto_string_definition(
     let key = context
         .cursor
         .as_bibtex()
-        .filter(|token| token.kind() == bibtex::WORD)?;
+        .filter(|token| token.kind() == bibtex::NAME)?;
 
     bibtex::Value::cast(key.parent()?)?;
 
@@ -28,7 +28,7 @@ pub fn goto_string_definition(
         .children()
         .filter_map(bibtex::StringDef::cast)
     {
-        if let Some(string_name) = string.key().filter(|k| k.text() == key.text()) {
+        if let Some(string_name) = string.name_token().filter(|k| k.text() == key.text()) {
             return Some(vec![LocationLink {
                 origin_selection_range: Some(origin_selection_range),
                 target_uri: main_document.uri.as_ref().clone(),
@@ -37,7 +37,7 @@ pub fn goto_string_definition(
                     .line_col_lsp_range(string_name.text_range()),
                 target_range: main_document
                     .line_index
-                    .line_col_lsp_range(bibtex::small_range(&string)),
+                    .line_col_lsp_range(string.syntax().text_range()),
             }]);
         }
     }
@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn concat() {
+    fn test_concat() {
         let tester = FeatureTester::builder()
             .files(vec![(
                 "main.bib",
