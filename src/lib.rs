@@ -1,5 +1,4 @@
 mod capabilities;
-#[cfg(feature = "citation")]
 pub mod citation;
 mod client;
 pub mod component_db;

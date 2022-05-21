@@ -1,0 +1,6 @@
+---
+source: src/citation/tests.rs
+assertion_line: 284
+expression: "render_entry(r#\"\n@collection{matuz:doody,\n    editor       = {Matuz, Roger},\n    title        = {Contemporary Literary Criticism},\n    year         = 1990,\n    volume       = 61,\n    publisher    = {Gale},\n    location     = {Detroit},\n    pages        = {204-208},\n    langid       = {english},\n    langidopts   = {variant=american},\n    annotation   = {A \\texttt{collection} entry providing the excerpt information\n                    for the \\texttt{doody} entry. Note the format of the\n                    \\texttt{pages} field},\n}\"#)"
+---
+"Contemporary Literary Criticism". Ed. by R. Matuz. Vol. 61. Detroit: Gale, 1990, pp. 204-208.

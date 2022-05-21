@@ -1,4 +1,5 @@
-use lsp_types::{Hover, HoverContents, HoverParams};
+use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
+use rowan::ast::AstNode;
 
 use crate::{citation, features::cursor::CursorContext, syntax::bibtex, LineIndexExt};
 
@@ -17,10 +18,14 @@ pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover
         .values()
         .find_map(|document| {
             document.data.as_bibtex().and_then(|data| {
-                citation::render_citation(
-                    &bibtex::SyntaxNode::new_root(data.green.clone()),
-                    &key_text,
-                )
+                let root = bibtex::SyntaxNode::new_root(data.green.clone());
+                let root = bibtex::Root::cast(root)?;
+                let entry = root.find_entry(&key_text)?;
+
+                citation::render(&entry).map(|value| MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value,
+                })
             })
         })?;
 
@@ -32,9 +37,9 @@ pub fn find_citation_hover(context: &CursorContext<HoverParams>) -> Option<Hover
 
 #[cfg(test)]
 mod tests {
-    use lsp_types::{MarkupContent, MarkupKind, Range};
+    use insta::assert_debug_snapshot;
 
-    use crate::{features::testing::FeatureTester, RangeExt};
+    use crate::features::testing::FeatureTester;
 
     use super::*;
 
@@ -89,14 +94,7 @@ mod tests {
         let context = CursorContext::new(request);
         let actual_hover = find_citation_hover(&context).unwrap();
 
-        let expected_hover = Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: "Bar, Foo. (1337). *Baz Qux*.".into(),
-            }),
-            range: Some(Range::new_simple(1, 6, 1, 9)),
-        };
-        assert_eq!(actual_hover, expected_hover);
+        assert_debug_snapshot!(actual_hover);
     }
 
     #[test]
@@ -118,13 +116,6 @@ mod tests {
         let context = CursorContext::new(request);
         let actual_hover = find_citation_hover(&context).unwrap();
 
-        let expected_hover = Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: "Bar, Foo. (1337). *Baz Qux*.".into(),
-            }),
-            range: Some(Range::new_simple(0, 9, 0, 12)),
-        };
-        assert_eq!(actual_hover, expected_hover);
+        assert_debug_snapshot!(actual_hover);
     }
 }

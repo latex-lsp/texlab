@@ -555,23 +555,33 @@ impl Server {
 
     #[cfg(feature = "completion")]
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
+        use rowan::ast::AstNode;
+
+        use crate::{
+            citation, component_db::COMPONENT_DATABASE, features::CompletionItemData,
+            syntax::bibtex,
+        };
+
         self.spawn(move |server| {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
-                crate::features::CompletionItemData::Package
-                | crate::features::CompletionItemData::Class => {
-                    item.documentation = crate::component_db::COMPONENT_DATABASE
+                CompletionItemData::Package | CompletionItemData::Class => {
+                    item.documentation = COMPONENT_DATABASE
                         .documentation(&item.label)
                         .map(Documentation::MarkupContent);
                 }
-                #[cfg(feature = "citation")]
-                crate::features::CompletionItemData::Citation { uri, key } => {
+                CompletionItemData::Citation { uri, key } => {
                     if let Some(document) = server.workspace.documents_by_uri.get(&uri) {
                         if let Some(data) = document.data.as_bibtex() {
-                            let markup = crate::citation::render_citation(
-                                &crate::syntax::bibtex::SyntaxNode::new_root(data.green.clone()),
-                                &key,
-                            );
-                            item.documentation = markup.map(Documentation::MarkupContent);
+                            let root = bibtex::SyntaxNode::new_root(data.green.clone());
+                            item.documentation = bibtex::Root::cast(root)
+                                .and_then(|root| root.find_entry(&key))
+                                .and_then(|entry| citation::render(&entry))
+                                .map(|value| {
+                                    Documentation::MarkupContent(MarkupContent {
+                                        kind: MarkupKind::Markdown,
+                                        value,
+                                    })
+                                });
                         }
                     }
                 }

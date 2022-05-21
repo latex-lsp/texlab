@@ -195,6 +195,14 @@ impl Root {
     pub fn entries(&self) -> impl Iterator<Item = Entry> {
         self.syntax().children().filter_map(Entry::cast)
     }
+
+    pub fn find_entry(&self, name: &str) -> Option<Entry> {
+        self.entries().find(|entry| {
+            entry
+                .name_token()
+                .map_or(false, |token| token.text() == name)
+        })
+    }
 }
 
 ast_node!(name: Preamble, kinds: [PREAMBLE], traits: [HasType, HasDelims, HasValue]);
