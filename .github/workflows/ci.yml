@@ -12,7 +12,7 @@ env:
   RUSTUP_MAX_RETRIES: 10
 jobs:
   test:
-    name: Test (${{matrix.os}}, ${{matrix.toolchain}})
+    name: Test (${{ matrix.os }}, ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -38,7 +38,7 @@ jobs:
       - name: Test
         run: cargo test --all-features -- --nocapture --quiet
   cross:
-    name: Cross (${{matrix.target}}, ${{matrix.toolchain}})
+    name: Cross (${{ matrix.target }}, ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

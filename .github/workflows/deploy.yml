@@ -4,52 +4,48 @@ on:
     types: [published]
 jobs:
   github:
+    name: Test (${{ matrix.os }}, ${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-18.04
-            transpile_target: null
+            target: null
             archive_file: texlab-x86_64-linux.tar.gz
             archive_cmd: tar -czvf {0} -C target/release texlab
             archive_type: application/gzip
           - os: windows-latest
-            transpile_target: null
+            target: null
             archive_file: texlab-x86_64-windows.zip
             archive_cmd: Compress-Archive target/release/texlab.exe {0}
             archive_type: application/zip
           - os: macos-latest
-            transpile_target: null
+            target: null
             archive_file: texlab-x86_64-macos.tar.gz
             archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/release texlab
             archive_type: application/gzip
           - os: macos-11
-            transpile_target: aarch64-apple-darwin
+            target: aarch64-apple-darwin
             archive_file: texlab-aarch64-macos.tar.gz
-            archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/release texlab
+            archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/aarch64-apple-darwin/release texlab
             archive_type: application/gzip
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        id: rust_toolchain_native
-        if: matrix.transpile_target == null
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
         with:
-          toolchain: stable
-          target: matrix.transpile_target
-      - uses: actions-rs/cargo@v1
-        id: rust_build_native
-        if: matrix.transpile_target == null
-        with:
-          command: build
-          args: --release --locked
-      - uses: actions-rs/cargo@v1
-        if: steps.rust_toolchain_native.conclusion == 'skipped'
-        with:
-          command: build
-          args: --release --locked --target ${{ matrix.transpile_target }}
-      - run: ${{ format(matrix.archive_cmd, matrix.archive_file) }}
-        name: "Compress release binary"
-      - uses: actions/upload-release-asset@v1
+          target: ${{ matrix.target }}
+      - name: Compile
+        run: cargo build --release --locked
+        if: matrix.target == null
+      - name: Compile (Cross)
+        run: cargo build --release --locked --target ${{ matrix.target }}
+        if: matrix.target != null
+      - name: Compress release binary
+        run: ${{ format(matrix.archive_cmd, matrix.archive_file) }}
+      - name: Upload release binary
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./${{ matrix.archive_file }}
@@ -58,6 +54,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ctan:
+    name: CTAN
+    needs: [github]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v3
