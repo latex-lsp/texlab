@@ -11,8 +11,8 @@ env:
   RUSTFLAGS: "-D warnings"
   RUSTUP_MAX_RETRIES: 10
 jobs:
-  rust_test:
-    name: Rust/Test (${{ matrix.os }})
+  server:
+    name: Server (${{ matrix.artifact.name }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -40,12 +40,14 @@ jobs:
         uses: actions/checkout@v3
       - name: Install Rust
         uses: ./.github/actions/install-rust
-      - name: Compile
-        if: ${{ matrix.target != null }}
-        run: cargo test --all-features --no-run --locked --target ${{ matrix.target }}
+        with:
+          target: ${{ matrix.target }}
       - name: Compile
         if: ${{ matrix.target == null }}
         run: cargo test --all-features --no-run --locked
+      - name: Compile (Cross)
+        if: ${{ matrix.target != null }}
+        run: cargo test --all-features --no-run --locked --target ${{ matrix.target }}
       - name: Test
         if: ${{ matrix.target == null }}
         run: cargo test --all-features -- --nocapture --quiet
@@ -56,9 +58,9 @@ jobs:
           path: ${{ matrix.artifact.path }}
           retention-days: 3
 
-  code_test:
-    name: Code/Test (${{ matrix.target }})
-    needs: [rust_test]
+  client_code:
+    name: Client (Code, ${{ matrix.target }})
+    needs: [server]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -76,7 +78,7 @@ jobs:
             target: alpine-x64
           - os: windows-latest
             target: win32-x64
-            artifact: texlab-x86_64-windows.exe
+            artifact: texlab-x86_64-windows
             test: true
           - os: windows-latest
             target: win32-ia32
@@ -103,19 +105,23 @@ jobs:
         if: ${{ matrix.artifact != null }}
         with:
           name: ${{ matrix.artifact }}
-      - name: Move server to directory
-        if: ${{ matrix.artifact != null && matrix.target != 'win32-x64' }}
+      - name: Move server to directory (Windows)
+        if: ${{ matrix.artifact != null && startsWith(matrix.target, 'win32') }}
         run: Move-Item -Path ${{ format('{0}/texlab.exe', steps.download.outputs.download-path) }} -Destination editors/code/server/texlab.exe
-      - name: Move server to directory
-        if: ${{ matrix.artifact != null && matrix.target == 'win32-x64' }}
+      - name: Move server to directory (Unix)
+        if: ${{ matrix.artifact != null && !startsWith(matrix.target, 'win32') }}
         run: mv ${{ format('{0}/texlab', steps.download.outputs.download-path) }} editors/code/server/texlab
-      - name: Test
-        if: ${{ matrix.test }}
+      - name: Test (Linux)
+        run: xvfb-run -a npm test
+        if: ${{ matrix.test && runner.os == 'Linux' }}
+        working-directory: editors/code
+      - name: Test (Windows / macOS)
         run: npm test
+        if: ${{ matrix.test && runner.os != 'Linux' }}
         working-directory: editors/code
 
-  rust_msrv:
-    name: Rust/MSRV
+  msrv:
+    name: MSRV
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout repository
@@ -127,8 +133,8 @@ jobs:
       - name: Verify MSRV
         run: cargo msrv --verify
 
-  rust_coverage:
-    name: Rust/Coverage
+  coverage:
+    name: Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
