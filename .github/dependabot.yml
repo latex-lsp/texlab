@@ -3,10 +3,15 @@ updates:
   - package-ecosystem: cargo
     directory: "/"
     schedule:
-      interval: weekly
+      interval: daily
     open-pull-requests-limit: 10
   - package-ecosystem: github-actions
     directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+  - package-ecosystem: npm
+    directory: "/editors/code"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
