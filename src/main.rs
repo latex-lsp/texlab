@@ -8,6 +8,7 @@ use texlab::Server;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, Parser)]
+#[clap(version)]
 struct Opts {
     /// Increase message verbosity (-vvvv for max verbosity)
     #[clap(short, long, parse(from_occurrences))]
@@ -20,6 +21,10 @@ struct Opts {
     /// Write the logging output to FILE
     #[clap(long, name = "FILE", parse(from_os_str))]
     log_file: Option<PathBuf>,
+
+    /// Print version information and exit
+    #[clap(short = 'V', long)]
+    version: bool,
 }
 
 fn main() -> Result<()> {
