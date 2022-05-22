@@ -94,6 +94,7 @@ impl Driver {
         self.pages(&mut entry);
         self.issn(&mut entry);
         self.doi(&mut entry);
+        self.eprint(&mut entry);
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
@@ -127,6 +128,7 @@ impl Driver {
         self.page_total(&mut entry);
         self.isbn(&mut entry);
         self.doi(&mut entry);
+        self.eprint(&mut entry);
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
@@ -140,6 +142,7 @@ impl Driver {
         self.holder(&mut entry);
         self.date(&mut entry);
         self.doi(&mut entry);
+        self.eprint(&mut entry);
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
@@ -686,6 +689,39 @@ impl Driver {
 
         self.builder
             .push(Inline::Link { url, alt }, Punct::Space, Punct::Dot);
+
+        Some(())
+    }
+
+    fn eprint(&mut self, entry: &mut EntryData) -> Option<()> {
+        let eprint = entry.text.remove(&TextField::Eprint)?;
+        let eprint_type = entry
+            .text
+            .remove(&TextField::EprintType)
+            .map_or_else(|| "eprint".to_string(), |data| data.text);
+
+        if eprint_type.eq_ignore_ascii_case("arxiv") {
+            self.builder.push(
+                Inline::Regular("arXiv".to_string()),
+                Punct::Dot,
+                Punct::Colon,
+            );
+
+            self.builder.push(
+                Inline::Link {
+                    url: format!("https://arxiv.org/abs/{}", eprint.text),
+                    alt: eprint.text,
+                },
+                Punct::Space,
+                Punct::Dot,
+            );
+        } else {
+            self.builder
+                .push(Inline::Regular(eprint_type), Punct::Dot, Punct::Colon);
+
+            self.builder
+                .push(Inline::Regular(eprint.text), Punct::Space, Punct::Dot);
+        }
 
         Some(())
     }

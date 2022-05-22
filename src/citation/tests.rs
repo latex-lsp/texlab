@@ -134,6 +134,33 @@ fn article_kastenholz_2006() {
 }
 
 #[test]
+fn article_blom_2021() {
+    assert_snapshot!(render_entry(
+        r#"
+@article{DBLP:journals/corr/abs-2107-11903,
+    author    = {Michelle L. Blom and
+                    Jurlind Budurushi and
+                    Ronald L. Rivest and
+                    Philip B. Stark and
+                    Peter J. Stuckey and
+                    Vanessa Teague and
+                    Damjan Vukcevic},
+    title     = {Assertion-based Approaches to Auditing Complex Elections, with application
+                    to party-list proportional elections},
+    journal   = {CoRR},
+    volume    = {abs/2107.11903},
+    year      = {2021},
+    url       = {https://arxiv.org/abs/2107.11903},
+    eprinttype = {arXiv},
+    eprint    = {2107.11903},
+    timestamp = {Thu, 29 Jul 2021 16:14:15 +0200},
+    biburl    = {https://dblp.org/rec/journals/corr/abs-2107-11903.bib},
+    bibsource = {dblp computer science bibliography, https://dblp.org}
+}"#
+    ));
+}
+
+#[test]
 fn book_aho_2006() {
     assert_snapshot!(render_entry(
         r#"
