@@ -17,7 +17,6 @@ pub fn render(entry: &bibtex::Entry) -> Option<String> {
         let text = match inline {
             Inline::Regular(text) => text,
             Inline::Italic(text) => format!("*{text}*"),
-            Inline::Quoted(text) => format!("\"{text}\""),
             Inline::Link { url, alt } => format!("[{alt}]({url})"),
         };
         output.push_str(&text);

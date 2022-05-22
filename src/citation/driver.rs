@@ -228,7 +228,7 @@ impl Driver {
             .unwrap_or_default();
 
         self.builder.push(
-            Inline::Quoted(format!("{}{}", title.text, subtitle)),
+            Inline::Italic(format!("{}{}", title.text, subtitle)),
             Punct::Nothing,
             Punct::Dot,
         );
@@ -249,7 +249,7 @@ impl Driver {
             .unwrap_or_default();
 
         self.builder.push(
-            Inline::Quoted(format!("{}{}", title.text, subtitle)),
+            Inline::Italic(format!("{}{}", title.text, subtitle)),
             Punct::Dot,
             Punct::Dot,
         );
@@ -270,7 +270,7 @@ impl Driver {
             .unwrap_or_default();
 
         self.builder.push(
-            Inline::Quoted(format!("{}{}", title.text, subtitle)),
+            Inline::Italic(format!("{}{}", title.text, subtitle)),
             Punct::Dot,
             Punct::Dot,
         );
