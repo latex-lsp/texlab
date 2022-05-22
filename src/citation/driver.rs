@@ -249,7 +249,7 @@ impl Driver {
             .unwrap_or_default();
 
         self.builder.push(
-            Inline::Quoted(format!("In: {}{}", title.text, subtitle)),
+            Inline::Quoted(format!("{}{}", title.text, subtitle)),
             Punct::Dot,
             Punct::Dot,
         );
@@ -270,7 +270,7 @@ impl Driver {
             .unwrap_or_default();
 
         self.builder.push(
-            Inline::Quoted(format!("In: {}{}", title.text, subtitle)),
+            Inline::Quoted(format!("{}{}", title.text, subtitle)),
             Punct::Dot,
             Punct::Dot,
         );
@@ -603,9 +603,6 @@ impl Driver {
             .remove(&TextField::Journal)
             .or_else(|| entry.text.remove(&TextField::JournalTitle))?;
 
-        self.builder
-            .push(Inline::Regular("In".to_string()), Punct::Dot, Punct::Colon);
-
         let subtitle = entry
             .text
             .remove(&TextField::JournalSubtitle)
@@ -613,7 +610,7 @@ impl Driver {
 
         self.builder.push(
             Inline::Italic(format!("{}{}", title.text, subtitle)),
-            Punct::Nothing,
+            Punct::Dot,
             Punct::Space,
         );
 

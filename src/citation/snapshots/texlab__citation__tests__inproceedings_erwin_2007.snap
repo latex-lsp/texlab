@@ -1,6 +1,6 @@
 ---
 source: src/citation/tests.rs
-assertion_line: 240
+assertion_line: 242
 expression: "render_entry(r#\"\n@inproceedings{10.5555/1386993.1386994,\n    author = {Erwin, Alva and Gopalan, Raj P. and Achuthan, N. R.},\n    title = {A Bottom-up Projection Based Algorithm for Mining High Utility Itemsets},\n    year = {2007},\n    isbn = {9781920682651},\n    publisher = {Australian Computer Society, Inc.},\n    address = {AUS},\n    booktitle = {Proceedings of the 2nd International Workshop on Integrating Artificial Intelligence and Data Mining - Volume 84},\n    pages = {3-11},\n    numpages = {9},\n    keywords = {pattern growth, high utility itemset mining},\n    location = {Gold Coast, Australia},\n    series = {AIDM '07}\n}\"#)"
 ---
-A. Erwin, R. Gopalan, N. Achuthan: "A Bottom-up Projection Based Algorithm for Mining High Utility Itemsets". "In: Proceedings of the 2nd International Workshop on Integrating Artificial Intelligence and Data Mining - Volume 84". AIDM '07. Gold Coast, Australia: Australian Computer Society, Inc., 2007, pp. 3-11. ISBN: 9781920682651.
+A. Erwin, R. Gopalan, N. Achuthan: "A Bottom-up Projection Based Algorithm for Mining High Utility Itemsets". "Proceedings of the 2nd International Workshop on Integrating Artificial Intelligence and Data Mining - Volume 84". AIDM '07. Gold Coast, Australia: Australian Computer Society, Inc., 2007, pp. 3-11. ISBN: 9781920682651.
