@@ -58,6 +58,7 @@ jobs:
 
   code_test:
     name: Code/Test (${{ matrix.target }})
+    needs: [rust_test]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
