@@ -1,9 +1,9 @@
 name: CI
 on:
-  pull_request:
   push:
-    branches:
-      - master
+    branches: [master]
+  pull_request:
+    branches: [master]
 env:
   CARGO_INCREMENTAL: 0
   CI: 1
@@ -11,54 +11,123 @@ env:
   RUSTFLAGS: "-D warnings"
   RUSTUP_MAX_RETRIES: 10
 jobs:
-  test:
-    name: Test (${{ matrix.os }}, ${{ matrix.toolchain }})
+  rust_test:
+    name: Rust/Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            toolchain: stable
-          - os: ubuntu-18.04
-            toolchain: 1.58.1
+            artifact:
+              name: texlab-x86_64-linux
+              path: target/debug/texlab
           - os: windows-latest
-            toolchain: stable
+            artifact:
+              name: texlab-x86_64-windows
+              path: target/debug/texlab.exe
           - os: macos-latest
-            toolchain: stable
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
-        with:
-          toolchain: ${{ matrix.toolchain }}
-      - name: Compile
-        run: cargo test --all-features --no-run --locked
-      - name: Test
-        run: cargo test --all-features -- --nocapture --quiet
-  cross:
-    name: Cross (${{ matrix.target }}, ${{ matrix.toolchain }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
+            artifact:
+              name: texlab-x86_64-macos
+              path: target/debug/texlab
           - os: macos-latest
-            toolchain: stable
+            artifact:
+              name: texlab-aarch64-macos
+              path: target/aarch64-apple-darwin/debug/texlab
             target: aarch64-apple-darwin
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install Rust
         uses: ./.github/actions/install-rust
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
       - name: Compile
-        run: cargo build --target ${{ matrix.target }}
-  coverage:
-    name: Coverage
+        if: ${{ matrix.target != null }}
+        run: cargo test --all-features --no-run --locked --target ${{ matrix.target }}
+      - name: Compile
+        if: ${{ matrix.target == null }}
+        run: cargo test --all-features --no-run --locked
+      - name: Test
+        if: ${{ matrix.target == null }}
+        run: cargo test --all-features -- --nocapture --quiet
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact.name }}
+          path: ${{ matrix.artifact.path }}
+          retention-days: 3
+
+  code_test:
+    name: Code/Test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+            artifact: texlab-x86_64-linux
+            test: true
+          - os: ubuntu-latest
+            target: linux-arm64
+          - os: ubuntu-latest
+            target: linux-armhf
+          - os: ubuntu-latest
+            target: alpine-x64
+          - os: windows-latest
+            target: win32-x64
+            artifact: texlab-x86_64-windows.exe
+            test: true
+          - os: windows-latest
+            target: win32-ia32
+          - os: windows-latest
+            target: alpine-arm64
+          - os: macos-latest
+            target: darwin-x64
+            artifact: texlab-x86_64-macos
+            test: true
+          - os: macos-latest
+            target: darwin-arm64
+            artifact: texlab-aarch64-macos
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: npm ci
+        working-directory: editors/code
+      - name: Download server
+        uses: actions/download-artifact@v3
+        id: download
+        if: ${{ matrix.artifact != null }}
+        with:
+          name: ${{ matrix.artifact }}
+      - name: Move server to directory
+        if: ${{ matrix.artifact != null && matrix.target != 'win32-x64' }}
+        run: Move-Item -Path ${{ format('{0}/texlab.exe', steps.download.outputs.download-path) }} -Destination editors/code/server/texlab.exe
+      - name: Move server to directory
+        if: ${{ matrix.artifact != null && matrix.target == 'win32-x64' }}
+        run: mv ${{ format('{0}/texlab', steps.download.outputs.download-path) }} editors/code/server/texlab
+      - name: Test
+        if: ${{ matrix.test }}
+        run: npm test
+        working-directory: editors/code
+
+  rust_msrv:
+    name: Rust/MSRV
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/install-rust
+      - name: Install cargo-msrv
+        run: cargo install cargo-msrv --no-default-features
+      - name: Verify MSRV
+        run: cargo msrv --verify
+
+  rust_coverage:
+    name: Rust/Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -76,15 +145,3 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
-  format:
-    name: Format (Rustfmt)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
-        with:
-          components: rustfmt
-      - name: Check formatting
-        run: cargo fmt --check
