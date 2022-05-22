@@ -574,14 +574,11 @@ impl Driver {
 
     fn pages(&mut self, entry: &mut EntryData) -> Option<()> {
         let pages = entry.number.remove(&NumberField::Pages)?;
-        let text = match pages {
-            NumberFieldData::Scalar(page) => format!("p. {page}"),
-            NumberFieldData::Range(from, to) => format!("pp. {from}-{to}"),
-            NumberFieldData::Other(pages) => format!("pp. {}", pages.replace("--", "-")),
-        };
-
-        self.builder
-            .push(Inline::Regular(text), Punct::Comma, Punct::Space);
+        self.builder.push(
+            Inline::Regular(pages.to_string()),
+            Punct::Comma,
+            Punct::Space,
+        );
 
         Some(())
     }

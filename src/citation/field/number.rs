@@ -36,7 +36,7 @@ impl fmt::Display for NumberFieldData {
         match self {
             Self::Scalar(value) => write!(f, "{}", value),
             Self::Range(start, end) => write!(f, "{}-{}", start, end),
-            Self::Other(value) => write!(f, "{}", value),
+            Self::Other(value) => write!(f, "{}", value.replace("--", "-")),
         }
     }
 }
