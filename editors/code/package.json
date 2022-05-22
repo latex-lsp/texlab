@@ -1,0 +1,284 @@
+{
+  "name": "texlab",
+  "displayName": "TexLab",
+  "description": "LaTeX and BibTeX language support for Visual Studio Code",
+  "version": "3.3.2",
+  "publisher": "efoerster",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/latex-lsp/texlab"
+  },
+  "homepage": "https://github.com/latex-lsp/texlab",
+  "bugs": {
+    "url": "https://github.com/latex-lsp/texlab/issues"
+  },
+  "engines": {
+    "vscode": "^1.67.0"
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write \"src/**/*.{ts,json}\" \"{grammars,languages}/**/*.json\" \"*.{ts,json,yml,md}\" ",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.67.0",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
+    "@vscode/test-electron": "^2.1.3",
+    "eslint": "^8.14.0",
+    "eslint-config-prettier": "^8.3.0",
+    "glob": "^8.0.1",
+    "mocha": "^9.2.2",
+    "prettier": "^2.5.1",
+    "ts-loader": "^9.2.8",
+    "ts-node": "^10.8.0",
+    "typescript": "^4.6.4",
+    "vscode-languageclient": "^8.0.1",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "latex",
+    "tex",
+    "bibtex"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#F5F5F5",
+    "theme": "light"
+  },
+  "preview": true,
+  "badges": [
+    {
+      "url": "https://img.shields.io/github/workflow/status/latex-lsp/texlab/CI.svg?logo=github",
+      "href": "https://github.com/latex-lsp/texlab/actions",
+      "description": "CI"
+    }
+  ],
+  "activationEvents": [
+    "onLanguage:latex",
+    "onLanguage:bibtex"
+  ],
+  "contributes": {
+    "configuration": [
+      {
+        "title": "TeXLab configuration",
+        "properties": {
+          "texlab.rootDirectory": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null,
+            "description": "Path to the root directory."
+          },
+          "texlab.build.executable": {
+            "type": "string",
+            "default": "latexmk",
+            "description": "Path to a LaTeX build tool."
+          },
+          "texlab.build.args": {
+            "type": "array",
+            "default": [
+              "-pdf",
+              "-interaction=nonstopmode",
+              "-synctex=1",
+              "%f"
+            ],
+            "description": "Additional arguments that are passed to the build tool."
+          },
+          "texlab.build.forwardSearchAfter": {
+            "type": "boolean",
+            "default": false,
+            "description": "Execute forward search after building"
+          },
+          "texlab.build.onSave": {
+            "type": "boolean",
+            "default": false,
+            "description": "Build after saving a file"
+          },
+          "texlab.auxDirectory": {
+            "type": "string",
+            "default": ".",
+            "description": "Directory containing the build artifacts."
+          },
+          "texlab.forwardSearch.executable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null,
+            "description": "Path to a PDF previewer that supports SyncTeX."
+          },
+          "texlab.forwardSearch.args": {
+            "type": "array",
+            "default": [],
+            "description": "Additional arguments that are passed to the previewer."
+          },
+          "texlab.chktex.onOpenAndSave": {
+            "type": "boolean",
+            "default": true,
+            "description": "Lint using chktex after opening and saving a file."
+          },
+          "texlab.chktex.onEdit": {
+            "type": "boolean",
+            "default": false,
+            "description": "Lint using chktex after changing a file"
+          },
+          "texlab.server.trace": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable the trace verbosity of the server."
+          },
+          "texlab.server.logFile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null,
+            "description": "Path to the server log file."
+          },
+          "texlab.bibtexFormatter": {
+            "type": "string",
+            "default": "texlab",
+            "description": "BibTeX formatter to use."
+          },
+          "texlab.formatterLineLength": {
+            "type": "integer",
+            "default": 80,
+            "description": "Maximum amount of characters per line (0 = disable)."
+          },
+          "texlab.latexFormatter": {
+            "type": "string",
+            "default": "latexindent",
+            "description": "LaTeX formatter to use."
+          },
+          "texlab.latexindent.local": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "default": null,
+            "description": "Configures the --local flag of latexindent."
+          },
+          "texlab.latexindent.modifyLineBreaks": {
+            "type": "boolean",
+            "default": false,
+            "description": "Configures the --modifylinebreaks flag of latexindent."
+          }
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "[latex]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.suggest.snippetsPreventQuickSuggestions": false
+      },
+      "[bibtex]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.suggest.snippetsPreventQuickSuggestions": false
+      }
+    },
+    "commands": [
+      {
+        "command": "latex.build",
+        "title": "Build file (latexmk)",
+        "description": "Builds the current file.",
+        "category": "LaTeX"
+      },
+      {
+        "command": "latex.forwardSearch",
+        "title": "Forward Search",
+        "description": "Performs a forward search from the current file.",
+        "category": "LaTeX"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "latex.build",
+          "when": "editorLangId =~ /(latex|bibtex)/"
+        },
+        {
+          "command": "latex.forwardSearch",
+          "when": "editorLangId == latex"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "latex.forwardSearch",
+          "when": "editorLangId == latex"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "latex.build",
+        "key": "f5",
+        "mac": "f5",
+        "when": "editorLangId =~ /(latex|bibtex)/"
+      },
+      {
+        "command": "latex.forwardSearch",
+        "key": "ctrl+alt+f",
+        "mac": "ctrl+alt+f",
+        "when": "editorLangId == latex"
+      }
+    ],
+    "languages": [
+      {
+        "id": "latex",
+        "aliases": [
+          "LaTeX",
+          "latex"
+        ],
+        "extensions": [
+          ".tex",
+          ".sty",
+          ".cls"
+        ],
+        "configuration": "./languages/latex.json"
+      },
+      {
+        "id": "bibtex",
+        "aliases": [
+          "BibTeX",
+          "bibtex"
+        ],
+        "extensions": [
+          ".bib"
+        ],
+        "configuration": "./languages/bibtex.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "latex",
+        "scopeName": "source.latex",
+        "path": "./grammars/latex.tmLanguage.json"
+      },
+      {
+        "language": "bibtex",
+        "scopeName": "source.bibtex",
+        "path": "./grammars/bibtex.tmLanguage.json"
+      }
+    ]
+  }
+}

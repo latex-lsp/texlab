@@ -1,0 +1,134 @@
+{
+  "name": "bibtex",
+  "scopeName": "source.bibtex",
+  "fileTypes": [""],
+  "foldingStartMarker": "",
+  "foldingStopMarker": "",
+  "patterns": [
+    {
+      "include": "#preamble"
+    },
+    {
+      "include": "#string"
+    },
+    {
+      "include": "#entry"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "entry": {
+      "patterns": [
+        {
+          "begin": "(@[a-zA-Z]+)\\s*[{\\(]\\s*([a-zA-Z_\\0-9:]+)\\s*,",
+          "end": "[}\\)]",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.type.bibtex"
+            },
+            "2": {
+              "name": "variable.parameter.identifier.bibtex"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#field"
+            }
+          ]
+        }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.bibtex",
+          "match": ".*"
+        }
+      ]
+    },
+    "field": {
+      "patterns": [
+        {
+          "match": "([a-zA-Z\\-_]+)\\s*(=)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.key.bibtex"
+            },
+            "2": {
+              "name": "keyword.assignment.bibtex"
+            }
+          }
+        },
+        {
+          "include": "#content"
+        }
+      ]
+    },
+    "content": {
+      "patterns": [
+        {
+          "begin": "(\")",
+          "end": "(\")",
+          "patterns": [
+            {
+              "include": "#content"
+            }
+          ]
+        },
+        {
+          "begin": "{",
+          "end": "}",
+          "patterns": [
+            {
+              "include": "#content"
+            }
+          ]
+        },
+        {
+          "match": "%"
+        },
+        {
+          "include": "source.latex"
+        }
+      ]
+    },
+    "preamble": {
+      "patterns": [
+        {
+          "begin": "(@[pP][rR][eE][aA][mM][bB][lL][eE])\\s*{",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.type.bibtex"
+            }
+          },
+          "end": "}",
+          "patterns": [
+            {
+              "include": "#content"
+            }
+          ]
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "begin": "(@[sS][tT][rR][iI][nN][gG])\\s*{",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.type.bibtex"
+            }
+          },
+          "end": "}",
+          "patterns": [
+            {
+              "include": "#field"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

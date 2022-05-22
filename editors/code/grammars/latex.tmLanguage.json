@@ -1,0 +1,156 @@
+{
+  "name": "latex",
+  "scopeName": "source.latex",
+  "fileTypes": [""],
+  "foldingStartMarker": "",
+  "foldingStopMarker": "",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#special"
+    },
+    {
+      "include": "#parameter"
+    },
+    {
+      "include": "#command"
+    },
+    {
+      "include": "#math"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.latex",
+          "match": "%.*$"
+        }
+      ]
+    },
+    "special": {
+      "patterns": [
+        {
+          "name": "keyword.special.latex",
+          "match": "[&~]"
+        }
+      ]
+    },
+    "parameter": {
+      "patterns": [
+        {
+          "name": "entity.name.type.parameter.latex",
+          "match": "#[0-9]"
+        }
+      ]
+    },
+    "command": {
+      "patterns": [
+        {
+          "begin": "(\\\\begin)\\{((?:align|alignat|aligned|alignedat|array|Bmatrix|bmatrix|cases|CD|eqnarray|equation|gather|gathered|matrix|multline|pmatrix|smallmatrix|split|subarray|Vmatrix|vmatrix)\\*?)\\}",
+          "end": "(\\\\end)\\{((?:align|alignat|aligned|alignedat|array|Bmatrix|bmatrix|cases|CD|eqnarray|equation|gather|gathered|matrix|multline|pmatrix|smallmatrix|split|subarray|Vmatrix|vmatrix)\\*?)\\}",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.command.latex"
+            },
+            "2": {
+              "name": "variable.parameter.identifier.latex"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "keyword.command.latex"
+            },
+            "2": {
+              "name": "variable.parameter.identifier.latex"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "name": "support.constant.math.latex",
+              "match": "[^\\$%\\{\\}\\[\\]\\\\\\s]+"
+            }
+          ]
+        },
+        {
+          "begin": "(\\\\(?:documentclass|usepackage|begin|end))\\[?",
+          "end": "\\]?(?:\\{([^\\$%\\{\\}\\[\\]\\\\\\s]*)\\})",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.command.latex"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "variable.parameter.identifier.latex"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "name": "entity.name.type.options.latex",
+              "match": "[^\\$%\\{\\}\\[\\]\\\\\\s]+"
+            }
+          ]
+        },
+        {
+          "begin": "(\\\\(?:chapter|(?:sub){0,2}section|(?:sub)?paragraph)\\*?)\\{",
+          "end": "\\}",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.command.latex"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "name": "entity.name.type.section.latex",
+              "match": "[^\\$%\\{\\}\\[\\]\\\\\\s]+"
+            }
+          ]
+        },
+        {
+          "name": "constant.character.escape.latex",
+          "match": "\\\\[#\\$%&_{}~\\\\, \"`'\\^=\\.]"
+        },
+        {
+          "name": "entity.name.function.command.latex",
+          "match": "\\\\[a-zA-Z@]+(\\*)?"
+        }
+      ]
+    },
+    "math": {
+      "patterns": [
+        {
+          "name": "support.constant.math.latex",
+          "begin": "(\\$\\$|\\\\\\[)",
+          "end": "(\\$\\$|\\\\\\])",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        },
+        {
+          "name": "support.constant.math.latex",
+          "begin": "(\\$|\\\\\\()",
+          "end": "(\\$|\\\\\\))",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
