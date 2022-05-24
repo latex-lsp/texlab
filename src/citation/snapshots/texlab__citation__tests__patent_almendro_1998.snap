@@ -1,6 +1,6 @@
 ---
 source: src/citation/tests.rs
-assertion_line: 307
+assertion_line: 334
 expression: "render_entry(r#\"\n@patent{almendro,\n    author       = {Almendro, Jos{\\'e} L. and Mart{\\'i}n, Jacinto and S{\\'a}nchez,\n                    Alberto and Nozal, Fernando},\n    title        = {Elektromagnetisches Signalhorn},\n    number       = {EU-29702195U},\n    date         = 1998,\n    location     = {countryfr and countryuk and countryde},\n    langid       = {german},\n    annotation   = {This is a \\texttt{patent} entry with a \\texttt{location}\n                    field. The number is given in the \\texttt{number} field. Note\n                    the format of the \\texttt{location} field in the database\n                    file. Compare \\texttt{laufenberg}, \\texttt{sorace}, and\n                    \\texttt{kowalik}},\n}\"#)"
 ---
-J. Almendro, J. Martín, A. Sánchez, F. Nozal: *Elektromagnetisches Signalhorn*. EU-29702195U (France and United Kingdom and Germany). 1998.
+J. Almendro, J. Martín, A. Sánchez, F. Nozal: "Elektromagnetisches Signalhorn". EU-29702195U (France and United Kingdom and Germany). 1998.

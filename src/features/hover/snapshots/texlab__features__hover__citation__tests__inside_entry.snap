@@ -7,7 +7,7 @@ Hover {
     contents: Markup(
         MarkupContent {
             kind: Markdown,
-            value: "F. Bar: *Baz Qux*. (1337).",
+            value: "F. Bar: \"Baz Qux\". (1337).",
         },
     ),
     range: Some(

@@ -59,6 +59,7 @@ impl Add for Punct {
 pub enum Inline {
     Regular(String),
     Italic(String),
+    Quoted(String),
     Link { url: String, alt: String },
 }
 
