@@ -4,7 +4,7 @@ use anyhow::Result;
 use crossbeam_channel::Sender;
 use lsp_types::Url;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment};
 
@@ -15,19 +15,17 @@ pub enum WorkspaceEvent {
 
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
-    pub documents_by_uri: im::HashMap<Arc<Url>, Document>,
-    pub viewport: im::HashSet<Arc<Url>>,
-    pub listeners: im::Vector<Sender<WorkspaceEvent>>,
+    pub documents_by_uri: FxHashMap<Arc<Url>, Document>,
+    pub viewport: FxHashSet<Arc<Url>>,
+    pub listeners: Vec<Sender<WorkspaceEvent>>,
     pub environment: Environment,
 }
 
 impl Workspace {
     pub fn new(environment: Environment) -> Self {
         Self {
-            documents_by_uri: im::HashMap::new(),
-            viewport: im::HashSet::new(),
-            listeners: im::Vector::new(),
             environment,
+            ..Self::default()
         }
     }
 
@@ -125,7 +123,7 @@ impl Workspace {
                 }
 
                 let mut slice = self.clone();
-                slice.documents_by_uri = im::HashMap::new();
+                slice.documents_by_uri = FxHashMap::default();
                 let graph = UnGraphMap::from_edges(edges);
                 let mut dfs = Dfs::new(&graph, start);
                 while let Some(i) = dfs.next(&graph) {

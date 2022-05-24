@@ -45,7 +45,6 @@ fern = "0.6"
 fnv = { version = "1.0", optional = true }
 fuzzy-matcher = { version = "0.3.7", optional = true }
 html2md = { version = "0.2.13", optional = true }
-im = "15.1.0"
 itertools = "0.10.1"
 log = "0.4.17"
 logos = "0.12.0"

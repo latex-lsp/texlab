@@ -256,7 +256,7 @@ impl Server {
             }
         });
 
-        self.workspace.listeners.push_back(event_sender);
+        self.workspace.listeners.push(event_sender);
     }
 
     fn register_incoming_request(&self, id: RequestId) {
