@@ -5,7 +5,7 @@ use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    syntax::bibtex::{self, HasDelimiters, HasEq, HasKey, HasType, HasValue},
+    syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue},
     Document, LineIndexExt, Workspace,
 };
 
@@ -31,13 +31,13 @@ fn analyze_entry(
     node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let entry = bibtex::Entry::cast(node)?;
-    if entry.left_delimiter().is_none() {
+    if entry.left_delim_token().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(entry.type_()?.text_range()),
+                    .line_col_lsp_range(entry.type_token()?.text_range()),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(4)),
                 code_description: None,
@@ -51,13 +51,13 @@ fn analyze_entry(
         return Some(());
     }
 
-    if entry.key().is_none() {
+    if entry.name_token().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(entry.left_delimiter()?.text_range()),
+                    .line_col_lsp_range(entry.left_delim_token()?.text_range()),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(5)),
                 code_description: None,
@@ -71,13 +71,13 @@ fn analyze_entry(
         return Some(());
     }
 
-    if entry.right_delimiter().is_none() {
+    if entry.right_delim_token().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(entry.right_delimiter()?.text_range()),
+                    .line_col_lsp_range(TextRange::empty(entry.syntax().text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(6)),
                 code_description: None,
@@ -100,13 +100,13 @@ fn analyze_field(
     node: bibtex::SyntaxNode,
 ) -> Option<()> {
     let field = bibtex::Field::cast(node)?;
-    if field.eq().is_none() {
+    if field.eq_token().is_none() {
         diagnostics_by_uri.insert(
             Arc::clone(&document.uri),
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(TextRange::empty(field.key()?.text_range().end())),
+                    .line_col_lsp_range(TextRange::empty(field.name_token()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(7)),
                 code_description: None,
@@ -126,7 +126,7 @@ fn analyze_field(
             Diagnostic {
                 range: document
                     .line_index
-                    .line_col_lsp_range(TextRange::empty(field.eq()?.text_range().end())),
+                    .line_col_lsp_range(TextRange::empty(field.eq_token()?.text_range().end())),
                 severity: Some(DiagnosticSeverity::ERROR),
                 code: Some(NumberOrString::Number(8)),
                 code_description: None,

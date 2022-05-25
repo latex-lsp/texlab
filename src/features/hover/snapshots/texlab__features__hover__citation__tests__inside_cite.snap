@@ -1,0 +1,25 @@
+---
+source: src/features/hover/citation.rs
+assertion_line: 97
+expression: actual_hover
+---
+Hover {
+    contents: Markup(
+        MarkupContent {
+            kind: Markdown,
+            value: "F. Bar: \"Baz Qux\". (1337).",
+        },
+    ),
+    range: Some(
+        Range {
+            start: Position {
+                line: 1,
+                character: 6,
+            },
+            end: Position {
+                line: 1,
+                character: 9,
+            },
+        },
+    ),
+}

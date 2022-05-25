@@ -1,0 +1,6 @@
+---
+source: src/citation/tests.rs
+assertion_line: 110
+expression: "render_entry(r#\"\n@string{jchph   = {J.~Chem. Phys.}}\n\n@article{kastenholz,\n    author       = {Kastenholz, M. A. and H{\\\"u}nenberger, Philippe H.},\n    title        = {Computation of methodology\\hyphen independent ionic solvation\n                    free energies from molecular simulations},\n    journaltitle = jchph,\n    date         = 2006,\n    subtitle     = {{I}. {The} electrostatic potential in molecular liquids},\n    volume       = 124,\n    eid          = 124106,\n    doi          = {10.1063/1.2172593},\n    langid       = {english},\n    langidopts   = {variant=american},\n    indextitle   = {Computation of ionic solvation free energies},\n    annotation   = {An \\texttt{article} entry with an \\texttt{eid} and a\n                    \\texttt{doi} field. Note that the \\textsc{doi} is transformed\n                    into a clickable link if \\texttt{hyperref} support has been\n                    enabled},\n}\n        \"#)"
+---
+M. Kastenholz, P. Hünenberger: "Computation of methodology- independent ionic solvation free energies from molecular simulations. I. The electrostatic potential in molecular liquids". *J. Chem. Phys.* 124, 124106 (2006): DOI: [10.1063/1.2172593](https://doi.org/10.1063/1.2172593).

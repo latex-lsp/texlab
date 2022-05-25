@@ -3,7 +3,7 @@ use rowan::ast::AstNode;
 
 use crate::{
     features::FeatureRequest,
-    syntax::bibtex::{self, HasKey, HasType},
+    syntax::bibtex::{self, HasName, HasType},
     BibtexEntryTypeCategory, LineIndexExt, LANGUAGE_DATA,
 };
 
@@ -18,7 +18,7 @@ pub fn find_bibtex_symbols(
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
         if let Some(string) = bibtex::StringDef::cast(node.clone()) {
-            if let Some(name) = string.key() {
+            if let Some(name) = string.name_token() {
                 buf.push(InternalSymbol {
                     name: name.text().into(),
                     label: None,
@@ -26,7 +26,7 @@ pub fn find_bibtex_symbols(
                     deprecated: false,
                     full_range: main_document
                         .line_index
-                        .line_col_lsp_range(bibtex::small_range(&string)),
+                        .line_col_lsp_range(string.syntax().text_range()),
                     selection_range: main_document
                         .line_index
                         .line_col_lsp_range(name.text_range()),
@@ -34,11 +34,11 @@ pub fn find_bibtex_symbols(
                 })
             }
         } else if let Some(entry) = bibtex::Entry::cast(node) {
-            if let Some(ty) = entry.type_() {
-                if let Some(key) = entry.key() {
+            if let Some(ty) = entry.type_token() {
+                if let Some(key) = entry.name_token() {
                     let mut children = Vec::new();
                     for field in entry.fields() {
-                        if let Some(name) = field.key() {
+                        if let Some(name) = field.name_token() {
                             let symbol = InternalSymbol {
                                 name: name.text().to_string(),
                                 label: None,
@@ -46,7 +46,7 @@ pub fn find_bibtex_symbols(
                                 deprecated: false,
                                 full_range: main_document
                                     .line_index
-                                    .line_col_lsp_range(bibtex::small_range(&field)),
+                                    .line_col_lsp_range(field.syntax().text_range()),
                                 selection_range: main_document
                                     .line_index
                                     .line_col_lsp_range(name.text_range()),
@@ -68,7 +68,7 @@ pub fn find_bibtex_symbols(
                         deprecated: false,
                         full_range: main_document
                             .line_index
-                            .line_col_lsp_range(bibtex::small_range(&entry)),
+                            .line_col_lsp_range(entry.syntax().text_range()),
                         selection_range: main_document
                             .line_index
                             .line_col_lsp_range(key.text_range()),

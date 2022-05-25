@@ -6,34 +6,37 @@ mod tests;
 
 pub use self::{ast::*, parser::parse, SyntaxKind::*};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 #[allow(non_camel_case_types)]
 #[repr(u16)]
 pub enum SyntaxKind {
     WHITESPACE,
-    TYPE,
-    WORD,
-    KEY,
-    INTEGER,
+    JUNK,
+    L_DELIM,
+    R_DELIM,
     L_CURLY,
     R_CURLY,
-    L_PAREN,
-    R_PAREN,
     COMMA,
     POUND,
     QUOTE,
     EQ,
+    TYPE,
+    WORD,
+    NAME,
+    INTEGER,
+    NBSP,
+    ACCENT_NAME,
     COMMAND_NAME,
 
-    ERROR,
-    JUNK,
     PREAMBLE,
     STRING,
-    COMMENT,
     ENTRY,
     FIELD,
+    VALUE,
     LITERAL,
-    CONCAT,
+    JOIN,
+    ACCENT,
+    COMMAND,
     CURLY_GROUP,
     QUOTE_GROUP,
     ROOT,
@@ -45,10 +48,10 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub enum Language {}
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum Lang {}
 
-impl rowan::Language for Language {
+impl rowan::Language for Lang {
     type Kind = SyntaxKind;
 
     fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
@@ -61,8 +64,8 @@ impl rowan::Language for Language {
     }
 }
 
-pub type SyntaxNode = rowan::SyntaxNode<Language>;
+pub type SyntaxNode = rowan::SyntaxNode<Lang>;
 
-pub type SyntaxToken = rowan::SyntaxToken<Language>;
+pub type SyntaxToken = rowan::SyntaxToken<Lang>;
 
-pub type SyntaxElement = rowan::SyntaxElement<Language>;
+pub type SyntaxElement = rowan::SyntaxElement<Lang>;

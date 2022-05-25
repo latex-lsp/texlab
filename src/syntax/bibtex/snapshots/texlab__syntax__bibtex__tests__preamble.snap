@@ -6,12 +6,12 @@ expression: "setup(r#\"@preamble{\"Hello World!\"}\"#)"
 ROOT@0..25
   PREAMBLE@0..25
     TYPE@0..9 "@preamble"
-    L_CURLY@9..10 "{"
+    L_DELIM@9..10 "{"
     QUOTE_GROUP@10..24
       QUOTE@10..11 "\""
       WORD@11..16 "Hello"
       WHITESPACE@16..17 " "
       WORD@17..23 "World!"
       QUOTE@23..24 "\""
-    R_CURLY@24..25 "}"
+    R_DELIM@24..25 "}"
 

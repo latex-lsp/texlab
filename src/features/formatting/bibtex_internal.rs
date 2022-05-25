@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
     features::FeatureRequest,
-    syntax::bibtex::{self, HasKey, HasType, HasValue},
+    syntax::bibtex::{self, HasName, HasType, HasValue},
     LineIndex, LineIndexExt,
 };
 
@@ -37,16 +37,16 @@ pub fn format_bibtex_internal(
     let data = document.data.as_bibtex()?;
     let mut edits = Vec::new();
 
-    for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
-        let range = if let Some(entry) = bibtex::Entry::cast(node.clone()) {
-            bibtex::small_range(&entry)
-        } else if let Some(string) = bibtex::StringDef::cast(node.clone()) {
-            bibtex::small_range(&string)
-        } else if let Some(preamble) = bibtex::Preamble::cast(node.clone()) {
-            bibtex::small_range(&preamble)
-        } else {
-            continue;
-        };
+    for node in bibtex::SyntaxNode::new_root(data.green.clone())
+        .children()
+        .filter(|node| {
+            matches!(
+                node.kind(),
+                bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
+            )
+        })
+    {
+        let range = node.text_range();
 
         let mut formatter = Formatter::new(
             indent.clone(),
@@ -111,7 +111,7 @@ impl<'a> Formatter<'a> {
         match parent.kind() {
             bibtex::PREAMBLE => {
                 let preamble = bibtex::Preamble::cast(parent).unwrap();
-                self.visit_token_lowercase(&preamble.type_().unwrap());
+                self.visit_token_lowercase(&preamble.type_token().unwrap());
                 self.output.push('{');
                 if preamble.syntax().children().next().is_some() {
                     self.align.push(self.base_align());
@@ -123,9 +123,9 @@ impl<'a> Formatter<'a> {
             }
             bibtex::STRING => {
                 let string = bibtex::StringDef::cast(parent).unwrap();
-                self.visit_token_lowercase(&string.type_().unwrap());
+                self.visit_token_lowercase(&string.type_token().unwrap());
                 self.output.push('{');
-                if let Some(name) = string.key() {
+                if let Some(name) = string.name_token() {
                     self.output.push_str(name.text());
                     self.output.push_str(" = ");
                     if let Some(value) = string.value() {
@@ -137,9 +137,9 @@ impl<'a> Formatter<'a> {
             }
             bibtex::ENTRY => {
                 let entry = bibtex::Entry::cast(parent).unwrap();
-                self.visit_token_lowercase(&entry.type_().unwrap());
+                self.visit_token_lowercase(&entry.type_token().unwrap());
                 self.output.push('{');
-                if let Some(key) = entry.key() {
+                if let Some(key) = entry.name_token() {
                     self.output.push_str(&key.to_string());
                     self.output.push(',');
                     self.output.push('\n');
@@ -152,7 +152,7 @@ impl<'a> Formatter<'a> {
             bibtex::FIELD => {
                 let field = bibtex::Field::cast(parent).unwrap();
                 self.output.push_str(&self.indent);
-                let name = field.key().unwrap();
+                let name = field.name_token().unwrap();
                 self.output.push_str(name.text());
                 self.output.push_str(" = ");
                 if let Some(value) = field.value() {
@@ -197,7 +197,7 @@ impl<'a> Formatter<'a> {
                     length += current_length;
                 }
             }
-            bibtex::ROOT | bibtex::JUNK | bibtex::COMMENT => {
+            bibtex::ROOT | bibtex::JUNK => {
                 for element in parent.children_with_tokens() {
                     match element {
                         NodeOrToken::Token(token) => {

@@ -4,14 +4,14 @@ assertion_line: 47
 expression: "setup(r#\"@incollection{westfahl:space,\n    author       = {Westfahl, Gary},\n    title        = {The True Frontier},\n    subtitle     = {Confronting and Avoiding the Realities of Space in {American}\n                    Science Fiction Films},\n    pages        = {55-65},\n    crossref     = {westfahl:frontier},\n    langid       = {english},\n    langidopts   = {variant=american},\n    indextitle   = {True Frontier, The},\n    annotation   = {A cross-referenced article from a \\texttt{collection}. This is\n                    an \\texttt{incollection} entry with a \\texttt{crossref}\n                    field. Note the \\texttt{subtitle} and \\texttt{indextitle}\n                    fields},\n}\n\n% booktitle and booksubtitle are only needed for BibTeX's less sophisticated\n% inheritance set-up to make sure westfahl:space shows correctly.\n% With Biber they are not needed.\n@collection{westfahl:frontier,\n    editor       = {Westfahl, Gary},\n    title        = {Space and Beyond},\n    date         = 2000,\n    subtitle     = {The Frontier Theme in Science Fiction},\n    publisher    = {Greenwood},\n    location     = {Westport, Conn. and London},\n    langid       = {english},\n    langidopts   = {variant=american},\n    booktitle    = {Space and Beyond},\n    booksubtitle = {The Frontier Theme in Science Fiction},\n    annotation   = {This is a \\texttt{collection} entry. Note the format of the\n                    \\texttt{location} field as well as the \\texttt{subtitle}\n                    field},\n}\"#)"
 ---
 ROOT@0..1484
-  ENTRY@0..680
+  ENTRY@0..678
     TYPE@0..13 "@incollection"
-    L_CURLY@13..14 "{"
-    KEY@14..28 "westfahl:space"
+    L_DELIM@13..14 "{"
+    NAME@14..28 "westfahl:space"
     COMMA@28..29 ","
     WHITESPACE@29..34 "\n    "
-    FIELD@34..71
-      KEY@34..40 "author"
+    FIELD@34..66
+      NAME@34..40 "author"
       WHITESPACE@40..47 "       "
       EQ@47..48 "="
       WHITESPACE@48..49 " "
@@ -23,9 +23,9 @@ ROOT@0..1484
         WORD@60..64 "Gary"
         R_CURLY@64..65 "}"
       COMMA@65..66 ","
-      WHITESPACE@66..71 "\n    "
-    FIELD@71..111
-      KEY@71..76 "title"
+    WHITESPACE@66..71 "\n    "
+    FIELD@71..106
+      NAME@71..76 "title"
       WHITESPACE@76..84 "        "
       EQ@84..85 "="
       WHITESPACE@85..86 " "
@@ -38,9 +38,9 @@ ROOT@0..1484
         WORD@96..104 "Frontier"
         R_CURLY@104..105 "}"
       COMMA@105..106 ","
-      WHITESPACE@106..111 "\n    "
-    FIELD@111..237
-      KEY@111..119 "subtitle"
+    WHITESPACE@106..111 "\n    "
+    FIELD@111..232
+      NAME@111..119 "subtitle"
       WHITESPACE@119..124 "     "
       EQ@124..125 "="
       WHITESPACE@125..126 " "
@@ -62,11 +62,11 @@ ROOT@0..1484
         WHITESPACE@174..175 " "
         WORD@175..177 "in"
         WHITESPACE@177..178 " "
-        CURLY_GROUP@178..209
+        CURLY_GROUP@178..188
           L_CURLY@178..179 "{"
           WORD@179..187 "American"
           R_CURLY@187..188 "}"
-          WHITESPACE@188..209 "\n                    "
+        WHITESPACE@188..209 "\n                    "
         WORD@209..216 "Science"
         WHITESPACE@216..217 " "
         WORD@217..224 "Fiction"
@@ -74,9 +74,9 @@ ROOT@0..1484
         WORD@225..230 "Films"
         R_CURLY@230..231 "}"
       COMMA@231..232 ","
-      WHITESPACE@232..237 "\n    "
-    FIELD@237..265
-      KEY@237..242 "pages"
+    WHITESPACE@232..237 "\n    "
+    FIELD@237..260
+      NAME@237..242 "pages"
       WHITESPACE@242..250 "        "
       EQ@250..251 "="
       WHITESPACE@251..252 " "
@@ -85,9 +85,9 @@ ROOT@0..1484
         WORD@253..258 "55-65"
         R_CURLY@258..259 "}"
       COMMA@259..260 ","
-      WHITESPACE@260..265 "\n    "
-    FIELD@265..305
-      KEY@265..273 "crossref"
+    WHITESPACE@260..265 "\n    "
+    FIELD@265..300
+      NAME@265..273 "crossref"
       WHITESPACE@273..278 "     "
       EQ@278..279 "="
       WHITESPACE@279..280 " "
@@ -96,9 +96,9 @@ ROOT@0..1484
         WORD@281..298 "westfahl:frontier"
         R_CURLY@298..299 "}"
       COMMA@299..300 ","
-      WHITESPACE@300..305 "\n    "
-    FIELD@305..335
-      KEY@305..311 "langid"
+    WHITESPACE@300..305 "\n    "
+    FIELD@305..330
+      NAME@305..311 "langid"
       WHITESPACE@311..318 "       "
       EQ@318..319 "="
       WHITESPACE@319..320 " "
@@ -107,22 +107,20 @@ ROOT@0..1484
         WORD@321..328 "english"
         R_CURLY@328..329 "}"
       COMMA@329..330 ","
-      WHITESPACE@330..335 "\n    "
-    FIELD@335..374
-      KEY@335..345 "langidopts"
+    WHITESPACE@330..335 "\n    "
+    FIELD@335..369
+      NAME@335..345 "langidopts"
       WHITESPACE@345..348 "   "
       EQ@348..349 "="
       WHITESPACE@349..350 " "
       CURLY_GROUP@350..368
         L_CURLY@350..351 "{"
-        WORD@351..358 "variant"
-        EQ@358..359 "="
-        WORD@359..367 "american"
+        WORD@351..367 "variant=american"
         R_CURLY@367..368 "}"
       COMMA@368..369 ","
-      WHITESPACE@369..374 "\n    "
-    FIELD@374..415
-      KEY@374..384 "indextitle"
+    WHITESPACE@369..374 "\n    "
+    FIELD@374..410
+      NAME@374..384 "indextitle"
       WHITESPACE@384..387 "   "
       EQ@387..388 "="
       WHITESPACE@388..389 " "
@@ -136,9 +134,9 @@ ROOT@0..1484
         WORD@405..408 "The"
         R_CURLY@408..409 "}"
       COMMA@409..410 ","
-      WHITESPACE@410..415 "\n    "
-    FIELD@415..677
-      KEY@415..425 "annotation"
+    WHITESPACE@410..415 "\n    "
+    FIELD@415..676
+      NAME@415..425 "annotation"
       WHITESPACE@425..428 "   "
       EQ@428..429 "="
       WHITESPACE@429..430 " "
@@ -154,7 +152,8 @@ ROOT@0..1484
         WHITESPACE@462..463 " "
         WORD@463..464 "a"
         WHITESPACE@464..465 " "
-        COMMAND_NAME@465..472 "\\texttt"
+        COMMAND@465..472
+          COMMAND_NAME@465..472 "\\texttt"
         CURLY_GROUP@472..484
           L_CURLY@472..473 "{"
           WORD@473..483 "collection"
@@ -167,113 +166,62 @@ ROOT@0..1484
         WHITESPACE@493..514 "\n                    "
         WORD@514..516 "an"
         WHITESPACE@516..517 " "
-        COMMAND_NAME@517..524 "\\texttt"
-        CURLY_GROUP@524..539
+        COMMAND@517..524
+          COMMAND_NAME@517..524 "\\texttt"
+        CURLY_GROUP@524..538
           L_CURLY@524..525 "{"
           WORD@525..537 "incollection"
           R_CURLY@537..538 "}"
-          WHITESPACE@538..539 " "
+        WHITESPACE@538..539 " "
         WORD@539..544 "entry"
         WHITESPACE@544..545 " "
         WORD@545..549 "with"
         WHITESPACE@549..550 " "
         WORD@550..551 "a"
         WHITESPACE@551..552 " "
-        COMMAND_NAME@552..559 "\\texttt"
-        CURLY_GROUP@559..590
+        COMMAND@552..559
+          COMMAND_NAME@552..559 "\\texttt"
+        CURLY_GROUP@559..569
           L_CURLY@559..560 "{"
           WORD@560..568 "crossref"
           R_CURLY@568..569 "}"
-          WHITESPACE@569..590 "\n                    "
+        WHITESPACE@569..590 "\n                    "
         WORD@590..596 "field."
         WHITESPACE@596..597 " "
         WORD@597..601 "Note"
         WHITESPACE@601..602 " "
         WORD@602..605 "the"
         WHITESPACE@605..606 " "
-        COMMAND_NAME@606..613 "\\texttt"
-        CURLY_GROUP@613..624
+        COMMAND@606..613
+          COMMAND_NAME@606..613 "\\texttt"
+        CURLY_GROUP@613..623
           L_CURLY@613..614 "{"
           WORD@614..622 "subtitle"
           R_CURLY@622..623 "}"
-          WHITESPACE@623..624 " "
+        WHITESPACE@623..624 " "
         WORD@624..627 "and"
         WHITESPACE@627..628 " "
-        COMMAND_NAME@628..635 "\\texttt"
-        CURLY_GROUP@635..668
+        COMMAND@628..635
+          COMMAND_NAME@628..635 "\\texttt"
+        CURLY_GROUP@635..647
           L_CURLY@635..636 "{"
           WORD@636..646 "indextitle"
           R_CURLY@646..647 "}"
-          WHITESPACE@647..668 "\n                    "
+        WHITESPACE@647..668 "\n                    "
         WORD@668..674 "fields"
         R_CURLY@674..675 "}"
       COMMA@675..676 ","
-      WHITESPACE@676..677 "\n"
-    R_CURLY@677..678 "}"
-    WHITESPACE@678..680 "\n\n"
-  JUNK@680..857
-    WORD@680..681 "%"
-    WHITESPACE@681..682 " "
-    WORD@682..691 "booktitle"
-    WHITESPACE@691..692 " "
-    WORD@692..695 "and"
-    WHITESPACE@695..696 " "
-    WORD@696..708 "booksubtitle"
-    WHITESPACE@708..709 " "
-    WORD@709..712 "are"
-    WHITESPACE@712..713 " "
-    WORD@713..717 "only"
-    WHITESPACE@717..718 " "
-    WORD@718..724 "needed"
-    WHITESPACE@724..725 " "
-    WORD@725..728 "for"
-    WHITESPACE@728..729 " "
-    WORD@729..737 "BibTeX's"
-    WHITESPACE@737..738 " "
-    WORD@738..742 "less"
-    WHITESPACE@742..743 " "
-    WORD@743..756 "sophisticated"
-    WHITESPACE@756..757 "\n"
-    WORD@757..758 "%"
-    WHITESPACE@758..759 " "
-    WORD@759..770 "inheritance"
-    WHITESPACE@770..771 " "
-    WORD@771..777 "set-up"
-    WHITESPACE@777..778 " "
-    WORD@778..780 "to"
-    WHITESPACE@780..781 " "
-    WORD@781..785 "make"
-    WHITESPACE@785..786 " "
-    WORD@786..790 "sure"
-    WHITESPACE@790..791 " "
-    WORD@791..805 "westfahl:space"
-    WHITESPACE@805..806 " "
-    WORD@806..811 "shows"
-    WHITESPACE@811..812 " "
-    WORD@812..822 "correctly."
-    WHITESPACE@822..823 "\n"
-    WORD@823..824 "%"
-    WHITESPACE@824..825 " "
-    WORD@825..829 "With"
-    WHITESPACE@829..830 " "
-    WORD@830..835 "Biber"
-    WHITESPACE@835..836 " "
-    WORD@836..840 "they"
-    WHITESPACE@840..841 " "
-    WORD@841..844 "are"
-    WHITESPACE@844..845 " "
-    WORD@845..848 "not"
-    WHITESPACE@848..849 " "
-    WORD@849..856 "needed."
-    WHITESPACE@856..857 "\n"
+    WHITESPACE@676..677 "\n"
+    R_DELIM@677..678 "}"
+  JUNK@678..857 "\n\n% booktitle and boo ..."
   ENTRY@857..1484
     TYPE@857..868 "@collection"
-    L_CURLY@868..869 "{"
-    KEY@869..886 "westfahl:frontier"
+    L_DELIM@868..869 "{"
+    NAME@869..886 "westfahl:frontier"
     COMMA@886..887 ","
     WHITESPACE@887..892 "\n    "
-    FIELD@892..929
-      KEY@892..898 "editor"
+    FIELD@892..924
+      NAME@892..898 "editor"
       WHITESPACE@898..905 "       "
       EQ@905..906 "="
       WHITESPACE@906..907 " "
@@ -285,9 +233,9 @@ ROOT@0..1484
         WORD@918..922 "Gary"
         R_CURLY@922..923 "}"
       COMMA@923..924 ","
-      WHITESPACE@924..929 "\n    "
-    FIELD@929..968
-      KEY@929..934 "title"
+    WHITESPACE@924..929 "\n    "
+    FIELD@929..963
+      NAME@929..934 "title"
       WHITESPACE@934..942 "        "
       EQ@942..943 "="
       WHITESPACE@943..944 " "
@@ -300,18 +248,18 @@ ROOT@0..1484
         WORD@955..961 "Beyond"
         R_CURLY@961..962 "}"
       COMMA@962..963 ","
-      WHITESPACE@963..968 "\n    "
-    FIELD@968..993
-      KEY@968..972 "date"
+    WHITESPACE@963..968 "\n    "
+    FIELD@968..988
+      NAME@968..972 "date"
       WHITESPACE@972..981 "         "
       EQ@981..982 "="
       WHITESPACE@982..983 " "
       LITERAL@983..987
         INTEGER@983..987 "2000"
       COMMA@987..988 ","
-      WHITESPACE@988..993 "\n    "
-    FIELD@993..1053
-      KEY@993..1001 "subtitle"
+    WHITESPACE@988..993 "\n    "
+    FIELD@993..1048
+      NAME@993..1001 "subtitle"
       WHITESPACE@1001..1006 "     "
       EQ@1006..1007 "="
       WHITESPACE@1007..1008 " "
@@ -330,9 +278,9 @@ ROOT@0..1484
         WORD@1039..1046 "Fiction"
         R_CURLY@1046..1047 "}"
       COMMA@1047..1048 ","
-      WHITESPACE@1048..1053 "\n    "
-    FIELD@1053..1085
-      KEY@1053..1062 "publisher"
+    WHITESPACE@1048..1053 "\n    "
+    FIELD@1053..1080
+      NAME@1053..1062 "publisher"
       WHITESPACE@1062..1066 "    "
       EQ@1066..1067 "="
       WHITESPACE@1067..1068 " "
@@ -341,9 +289,9 @@ ROOT@0..1484
         WORD@1069..1078 "Greenwood"
         R_CURLY@1078..1079 "}"
       COMMA@1079..1080 ","
-      WHITESPACE@1080..1085 "\n    "
-    FIELD@1085..1134
-      KEY@1085..1093 "location"
+    WHITESPACE@1080..1085 "\n    "
+    FIELD@1085..1129
+      NAME@1085..1093 "location"
       WHITESPACE@1093..1098 "     "
       EQ@1098..1099 "="
       WHITESPACE@1099..1100 " "
@@ -359,9 +307,9 @@ ROOT@0..1484
         WORD@1121..1127 "London"
         R_CURLY@1127..1128 "}"
       COMMA@1128..1129 ","
-      WHITESPACE@1129..1134 "\n    "
-    FIELD@1134..1164
-      KEY@1134..1140 "langid"
+    WHITESPACE@1129..1134 "\n    "
+    FIELD@1134..1159
+      NAME@1134..1140 "langid"
       WHITESPACE@1140..1147 "       "
       EQ@1147..1148 "="
       WHITESPACE@1148..1149 " "
@@ -370,22 +318,20 @@ ROOT@0..1484
         WORD@1150..1157 "english"
         R_CURLY@1157..1158 "}"
       COMMA@1158..1159 ","
-      WHITESPACE@1159..1164 "\n    "
-    FIELD@1164..1203
-      KEY@1164..1174 "langidopts"
+    WHITESPACE@1159..1164 "\n    "
+    FIELD@1164..1198
+      NAME@1164..1174 "langidopts"
       WHITESPACE@1174..1177 "   "
       EQ@1177..1178 "="
       WHITESPACE@1178..1179 " "
       CURLY_GROUP@1179..1197
         L_CURLY@1179..1180 "{"
-        WORD@1180..1187 "variant"
-        EQ@1187..1188 "="
-        WORD@1188..1196 "american"
+        WORD@1180..1196 "variant=american"
         R_CURLY@1196..1197 "}"
       COMMA@1197..1198 ","
-      WHITESPACE@1198..1203 "\n    "
-    FIELD@1203..1242
-      KEY@1203..1212 "booktitle"
+    WHITESPACE@1198..1203 "\n    "
+    FIELD@1203..1237
+      NAME@1203..1212 "booktitle"
       WHITESPACE@1212..1216 "    "
       EQ@1216..1217 "="
       WHITESPACE@1217..1218 " "
@@ -398,9 +344,9 @@ ROOT@0..1484
         WORD@1229..1235 "Beyond"
         R_CURLY@1235..1236 "}"
       COMMA@1236..1237 ","
-      WHITESPACE@1237..1242 "\n    "
-    FIELD@1242..1302
-      KEY@1242..1254 "booksubtitle"
+    WHITESPACE@1237..1242 "\n    "
+    FIELD@1242..1297
+      NAME@1242..1254 "booksubtitle"
       WHITESPACE@1254..1255 " "
       EQ@1255..1256 "="
       WHITESPACE@1256..1257 " "
@@ -419,9 +365,9 @@ ROOT@0..1484
         WORD@1288..1295 "Fiction"
         R_CURLY@1295..1296 "}"
       COMMA@1296..1297 ","
-      WHITESPACE@1297..1302 "\n    "
-    FIELD@1302..1483
-      KEY@1302..1312 "annotation"
+    WHITESPACE@1297..1302 "\n    "
+    FIELD@1302..1482
+      NAME@1302..1312 "annotation"
       WHITESPACE@1312..1315 "   "
       EQ@1315..1316 "="
       WHITESPACE@1316..1317 " "
@@ -433,12 +379,13 @@ ROOT@0..1484
         WHITESPACE@1325..1326 " "
         WORD@1326..1327 "a"
         WHITESPACE@1327..1328 " "
-        COMMAND_NAME@1328..1335 "\\texttt"
-        CURLY_GROUP@1335..1348
+        COMMAND@1328..1335
+          COMMAND_NAME@1328..1335 "\\texttt"
+        CURLY_GROUP@1335..1347
           L_CURLY@1335..1336 "{"
           WORD@1336..1346 "collection"
           R_CURLY@1346..1347 "}"
-          WHITESPACE@1347..1348 " "
+        WHITESPACE@1347..1348 " "
         WORD@1348..1354 "entry."
         WHITESPACE@1354..1355 " "
         WORD@1355..1359 "Note"
@@ -451,12 +398,13 @@ ROOT@0..1484
         WHITESPACE@1373..1374 " "
         WORD@1374..1377 "the"
         WHITESPACE@1377..1398 "\n                    "
-        COMMAND_NAME@1398..1405 "\\texttt"
-        CURLY_GROUP@1405..1416
+        COMMAND@1398..1405
+          COMMAND_NAME@1398..1405 "\\texttt"
+        CURLY_GROUP@1405..1415
           L_CURLY@1405..1406 "{"
           WORD@1406..1414 "location"
           R_CURLY@1414..1415 "}"
-          WHITESPACE@1415..1416 " "
+        WHITESPACE@1415..1416 " "
         WORD@1416..1421 "field"
         WHITESPACE@1421..1422 " "
         WORD@1422..1424 "as"
@@ -467,15 +415,16 @@ ROOT@0..1484
         WHITESPACE@1432..1433 " "
         WORD@1433..1436 "the"
         WHITESPACE@1436..1437 " "
-        COMMAND_NAME@1437..1444 "\\texttt"
-        CURLY_GROUP@1444..1475
+        COMMAND@1437..1444
+          COMMAND_NAME@1437..1444 "\\texttt"
+        CURLY_GROUP@1444..1454
           L_CURLY@1444..1445 "{"
           WORD@1445..1453 "subtitle"
           R_CURLY@1453..1454 "}"
-          WHITESPACE@1454..1475 "\n                    "
+        WHITESPACE@1454..1475 "\n                    "
         WORD@1475..1480 "field"
         R_CURLY@1480..1481 "}"
       COMMA@1481..1482 ","
-      WHITESPACE@1482..1483 "\n"
-    R_CURLY@1483..1484 "}"
+    WHITESPACE@1482..1483 "\n"
+    R_DELIM@1483..1484 "}"
 

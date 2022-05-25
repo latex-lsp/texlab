@@ -70,19 +70,19 @@ impl Cursor {
             return Some(Self::Bibtex(left));
         }
 
-        if left.kind() == bibtex::COMMAND_NAME {
+        if matches!(left.kind(), bibtex::COMMAND_NAME | bibtex::ACCENT_NAME) {
             return Some(Self::Bibtex(left));
         }
 
-        if matches!(right.kind(), bibtex::WORD | bibtex::KEY) {
+        if matches!(right.kind(), bibtex::WORD | bibtex::NAME) {
             return Some(Self::Bibtex(right));
         }
 
-        if matches!(left.kind(), bibtex::WORD | bibtex::KEY) {
+        if matches!(left.kind(), bibtex::WORD | bibtex::NAME) {
             return Some(Self::Bibtex(left));
         }
 
-        if right.kind() == bibtex::COMMAND_NAME {
+        if matches!(right.kind(), bibtex::COMMAND_NAME | bibtex::ACCENT_NAME) {
             return Some(Self::Bibtex(right));
         }
 
@@ -113,7 +113,9 @@ impl Cursor {
             .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
             .or_else(|| {
                 self.as_bibtex()
-                    .filter(|token| token.kind() == bibtex::COMMAND_NAME)
+                    .filter(|token| {
+                        matches!(token.kind(), bibtex::COMMAND_NAME | bibtex::ACCENT_NAME)
+                    })
                     .filter(|token| token.text_range().start() != offset)
                     .map(|token| token.text_range())
                     .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
@@ -186,7 +188,7 @@ impl<P: HasPosition> CursorContext<P> {
         let key = self
             .cursor
             .as_bibtex()
-            .filter(|token| token.kind() == bibtex::KEY)?;
+            .filter(|token| token.kind() == bibtex::NAME)?;
 
         bibtex::Entry::cast(key.parent()?)?;
         Some((key.to_string(), key.text_range()))

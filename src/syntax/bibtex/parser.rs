@@ -1,260 +1,264 @@
+use logos::{Lexer, Logos};
 use rowan::{GreenNode, GreenNodeBuilder};
 
-use crate::syntax::token_ptr::TokenPtr;
-
 use super::{
-    lexer::{tokenize, Token, Type},
+    lexer::*,
     SyntaxKind::{self, *},
 };
 
-struct Parser<'a> {
-    ptr: TokenPtr<'a, Token>,
-    ast: GreenNodeBuilder<'static>,
+pub fn parse(input: &str) -> GreenNode {
+    let mut ptr = TokenPtr {
+        builder: GreenNodeBuilder::new(),
+        lexer: RootToken::lexer(input),
+        token: None,
+    };
+
+    ptr.builder.start_node(ROOT.into());
+
+    while let Some(token) = ptr.current() {
+        match token {
+            RootToken::Preamble => ptr = preamble(ptr),
+            RootToken::String => ptr = string(ptr),
+            RootToken::Entry => ptr = entry(ptr),
+            RootToken::Comment | RootToken::Junk => ptr.bump(),
+        }
+    }
+
+    ptr.builder.finish_node();
+    ptr.builder.finish()
 }
 
-impl<'a> Parser<'a> {
-    pub fn parse(mut self) -> GreenNode {
-        self.ast.start_node(ROOT.into());
+fn preamble(mut ptr: TokenPtr<RootToken>) -> TokenPtr<RootToken> {
+    ptr.builder.start_node(PREAMBLE.into());
+    ptr.bump();
+    let mut ptr = ptr.morph();
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::LDelim);
+    ptr.expect(BodyToken::Whitespace);
+    ptr = value(ptr.morph()).morph();
+    ptr.expect(BodyToken::RDelim);
+    ptr.builder.finish_node();
+    ptr.morph()
+}
 
-        while let Some(kind) = self.ptr.current() {
-            match kind {
-                Token::Whitespace => self.bump(),
-                Token::Type(Type::Preamble) => self.preamble(),
-                Token::Type(Type::String) => self.string_def(),
-                Token::Type(Type::Entry) => self.entry(),
-                Token::Type(Type::Comment) => self.comment(),
-                Token::Word
-                | Token::Integer
-                | Token::LCurly
-                | Token::RCurly
-                | Token::LParen
-                | Token::RParen
-                | Token::Comma
-                | Token::Pound
-                | Token::Quote
-                | Token::Eq
-                | Token::CommandName => self.junk(),
-            };
-        }
+fn string(mut ptr: TokenPtr<RootToken>) -> TokenPtr<RootToken> {
+    ptr.builder.start_node(STRING.into());
+    ptr.bump();
+    let mut ptr = ptr.morph();
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::LDelim);
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Name);
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Eq);
+    ptr.expect(BodyToken::Whitespace);
+    ptr = value(ptr.morph()).morph();
+    ptr.expect(BodyToken::RDelim);
+    ptr.builder.finish_node();
+    ptr.morph()
+}
 
-        self.ast.finish_node();
-        self.ast.finish()
+fn entry(mut ptr: TokenPtr<RootToken>) -> TokenPtr<RootToken> {
+    ptr.builder.start_node(ENTRY.into());
+    ptr.bump();
+    let mut ptr = ptr.morph();
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::LDelim);
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Name);
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Comma);
+    ptr.expect(BodyToken::Whitespace);
+
+    while ptr.at(BodyToken::Name) {
+        ptr = field(ptr);
+        ptr.expect(BodyToken::Whitespace);
     }
 
-    fn bump(&mut self) {
-        let (kind, text) = self.ptr.bump();
-        self.ast.token(kind.into(), text);
-    }
+    ptr.expect(BodyToken::RDelim);
+    ptr.builder.finish_node();
+    ptr.morph()
+}
 
-    fn bump_and_trivia(&mut self) {
-        self.bump();
-        self.trivia();
-    }
+fn field(mut ptr: TokenPtr<BodyToken>) -> TokenPtr<BodyToken> {
+    ptr.builder.start_node(FIELD.into());
+    ptr.bump();
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Eq);
+    ptr.expect(BodyToken::Whitespace);
+    ptr = value(ptr.morph()).morph();
+    ptr.expect(BodyToken::Whitespace);
+    ptr.expect(BodyToken::Comma);
+    ptr.builder.finish_node();
+    ptr
+}
 
-    fn bump_and_remap(&mut self, new_kind: SyntaxKind) {
-        let (_, text) = self.ptr.bump();
-        self.ast.token(new_kind.into(), text);
-    }
-
-    fn trivia(&mut self) {
-        while self.ptr.at(Token::Whitespace) {
-            self.bump();
-        }
-    }
-
-    fn junk(&mut self) {
-        self.ast.start_node(JUNK.into());
-
-        while self.ptr.at_cond(|kind| !matches!(kind, Token::Type(_))) {
-            self.bump();
-        }
-
-        self.ast.finish_node();
-    }
-
-    fn comment(&mut self) {
-        self.ast.start_node(COMMENT.into());
-        self.bump_and_trivia();
-
-        while self.ptr.at_cond(|kind| !matches!(kind, Token::Type(_))) {
-            self.bump();
-        }
-
-        self.ast.finish_node();
-    }
-
-    fn preamble(&mut self) {
-        self.ast.start_node(PREAMBLE.into());
-        self.bump_and_trivia();
-        self.left_delimiter();
-        self.value();
-        self.right_delimiter();
-        self.ast.finish_node();
-    }
-
-    fn string_def(&mut self) {
-        self.ast.start_node(STRING.into());
-        self.bump_and_trivia();
-        self.left_delimiter();
-        self.key();
-        self.eq();
-        self.value();
-        self.right_delimiter();
-        self.ast.finish_node();
-    }
-
-    fn entry(&mut self) {
-        self.ast.start_node(ENTRY.into());
-        self.bump_and_trivia();
-        self.left_delimiter();
-        self.key();
-        self.comma();
-        while self.field().is_some() {}
-        self.right_delimiter();
-        self.ast.finish_node();
-    }
-
-    fn field(&mut self) -> Option<()> {
-        if !self.ptr.at(Token::Word) {
-            return None;
-        }
-
-        self.ast.start_node(FIELD.into());
-        self.key().unwrap();
-        self.eq();
-        self.value();
-        self.comma();
-        self.ast.finish_node();
-        Some(())
-    }
-
-    fn key(&mut self) -> Option<()> {
-        if !self.ptr.at(Token::Word) {
-            return None;
-        }
-
-        self.bump_and_remap(KEY);
-        self.trivia();
-        Some(())
-    }
-
-    fn left_delimiter(&mut self) -> Option<()> {
-        self.token(|kind| matches!(kind, Token::LCurly | Token::LParen))
-    }
-
-    fn right_delimiter(&mut self) -> Option<()> {
-        self.token(|kind| matches!(kind, Token::RCurly | Token::RParen))
-    }
-
-    fn eq(&mut self) -> Option<()> {
-        self.token(|kind| kind == Token::Eq)
-    }
-
-    fn comma(&mut self) -> Option<()> {
-        self.token(|kind| kind == Token::Comma)
-    }
-
-    fn token(&mut self, predicate: impl FnOnce(Token) -> bool) -> Option<()> {
-        if !self.ptr.at_cond(predicate) {
-            return None;
-        }
-
-        self.bump_and_trivia();
-        Some(())
-    }
-
-    fn value(&mut self) -> Option<()> {
-        let checkpoint = self.ast.checkpoint();
-        match self.ptr.current()? {
-            Token::Whitespace
-            | Token::Type(_)
-            | Token::LParen
-            | Token::RParen
-            | Token::Comma
-            | Token::Pound
-            | Token::Eq
-            | Token::RCurly => return None,
-            Token::LCurly => self.curly_group(),
-            Token::Quote => self.quote_group(),
-            Token::Integer | Token::Word | Token::CommandName => self.literal(),
+fn value(mut ptr: TokenPtr<ValueToken>) -> TokenPtr<ValueToken> {
+    let checkpoint = ptr.builder.checkpoint();
+    if let Some(token) = ptr.current() {
+        match token {
+            ValueToken::Whitespace => unreachable!(),
+            ValueToken::Pound | ValueToken::Comma | ValueToken::RCurly => return ptr,
+            ValueToken::Integer | ValueToken::Name => ptr = literal(ptr),
+            ValueToken::LCurly => ptr = curly_group(ptr.morph()).morph(),
+            ValueToken::Quote => ptr = quote_group(ptr.morph()).morph(),
         };
 
-        if self.ptr.at(Token::Pound) {
-            self.ast.start_node_at(checkpoint, CONCAT.into());
-            self.bump_and_trivia();
-            self.value();
-            self.ast.finish_node();
+        ptr.expect(ValueToken::Whitespace);
+        if ptr.at(ValueToken::Pound) {
+            ptr.builder.start_node_at(checkpoint, JOIN.into());
+            ptr.bump();
+            ptr.expect(ValueToken::Whitespace);
+            ptr = value(ptr);
+            ptr.builder.finish_node();
         }
-
-        Some(())
     }
 
-    fn curly_group(&mut self) {
-        self.ast.start_node(CURLY_GROUP.into());
-        self.bump_and_trivia();
-
-        while let Some(kind) = self.ptr.current() {
-            match kind {
-                Token::Whitespace
-                | Token::Type(_)
-                | Token::Word
-                | Token::Integer
-                | Token::LParen
-                | Token::RParen
-                | Token::Comma
-                | Token::Eq
-                | Token::CommandName => self.bump(),
-                Token::LCurly => self.curly_group(),
-                Token::Quote => self.quote_group(),
-                Token::Pound => break,
-                Token::RCurly => {
-                    self.bump_and_trivia();
-                    break;
-                }
-            };
-        }
-
-        self.ast.finish_node();
-    }
-
-    fn quote_group(&mut self) {
-        self.ast.start_node(QUOTE_GROUP.into());
-        self.bump_and_trivia();
-
-        while let Some(kind) = self.ptr.current() {
-            match kind {
-                Token::Whitespace
-                | Token::Type(_)
-                | Token::Word
-                | Token::Integer
-                | Token::LParen
-                | Token::RParen
-                | Token::Comma
-                | Token::Eq
-                | Token::CommandName
-                | Token::RCurly => self.bump(),
-                Token::LCurly => self.curly_group(),
-                Token::Pound => break,
-                Token::Quote => {
-                    self.bump_and_trivia();
-                    break;
-                }
-            };
-        }
-
-        self.ast.finish_node();
-    }
-
-    fn literal(&mut self) {
-        self.ast.start_node(LITERAL.into());
-        self.bump_and_trivia();
-        self.ast.finish_node();
-    }
+    ptr
 }
 
-pub fn parse(input: &str) -> GreenNode {
-    let ptr = tokenize(input);
-    let ast = GreenNodeBuilder::new();
-    let parser = Parser { ptr, ast };
-    parser.parse()
+fn literal(mut ptr: TokenPtr<ValueToken>) -> TokenPtr<ValueToken> {
+    ptr.builder.start_node(LITERAL.into());
+    ptr.bump();
+    ptr.builder.finish_node();
+    ptr
+}
+
+fn curly_group(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
+    ptr.builder.start_node(CURLY_GROUP.into());
+    ptr.bump();
+    ptr.expect(ContentToken::Whitespace);
+
+    while let Some(token) = ptr.current() {
+        match token {
+            ContentToken::RCurly => break,
+            ContentToken::Whitespace
+            | ContentToken::Nbsp
+            | ContentToken::Comma
+            | ContentToken::Integer
+            | ContentToken::Word => ptr.bump(),
+            ContentToken::LCurly => ptr = curly_group(ptr),
+            ContentToken::Quote => ptr = quote_group(ptr),
+            ContentToken::AccentName => ptr = accent(ptr),
+            ContentToken::CommandName => ptr = command(ptr),
+        };
+    }
+
+    ptr.expect(ContentToken::RCurly);
+    ptr.builder.finish_node();
+    ptr
+}
+
+fn quote_group(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
+    ptr.builder.start_node(QUOTE_GROUP.into());
+    ptr.bump();
+    ptr.expect(ContentToken::Whitespace);
+
+    while let Some(token) = ptr.current() {
+        match token {
+            ContentToken::Quote => break,
+            ContentToken::Whitespace
+            | ContentToken::Nbsp
+            | ContentToken::Comma
+            | ContentToken::RCurly
+            | ContentToken::Integer
+            | ContentToken::Word => ptr.bump(),
+            ContentToken::LCurly => ptr = curly_group(ptr),
+            ContentToken::AccentName => ptr = accent(ptr),
+            ContentToken::CommandName => ptr = command(ptr),
+        };
+    }
+
+    ptr.expect(ContentToken::Quote);
+    ptr.builder.finish_node();
+    ptr
+}
+
+fn accent(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
+    ptr.builder.start_node(ACCENT.into());
+    ptr.bump();
+    ptr.expect(ContentToken::Whitespace);
+
+    let group = ptr.at(ContentToken::LCurly);
+    if group {
+        ptr.expect(ContentToken::LCurly);
+        ptr.expect(ContentToken::Whitespace);
+    }
+
+    ptr.expect(ContentToken::Word);
+
+    if group {
+        ptr.expect(ContentToken::Whitespace);
+        ptr.expect(ContentToken::RCurly);
+    }
+
+    ptr.builder.finish_node();
+    ptr
+}
+
+fn command(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
+    ptr.builder.start_node(COMMAND.into());
+    ptr.bump();
+    ptr.builder.finish_node();
+    ptr
+}
+
+struct TokenPtr<'a, T: Logos<'a>> {
+    builder: GreenNodeBuilder<'static>,
+    lexer: Lexer<'a, T>,
+    token: Option<(T, &'a str)>,
+}
+
+impl<'a, T> TokenPtr<'a, T>
+where
+    T: Logos<'a, Source = str> + Eq + Copy + Into<SyntaxKind>,
+    T::Extras: Default,
+{
+    pub fn morph<U>(mut self) -> TokenPtr<'a, U>
+    where
+        U: Logos<'a, Source = str> + Eq + Copy + Into<SyntaxKind>,
+        U::Extras: Default,
+    {
+        self.peek();
+        let start = self.lexer.span().start;
+        let input = &self.lexer.source()[start..];
+        TokenPtr {
+            builder: self.builder,
+            lexer: U::lexer(input),
+            token: None,
+        }
+    }
+
+    #[must_use]
+    pub fn at(&mut self, kind: T) -> bool {
+        self.peek().map_or(false, |(k, _)| k == kind)
+    }
+
+    #[must_use]
+    pub fn current(&mut self) -> Option<T> {
+        self.peek().map(|(k, _)| k)
+    }
+
+    pub fn bump(&mut self) {
+        let (kind, text) = self.peek().unwrap();
+        self.token = None;
+        self.builder
+            .token(rowan::SyntaxKind::from(kind.into()), text);
+    }
+
+    pub fn expect(&mut self, kind: T) {
+        if self.at(kind) {
+            self.bump();
+        }
+    }
+
+    fn peek(&mut self) -> Option<(T, &'a str)> {
+        if self.token.is_none() {
+            let kind = self.lexer.next()?;
+            let text = self.lexer.slice();
+            self.token = Some((kind, text));
+        }
+
+        self.token
+    }
 }
