@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 25.05.2022
+
+### Added
+
+- Add `--version` command line flag
+- Provide pre-built binaries for `aarch64-apple-darwin` architecture ([#591](https://github.com/latex-lsp/texlab/pull/591))
+- Autocomplete files based on `\graphicspath` ([#590](https://github.com/latex-lsp/texlab/issues/590))
+- Release `texlab` on `crates.io` ([#399](https://github.com/latex-lsp/texlab/issues/399))
+
+### Changed
+
+- _BREAKING_: Use client-side file watching instead of server-side notifications (`workspace/didChangeWatchedFiles`)
+- _BREAKING_: Bump minimum supported Rust version to 1.58.1
+- _BREAKING_: Do not use `citeproc-rs` to render citations. Instead, use a custom approach that tries to resemble the `BibLaTeX` output ([#629](https://github.com/latex-lsp/texlab/pull/629))
+
+### Fixed
+
+- Parse `\subinputfrom` command correctly ([#610](https://github.com/latex-lsp/texlab/pull/610))
+- Parse verbatim environments correctly ([#490](https://github.com/latex-lsp/texlab/issues/490))
+- Stop capturing stdout when build exits ([#588](https://github.com/latex-lsp/texlab/issues/588))
+- Fix parsing of key-value pairs ([#573](https://github.com/latex-lsp/texlab/issues/573))
+- Normalize `texlab.rootDirectory` when resolving includes ([#571](https://github.com/latex-lsp/texlab/issues/571))
+- Allow optional arguments in environment definitions ([#570](https://github.com/latex-lsp/texlab/issues/570))
+- Allow `=` in include paths ([#568](https://github.com/latex-lsp/texlab/issues/568))
+
 ## [3.3.2] - 26.02.2022
 
 ### Fixed
