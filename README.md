@@ -3,7 +3,9 @@
 [![Rust](https://img.shields.io/badge/rustc-1.58.1%2B-blue)](https://blog.rust-lang.org/2022/01/20/Rust-1.58.1.html)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
+[![crates.io](https://img.shields.io/crates/v/texlab)](https://crates.io/crates/texlab)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
+
 [![Arch Linux](https://repology.org/badge/version-for-repo/arch/texlab.svg?header=arch%20linux)](https://www.archlinux.org/packages/community/x86_64/texlab/)
 [![NixOS Stable](https://repology.org/badge/version-for-repo/nix_stable/texlab.svg?header=nixos%20stable)](https://nixos.org/nixos/packages.html?channel=nixos-20.03&query=texlab)
 [![NixOS Unstable](https://repology.org/badge/version-for-repo/nix_unstable/texlab.svg?header=nixos%20unstable)](https://nixos.org/nixos/packages.html?channel=nixpkgs-unstable&query=texlab)
@@ -50,11 +52,10 @@ Then run the following command in the project folder:
 cargo build --release
 ```
 
-Alternatively, you can run the following command
-without having to clone this repository and make TexLab available in your PATH:
+Alternatively, you can install `texlab` from [crates.io](https://crates.io/crates/texlab) and run
 
 ```shell
-cargo install --git https://github.com/latex-lsp/texlab.git --locked
+cargo install texlab
 ```
 
 ## Usage
