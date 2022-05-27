@@ -3,6 +3,7 @@ mod build;
 mod completion;
 mod cursor;
 mod definition;
+mod execute_command;
 mod folding;
 mod formatting;
 mod forward_search;
@@ -25,6 +26,7 @@ pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
 pub use self::{
     build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
     definition::goto_definition,
+    execute_command::execute_command,
     folding::find_foldings,
     formatting::format_source_code,
     forward_search::{execute_forward_search, ForwardSearchResult, ForwardSearchStatus},

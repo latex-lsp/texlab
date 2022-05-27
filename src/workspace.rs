@@ -137,7 +137,7 @@ impl Workspace {
             .unwrap_or_default()
     }
 
-    fn find_parent(&self, uri: &Url) -> Option<Document> {
+    pub fn find_parent(&self, uri: &Url) -> Option<Document> {
         self.slice(uri)
             .documents_by_uri
             .values()

@@ -17,10 +17,11 @@ use crate::{
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
-        find_all_references, find_document_highlights, find_document_links, find_document_symbols,
-        find_foldings, find_hover, find_workspace_symbols, format_source_code, goto_definition,
-        prepare_rename_all, rename_all, BuildEngine, BuildParams, BuildResult, BuildStatus,
-        FeatureRequest, ForwardSearchResult, ForwardSearchStatus,
+        execute_command, find_all_references, find_document_highlights, find_document_links,
+        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
+        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
+        BuildParams, BuildResult, BuildStatus, FeatureRequest, ForwardSearchResult,
+        ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
     ClientCapabilitiesExt, DocumentLanguage, Environment, LineIndex, LineIndexExt, Options,
@@ -127,6 +128,13 @@ impl Server {
             })),
             document_highlight_provider: Some(OneOf::Left(true)),
             document_formatting_provider: Some(OneOf::Left(true)),
+            execute_command_provider: Some(ExecuteCommandOptions {
+                commands: vec![
+                    "texlab.cleanAuxiliary".into(),
+                    "texlab.cleanArtifacts".into(),
+                ],
+                ..Default::default()
+            }),
             ..ServerCapabilities::default()
         }
     }
@@ -668,6 +676,24 @@ impl Server {
         Ok(())
     }
 
+    fn execute_command(&self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
+        self.spawn(move |server| {
+            let result = execute_command(&server.workspace, &params.command, params.arguments);
+            let response = match result {
+                Ok(()) => lsp_server::Response::new_ok(id, ()),
+                Err(why) => lsp_server::Response::new_err(
+                    id,
+                    lsp_server::ErrorCode::InternalError as i32,
+                    why.to_string(),
+                ),
+            };
+
+            server.connection.sender.send(response.into()).unwrap();
+        });
+
+        Ok(())
+    }
+
     fn semantic_tokens_range(
         &self,
         _id: RequestId,
@@ -765,6 +791,7 @@ impl Server {
                                 .on::<ForwardSearchRequest, _>(|id, params| {
                                     self.forward_search(id, params)
                                 })?
+                                .on::<ExecuteCommand,_>(|id, params| self.execute_command(id, params))?
                                 .on::<SemanticTokensRangeRequest, _>(|id, params| {
                                     self.semantic_tokens_range(id, params)
                                 })?
