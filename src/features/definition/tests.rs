@@ -1,10 +1,6 @@
-use insta::{
-    assert_json_snapshot,
-    internals::{Content, ContentPath},
-};
-use lsp_types::Url;
+use insta::assert_json_snapshot;
 
-use crate::features::{goto_definition, testing::FeatureTester};
+use crate::features::{goto_definition, redactions::redact_uri, testing::FeatureTester};
 
 #[test]
 fn test_empty_latex_document() {
@@ -157,13 +153,4 @@ fn test_string_field() {
     );
 
     assert_eq!(links, None);
-}
-
-fn redact_uri(value: Content, _path: ContentPath) -> String {
-    value.as_str().unwrap().replace(
-        Url::from_directory_path(std::env::temp_dir())
-            .unwrap()
-            .as_str(),
-        "[tmp]/",
-    )
 }

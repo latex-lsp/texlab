@@ -1,0 +1,20 @@
+---
+source: src/features/reference/tests.rs
+assertion_line: 148
+expression: references
+---
+[
+  {
+    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/bar.tex",
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 5
+      },
+      "end": {
+        "line": 0,
+        "character": 8
+      }
+    }
+  }
+]

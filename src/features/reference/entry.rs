@@ -1,4 +1,6 @@
-use lsp_types::{Location, ReferenceParams};
+use std::sync::Arc;
+
+use lsp_types::ReferenceParams;
 use rowan::ast::AstNode;
 
 use crate::{
@@ -7,12 +9,14 @@ use crate::{
         bibtex::{self, HasName},
         latex,
     },
-    DocumentData, LineIndexExt,
+    DocumentData,
 };
 
-pub fn find_entry_references(
+use super::ReferenceResult;
+
+pub(super) fn find_entry_references(
     context: &CursorContext<ReferenceParams>,
-    references: &mut Vec<Location>,
+    results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {
     let (key_text, _) = context
         .find_citation_key_word()
@@ -28,13 +32,10 @@ pub fn find_entry_references(
                     .filter_map(|citation| citation.key_list())
                     .flat_map(|keys| keys.keys())
                     .filter(|key| key.to_string() == key_text)
-                    .map(|key| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(latex::small_range(&key))
-                    })
+                    .map(|key| latex::small_range(&key))
                     .for_each(|range| {
-                        references.push(Location::new(document.uri.as_ref().clone(), range));
+                        let uri = Arc::clone(&document.uri);
+                        results.push(ReferenceResult { uri, range });
                     });
             }
             DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
@@ -43,172 +44,15 @@ pub fn find_entry_references(
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.name_token())
                     .filter(|key| key.text() == key_text)
-                    .map(|key| document.line_index.line_col_lsp_range(key.text_range()))
+                    .map(|key| key.text_range())
                     .for_each(|range| {
-                        references.push(Location::new(document.uri.as_ref().clone(), range));
+                        let uri = Arc::clone(&document.uri);
+                        results.push(ReferenceResult { uri, range });
                     });
             }
             DocumentData::Bibtex(_) | DocumentData::BuildLog(_) => {}
         }
     }
+
     Some(())
-}
-
-#[cfg(test)]
-mod tests {
-    use lsp_types::Range;
-
-    use crate::{features::testing::FeatureTester, RangeExt};
-
-    use super::*;
-
-    fn sort_references(actual_references: &mut [Location]) {
-        actual_references.sort_by(|a, b| {
-            a.uri
-                .cmp(&b.uri)
-                .then_with(|| a.range.start.cmp(&b.range.start))
-        });
-    }
-
-    #[test]
-    fn test_empty_latex_document() {
-        let request = FeatureTester::builder()
-            .files(vec![("main.tex", "")])
-            .main("main.tex")
-            .line(0)
-            .character(0)
-            .build()
-            .reference();
-
-        let mut actual_references = Vec::new();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        assert!(actual_references.is_empty());
-    }
-
-    #[test]
-    fn test_empty_bibtex_document() {
-        let request = FeatureTester::builder()
-            .files(vec![("main.bib", "")])
-            .main("main.bib")
-            .line(0)
-            .character(0)
-            .build()
-            .reference();
-
-        let mut actual_references = Vec::new();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        assert!(actual_references.is_empty());
-    }
-
-    #[test]
-    fn test_definition() {
-        let tester = FeatureTester::builder()
-            .files(vec![
-                ("foo.bib", r#"@article{foo,}"#),
-                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
-            ])
-            .main("foo.bib")
-            .line(0)
-            .character(11)
-            .build();
-        let uri = tester.uri("bar.tex");
-        let mut actual_references = Vec::new();
-
-        let request = tester.reference();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        sort_references(&mut actual_references);
-        let expected_references = vec![Location::new(
-            uri.as_ref().clone(),
-            Range::new_simple(0, 6, 0, 9),
-        )];
-        assert_eq!(actual_references, expected_references);
-    }
-
-    #[test]
-    fn test_definition_include_declaration() {
-        let tester = FeatureTester::builder()
-            .files(vec![
-                ("foo.bib", r#"@article{foo,}"#),
-                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
-            ])
-            .main("foo.bib")
-            .line(0)
-            .character(11)
-            .include_declaration(true)
-            .build();
-        let uri1 = tester.uri("bar.tex");
-        let uri2 = tester.uri("foo.bib");
-        let mut actual_references = Vec::new();
-
-        let request = tester.reference();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        sort_references(&mut actual_references);
-        let expected_references = vec![
-            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 6, 0, 9)),
-            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 9, 0, 12)),
-        ];
-        assert_eq!(actual_references, expected_references);
-    }
-
-    #[test]
-    fn test_reference() {
-        let tester = FeatureTester::builder()
-            .files(vec![
-                ("foo.bib", r#"@article{foo,}"#),
-                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
-            ])
-            .main("bar.tex")
-            .line(0)
-            .character(8)
-            .build();
-        let uri = tester.uri("bar.tex");
-        let mut actual_references = Vec::new();
-
-        let request = tester.reference();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        sort_references(&mut actual_references);
-        let expected_references = vec![Location::new(
-            uri.as_ref().clone(),
-            Range::new_simple(0, 6, 0, 9),
-        )];
-        assert_eq!(actual_references, expected_references);
-    }
-
-    #[test]
-    fn test_reference_include_declaration() {
-        let tester = FeatureTester::builder()
-            .files(vec![
-                ("foo.bib", r#"@article{foo,}"#),
-                ("bar.tex", r#"\cite{foo}\addbibresource{foo.bib}"#),
-            ])
-            .main("bar.tex")
-            .line(0)
-            .character(6)
-            .include_declaration(true)
-            .build();
-        let uri1 = tester.uri("foo.bib");
-        let uri2 = tester.uri("bar.tex");
-        let mut actual_references = Vec::new();
-
-        let request = tester.reference();
-        let context = CursorContext::new(request);
-        find_entry_references(&context, &mut actual_references);
-
-        sort_references(&mut actual_references);
-        let expected_references = vec![
-            Location::new(uri2.as_ref().clone(), Range::new_simple(0, 6, 0, 9)),
-            Location::new(uri1.as_ref().clone(), Range::new_simple(0, 9, 0, 12)),
-        ];
-        assert_eq!(actual_references, expected_references);
-    }
 }

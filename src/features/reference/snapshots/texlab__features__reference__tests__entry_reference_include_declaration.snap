@@ -1,0 +1,33 @@
+---
+source: src/features/reference/tests.rs
+assertion_line: 124
+expression: references
+---
+[
+  {
+    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/bar.tex",
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 6
+      },
+      "end": {
+        "line": 0,
+        "character": 9
+      }
+    }
+  },
+  {
+    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/foo.bib",
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 9
+      },
+      "end": {
+        "line": 0,
+        "character": 12
+      }
+    }
+  }
+]

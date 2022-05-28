@@ -1,0 +1,20 @@
+---
+source: src/features/reference/tests.rs
+assertion_line: 326
+expression: references
+---
+[
+  {
+    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/main.bib",
+    "range": {
+      "start": {
+        "line": 2,
+        "character": 23
+      },
+      "end": {
+        "line": 2,
+        "character": 26
+      }
+    }
+  }
+]
