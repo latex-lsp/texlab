@@ -1,12 +1,12 @@
 ---
 source: src/features/hover/tests.rs
-assertion_line: 248
+assertion_line: 240
 expression: hover
 ---
 {
   "contents": {
     "kind": "plaintext",
-    "value": "\"Bar\""
+    "value": "Bar"
   },
   "range": {
     "start": {

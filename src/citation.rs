@@ -1,6 +1,6 @@
 mod driver;
 mod entry;
-mod field;
+pub(crate) mod field;
 mod output;
 
 use unicode_normalization::UnicodeNormalization;

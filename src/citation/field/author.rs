@@ -4,7 +4,7 @@ use human_name::Name;
 use itertools::Itertools;
 use strum::EnumString;
 
-use crate::syntax::bibtex::Field;
+use crate::syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
@@ -51,8 +51,8 @@ impl fmt::Display for AuthorFieldData {
 }
 
 impl AuthorFieldData {
-    pub fn parse(field: &Field) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(field)?;
+    pub fn parse(value: &Value) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value)?;
         let mut authors = Vec::new();
         let mut words = Vec::new();
         for word in text.split_whitespace() {

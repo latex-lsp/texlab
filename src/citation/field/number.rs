@@ -2,7 +2,7 @@ use std::{fmt, str::FromStr};
 
 use strum::EnumString;
 
-use crate::syntax::bibtex::Field;
+use crate::syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
@@ -42,8 +42,8 @@ impl fmt::Display for NumberFieldData {
 }
 
 impl NumberFieldData {
-    pub fn parse(field: &Field) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(field)?;
+    pub fn parse(value: &Value) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value)?;
         text.split_once("--")
             .or_else(|| text.split_once('-'))
             .and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?)))

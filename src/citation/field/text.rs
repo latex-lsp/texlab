@@ -5,8 +5,8 @@ use rustc_hash::FxHashSet;
 use strum::EnumString;
 
 use crate::syntax::bibtex::{
-    Accent, Command, CurlyGroup, Field, HasAccentName, HasCommandName, HasName, HasValue, HasWord,
-    Join, Literal, QuoteGroup, Root, SyntaxKind::*, SyntaxToken, Value,
+    Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasValue, HasWord, Join,
+    Literal, QuoteGroup, Root, SyntaxKind::*, SyntaxToken, Value,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
@@ -73,9 +73,9 @@ pub struct TextFieldData {
 }
 
 impl TextFieldData {
-    pub fn parse(field: &Field) -> Option<Self> {
+    pub fn parse(value: &Value) -> Option<Self> {
         let mut builder = TextFieldDataBuilder::default();
-        builder.visit_value(&field.value()?)?;
+        builder.visit_value(&value)?;
         Some(builder.data)
     }
 }

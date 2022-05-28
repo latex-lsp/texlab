@@ -3,7 +3,7 @@ use std::{fmt, ops::Add, str::FromStr};
 use chrono::{Datelike, Month, NaiveDate};
 use strum::EnumString;
 
-use crate::syntax::bibtex::Field;
+use crate::syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
@@ -69,8 +69,8 @@ impl fmt::Display for DateFieldData {
 }
 
 impl DateFieldData {
-    pub fn parse(field: &Field) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(field)?;
+    pub fn parse(value: &Value) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value)?;
         NaiveDate::from_str(&text)
             .ok()
             .map(Self::Date)

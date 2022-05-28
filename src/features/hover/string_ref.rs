@@ -2,6 +2,7 @@ use lsp_types::{HoverParams, MarkupKind};
 use rowan::ast::AstNode;
 
 use crate::{
+    citation::field::text::TextFieldData,
     features::cursor::CursorContext,
     syntax::bibtex::{self, HasName, HasValue},
 };
@@ -13,7 +14,7 @@ pub(super) fn find_string_reference_hover(
 ) -> Option<HoverResult> {
     let data = context.request.main_document().data.as_bibtex()?;
 
-    let key = context
+    let name = context
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::NAME)
@@ -28,12 +29,11 @@ pub(super) fn find_string_reference_hover(
     {
         if string
             .name_token()
-            .filter(|k| k.text() == key.text())
-            .is_some()
+            .map_or(false, |token| token.text() == name.text())
         {
-            let value = string.value()?.syntax().text().to_string();
+            let value = TextFieldData::parse(&string.value()?)?.text;
             return Some(HoverResult {
-                range: key.text_range(),
+                range: name.text_range(),
                 value,
                 value_kind: MarkupKind::PlainText,
             });
