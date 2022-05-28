@@ -1,0 +1,21 @@
+---
+source: src/features/hover/tests.rs
+assertion_line: 219
+expression: hover
+---
+{
+  "contents": {
+    "kind": "plaintext",
+    "value": "Section (Foo)"
+  },
+  "range": {
+    "start": {
+      "line": 0,
+      "character": 20
+    },
+    "end": {
+      "line": 0,
+      "character": 27
+    }
+  }
+}

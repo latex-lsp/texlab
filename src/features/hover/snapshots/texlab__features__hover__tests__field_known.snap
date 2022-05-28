@@ -1,0 +1,21 @@
+---
+source: src/features/hover/tests.rs
+assertion_line: 174
+expression: hover
+---
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "The author(s) of the `title`."
+  },
+  "range": {
+    "start": {
+      "line": 0,
+      "character": 14
+    },
+    "end": {
+      "line": 0,
+      "character": 20
+    }
+  }
+}
