@@ -50,7 +50,7 @@ fn test_entry_definition() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -75,7 +75,7 @@ fn test_entry_definition_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -99,7 +99,7 @@ fn test_entry_reference() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -124,7 +124,7 @@ fn test_entry_reference_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -148,7 +148,7 @@ fn test_label_definition() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -173,7 +173,7 @@ fn test_label_definition_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -198,7 +198,7 @@ fn test_label_reference() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -223,7 +223,7 @@ fn test_label_reference_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -250,7 +250,7 @@ fn test_string_definition() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -278,7 +278,7 @@ fn test_string_definition_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -305,7 +305,7 @@ fn test_string_reference() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );
@@ -333,7 +333,7 @@ fn test_string_reference_include_declaration() {
     assert_json_snapshot!(
         references,
         {
-            "[].targetUri" => insta::dynamic_redaction(redact_uri),
+            "[].uri" => insta::dynamic_redaction(redact_uri),
             "." => insta::sorted_redaction(),
         }
     );

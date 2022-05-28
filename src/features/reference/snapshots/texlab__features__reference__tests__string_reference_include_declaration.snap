@@ -1,11 +1,11 @@
 ---
 source: src/features/reference/tests.rs
-assertion_line: 361
+assertion_line: 333
 expression: references
 ---
 [
   {
-    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/main.bib",
+    "uri": "[tmp]/main.bib",
     "range": {
       "start": {
         "line": 0,
@@ -18,7 +18,7 @@ expression: references
     }
   },
   {
-    "uri": "file:///C:/Users/Paddy/AppData/Local/Temp/main.bib",
+    "uri": "[tmp]/main.bib",
     "range": {
       "start": {
         "line": 2,
