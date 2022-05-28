@@ -37,10 +37,7 @@ pub struct AuthorFieldData {
 
 impl fmt::Display for AuthorFieldData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let names = self
-            .authors
-            .iter()
-            .map(|author| author.display_initial_surname());
+        let names = self.authors.iter().map(Name::display_initial_surname);
 
         for part in Itertools::intersperse(names, Cow::Borrowed(", ")) {
             write!(f, "{}", part)?;

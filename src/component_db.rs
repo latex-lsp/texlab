@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::Workspace;
+use crate::{syntax::latex::ExplicitLink, Workspace};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -17,6 +17,7 @@ pub struct ComponentDatabase {
 }
 
 impl ComponentDatabase {
+    #[must_use]
     pub fn find(&self, name: &str) -> Option<&Component> {
         self.components.iter().find(|component| {
             component
@@ -26,6 +27,7 @@ impl ComponentDatabase {
         })
     }
 
+    #[must_use]
     pub fn find_no_ext(&self, name: &str) -> Option<&Component> {
         self.components.iter().find(|component| {
             component
@@ -35,6 +37,7 @@ impl ComponentDatabase {
         })
     }
 
+    #[must_use]
     pub fn linked_components(&self, workspace: &Workspace) -> Vec<&Component> {
         let mut start_components = vec![self.kernel()];
         for document in workspace.documents_by_uri.values() {
@@ -42,7 +45,7 @@ impl ComponentDatabase {
                 data.extras
                     .explicit_links
                     .iter()
-                    .filter_map(|link| link.as_component_name())
+                    .filter_map(ExplicitLink::as_component_name)
                     .filter_map(|name| self.find(&name))
                     .for_each(|component| start_components.push(component));
             }
@@ -54,8 +57,8 @@ impl ComponentDatabase {
             component
                 .references
                 .iter()
-                .flat_map(|file| self.find(file))
-                .for_each(|component| all_components.push(component))
+                .filter_map(|file| self.find(file))
+                .for_each(|component| all_components.push(component));
         }
 
         all_components
@@ -64,12 +67,14 @@ impl ComponentDatabase {
             .collect()
     }
 
+    #[must_use]
     pub fn contains(&self, short_name: &str) -> bool {
         let sty = format!("{}.sty", short_name);
         let cls = format!("{}.cls", short_name);
         self.find(&sty).is_some() || self.find(&cls).is_some()
     }
 
+    #[must_use]
     pub fn kernel(&self) -> &Component {
         self.components
             .iter()
@@ -77,12 +82,14 @@ impl ComponentDatabase {
             .unwrap()
     }
 
+    #[must_use]
     pub fn exists(&self, file_name: &str) -> bool {
         self.components
             .iter()
             .any(|component| component.file_names.iter().any(|f| f == file_name))
     }
 
+    #[must_use]
     pub fn documentation(&self, name: &str) -> Option<MarkupContent> {
         let metadata = self
             .metadata

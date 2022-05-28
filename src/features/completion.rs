@@ -71,6 +71,7 @@ use super::{
 
 pub const COMPLETION_LIMIT: usize = 50;
 
+#[must_use]
 pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionList> {
     let mut items = Vec::new();
     let context = CursorContext::new(request);
@@ -172,7 +173,6 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                 token.text().into()
             }
         }
-        Cursor::Latex(_) => "".into(),
         Cursor::Bibtex(token)
             if matches!(
                 token.kind(),
@@ -185,8 +185,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
         {
             token.text().into()
         }
-        Cursor::Bibtex(_) => "".into(),
-        Cursor::Nothing => "".into(),
+        Cursor::Latex(_) | Cursor::Bibtex(_) | Cursor::Nothing => "".into(),
     };
 
     let file_pattern = pattern.split('/').last().unwrap();

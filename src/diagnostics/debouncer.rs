@@ -45,7 +45,7 @@ impl DiagnosticsDebouncer {
                     .unwrap_or(300);
 
                 if let Some(time) = last_task_time_by_uri.get(&document.uri) {
-                    if time.elapsed().as_millis() < delay as u128 {
+                    if time.elapsed().as_millis() < u128::from(delay) {
                         continue;
                     }
                 }

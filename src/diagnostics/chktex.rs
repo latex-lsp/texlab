@@ -54,10 +54,10 @@ pub static LINE_REGEX: Lazy<Regex> =
 fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
     let directory = tempdir()?;
     fs::write(directory.path().join("file.tex"), text)?;
-    let _ = fs::copy(
+    drop(fs::copy(
         current_dir.join("chktexrc"),
         directory.path().join("chktexrc"),
-    );
+    ));
 
     let output = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n", "file.tex"])

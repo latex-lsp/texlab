@@ -22,8 +22,8 @@ pub struct Driver {
 }
 
 impl Driver {
-    pub fn process(&mut self, entry: &bibtex::Entry) -> Option<()> {
-        let entry = EntryData::parse(entry)?;
+    pub fn process(&mut self, entry: &bibtex::Entry) {
+        let entry = EntryData::from(entry);
         match entry.kind {
             EntryKind::Article
             | EntryKind::DataSet
@@ -60,10 +60,10 @@ impl Driver {
             | EntryKind::Report
             | EntryKind::TechReport => self.book_like(entry),
             EntryKind::Patent => self.patent(entry),
-        }
+        };
     }
 
-    fn article_like(&mut self, mut entry: EntryData) -> Option<()> {
+    fn article_like(&mut self, mut entry: EntryData) {
         self.author(&mut entry);
         self.title(&mut entry);
         self.translator(&mut entry);
@@ -99,10 +99,9 @@ impl Driver {
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
-        Some(())
     }
 
-    fn book_like(&mut self, mut entry: EntryData) -> Option<()> {
+    fn book_like(&mut self, mut entry: EntryData) {
         self.author(&mut entry);
         self.title(&mut entry);
         self.inbook_title(&mut entry);
@@ -133,10 +132,9 @@ impl Driver {
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
-        Some(())
     }
 
-    fn patent(&mut self, mut entry: EntryData) -> Option<()> {
+    fn patent(&mut self, mut entry: EntryData) {
         self.author(&mut entry);
         self.title(&mut entry);
         self.patent_number(&mut entry);
@@ -147,7 +145,6 @@ impl Driver {
         self.url(&mut entry);
         self.addendum(&mut entry);
         self.pubstate(&mut entry);
-        Some(())
     }
 
     fn author(&mut self, entry: &mut EntryData) -> Option<()> {
@@ -211,8 +208,7 @@ impl Driver {
         let editor_type = entry
             .text
             .remove(&type_field)
-            .map(|data| data.text)
-            .unwrap_or_else(|| "Ed. by".to_string());
+            .map_or_else(|| "Ed. by".to_string(), |data| data.text);
 
         self.builder.push(
             Inline::Regular(format!("{editor_type} {editor}")),

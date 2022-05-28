@@ -31,6 +31,7 @@ pub enum DocumentData {
 }
 
 impl DocumentData {
+    #[must_use]
     pub fn language(&self) -> DocumentLanguage {
         match self {
             Self::Latex(_) => DocumentLanguage::Latex,
@@ -39,6 +40,7 @@ impl DocumentData {
         }
     }
 
+    #[must_use]
     pub fn as_latex(&self) -> Option<&LatexDocumentData> {
         if let Self::Latex(data) = self {
             Some(data)
@@ -47,6 +49,7 @@ impl DocumentData {
         }
     }
 
+    #[must_use]
     pub fn as_bibtex(&self) -> Option<&BibtexDocumentData> {
         if let Self::Bibtex(data) = self {
             Some(data)
@@ -55,6 +58,7 @@ impl DocumentData {
         }
     }
 
+    #[must_use]
     pub fn as_build_log(&self) -> Option<&build_log::Parse> {
         if let Self::BuildLog(v) = self {
             Some(v)
@@ -79,6 +83,7 @@ impl fmt::Debug for Document {
 }
 
 impl Document {
+    #[must_use]
     pub fn parse(
         environment: &Environment,
         uri: Arc<Url>,
@@ -95,8 +100,7 @@ impl Document {
                     Some(root_dir) => {
                         let root_dir = environment.current_directory.join(&root_dir);
                         Url::from_directory_path(root_dir)
-                            .map(Arc::new)
-                            .unwrap_or_else(|()| Arc::clone(&uri))
+                            .map_or_else(|()| Arc::clone(&uri), Arc::new)
                     }
                     None => Arc::clone(&uri),
                 };

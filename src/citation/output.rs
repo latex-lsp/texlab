@@ -26,31 +26,12 @@ impl Add for Punct {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (Self::Nothing, Self::Nothing) => Self::Nothing,
-            (Self::Nothing, Self::Space)
-            | (Self::Space, Self::Nothing)
-            | (Self::Space, Self::Space) => Self::Space,
-            (Self::Nothing, Self::Comma)
-            | (Self::Space, Self::Comma)
-            | (Self::Comma, Self::Nothing)
-            | (Self::Comma, Self::Space)
-            | (Self::Comma, Self::Comma)
-            | (Self::Comma, Self::Dot)
-            | (Self::Dot, Self::Comma) => Self::Comma,
-            (Self::Nothing, Self::Dot)
-            | (Self::Space, Self::Dot)
-            | (Self::Dot, Self::Nothing)
-            | (Self::Dot, Self::Space)
-            | (Self::Dot, Self::Dot) => Self::Dot,
-            (Self::Nothing, Self::Colon)
-            | (Self::Space, Self::Colon)
-            | (Self::Comma, Self::Colon)
-            | (Self::Dot, Self::Colon)
-            | (Self::Colon, Self::Nothing)
-            | (Self::Colon, Self::Space)
-            | (Self::Colon, Self::Comma)
-            | (Self::Colon, Self::Dot)
-            | (Self::Colon, Self::Colon) => Self::Colon,
+            (Self::Nothing, punct) | (punct, Self::Nothing) => punct,
+            (_, Self::Colon) | (Self::Colon, _) => Self::Colon,
+            (Self::Space, Self::Space) => Self::Space,
+            (Self::Space | Self::Comma | Self::Dot, Self::Comma)
+            | (Self::Comma, Self::Space | Self::Dot) => Self::Comma,
+            (Self::Space | Self::Dot, Self::Dot) | (Self::Dot, Self::Space) => Self::Dot,
         }
     }
 }

@@ -67,8 +67,8 @@ pub struct EntryData {
     pub number: FxHashMap<NumberField, NumberFieldData>,
 }
 
-impl EntryData {
-    pub fn parse(entry: &Entry) -> Option<Self> {
+impl From<&Entry> for EntryData {
+    fn from(entry: &Entry) -> Self {
         let mut data = EntryData {
             kind: entry
                 .type_token()
@@ -81,9 +81,11 @@ impl EntryData {
             let _ = data.parse_field(&field);
         }
 
-        Some(data)
+        data
     }
+}
 
+impl EntryData {
     fn parse_field(&mut self, field: &Field) -> Option<()> {
         let name = field.name_token()?;
         let name = name.text();

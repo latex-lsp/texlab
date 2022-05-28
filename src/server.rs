@@ -874,11 +874,7 @@ fn create_chktex_debouncer(
     let sender = conn.sender.clone();
     DiagnosticsDebouncer::launch(move |workspace, document| {
         let mut manager = manager.lock().unwrap();
-        manager.update_chktex(
-            &workspace,
-            Arc::clone(&document.uri),
-            &workspace.environment.options,
-        );
+        manager.update_chktex(&workspace, &document.uri, &workspace.environment.options);
         if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
             warn!("Failed to publish diagnostics: {}", why);
         }
@@ -891,7 +887,7 @@ fn publish_diagnostics(
     diag_manager: &DiagnosticsManager,
 ) -> Result<()> {
     for document in workspace.documents_by_uri.values() {
-        let diagnostics = diag_manager.publish(Arc::clone(&document.uri));
+        let diagnostics = diag_manager.publish(&document.uri);
         send_notification::<PublishDiagnostics>(
             sender,
             PublishDiagnosticsParams {

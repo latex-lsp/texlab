@@ -14,6 +14,7 @@ pub struct Environment {
 }
 
 impl Environment {
+    #[must_use]
     pub fn new(current_directory: Arc<PathBuf>) -> Self {
         Self {
             current_directory,

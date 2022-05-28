@@ -13,7 +13,7 @@ pub fn complete_entry_types<'a>(
         .cursor
         .as_bibtex()
         .filter(|token| token.kind() == bibtex::TYPE)
-        .map(|token| token.text_range())
+        .map(bibtex::SyntaxToken::text_range)
         .filter(|range| range.start() != context.offset)
         .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))?;
 

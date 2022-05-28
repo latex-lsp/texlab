@@ -75,7 +75,7 @@ pub struct TextFieldData {
 impl TextFieldData {
     pub fn parse(value: &Value) -> Option<Self> {
         let mut builder = TextFieldDataBuilder::default();
-        builder.visit_value(&value)?;
+        builder.visit_value(value)?;
         Some(builder.data)
     }
 }
@@ -90,7 +90,7 @@ impl TextFieldDataBuilder {
     fn visit_value(&mut self, value: &Value) -> Option<()> {
         match value {
             Value::Literal(lit) => {
-                self.visit_literal(lit)?;
+                self.visit_literal(lit);
             }
             Value::CurlyGroup(group) => {
                 self.visit_curly_group(group)?;
@@ -112,7 +112,7 @@ impl TextFieldDataBuilder {
         Some(())
     }
 
-    fn visit_literal(&mut self, lit: &Literal) -> Option<()> {
+    fn visit_literal(&mut self, lit: &Literal) {
         if lit
             .name_token()
             .and_then(|name| self.visit_string_reference(&name))
@@ -122,8 +122,6 @@ impl TextFieldDataBuilder {
                 .text()
                 .for_each_chunk(|text| self.data.text.push_str(text));
         }
-
-        Some(())
     }
 
     fn visit_string_reference(&mut self, name: &SyntaxToken) -> Option<()> {

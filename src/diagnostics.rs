@@ -34,19 +34,20 @@ impl DiagnosticsManager {
         self.static_diagnostics.insert(uri, diagnostics_by_uri);
     }
 
-    pub fn update_chktex(&mut self, workspace: &Workspace, uri: Arc<Url>, options: &Options) {
-        analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, &uri, options);
+    pub fn update_chktex(&mut self, workspace: &Workspace, uri: &Url, options: &Options) {
+        analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, uri, options);
     }
 
-    pub fn publish(&self, uri: Arc<Url>) -> Vec<Diagnostic> {
+    #[must_use]
+    pub fn publish(&self, uri: &Url) -> Vec<Diagnostic> {
         let mut all_diagnostics = Vec::new();
         for diagnostics_by_uri in self.static_diagnostics.values() {
-            if let Some(diagnostics) = diagnostics_by_uri.get_vec(&uri) {
+            if let Some(diagnostics) = diagnostics_by_uri.get_vec(uri) {
                 all_diagnostics.append(&mut diagnostics.clone());
             }
         }
 
-        if let Some(diagnostics) = self.chktex_diagnostics.get_vec(&uri) {
+        if let Some(diagnostics) = self.chktex_diagnostics.get_vec(uri) {
             all_diagnostics.append(&mut diagnostics.clone());
         }
 

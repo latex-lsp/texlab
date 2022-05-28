@@ -42,7 +42,7 @@ pub fn complete_citations<'a>(
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(item) = make_item(document, entry, range) {
+                if let Some(item) = make_item(document, &entry, range) {
                     items.push(item);
                 }
             }
@@ -70,16 +70,18 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
     Some(())
 }
 
-fn make_item(
-    document: &Document,
-    entry: bibtex::Entry,
+fn make_item<'a>(
+    document: &'a Document,
+    entry: &bibtex::Entry,
     range: TextRange,
-) -> Option<InternalCompletionItem> {
+) -> Option<InternalCompletionItem<'a>> {
     let key = entry.name_token()?.to_string();
     let ty = LANGUAGE_DATA
         .find_entry_type(&entry.type_token()?.text()[1..])
-        .map(|ty| Structure::Entry(ty.category))
-        .unwrap_or_else(|| Structure::Entry(BibtexEntryTypeCategory::Misc));
+        .map_or_else(
+            || Structure::Entry(BibtexEntryTypeCategory::Misc),
+            |ty| Structure::Entry(ty.category),
+        );
 
     let entry_code = entry.syntax().text().to_string();
     let text = format!(

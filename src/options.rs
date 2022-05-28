@@ -85,22 +85,26 @@ pub struct BuildOptions {
 }
 
 impl BuildOptions {
+    #[must_use]
     pub fn executable(&self) -> String {
         self.executable
             .as_ref()
-            .map(Clone::clone)
-            .unwrap_or_else(|| "latexmk".to_string())
+            .map_or_else(|| "latexmk".to_string(), Clone::clone)
     }
 
+    #[must_use]
     pub fn args(&self) -> Vec<String> {
-        self.args.as_ref().map(Clone::clone).unwrap_or_else(|| {
-            vec![
-                "-pdf".to_string(),
-                "-interaction=nonstopmode".to_string(),
-                "-synctex=1".to_string(),
-                "%f".to_string(),
-            ]
-        })
+        self.args.as_ref().map_or_else(
+            || {
+                vec![
+                    "-pdf".to_string(),
+                    "-interaction=nonstopmode".to_string(),
+                    "-synctex=1".to_string(),
+                    "%f".to_string(),
+                ]
+            },
+            Clone::clone,
+        )
     }
 }
 

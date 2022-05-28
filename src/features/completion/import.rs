@@ -38,8 +38,7 @@ pub fn complete_imports<'a>(
         file_names.insert(file_name);
         let stem = &file_name[0..file_name.len() - 4];
         let data = factory(stem.into());
-        let item = InternalCompletionItem::new(range, data);
-        items.push(item);
+        items.push(InternalCompletionItem::new(range, data));
     }
 
     let resolver = &context.request.workspace.environment.resolver;
@@ -50,8 +49,7 @@ pub fn complete_imports<'a>(
     {
         let stem = &file_name[0..file_name.len() - 4];
         let data = factory(stem.into());
-        let item = InternalCompletionItem::new(range, data);
-        items.push(item);
+        items.push(InternalCompletionItem::new(range, data));
     }
 
     Some(())

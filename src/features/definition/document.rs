@@ -28,7 +28,7 @@ pub(super) fn goto_document_definition(
             {
                 return Some(vec![DefinitionResult {
                     origin_selection_range: include.stem_range,
-                    target_uri: Arc::clone(&target),
+                    target_uri: Arc::clone(target),
                     target_range: TextRange::default(),
                     target_selection_range: TextRange::default(),
                 }]);

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Url};
 use multimap::MultiMap;
-use rowan::{ast::AstNode, TextRange};
+use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
 use crate::{syntax::latex, Document, LineIndexExt, Workspace};
 
@@ -20,7 +20,7 @@ pub fn analyze_latex_static(
 
     for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
         analyze_environment(document, diagnostics_by_uri, node.clone())
-            .or_else(|| analyze_curly_group(document, diagnostics_by_uri, node.clone()))
+            .or_else(|| analyze_curly_group(document, diagnostics_by_uri, &node))
             .or_else(|| {
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
                     diagnostics_by_uri.insert(
@@ -79,7 +79,7 @@ fn analyze_environment(
 fn analyze_curly_group(
     document: &Document,
     diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
-    node: latex::SyntaxNode,
+    node: &latex::SyntaxNode,
 ) -> Option<()> {
     if !matches!(
         node.kind(),
@@ -105,7 +105,7 @@ fn analyze_curly_group(
     if !is_inside_verbatim_environment
         && !node
             .children_with_tokens()
-            .filter_map(|element| element.into_token())
+            .filter_map(NodeOrToken::into_token)
             .any(|token| token.kind() == latex::R_CURLY)
     {
         diagnostics_by_uri.insert(

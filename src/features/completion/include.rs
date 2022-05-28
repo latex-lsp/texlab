@@ -101,19 +101,21 @@ fn current_dir(
         .options
         .root_directory
         .as_ref()
-        .map(|root_directory| {
-            context
-                .request
-                .workspace
-                .environment
-                .current_directory
-                .join(root_directory)
-        })
-        .unwrap_or_else(|| {
-            let mut path = context.request.main_document().uri.to_file_path().unwrap();
-            path.pop();
-            path
-        });
+        .map_or_else(
+            || {
+                let mut path = context.request.main_document().uri.to_file_path().unwrap();
+                path.pop();
+                path
+            },
+            |root_directory| {
+                context
+                    .request
+                    .workspace
+                    .environment
+                    .current_directory
+                    .join(root_directory)
+            },
+        );
 
     path = PathBuf::from(path.to_str()?.replace('\\', "/"));
     if !path_text.is_empty() {
@@ -133,8 +135,8 @@ fn is_included(file: &Path, allowed_extensions: &[&str]) -> bool {
     allowed_extensions.is_empty()
         || file
             .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|ext| ext.to_lowercase())
+            .and_then(std::ffi::OsStr::to_str)
+            .map(str::to_lowercase)
             .map(|ext| allowed_extensions.contains(&ext.as_str()))
             .unwrap_or_default()
 }
@@ -142,7 +144,7 @@ fn is_included(file: &Path, allowed_extensions: &[&str]) -> bool {
 fn remove_extension(path: &mut PathBuf) {
     if let Some(stem) = path
         .file_stem()
-        .and_then(|stem| stem.to_str())
+        .and_then(std::ffi::OsStr::to_str)
         .map(ToOwned::to_owned)
     {
         path.pop();

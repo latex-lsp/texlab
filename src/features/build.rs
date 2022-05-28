@@ -84,7 +84,7 @@ impl<'a> ProgressReporter<'a> {
 impl<'a> Drop for ProgressReporter<'a> {
     fn drop(&mut self) {
         if self.supports_progress {
-            let _ = client::send_notification::<Progress>(
+            drop(client::send_notification::<Progress>(
                 &self.lsp_sender,
                 ProgressParams {
                     token: NumberOrString::String(self.token.to_string()),
@@ -92,7 +92,7 @@ impl<'a> Drop for ProgressReporter<'a> {
                         WorkDoneProgressEnd { message: None },
                     )),
                 },
-            );
+            ));
         }
     }
 }

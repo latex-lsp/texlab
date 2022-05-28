@@ -41,6 +41,7 @@ pub struct LanguageData {
 }
 
 impl LanguageData {
+    #[must_use]
     pub fn find_entry_type(&self, name: &str) -> Option<&BibtexEntryTypeDoc> {
         let name = name.to_lowercase();
         self.entry_types
@@ -48,11 +49,13 @@ impl LanguageData {
             .find(|ty| ty.name.to_lowercase() == name)
     }
 
+    #[must_use]
     pub fn entry_type_documentation(&self, name: &str) -> Option<&str> {
         self.find_entry_type(name)
             .and_then(|ty| ty.documentation.as_ref().map(AsRef::as_ref))
     }
 
+    #[must_use]
     pub fn field_documentation(&self, name: &str) -> Option<&str> {
         self.fields
             .iter()

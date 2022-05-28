@@ -14,10 +14,12 @@ use crate::{ClientCapabilitiesExt, Workspace};
 
 use self::{
     bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
+    types::InternalSymbol,
 };
 
 use super::FeatureRequest;
 
+#[must_use]
 pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> DocumentSymbolResponse {
     let mut buf = Vec::new();
     find_latex_symbols(&req, &mut buf);
@@ -30,7 +32,7 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
     {
         DocumentSymbolResponse::Nested(
             buf.into_iter()
-                .map(|symbol| symbol.into_document_symbol())
+                .map(InternalSymbol::into_document_symbol)
                 .collect(),
         )
     } else {
@@ -53,6 +55,7 @@ struct WorkspaceSymbol {
     search_text: String,
 }
 
+#[must_use]
 pub fn find_workspace_symbols(
     workspace: &Workspace,
     params: &WorkspaceSymbolParams,

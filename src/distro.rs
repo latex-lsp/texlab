@@ -29,6 +29,7 @@ pub struct Distribution {
 }
 
 impl Distribution {
+    #[must_use]
     pub fn detect() -> Self {
         let kind = match Command::new("latex").arg("--version").output() {
             Ok(output) => {

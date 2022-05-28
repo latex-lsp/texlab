@@ -1,4 +1,8 @@
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{
+    fs::{self, FileType},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -6,7 +10,10 @@ use lsp_types::Url;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment};
+use crate::{
+    component_db::COMPONENT_DATABASE, syntax::latex::ExplicitLink, Document, DocumentLanguage,
+    Environment,
+};
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceEvent {
@@ -22,6 +29,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
+    #[must_use]
     pub fn new(environment: Environment) -> Self {
         Self {
             environment,
@@ -137,6 +145,7 @@ impl Workspace {
             .unwrap_or_default()
     }
 
+    #[must_use]
     pub fn find_parent(&self, uri: &Url) -> Option<Document> {
         self.slice(uri)
             .documents_by_uri
@@ -148,7 +157,7 @@ impl Workspace {
                             .extras
                             .explicit_links
                             .iter()
-                            .filter_map(|link| link.as_component_name())
+                            .filter_map(ExplicitLink::as_component_name)
                             .any(|name| name == "subfiles.cls")
                 })
             })
@@ -168,8 +177,8 @@ impl Workspace {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()
-                        .filter_map(|entry| entry.ok())
-                        .filter(|entry| entry.file_type().ok().filter(|ty| ty.is_file()).is_some())
+                        .filter_map(Result::ok)
+                        .filter(|entry| entry.file_type().ok().filter(FileType::is_file).is_some())
                         .map(|entry| entry.path())
                         .filter(|path| {
                             matches!(
@@ -200,7 +209,7 @@ impl Workspace {
                 }
             }
 
-            all_targets.into_iter().for_each(|targets| {
+            for targets in all_targets {
                 for path in targets
                     .iter()
                     .filter(|uri| uri.scheme() == "file" && uri.fragment().is_none())
@@ -210,7 +219,7 @@ impl Workspace {
                         break;
                     }
                 }
-            });
+            }
         }
     }
 }

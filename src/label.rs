@@ -69,6 +69,7 @@ pub struct RenderedLabel {
 }
 
 impl RenderedLabel {
+    #[must_use]
     pub fn reference(&self) -> String {
         match &self.number {
             Some(number) => match &self.object {
@@ -102,6 +103,7 @@ impl RenderedLabel {
         }
     }
 
+    #[must_use]
     pub fn detail(&self) -> Option<String> {
         match &self.object {
             Section { .. } | Theorem { .. } | Equation | EnumItem => Some(self.reference()),
@@ -115,6 +117,7 @@ impl RenderedLabel {
         }
     }
 
+    #[must_use]
     pub fn documentation(&self) -> MarkupContent {
         MarkupContent {
             kind: MarkupKind::PlainText,

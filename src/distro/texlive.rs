@@ -1,5 +1,5 @@
 use std::{
-    fs, io,
+    fs,
     path::{Path, PathBuf},
     str::Lines,
 };
@@ -23,11 +23,11 @@ fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     }
 
     let text = fs::read_to_string(file)?;
-    let files = parse_database(text.lines())?;
+    let files = parse_database(text.lines());
     Ok(files)
 }
 
-fn parse_database(lines: Lines) -> io::Result<Vec<PathBuf>> {
+fn parse_database(lines: Lines) -> Vec<PathBuf> {
     let mut paths = Vec::new();
     let mut directory = "";
 
@@ -39,5 +39,6 @@ fn parse_database(lines: Lines) -> io::Result<Vec<PathBuf>> {
             paths.push(path);
         }
     }
-    Ok(paths)
+
+    paths
 }

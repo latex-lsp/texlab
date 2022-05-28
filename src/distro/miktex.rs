@@ -18,10 +18,10 @@ pub fn load_resolver() -> Result<Resolver> {
 
 const DATABASE_PATH: &str = "miktex/data/le";
 const FNDB_SIGNATURE: u32 = 0x42_44_4e_46;
-const FNDB_WORD_SIZE: usize = 4;
-const FNDB_TABLE_POINTER_OFFSET: usize = 4 * FNDB_WORD_SIZE;
-const FNDB_TABLE_SIZE_OFFSET: usize = 6 * FNDB_WORD_SIZE;
-const FNDB_ENTRY_SIZE: usize = 4 * FNDB_WORD_SIZE;
+const FNDB_WORD_SIZE: u32 = 4;
+const FNDB_TABLE_POINTER_OFFSET: u32 = 4 * FNDB_WORD_SIZE;
+const FNDB_TABLE_SIZE_OFFSET: u32 = 6 * FNDB_WORD_SIZE;
+const FNDB_ENTRY_SIZE: u32 = 4 * FNDB_WORD_SIZE;
 
 fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
@@ -45,16 +45,16 @@ fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
         return Err(io::ErrorKind::InvalidData.into());
     }
 
-    reader.set_position(FNDB_TABLE_POINTER_OFFSET as u64);
+    reader.set_position(u64::from(FNDB_TABLE_POINTER_OFFSET));
     let table_address = reader.read_u32::<LittleEndian>()?;
 
-    reader.set_position(FNDB_TABLE_SIZE_OFFSET as u64);
+    reader.set_position(u64::from(FNDB_TABLE_SIZE_OFFSET));
     let table_size = reader.read_u32::<LittleEndian>()?;
 
     let mut files = Vec::new();
     for i in 0..table_size {
         let offset = table_address + i * FNDB_ENTRY_SIZE as u32;
-        reader.set_position(offset as u64);
+        reader.set_position(u64::from(offset));
         let file_name_offset = reader.read_u32::<LittleEndian>()? as usize;
         let directory_offset = reader.read_u32::<LittleEndian>()? as usize;
         let file_name = read_string(bytes, file_name_offset)?;

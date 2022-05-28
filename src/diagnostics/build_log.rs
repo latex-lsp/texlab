@@ -55,8 +55,7 @@ pub fn analyze_build_log_static(
                 .relative_path
                 .to_str()
                 .and_then(|path| root_document.uri.join(path).map(Into::into).ok())
-                .map(Arc::new)
-                .unwrap_or_else(|| Arc::clone(&root_document.uri))
+                .map_or_else(|| Arc::clone(&root_document.uri), Arc::new)
         } else {
             Arc::clone(&root_document.uri)
         };

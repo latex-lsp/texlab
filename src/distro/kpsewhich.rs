@@ -18,6 +18,7 @@ pub struct Resolver {
 }
 
 impl Resolver {
+    #[must_use]
     pub fn new(files_by_name: FxHashMap<SmolStr, PathBuf>) -> Self {
         Self { files_by_name }
     }

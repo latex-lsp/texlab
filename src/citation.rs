@@ -9,6 +9,7 @@ use crate::syntax::bibtex;
 
 use self::{driver::Driver, output::Inline};
 
+#[must_use]
 pub fn render(entry: &bibtex::Entry) -> Option<String> {
     let mut output = String::new();
     let mut driver = Driver::default();
