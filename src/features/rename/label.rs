@@ -1,31 +1,28 @@
-use std::collections::HashMap;
+use std::sync::Arc;
 
-use lsp_types::{Range, RenameParams, TextEdit, WorkspaceEdit};
-use rowan::ast::AstNode;
+use lsp_types::RenameParams;
+use rowan::{ast::AstNode, TextRange};
+use rustc_hash::FxHashMap;
 
 use crate::{
     features::cursor::{CursorContext, HasPosition},
     syntax::latex,
-    LineIndexExt,
 };
 
-pub fn prepare_label_rename<P: HasPosition>(context: &CursorContext<P>) -> Option<Range> {
-    let (_, range) = context.find_label_name_key()?;
+use super::{Indel, RenameResult};
 
-    Some(
-        context
-            .request
-            .main_document()
-            .line_index
-            .line_col_lsp_range(range),
-    )
+pub(super) fn prepare_label_rename<P: HasPosition>(
+    context: &CursorContext<P>,
+) -> Option<TextRange> {
+    let (_, range) = context.find_label_name_key()?;
+    Some(range)
 }
 
-pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEdit> {
+pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<RenameResult> {
     prepare_label_rename(context)?;
     let (name_text, _) = context.find_label_name_key()?;
 
-    let mut changes = HashMap::new();
+    let mut changes = FxHashMap::default();
     for document in context.request.workspace.documents_by_uri.values() {
         if let Some(data) = document.data.as_latex() {
             let mut edits = Vec::new();
@@ -34,16 +31,12 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                     .and_then(|label| label.name())
                     .and_then(|name| name.key())
                     .filter(|name| name.to_string() == name_text)
-                    .map(|name| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(latex::small_range(&name))
-                    })
+                    .map(|name| latex::small_range(&name))
                 {
-                    edits.push(TextEdit::new(
-                        range,
-                        context.request.params.new_name.clone(),
-                    ));
+                    edits.push(Indel {
+                        delete: range,
+                        insert: context.request.params.new_name.clone(),
+                    });
                 }
 
                 latex::LabelReference::cast(node.clone())
@@ -51,16 +44,11 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                     .into_iter()
                     .flat_map(|label| label.keys())
                     .filter(|name| name.to_string() == name_text)
-                    .map(|name| {
-                        document
-                            .line_index
-                            .line_col_lsp_range(latex::small_range(&name))
-                    })
-                    .for_each(|range| {
-                        edits.push(TextEdit::new(
-                            range,
-                            context.request.params.new_name.clone(),
-                        ));
+                    .for_each(|name| {
+                        edits.push(Indel {
+                            delete: latex::small_range(&name),
+                            insert: context.request.params.new_name.clone(),
+                        });
                     });
 
                 if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
@@ -69,12 +57,10 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                         .and_then(|name| name.key())
                         .filter(|name| name.to_string() == name_text)
                     {
-                        edits.push(TextEdit::new(
-                            document
-                                .line_index
-                                .line_col_lsp_range(latex::small_range(&name1)),
-                            context.request.params.new_name.clone(),
-                        ));
+                        edits.push(Indel {
+                            delete: latex::small_range(&name1),
+                            insert: context.request.params.new_name.clone(),
+                        });
                     }
 
                     if let Some(name2) = label
@@ -82,61 +68,17 @@ pub fn rename_label(context: &CursorContext<RenameParams>) -> Option<WorkspaceEd
                         .and_then(|name| name.key())
                         .filter(|name| name.to_string() == name_text)
                     {
-                        edits.push(TextEdit::new(
-                            document
-                                .line_index
-                                .line_col_lsp_range(latex::small_range(&name2)),
-                            context.request.params.new_name.clone(),
-                        ));
+                        edits.push(Indel {
+                            delete: latex::small_range(&name2),
+                            insert: context.request.params.new_name.clone(),
+                        });
                     }
                 }
             }
 
-            changes.insert(document.uri.as_ref().clone(), edits);
+            changes.insert(Arc::clone(&document.uri), edits);
         }
     }
 
-    Some(WorkspaceEdit::new(changes))
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{features::testing::FeatureTester, RangeExt};
-
-    use super::*;
-
-    #[test]
-    fn test_label() {
-        let tester = FeatureTester::builder()
-            .files(vec![
-                ("foo.tex", r#"\label{foo}\include{bar}"#),
-                ("bar.tex", r#"\ref{foo}"#),
-                ("baz.tex", r#"\ref{foo}"#),
-            ])
-            .main("foo.tex")
-            .line(0)
-            .character(7)
-            .new_name("bar")
-            .build();
-
-        let uri1 = tester.uri("foo.tex");
-        let uri2 = tester.uri("bar.tex");
-        let request = tester.rename();
-
-        let context = CursorContext::new(request);
-        let actual_edit = rename_label(&context).unwrap();
-
-        let mut expected_changes = HashMap::new();
-        expected_changes.insert(
-            uri1.as_ref().clone(),
-            vec![TextEdit::new(Range::new_simple(0, 7, 0, 10), "bar".into())],
-        );
-        expected_changes.insert(
-            uri2.as_ref().clone(),
-            vec![TextEdit::new(Range::new_simple(0, 5, 0, 8), "bar".into())],
-        );
-        let expected_edit = WorkspaceEdit::new(expected_changes);
-
-        assert_eq!(actual_edit, expected_edit);
-    }
+    Some(RenameResult { changes })
 }
