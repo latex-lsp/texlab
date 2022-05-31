@@ -854,7 +854,7 @@ impl<'a> Parser<'a> {
     fn curly_group_path(&mut self) {
         self.builder.start_node(CURLY_GROUP_WORD.into());
         self.eat();
-        while matches!(self.peek(), Some(WORD)) {
+        while matches!(self.peek(), Some(WORD | L_BRACK | R_BRACK)) {
             self.path();
         }
 
@@ -866,17 +866,20 @@ impl<'a> Parser<'a> {
         self.builder.start_node(CURLY_GROUP_WORD_LIST.into());
         self.eat();
 
-        while self
-            .peek()
-            .filter(|&kind| {
-                matches!(
-                    kind,
-                    LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA | EQUALITY_SIGN
-                )
-            })
-            .is_some()
-        {
-            if self.peek() == Some(WORD) {
+        while self.peek().map_or(false, |kind| {
+            matches!(
+                kind,
+                LINE_BREAK
+                    | WHITESPACE
+                    | COMMENT
+                    | WORD
+                    | COMMA
+                    | EQUALITY_SIGN
+                    | L_BRACK
+                    | R_BRACK
+            )
+        }) {
+            if matches!(self.peek(), Some(WORD | L_BRACK | R_BRACK)) {
                 self.path();
             } else {
                 self.eat();
@@ -890,11 +893,12 @@ impl<'a> Parser<'a> {
     fn path(&mut self) {
         self.builder.start_node(KEY.into());
         self.eat();
-        while self
-            .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD | EQUALITY_SIGN))
-            .is_some()
-        {
+        while self.peek().map_or(false, |kind| {
+            matches!(
+                kind,
+                WHITESPACE | COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK
+            )
+        }) {
             self.eat();
         }
 
@@ -1580,6 +1584,11 @@ mod tests {
     #[test]
     fn test_latex_input_simple() {
         assert_debug_snapshot!(setup(r#"\input{foo/bar.tex}"#));
+    }
+
+    #[test]
+    fn test_latex_input_path_with_brackets() {
+        assert_debug_snapshot!(setup(r#"\input{foo[bar].tex}"#));
     }
 
     #[test]
