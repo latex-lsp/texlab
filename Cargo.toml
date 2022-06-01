@@ -47,7 +47,7 @@ derive_more = "0.99.17"
 encoding_rs = "0.8.31"
 encoding_rs_io = "0.1.7"
 fern = "0.6"
-flate2 = "1.0.23"
+flate2 = "1.0.24"
 fuzzy-matcher = { version = "0.3.7", optional = true }
 human_name = { version = "1.0.3", default-features = false }
 isocountry = "0.3.2"
