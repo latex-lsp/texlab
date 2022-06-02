@@ -1,0 +1,20 @@
+---
+source: src/features/link/tests.rs
+assertion_line: 39
+expression: links
+---
+[
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 7
+      },
+      "end": {
+        "line": 0,
+        "character": 14
+      }
+    },
+    "target": "[tmp]/bar.tex"
+  }
+]
