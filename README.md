@@ -6,14 +6,6 @@
 [![crates.io](https://img.shields.io/crates/v/texlab)](https://crates.io/crates/texlab)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
 
-[![Arch Linux](https://repology.org/badge/version-for-repo/arch/texlab.svg?header=arch%20linux)](https://www.archlinux.org/packages/community/x86_64/texlab/)
-[![NixOS Stable](https://repology.org/badge/version-for-repo/nix_stable/texlab.svg?header=nixos%20stable)](https://nixos.org/nixos/packages.html?channel=nixos-20.03&query=texlab)
-[![NixOS Unstable](https://repology.org/badge/version-for-repo/nix_unstable/texlab.svg?header=nixos%20unstable)](https://nixos.org/nixos/packages.html?channel=nixpkgs-unstable&query=texlab)
-[![Homebrew](https://repology.org/badge/version-for-repo/homebrew/texlab.svg?header=homebrew)](https://formulae.brew.sh/formula/texlab)
-[![Scoop](https://repology.org/badge/version-for-repo/scoop/texlab.svg?header=scoop)](https://scoop.sh/)
-[![FreeBSD](https://repology.org/badge/version-for-repo/freebsd/texlab.svg?header=freebsd)](https://www.freshports.org/devel/texlab)
-[![NetBSD](https://repology.org/badge/version-for-repo/pkgsrc_current/texlab.svg?header=netbsd)](https://pkgsrc.se/print/texlab)
-
 # TexLab
 
 A cross-platform implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol)
@@ -29,7 +21,9 @@ you will need to install it manually.
 We provide [precompiled binaries](https://github.com/latex-lsp/texlab/releases)
 for Windows, Linux and macOS.
 Alternatively, you can build TexLab from source or install it using your package manager.
-For a list of supported package managers, you can take a look at [Repology](https://repology.org/project/texlab/versions).
+For a list of supported package managers, you can take a look at [Repology](https://repology.org/project/texlab/versions):
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/texlab.svg)](https://repology.org/project/texlab/versions)
 
 ### Requirements
 
