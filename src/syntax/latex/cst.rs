@@ -233,7 +233,7 @@ impl Key {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .filter(|node| node.kind() == WORD)
+            .filter(|node| !matches!(node.kind(), WHITESPACE | LINE_BREAK | COMMENT))
     }
 }
 

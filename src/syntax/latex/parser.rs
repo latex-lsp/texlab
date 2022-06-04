@@ -854,7 +854,10 @@ impl<'a> Parser<'a> {
     fn curly_group_path(&mut self) {
         self.builder.start_node(CURLY_GROUP_WORD.into());
         self.eat();
-        while matches!(self.peek(), Some(WORD | L_BRACK | R_BRACK)) {
+        while matches!(
+            self.peek(),
+            Some(WORD | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
+        ) {
             self.path();
         }
 
@@ -877,9 +880,13 @@ impl<'a> Parser<'a> {
                     | EQUALITY_SIGN
                     | L_BRACK
                     | R_BRACK
+                    | GENERIC_COMMAND_NAME
             )
         }) {
-            if matches!(self.peek(), Some(WORD | L_BRACK | R_BRACK)) {
+            if matches!(
+                self.peek(),
+                Some(WORD | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
+            ) {
                 self.path();
             } else {
                 self.eat();
@@ -896,7 +903,13 @@ impl<'a> Parser<'a> {
         while self.peek().map_or(false, |kind| {
             matches!(
                 kind,
-                WHITESPACE | COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK
+                WHITESPACE
+                    | COMMENT
+                    | WORD
+                    | EQUALITY_SIGN
+                    | L_BRACK
+                    | R_BRACK
+                    | GENERIC_COMMAND_NAME
             )
         }) {
             self.eat();
@@ -1619,6 +1632,13 @@ mod tests {
     #[test]
     fn test_graphics_include_complicated_options() {
         assert_debug_snapshot!(setup(r#"\includegraphics[width=0.5\textwidth]{}"#));
+    }
+
+    #[test]
+    fn test_graphics_include_command() {
+        assert_debug_snapshot!(setup(
+            r#"\includegraphics[width=0.5\textwidth]{\foo.\bar.pdf}"#
+        ));
     }
 
     #[test]
