@@ -63,6 +63,3 @@ struct Indel {
 struct RenameResult {
     changes: FxHashMap<Arc<Url>, Vec<Indel>>,
 }
-
-#[cfg(test)]
-mod tests;

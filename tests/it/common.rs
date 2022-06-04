@@ -27,7 +27,7 @@ impl ServerTester {
     pub fn launch_new_instance() -> Result<Self> {
         let directory = tempdir()?;
         let (conn, client) = Connection::memory();
-        let server = Server::with_connection(conn, directory.path().to_path_buf(), false)?;
+        let server = Server::with_connection(conn, directory.path().to_path_buf(), false);
         let handle = thread::spawn(move || server.run().unwrap());
         Ok(Self {
             directory,

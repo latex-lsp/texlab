@@ -53,7 +53,7 @@ impl Server {
         connection: Connection,
         current_dir: PathBuf,
         load_resolver: bool,
-    ) -> Result<Self> {
+    ) -> Self {
         let req_queue = Arc::default();
         let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
         let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
@@ -67,7 +67,7 @@ impl Server {
 
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
 
-        Ok(Self {
+        Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
@@ -78,7 +78,7 @@ impl Server {
             pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
             load_resolver,
             build_engine: Arc::default(),
-        })
+        }
     }
 
     fn spawn(&self, job: impl FnOnce(Self) + Send + 'static) {

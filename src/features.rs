@@ -59,7 +59,7 @@ mod testing {
         ClientCapabilities, ClientInfo, CompletionParams, DocumentFormattingParams,
         DocumentHighlightParams, DocumentLinkParams, FoldingRangeParams, FormattingOptions,
         GotoDefinitionParams, HoverParams, PartialResultParams, Position, ReferenceContext,
-        ReferenceParams, RenameParams, TextDocumentIdentifier, TextDocumentPositionParams,
+        ReferenceParams, TextDocumentIdentifier, TextDocumentPositionParams,
         WorkDoneProgressParams,
     };
     use typed_builder::TypedBuilder;
@@ -79,9 +79,6 @@ mod testing {
 
         #[builder(default)]
         character: u32,
-
-        #[builder(default)]
-        new_name: &'a str,
 
         #[builder(default)]
         include_declaration: bool,
@@ -223,18 +220,6 @@ mod testing {
                 ),
                 work_done_progress_params: WorkDoneProgressParams::default(),
                 partial_result_params: PartialResultParams::default(),
-            };
-            self.request(params)
-        }
-
-        pub fn rename(self) -> FeatureRequest<RenameParams> {
-            let params = RenameParams {
-                text_document_position: TextDocumentPositionParams::new(
-                    self.identifier(),
-                    Position::new(self.line, self.character),
-                ),
-                new_name: self.new_name.to_string(),
-                work_done_progress_params: WorkDoneProgressParams::default(),
             };
             self.request(params)
         }
