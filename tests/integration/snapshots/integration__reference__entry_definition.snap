@@ -1,0 +1,20 @@
+---
+source: tests/integration/reference.rs
+assertion_line: 58
+expression: result
+---
+[
+  {
+    "range": {
+      "end": {
+        "character": 9,
+        "line": 0
+      },
+      "start": {
+        "character": 6,
+        "line": 0
+      }
+    },
+    "uri": "[tmp]/bar.tex"
+  }
+]

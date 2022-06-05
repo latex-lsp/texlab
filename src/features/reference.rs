@@ -39,6 +39,3 @@ struct ReferenceResult {
     uri: Arc<Url>,
     range: TextRange,
 }
-
-#[cfg(test)]
-mod tests;

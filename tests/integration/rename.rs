@@ -1,5 +1,4 @@
 use anyhow::Result;
-use insta::assert_json_snapshot;
 use lsp_types::{notification::DidOpenTextDocument, request::Rename};
 use serde_json::json;
 
@@ -10,7 +9,7 @@ macro_rules! verify {
         let state = $server.shutdown()?;
 
         let path = state.directory.path().to_owned();
-        assert_json_snapshot!(
+        insta::assert_json_snapshot!(
             $result,
             {
                 ".changes.$key" => insta::dynamic_redaction(redact_uri(path)),

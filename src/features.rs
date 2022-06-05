@@ -58,9 +58,8 @@ mod testing {
     use lsp_types::{
         ClientCapabilities, ClientInfo, CompletionParams, DocumentFormattingParams,
         DocumentHighlightParams, DocumentLinkParams, FoldingRangeParams, FormattingOptions,
-        GotoDefinitionParams, HoverParams, PartialResultParams, Position, ReferenceContext,
-        ReferenceParams, TextDocumentIdentifier, TextDocumentPositionParams,
-        WorkDoneProgressParams,
+        GotoDefinitionParams, HoverParams, PartialResultParams, Position, TextDocumentIdentifier,
+        TextDocumentPositionParams, WorkDoneProgressParams,
     };
     use typed_builder::TypedBuilder;
 
@@ -79,9 +78,6 @@ mod testing {
 
         #[builder(default)]
         character: u32,
-
-        #[builder(default)]
-        include_declaration: bool,
 
         #[builder(default)]
         client_capabilities: ClientCapabilities,
@@ -166,21 +162,6 @@ mod testing {
             let text_document = self.identifier();
             let params = FoldingRangeParams {
                 text_document,
-                work_done_progress_params: WorkDoneProgressParams::default(),
-                partial_result_params: PartialResultParams::default(),
-            };
-            self.request(params)
-        }
-
-        pub fn reference(self) -> FeatureRequest<ReferenceParams> {
-            let params = ReferenceParams {
-                text_document_position: TextDocumentPositionParams::new(
-                    self.identifier(),
-                    Position::new(self.line, self.character),
-                ),
-                context: ReferenceContext {
-                    include_declaration: self.include_declaration,
-                },
                 work_done_progress_params: WorkDoneProgressParams::default(),
                 partial_result_params: PartialResultParams::default(),
             };

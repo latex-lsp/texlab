@@ -1,0 +1,20 @@
+---
+source: tests/integration/reference.rs
+assertion_line: 461
+expression: result
+---
+[
+  {
+    "range": {
+      "end": {
+        "character": 26,
+        "line": 2
+      },
+      "start": {
+        "character": 23,
+        "line": 2
+      }
+    },
+    "uri": "[tmp]/main.bib"
+  }
+]
