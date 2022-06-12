@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use lsp_types::Url;
 
@@ -19,24 +19,38 @@ fn find_by_extension(context: &LatexAnalyzerContext, extension: &str) -> Option<
 
         let options = &context.environment.options;
         if let Some(root_dir) = options.root_directory.as_ref() {
-            let path = context
-                .environment
-                .current_directory
-                .join(root_dir)
-                .join(&aux_name);
-            targets.push(Arc::new(Url::from_file_path(path).ok()?));
+            find_inside_directory(context, root_dir, &aux_name, &mut targets)?;
         }
 
         if let Some(build_dir) = options.aux_directory.as_ref() {
-            let path = context
-                .environment
-                .current_directory
-                .join(build_dir)
-                .join(&aux_name);
-            targets.push(Arc::new(Url::from_file_path(path).ok()?));
+            find_inside_directory(context, build_dir, &aux_name, &mut targets)?;
         }
     }
     Some(targets)
+}
+
+fn find_inside_directory(
+    context: &LatexAnalyzerContext,
+    dir: &Path,
+    aux_name: &str,
+    targets: &mut Vec<Arc<Url>>,
+) -> Option<()> {
+    let path = context
+        .environment
+        .current_directory
+        .join(dir)
+        .join(aux_name);
+
+    targets.push(Arc::new(Url::from_file_path(path).ok()?));
+
+    targets.push(Arc::new(
+        context
+            .base_uri
+            .join(&dir.join(aux_name).to_string_lossy())
+            .ok()?,
+    ));
+
+    Some(())
 }
 
 fn with_extension(uri: &Url, extension: &str) -> Option<Url> {

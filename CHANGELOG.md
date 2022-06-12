@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow brackets in included file paths ([#639](https://github.com/latex-lsp/texlab/issues/639))
 - Allow commands in included file paths ([#641](https://github.com/latex-lsp/texlab/issues/641))
+- Improve the heuristic for finding build artifacts ([#635](https://github.com/latex-lsp/texlab/issues/635))
 
 ## [4.0.0] - 25.05.2022
 
