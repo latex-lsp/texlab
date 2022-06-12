@@ -83,8 +83,6 @@ assert_unordered = "0.3.5"
 insta = { version = "1.14.1", features = ["backtrace", "redactions"] }
 glassbench = "0.3.3"
 jod-thread = "0.1.2"
-typed-builder = "0.10.0"
-unindent = "0.1.9"
 
 [profile.release]
 lto = "fat"
