@@ -30,11 +30,11 @@ jobs:
             archive_cmd: brew install gnu-tar; gtar -czvf {0} -C target/aarch64-apple-darwin/release texlab
             archive_type: application/gzip
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
+          override: true
           target: ${{ matrix.target }}
       - name: Compile
         run: cargo build --release --locked
@@ -53,9 +53,21 @@ jobs:
           asset_content_type: ${{ matrix.archive_type }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  crates:
+    name: crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+      - run: cargo publish --token ${CRATES_TOKEN}
+        env:
+          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
   ctan:
     name: CTAN
-    needs: [github]
+    needs: [github, crates]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v3
