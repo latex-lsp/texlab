@@ -57,7 +57,7 @@ human_name = { version = "1.0.3", default-features = false }
 isocountry = "0.3.2"
 itertools = "0.10.1"
 log = "0.4.17"
-logos = "0.12.0"
+logos = "0.12.1"
 lsp-server = "0.6.0"
 lsp-types = "0.93.0"
 multimap = "0.8.3"
