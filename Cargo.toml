@@ -81,7 +81,7 @@ uuid = { version = "1.0.0", features = ["v4"] }
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.3.5" }
-insta = { version = "1.14.0", features = ["backtrace", "redactions"] }
+insta = { version = "1.14.1", features = ["backtrace", "redactions"] }
 jod-thread = "0.1.2"
 typed-builder = "0.10.0"
 unindent = "0.1.9"
