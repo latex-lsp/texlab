@@ -85,7 +85,7 @@ glassbench = "0.3.3"
 jod-thread = "0.1.2"
 
 [profile.release]
-lto = "fat"
+lto = "thin"
 
 [profile.bench]
 lto = "thin"
