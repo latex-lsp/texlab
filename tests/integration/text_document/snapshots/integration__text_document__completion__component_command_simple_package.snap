@@ -1,0 +1,67 @@
+---
+source: tests/integration/text_document/completion.rs
+assertion_line: 394
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lips\n%CUR    ^\n%1.1  ^^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "lipsum.sty",
+    "kind": 1,
+    "label": "lipsum",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lipsum"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "lipsum.sty",
+    "kind": 1,
+    "label": "lipsumexp",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lipsumexp"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "lipsum.sty",
+    "kind": 1,
+    "label": "LipsumPar",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "LipsumPar"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "lipsum.sty",
+    "kind": 1,
+    "label": "LipsumProtect",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "LipsumProtect"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "lipsum.sty",
+    "kind": 1,
+    "label": "LipsumRestoreAll",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "LipsumRestoreAll"
+    }
+  }
+]

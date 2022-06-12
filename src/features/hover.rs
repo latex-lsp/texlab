@@ -51,6 +51,3 @@ struct HoverResult {
     value: String,
     value_kind: MarkupKind,
 }
-
-#[cfg(test)]
-mod tests;

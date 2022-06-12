@@ -1,8 +1,0 @@
----
-source: src/features/formatting/bibtex_internal.rs
-expression: edit.new_text
-
----
-@article{foo,
-	bar = "baz" # "qux",
-}

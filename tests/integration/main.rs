@@ -1,4 +1,4 @@
-mod redaction;
-mod reference;
-mod rename;
-mod server;
+mod client;
+mod fixture;
+mod text_document;
+mod workspace;

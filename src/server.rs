@@ -514,12 +514,19 @@ impl Server {
     {
         self.spawn(move |server| {
             let request = server.feature_request(uri, params);
-            let result = handler(request);
-            server
-                .connection
-                .sender
-                .send(lsp_server::Response::new_ok(id, result).into())
-                .unwrap();
+            if request.workspace.documents_by_uri.is_empty() {
+                let code = lsp_server::ErrorCode::InvalidRequest as i32;
+                let message = "unknown document".to_string();
+                let response = lsp_server::Response::new_err(id, code, message);
+                server.connection.sender.send(response.into()).unwrap();
+            } else {
+                let result = handler(request);
+                server
+                    .connection
+                    .sender
+                    .send(lsp_server::Response::new_ok(id, result).into())
+                    .unwrap();
+            }
         });
 
         Ok(())

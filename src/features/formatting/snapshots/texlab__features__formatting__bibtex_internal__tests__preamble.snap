@@ -1,6 +1,0 @@
----
-source: src/features/formatting/bibtex_internal.rs
-expression: edit.new_text
-
----
-@preamble{"foo bar baz"}

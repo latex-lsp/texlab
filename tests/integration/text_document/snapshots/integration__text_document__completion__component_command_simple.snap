@@ -1,0 +1,69 @@
+---
+source: tests/integration/text_document/completion.rs
+assertion_line: 370
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\\n%CUR  ^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "!",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "!"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "\"",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "\""
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "#",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "#"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "$, built-in",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "$",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "$"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "%",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "%"
+    }
+  }
+]

@@ -1,0 +1,9 @@
+---
+source: tests/integration/text_document/formatting.rs
+assertion_line: 107
+expression: "format(r#\"\n%BIB main.bib\n%SRC @article{foo, bar = \"baz\" # \"qux\"}\"#)?"
+---
+@article{foo,
+    bar = "baz" # "qux",
+}
+

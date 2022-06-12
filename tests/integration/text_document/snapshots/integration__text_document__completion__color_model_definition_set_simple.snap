@@ -1,0 +1,62 @@
+---
+source: tests/integration/text_document/completion.rs
+assertion_line: 309
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolorset{}\n%CUR                 ^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "HTML",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "HTML"
+    }
+  },
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "RGB",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "RGB"
+    }
+  },
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "cmyk",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "cmyk"
+    }
+  },
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "gray",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "gray"
+    }
+  },
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "rgb",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "rgb"
+    }
+  }
+]

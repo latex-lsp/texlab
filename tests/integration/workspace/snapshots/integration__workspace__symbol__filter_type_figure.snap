@@ -1,0 +1,25 @@
+---
+source: tests/integration/workspace/symbol.rs
+assertion_line: 127
+expression: result.actual_symbols
+---
+[
+  {
+    "deprecated": false,
+    "kind": 6,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 15,
+          "character": 0
+        },
+        "end": {
+          "line": 19,
+          "character": 12
+        }
+      }
+    },
+    "name": "Figure 1: Bar"
+  }
+]

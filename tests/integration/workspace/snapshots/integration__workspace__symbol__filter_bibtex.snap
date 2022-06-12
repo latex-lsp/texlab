@@ -1,0 +1,43 @@
+---
+source: tests/integration/workspace/symbol.rs
+assertion_line: 145
+expression: result.actual_symbols
+---
+[
+  {
+    "deprecated": false,
+    "kind": 24,
+    "location": {
+      "uri": "[tmp]/main.bib",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 0
+        },
+        "end": {
+          "line": 0,
+          "character": 14
+        }
+      }
+    },
+    "name": "foo"
+  },
+  {
+    "deprecated": false,
+    "kind": 15,
+    "location": {
+      "uri": "[tmp]/main.bib",
+      "range": {
+        "start": {
+          "line": 2,
+          "character": 0
+        },
+        "end": {
+          "line": 2,
+          "character": 20
+        }
+      }
+    },
+    "name": "bar"
+  }
+]

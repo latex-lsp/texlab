@@ -66,6 +66,3 @@ struct DefinitionResult {
     target_range: TextRange,
     target_selection_range: TextRange,
 }
-
-#[cfg(test)]
-mod tests;

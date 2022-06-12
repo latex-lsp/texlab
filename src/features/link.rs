@@ -31,6 +31,3 @@ struct LinkResult {
     range: TextRange,
     target: Arc<Url>,
 }
-
-#[cfg(test)]
-mod tests;

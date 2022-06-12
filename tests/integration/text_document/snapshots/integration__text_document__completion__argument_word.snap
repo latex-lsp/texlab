@@ -1,0 +1,19 @@
+---
+source: tests/integration/text_document/completion.rs
+assertion_line: 146
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\mathbb{A}\n%CUR         ^\n%1.1         ^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "A",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "A"
+    }
+  }
+]
