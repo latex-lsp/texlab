@@ -86,6 +86,7 @@ jod-thread = "0.1.2"
 
 [profile.release]
 lto = "thin"
+incremental = true
 
 [profile.bench]
 lto = "thin"
