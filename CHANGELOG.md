@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - ??.??.2022
+
+### Added
+
+- Add server commands to clean build directory ([#607](https://github.com/latex-lsp/texlab/issues/607))
+
+### Changed
+
+- Improve output when hovering over BibTeX strings
+
+### Fixed
+
+- Allow brackets in included file paths ([#639](https://github.com/latex-lsp/texlab/issues/639))
+- Allow commands in included file paths ([#641](https://github.com/latex-lsp/texlab/issues/641))
+
 ## [4.0.0] - 25.05.2022
 
 ### Added
