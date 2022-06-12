@@ -3,3 +3,4 @@ target/
 /.idea
 tarpaulin-report.html
 crates/**/Cargo.lock
+glassbench_v1.db
