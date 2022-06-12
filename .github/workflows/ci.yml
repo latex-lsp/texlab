@@ -31,6 +31,7 @@ jobs:
           override: true
           components: rustfmt
           target: ${{ inputs.target }}
+      - uses: Swatinem/rust-cache@v1
       - run: cargo test --all-features --no-run --locked
       - run: cargo test --all-features -- --nocapture --quiet
   cross:
@@ -51,6 +52,7 @@ jobs:
           profile: minimal
           override: true
           target: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v1
       - run: cargo build --all-features --target ${{ matrix.target }}
   coverage:
     name: Coverage
@@ -63,6 +65,7 @@ jobs:
           override: true
           components: llvm-tools-preview, rustfmt
       - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v1
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
