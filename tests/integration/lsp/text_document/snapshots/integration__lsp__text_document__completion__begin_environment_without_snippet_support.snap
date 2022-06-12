@@ -1,0 +1,68 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 215
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "begin",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "begin"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "begingroup",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "begingroup"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "AtBeginDocument",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "AtBeginDocument"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "built-in",
+    "kind": 1,
+    "label": "AtBeginDvi",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "AtBeginDvi"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "⋀, built-in",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "bigwedge",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "bigwedge"
+    }
+  }
+]

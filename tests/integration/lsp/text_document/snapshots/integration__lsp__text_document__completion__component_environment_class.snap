@@ -1,0 +1,19 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 487
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\documentclass{article}\n%SRC \\begin{thein}\n%CUR           ^\n%1.1        ^^^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "article.cls",
+    "kind": 1,
+    "label": "theindex",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "theindex"
+    }
+  }
+]

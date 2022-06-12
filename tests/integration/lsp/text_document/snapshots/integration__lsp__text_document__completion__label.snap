@@ -1,0 +1,73 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 719
+expression: "complete(r#\"\n%TEX foo.tex\n%SRC \\documentclass{article}\n%SRC \n%SRC \\usepackage{amsmath}\n%SRC \\usepackage{caption}\n%SRC \\usepackage{amsthm}\n%SRC \\newtheorem{lemma}{Lemma}\n%SRC \n%SRC \\begin{document}\n%SRC \n%SRC \\section{Foo}%\n%SRC \\label{sec:foo}\n%SRC \n%SRC \\begin{equation}%\n%SRC \\label{eq:foo}\n%SRC     1 + 1 = 2\n%SRC \\end{equation}\n%SRC \n%SRC \\begin{equation}%\n%SRC \\label{eq:bar}\n%SRC     1 + 1 = 2\n%SRC \\end{equation}\n%SRC \n%SRC \\begin{figure}%\n%SRC \\LaTeX{}\n%SRC \\caption{Baz}%\n%SRC \\label{fig:baz}\n%SRC \\end{figure}\n%SRC \n%SRC \\begin{lemma}%\n%SRC \\label{thm:foo}\n%SRC     1 + 1 = 2\n%SRC \\end{lemma}\n%SRC \n%SRC \\include{bar}\n%SRC \n%SRC \\end{document}\n\n%TEX bar.tex\n%SRC \\section{Bar}%\n%SRC \\label{sec:bar}\n%SRC \n%SRC Lorem ipsum dolor sit amet.\n%SRC \\ref{}\n%CUR      ^\n\n%TEX foo.aux\n%SRC \\relax\n%SRC \\@writefile{lof}{\\contentsline {figure}{\\numberline {1}{\\ignorespaces Baz\\relax }}{1}\\protected@file@percent }\n%SRC \\providecommand*\\caption@xref[2]{\\@setref\\relax\\@undefined{#1}}\n%SRC \\newlabel{fig:baz}{{1}{1}}\n%SRC \\@writefile{toc}{\\contentsline {section}{\\numberline {1}Foo}{1}\\protected@file@percent }\n%SRC \\newlabel{sec:foo}{{1}{1}}\n%SRC \\newlabel{eq:foo}{{1}{1}}\n%SRC \\newlabel{eq:bar}{{2}{1}}\n%SRC \\newlabel{thm:foo}{{1}{1}}\n%SRC \\@input{bar.aux}\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "Equation (2)",
+    "filterText": "eq:bar Equation (2)",
+    "kind": 1,
+    "label": "eq:bar",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "eq:bar"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "Equation (1)",
+    "filterText": "eq:foo Equation (1)",
+    "kind": 1,
+    "label": "eq:foo",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "eq:foo"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "Figure 1",
+    "documentation": "[documentation]",
+    "filterText": "fig:baz Figure 1: Baz",
+    "kind": 1,
+    "label": "fig:baz",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "fig:baz"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "Section (Bar)",
+    "filterText": "sec:bar Section (Bar)",
+    "kind": 1,
+    "label": "sec:bar",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "sec:bar"
+    }
+  },
+  {
+    "data": "[data]",
+    "detail": "Section 1 (Foo)",
+    "filterText": "sec:foo Section 1 (Foo)",
+    "kind": 1,
+    "label": "sec:foo",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "sec:foo"
+    }
+  }
+]

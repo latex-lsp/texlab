@@ -1,0 +1,18 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 75
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}\n%SRC \\acrshort{f}\n%CUR           ^\n%1.1           ^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "fpsLabel",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "fpsLabel"
+    }
+  }
+]

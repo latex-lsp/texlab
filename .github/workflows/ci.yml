@@ -17,26 +17,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        toolchain: [stable]
         include:
-          - os: ubuntu-latest
-            toolchain: stable
           - os: ubuntu-18.04
             toolchain: 1.58.1
-          - os: windows-latest
-            toolchain: stable
-          - os: macos-latest
-            toolchain: stable
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
-      - name: Compile
-        run: cargo test --all-features --no-run --locked
-      - name: Test
-        run: cargo test --all-features -- --nocapture --quiet
+          profile: minimal
+          override: true
+          components: rustfmt
+          target: ${{ inputs.target }}
+      - run: cargo test --all-features --no-run --locked
+      - run: cargo test --all-features -- --nocapture --quiet
   cross:
     name: Cross (${{ matrix.target }}, ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
@@ -48,27 +44,25 @@ jobs:
             toolchain: stable
             target: aarch64-apple-darwin
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          override: true
           target: ${{ matrix.target }}
-      - name: Compile
-        run: cargo build --target ${{ matrix.target }}
+      - run: cargo build --all-features --target ${{ matrix.target }}
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
-          components: llvm-tools-preview
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+          profile: minimal
+          override: true
+          components: llvm-tools-preview, rustfmt
+      - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
@@ -76,15 +70,3 @@ jobs:
         with:
           files: lcov.info
           fail_ci_if_error: true
-  format:
-    name: Format (Rustfmt)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: ./.github/actions/install-rust
-        with:
-          components: rustfmt
-      - name: Check formatting
-        run: cargo fmt --check

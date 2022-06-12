@@ -1,0 +1,19 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 838
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\foobar\n%SRC \\fooba\n%CUR    ^\n%1.1  ^^^^^\n%SRC \\begin{foo}\n%SRC \\end{foo}\n%SRC \\begin{fo}\n\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "user-defined",
+    "kind": 1,
+    "label": "foobar",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "foobar"
+    }
+  }
+]

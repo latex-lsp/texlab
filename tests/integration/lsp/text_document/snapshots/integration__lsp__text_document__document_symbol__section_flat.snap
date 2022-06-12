@@ -1,0 +1,61 @@
+---
+source: tests/integration/lsp/text_document/document_symbol.rs
+assertion_line: 316
+expression: result.response
+---
+[
+  {
+    "name": "Foo",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 4,
+          "character": 13
+        }
+      }
+    }
+  },
+  {
+    "name": "Bar",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 31
+        }
+      }
+    }
+  },
+  {
+    "name": "Baz",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 8,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 31
+        }
+      }
+    }
+  }
+]

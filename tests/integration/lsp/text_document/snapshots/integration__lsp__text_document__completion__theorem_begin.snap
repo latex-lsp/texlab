@@ -1,0 +1,19 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 785
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\newtheorem{lemma}{Lemma}\n%SRC \\begin{lem \n%CUR         ^\n%1.1        ^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "detail": "user-defined",
+    "kind": 1,
+    "label": "lemma",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lemma"
+    }
+  }
+]

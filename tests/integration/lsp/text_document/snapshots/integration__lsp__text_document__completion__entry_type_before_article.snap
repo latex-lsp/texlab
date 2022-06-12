@@ -1,0 +1,19 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 552
+expression: "complete(r#\"\n%BIB main.bib\n%SRC @article\n%CUR  ^\n%1.1  ^^^^^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "article",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "article"
+    }
+  }
+]

@@ -1,0 +1,7 @@
+---
+source: tests/integration/lsp/text_document/formatting.rs
+assertion_line: 129
+expression: "format(r#\"\n%BIB main.bib\n%SRC @string{foo=\"bar\"}\"#)?"
+---
+@string{foo = "bar"}
+

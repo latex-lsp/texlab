@@ -1,0 +1,19 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+assertion_line: 286
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\addbibresource{main.bib}\n%SRC \\DeclareAcronym{foo}{cite={}}\n%CUR                            ^\n\n%BIB main.bib\n%SRC @article{foo,}\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "filterText": "foo @article foo",
+    "kind": 1,
+    "label": "foo",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "foo"
+    }
+  }
+]

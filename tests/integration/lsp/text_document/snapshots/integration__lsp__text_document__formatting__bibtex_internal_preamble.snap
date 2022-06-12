@@ -1,0 +1,7 @@
+---
+source: tests/integration/lsp/text_document/formatting.rs
+assertion_line: 140
+expression: "format(r#\"\n%BIB main.bib\n%SRC @preamble{\n%SRC     \"foo bar baz\" }\"#)?"
+---
+@preamble{"foo bar baz"}
+
