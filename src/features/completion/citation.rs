@@ -61,7 +61,9 @@ fn check_citation(context: &CursorContext<CompletionParams>) -> Option<()> {
 fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
     let token = context.cursor.as_latex()?;
 
-    let pair = token.ancestors().find_map(latex::KeyValuePair::cast)?;
+    let pair = token
+        .parent_ancestors()
+        .find_map(latex::KeyValuePair::cast)?;
     if pair.key()?.to_string() != "cite" {
         return None;
     }

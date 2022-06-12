@@ -125,7 +125,7 @@ impl TextFieldDataBuilder {
     }
 
     fn visit_string_reference(&mut self, name: &SyntaxToken) -> Option<()> {
-        let root = Root::cast(name.ancestors().last()?)?;
+        let root = Root::cast(name.parent_ancestors().last()?)?;
         let name = name.text();
 
         let value = root
