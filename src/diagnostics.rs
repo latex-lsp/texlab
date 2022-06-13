@@ -1,56 +1,141 @@
 mod bibtex;
-mod build_log;
+mod build;
 mod chktex;
-mod debouncer;
 mod latex;
 
 use std::sync::Arc;
 
-use lsp_types::{Diagnostic, Url};
-use multimap::MultiMap;
-use rustc_hash::FxHashMap;
+use dashmap::DashMap;
+use lsp_types::{DiagnosticSeverity, NumberOrString, Range, Url};
 
-use crate::{Options, Workspace};
-
-pub use self::debouncer::{DiagnosticsDebouncer, DiagnosticsMessage};
+use crate::Workspace;
 
 use self::{
-    bibtex::analyze_bibtex_static, build_log::analyze_build_log_static,
-    chktex::analyze_latex_chktex, latex::analyze_latex_static,
+    bibtex::collect_bibtex_diagnostics, build::collect_build_diagnostics,
+    chktex::collect_chktex_diagnostics, latex::collect_latex_diagnostics,
 };
 
-#[derive(Default)]
-pub struct DiagnosticsManager {
-    static_diagnostics: FxHashMap<Arc<Url>, MultiMap<Arc<Url>, Diagnostic>>,
-    chktex_diagnostics: MultiMap<Arc<Url>, Diagnostic>,
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Diagnostic {
+    pub severity: DiagnosticSeverity,
+    pub range: Range,
+    pub code: DiagnosticCode,
+    pub message: String,
 }
 
-impl DiagnosticsManager {
-    pub fn update_static(&mut self, workspace: &Workspace, uri: Arc<Url>) {
-        let mut diagnostics_by_uri = MultiMap::new();
-        analyze_build_log_static(workspace, &mut diagnostics_by_uri, &uri);
-        analyze_bibtex_static(workspace, &mut diagnostics_by_uri, &uri);
-        analyze_latex_static(workspace, &mut diagnostics_by_uri, &uri);
-        self.static_diagnostics.insert(uri, diagnostics_by_uri);
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+pub enum DiagnosticCode {
+    Latex(LatexCode),
+    Bibtex(BibtexCode),
+    Chktex(String),
+    Build(Arc<Url>),
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum LatexCode {
+    UnexpectedRCurly,
+    RCurlyInserted,
+    MismatchedEnvironment,
+}
+
+impl From<LatexCode> for String {
+    fn from(code: LatexCode) -> Self {
+        match code {
+            LatexCode::UnexpectedRCurly => "Unexpected \"}\"".to_string(),
+            LatexCode::RCurlyInserted => "Missing \"}\" inserted".to_string(),
+            LatexCode::MismatchedEnvironment => "Mismatched environment".to_string(),
+        }
+    }
+}
+
+impl From<LatexCode> for NumberOrString {
+    fn from(code: LatexCode) -> Self {
+        match code {
+            LatexCode::UnexpectedRCurly => NumberOrString::Number(1),
+            LatexCode::RCurlyInserted => NumberOrString::Number(2),
+            LatexCode::MismatchedEnvironment => NumberOrString::Number(3),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+#[allow(clippy::enum_variant_names)]
+pub enum BibtexCode {
+    ExpectingLCurly,
+    ExpectingKey,
+    ExpectingRCurly,
+    ExpectingEq,
+    ExpectingFieldValue,
+}
+
+impl From<BibtexCode> for String {
+    fn from(code: BibtexCode) -> Self {
+        match code {
+            BibtexCode::ExpectingLCurly => "Expecting a curly bracket: \"{\"".to_string(),
+            BibtexCode::ExpectingKey => "Expecting a key".to_string(),
+            BibtexCode::ExpectingRCurly => "Expecting a curly bracket: \"}\"".to_string(),
+            BibtexCode::ExpectingEq => "Expecting an equality sign: \"=\"".to_string(),
+            BibtexCode::ExpectingFieldValue => "Expecting a field value".to_string(),
+        }
+    }
+}
+
+impl From<BibtexCode> for NumberOrString {
+    fn from(code: BibtexCode) -> Self {
+        match code {
+            BibtexCode::ExpectingLCurly => NumberOrString::Number(4),
+            BibtexCode::ExpectingKey => NumberOrString::Number(5),
+            BibtexCode::ExpectingRCurly => NumberOrString::Number(6),
+            BibtexCode::ExpectingEq => NumberOrString::Number(7),
+            BibtexCode::ExpectingFieldValue => NumberOrString::Number(8),
+        }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct DiagnosticManager {
+    all_diagnostics: Arc<DashMap<Arc<Url>, Vec<Diagnostic>>>,
+}
+
+impl DiagnosticManager {
+    pub fn push_syntax(&self, workspace: &Workspace, uri: &Url) {
+        collect_bibtex_diagnostics(&self.all_diagnostics, workspace, uri)
+            .or_else(|| collect_latex_diagnostics(&self.all_diagnostics, workspace, uri))
+            .or_else(|| collect_build_diagnostics(&self.all_diagnostics, workspace, uri));
     }
 
-    pub fn update_chktex(&mut self, workspace: &Workspace, uri: &Url, options: &Options) {
-        analyze_latex_chktex(workspace, &mut self.chktex_diagnostics, uri, options);
+    pub fn push_chktex(&self, workspace: &Workspace, uri: &Url) {
+        collect_chktex_diagnostics(&self.all_diagnostics, workspace, uri);
     }
 
-    #[must_use]
-    pub fn publish(&self, uri: &Url) -> Vec<Diagnostic> {
-        let mut all_diagnostics = Vec::new();
-        for diagnostics_by_uri in self.static_diagnostics.values() {
-            if let Some(diagnostics) = diagnostics_by_uri.get_vec(uri) {
-                all_diagnostics.append(&mut diagnostics.clone());
+    pub fn publish(&self, uri: &Url) -> Vec<lsp_types::Diagnostic> {
+        let mut results = Vec::new();
+        if let Some(diagnostics) = self.all_diagnostics.get(uri) {
+            for diagnostic in diagnostics.iter() {
+                let source = match diagnostic.code {
+                    DiagnosticCode::Latex(_) | DiagnosticCode::Bibtex(_) => "texlab",
+                    DiagnosticCode::Chktex(_) => "chktex",
+                    DiagnosticCode::Build(_) => "latex-build",
+                };
+
+                let code = match diagnostic.code.clone() {
+                    DiagnosticCode::Latex(code) => Some(code.into()),
+                    DiagnosticCode::Bibtex(code) => Some(code.into()),
+                    DiagnosticCode::Chktex(code) => Some(NumberOrString::String(code)),
+                    DiagnosticCode::Build(_) => None,
+                };
+
+                results.push(lsp_types::Diagnostic {
+                    range: diagnostic.range,
+                    code,
+                    severity: Some(diagnostic.severity),
+                    message: diagnostic.message.clone(),
+                    source: Some(source.to_string()),
+                    ..Default::default()
+                });
             }
         }
 
-        if let Some(diagnostics) = self.chktex_diagnostics.get_vec(uri) {
-            all_diagnostics.append(&mut diagnostics.clone());
-        }
-
-        all_diagnostics
+        results
     }
 }

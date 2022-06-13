@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Url};
-use multimap::MultiMap;
+use dashmap::DashMap;
+use lsp_types::{DiagnosticSeverity, Url};
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
 use crate::{syntax::latex, Document, LineIndexExt, Workspace};
 
-pub fn analyze_latex_static(
+use super::{Diagnostic, DiagnosticCode, LatexCode};
+
+pub fn collect_latex_diagnostics(
+    all_diagnostics: &DashMap<Arc<Url>, Vec<Diagnostic>>,
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     uri: &Url,
 ) -> Option<()> {
     let document = workspace.documents_by_uri.get(uri)?;
@@ -18,25 +20,27 @@ pub fn analyze_latex_static(
 
     let data = document.data.as_latex()?;
 
+    all_diagnostics.alter(uri, |_, mut diagnostics| {
+        diagnostics.retain(|diag| !matches!(diag.code, DiagnosticCode::Latex(_)));
+        diagnostics
+    });
+
     for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        analyze_environment(document, diagnostics_by_uri, node.clone())
-            .or_else(|| analyze_curly_group(document, diagnostics_by_uri, &node))
+        analyze_environment(all_diagnostics, document, node.clone())
+            .or_else(|| analyze_curly_group(all_diagnostics, document, &node))
             .or_else(|| {
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
-                    diagnostics_by_uri.insert(
-                        Arc::clone(&document.uri),
-                        Diagnostic {
+                    let code = LatexCode::UnexpectedRCurly;
+                    all_diagnostics
+                        .entry(Arc::clone(&document.uri))
+                        .or_default()
+                        .push(Diagnostic {
+                            severity: DiagnosticSeverity::ERROR,
                             range: document.line_index.line_col_lsp_range(node.text_range()),
-                            severity: Some(DiagnosticSeverity::ERROR),
-                            code: Some(NumberOrString::Number(1)),
-                            code_description: None,
-                            source: Some("texlab".to_string()),
-                            message: "Unexpected \"}\"".to_string(),
-                            related_information: None,
-                            tags: None,
-                            data: None,
-                        },
-                    );
+                            code: DiagnosticCode::Latex(code),
+                            message: String::from(code),
+                        });
+
                     Some(())
                 } else {
                     None
@@ -48,37 +52,33 @@ pub fn analyze_latex_static(
 }
 
 fn analyze_environment(
+    all_diagnostics: &DashMap<Arc<Url>, Vec<Diagnostic>>,
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: latex::SyntaxNode,
 ) -> Option<()> {
     let environment = latex::Environment::cast(node)?;
     let name1 = environment.begin()?.name()?.key()?;
     let name2 = environment.end()?.name()?.key()?;
     if name1 != name2 {
-        diagnostics_by_uri.insert(
-            Arc::clone(&document.uri),
-            Diagnostic {
+        let code = LatexCode::MismatchedEnvironment;
+        all_diagnostics
+            .entry(Arc::clone(&document.uri))
+            .or_default()
+            .push(Diagnostic {
+                severity: DiagnosticSeverity::ERROR,
                 range: document
                     .line_index
                     .line_col_lsp_range(latex::small_range(&name1)),
-                severity: Some(DiagnosticSeverity::ERROR),
-                code: Some(NumberOrString::Number(3)),
-                code_description: None,
-                source: Some("texlab".to_string()),
-                message: "Mismatched environment".to_string(),
-                related_information: None,
-                tags: None,
-                data: None,
-            },
-        );
+                code: DiagnosticCode::Latex(code),
+                message: String::from(code),
+            });
     }
     Some(())
 }
 
 fn analyze_curly_group(
+    all_diagnostics: &DashMap<Arc<Url>, Vec<Diagnostic>>,
     document: &Document,
-    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     node: &latex::SyntaxNode,
 ) -> Option<()> {
     if !matches!(
@@ -108,22 +108,18 @@ fn analyze_curly_group(
             .filter_map(NodeOrToken::into_token)
             .any(|token| token.kind() == latex::R_CURLY)
     {
-        diagnostics_by_uri.insert(
-            Arc::clone(&document.uri),
-            Diagnostic {
+        let code = LatexCode::RCurlyInserted;
+        all_diagnostics
+            .entry(Arc::clone(&document.uri))
+            .or_default()
+            .push(Diagnostic {
+                severity: DiagnosticSeverity::ERROR,
                 range: document
                     .line_index
                     .line_col_lsp_range(TextRange::empty(node.text_range().end())),
-                severity: Some(DiagnosticSeverity::ERROR),
-                code: Some(NumberOrString::Number(2)),
-                code_description: None,
-                source: Some("texlab".to_string()),
-                message: "Missing \"}\" inserted".to_string(),
-                related_information: None,
-                tags: None,
-                data: None,
-            },
-        );
+                code: DiagnosticCode::Latex(code),
+                message: String::from(code),
+            });
     }
 
     Some(())

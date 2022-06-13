@@ -20,8 +20,8 @@ pub struct Options {
     #[serde(default)]
     pub formatter_line_length: Option<i32>,
 
-    #[serde(default)]
-    pub diagnostics_delay: Option<u64>,
+    #[serde(default = "default_diagnostics_delay")]
+    pub diagnostics_delay: u64,
 
     #[serde(default)]
     pub build: BuildOptions,
@@ -34,6 +34,10 @@ pub struct Options {
 
     #[serde(default)]
     pub forward_search: ForwardSearchOptions,
+}
+
+fn default_diagnostics_delay() -> u64 {
+    300
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -115,6 +119,7 @@ pub struct ChktexOptions {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ForwardSearchOptions {
     #[serde(default)]
     pub executable: Option<String>,
