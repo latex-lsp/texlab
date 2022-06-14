@@ -5,8 +5,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
+    #[serde(default)]
     pub root_directory: Option<PathBuf>,
 
+    #[serde(default)]
     pub aux_directory: Option<PathBuf>,
 
     #[serde(default)]
@@ -15,8 +17,10 @@ pub struct Options {
     #[serde(default)]
     pub latex_formatter: LatexFormatter,
 
+    #[serde(default)]
     pub formatter_line_length: Option<i32>,
 
+    #[serde(default)]
     pub diagnostics_delay: Option<u64>,
 
     #[serde(default)]
@@ -61,6 +65,7 @@ impl Default for LatexFormatter {
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LatexindentOptions {
+    #[serde(default)]
     pub local: Option<String>,
 
     #[serde(default)]
@@ -70,9 +75,11 @@ pub struct LatexindentOptions {
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildOptions {
-    pub executable: Option<String>,
+    #[serde(default = "default_build_executable")]
+    pub executable: String,
 
-    pub args: Option<Vec<String>>,
+    #[serde(default = "default_build_args")]
+    pub args: Vec<String>,
 
     #[serde(default)]
     pub is_continuous: bool,
@@ -84,39 +91,17 @@ pub struct BuildOptions {
     pub forward_search_after: bool,
 }
 
-impl BuildOptions {
-    #[must_use]
-    pub fn executable(&self) -> String {
-        self.executable
-            .as_ref()
-            .map_or_else(|| "latexmk".to_string(), Clone::clone)
-    }
-
-    #[must_use]
-    pub fn args(&self) -> Vec<String> {
-        self.args.as_ref().map_or_else(
-            || {
-                vec![
-                    "-pdf".to_string(),
-                    "-interaction=nonstopmode".to_string(),
-                    "-synctex=1".to_string(),
-                    "%f".to_string(),
-                ]
-            },
-            Clone::clone,
-        )
-    }
+fn default_build_executable() -> String {
+    "latexmk".to_string()
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ViewerOptions {
-    #[serde(default)]
-    pub enabled: bool,
-
-    pub executable: Option<String>,
-
-    pub args: Option<String>,
+fn default_build_args() -> Vec<String> {
+    vec![
+        "-pdf".to_string(),
+        "-interaction=nonstopmode".to_string(),
+        "-synctex=1".to_string(),
+        "%f".to_string(),
+    ]
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -131,6 +116,9 @@ pub struct ChktexOptions {
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 pub struct ForwardSearchOptions {
+    #[serde(default)]
     pub executable: Option<String>,
+
+    #[serde(default)]
     pub args: Option<Vec<String>>,
 }
