@@ -1,7 +1,7 @@
 use std::{env, fs::OpenOptions, io, path::PathBuf};
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use log::LevelFilter;
 use lsp_server::Connection;
 use texlab::Server;
@@ -11,7 +11,7 @@ use texlab::Server;
 #[clap(version)]
 struct Opts {
     /// Increase message verbosity (-vvvv for max verbosity)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     verbosity: u8,
 
     /// No output printed to stderr
@@ -19,7 +19,7 @@ struct Opts {
     quiet: bool,
 
     /// Write the logging output to FILE
-    #[clap(long, name = "FILE", parse(from_os_str))]
+    #[clap(long, name = "FILE", value_parser)]
     log_file: Option<PathBuf>,
 
     /// Print version information and exit
