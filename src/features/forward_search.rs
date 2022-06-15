@@ -86,6 +86,73 @@ pub fn execute_forward_search(
     Some(ForwardSearchResult { status })
 }
 
+/// Iterate overs chunks of a string. Either returns a slice of the
+/// original string, or the placeholder replacement.
+pub struct PlaceHolderIterator<'a> {
+	remainder: &'a str,
+	tex_file: &'a str,
+	pdf_file: &'a str,
+	line_number: &'a str,
+}
+
+impl<'a> PlaceHolderIterator<'a> {
+	pub fn new(s: &'a str, tex_file: &'a str, pdf_file: &'a str, line_number: &'a str) -> Self {
+		Self {
+			remainder: s,
+			tex_file,
+			pdf_file,
+			line_number,
+		}
+	}
+
+	pub fn yield_remainder(&mut self) -> Option<&'a str> {
+		let chunk = self.remainder;
+		self.remainder = "";
+		Some(chunk)
+	}
+
+	pub fn yield_placeholder(&mut self) -> Option<&'a str> {
+    	if self.remainder.len() >= 2 {
+			let placeholder = self.remainder;
+			self.remainder = &self.remainder[2..];
+			match &placeholder[1..2] {
+				"f" => Some(self.tex_file),
+				"p" => Some(self.pdf_file),
+				"l" => Some(self.line_number),
+				"%" => Some("%"), // escape %
+				_ => Some(&placeholder[0..2])
+			}
+    	} else {
+        	self.remainder = &self.remainder[1..];
+        	Some("%")
+    	}
+	}
+
+	pub fn yield_str(&mut self, end: usize) -> Option<&'a str> {
+		let chunk = &self.remainder[..end];
+		self.remainder = &self.remainder[end..];
+		Some(chunk)
+	}
+}
+
+impl<'a> Iterator for PlaceHolderIterator<'a> {
+	type Item = &'a str;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		return if self.remainder.is_empty() {
+			None
+		} else if self.remainder.starts_with("%") {
+			self.yield_placeholder()
+		} else {
+    		// yield up to the next % or to the end
+			match self.remainder.find("%") {
+				None => self.yield_remainder(),
+				Some(end) => self.yield_str(end),
+			}
+		};
+	}
+}
+
 fn replace_placeholder(
     tex_file: &Path,
     pdf_file: &Path,
@@ -95,10 +162,9 @@ fn replace_placeholder(
     let result = if argument.starts_with('"') || argument.ends_with('"') {
         argument.to_string()
     } else {
-        argument
-            .replace("%f", tex_file.to_str()?)
-            .replace("%p", pdf_file.to_str()?)
-            .replace("%l", &(line_number + 1).to_string())
+        let line = &(line_number + 1).to_string();
+        let it = PlaceHolderIterator::new(argument, tex_file.to_str()?, pdf_file.to_str()?, line);
+        it.collect::<Vec<&str>>().join("")
     };
     Some(result)
 }

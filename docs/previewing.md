@@ -97,7 +97,7 @@ Add the following lines to your editor config:
 ```json
 {
   "texlab.forwardSearch.executable": "okular",
-  "texlab.forwardSearch.args": ["--unique", "file:%p#src:%l%f"]
+  "texlab.forwardSearch.args": ["--editor-cmd": "code -g \"%%f\":%%l", "--unique", "file:%p#src:%l%f"]
 }
 ```
 
