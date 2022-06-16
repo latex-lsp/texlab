@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     #[serde(default)]
@@ -19,6 +20,9 @@ pub struct Options {
 
     #[serde(default)]
     pub formatter_line_length: Option<i32>,
+
+    #[serde(default)]
+    pub diagnostics: DiagnosticsOptions,
 
     #[serde(default = "default_diagnostics_delay")]
     pub diagnostics_delay: u64,
@@ -127,3 +131,16 @@ pub struct ForwardSearchOptions {
     #[serde(default)]
     pub args: Option<Vec<String>>,
 }
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiagnosticsOptions {
+    #[serde(default)]
+    pub allowed_patterns: Vec<DiagnosticsPattern>,
+
+    #[serde(default)]
+    pub ignored_patterns: Vec<DiagnosticsPattern>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticsPattern(#[serde(with = "serde_regex")] pub Regex);

@@ -33,7 +33,7 @@ use crate::{
 #[derive(Debug)]
 enum InternalMessage {
     SetDistro(Distribution),
-    SetOptions(Options),
+    SetOptions(Arc<Options>),
 }
 
 #[derive(Clone)]
@@ -297,7 +297,7 @@ impl Server {
                 };
 
                 self.internal_tx
-                    .send(InternalMessage::SetOptions(options))
+                    .send(InternalMessage::SetOptions(Arc::new(options)))
                     .unwrap();
             }
             Err(why) => {
@@ -833,7 +833,7 @@ impl Server {
                             self.reparse_all()?;
                         }
                         InternalMessage::SetOptions(options) => {
-                            self.workspace.environment.options = Arc::new(options);
+                            self.workspace.environment.options = options;
                             self.reparse_all()?;
                         }
                     };
@@ -857,7 +857,7 @@ fn create_debouncer(
     let (tx, rx) = debouncer::unbounded();
     std::thread::spawn(move || {
         while let Ok(workspace) = rx.recv() {
-            if let Err(why) = publish_diagnostics(&lsp_sender, &workspace, &diagnostic_manager) {
+            if let Err(why) = publish_diagnostics(&lsp_sender, &diagnostic_manager, &workspace) {
                 warn!("Failed to publish diagnostics: {}", why);
             }
         }
@@ -867,14 +867,14 @@ fn create_debouncer(
 }
 
 fn publish_diagnostics(
-    sender: &Sender<lsp_server::Message>,
-    workspace: &Workspace,
+    lsp_sender: &Sender<lsp_server::Message>,
     diagnostic_manager: &DiagnosticManager,
+    workspace: &Workspace,
 ) -> Result<()> {
     for document in workspace.documents_by_uri.values() {
-        let diagnostics = diagnostic_manager.publish(&document.uri);
+        let diagnostics = diagnostic_manager.publish(workspace, &document.uri);
         send_notification::<PublishDiagnostics>(
-            sender,
+            lsp_sender,
             PublishDiagnosticsParams {
                 uri: document.uri.as_ref().clone(),
                 version: None,

@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use dashmap::DashMap;
 use lsp_types::{DiagnosticSeverity, NumberOrString, Range, Url};
+use regex::Regex;
 
 use crate::Workspace;
 
@@ -108,10 +109,29 @@ impl DiagnosticManager {
         collect_chktex_diagnostics(&self.all_diagnostics, workspace, uri);
     }
 
-    pub fn publish(&self, uri: &Url) -> Vec<lsp_types::Diagnostic> {
+    pub fn publish(&self, workspace: &Workspace, uri: &Url) -> Vec<lsp_types::Diagnostic> {
+        let options = &workspace.environment.options.diagnostics;
+
         let mut results = Vec::new();
         if let Some(diagnostics) = self.all_diagnostics.get(uri) {
             for diagnostic in diagnostics.iter() {
+                if !options.allowed_patterns.is_empty()
+                    && !options
+                        .allowed_patterns
+                        .iter()
+                        .any(|pattern| pattern.0.is_match(&diagnostic.message))
+                {
+                    continue;
+                }
+
+                if options
+                    .ignored_patterns
+                    .iter()
+                    .any(|pattern| pattern.0.is_match(&diagnostic.message))
+                {
+                    continue;
+                }
+
                 let source = match diagnostic.code {
                     DiagnosticCode::Latex(_) | DiagnosticCode::Bibtex(_) => "texlab",
                     DiagnosticCode::Chktex(_) => "chktex",
@@ -138,4 +158,10 @@ impl DiagnosticManager {
 
         results
     }
+}
+
+#[derive(Debug, Default)]
+pub struct DiagnosticFilter {
+    pub allowed_patterns: Vec<Regex>,
+    pub ignored_patterns: Vec<Regex>,
 }

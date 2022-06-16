@@ -77,6 +77,8 @@ In this case, use the `-outdir` flag for `latexmk`.
 
 **Default value:** `.` (the same directory as the TeX file)
 
+---
+
 ## texlab.forwardSearch.executable
 
 Defines the executable of the PDF previewer.
@@ -132,6 +134,30 @@ Delay in milliseconds before reporting diagnostics.
 **Type:** `integer`
 
 **Default value:** `300`
+
+---
+
+## texlab.diagnostics.allowedPatterns
+
+A list of regular expressions used to filter the list of reported diagnostics.
+If specified, only diagnostics that match _at least one_ of the specified patterns
+are sent to the client.
+
+**Type:** `RegExp[]`
+
+**Default value:** `[]`
+
+---
+
+## texlab.diagnostics.ignoredPatterns
+
+A list of regular expressions used to filter the list of reported diagnostics.
+If specified, only diagnostics that match _none_ of the specified patterns
+are sent to the client.
+
+**Type:** `RegExp[]`
+
+**Default value:** `[]`
 
 ---
 
