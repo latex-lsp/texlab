@@ -26,8 +26,8 @@ use crate::{
         ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, Document, DocumentLanguage, Environment, LineIndex, LineIndexExt,
-    Options, Workspace, WorkspaceEvent,
+    ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
+    LineIndexExt, Options, Workspace, WorkspaceEvent,
 };
 
 #[derive(Debug)]
@@ -872,6 +872,10 @@ fn publish_diagnostics(
     workspace: &Workspace,
 ) -> Result<()> {
     for document in workspace.documents_by_uri.values() {
+        if matches!(document.data, DocumentData::BuildLog(_)) {
+            continue;
+        }
+
         let diagnostics = diagnostic_manager.publish(workspace, &document.uri);
         send_notification::<PublishDiagnostics>(
             lsp_sender,
