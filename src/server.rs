@@ -167,7 +167,7 @@ impl Server {
         self.spawn(move |server| {
             server.register_config_capability();
             server.register_file_watching();
-            server.pull_config();
+            let _ = server.pull_config();
         });
 
         Ok(())
@@ -264,14 +264,14 @@ impl Server {
         req_queue.incoming.register(id, IncomingData);
     }
 
-    fn pull_config(&self) {
+    fn pull_config(&self) -> Result<()> {
         if !self
             .workspace
             .environment
             .client_capabilities
             .has_pull_configuration_support()
         {
-            return;
+            return Ok(());
         }
 
         let params = ConfigurationParams {
@@ -288,14 +288,7 @@ impl Server {
         ) {
             Ok(mut json) => {
                 let value = json.pop().expect("invalid configuration request");
-                let options = match serde_json::from_value(value) {
-                    Ok(new_options) => new_options,
-                    Err(why) => {
-                        warn!("Invalid configuration section \"texlab\": {}", why);
-                        Options::default()
-                    }
-                };
-
+                let options = self.parse_options(value)?;
                 self.internal_tx
                     .send(InternalMessage::SetOptions(Arc::new(options)))
                     .unwrap();
@@ -304,6 +297,29 @@ impl Server {
                 error!("Retrieving configuration failed: {}", why);
             }
         };
+
+        Ok(())
+    }
+
+    fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
+        let options = match serde_json::from_value(value) {
+            Ok(new_options) => new_options,
+            Err(why) => {
+                send_notification::<ShowMessage>(
+                    &self.connection.sender,
+                    ShowMessageParams {
+                        message: format!(
+                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
+                        ),
+                        typ: MessageType::WARNING,
+                    },
+                )?;
+
+                Options::default()
+            }
+        };
+
+        Ok(options)
     }
 
     fn cancel(&self, params: CancelParams) -> Result<()> {
@@ -344,18 +360,11 @@ impl Server {
             .has_pull_configuration_support()
         {
             self.spawn(move |server| {
-                server.pull_config();
+                let _ = server.pull_config();
             });
         } else {
-            match serde_json::from_value(params.settings) {
-                Ok(options) => {
-                    self.workspace.environment.options = Arc::new(options);
-                }
-                Err(why) => {
-                    error!("Invalid configuration: {}", why);
-                }
-            };
-
+            let options = self.parse_options(params.settings)?;
+            self.workspace.environment.options = Arc::new(options);
             self.reparse_all()?;
         }
 
