@@ -7,5 +7,6 @@ mod document_symbol;
 mod folding_range;
 mod formatting;
 mod hover;
+mod publish_diagnostics;
 mod references;
 mod rename;
