@@ -143,6 +143,12 @@ A list of regular expressions used to filter the list of reported diagnostics.
 If specified, only diagnostics that match _at least one_ of the specified patterns
 are sent to the client.
 
+See also [`texlab.diagnostics.ignoredPatterns`](#texlabdiagnosticsignoredpatterns).
+
+_Hint_:
+If both `allowedPatterns` and `ignoredPatterns` are set,
+then allowed patterns are applied first. Afterwards, the results are filtered with the ignored patterns.
+
 **Type:** `RegExp[]`
 
 **Default value:** `[]`
@@ -154,6 +160,8 @@ are sent to the client.
 A list of regular expressions used to filter the list of reported diagnostics.
 If specified, only diagnostics that match _none_ of the specified patterns
 are sent to the client.
+
+See also [`texlab.diagnostics.allowedPatterns`](#texlabdiagnosticsallowedpatterns).
 
 **Type:** `RegExp[]`
 
