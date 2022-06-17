@@ -5,8 +5,8 @@ version = "4.1.0"
 license = "GPL-3.0"
 readme = "README.md"
 authors = [
-    "Eric Förster <eric.foerster@outlook.com>",
-    "Patrick Förster <patrick.foerster@outlook.de>",
+  "Eric Förster <eric.foerster@outlook.com>",
+  "Patrick Förster <patrick.foerster@outlook.de>",
 ]
 edition = "2021"
 rust-version = "1.58.1"
@@ -16,14 +16,14 @@ documentation = "https://github.com/latex-lsp/texlab"
 keywords = ["lsp", "server", "latex", "bibtex"]
 categories = ["development-tools"]
 exclude = [
-    ".gitattributes",
-    ".gitignore",
-    ".github/**",
-    "tests/it/**",
-    "*.snap",
-    "texlab.1",
-    "texlab.pdf",
-    "texlab.tex",
+  ".gitattributes",
+  ".gitignore",
+  ".github/**",
+  "tests/it/**",
+  "*.snap",
+  "texlab.1",
+  "texlab.pdf",
+  "texlab.tex",
 ]
 
 [[bin]]
@@ -42,8 +42,8 @@ anyhow = "1.0.57"
 byteorder = "1.4.3"
 chrono = { version = "0.4.19", default-features = false, features = ["std"] }
 clap = { version = "3.2.5", features = [
-    "std",
-    "derive",
+  "std",
+  "derive",
 ], default-features = false }
 crossbeam-channel = "0.5.4"
 dashmap = "~5.2.0"
@@ -71,7 +71,7 @@ serde_json = "1.0.81"
 serde_regex = "1.1.0"
 serde_repr = "0.1.8"
 smol_str = { version = "0.1.23", features = ["serde"] }
-strum = { version = "0.24.1", features = ["derive"] }
+strum = { version = "0.24.0", features = ["derive"] }
 tempfile = "3.3.0"
 threadpool = "1.8.1"
 titlecase = "2.0.0"
