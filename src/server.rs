@@ -1,6 +1,7 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use anyhow::Result;
@@ -13,7 +14,8 @@ use threadpool::ThreadPool;
 
 use crate::{
     client::{send_notification, send_request},
-    diagnostics::{DiagnosticsDebouncer, DiagnosticsManager, DiagnosticsMessage},
+    debouncer,
+    diagnostics::DiagnosticManager,
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
@@ -24,14 +26,14 @@ use crate::{
         ForwardSearchStatus,
     },
     req_queue::{IncomingData, ReqQueue},
-    ClientCapabilitiesExt, DocumentLanguage, Environment, LineIndex, LineIndexExt, Options,
-    Workspace, WorkspaceEvent,
+    ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
+    LineIndexExt, Options, Workspace, WorkspaceEvent,
 };
 
 #[derive(Debug)]
 enum InternalMessage {
     SetDistro(Distribution),
-    SetOptions(Options),
+    SetOptions(Arc<Options>),
 }
 
 #[derive(Clone)]
@@ -41,8 +43,8 @@ pub struct Server {
     internal_rx: Receiver<InternalMessage>,
     req_queue: Arc<Mutex<ReqQueue>>,
     workspace: Workspace,
-    static_debouncer: Arc<DiagnosticsDebouncer>,
-    chktex_debouncer: Arc<DiagnosticsDebouncer>,
+    diagnostic_tx: debouncer::Sender<Workspace>,
+    diagnostic_manager: DiagnosticManager,
     pool: Arc<Mutex<ThreadPool>>,
     load_resolver: bool,
     build_engine: Arc<BuildEngine>,
@@ -56,25 +58,17 @@ impl Server {
     ) -> Self {
         let req_queue = Arc::default();
         let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
-        let diag_manager = Arc::new(Mutex::new(DiagnosticsManager::default()));
-
-        let static_debouncer = Arc::new(create_static_debouncer(
-            Arc::clone(&diag_manager),
-            &connection,
-        ));
-
-        let chktex_debouncer = Arc::new(create_chktex_debouncer(diag_manager, &connection));
-
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
-
+        let diagnostic_manager = DiagnosticManager::default();
+        let diagnostic_tx = create_debouncer(connection.sender.clone(), diagnostic_manager.clone());
         Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
             req_queue,
             workspace,
-            static_debouncer,
-            chktex_debouncer,
+            diagnostic_tx,
+            diagnostic_manager,
             pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
             load_resolver,
             build_engine: Arc::default(),
@@ -173,7 +167,7 @@ impl Server {
         self.spawn(move |server| {
             server.register_config_capability();
             server.register_file_watching();
-            server.pull_config();
+            let _ = server.pull_config();
         });
 
         Ok(())
@@ -246,19 +240,17 @@ impl Server {
 
     fn register_diagnostics_handler(&mut self) {
         let (event_sender, event_receiver) = crossbeam_channel::unbounded();
-        let diag_sender = self.static_debouncer.sender.clone();
+        let diagnostic_tx = self.diagnostic_tx.clone();
+        let diagnostic_manager = self.diagnostic_manager.clone();
         std::thread::spawn(move || {
             for event in event_receiver {
                 match event {
                     WorkspaceEvent::Changed(workspace, document) => {
-                        let message = DiagnosticsMessage::Analyze {
-                            workspace,
-                            document,
-                        };
-
-                        if diag_sender.send(message).is_err() {
-                            break;
-                        }
+                        diagnostic_manager.push_syntax(&workspace, &document.uri);
+                        let delay = workspace.environment.options.diagnostics_delay;
+                        diagnostic_tx
+                            .send(workspace, Duration::from_millis(delay))
+                            .unwrap();
                     }
                 };
             }
@@ -272,14 +264,14 @@ impl Server {
         req_queue.incoming.register(id, IncomingData);
     }
 
-    fn pull_config(&self) {
+    fn pull_config(&self) -> Result<()> {
         if !self
             .workspace
             .environment
             .client_capabilities
             .has_pull_configuration_support()
         {
-            return;
+            return Ok(());
         }
 
         let params = ConfigurationParams {
@@ -296,22 +288,38 @@ impl Server {
         ) {
             Ok(mut json) => {
                 let value = json.pop().expect("invalid configuration request");
-                let options = match serde_json::from_value(value) {
-                    Ok(new_options) => new_options,
-                    Err(why) => {
-                        warn!("Invalid configuration section \"texlab\": {}", why);
-                        Options::default()
-                    }
-                };
-
+                let options = self.parse_options(value)?;
                 self.internal_tx
-                    .send(InternalMessage::SetOptions(options))
+                    .send(InternalMessage::SetOptions(Arc::new(options)))
                     .unwrap();
             }
             Err(why) => {
                 error!("Retrieving configuration failed: {}", why);
             }
         };
+
+        Ok(())
+    }
+
+    fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
+        let options = match serde_json::from_value(value) {
+            Ok(new_options) => new_options,
+            Err(why) => {
+                send_notification::<ShowMessage>(
+                    &self.connection.sender,
+                    ShowMessageParams {
+                        message: format!(
+                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
+                        ),
+                        typ: MessageType::WARNING,
+                    },
+                )?;
+
+                Options::default()
+            }
+        };
+
+        Ok(options)
     }
 
     fn cancel(&self, params: CancelParams) -> Result<()> {
@@ -352,18 +360,11 @@ impl Server {
             .has_pull_configuration_support()
         {
             self.spawn(move |server| {
-                server.pull_config();
+                let _ = server.pull_config();
             });
         } else {
-            match serde_json::from_value(params.settings) {
-                Ok(options) => {
-                    self.workspace.environment.options = Arc::new(options);
-                }
-                Err(why) => {
-                    error!("Invalid configuration: {}", why);
-                }
-            };
-
+            let options = self.parse_options(params.settings)?;
+            self.workspace.environment.options = Arc::new(options);
             self.reparse_all()?;
         }
 
@@ -382,12 +383,7 @@ impl Server {
         self.workspace.viewport.insert(Arc::clone(&document.uri));
 
         if self.workspace.environment.options.chktex.on_open_and_save {
-            self.chktex_debouncer
-                .sender
-                .send(DiagnosticsMessage::Analyze {
-                    workspace: self.workspace.clone(),
-                    document,
-                })?;
+            self.run_chktex(document);
         }
 
         Ok(())
@@ -421,12 +417,7 @@ impl Server {
                 );
 
                 if self.workspace.environment.options.chktex.on_edit {
-                    self.chktex_debouncer
-                        .sender
-                        .send(DiagnosticsMessage::Analyze {
-                            workspace: self.workspace.clone(),
-                            document: new_document,
-                        })?;
+                    self.run_chktex(new_document);
                 };
             }
             None => match uri.to_file_path() {
@@ -440,7 +431,7 @@ impl Server {
         Ok(())
     }
 
-    fn did_save(&self, params: DidSaveTextDocumentParams) -> Result<()> {
+    fn did_save(&mut self, params: DidSaveTextDocumentParams) -> Result<()> {
         let uri = params.text_document.uri;
 
         if let Some(request) = self
@@ -477,19 +468,29 @@ impl Server {
             .filter(|_| self.workspace.environment.options.chktex.on_open_and_save)
             .cloned()
         {
-            self.chktex_debouncer
-                .sender
-                .send(DiagnosticsMessage::Analyze {
-                    workspace: self.workspace.clone(),
-                    document,
-                })?;
-        };
+            self.run_chktex(document);
+        }
+
         Ok(())
     }
 
     fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
         self.workspace.close(&params.text_document.uri);
         Ok(())
+    }
+
+    fn run_chktex(&mut self, document: Document) {
+        self.spawn(move |server| {
+            server
+                .diagnostic_manager
+                .push_chktex(&server.workspace, &document.uri);
+
+            let delay = server.workspace.environment.options.diagnostics_delay;
+            server
+                .diagnostic_tx
+                .send(server.workspace.clone(), Duration::from_millis(delay))
+                .unwrap();
+        });
     }
 
     fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
@@ -841,7 +842,7 @@ impl Server {
                             self.reparse_all()?;
                         }
                         InternalMessage::SetOptions(options) => {
-                            self.workspace.environment.options = Arc::new(options);
+                            self.workspace.environment.options = options;
                             self.reparse_all()?;
                         }
                     };
@@ -853,50 +854,40 @@ impl Server {
     pub fn run(mut self) -> Result<()> {
         self.initialize()?;
         self.process_messages()?;
-        drop(self.static_debouncer);
-        drop(self.chktex_debouncer);
         self.pool.lock().unwrap().join();
         Ok(())
     }
 }
 
-fn create_static_debouncer(
-    manager: Arc<Mutex<DiagnosticsManager>>,
-    conn: &Connection,
-) -> DiagnosticsDebouncer {
-    let sender = conn.sender.clone();
-    DiagnosticsDebouncer::launch(move |workspace, document| {
-        let mut manager = manager.lock().unwrap();
-        manager.update_static(&workspace, Arc::clone(&document.uri));
-        if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
-            warn!("Failed to publish diagnostics: {}", why);
+fn create_debouncer(
+    lsp_sender: Sender<Message>,
+    diagnostic_manager: DiagnosticManager,
+) -> debouncer::Sender<Workspace> {
+    let (tx, rx) = debouncer::unbounded();
+    std::thread::spawn(move || {
+        while let Ok(workspace) = rx.recv() {
+            if let Err(why) = publish_diagnostics(&lsp_sender, &diagnostic_manager, &workspace) {
+                warn!("Failed to publish diagnostics: {}", why);
+            }
         }
-    })
-}
+    });
 
-fn create_chktex_debouncer(
-    manager: Arc<Mutex<DiagnosticsManager>>,
-    conn: &Connection,
-) -> DiagnosticsDebouncer {
-    let sender = conn.sender.clone();
-    DiagnosticsDebouncer::launch(move |workspace, document| {
-        let mut manager = manager.lock().unwrap();
-        manager.update_chktex(&workspace, &document.uri, &workspace.environment.options);
-        if let Err(why) = publish_diagnostics(&sender, &workspace, &manager) {
-            warn!("Failed to publish diagnostics: {}", why);
-        }
-    })
+    tx
 }
 
 fn publish_diagnostics(
-    sender: &Sender<lsp_server::Message>,
+    lsp_sender: &Sender<lsp_server::Message>,
+    diagnostic_manager: &DiagnosticManager,
     workspace: &Workspace,
-    diag_manager: &DiagnosticsManager,
 ) -> Result<()> {
     for document in workspace.documents_by_uri.values() {
-        let diagnostics = diag_manager.publish(&document.uri);
+        if matches!(document.data, DocumentData::BuildLog(_)) {
+            continue;
+        }
+
+        let diagnostics = diagnostic_manager.publish(workspace, &document.uri);
         send_notification::<PublishDiagnostics>(
-            sender,
+            lsp_sender,
             PublishDiagnosticsParams {
                 uri: document.uri.as_ref().clone(),
                 version: None,
@@ -904,6 +895,7 @@ fn publish_diagnostics(
             },
         )?;
     }
+
     Ok(())
 }
 

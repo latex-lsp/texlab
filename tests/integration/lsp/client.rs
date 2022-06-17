@@ -142,6 +142,13 @@ impl Client {
         Ok(())
     }
 
+    pub fn store_on_disk(&mut self, name: &str, text: &str) -> Result<()> {
+        let path = self.directory.path().join(name);
+        std::fs::create_dir_all(path.parent().unwrap())?;
+        std::fs::write(path, text)?;
+        Ok(())
+    }
+
     pub fn shutdown(mut self) -> Result<ClientResult> {
         self.request::<Shutdown>(())?;
         self.notify::<Exit>(())?;

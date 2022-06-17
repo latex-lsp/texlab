@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     #[serde(default)]
@@ -21,7 +22,10 @@ pub struct Options {
     pub formatter_line_length: Option<i32>,
 
     #[serde(default)]
-    pub diagnostics_delay: Option<u64>,
+    pub diagnostics: DiagnosticsOptions,
+
+    #[serde(default = "default_diagnostics_delay")]
+    pub diagnostics_delay: u64,
 
     #[serde(default)]
     pub build: BuildOptions,
@@ -34,6 +38,10 @@ pub struct Options {
 
     #[serde(default)]
     pub forward_search: ForwardSearchOptions,
+}
+
+fn default_diagnostics_delay() -> u64 {
+    300
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -115,6 +123,7 @@ pub struct ChktexOptions {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ForwardSearchOptions {
     #[serde(default)]
     pub executable: Option<String>,
@@ -122,3 +131,16 @@ pub struct ForwardSearchOptions {
     #[serde(default)]
     pub args: Option<Vec<String>>,
 }
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiagnosticsOptions {
+    #[serde(default)]
+    pub allowed_patterns: Vec<DiagnosticsPattern>,
+
+    #[serde(default)]
+    pub ignored_patterns: Vec<DiagnosticsPattern>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticsPattern(#[serde(with = "serde_regex")] pub Regex);

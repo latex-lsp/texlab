@@ -20,6 +20,8 @@ fn parse_line(line: &str) -> Line {
         Line::File(name, "latex")
     } else if let Some(name) = line.strip_prefix("%BIB ") {
         Line::File(name, "bibtex")
+    } else if let Some(name) = line.strip_prefix("%LOG ") {
+        Line::File(name, "log")
     } else if let Some(text) = line.strip_prefix("%SRC ") {
         Line::Plain(text)
     } else if let Some(text) = line.strip_prefix("%CUR ") {

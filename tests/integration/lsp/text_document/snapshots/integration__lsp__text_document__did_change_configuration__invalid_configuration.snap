@@ -1,0 +1,10 @@
+---
+source: tests/integration/lsp/text_document/did_change_configuration.rs
+assertion_line: 37
+expression: message
+---
+The texlab configuration is invalid; using the default settings instead.
+Details: regex parse error:
+    \
+    ^
+error: incomplete escape sequence, reached end of pattern prematurely

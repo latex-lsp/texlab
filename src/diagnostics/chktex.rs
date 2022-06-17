@@ -5,24 +5,32 @@ use std::{
     sync::Arc,
 };
 
-use lsp_types::{Diagnostic, DiagnosticSeverity, NumberOrString, Range, Url};
-use multimap::MultiMap;
+use dashmap::DashMap;
+use lsp_types::{DiagnosticSeverity, Range, Url};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use tempfile::tempdir;
 
-use crate::{Options, RangeExt, Workspace};
+use crate::{RangeExt, Workspace};
 
-pub fn analyze_latex_chktex(
+use super::{Diagnostic, DiagnosticCode};
+
+pub fn collect_chktex_diagnostics(
+    all_diagnostics: &DashMap<Arc<Url>, Vec<Diagnostic>>,
     workspace: &Workspace,
-    diagnostics_by_uri: &mut MultiMap<Arc<Url>, Diagnostic>,
     uri: &Url,
-    options: &Options,
 ) -> Option<()> {
     let document = workspace.documents_by_uri.get(uri)?;
     document.data.as_latex()?;
 
-    let current_dir = options
+    all_diagnostics.alter(uri, |_, mut diagnostics| {
+        diagnostics.retain(|diag| !matches!(diag.code, DiagnosticCode::Chktex(_)));
+        diagnostics
+    });
+
+    let current_dir = workspace
+        .environment
+        .options
         .root_directory
         .as_ref()
         .cloned()
@@ -40,15 +48,15 @@ pub fn analyze_latex_chktex(
         })
         .unwrap_or_else(|| ".".into());
 
-    diagnostics_by_uri.remove(uri);
-    diagnostics_by_uri.insert_many(
-        Arc::clone(&document.uri),
-        lint(&document.text, &current_dir).unwrap_or_default(),
-    );
+    all_diagnostics
+        .entry(Arc::clone(&document.uri))
+        .or_default()
+        .extend(lint(&document.text, &current_dir).unwrap_or_default());
+
     Some(())
 }
 
-pub static LINE_REGEX: Lazy<Regex> =
+static LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("(\\d+):(\\d+):(\\d+):(\\w+):(\\w+):(.*)").unwrap());
 
 fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
@@ -85,14 +93,9 @@ fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
 
         diagnostics.push(Diagnostic {
             range,
-            severity: Some(severity),
-            code: Some(NumberOrString::String(code.into())),
-            code_description: None,
-            source: Some("chktex".into()),
+            severity,
+            code: DiagnosticCode::Chktex(code.into()),
             message,
-            related_information: None,
-            tags: None,
-            data: None,
         });
     }
 
