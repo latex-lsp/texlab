@@ -45,7 +45,7 @@ clap = { version = "3.2.5", features = [
   "std",
   "derive",
 ], default-features = false }
-crossbeam-channel = "0.5.4"
+crossbeam-channel = "0.5.5"
 dashmap = "~5.2.0"
 derive_more = "0.99.17"
 encoding_rs = "0.8.31"
