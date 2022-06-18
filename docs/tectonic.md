@@ -24,7 +24,7 @@ Without the `--keep-logs` flag, `texlab` won't be able to report compilation war
   "texlab.build.executable": "tectonic",
   "texlab.build.args": [
     "-X",
-    "compile"
+    "compile",
     "%f",
     "--synctex",
     "--keep-logs",
