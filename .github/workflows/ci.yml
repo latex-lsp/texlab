@@ -34,7 +34,7 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - run: cargo test --all-features --no-run --locked
       - run: cargo test --all-features -- --nocapture --quiet
-  cross:
+  cross_cargo:
     name: Cross (${{ matrix.target }}, ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -44,6 +44,9 @@ jobs:
           - os: macos-latest
             toolchain: stable
             target: aarch64-apple-darwin
+          - os: ubuntu-latest
+            toolchain: stable
+            target: x86_64-unknown-linux-musl
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
