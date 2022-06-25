@@ -141,11 +141,11 @@ impl<'a> Iterator for PlaceHolderIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         return if self.remainder.is_empty() {
             None
-        } else if self.remainder.starts_with("%") {
+        } else if self.remainder.starts_with('%') {
             self.yield_placeholder()
         } else {
             // yield up to the next % or to the end
-            match self.remainder.find("%") {
+            match self.remainder.find('%') {
                 None => self.yield_remainder(),
                 Some(end) => self.yield_str(end),
             }
