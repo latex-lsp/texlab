@@ -72,7 +72,6 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-          components: rustfmt
           target: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
@@ -95,7 +94,7 @@ jobs:
         with:
           profile: minimal
           override: true
-          components: llvm-tools-preview, rustfmt
+          components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v1
       - name: Generate code coverage
