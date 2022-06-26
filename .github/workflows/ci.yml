@@ -74,6 +74,8 @@ jobs:
           override: true
           target: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.target }}
       - uses: actions-rs/cargo@v1
         with:
           command: test
