@@ -11,17 +11,60 @@ env:
   RUSTFLAGS: "-D warnings"
   RUSTUP_MAX_RETRIES: 10
 jobs:
-  test:
-    name: Test (${{ matrix.os }}, ${{ matrix.toolchain }})
+  build:
+    name: Build (${{ matrix.target }}, ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [stable]
         include:
-          - os: ubuntu-18.04
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            run-tests: true
+            use-cross: false
+            toolchain: stable
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            run-tests: false
+            use-cross: false
+            toolchain: stable
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            run-tests: false
+            use-cross: false
+            toolchain: stable
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            run-tests: true
+            use-cross: false
+            toolchain: stable
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            run-tests: false
+            use-cross: false
+            toolchain: stable
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            run-tests: true
+            use-cross: false
             toolchain: 1.58.1
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            run-tests: false
+            use-cross: true
+            toolchain: stable
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            run-tests: false
+            use-cross: true
+            toolchain: stable
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            run-tests: false
+            use-cross: false
+            toolchain: stable
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -30,33 +73,19 @@ jobs:
           profile: minimal
           override: true
           components: rustfmt
-          target: ${{ inputs.target }}
-      - uses: Swatinem/rust-cache@v1
-      - run: cargo test --all-features --no-run --locked
-      - run: cargo test --all-features -- --nocapture --quiet
-  cross_cargo:
-    name: Cross (${{ matrix.target }}, ${{ matrix.toolchain }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            toolchain: stable
-            target: aarch64-apple-darwin
-          - os: ubuntu-latest
-            toolchain: stable
-            target: x86_64-unknown-linux-musl
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-          override: true
           target: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v1
-      - run: cargo build --all-features --target ${{ matrix.target }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --target ${{ matrix.target }} --all-features --no-run --locked
+          use-cross: ${{ matrix.use-cross }}
+      - uses: actions-rs/cargo@v1
+        if: ${{ matrix.run-tests }}
+        with:
+          command: test
+          args: --target ${{ matrix.target }} --all-features -- --nocapture --quiet
+          use-cross: ${{ matrix.use-cross }}
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
