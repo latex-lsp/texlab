@@ -76,12 +76,14 @@ jobs:
       - uses: Swatinem/rust-cache@v1
         with:
           key: ${{ matrix.target }}
-      - uses: actions-rs/cargo@v1
+      - name: Compile
+        uses: actions-rs/cargo@v1
         with:
           command: test
           args: --target ${{ matrix.target }} --all-features --no-run --locked
           use-cross: ${{ matrix.use-cross }}
-      - uses: actions-rs/cargo@v1
+      - name: Test
+        uses: actions-rs/cargo@v1
         if: ${{ matrix.run-tests }}
         with:
           command: test
