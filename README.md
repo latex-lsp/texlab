@@ -1,6 +1,6 @@
 [![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
 [![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
-[![Rust](https://img.shields.io/badge/rustc-1.58.1%2B-blue)](https://blog.rust-lang.org/2022/01/20/Rust-1.58.1.html)
+[![Rust](https://img.shields.io/badge/rustc-1.59%2B-blue)](https://blog.rust-lang.org/2022/02/24/Rust-1.59.0.html)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
 [![crates.io](https://img.shields.io/crates/v/texlab)](https://crates.io/crates/texlab)
