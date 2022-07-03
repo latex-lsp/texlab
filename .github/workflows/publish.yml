@@ -77,7 +77,7 @@ jobs:
         run: ${{ format('Compress-Archive target/{0}/release/texlab.exe {1}', matrix.target, matrix.archive) }}
       - name: Compress (macOS)
         if: ${{ contains(matrix.os, 'macos') }}
-        run: ${{ format('brew install gnu-tar; gtar -czvf {1} -C target/{0}/release texlab', matrix.target, matrix.archive) }}
+        run: ${{ format('gtar -czvf {1} -C target/{0}/release texlab', matrix.target, matrix.archive) }}
       - name: Compress (Linux)
         if: ${{ contains(matrix.os, 'ubuntu') }}
         run: ${{ format('tar -czvf {1} -C target/{0}/release texlab', matrix.target, matrix.archive) }}
