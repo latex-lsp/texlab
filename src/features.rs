@@ -1,5 +1,4 @@
 mod build;
-#[cfg(feature = "completion")]
 mod completion;
 mod cursor;
 mod definition;
@@ -21,10 +20,9 @@ use lsp_types::Url;
 
 use crate::{Document, Workspace};
 
-#[cfg(feature = "completion")]
-pub use self::completion::{complete, CompletionItemData, COMPLETION_LIMIT};
 pub use self::{
     build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
+    completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     execute_command::execute_command,
     folding::find_foldings,

@@ -1,4 +1,3 @@
-#[cfg(feature = "completion")]
 mod completion;
 mod definition;
 mod did_change_configuration;

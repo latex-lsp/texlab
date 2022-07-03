@@ -9,11 +9,14 @@ use crossbeam_channel::{Receiver, Sender};
 use log::{error, info, warn};
 use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
+use rowan::ast::AstNode;
 use serde::Serialize;
 use threadpool::ThreadPool;
 
 use crate::{
+    citation,
     client::{send_notification, send_request, ReqQueue},
+    component_db::COMPONENT_DATABASE,
     debouncer,
     diagnostics::DiagnosticManager,
     dispatch::{NotificationDispatcher, RequestDispatcher},
@@ -22,9 +25,10 @@ use crate::{
         execute_command, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
         format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
-        BuildParams, BuildResult, BuildStatus, FeatureRequest, ForwardSearchResult,
-        ForwardSearchStatus,
+        BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest,
+        ForwardSearchResult, ForwardSearchStatus,
     },
+    syntax::bibtex,
     ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
     LineIndexExt, Options, Workspace, WorkspaceEvent,
 };
@@ -100,7 +104,6 @@ impl Server {
             definition_provider: Some(OneOf::Left(true)),
             references_provider: Some(OneOf::Left(true)),
             hover_provider: Some(HoverProviderCapability::Simple(true)),
-            #[cfg(feature = "completion")]
             completion_provider: Some(CompletionOptions {
                 resolve_provider: Some(true),
                 trigger_characters: Some(vec![
@@ -543,7 +546,6 @@ impl Server {
         Ok(())
     }
 
-    #[cfg(feature = "completion")]
     fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
 
@@ -555,15 +557,7 @@ impl Server {
         Ok(())
     }
 
-    #[cfg(feature = "completion")]
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
-        use rowan::ast::AstNode;
-
-        use crate::{
-            citation, component_db::COMPONENT_DATABASE, features::CompletionItemData,
-            syntax::bibtex,
-        };
-
         self.spawn(move |server| {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 CompletionItemData::Package | CompletionItemData::Class => {
@@ -572,19 +566,22 @@ impl Server {
                         .map(Documentation::MarkupContent);
                 }
                 CompletionItemData::Citation { uri, key } => {
-                    if let Some(document) = server.workspace.documents_by_uri.get(&uri) {
-                        if let Some(data) = document.data.as_bibtex() {
-                            let root = bibtex::SyntaxNode::new_root(data.green.clone());
-                            item.documentation = bibtex::Root::cast(root)
-                                .and_then(|root| root.find_entry(&key))
-                                .and_then(|entry| citation::render(&entry))
-                                .map(|value| {
-                                    Documentation::MarkupContent(MarkupContent {
-                                        kind: MarkupKind::Markdown,
-                                        value,
-                                    })
-                                });
-                        }
+                    if let Some(data) = server
+                        .workspace
+                        .documents_by_uri
+                        .get(&uri)
+                        .and_then(|document| document.data.as_bibtex())
+                    {
+                        let root = bibtex::SyntaxNode::new_root(data.green.clone());
+                        item.documentation = bibtex::Root::cast(root)
+                            .and_then(|root| root.find_entry(&key))
+                            .and_then(|entry| citation::render(&entry))
+                            .map(|value| {
+                                Documentation::MarkupContent(MarkupContent {
+                                    kind: MarkupKind::Markdown,
+                                    value,
+                                })
+                            });
                     }
                 }
                 _ => {}
@@ -762,12 +759,10 @@ impl Server {
                                 })?
                                 .on::<WorkspaceSymbol, _>(|id, params| self.workspace_symbols(id, params))?
                                 .on::<Completion, _>(|id, params| {
-                                    #[cfg(feature = "completion")]
                                     self.completion(id, params)?;
                                     Ok(())
                                 })?
                                 .on::<ResolveCompletionItem, _>(|id, params| {
-                                    #[cfg(feature = "completion")]
                                     self.completion_resolve(id, params)?;
                                     Ok(())
                                 })?
