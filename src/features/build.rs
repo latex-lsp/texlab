@@ -20,7 +20,10 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use uuid::Uuid;
 
-use crate::{client, req_queue::ReqQueue, ClientCapabilitiesExt, DocumentLanguage};
+use crate::{
+    client::{self, ReqQueue},
+    ClientCapabilitiesExt, DocumentLanguage,
+};
 
 use super::{forward_search, FeatureRequest};
 

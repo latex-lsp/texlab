@@ -16,7 +16,6 @@ mod line_index;
 mod line_index_ext;
 mod options;
 mod range;
-mod req_queue;
 mod server;
 pub mod syntax;
 mod workspace;

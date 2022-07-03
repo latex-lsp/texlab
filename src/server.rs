@@ -13,7 +13,7 @@ use serde::Serialize;
 use threadpool::ThreadPool;
 
 use crate::{
-    client::{send_notification, send_request},
+    client::{send_notification, send_request, ReqQueue},
     debouncer,
     diagnostics::DiagnosticManager,
     dispatch::{NotificationDispatcher, RequestDispatcher},
@@ -25,7 +25,6 @@ use crate::{
         BuildParams, BuildResult, BuildStatus, FeatureRequest, ForwardSearchResult,
         ForwardSearchStatus,
     },
-    req_queue::{IncomingData, ReqQueue},
     ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
     LineIndexExt, Options, Workspace, WorkspaceEvent,
 };
@@ -259,11 +258,6 @@ impl Server {
         self.workspace.listeners.push(event_sender);
     }
 
-    fn register_incoming_request(&self, id: RequestId) {
-        let mut req_queue = self.req_queue.lock().unwrap();
-        req_queue.incoming.register(id, IncomingData);
-    }
-
     fn pull_config(&self) -> Result<()> {
         if !self
             .workspace
@@ -322,15 +316,7 @@ impl Server {
         Ok(options)
     }
 
-    fn cancel(&self, params: CancelParams) -> Result<()> {
-        let id = match params.id {
-            NumberOrString::Number(id) => RequestId::from(id),
-            NumberOrString::String(id) => RequestId::from(id),
-        };
-
-        let mut req_queue = self.req_queue.lock().unwrap();
-        req_queue.incoming.complete(id);
-
+    fn cancel(&self, _params: CancelParams) -> Result<()> {
         Ok(())
     }
 
@@ -766,7 +752,6 @@ impl Server {
                                 return Ok(());
                             }
 
-                            self.register_incoming_request(request.id.clone());
                             if let Some(response) = RequestDispatcher::new(request)
                                 .on::<DocumentLinkRequest, _>(|id, params| self.document_link(id, params))?
                                 .on::<FoldingRangeRequest, _>(|id, params| self.folding_range(id, params))?

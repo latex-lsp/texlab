@@ -5,7 +5,11 @@ use crossbeam_channel::{Receiver, Sender};
 use lsp_server::{Message, ResponseError};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::req_queue::{OutgoingData, ReqQueue};
+pub struct OutgoingData {
+    pub sender: Sender<Result<serde_json::Value, ResponseError>>,
+}
+
+pub type ReqQueue = lsp_server::ReqQueue<(), OutgoingData>;
 
 pub fn send_notification<N>(lsp_sender: &Sender<Message>, params: N::Params) -> Result<()>
 where

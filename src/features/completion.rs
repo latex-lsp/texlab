@@ -266,7 +266,7 @@ fn convert_internal_items(
             let kind = Structure::Entry(ty.category).completion_kind();
             CompletionItem {
                 label: (&ty.name).into(),
-                kind: Some(adjust_kind(&context.request, kind)),
+                kind: Some(kind),
                 documentation: ty.documentation.as_ref().map(|doc| {
                     Documentation::MarkupContent(MarkupContent {
                         kind: MarkupKind::Markdown,
@@ -282,13 +282,10 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, (&field.name).into());
             CompletionItem {
                 label: (&field.name).into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Field.completion_kind(),
-                )),
+                kind: Some(Structure::Field.completion_kind()),
                 documentation: Some(Documentation::MarkupContent(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: (&field.documentation).into(),
+                    value: field.documentation.clone(),
                 })),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 data: Some(serde_json::to_value(CompletionItemData::FieldName).unwrap()),
@@ -299,10 +296,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.into());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Argument.completion_kind(),
-                )),
+                kind: Some(Structure::Argument.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Argument).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 documentation: image
@@ -325,10 +319,7 @@ fn convert_internal_items(
             {
                 let text_edit = TextEdit::new(range, "begin{$1}\n\t$0\n\\end{$1}".into());
                 CompletionItem {
-                    kind: Some(adjust_kind(
-                        &context.request,
-                        Structure::Snippet.completion_kind(),
-                    )),
+                    kind: Some(Structure::Snippet.completion_kind()),
                     data: Some(serde_json::to_value(CompletionItemData::CommandSnippet).unwrap()),
                     text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                     insert_text_format: Some(InsertTextFormat::SNIPPET),
@@ -351,7 +342,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, key.to_string());
             CompletionItem {
                 label: key.to_string(),
-                kind: Some(adjust_kind(&context.request, ty.completion_kind())),
+                kind: Some(ty.completion_kind()),
                 filter_text: Some(text.clone()),
                 sort_text: Some(text),
                 data: Some(
@@ -379,10 +370,7 @@ fn convert_internal_items(
                 image.and_then(|img| image_documentation(&context.request, name, img));
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Command.completion_kind(),
-                )),
+                kind: Some(Structure::Command.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Command).unwrap()),
                 documentation,
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
@@ -392,10 +380,7 @@ fn convert_internal_items(
         InternalCompletionItemData::ComponentEnvironment { name, file_names } => {
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Environment.completion_kind(),
-                )),
+                kind: Some(Structure::Environment.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Environment).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::new_simple(name.to_string(), component_detail(file_names))
@@ -405,10 +390,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Class.completion_kind(),
-                )),
+                kind: Some(Structure::Class.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Class).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -418,10 +400,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Package.completion_kind(),
-                )),
+                kind: Some(Structure::Package.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Package).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -431,10 +410,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.into());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Color.completion_kind(),
-                )),
+                kind: Some(Structure::Color.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Color).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -444,10 +420,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.into());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::ColorModel.completion_kind(),
-                )),
+                kind: Some(Structure::ColorModel.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::ColorModel).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -457,10 +430,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name,
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::GlossaryEntry.completion_kind(),
-                )),
+                kind: Some(Structure::GlossaryEntry.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Acronym).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -470,10 +440,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name,
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::GlossaryEntry.completion_kind(),
-                )),
+                kind: Some(Structure::GlossaryEntry.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::GlossaryEntry).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -483,10 +450,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::File.completion_kind(),
-                )),
+                kind: Some(Structure::File.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::File).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -496,10 +460,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Folder.completion_kind(),
-                )),
+                kind: Some(Structure::Folder.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Folder).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -515,7 +476,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 label: name,
-                kind: Some(adjust_kind(&context.request, kind.completion_kind())),
+                kind: Some(kind.completion_kind()),
                 detail: header,
                 documentation: footer.map(Documentation::String),
                 sort_text: Some(text.clone()),
@@ -530,10 +491,7 @@ fn convert_internal_items(
             let name = &name[1..];
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Command.completion_kind(),
-                )),
+                kind: Some(Structure::Command.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Command).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::new_simple(name.into(), detail)
@@ -543,10 +501,7 @@ fn convert_internal_items(
             let detail = "user-defined".into();
             let text_edit = TextEdit::new(range, name.clone());
             CompletionItem {
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::Environment.completion_kind(),
-                )),
+                kind: Some(Structure::Environment.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Environment).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::new_simple(name, detail)
@@ -556,10 +511,7 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.into());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::PgfLibrary.completion_kind(),
-                )),
+                kind: Some(Structure::PgfLibrary.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::PgfLibrary).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
@@ -569,16 +521,17 @@ fn convert_internal_items(
             let text_edit = TextEdit::new(range, name.into());
             CompletionItem {
                 label: name.into(),
-                kind: Some(adjust_kind(
-                    &context.request,
-                    Structure::TikzLibrary.completion_kind(),
-                )),
+                kind: Some(Structure::TikzLibrary.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::TikzLibrary).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                 ..CompletionItem::default()
             }
         }
     };
+
+    new_item.kind = new_item
+        .kind
+        .map(|kind| adjust_kind(&context.request, kind));
     new_item.preselect = Some(item.preselect);
     new_item
 }
