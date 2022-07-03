@@ -118,6 +118,11 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v3
+      - uses: wtfjoke/setup-tectonic@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile documentation
+        run: tectonic texlab.tex
       - run: git archive --prefix=texlab/ -o texlab.zip HEAD
       - id: get-version
         run: |
