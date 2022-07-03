@@ -10,7 +10,7 @@ env:
   RUSTUP_MAX_RETRIES: 10
 jobs:
   build:
-    name: Build (${{ matrix.archive.file  }})
+    name: Build (${{ matrix.archive  }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
