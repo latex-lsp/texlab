@@ -118,12 +118,26 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v3
-      - uses: wtfjoke/setup-tectonic@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          override: true
+      - name: Install Tectonic
+        uses: wtfjoke/setup-tectonic@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Compile documentation
+      - name: Generate PDF documentation
         run: tectonic texlab.tex
-      - run: git archive --prefix=texlab/ -o texlab.zip HEAD
+      - name: Generate man page
+        run: |
+          sudo apt install -y help2man
+          cargo build
+          help2man --output=texlab.1 --no-info "target/debug/texlab"
+      - name: Export to ZIP archive
+        run: |
+          git add texlab.1 texlab.pdf
+          git commit -m "Update CTAN documentation" --author="Patrick Förster <pfoerster@users.noreply.github.com>"
+          git archive --prefix=texlab/ -o texlab.zip HEAD
       - id: get-version
         run: |
           RELEASE_TAG=${{ github.event.release.tag_name }}
