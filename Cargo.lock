@@ -921,9 +921,9 @@ dependencies = [
 
 [[package]]
 name = "plotters-backend"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d88417318da0eaf0fdcdb51a0ee6c3bed624333bff8f946733049380be67ac1c"
+checksum = "1c89e57ae773e34419b0f62d68c1934a97ac0637f36741dfde4efb88aaf711a0"
 
 [[package]]
 name = "plotters-svg"
