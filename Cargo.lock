@@ -514,9 +514,9 @@ dependencies = [
 
 [[package]]
 name = "human_name"
-version = "1.0.3"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29d4c0030db95c2e6e68fc240def0fc5bcbecab549c1c856a9f14ec309ccb332"
+checksum = "39b921bffb906edc4a78809ec56cc585a7185acbd80a6da70e9127e92a633bb5"
 dependencies = [
  "libc",
  "phf",
@@ -1250,9 +1250,9 @@ checksum = "7bd3e3206899af3f8b12af284fafc038cc1dc2b41d1b89dd17297221c5d225de"
 
 [[package]]
 name = "smallstr"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e922794d168678729ffc7e07182721a14219c65814e66e91b839a272fe5ae4f"
+checksum = "63b1aefdf380735ff8ded0b15f31aab05daf1f70216c01c02a12926badd1df9d"
 dependencies = [
  "smallvec",
 ]
