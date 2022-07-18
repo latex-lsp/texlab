@@ -505,9 +505,9 @@ dependencies = [
 
 [[package]]
 name = "human_name"
-version = "1.0.5"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39b921bffb906edc4a78809ec56cc585a7185acbd80a6da70e9127e92a633bb5"
+checksum = "b72eb03fa260b74e681c79e580fb995be24ad683b8a2d3e85e0035df118bb283"
 dependencies = [
  "libc",
  "phf",
