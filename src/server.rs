@@ -37,6 +37,8 @@ use crate::{
 enum InternalMessage {
     SetDistro(Distribution),
     SetOptions(Arc<Options>),
+    FileWatcher(notify::RecommendedWatcher),
+    FileEvent(notify::Event),
 }
 
 #[derive(Clone)]
@@ -208,6 +210,18 @@ impl Server {
                     why
                 );
             }
+        } else {
+            let tx = self.internal_tx.clone();
+            self.internal_tx
+                .send(InternalMessage::FileWatcher(
+                    notify::recommended_watcher(move |ev: Result<notify::Event, notify::Error>| {
+                        if let Ok(ev) = ev {
+                            tx.send(InternalMessage::FileEvent(ev)).unwrap();
+                        }
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
         }
     }
 
@@ -824,6 +838,28 @@ impl Server {
                         InternalMessage::SetOptions(options) => {
                             self.workspace.environment.options = options;
                             self.reparse_all()?;
+                        }
+                        InternalMessage::FileWatcher(watcher) => {
+                            self.workspace.register_watcher(watcher);
+                        }
+                        InternalMessage::FileEvent(ev) => {
+                            match ev.kind {
+                                notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
+                                    for path in ev.paths {
+                                        let _ = self.workspace.reload(path);
+                                    }
+                                }
+                                notify::EventKind::Remove(_) => {
+                                    for uri in
+                                        ev.paths.iter().flat_map(|path| Url::from_file_path(path))
+                                    {
+                                        self.workspace.documents_by_uri.remove(&uri);
+                                    }
+                                }
+                                notify::EventKind::Any
+                                | notify::EventKind::Access(_)
+                                | notify::EventKind::Other => {}
+                            };
                         }
                     };
                 }

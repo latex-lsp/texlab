@@ -1,12 +1,13 @@
 use std::{
     fs::{self, FileType},
     path::PathBuf,
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use lsp_types::Url;
+use notify::Watcher;
 use petgraph::{graphmap::UnGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -26,6 +27,7 @@ pub struct Workspace {
     pub viewport: FxHashSet<Arc<Url>>,
     pub listeners: Vec<Sender<WorkspaceEvent>>,
     pub environment: Environment,
+    watcher: Option<Arc<Mutex<notify::RecommendedWatcher>>>,
 }
 
 impl Workspace {
@@ -37,12 +39,27 @@ impl Workspace {
         }
     }
 
+    pub fn register_watcher(&mut self, watcher: notify::RecommendedWatcher) {
+        self.watcher = Some(Arc::new(Mutex::new(watcher)));
+    }
+
     pub fn open(
         &mut self,
         uri: Arc<Url>,
         text: Arc<String>,
         language: DocumentLanguage,
     ) -> Result<Document> {
+        if let Some(watcher) = &self.watcher {
+            if uri.scheme() == "file" && uri.as_str().ends_with(".log") {
+                if let Ok(path) = uri.to_file_path() {
+                    let _ = watcher
+                        .lock()
+                        .unwrap()
+                        .watch(&path, notify::RecursiveMode::NonRecursive);
+                }
+            }
+        }
+
         log::debug!("(Re)Loading document: {}", uri);
         let document = Document::parse(&self.environment, Arc::clone(&uri), text, language);
 
