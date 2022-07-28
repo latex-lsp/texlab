@@ -747,9 +747,10 @@ impl Server {
             )?;
         }
 
-        if let Some(path) = &self.workspace.environment.options.aux_directory {
-            let _ = self.workspace.watch(path);
-        }
+        let _ = match &self.workspace.environment.options.aux_directory {
+            Some(path) => self.workspace.watch(path),
+            None => self.workspace.watch(&PathBuf::from(".")),
+        };
 
         Ok(())
     }
