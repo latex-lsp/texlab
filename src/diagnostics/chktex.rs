@@ -1,6 +1,6 @@
 use std::{
     fs, io,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Arc,
 };
@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use tempfile::tempdir;
 
-use crate::{RangeExt, Workspace};
+use crate::{Document, RangeExt, Workspace};
 
 use super::{Diagnostic, DiagnosticCode};
 
@@ -28,12 +28,15 @@ pub fn collect_chktex_diagnostics(
         diagnostics
     });
 
-    let current_dir = workspace
-        .environment
-        .options
-        .root_directory
-        .as_ref()
-        .cloned()
+    let current_dir = find_chktexrc_directory(&document)
+        .or_else(|| {
+            workspace
+                .environment
+                .options
+                .root_directory
+                .as_ref()
+                .cloned()
+        })
         .or_else(|| {
             workspace
                 .find_parent(uri)
@@ -53,6 +56,20 @@ pub fn collect_chktex_diagnostics(
         .extend(lint(&document.text, &current_dir).unwrap_or_default());
 
     Some(())
+}
+
+fn find_chktexrc_directory(document: &Document) -> Option<PathBuf> {
+    if document.uri.scheme() == "file" {
+        if let Ok(mut path) = document.uri.to_file_path() {
+            while path.pop() {
+                if path.join("chktexrc").exists() || path.join(".chktexrc").exists() {
+                    return Some(path);
+                }
+            }
+        }
+    }
+
+    None
 }
 
 static LINE_REGEX: Lazy<Regex> =
