@@ -36,7 +36,6 @@ use crate::{
 enum InternalMessage {
     SetDistro(Distribution),
     SetOptions(Arc<Options>),
-    FileWatcher(notify::RecommendedWatcher),
     FileEvent(notify::Event),
 }
 
@@ -166,28 +165,27 @@ impl Server {
         }
 
         self.register_diagnostics_handler();
+        self.register_file_watching();
 
         self.spawn(move |server| {
             server.register_config_capability();
-            server.register_file_watching();
             let _ = server.pull_config();
         });
 
         Ok(())
     }
 
-    fn register_file_watching(&self) {
+    fn register_file_watching(&mut self) {
         let tx = self.internal_tx.clone();
-        self.internal_tx
-            .send(InternalMessage::FileWatcher(
-                notify::recommended_watcher(move |ev: Result<notify::Event, notify::Error>| {
-                    if let Ok(ev) = ev {
-                        tx.send(InternalMessage::FileEvent(ev)).unwrap();
-                    }
-                })
-                .unwrap(),
-            ))
-            .unwrap();
+        let watcher = notify::recommended_watcher(move |ev: Result<_, _>| {
+            if let Ok(ev) = ev {
+                let _ = tx.send(InternalMessage::FileEvent(ev));
+            }
+        });
+
+        if let Ok(watcher) = watcher {
+            self.workspace.register_watcher(watcher);
+        }
     }
 
     fn register_config_capability(&self) {
@@ -792,9 +790,6 @@ impl Server {
                         InternalMessage::SetOptions(options) => {
                             self.workspace.environment.options = options;
                             self.reparse_all()?;
-                        }
-                        InternalMessage::FileWatcher(watcher) => {
-                            self.workspace.register_watcher(watcher);
                         }
                         InternalMessage::FileEvent(ev) => {
                             match ev.kind {
