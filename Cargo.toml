@@ -78,7 +78,7 @@ uuid = { version = "1.1.2", features = ["v4"] }
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.3.6" }
-insta = { version = "1.15.0", features = ["backtrace", "redactions"] }
+insta = { version = "1.17.0", features = ["backtrace", "redactions"] }
 jod-thread = "0.1.2"
 
 [profile.release]
