@@ -1275,6 +1275,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_millis"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6e2dc780ca5ee2c369d1d01d100270203c4ff923d2a4264812d723766434d00"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_regex"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1447,6 +1456,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "serde_millis",
  "serde_regex",
  "serde_repr",
  "smol_str",

@@ -1,7 +1,6 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 
 use anyhow::Result;
@@ -264,9 +263,7 @@ impl Server {
                     WorkspaceEvent::Changed(workspace, document) => {
                         diagnostic_manager.push_syntax(&workspace, &document.uri);
                         let delay = workspace.environment.options.diagnostics_delay;
-                        diagnostic_tx
-                            .send(workspace, Duration::from_millis(delay))
-                            .unwrap();
+                        diagnostic_tx.send(workspace, delay.0).unwrap();
                     }
                 };
             }
@@ -326,11 +323,11 @@ impl Server {
                     },
                 )?;
 
-                Options::default()
+                None
             }
         };
 
-        Ok(options)
+        Ok(options.unwrap_or_default())
     }
 
     fn cancel(&self, _params: CancelParams) -> Result<()> {
@@ -491,7 +488,7 @@ impl Server {
             let delay = server.workspace.environment.options.diagnostics_delay;
             server
                 .diagnostic_tx
-                .send(server.workspace.clone(), Duration::from_millis(delay))
+                .send(server.workspace.clone(), delay.0)
                 .unwrap();
         });
     }

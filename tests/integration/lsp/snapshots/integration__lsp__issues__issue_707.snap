@@ -1,0 +1,45 @@
+---
+source: tests/integration/lsp/issues.rs
+expression: "serde_json::from_value::<Option<Options>>(serde_json::json!({}))?.unwrap_or_default()"
+---
+Options {
+    root_directory: None,
+    aux_directory: None,
+    bibtex_formatter: Texlab,
+    latex_formatter: Latexindent,
+    formatter_line_length: None,
+    diagnostics: DiagnosticsOptions {
+        allowed_patterns: [],
+        ignored_patterns: [],
+    },
+    diagnostics_delay: DiagnosticsDelay(
+        300ms,
+    ),
+    build: BuildOptions {
+        executable: BuildExecutable(
+            "latexmk",
+        ),
+        args: BuildArgs(
+            [
+                "-pdf",
+                "-interaction=nonstopmode",
+                "-synctex=1",
+                "%f",
+            ],
+        ),
+        on_save: false,
+        forward_search_after: false,
+    },
+    chktex: ChktexOptions {
+        on_open_and_save: false,
+        on_edit: false,
+    },
+    latexindent: LatexindentOptions {
+        local: None,
+        modify_line_breaks: false,
+    },
+    forward_search: ForwardSearchOptions {
+        executable: None,
+        args: None,
+    },
+}

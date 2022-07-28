@@ -168,11 +168,12 @@ impl BuildEngine {
         let args: Vec<_> = options
             .build
             .args
+            .0
             .iter()
             .map(|arg| replace_placeholder(arg.clone(), &path))
             .collect();
 
-        let mut process = Command::new(&options.build.executable)
+        let mut process = Command::new(&options.build.executable.0)
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
