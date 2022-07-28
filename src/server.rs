@@ -177,51 +177,17 @@ impl Server {
     }
 
     fn register_file_watching(&self) {
-        if self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_file_watching_support()
-        {
-            let options = DidChangeWatchedFilesRegistrationOptions {
-                watchers: vec![FileSystemWatcher {
-                    glob_pattern: "**/*.{aux,log}".into(),
-                    kind: Some(WatchKind::Create | WatchKind::Change | WatchKind::Delete),
-                }],
-            };
-
-            let reg = Registration {
-                id: "build-watch".to_string(),
-                method: DidChangeWatchedFiles::METHOD.to_string(),
-                register_options: Some(serde_json::to_value(options).unwrap()),
-            };
-
-            let params = RegistrationParams {
-                registrations: vec![reg],
-            };
-
-            if let Err(why) =
-                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
-            {
-                error!(
-                    "Failed to register \"{}\" notification: {}",
-                    DidChangeWatchedFiles::METHOD,
-                    why
-                );
-            }
-        } else {
-            let tx = self.internal_tx.clone();
-            self.internal_tx
-                .send(InternalMessage::FileWatcher(
-                    notify::recommended_watcher(move |ev: Result<notify::Event, notify::Error>| {
-                        if let Ok(ev) = ev {
-                            tx.send(InternalMessage::FileEvent(ev)).unwrap();
-                        }
-                    })
-                    .unwrap(),
-                ))
-                .unwrap();
-        }
+        let tx = self.internal_tx.clone();
+        self.internal_tx
+            .send(InternalMessage::FileWatcher(
+                notify::recommended_watcher(move |ev: Result<notify::Event, notify::Error>| {
+                    if let Ok(ev) = ev {
+                        tx.send(InternalMessage::FileEvent(ev)).unwrap();
+                    }
+                })
+                .unwrap(),
+            ))
+            .unwrap();
     }
 
     fn register_config_capability(&self) {
@@ -334,21 +300,7 @@ impl Server {
         Ok(())
     }
 
-    fn did_change_watched_files(&mut self, params: DidChangeWatchedFilesParams) -> Result<()> {
-        for change in params.changes {
-            if let Ok(path) = change.uri.to_file_path() {
-                match change.typ {
-                    FileChangeType::CREATED | FileChangeType::CHANGED => {
-                        self.workspace.reload(path)?;
-                    }
-                    FileChangeType::DELETED => {
-                        self.workspace.documents_by_uri.remove(&change.uri);
-                    }
-                    _ => {}
-                }
-            }
-        }
-
+    fn did_change_watched_files(&mut self, _params: DidChangeWatchedFilesParams) -> Result<()> {
         Ok(())
     }
 
