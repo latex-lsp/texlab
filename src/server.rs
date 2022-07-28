@@ -750,6 +750,10 @@ impl Server {
             )?;
         }
 
+        if let Some(path) = &self.workspace.environment.options.aux_directory {
+            let _ = self.workspace.watch(path);
+        }
+
         Ok(())
     }
 

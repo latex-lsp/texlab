@@ -1,6 +1,6 @@
 use std::{
     fs::{self, FileType},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -43,20 +43,24 @@ impl Workspace {
         self.watcher = Some(Arc::new(Mutex::new(watcher)));
     }
 
+    pub fn watch(&self, path: &Path) {
+        if let Some(watcher) = &self.watcher {
+            let _ = watcher
+                .lock()
+                .unwrap()
+                .watch(&path, notify::RecursiveMode::NonRecursive);
+        }
+    }
+
     pub fn open(
         &mut self,
         uri: Arc<Url>,
         text: Arc<String>,
         language: DocumentLanguage,
     ) -> Result<Document> {
-        if let Some(watcher) = &self.watcher {
-            if uri.scheme() == "file" && uri.as_str().ends_with(".log") {
-                if let Ok(path) = uri.to_file_path() {
-                    let _ = watcher
-                        .lock()
-                        .unwrap()
-                        .watch(&path, notify::RecursiveMode::NonRecursive);
-                }
+        if uri.scheme() == "file" && uri.as_str().ends_with(".log") {
+            if let Ok(path) = uri.to_file_path() {
+                self.watch(&path);
             }
         }
 
