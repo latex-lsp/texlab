@@ -37,7 +37,7 @@ doctest = false
 anyhow = "1.0.58"
 byteorder = "1.4.3"
 chrono = { version = "0.4.19", default-features = false, features = ["std"] }
-clap = { version = "3.2.12", features = [
+clap = { version = "3.2.15", features = [
   "std",
   "derive",
 ], default-features = false }
