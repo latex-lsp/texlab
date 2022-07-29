@@ -58,11 +58,16 @@ pub fn collect_chktex_diagnostics(
     Some(())
 }
 
+static CHKTEXRC_FILES: &[&str] = &["chktexrc", ".chktexrc"];
+
 fn find_chktexrc_directory(document: &Document) -> Option<PathBuf> {
     if document.uri.scheme() == "file" {
         if let Ok(mut path) = document.uri.to_file_path() {
             while path.pop() {
-                if path.join("chktexrc").exists() || path.join(".chktexrc").exists() {
+                if CHKTEXRC_FILES
+                    .iter()
+                    .any(|rc_file| path.join(rc_file).exists())
+                {
                     return Some(path);
                 }
             }
@@ -78,10 +83,10 @@ static LINE_REGEX: Lazy<Regex> =
 fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
     let directory = tempdir()?;
     fs::write(directory.path().join("file.tex"), text)?;
-    drop(fs::copy(
-        current_dir.join("chktexrc"),
-        directory.path().join("chktexrc"),
-    ));
+
+    for rc_file in CHKTEXRC_FILES {
+        let _ = fs::copy(current_dir.join(rc_file), directory.path().join(rc_file));
+    }
 
     let output = Command::new("chktex")
         .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n", "file.tex"])
