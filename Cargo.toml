@@ -39,7 +39,7 @@ byteorder = "1.4.3"
 chrono = { version = "0.4.20-rc.1", default-features = false, features = [
   "std",
 ] }
-clap = { version = "3.2.15", features = [
+clap = { version = "3.2.16", features = [
   "std",
   "derive",
 ], default-features = false }
