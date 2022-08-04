@@ -34,7 +34,7 @@ test = false
 doctest = false
 
 [dependencies]
-anyhow = "1.0.58"
+anyhow = "1.0.60"
 byteorder = "1.4.3"
 chrono = { version = "0.4.20-rc.1", default-features = false, features = [
   "std",
