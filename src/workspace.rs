@@ -48,7 +48,7 @@ impl Workspace {
             let _ = watcher
                 .lock()
                 .unwrap()
-                .watch(&path, notify::RecursiveMode::NonRecursive);
+                .watch(path, notify::RecursiveMode::NonRecursive);
         }
     }
 
