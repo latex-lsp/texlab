@@ -170,6 +170,7 @@ fn replace_placeholder(
 }
 
 fn run_process(executable: &str, args: Vec<String>) -> io::Result<()> {
+    log::debug!("Executing forward search: {} {:?}", executable, args);
     Command::new(executable)
         .args(args)
         .stdin(Stdio::null())
