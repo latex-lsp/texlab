@@ -28,7 +28,7 @@ pub fn collect_chktex_diagnostics(
         diagnostics
     });
 
-    let current_dir = find_chktexrc_directory(&document)
+    let current_dir = find_chktexrc_directory(document)
         .or_else(|| {
             workspace
                 .environment
@@ -41,7 +41,7 @@ pub fn collect_chktex_diagnostics(
             workspace
                 .find_parent(uri)
                 .as_ref()
-                .or_else(|| Some(document))
+                .or(Some(document))
                 .filter(|doc| doc.uri.scheme() == "file")
                 .and_then(|doc| doc.uri.to_file_path().ok())
                 .and_then(|path| path.parent().map(ToOwned::to_owned))

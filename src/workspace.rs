@@ -48,7 +48,7 @@ impl Workspace {
             let _ = watcher
                 .lock()
                 .unwrap()
-                .watch(&path, notify::RecursiveMode::NonRecursive);
+                .watch(path, notify::RecursiveMode::NonRecursive);
         }
     }
 
@@ -82,9 +82,7 @@ impl Workspace {
 
     pub fn reload(&mut self, path: PathBuf) -> Result<Option<Document>> {
         let uri = Arc::new(Url::from_file_path(path.clone()).unwrap());
-
-        if self.is_open(&uri)
-            && !(uri.as_str().ends_with(".log") || !uri.as_str().ends_with(".aux"))
+        if self.is_open(&uri) || !(uri.as_str().ends_with(".log") || uri.as_str().ends_with(".aux"))
         {
             return Ok(self.documents_by_uri.get(&uri).cloned());
         }

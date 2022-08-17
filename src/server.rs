@@ -697,7 +697,7 @@ impl Server {
             )?;
         }
 
-        let _ = match &self.workspace.environment.options.aux_directory {
+        match &self.workspace.environment.options.aux_directory {
             Some(path) => self.workspace.watch(path),
             None => self.workspace.watch(&PathBuf::from(".")),
         };
@@ -800,7 +800,7 @@ impl Server {
                                 }
                                 notify::EventKind::Remove(_) => {
                                     for uri in
-                                        ev.paths.iter().flat_map(|path| Url::from_file_path(path))
+                                        ev.paths.iter().flat_map(Url::from_file_path)
                                     {
                                         self.workspace.documents_by_uri.remove(&uri);
                                     }
