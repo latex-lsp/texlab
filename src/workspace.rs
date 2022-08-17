@@ -8,7 +8,7 @@ use anyhow::Result;
 use crossbeam_channel::Sender;
 use lsp_types::Url;
 use notify::Watcher;
-use petgraph::{graphmap::UnGraphMap, visit::Dfs};
+use petgraph::{graphmap::DiGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -145,6 +145,14 @@ impl Workspace {
                             for target in targets {
                                 if let Some(j) = all_uris.iter().position(|uri| uri == target) {
                                     edges.push((i, j, ()));
+
+                                    if target.as_str().ends_with(".tex")
+                                        || target.as_str().ends_with(".bib")
+                                        || target.as_str().ends_with(".rnw")
+                                    {
+                                        edges.push((j, i, ()));
+                                    }
+
                                     break;
                                 }
                             }
@@ -154,7 +162,7 @@ impl Workspace {
 
                 let mut slice = self.clone();
                 slice.documents_by_uri = FxHashMap::default();
-                let graph = UnGraphMap::from_edges(edges);
+                let graph = DiGraphMap::from_edges(edges);
                 let mut dfs = Dfs::new(&graph, start);
                 while let Some(i) = dfs.next(&graph) {
                     let uri = &all_uris[i];
