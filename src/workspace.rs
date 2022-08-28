@@ -28,6 +28,7 @@ pub struct Workspace {
     pub listeners: Vec<Sender<WorkspaceEvent>>,
     pub environment: Environment,
     watcher: Option<Arc<Mutex<notify::RecommendedWatcher>>>,
+    watched_dirs: Arc<Mutex<FxHashSet<PathBuf>>>,
 }
 
 impl Workspace {
@@ -43,12 +44,14 @@ impl Workspace {
         self.watcher = Some(Arc::new(Mutex::new(watcher)));
     }
 
-    pub fn watch(&self, path: &Path) {
+    pub fn watch_dir(&self, path: &Path) {
         if let Some(watcher) = &self.watcher {
-            let _ = watcher
-                .lock()
-                .unwrap()
-                .watch(path, notify::RecursiveMode::NonRecursive);
+            if self.watched_dirs.lock().unwrap().insert(path.to_owned()) {
+                let _ = watcher
+                    .lock()
+                    .unwrap()
+                    .watch(path, notify::RecursiveMode::NonRecursive);
+            }
         }
     }
 
@@ -61,7 +64,7 @@ impl Workspace {
         if uri.scheme() == "file" {
             if let Ok(mut path) = uri.to_file_path() {
                 path.pop();
-                self.watch(&path);
+                self.watch_dir(&path);
             }
         }
 

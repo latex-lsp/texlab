@@ -698,8 +698,8 @@ impl Server {
         }
 
         match &self.workspace.environment.options.aux_directory {
-            Some(path) => self.workspace.watch(path),
-            None => self.workspace.watch(&PathBuf::from(".")),
+            Some(path) => self.workspace.watch_dir(path),
+            None => self.workspace.watch_dir(&PathBuf::from(".")),
         };
 
         Ok(())
