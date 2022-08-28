@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.2] - 28.08.2022
+
+### Fixed
+
+- Do not watch the same directory multiple times, which can result in a memory leak on Windows ([#737](https://github.com/latex-lsp/texlab/issues/679))
+- Fix detection of root document when sharing files between projects ([#679](https://github.com/latex-lsp/texlab/issues/679))
+- Fix text synchronization problem caused by file watcher ([#724](https://github.com/latex-lsp/texlab/issues/724))
+
 ## [4.2.1] - 05.08.2022
 
 ### Fixed
