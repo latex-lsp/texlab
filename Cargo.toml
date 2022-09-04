@@ -38,7 +38,7 @@ anyhow = "1.0.62"
 byteorder = "1.4.3"
 chrono = { version = "0.4.22", default-features = false, features = ["std"] }
 crossbeam-channel = "0.5.5"
-dashmap = "~5.3.4"
+dashmap = "~5.4.0"
 encoding_rs = "0.8.31"
 encoding_rs_io = "0.1.7"
 fern = "0.6"
