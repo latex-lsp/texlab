@@ -34,7 +34,7 @@ test = false
 doctest = false
 
 [dependencies]
-anyhow = "1.0.62"
+anyhow = "1.0.64"
 byteorder = "1.4.3"
 chrono = { version = "0.4.22", default-features = false, features = ["std"] }
 crossbeam-channel = "0.5.5"
