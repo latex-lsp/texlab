@@ -177,7 +177,7 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME))
+            .filter(|&kind| !matches!(kind, R_CURLY))
             .is_some()
         {
             self.content(ParserContext::default());
@@ -518,7 +518,7 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| kind != END_ENVIRONMENT_NAME)
+            .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME))
             .is_some()
         {
             self.content(ParserContext::default());
@@ -1919,5 +1919,33 @@ Baz"#
     #[test]
     fn test_graphics_path() {
         assert_debug_snapshot!(setup(r#"\graphicspath{{../figures/}}"#));
+    }
+
+    #[test]
+    fn test_issue_745() {
+        assert_debug_snapshot!(setup(
+            r#"
+\documentclass{article}
+\usepackage{tabularray} 
+
+\ExplSyntaxOn
+\NewDocumentEnvironment{exptblr}{O{}m}
+    {
+    \use:x
+    {
+    \exp_not:N \begin{tblr}
+    [\exp_not:n{#1}]
+    {#2}
+    }
+    }
+    {
+    \end{tblr}
+    }
+\ExplSyntaxOff
+
+\begin{document}
+
+\end{document}"#
+        ));
     }
 }
