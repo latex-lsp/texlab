@@ -26,7 +26,7 @@ pub static FILE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new("\\((?P<file>[^\r\n()]+\\.(tex|sty|cls))").unwrap());
 
 pub static TEX_ERROR_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new("(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)|(?P<msg2>[^\r\n]*))").unwrap()
+    Regex::new("(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)( (\\.\\.\\.)?(?P<hint>[^\r\n]+))?|(?P<msg2>[^\r\n]*))").unwrap()
 });
 
 pub static WARNING_REGEX: Lazy<Regex> =
