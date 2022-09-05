@@ -9,11 +9,11 @@ expression: result.all_diagnostics
       "range": {
         "start": {
           "line": 6,
-          "character": 0
+          "character": 3
         },
         "end": {
           "line": 6,
-          "character": 0
+          "character": 3
         }
       },
       "severity": 1,

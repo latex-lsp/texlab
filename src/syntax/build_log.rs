@@ -14,6 +14,7 @@ pub struct BuildError {
     pub relative_path: PathBuf,
     pub level: BuildErrorLevel,
     pub message: String,
+    pub hint: Option<String>,
     pub line: Option<u32>,
 }
 
@@ -83,11 +84,18 @@ fn extract_matches(
                 .name("line")
                 .map(|result| result.as_str().parse::<u32>().unwrap() - 1);
 
+            let hint: Option<String> = if line.is_some() {
+                captures.name("hint").map(|r| String::from(r.as_str()))
+            } else {
+                None
+            };
+
             errors.push(BuildError {
                 relative_path: range.path.clone(),
                 level,
                 message,
                 line,
+                hint,
             });
         }
     }
@@ -280,12 +288,14 @@ PDF statistics:
                     message: "Overfull \\hbox (200.00162pt too wide) in paragraph at lines 8--9"
                         .into(),
                     line: Some(7),
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "Overfull \\vbox (3.19998pt too high) detected at line 23".into(),
                     line: Some(22),
+                    hint: None,
                 }
             ]
         );
@@ -365,7 +375,8 @@ PDF statistics:
                 relative_path: "./child.tex".into(),
                 level: BuildErrorLevel::Error,
                 message: "Undefined control sequence.".into(),
-                line: Some(0)
+                line: Some(0),
+                hint: Some("\\foo".into()),
             }]
         );
     }
@@ -446,13 +457,15 @@ PDF statistics:
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "Citation `foo' on page 1 undefined on input line 6.".into(),
-                    line: None
+                    line: None,
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "There were undefined references.".into(),
                     line: None,
+                    hint: None,
                 }
             ]
         );
@@ -552,13 +565,15 @@ PDF statistics:
                     relative_path: "/TexLive/texmf-dist/tex/generic/babel/babel.sty".into(),
                     level: BuildErrorLevel::Error,
                     message: "Package babel Error: Unknown option `foo'. Either you misspelled it or the language definition file foo.ldf was not found.".into(),
-                    line: Some(392)
+                    line: Some(392),
+                    hint: Some("\\ProcessOptions*".into()),
                 },
                 BuildError {
                     relative_path: "/TexLive/texmf-dist/tex/generic/babel/babel.sty".into(),
                     level: BuildErrorLevel::Error,
                     message: "Package babel Error: You haven't specified a language option.".into(),
-                    line: Some(425)
+                    line: Some(425),
+                    hint: Some("ry to proceed from here, type x to quit.}".into()),
                 }
             ]
         );
@@ -960,19 +975,22 @@ PDF statistics:
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "'babel/polyglossia' detected but 'csquotes' missing. Loading 'csquotes' recommended.".into(),
-                    line: None
+                    line: None,
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "There were undefined references.".into(),
                     line: None,
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Warning,
                     message: "Please (re)run Biber on the file: parent and rerun LaTeX afterwards.".into(),
-                    line: None
+                    line: None,
+                    hint: None,
                 }
             ]
         );
@@ -1111,37 +1129,43 @@ PDF statistics:
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Undefined control sequence.".into(),
-                    line: Some(6)
+                    line: Some(6),
+                    hint: Some("\\foo".into()),
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Missing $ inserted.".into(),
-                    line: Some(7)
+                    line: Some(7),
+                    hint: Some("\\bar".into()),
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Undefined control sequence.".into(),
-                    line: Some(8)
+                    line: Some(8),
+                    hint: Some("\\baz".into()),
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Missing { inserted.".into(),
-                    line: Some(9)
+                    line: Some(9),
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Missing $ inserted.".into(),
-                    line: Some(9)
+                    line: Some(9),
+                    hint: None,
                 },
                 BuildError {
                     relative_path: "./parent.tex".into(),
                     level: BuildErrorLevel::Error,
                     message: "Missing } inserted.".into(),
-                    line: Some(9)
+                    line: Some(9),
+                    hint: None,
                 },
             ]
         );
