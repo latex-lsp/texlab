@@ -1,3 +1,5 @@
+use std::sync::Once;
+
 use anyhow::{bail, Result};
 use crossbeam_channel::{Receiver, Sender};
 use lsp_server::{Connection, Message, Notification, Request, Response};
@@ -9,6 +11,8 @@ use lsp_types::{
 };
 use tempfile::{tempdir, TempDir};
 use texlab::Server;
+
+static INIT_LOGGER: Once = Once::new();
 
 pub struct IncomingHandler {
     _handle: jod_thread::JoinHandle<Result<()>>,
@@ -59,6 +63,8 @@ pub struct Client {
 
 impl Client {
     pub fn spawn() -> Result<Self> {
+        INIT_LOGGER.call_once(|| env_logger::init());
+
         let directory = tempdir()?;
         let (client, server) = Connection::memory();
         let incoming = IncomingHandler::spawn(client.receiver)?;
