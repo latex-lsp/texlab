@@ -67,7 +67,7 @@ tempfile = "3.3.0"
 threadpool = "1.8.1"
 titlecase = "2.2.0"
 unicode-normalization = "0.1.20"
-url = { version = "2.2.2", features = ["serde"] }
+url = { version = "2.3.0", features = ["serde"] }
 uuid = { version = "1.1.2", features = ["v4"] }
 
 [dependencies.clap]
