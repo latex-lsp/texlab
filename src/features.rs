@@ -8,6 +8,7 @@ mod formatting;
 mod forward_search;
 mod highlight;
 mod hover;
+mod inlay_hint;
 mod link;
 mod lsp_kinds;
 mod reference;
@@ -30,6 +31,7 @@ pub use self::{
     forward_search::{execute_forward_search, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
     hover::find_hover,
+    inlay_hint::find_inlay_hints,
     link::find_document_links,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
