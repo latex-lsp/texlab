@@ -262,3 +262,63 @@ fn build_log_filter_ignored() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn build_log_spaces_in_path() -> Result<()> {
+    assert_symbols!(find_diagnostics(
+        r#"
+%TEX foo bar/main.tex
+%SRC \documentclass{article}
+%SRC \usepackage{amsmath}
+%SRC \begin{document}
+%SRC \foo{}
+%SRC \end{document}
+
+%LOG foo bar/main.log
+%SRC This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2022.1.23)  16 JUN 2022 11:04
+%SRC entering extended mode
+%SRC  restricted \write18 enabled.
+%SRC  %&-line parsing enabled.
+%SRC **main.tex
+%SRC (./main.tex
+%SRC LaTeX2e <2020-10-01> patch level 4
+%SRC L3 programming layer <2021-02-18>
+%SRC (c:/texlive/2021/texmf-dist/tex/latex/base/article.cls
+%SRC Document Class: article 2020/04/10 v1.4m Standard LaTeX document class
+%SRC (c:/texlive/2021/texmf-dist/tex/latex/base/size10.clo
+%SRC File: size10.clo 2020/04/10 v1.4m Standard LaTeX file (size option)
+%SRC ))
+%SRC (c:/texlive/2021/texmf-dist/tex/latex/amsmath/amsmath.sty
+%SRC Package: amsmath 2020/09/23 v2.17i AMS math features
+%SRC \@mathmargin=\skip49
+%SRC 
+%SRC For additional information on amsmath, use the `?' option.
+%SRC (c:/texlive/2021/texmf-dist/tex/latex/amsmath/amstext.sty
+%SRC Package: amstext 2000/06/29 v2.01 AMS text
+%SRC 
+%SRC (c:/texlive/2021/texmf-dist/tex/latex/amsmath/amsgen.sty
+%SRC File: amsgen.sty 1999/11/30 v2.0 generic functions
+%SRC \@emptytoks=\toks15
+%SRC \ex@=\dimen139
+%SRC ))
+%SRC )
+%SRC (./main.aux)
+%SRC \openout1 = `main.aux'.
+%SRC 
+%SRC ! Undefined control sequence.
+%SRC l.4 \foo
+%SRC         {}
+%SRC The control sequence at the end of the top line
+%SRC of your error message was never \def'ed. If you have
+%SRC misspelled it (e.g., `\hobx'), type `I' and the correct
+%SRC spelling (e.g., `I\hbox'). Otherwise just continue,
+%SRC and I'll forget about whatever was undefined.
+%SRC {c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./main.aux) ) 
+%SRC <
+%SRC c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+%SRC Output written on main.pdf (1 page, 9741 bytes).
+"#,
+        serde_json::Value::Null
+    )?);
+    Ok(())
+}
