@@ -22,7 +22,7 @@ use crate::{
     distro::Distribution,
     features::{
         execute_command, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_foldings, find_hover, find_workspace_symbols,
+        find_document_symbols, find_foldings, find_hover, find_inlay_hints, find_workspace_symbols,
         format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
         BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest,
         ForwardSearchResult, ForwardSearchStatus,
@@ -131,6 +131,7 @@ impl Server {
                 ],
                 ..Default::default()
             }),
+            inlay_hint_provider: Some(OneOf::Left(true)),
             ..ServerCapabilities::default()
         }
     }
@@ -148,6 +149,7 @@ impl Server {
                 name: "TexLab".to_owned(),
                 version: Some(env!("CARGO_PKG_VERSION").to_owned()),
             }),
+            offset_encoding: None,
         };
         self.connection
             .initialize_finish(id, serde_json::to_value(result)?)?;
@@ -646,6 +648,18 @@ impl Server {
         Ok(())
     }
 
+    fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
+        let uri = Arc::new(params.text_document.uri.clone());
+        self.handle_feature_request(id, params, uri, find_inlay_hints)?;
+        Ok(())
+    }
+
+    fn inlay_hint_resolve(&self, id: RequestId, hint: InlayHint) -> Result<()> {
+        let response = lsp_server::Response::new_ok(id, hint);
+        self.connection.sender.send(response.into()).unwrap();
+        Ok(())
+    }
+
     fn semantic_tokens_range(
         &self,
         _id: RequestId,
@@ -748,6 +762,12 @@ impl Server {
                                 .on::<ExecuteCommand,_>(|id, params| self.execute_command(id, params))?
                                 .on::<SemanticTokensRangeRequest, _>(|id, params| {
                                     self.semantic_tokens_range(id, params)
+                                })?
+                                .on::<InlayHintRequest, _>(|id,params| {
+                                    self.inlay_hints(id, params)
+                                })?
+                                .on::<InlayHintResolveRequest,_>(|id, params| {
+                                    self.inlay_hint_resolve(id, params)
                                 })?
                                 .default()
                             {
