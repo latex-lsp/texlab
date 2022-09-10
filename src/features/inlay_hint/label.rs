@@ -16,9 +16,14 @@ pub fn find_label_inlay_hints(
     let data = main_document.data.as_latex()?;
     let root = latex::SyntaxNode::new_root(data.green.clone());
 
+    let range = main_document
+        .line_index
+        .offset_lsp_range(request.params.range);
+
     hints.extend(
         root.descendants()
             .filter_map(latex::LabelDefinition::cast)
+            .filter(|label| label.syntax().text_range().intersect(range).is_some())
             .filter_map(|label| create_hint(request, &label)),
     );
 
