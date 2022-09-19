@@ -88,7 +88,7 @@ features = ["graphmap"]
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.4.0" }
-env_logger = "0.9.0"
+env_logger = "0.9.1"
 insta = { version = "1.19.1", features = ["redactions", "json"] }
 jod-thread = "0.1.2"
 
