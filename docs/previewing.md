@@ -97,13 +97,15 @@ Add the following lines to your editor config:
 ```json
 {
   "texlab.forwardSearch.executable": "okular",
-  "texlab.forwardSearch.args": ["--editor-cmd": "code -g \"%%f\":%%l", "--unique", "file:%p#src:%l%f"]
+  "texlab.forwardSearch.args": ["--unique", "file:%p#src:%l%f"]
 }
 ```
 
 ### Inverse Search
 
-Change the editor of Okular (Settings -> Configure Okular... -> Editor) to "Custom Text Editor" and set the following command:
+Change the editor of Okular (Settings -> Configure Okular... -> Editor) to "Custom Text Editor"
+and set the editor command.
+For Visual Studio Code, you can use the following command:
 
 ```bash
 code -g "%f":%l
