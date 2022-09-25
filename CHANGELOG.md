@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 25.09.2022
+
+### Added
+
+- Add inlay hints for `\label{...}` ([#753](https://github.com/latex-lsp/texlab/issues/753))
+
+### Fixed
+
+- Improve accuracy of the error locations reported by the TeX engine ([#738](https://github.com/latex-lsp/texlab/issues/738))
+- Reduce number of false positive errors reported by `texlab` ([#745](https://github.com/latex-lsp/texlab/issues/745))
+
 ## [4.2.2] - 28.08.2022
 
 ### Fixed
