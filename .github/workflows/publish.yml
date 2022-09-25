@@ -122,6 +122,10 @@ jobs:
         with:
           profile: minimal
           override: true
+      - name: Install Tectonic workaround
+        run: |
+          sudo add-apt-repository universe
+          sudo apt install libfuse2
       - name: Install Tectonic
         uses: wtfjoke/setup-tectonic@v1
         with:
