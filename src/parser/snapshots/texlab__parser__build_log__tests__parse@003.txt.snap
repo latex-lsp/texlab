@@ -1,0 +1,23 @@
+---
+source: src/parser/build_log.rs
+expression: parse_build_log(&text)
+input_file: src/parser/test_data/build_log/003.txt
+---
+BuildLog {
+    errors: [
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "Citation `foo' on page 1 undefined on input line 6.",
+            hint: None,
+            line: None,
+        },
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "There were undefined references.",
+            hint: None,
+            line: None,
+        },
+    ],
+}

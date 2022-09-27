@@ -1,0 +1,18 @@
+@article{10.1145/331499.331504,
+    author = {Jain, A. K. and Murty, M. N. and Flynn, P. J.},
+    title = {Data Clustering: A Review},
+    year = {1999},
+    issue_date = {Sept. 1999},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {31},
+    number = {3},
+    issn = {0360-0300},
+    url = {https://doi.org/10.1145/331499.331504},
+    doi = {10.1145/331499.331504},
+    journal = {ACM Comput. Surv.},
+    month = {sep},
+    pages = {264-323},
+    numpages = {60},
+    keywords = {incremental clustering, clustering applications, exploratory data analysis, cluster analysis, similarity indices, unsupervised learning}
+}

@@ -1,0 +1,16 @@
+@inproceedings{10.1145/967900.968040,
+    author = {Combi, Carlo and Pozzi, Giuseppe},
+    title = {Architectures for a Temporal Workflow Management System},
+    year = {2004},
+    isbn = {1581138121},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/967900.968040},
+    doi = {10.1145/967900.968040},
+    booktitle = {Proceedings of the 2004 ACM Symposium on Applied Computing},
+    pages = {659-666},
+    numpages = {8},
+    keywords = {active DBMS, temporal DBMS, workflow management system - WfMS, temporal workflow management system},
+    location = {Nicosia, Cyprus},
+    series = {SAC '04}
+}

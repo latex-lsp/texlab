@@ -1,0 +1,1 @@
+\newenvironment{bar}[1]{\begin{foo}}{\end{foo}}

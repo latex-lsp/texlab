@@ -1,0 +1,21 @@
+\documentclass{article}
+\usepackage{tabularray} 
+
+\ExplSyntaxOn
+\NewDocumentEnvironment{exptblr}{O{}m}
+    {
+    \use:x
+    {
+    \exp_not:N \begin{tblr}
+    [\exp_not:n{#1}]
+    {#2}
+    }
+    }
+    {
+    \end{tblr}
+    }
+\ExplSyntaxOff
+
+\begin{document}
+
+\end{document}

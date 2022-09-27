@@ -1,0 +1,15 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/citation/citation_missing_brace.txt
+---
+ROOT@0..9
+  PREAMBLE@0..9
+    CITATION@0..9
+      CITATION_NAME@0..5 "\\cite"
+      CURLY_GROUP_WORD_LIST@5..9
+        L_CURLY@5..6 "{"
+        KEY@6..9
+          WORD@6..9 "foo"
+        MISSING@9..9 ""
+

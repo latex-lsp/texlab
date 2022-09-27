@@ -1,0 +1,19 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/label/label_reference_multiple.txt
+---
+ROOT@0..14
+  PREAMBLE@0..14
+    LABEL_REFERENCE@0..14
+      LABEL_REFERENCE_NAME@0..4 "\\ref"
+      CURLY_GROUP_WORD_LIST@4..14
+        L_CURLY@4..5 "{"
+        KEY@5..8
+          WORD@5..8 "foo"
+        COMMA@8..9 ","
+        WHITESPACE@9..10 " "
+        KEY@10..13
+          WORD@10..13 "bar"
+        R_CURLY@13..14 "}"
+

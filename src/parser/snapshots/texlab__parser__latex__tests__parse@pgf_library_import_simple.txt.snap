@@ -1,0 +1,15 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/include/pgf_library_import_simple.txt
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    TIKZ_LIBRARY_IMPORT@0..19
+      TIKZ_LIBRARY_IMPORT_NAME@0..14 "\\usepgflibrary"
+      CURLY_GROUP_WORD_LIST@14..19
+        L_CURLY@14..15 "{"
+        KEY@15..18
+          WORD@15..18 "foo"
+        R_CURLY@18..19 "}"
+

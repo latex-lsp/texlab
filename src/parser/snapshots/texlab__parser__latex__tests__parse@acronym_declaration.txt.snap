@@ -1,0 +1,50 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/glossary/acronym_declaration.txt
+---
+ROOT@0..64
+  PREAMBLE@0..64
+    ACRONYM_DECLARATION@0..64
+      ACRONYM_DECLARATION_NAME@0..15 "\\DeclareAcronym"
+      CURLY_GROUP_WORD@15..19
+        L_CURLY@15..16 "{"
+        KEY@16..18
+          WORD@16..18 "eg"
+        R_CURLY@18..19 "}"
+      CURLY_GROUP_KEY_VALUE@19..64
+        L_CURLY@19..20 "{"
+        KEY_VALUE_BODY@20..63
+          KEY_VALUE_PAIR@20..31
+            KEY@20..26
+              WORD@20..25 "short"
+              WHITESPACE@25..26 " "
+            EQUALITY_SIGN@26..27 "="
+            WHITESPACE@27..28 " "
+            VALUE@28..31
+              TEXT@28..31
+                WORD@28..31 "e.g"
+          COMMA@31..32 ","
+          KEY_VALUE_PAIR@32..50
+            KEY@32..37
+              WORD@32..36 "long"
+              WHITESPACE@36..37 " "
+            EQUALITY_SIGN@37..38 "="
+            WHITESPACE@38..39 " "
+            VALUE@39..50
+              TEXT@39..50
+                WORD@39..42 "for"
+                WHITESPACE@42..43 " "
+                WORD@43..50 "example"
+          COMMA@50..51 ","
+          KEY_VALUE_PAIR@51..63
+            KEY@51..55
+              WORD@51..54 "tag"
+              WHITESPACE@54..55 " "
+            EQUALITY_SIGN@55..56 "="
+            WHITESPACE@56..57 " "
+            VALUE@57..63
+              TEXT@57..63
+                WORD@57..63 "abbrev"
+        R_CURLY@63..64 "}"
+

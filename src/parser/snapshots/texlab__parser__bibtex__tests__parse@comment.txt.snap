@@ -1,0 +1,10 @@
+---
+source: src/parser/bibtex.rs
+expression: root
+input_file: src/parser/test_data/bibtex/comment.txt
+---
+ROOT@0..82
+  JUNK@0..16 "Some junk here\n\n"
+  TYPE@16..24 "@comment"
+  JUNK@24..82 "{foo,\n    author = {F ..."
+

@@ -1,0 +1,1 @@
+\newenvironment{foo}[1][default]{begin}{end}

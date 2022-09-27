@@ -1,0 +1,13 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/include/class_include_empty.txt
+---
+ROOT@0..16
+  PREAMBLE@0..16
+    CLASS_INCLUDE@0..16
+      CLASS_INCLUDE_NAME@0..14 "\\documentclass"
+      CURLY_GROUP_WORD_LIST@14..16
+        L_CURLY@14..15 "{"
+        R_CURLY@15..16 "}"
+

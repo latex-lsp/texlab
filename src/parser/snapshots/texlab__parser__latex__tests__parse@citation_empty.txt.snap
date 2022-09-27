@@ -1,0 +1,13 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/citation/citation_empty.txt
+---
+ROOT@0..7
+  PREAMBLE@0..7
+    CITATION@0..7
+      CITATION_NAME@0..5 "\\cite"
+      CURLY_GROUP_WORD_LIST@5..7
+        L_CURLY@5..6 "{"
+        R_CURLY@6..7 "}"
+

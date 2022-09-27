@@ -1,0 +1,1 @@
+\begin{foo} Hello World \end{bar}

@@ -15,6 +15,7 @@ mod language;
 mod line_index;
 mod line_index_ext;
 mod options;
+pub mod parser;
 mod range;
 mod server;
 pub mod syntax;

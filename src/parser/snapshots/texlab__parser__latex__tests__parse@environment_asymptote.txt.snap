@@ -1,0 +1,24 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/environment/environment_asymptote.txt
+---
+ROOT@0..50
+  PREAMBLE@0..50
+    ENVIRONMENT@0..50
+      BEGIN@0..11
+        BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
+        CURLY_GROUP_WORD@6..11
+          L_CURLY@6..7 "{"
+          KEY@7..10
+            WORD@7..10 "asy"
+          R_CURLY@10..11 "}"
+      VERBATIM@11..41 "\n    printf(\"Hello Wo ..."
+      END@41..50
+        END_ENVIRONMENT_NAME@41..45 "\\end"
+        CURLY_GROUP_WORD@45..50
+          L_CURLY@45..46 "{"
+          KEY@46..49
+            WORD@46..49 "asy"
+          R_CURLY@49..50 "}"
+

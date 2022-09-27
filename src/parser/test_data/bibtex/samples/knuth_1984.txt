@@ -1,0 +1,22 @@
+@book{knuth:ct:a,
+    author       = {Knuth, Donald E.},
+    title        = {The {\TeX book}},
+    date         = 1984,
+    maintitle    = {Computers \& Typesetting},
+    volume       = {A},
+    publisher    = {Addison-Wesley},
+    location     = {Reading, Mass.},
+    langid       = {english},
+    langidopts   = {variant=american},
+    sorttitle    = {Computers & Typesetting A},
+    indexsorttitle= {The TeXbook},
+    indextitle   = {\protect\TeX book, The},
+    shorttitle   = {\TeX book},
+    annotation   = {The first volume of a five-volume book. Note the
+                    \texttt{sorttitle} field. We want this
+                    volume to be listed after the entry referring to the entire
+                    five-volume set. Also note the \texttt{indextitle} and
+                    \texttt{indexsorttitle} fields. Indexing packages that don't
+                    generate robust index entries require some control sequences
+                    to be protected from expansion},
+}

@@ -1,0 +1,1 @@
+\newglossaryentry{foo}{bar = baz, qux,}

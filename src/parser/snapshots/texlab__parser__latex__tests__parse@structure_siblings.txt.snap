@@ -1,0 +1,29 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/structure/structure_siblings.txt
+---
+ROOT@0..35
+  PREAMBLE@0..35
+    SECTION@0..18
+      SECTION_NAME@0..8 "\\section"
+      CURLY_GROUP@8..14
+        L_CURLY@8..9 "{"
+        TEXT@9..12
+          WORD@9..12 "Foo"
+        R_CURLY@12..13 "}"
+        WHITESPACE@13..14 " "
+      TEXT@14..18
+        WORD@14..17 "Foo"
+        WHITESPACE@17..18 " "
+    SECTION@18..35
+      SECTION_NAME@18..26 "\\section"
+      CURLY_GROUP@26..32
+        L_CURLY@26..27 "{"
+        TEXT@27..30
+          WORD@27..30 "Bar"
+        R_CURLY@30..31 "}"
+        WHITESPACE@31..32 " "
+      TEXT@32..35
+        WORD@32..35 "Bar"
+

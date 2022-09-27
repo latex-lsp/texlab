@@ -4,11 +4,11 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use lsp_types::{
     CompletionParams, Position, TextDocumentIdentifier, TextDocumentPositionParams, Url,
 };
-use texlab::{features::FeatureRequest, syntax::latex, DocumentLanguage, Workspace};
+use texlab::{features::FeatureRequest, parser::parse_latex, DocumentLanguage, Workspace};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("LaTeX/Parser", |b| {
-        b.iter(|| latex::parse(black_box(include_str!("../texlab.tex"))));
+        b.iter(|| parse_latex(black_box(include_str!("../texlab.tex"))));
     });
 
     c.bench_function("LaTeX/Completion/Command", |b| {

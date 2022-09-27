@@ -3,7 +3,7 @@ use std::sync::Arc;
 use dashmap::DashMap;
 use lsp_types::{DiagnosticSeverity, Position, Range, Url};
 
-use crate::{syntax::build_log::BuildErrorLevel, Workspace};
+use crate::{syntax::BuildErrorLevel, Workspace};
 
 use super::{Diagnostic, DiagnosticCode};
 
@@ -59,12 +59,13 @@ pub fn collect_build_diagnostics(
             let line = error.line.unwrap();
             let hint: &String = error.hint.as_ref().unwrap();
             if let Some(hint_line) = doc.text.lines().nth(line as usize) {
-                hint_line
-                    .find(hint)
-                    .map(|col| {
-                        let lc = doc.line_index.to_utf16(crate::LineCol { line, col: (col + hint.len() - 1) as u32 });
-                        Position::new(lc.line, lc.col)
-                    })
+                hint_line.find(hint).map(|col| {
+                    let lc = doc.line_index.to_utf16(crate::LineCol {
+                        line,
+                        col: (col + hint.len() - 1) as u32,
+                    });
+                    Position::new(lc.line, lc.col)
+                })
             } else {
                 log::warn!(
                     "Invalid line number {} in \"{}\" for \"{}\"",

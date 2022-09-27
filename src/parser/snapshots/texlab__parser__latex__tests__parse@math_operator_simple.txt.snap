@@ -1,0 +1,19 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/command_definition/math_operator_simple.txt
+---
+ROOT@0..31
+  PREAMBLE@0..31
+    MATH_OPERATOR@0..31
+      MATH_OPERATOR_NAME@0..20 "\\DeclareMathOperator"
+      CURLY_GROUP_COMMAND@20..26
+        L_CURLY@20..21 "{"
+        GENERIC_COMMAND_NAME@21..25 "\\foo"
+        R_CURLY@25..26 "}"
+      CURLY_GROUP@26..31
+        L_CURLY@26..27 "{"
+        TEXT@27..30
+          WORD@27..30 "foo"
+        R_CURLY@30..31 "}"
+

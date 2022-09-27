@@ -1,0 +1,21 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/color/color_set_definition_error3.txt
+---
+ROOT@0..25
+  PREAMBLE@0..25
+    COLOR_SET_DEFINITION@0..25
+      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      CURLY_GROUP_WORD_LIST@15..25
+        L_CURLY@15..16 "{"
+        KEY@16..19
+          WORD@16..19 "rgb"
+        COMMA@19..20 ","
+        KEY@20..24
+          WORD@20..24 "HTML"
+        R_CURLY@24..25 "}"
+      MISSING@25..25 ""
+      MISSING@25..25 ""
+      MISSING@25..25 ""
+

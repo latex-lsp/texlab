@@ -1,0 +1,15 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/include/graphics_include_simple.txt
+---
+ROOT@0..29
+  PREAMBLE@0..29
+    GRAPHICS_INCLUDE@0..29
+      GRAPHICS_INCLUDE_NAME@0..16 "\\includegraphics"
+      CURLY_GROUP_WORD_LIST@16..29
+        L_CURLY@16..17 "{"
+        KEY@17..28
+          WORD@17..28 "foo/bar.pdf"
+        R_CURLY@28..29 "}"
+

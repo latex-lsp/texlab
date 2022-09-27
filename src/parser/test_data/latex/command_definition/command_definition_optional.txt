@@ -1,0 +1,1 @@
+\newcommand{\foo}[1][def]{#1}

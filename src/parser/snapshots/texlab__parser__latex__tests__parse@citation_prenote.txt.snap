@@ -1,0 +1,20 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/citation/citation_prenote.txt
+---
+ROOT@0..15
+  PREAMBLE@0..15
+    CITATION@0..15
+      CITATION_NAME@0..5 "\\cite"
+      BRACK_GROUP@5..10
+        L_BRACK@5..6 "["
+        TEXT@6..9
+          WORD@6..9 "foo"
+        R_BRACK@9..10 "]"
+      CURLY_GROUP_WORD_LIST@10..15
+        L_CURLY@10..11 "{"
+        KEY@11..14
+          WORD@11..14 "bar"
+        R_CURLY@14..15 "}"
+

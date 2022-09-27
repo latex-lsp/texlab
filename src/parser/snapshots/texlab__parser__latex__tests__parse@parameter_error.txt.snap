@@ -1,0 +1,10 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/parameter_error.txt
+---
+ROOT@0..1
+  PREAMBLE@0..1
+    TEXT@0..1
+      WORD@0..1 "#"
+

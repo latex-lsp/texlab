@@ -1,0 +1,1 @@
+\includesvg[scale=.5]{foo/bar}

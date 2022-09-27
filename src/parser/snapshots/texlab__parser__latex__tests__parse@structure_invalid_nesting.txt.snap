@@ -1,0 +1,23 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/structure/structure_invalid_nesting.txt
+---
+ROOT@0..27
+  PREAMBLE@0..27
+    SECTION@0..14
+      SECTION_NAME@0..8 "\\section"
+      CURLY_GROUP@8..14
+        L_CURLY@8..9 "{"
+        TEXT@9..12
+          WORD@9..12 "Foo"
+        R_CURLY@12..13 "}"
+        WHITESPACE@13..14 " "
+    CHAPTER@14..27
+      CHAPTER_NAME@14..22 "\\chapter"
+      CURLY_GROUP@22..27
+        L_CURLY@22..23 "{"
+        TEXT@23..26
+          WORD@23..26 "Bar"
+        R_CURLY@26..27 "}"
+

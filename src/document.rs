@@ -5,9 +5,10 @@ use lsp_types::Url;
 
 use crate::{
     line_index::LineIndex,
+    parser::{parse_bibtex, parse_build_log, parse_latex},
     syntax::{
-        bibtex, build_log,
         latex::{self, LatexAnalyzerContext},
+        BuildLog,
     },
     DocumentLanguage, Environment,
 };
@@ -27,7 +28,7 @@ pub struct BibtexDocumentData {
 pub enum DocumentData {
     Latex(Box<LatexDocumentData>),
     Bibtex(BibtexDocumentData),
-    BuildLog(Arc<build_log::Parse>),
+    BuildLog(Arc<BuildLog>),
 }
 
 impl DocumentData {
@@ -59,7 +60,7 @@ impl DocumentData {
     }
 
     #[must_use]
-    pub fn as_build_log(&self) -> Option<&build_log::Parse> {
+    pub fn as_build_log(&self) -> Option<&BuildLog> {
         if let Self::BuildLog(v) = self {
             Some(v)
         } else {
@@ -93,7 +94,7 @@ impl Document {
         let line_index = Arc::new(LineIndex::new(&text));
         let data = match language {
             DocumentLanguage::Latex => {
-                let green = latex::parse(&text).green;
+                let green = parse_latex(&text);
                 let root = latex::SyntaxNode::new_root(green.clone());
 
                 let base_uri = match &environment.options.root_directory {
@@ -116,11 +117,11 @@ impl Document {
                 DocumentData::Latex(Box::new(LatexDocumentData { green, extras }))
             }
             DocumentLanguage::Bibtex => {
-                let green = bibtex::parse(&text);
+                let green = parse_bibtex(&text);
                 DocumentData::Bibtex(BibtexDocumentData { green })
             }
             DocumentLanguage::BuildLog => {
-                let data = Arc::new(build_log::parse(&text));
+                let data = Arc::new(parse_build_log(&text));
                 DocumentData::BuildLog(data)
             }
         };

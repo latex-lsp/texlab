@@ -1,0 +1,30 @@
+---
+source: src/parser/build_log.rs
+expression: parse_build_log(&text)
+input_file: src/parser/test_data/build_log/005.txt
+---
+BuildLog {
+    errors: [
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "'babel/polyglossia' detected but 'csquotes' missing. Loading 'csquotes' recommended.",
+            hint: None,
+            line: None,
+        },
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "There were undefined references.",
+            hint: None,
+            line: None,
+        },
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "Please (re)run Biber on the file: parent and rerun LaTeX afterwards.",
+            hint: None,
+            line: None,
+        },
+    ],
+}

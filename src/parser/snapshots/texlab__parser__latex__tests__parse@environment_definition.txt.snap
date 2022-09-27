@@ -1,0 +1,40 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/environment/environment_definition.txt
+---
+ROOT@0..47
+  PREAMBLE@0..47
+    ENVIRONMENT_DEFINITION@0..47
+      ENVIRONMENT_DEFINITION_NAME@0..15 "\\newenvironment"
+      CURLY_GROUP_WORD@15..20
+        L_CURLY@15..16 "{"
+        KEY@16..19
+          WORD@16..19 "bar"
+        R_CURLY@19..20 "}"
+      BRACK_GROUP_WORD@20..23
+        L_BRACK@20..21 "["
+        KEY@21..22
+          WORD@21..22 "1"
+        R_BRACK@22..23 "]"
+      CURLY_GROUP@23..36
+        L_CURLY@23..24 "{"
+        GENERIC_COMMAND@24..35
+          BEGIN_ENVIRONMENT_NAME@24..30 "\\begin"
+          CURLY_GROUP@30..35
+            L_CURLY@30..31 "{"
+            TEXT@31..34
+              WORD@31..34 "foo"
+            R_CURLY@34..35 "}"
+        R_CURLY@35..36 "}"
+      CURLY_GROUP@36..47
+        L_CURLY@36..37 "{"
+        GENERIC_COMMAND@37..46
+          END_ENVIRONMENT_NAME@37..41 "\\end"
+          CURLY_GROUP@41..46
+            L_CURLY@41..42 "{"
+            TEXT@42..45
+              WORD@42..45 "foo"
+            R_CURLY@45..46 "}"
+        R_CURLY@46..47 "}"
+

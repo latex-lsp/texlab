@@ -1,0 +1,1 @@
+\acrshort[foo=bar,baz]{fpsLabel}

@@ -1,0 +1,16 @@
+@string{jams    = {J.~Amer. Math. Soc.}}
+
+@article{bertram,
+    author       = {Bertram, Aaron and Wentworth, Richard},
+    title        = {Gromov invariants for holomorphic maps on {Riemann} surfaces},
+    journaltitle = jams,
+    date         = 1996,
+    volume       = 9,
+    number       = 2,
+    pages        = {529-571},
+    langid       = {english},
+    langidopts   = {variant=american},
+    shorttitle   = {Gromov invariants},
+    annotation   = {An \texttt{article} entry with a \texttt{volume} and a
+                    \texttt{number} field},
+}

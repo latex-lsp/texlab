@@ -1,0 +1,14 @@
+@patent{almendro,
+    author       = {Almendro, Jos{\'e} L. and Mart{\'i}n, Jacinto and S{\'a}nchez,
+                    Alberto and Nozal, Fernando},
+    title        = {Elektromagnetisches Signalhorn},
+    number       = {EU-29702195U},
+    date         = 1998,
+    location     = {countryfr and countryuk and countryde},
+    langid       = {german},
+    annotation   = {This is a \texttt{patent} entry with a \texttt{location}
+                    field. The number is given in the \texttt{number} field. Note
+                    the format of the \texttt{location} field in the database
+                    file. Compare \texttt{laufenberg}, \texttt{sorace}, and
+                    \texttt{kowalik}},
+}

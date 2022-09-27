@@ -1,0 +1,10 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/generic_command_empty.txt
+---
+ROOT@0..4
+  PREAMBLE@0..4
+    GENERIC_COMMAND@0..4
+      GENERIC_COMMAND_NAME@0..4 "\\foo"
+

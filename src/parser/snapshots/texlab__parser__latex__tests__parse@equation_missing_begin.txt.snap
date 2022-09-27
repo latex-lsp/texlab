@@ -1,0 +1,32 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/equation_missing_begin.txt
+---
+ROOT@0..28
+  PREAMBLE@0..28
+    ENVIRONMENT@0..28
+      BEGIN@0..10
+        BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
+        CURLY_GROUP_WORD@6..10
+          L_CURLY@6..7 "{"
+          KEY@7..8
+            WORD@7..8 "a"
+          R_CURLY@8..9 "}"
+          WHITESPACE@9..10 " "
+      TEXT@10..18
+        WORD@10..13 "foo"
+        WHITESPACE@13..14 " "
+        WORD@14..17 "bar"
+        WHITESPACE@17..18 " "
+      GENERIC_COMMAND@18..21
+        END_EQUATION_NAME@18..20 "\\]"
+        WHITESPACE@20..21 " "
+      END@21..28
+        END_ENVIRONMENT_NAME@21..25 "\\end"
+        CURLY_GROUP_WORD@25..28
+          L_CURLY@25..26 "{"
+          KEY@26..27
+            WORD@26..27 "b"
+          R_CURLY@27..28 "}"
+

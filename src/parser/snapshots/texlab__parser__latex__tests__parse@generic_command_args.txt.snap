@@ -1,0 +1,20 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/generic_command_args.txt
+---
+ROOT@0..14
+  PREAMBLE@0..14
+    GENERIC_COMMAND@0..14
+      GENERIC_COMMAND_NAME@0..4 "\\foo"
+      CURLY_GROUP@4..9
+        L_CURLY@4..5 "{"
+        TEXT@5..8
+          WORD@5..8 "bar"
+        R_CURLY@8..9 "}"
+      MIXED_GROUP@9..14
+        L_BRACK@9..10 "["
+        TEXT@10..13
+          WORD@10..13 "qux"
+        R_BRACK@13..14 "]"
+

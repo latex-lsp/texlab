@@ -1,6 +1,0 @@
----
-source: src/syntax/latex/lexer.rs
-expression: "verify(r#\"\"#)"
-
----
-[]

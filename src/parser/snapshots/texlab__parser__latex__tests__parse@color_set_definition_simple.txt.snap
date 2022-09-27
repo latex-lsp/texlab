@@ -1,0 +1,38 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/color/color_set_definition_simple.txt
+---
+ROOT@0..44
+  PREAMBLE@0..44
+    COLOR_SET_DEFINITION@0..44
+      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      BRACK_GROUP_WORD@15..19
+        L_BRACK@15..16 "["
+        KEY@16..18
+          WORD@16..18 "ty"
+        R_BRACK@18..19 "]"
+      CURLY_GROUP_WORD_LIST@19..29
+        L_CURLY@19..20 "{"
+        KEY@20..23
+          WORD@20..23 "rgb"
+        COMMA@23..24 ","
+        KEY@24..28
+          WORD@24..28 "HTML"
+        R_CURLY@28..29 "}"
+      CURLY_GROUP_WORD@29..34
+        L_CURLY@29..30 "{"
+        KEY@30..33
+          WORD@30..33 "foo"
+        R_CURLY@33..34 "}"
+      CURLY_GROUP_WORD@34..39
+        L_CURLY@34..35 "{"
+        KEY@35..38
+          WORD@35..38 "bar"
+        R_CURLY@38..39 "}"
+      CURLY_GROUP_WORD@39..44
+        L_CURLY@39..40 "{"
+        KEY@40..43
+          WORD@40..43 "baz"
+        R_CURLY@43..44 "}"
+

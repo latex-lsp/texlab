@@ -1,0 +1,1 @@
+\definecolor{foo}{rgb}{255,168,0}

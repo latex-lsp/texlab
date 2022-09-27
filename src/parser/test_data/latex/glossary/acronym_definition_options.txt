@@ -1,0 +1,1 @@
+\newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}

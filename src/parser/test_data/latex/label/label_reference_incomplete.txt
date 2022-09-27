@@ -1,0 +1,1 @@
+Equation \eqref{eq is a \emph{useful} identity.

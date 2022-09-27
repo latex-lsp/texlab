@@ -1,10 +1,10 @@
 use insta::assert_snapshot;
 use rowan::ast::AstNode;
 
-use crate::syntax::bibtex;
+use crate::{parser::parse_bibtex, syntax::bibtex};
 
 fn render_entry(input: &str) -> String {
-    let green = bibtex::parse(input);
+    let green = parse_bibtex(input);
     let root = bibtex::Root::cast(bibtex::SyntaxNode::new_root(green)).unwrap();
     let entry = root.entries().next().unwrap();
     super::render(&entry).unwrap()

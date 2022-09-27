@@ -1,0 +1,31 @@
+---
+source: src/parser/build_log.rs
+expression: parse_build_log(&text)
+input_file: src/parser/test_data/build_log/004.txt
+---
+BuildLog {
+    errors: [
+        BuildError {
+            relative_path: "/TexLive/texmf-dist/tex/generic/babel/babel.sty",
+            level: Error,
+            message: "Package babel Error: Unknown option `foo'. Either you misspelled it or the language definition file foo.ldf was not found.",
+            hint: Some(
+                "\\ProcessOptions*",
+            ),
+            line: Some(
+                392,
+            ),
+        },
+        BuildError {
+            relative_path: "/TexLive/texmf-dist/tex/generic/babel/babel.sty",
+            level: Error,
+            message: "Package babel Error: You haven't specified a language option.",
+            hint: Some(
+                "ry to proceed from here, type x to quit.}",
+            ),
+            line: Some(
+                425,
+            ),
+        },
+    ],
+}

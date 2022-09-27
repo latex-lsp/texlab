@@ -1,0 +1,19 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/command_definition/command_definition_no_argc.txt
+---
+ROOT@0..22
+  PREAMBLE@0..22
+    COMMAND_DEFINITION@0..22
+      COMMAND_DEFINITION_NAME@0..11 "\\newcommand"
+      CURLY_GROUP_COMMAND@11..17
+        L_CURLY@11..12 "{"
+        GENERIC_COMMAND_NAME@12..16 "\\foo"
+        R_CURLY@16..17 "}"
+      CURLY_GROUP@17..22
+        L_CURLY@17..18 "{"
+        TEXT@18..21
+          WORD@18..21 "foo"
+        R_CURLY@21..22 "}"
+
