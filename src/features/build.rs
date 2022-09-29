@@ -117,8 +117,7 @@ impl BuildEngine {
 
         let document = request
             .workspace
-            .documents_by_uri
-            .values()
+            .iter()
             .find(|document| {
                 if let Some(data) = document.data.as_latex() {
                     data.extras.has_document_environment

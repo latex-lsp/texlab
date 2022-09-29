@@ -24,8 +24,7 @@ impl From<&Workspace> for ProjectOrdering {
     fn from(workspace: &Workspace) -> Self {
         let mut ordering = Vec::new();
         let uris: FxHashSet<Arc<Url>> = workspace
-            .documents_by_uri
-            .values()
+            .iter()
             .map(|document| Arc::clone(&document.uri))
             .collect();
 
@@ -43,7 +42,7 @@ impl From<&Workspace> for ProjectOrdering {
                 }
 
                 ordering.push(Arc::clone(&uri));
-                if let Some(document) = workspace.documents_by_uri.get(&uri) {
+                if let Some(document) = workspace.get(&uri) {
                     if let Some(data) = document.data.as_latex() {
                         for link in data.extras.explicit_links.iter().rev() {
                             for target in &link.targets {
@@ -64,23 +63,23 @@ impl From<&Workspace> for ProjectOrdering {
 fn connected_components(workspace: &Workspace) -> Vec<Workspace> {
     let mut components = Vec::new();
     let mut visited = FxHashSet::default();
-    for root_document in workspace.documents_by_uri.values() {
+    for root_document in workspace.iter() {
         if !visited.insert(Arc::clone(&root_document.uri)) {
             continue;
         }
 
         let slice = workspace.slice(&root_document.uri);
-        for uri in slice.documents_by_uri.keys() {
-            visited.insert(Arc::clone(uri));
+        for uri in slice.iter().map(|document| document.uri) {
+            visited.insert(uri);
         }
         components.push(slice);
     }
     components
 }
 
-fn build_dependency_graph(workspace: &Workspace) -> (Graph<usize, (), Directed>, Vec<&Document>) {
+fn build_dependency_graph(workspace: &Workspace) -> (Graph<usize, (), Directed>, Vec<Document>) {
     let mut graph = Graph::new();
-    let documents: Vec<_> = workspace.documents_by_uri.values().collect();
+    let documents: Vec<_> = workspace.iter().collect();
     let nodes: Vec<_> = (0..documents.len()).map(|i| graph.add_node(i)).collect();
 
     for (i, document) in documents.iter().enumerate() {

@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use lsp_types::{DocumentSymbolParams, Range};
 use rowan::ast::AstNode;
-use smol_str::SmolStr;
 use titlecase::titlecase;
 
 use crate::{
@@ -18,7 +17,8 @@ pub fn find_latex_symbols(
     request: &FeatureRequest<DocumentSymbolParams>,
     buf: &mut Vec<InternalSymbol>,
 ) -> Option<()> {
-    let data = request.main_document().data.as_latex()?;
+    let document = request.main_document();
+    let data = document.data.as_latex()?;
     let mut context = Context { request, data };
 
     let root = context.data.green.clone();
@@ -365,9 +365,8 @@ fn visit_theorem(
     let definition = context
         .request
         .workspace
-        .documents_by_uri
-        .values()
-        .filter_map(|document| document.data.as_latex())
+        .iter()
+        .filter_map(|document| document.data.as_latex().cloned())
         .find_map(|data| {
             data.extras
                 .theorem_environments
@@ -436,7 +435,7 @@ fn visit_theorem(
 struct NumberedLabel {
     name: String,
     range: Range,
-    number: Option<SmolStr>,
+    number: Option<String>,
 }
 
 fn find_label_by_parent(
@@ -456,6 +455,6 @@ fn find_label_by_parent(
     Some(NumberedLabel {
         name: name.to_string(),
         range,
-        number: number.map(Into::into),
+        number,
     })
 }

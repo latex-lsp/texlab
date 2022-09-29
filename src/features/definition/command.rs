@@ -17,7 +17,7 @@ pub(super) fn goto_command_definition(
 
     let origin_selection_range = name.text_range();
 
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_latex() {
             let root = latex::SyntaxNode::new_root(data.green.clone());
 

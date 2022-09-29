@@ -5,7 +5,8 @@ use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, s
 use super::HoverResult;
 
 pub(super) fn find_component_hover(context: &CursorContext<HoverParams>) -> Option<HoverResult> {
-    let data = context.request.main_document().data.as_latex()?;
+    let document = context.request.main_document();
+    let data = document.data.as_latex()?;
     for link in &data.extras.explicit_links {
         if matches!(
             link.kind,

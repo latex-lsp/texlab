@@ -14,7 +14,7 @@ pub(super) fn find_label_references(
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_latex() {
             for name in data
                 .extras

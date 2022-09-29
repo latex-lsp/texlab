@@ -62,7 +62,7 @@ pub fn find_workspace_symbols(
 ) -> Vec<SymbolInformation> {
     let mut symbols = Vec::new();
 
-    for document in workspace.documents_by_uri.values() {
+    for document in workspace.iter() {
         let request = FeatureRequest {
             uri: Arc::clone(&document.uri),
             params: DocumentSymbolParams {

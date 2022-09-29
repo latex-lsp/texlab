@@ -348,7 +348,7 @@ impl Server {
         normalize_uri(&mut params.text_document.uri);
 
         let uri = Arc::new(params.text_document.uri);
-        match self.workspace.documents_by_uri.get(&uri).cloned() {
+        match self.workspace.get(&uri) {
             Some(old_document) => {
                 let mut text = old_document.text.to_string();
                 apply_document_edit(&mut text, params.content_changes);
@@ -394,7 +394,6 @@ impl Server {
 
         if let Some(request) = self
             .workspace
-            .documents_by_uri
             .get(&uri)
             .filter(|_| self.workspace.environment.options.build.on_save)
             .map(|document| {
@@ -421,10 +420,8 @@ impl Server {
 
         if let Some(document) = self
             .workspace
-            .documents_by_uri
             .get(&uri)
             .filter(|_| self.workspace.environment.options.chktex.on_open_and_save)
-            .cloned()
         {
             self.run_chktex(document);
         }
@@ -474,7 +471,7 @@ impl Server {
     {
         self.spawn(move |server| {
             let request = server.feature_request(uri, params);
-            if request.workspace.documents_by_uri.is_empty() {
+            if request.workspace.iter().next().is_none() {
                 let code = lsp_server::ErrorCode::InvalidRequest as i32;
                 let message = "unknown document".to_string();
                 let response = lsp_server::Response::new_err(id, code, message);
@@ -539,13 +536,12 @@ impl Server {
                         .map(Documentation::MarkupContent);
                 }
                 CompletionItemData::Citation { uri, key } => {
-                    if let Some(data) = server
-                        .workspace
-                        .documents_by_uri
-                        .get(&uri)
-                        .and_then(|document| document.data.as_bibtex())
-                    {
-                        let root = bibtex::SyntaxNode::new_root(data.green.clone());
+                    if let Some(root) = server.workspace.get(&uri).and_then(|document| {
+                        document
+                            .data
+                            .as_bibtex()
+                            .map(|data| bibtex::SyntaxNode::new_root(data.green.clone()))
+                    }) {
                         item.documentation = bibtex::Root::cast(root)
                             .and_then(|root| root.find_entry(&key))
                             .and_then(|entry| citation::render(&entry))
@@ -718,13 +714,7 @@ impl Server {
     }
 
     fn reparse_all(&mut self) -> Result<()> {
-        for document in self
-            .workspace
-            .documents_by_uri
-            .values()
-            .cloned()
-            .collect::<Vec<_>>()
-        {
+        for document in self.workspace.iter().collect::<Vec<_>>() {
             self.workspace.open(
                 Arc::clone(&document.uri),
                 document.text.clone(),
@@ -841,7 +831,7 @@ impl Server {
                                 }
                                 notify::EventKind::Remove(_) => {
                                     for uri in ev.paths.iter().flat_map(Url::from_file_path) {
-                                        self.workspace.documents_by_uri.remove(&uri);
+                                        self.workspace.remove(&uri);
                                     }
                                 }
                                 notify::EventKind::Any
@@ -884,7 +874,7 @@ fn publish_diagnostics(
     diagnostic_manager: &DiagnosticManager,
     workspace: &Workspace,
 ) -> Result<()> {
-    for document in workspace.documents_by_uri.values() {
+    for document in workspace.iter() {
         if matches!(document.data, DocumentData::BuildLog(_)) {
             continue;
         }

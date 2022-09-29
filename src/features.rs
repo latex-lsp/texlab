@@ -46,7 +46,7 @@ pub struct FeatureRequest<P> {
 }
 
 impl<P> FeatureRequest<P> {
-    pub fn main_document(&self) -> &Document {
-        &self.workspace.documents_by_uri[&self.uri]
+    pub fn main_document(&self) -> Document {
+        self.workspace.get(&self.uri).unwrap()
     }
 }

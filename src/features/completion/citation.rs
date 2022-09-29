@@ -36,13 +36,13 @@ pub fn complete_citations<'a>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_bibtex() {
             for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(item) = make_item(document, &entry, range) {
+                if let Some(item) = make_item(&document, &entry, range) {
                     items.push(item);
                 }
             }
@@ -72,11 +72,11 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
     Some(())
 }
 
-fn make_item<'a>(
-    document: &'a Document,
+fn make_item(
+    document: &Document,
     entry: &bibtex::Entry,
     range: TextRange,
-) -> Option<InternalCompletionItem<'a>> {
+) -> Option<InternalCompletionItem<'static>> {
     let key = entry.name_token()?.to_string();
     let ty = LANGUAGE_DATA
         .find_entry_type(&entry.type_token()?.text()[1..])

@@ -12,7 +12,7 @@ pub fn collect_build_diagnostics(
     workspace: &Workspace,
     build_log_uri: &Url,
 ) -> Option<()> {
-    let build_log_document = workspace.documents_by_uri.get(build_log_uri)?;
+    let build_log_document = workspace.get(build_log_uri)?;
     let build_log = build_log_document.data.as_build_log()?.to_owned();
 
     all_diagnostics.alter_all(|_, mut diagnostics| {
@@ -23,8 +23,7 @@ pub fn collect_build_diagnostics(
     });
 
     let root_document_uri = &workspace
-        .documents_by_uri
-        .values()
+        .iter()
         .find(|document| {
             document.data.as_latex().map_or(false, |data| {
                 !document.uri.as_str().ends_with(".aux")
@@ -49,7 +48,7 @@ pub fn collect_build_diagnostics(
         };
 
         let doc = if error.line.is_some() && error.hint.is_some() {
-            workspace.documents_by_uri.get(&full_path_uri)
+            workspace.get(&full_path_uri)
         } else {
             None
         };
