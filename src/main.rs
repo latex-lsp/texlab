@@ -21,10 +21,6 @@ struct Opts {
     /// Write the logging output to FILE
     #[clap(long, name = "FILE", value_parser)]
     log_file: Option<PathBuf>,
-
-    /// Print version information and exit
-    #[clap(short = 'V', long)]
-    version: bool,
 }
 
 fn main() -> Result<()> {
