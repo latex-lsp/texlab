@@ -9,104 +9,43 @@ env:
   CI: 1
   RUST_BACKTRACE: short
   RUSTFLAGS: "-D warnings"
-  RUSTUP_MAX_RETRIES: 10
 jobs:
   build:
-    name: Build (${{ matrix.target }}, ${{ matrix.toolchain }})
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            run-tests: true
-            use-cross: false
-            toolchain: stable
-          # - os: windows-latest
-          #   target: i686-pc-windows-msvc
-          #   run-tests: false
-          #   use-cross: false
-          #   toolchain: stable
-          # - os: windows-latest
-          #   target: aarch64-pc-windows-msvc
-          #   run-tests: false
-          #   use-cross: false
-          #   toolchain: stable
-
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            run-tests: true
-            use-cross: false
-            toolchain: stable
-          # - os: macos-latest
-          #   target: aarch64-apple-darwin
-          #   run-tests: false
-          #   use-cross: false
-          #   toolchain: stable
-
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            run-tests: true
-            use-cross: false
-            toolchain: stable
-          # - os: ubuntu-latest
-          #   target: aarch64-unknown-linux-gnu
-          #   run-tests: false
-          #   use-cross: true
-          #   toolchain: stable
-          # - os: ubuntu-latest
-          #   target: armv7-unknown-linux-gnueabihf
-          #   run-tests: false
-          #   use-cross: true
-          #   toolchain: stable
-          # - os: ubuntu-latest
-          #   target: x86_64-unknown-linux-musl
-          #   run-tests: false
-          #   use-cross: false
-          #   toolchain: stable
-
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            run-tests: false
-            use-cross: false
-            toolchain: 1.59
+        os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ matrix.target }}
       - name: Compile
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --target ${{ matrix.target }} --all-features --no-run --locked
-          use-cross: ${{ matrix.use-cross }}
+        run: cargo test --all-features --no-run --locked
       - name: Test
-        uses: actions-rs/cargo@v1
-        if: ${{ matrix.run-tests }}
-        with:
-          command: test
-          args: --target ${{ matrix.target }} --all-features -- --nocapture --quiet
-          use-cross: ${{ matrix.use-cross }}
+        run: cargo test --all-features -- --nocapture --quiet
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v1
+      - name: Verify minimum supported Rust version
+        run: |
+          cargo install cargo-msrv
+          cargo msrv verify
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          override: true
           components: llvm-tools-preview
-      - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v1
+      - uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
