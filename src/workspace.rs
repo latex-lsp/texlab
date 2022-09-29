@@ -24,7 +24,7 @@ pub enum WorkspaceEvent {
 
 #[derive(Debug, Clone, Default)]
 pub struct Workspace {
-    pub documents_by_uri: FxHashMap<Arc<Url>, Document>,
+    documents_by_uri: FxHashMap<Arc<Url>, Document>,
     pub viewport: FxHashSet<Arc<Url>>,
     pub listeners: Vec<Sender<WorkspaceEvent>>,
     pub environment: Environment,
@@ -33,12 +33,23 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    #[must_use]
     pub fn new(environment: Environment) -> Self {
         Self {
             environment,
             ..Self::default()
         }
+    }
+
+    pub fn get(&self, uri: &Url) -> Option<Document> {
+        self.documents_by_uri.get(uri).cloned()
+    }
+
+    pub fn remove(&mut self, uri: &Url) {
+        self.documents_by_uri.remove(uri);
+    }
+
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = Document> + 'a {
+        self.documents_by_uri.values().cloned()
     }
 
     pub fn register_watcher(&mut self, watcher: notify::RecommendedWatcher) {
@@ -179,7 +190,6 @@ impl Workspace {
             .unwrap_or_default()
     }
 
-    #[must_use]
     pub fn find_parent(&self, uri: &Url) -> Option<Document> {
         self.slice(uri)
             .documents_by_uri

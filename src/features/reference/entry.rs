@@ -23,7 +23,7 @@ pub(super) fn find_entry_references(
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
 
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         match &document.data {
             DocumentData::Latex(data) => {
                 latex::SyntaxNode::new_root(data.green.clone())

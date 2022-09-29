@@ -20,7 +20,7 @@ pub fn collect_chktex_diagnostics(
     workspace: &Workspace,
     uri: &Url,
 ) -> Option<()> {
-    let document = workspace.documents_by_uri.get(uri)?;
+    let document = workspace.get(uri)?;
     document.data.as_latex()?;
 
     all_diagnostics.alter(uri, |_, mut diagnostics| {
@@ -28,7 +28,7 @@ pub fn collect_chktex_diagnostics(
         diagnostics
     });
 
-    let current_dir = find_chktexrc_directory(document)
+    let current_dir = find_chktexrc_directory(&document)
         .or_else(|| {
             workspace
                 .environment
@@ -40,8 +40,7 @@ pub fn collect_chktex_diagnostics(
         .or_else(|| {
             workspace
                 .find_parent(uri)
-                .as_ref()
-                .or(Some(document))
+                .or(Some(document.clone()))
                 .filter(|doc| doc.uri.scheme() == "file")
                 .and_then(|doc| doc.uri.to_file_path().ok())
                 .and_then(|path| path.parent().map(ToOwned::to_owned))

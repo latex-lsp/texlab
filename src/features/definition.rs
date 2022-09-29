@@ -38,7 +38,7 @@ pub fn goto_definition(
                     .line_col_lsp_range(result.origin_selection_range),
             );
 
-            let target_document = &context.request.workspace.documents_by_uri[&result.target_uri];
+            let target_document = &context.request.workspace.get(&result.target_uri).unwrap();
             let target_uri = result.target_uri.as_ref().clone();
             let target_range = target_document
                 .line_index

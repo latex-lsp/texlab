@@ -27,7 +27,7 @@ pub(super) fn goto_entry_definition(
 
     let origin_selection_range = latex::small_range(&key);
 
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_bibtex() {
             for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()

@@ -27,7 +27,11 @@ pub fn find_all_references(request: FeatureRequest<ReferenceParams>) -> Vec<Loca
         .into_iter()
         .map(|result| Location {
             uri: result.uri.as_ref().clone(),
-            range: context.request.workspace.documents_by_uri[&result.uri]
+            range: context
+                .request
+                .workspace
+                .get(&result.uri)
+                .unwrap()
                 .line_index
                 .line_col_lsp_range(result.range),
         })

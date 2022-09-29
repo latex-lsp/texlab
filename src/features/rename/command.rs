@@ -21,7 +21,7 @@ pub(super) fn rename_command(context: &CursorContext<RenameParams>) -> Option<Re
     prepare_command_rename(context)?;
     let name = context.cursor.as_latex()?.text();
     let mut changes = FxHashMap::default();
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_latex() {
             let root = latex::SyntaxNode::new_root(data.green.clone());
             let edits = root

@@ -131,9 +131,9 @@ pub fn render_label(
     label_name: &str,
     mut label: Option<latex::LabelDefinition>,
 ) -> Option<RenderedLabel> {
-    let mut number = find_label_number(workspace, label_name).map(ToString::to_string);
+    let mut number = find_label_number(workspace, label_name);
 
-    for document in workspace.documents_by_uri.values() {
+    for document in workspace.iter() {
         if let Some(data) = document.data.as_latex() {
             label = label.or_else(|| {
                 find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), label_name)
@@ -166,13 +166,13 @@ pub fn find_label_definition(
         })
 }
 
-pub fn find_label_number<'a>(workspace: &'a Workspace, label_name: &str) -> Option<&'a str> {
-    workspace.documents_by_uri.values().find_map(|document| {
+pub fn find_label_number(workspace: &Workspace, label_name: &str) -> Option<String> {
+    workspace.iter().find_map(|document| {
         document
             .data
             .as_latex()
             .and_then(|data| data.extras.label_numbers_by_name.get(label_name))
-            .map(|number| number.as_str())
+            .cloned()
     })
 }
 
@@ -266,22 +266,23 @@ fn render_label_theorem(
 
     let environment_name = begin.name()?.key()?.to_string();
 
-    let theorem = workspace.documents_by_uri.values().find_map(|document| {
-        document.data.as_latex().and_then(|data| {
-            data.extras
-                .theorem_environments
-                .iter()
-                .find(|theorem| theorem.name.as_str() == environment_name)
-        })
+    let kind = workspace.iter().find_map(|document| {
+        document
+            .data
+            .as_latex()
+            .and_then(|data| {
+                data.extras
+                    .theorem_environments
+                    .iter()
+                    .find(|theorem| theorem.name.as_str() == environment_name)
+            })
+            .map(|theorem| theorem.description.clone())
     })?;
 
     Some(RenderedLabel {
         range: latex::small_range(&environment),
         number: number.take(),
-        object: LabelledObject::Theorem {
-            kind: theorem.description.clone(),
-            description,
-        },
+        object: LabelledObject::Theorem { kind, description },
     })
 }
 

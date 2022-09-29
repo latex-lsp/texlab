@@ -38,7 +38,7 @@ pub fn rename_all(request: FeatureRequest<RenameParams>) -> Option<WorkspaceEdit
         .changes
         .into_iter()
         .map(|(uri, old_edits)| {
-            let document = &context.request.workspace.documents_by_uri[&uri];
+            let document = &context.request.workspace.get(&uri).unwrap();
             let new_edits = old_edits
                 .into_iter()
                 .map(|Indel { delete, insert }| {

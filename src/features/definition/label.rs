@@ -13,7 +13,7 @@ pub(super) fn goto_label_definition(
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         if let Some(data) = document.data.as_latex() {
             let root = latex::SyntaxNode::new_root(data.green.clone());
             if let Some(definition) = find_label_definition(&root, &name_text) {

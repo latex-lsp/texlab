@@ -12,7 +12,8 @@ use super::HoverResult;
 pub(super) fn find_string_reference_hover(
     context: &CursorContext<HoverParams>,
 ) -> Option<HoverResult> {
-    let data = context.request.main_document().data.as_bibtex()?;
+    let document = context.request.main_document();
+    let data = document.data.as_bibtex()?;
 
     let name = context
         .cursor

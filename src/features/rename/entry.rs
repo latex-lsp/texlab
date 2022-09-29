@@ -32,7 +32,7 @@ pub(super) fn rename_entry(context: &CursorContext<RenameParams>) -> Option<Rena
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = FxHashMap::default();
-    for document in context.request.workspace.documents_by_uri.values() {
+    for document in context.request.workspace.iter() {
         let uri = Arc::clone(&document.uri);
         match &document.data {
             DocumentData::Latex(data) => {

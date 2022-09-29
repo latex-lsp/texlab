@@ -13,7 +13,7 @@ pub fn collect_latex_diagnostics(
     workspace: &Workspace,
     uri: &Url,
 ) -> Option<()> {
-    let document = workspace.documents_by_uri.get(uri)?;
+    let document = workspace.get(uri)?;
     if !document.uri.as_str().ends_with(".tex") {
         return None;
     }
@@ -26,8 +26,8 @@ pub fn collect_latex_diagnostics(
     });
 
     for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
-        analyze_environment(all_diagnostics, document, node.clone())
-            .or_else(|| analyze_curly_group(all_diagnostics, document, &node))
+        analyze_environment(all_diagnostics, &document, node.clone())
+            .or_else(|| analyze_curly_group(all_diagnostics, &document, &node))
             .or_else(|| {
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
                     let code = LatexCode::UnexpectedRCurly;

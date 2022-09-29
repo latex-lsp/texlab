@@ -16,7 +16,7 @@ pub fn collect_bibtex_diagnostics(
     workspace: &Workspace,
     uri: &Url,
 ) -> Option<()> {
-    let document = workspace.documents_by_uri.get(uri)?;
+    let document = workspace.get(uri)?;
     let data = document.data.as_bibtex()?;
 
     all_diagnostics.alter(uri, |_, mut diagnostics| {
@@ -26,8 +26,8 @@ pub fn collect_bibtex_diagnostics(
 
     let root = bibtex::SyntaxNode::new_root(data.green.clone());
     for node in root.descendants() {
-        analyze_entry(all_diagnostics, document, node.clone())
-            .or_else(|| analyze_field(all_diagnostics, document, node));
+        analyze_entry(all_diagnostics, &document, node.clone())
+            .or_else(|| analyze_field(all_diagnostics, &document, node));
     }
 
     Some(())
