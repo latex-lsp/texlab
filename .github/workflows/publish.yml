@@ -127,7 +127,7 @@ jobs:
           sudo add-apt-repository universe
           sudo apt install libfuse2
       - name: Install Tectonic
-        uses: wtfjoke/setup-tectonic@v1
+        uses: wtfjoke/setup-tectonic@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate PDF documentation
