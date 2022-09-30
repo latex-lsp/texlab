@@ -13,7 +13,7 @@ pub fn collect_build_diagnostics(
     build_log_uri: &Url,
 ) -> Option<()> {
     let build_log_document = workspace.get(build_log_uri)?;
-    let build_log = build_log_document.data.as_build_log()?.to_owned();
+    let build_log = build_log_document.data().as_build_log()?.to_owned();
 
     all_diagnostics.alter_all(|_, mut diagnostics| {
         diagnostics.retain(
@@ -22,22 +22,19 @@ pub fn collect_build_diagnostics(
         diagnostics
     });
 
-    let root_document_uri = &workspace
-        .iter()
-        .find(|document| {
-            document.data.as_latex().map_or(false, |data| {
-                !document.uri.as_str().ends_with(".aux")
-                    && data
-                        .extras
-                        .implicit_links
-                        .log
-                        .iter()
-                        .any(|u| u.as_ref() == build_log_uri)
-            })
-        })?
-        .uri;
+    let root_document = &workspace.iter().find(|document| {
+        document.data().as_latex().map_or(false, |data| {
+            !document.uri().as_str().ends_with(".aux")
+                && data
+                    .extras
+                    .implicit_links
+                    .log
+                    .iter()
+                    .any(|u| u.as_ref() == build_log_uri)
+        })
+    })?;
 
-    let mut base_path = root_document_uri.to_file_path().ok()?;
+    let mut base_path = root_document.uri().to_file_path().ok()?;
     base_path.pop();
     for error in &build_log.errors {
         let full_path = base_path.join(&error.relative_path);
@@ -57,9 +54,9 @@ pub fn collect_build_diagnostics(
             // SAFETY: error.line and error.hint are necessarily Some() if we get here
             let line = error.line.unwrap();
             let hint: &String = error.hint.as_ref().unwrap();
-            if let Some(hint_line) = doc.text.lines().nth(line as usize) {
+            if let Some(hint_line) = doc.text().lines().nth(line as usize) {
                 hint_line.find(hint).map(|col| {
-                    let lc = doc.line_index.to_utf16(crate::LineCol {
+                    let lc = doc.line_index().to_utf16(crate::LineCol {
                         line,
                         col: (col + hint.len() - 1) as u32,
                     });
@@ -87,7 +84,7 @@ pub fn collect_build_diagnostics(
         let diagnostic = Diagnostic {
             severity,
             range,
-            code: DiagnosticCode::Build(Arc::clone(&build_log_document.uri)),
+            code: DiagnosticCode::Build(Arc::clone(build_log_document.uri())),
             message: error.message.clone(),
         };
 
@@ -95,10 +92,10 @@ pub fn collect_build_diagnostics(
             error
                 .relative_path
                 .to_str()
-                .and_then(|path| root_document_uri.join(path).map(Into::into).ok())
-                .map_or_else(|| Arc::clone(root_document_uri), Arc::new)
+                .and_then(|path| root_document.uri().join(path).map(Into::into).ok())
+                .map_or_else(|| Arc::clone(root_document.uri()), Arc::new)
         } else {
-            Arc::clone(root_document_uri)
+            Arc::clone(root_document.uri())
         };
 
         all_diagnostics.entry(uri).or_default().push(diagnostic);

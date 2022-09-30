@@ -15,7 +15,7 @@ pub(super) fn find_label_references(
         .or_else(|| context.find_label_name_command())?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             for name in data
                 .extras
                 .label_names
@@ -26,7 +26,7 @@ pub(super) fn find_label_references(
                 })
             {
                 results.push(ReferenceResult {
-                    uri: Arc::clone(&document.uri),
+                    uri: Arc::clone(document.uri()),
                     range: name.range,
                 });
             }

@@ -119,7 +119,7 @@ impl BuildEngine {
             .workspace
             .iter()
             .find(|document| {
-                if let Some(data) = document.data.as_latex() {
+                if let Some(data) = document.data().as_latex() {
                     data.extras.has_document_environment
                 } else {
                     false
@@ -127,18 +127,18 @@ impl BuildEngine {
             })
             .unwrap_or_else(|| request.main_document());
 
-        if document.data.language() != DocumentLanguage::Latex {
+        if document.data().language() != DocumentLanguage::Latex {
             return Ok(BuildResult {
                 status: BuildStatus::SUCCESS,
             });
         }
 
-        if document.uri.scheme() != "file" {
+        if document.uri().scheme() != "file" {
             return Ok(BuildResult {
                 status: BuildStatus::FAILURE,
             });
         }
-        let path = document.uri.to_file_path().unwrap();
+        let path = document.uri().to_file_path().unwrap();
 
         let supports_progress = request
             .workspace
@@ -153,7 +153,7 @@ impl BuildEngine {
             lsp_sender: lsp_sender.clone(),
             token: &token,
         };
-        progress_reporter.start(&document.uri)?;
+        progress_reporter.start(document.uri())?;
 
         let options = &request.workspace.environment.options;
 
@@ -201,7 +201,7 @@ impl BuildEngine {
                 params: TextDocumentPositionParams {
                     position: self
                         .positions_by_uri
-                        .get(&request.main_document().uri)
+                        .get(request.main_document().uri())
                         .map(|guard| *guard)
                         .unwrap_or_default(),
                     text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone()),

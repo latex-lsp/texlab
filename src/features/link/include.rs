@@ -11,7 +11,7 @@ pub(super) fn find_include_links(
     results: &mut Vec<LinkResult>,
 ) -> Option<()> {
     let document = request.main_document();
-    let data = document.data.as_latex()?;
+    let data = document.data().as_latex()?;
 
     for include in &data.extras.explicit_links {
         for target in &include.targets {

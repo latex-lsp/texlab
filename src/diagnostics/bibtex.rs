@@ -17,7 +17,7 @@ pub fn collect_bibtex_diagnostics(
     uri: &Url,
 ) -> Option<()> {
     let document = workspace.get(uri)?;
-    let data = document.data.as_bibtex()?;
+    let data = document.data().as_bibtex()?;
 
     all_diagnostics.alter(uri, |_, mut diagnostics| {
         diagnostics.retain(|diag| !matches!(diag.code, DiagnosticCode::Bibtex(_)));
@@ -42,12 +42,12 @@ fn analyze_entry(
     if entry.left_delim_token().is_none() {
         let code = BibtexCode::ExpectingLCurly;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(entry.type_token()?.text_range()),
                 code: DiagnosticCode::Bibtex(code),
                 message: String::from(code),
@@ -59,12 +59,12 @@ fn analyze_entry(
     if entry.name_token().is_none() {
         let code = BibtexCode::ExpectingKey;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(entry.left_delim_token()?.text_range()),
                 code: DiagnosticCode::Bibtex(code),
                 message: String::from(code),
@@ -76,12 +76,12 @@ fn analyze_entry(
     if entry.right_delim_token().is_none() {
         let code = BibtexCode::ExpectingRCurly;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(TextRange::empty(entry.syntax().text_range().end())),
                 code: DiagnosticCode::Bibtex(code),
                 message: String::from(code),
@@ -102,12 +102,12 @@ fn analyze_field(
     if field.eq_token().is_none() {
         let code = BibtexCode::ExpectingEq;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(field.name_token()?.text_range()),
 
                 code: DiagnosticCode::Bibtex(code),
@@ -120,12 +120,12 @@ fn analyze_field(
     if field.value().is_none() {
         let code = BibtexCode::ExpectingFieldValue;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(field.name_token()?.text_range()),
 
                 code: DiagnosticCode::Bibtex(code),

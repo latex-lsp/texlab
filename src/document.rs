@@ -71,10 +71,10 @@ impl DocumentData {
 
 #[derive(Clone)]
 pub struct Document {
-    pub uri: Arc<Url>,
-    pub text: Arc<String>,
-    pub line_index: Arc<LineIndex>,
-    pub data: DocumentData,
+    uri: Arc<Url>,
+    text: Arc<String>,
+    line_index: Arc<LineIndex>,
+    data: DocumentData,
 }
 
 impl fmt::Debug for Document {
@@ -84,6 +84,22 @@ impl fmt::Debug for Document {
 }
 
 impl Document {
+    pub fn uri(&self) -> &Arc<Url> {
+        &self.uri
+    }
+
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
+    pub fn line_index(&self) -> &LineIndex {
+        &self.line_index
+    }
+
+    pub fn data(&self) -> &DocumentData {
+        &self.data
+    }
+
     #[must_use]
     pub fn parse(
         environment: &Environment,

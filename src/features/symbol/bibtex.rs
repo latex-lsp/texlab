@@ -14,7 +14,7 @@ pub fn find_bibtex_symbols(
     buf: &mut Vec<InternalSymbol>,
 ) -> Option<()> {
     let main_document = request.main_document();
-    let data = main_document.data.as_bibtex()?;
+    let data = main_document.data().as_bibtex()?;
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
         if let Some(string) = bibtex::StringDef::cast(node.clone()) {
@@ -25,10 +25,10 @@ pub fn find_bibtex_symbols(
                     kind: InternalSymbolKind::String,
                     deprecated: false,
                     full_range: main_document
-                        .line_index
+                        .line_index()
                         .line_col_lsp_range(string.syntax().text_range()),
                     selection_range: main_document
-                        .line_index
+                        .line_index()
                         .line_col_lsp_range(name.text_range()),
                     children: Vec::new(),
                 })
@@ -45,10 +45,10 @@ pub fn find_bibtex_symbols(
                                 kind: InternalSymbolKind::Field,
                                 deprecated: false,
                                 full_range: main_document
-                                    .line_index
+                                    .line_index()
                                     .line_col_lsp_range(field.syntax().text_range()),
                                 selection_range: main_document
-                                    .line_index
+                                    .line_index()
                                     .line_col_lsp_range(name.text_range()),
                                 children: Vec::new(),
                             };
@@ -67,10 +67,10 @@ pub fn find_bibtex_symbols(
                         kind: InternalSymbolKind::Entry(category),
                         deprecated: false,
                         full_range: main_document
-                            .line_index
+                            .line_index()
                             .line_col_lsp_range(entry.syntax().text_range()),
                         selection_range: main_document
-                            .line_index
+                            .line_index()
                             .line_col_lsp_range(key.text_range()),
                         children,
                     });

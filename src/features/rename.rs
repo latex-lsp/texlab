@@ -24,8 +24,13 @@ pub fn prepare_rename_all(request: FeatureRequest<TextDocumentPositionParams>) -
         .or_else(|| prepare_label_rename(&context))
         .or_else(|| prepare_command_rename(&context))?;
 
-    let line_index = &context.request.main_document().line_index;
-    Some(line_index.line_col_lsp_range(range))
+    Some(
+        context
+            .request
+            .main_document()
+            .line_index()
+            .line_col_lsp_range(range),
+    )
 }
 
 pub fn rename_all(request: FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
@@ -42,7 +47,7 @@ pub fn rename_all(request: FeatureRequest<RenameParams>) -> Option<WorkspaceEdit
             let new_edits = old_edits
                 .into_iter()
                 .map(|Indel { delete, insert }| {
-                    TextEdit::new(document.line_index.line_col_lsp_range(delete), insert)
+                    TextEdit::new(document.line_index().line_col_lsp_range(delete), insert)
                 })
                 .collect();
 

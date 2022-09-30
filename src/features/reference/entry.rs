@@ -24,7 +24,7 @@ pub(super) fn find_entry_references(
         .or_else(|| context.find_entry_key())?;
 
     for document in context.request.workspace.iter() {
-        match &document.data {
+        match document.data() {
             DocumentData::Latex(data) => {
                 latex::SyntaxNode::new_root(data.green.clone())
                     .descendants()
@@ -34,7 +34,7 @@ pub(super) fn find_entry_references(
                     .filter(|key| key.to_string() == key_text)
                     .map(|key| latex::small_range(&key))
                     .for_each(|range| {
-                        let uri = Arc::clone(&document.uri);
+                        let uri = Arc::clone(document.uri());
                         results.push(ReferenceResult { uri, range });
                     });
             }
@@ -46,7 +46,7 @@ pub(super) fn find_entry_references(
                     .filter(|key| key.text() == key_text)
                     .map(|key| key.text_range())
                     .for_each(|range| {
-                        let uri = Arc::clone(&document.uri);
+                        let uri = Arc::clone(document.uri());
                         results.push(ReferenceResult { uri, range });
                     });
             }

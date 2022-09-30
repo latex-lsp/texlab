@@ -32,7 +32,7 @@ pub fn find_all_references(request: FeatureRequest<ReferenceParams>) -> Vec<Loca
                 .workspace
                 .get(&result.uri)
                 .unwrap()
-                .line_index
+                .line_index()
                 .line_col_lsp_range(result.range),
         })
         .collect()

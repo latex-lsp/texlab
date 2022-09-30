@@ -134,7 +134,7 @@ pub fn render_label(
     let mut number = find_label_number(workspace, label_name);
 
     for document in workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             label = label.or_else(|| {
                 find_label_definition(&latex::SyntaxNode::new_root(data.green.clone()), label_name)
             });
@@ -169,7 +169,7 @@ pub fn find_label_definition(
 pub fn find_label_number(workspace: &Workspace, label_name: &str) -> Option<String> {
     workspace.iter().find_map(|document| {
         document
-            .data
+            .data()
             .as_latex()
             .and_then(|data| data.extras.label_numbers_by_name.get(label_name))
             .cloned()
@@ -268,7 +268,7 @@ fn render_label_theorem(
 
     let kind = workspace.iter().find_map(|document| {
         document
-            .data
+            .data()
             .as_latex()
             .and_then(|data| {
                 data.extras

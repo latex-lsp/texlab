@@ -9,7 +9,7 @@ pub fn find_label_highlights(
     let (name_text, _) = context.find_label_name_key()?;
 
     let main_document = context.request.main_document();
-    let data = main_document.data.as_latex()?;
+    let data = main_document.data().as_latex()?;
 
     let mut highlights = Vec::new();
     for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
@@ -19,7 +19,7 @@ pub fn find_label_highlights(
             .filter(|label_name| label_name.to_string() == name_text)
         {
             let range = main_document
-                .line_index
+                .line_index()
                 .line_col_lsp_range(latex::small_range(&label_name));
 
             highlights.push(DocumentHighlight {
@@ -34,7 +34,7 @@ pub fn find_label_highlights(
                 .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {
@@ -49,7 +49,7 @@ pub fn find_label_highlights(
                 .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {
@@ -64,7 +64,7 @@ pub fn find_label_highlights(
                 .filter(|label_name| label_name.to_string() == name_text)
             {
                 let range = main_document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(latex::small_range(&label_name));
 
                 highlights.push(DocumentHighlight {

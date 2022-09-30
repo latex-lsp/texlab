@@ -15,7 +15,7 @@ pub(super) fn goto_string_definition(
 ) -> Option<Vec<DefinitionResult>> {
     let main_document = context.request.main_document();
 
-    let data = main_document.data.as_bibtex()?;
+    let data = main_document.data().as_bibtex()?;
     let key = context
         .cursor
         .as_bibtex()
@@ -32,7 +32,7 @@ pub(super) fn goto_string_definition(
         if let Some(string_name) = string.name_token().filter(|k| k.text() == key.text()) {
             return Some(vec![DefinitionResult {
                 origin_selection_range,
-                target_uri: Arc::clone(&main_document.uri),
+                target_uri: Arc::clone(main_document.uri()),
                 target_selection_range: string_name.text_range(),
                 target_range: string.syntax().text_range(),
             }]);

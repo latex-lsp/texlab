@@ -14,7 +14,7 @@ pub(super) fn goto_label_definition(
         .or_else(|| context.find_label_name_command())?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             let root = latex::SyntaxNode::new_root(data.green.clone());
             if let Some(definition) = find_label_definition(&root, &name_text) {
                 let target_selection_range = latex::small_range(&definition.name()?.key()?);
@@ -25,7 +25,7 @@ pub(super) fn goto_label_definition(
 
                 return Some(vec![DefinitionResult {
                     origin_selection_range,
-                    target_uri: Arc::clone(&document.uri),
+                    target_uri: Arc::clone(document.uri()),
                     target_range,
                     target_selection_range,
                 }]);

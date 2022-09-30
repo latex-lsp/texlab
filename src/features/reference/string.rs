@@ -25,7 +25,7 @@ pub(super) fn find_string_references(
         .text();
 
     let document = context.request.main_document();
-    let data = document.data.as_bibtex()?;
+    let data = document.data().as_bibtex()?;
     for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
         if let Some(name) = bibtex::StringDef::cast(node.clone())
             .and_then(|string| string.name_token())
@@ -39,7 +39,7 @@ pub(super) fn find_string_references(
             })
         {
             results.push(ReferenceResult {
-                uri: Arc::clone(&document.uri),
+                uri: Arc::clone(document.uri()),
                 range: name.text_range(),
             });
         }

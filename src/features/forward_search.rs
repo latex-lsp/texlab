@@ -40,7 +40,7 @@ pub fn execute_forward_search(
         .workspace
         .iter()
         .find(|document| {
-            if let Some(data) = document.data.as_latex() {
+            if let Some(data) = document.data().as_latex() {
                 data.extras.has_document_environment
                     && !data
                         .extras
@@ -52,9 +52,9 @@ pub fn execute_forward_search(
                 false
             }
         })
-        .filter(|document| document.uri.scheme() == "file")?;
+        .filter(|document| document.uri().scheme() == "file")?;
 
-    let data = root_document.data.as_latex()?;
+    let data = root_document.data().as_latex()?;
     let pdf_path = data
         .extras
         .implicit_links
@@ -63,7 +63,7 @@ pub fn execute_forward_search(
         .filter_map(|uri| uri.to_file_path().ok())
         .find(|path| path.exists())?;
 
-    let tex_path = request.main_document().uri.to_file_path().ok()?;
+    let tex_path = request.main_document().uri().to_file_path().ok()?;
 
     let args: Vec<String> = options
         .args

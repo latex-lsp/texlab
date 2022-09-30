@@ -34,17 +34,17 @@ pub fn goto_definition(
         .map(|result| {
             let origin_selection_range = Some(
                 origin_document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(result.origin_selection_range),
             );
 
             let target_document = &context.request.workspace.get(&result.target_uri).unwrap();
             let target_uri = result.target_uri.as_ref().clone();
             let target_range = target_document
-                .line_index
+                .line_index()
                 .line_col_lsp_range(result.target_range);
             let target_selection_range = target_document
-                .line_index
+                .line_index()
                 .line_col_lsp_range(result.target_selection_range);
 
             LocationLink {

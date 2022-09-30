@@ -12,7 +12,7 @@ pub fn complete_user_commands<'a>(
     let token = context.cursor.as_latex()?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             for name in data
                 .extras
                 .command_names

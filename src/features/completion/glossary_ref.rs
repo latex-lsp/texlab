@@ -13,7 +13,7 @@ pub fn complete_glossary_entries<'a>(
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())
                     .and_then(|entry| entry.name())

@@ -146,7 +146,7 @@ impl Workspace {
                     let document = self.documents_by_uri.get(uri);
                     if let Some(data) = document
                         .as_ref()
-                        .and_then(|document| document.data.as_latex())
+                        .and_then(|document| document.data().as_latex())
                     {
                         let extras = &data.extras;
                         let mut all_targets =
@@ -194,7 +194,7 @@ impl Workspace {
             .documents_by_uri
             .values()
             .find(|document| {
-                document.data.as_latex().map_or(false, |data| {
+                document.data().as_latex().map_or(false, |data| {
                     data.extras.has_document_environment
                         && !data
                             .extras
@@ -211,12 +211,12 @@ impl Workspace {
         let all_current_paths = self
             .documents_by_uri
             .values()
-            .filter_map(|doc| doc.uri.to_file_path().ok())
+            .filter_map(|doc| doc.uri().to_file_path().ok())
             .collect::<FxHashSet<_>>();
 
-        if document.uri.scheme() == "file" {
-            if let Ok(mut path) = document.uri.to_file_path() {
-                while path.pop() && self.find_parent(&document.uri).is_none() {
+        if document.uri().scheme() == "file" {
+            if let Ok(mut path) = document.uri().to_file_path() {
+                while path.pop() && self.find_parent(document.uri()).is_none() {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()
@@ -239,7 +239,7 @@ impl Workspace {
     }
 
     fn expand_children(&mut self, document: &Document) {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             let extras = &data.extras;
             let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];
             for link in &extras.explicit_links {

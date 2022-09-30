@@ -18,7 +18,7 @@ pub fn find_document_links(request: FeatureRequest<DocumentLinkParams>) -> Vec<D
     results
         .into_iter()
         .map(|result| DocumentLink {
-            range: document.line_index.line_col_lsp_range(result.range),
+            range: document.line_index().line_col_lsp_range(result.range),
             target: Some(result.target.as_ref().clone()),
             tooltip: None,
             data: None,

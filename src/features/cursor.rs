@@ -133,10 +133,10 @@ impl<P: HasPosition> CursorContext<P> {
     pub fn new(request: FeatureRequest<P>) -> Self {
         let main_document = request.main_document();
         let offset = main_document
-            .line_index
+            .line_index()
             .offset_lsp(request.params.position());
 
-        let cursor = match &main_document.data {
+        let cursor = match main_document.data() {
             DocumentData::Latex(data) => {
                 let root = latex::SyntaxNode::new_root(data.green.clone());
                 let left = root.token_at_offset(offset).left_biased();

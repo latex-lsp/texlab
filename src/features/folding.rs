@@ -11,7 +11,7 @@ use super::FeatureRequest;
 pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
     let mut foldings = Vec::new();
     let main_document = request.main_document();
-    match &main_document.data {
+    match main_document.data() {
         DocumentData::Latex(data) => {
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(folding) = latex::Environment::cast(node.clone())
@@ -20,7 +20,7 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
                         latex::Section::cast(node.clone()).map(|node| latex::small_range(&node))
                     })
                     .or_else(|| latex::EnumItem::cast(node).map(|node| latex::small_range(&node)))
-                    .map(|node| main_document.line_index.line_col_lsp_range(node))
+                    .map(|node| main_document.line_index().line_col_lsp_range(node))
                     .map(create_range)
                 {
                     foldings.push(folding);
@@ -35,7 +35,7 @@ pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<Folding
                 ) {
                     foldings.push(create_range(
                         main_document
-                            .line_index
+                            .line_index()
                             .line_col_lsp_range(node.text_range()),
                     ));
                 }

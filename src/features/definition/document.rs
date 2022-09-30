@@ -11,7 +11,7 @@ pub(super) fn goto_document_definition(
     context: &CursorContext<GotoDefinitionParams>,
 ) -> Option<Vec<DefinitionResult>> {
     let document = context.request.main_document();
-    let data = document.data.as_latex()?;
+    let data = document.data().as_latex()?;
 
     for include in data
         .extras
