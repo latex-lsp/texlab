@@ -19,13 +19,14 @@ pub struct LatexAnalyzerContext<'a> {
 pub struct Extras {
     pub implicit_links: ImplicitLinks,
     pub explicit_links: Vec<ExplicitLink>,
-    pub has_document_environment: bool,
     pub command_names: FxHashSet<SmolStr>,
     pub environment_names: FxHashSet<String>,
     pub label_names: Vec<LabelName>,
     pub label_numbers_by_name: FxHashMap<String, String>,
     pub theorem_environments: Vec<TheoremEnvironment>,
     pub graphics_paths: FxHashSet<String>,
+    pub has_document_environment: bool,
+    pub has_subfiles_package: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Hash)]
@@ -47,6 +48,7 @@ pub enum ExplicitLinkKind {
 pub struct ExplicitLink {
     pub stem: SmolStr,
     pub stem_range: TextRange,
+    pub working_dir: Option<String>,
     pub targets: Vec<Arc<Url>>,
     pub kind: ExplicitLinkKind,
 }

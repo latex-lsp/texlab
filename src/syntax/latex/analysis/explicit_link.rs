@@ -41,6 +41,7 @@ pub fn analyze_include(context: &mut LatexAnalyzerContext, node: latex::SyntaxNo
             kind,
             stem: stem.into(),
             stem_range: latex::small_range(&path),
+            working_dir: None,
             targets,
         });
     }
@@ -65,6 +66,7 @@ pub fn analyze_import(context: &mut LatexAnalyzerContext, node: latex::SyntaxNod
     context.extras.explicit_links.push(ExplicitLink {
         stem: stem.into(),
         stem_range: latex::small_range(&file),
+        working_dir: Some(import.directory()?.key()?.to_string()),
         targets,
         kind: ExplicitLinkKind::Latex,
     });

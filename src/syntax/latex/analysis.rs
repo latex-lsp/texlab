@@ -36,5 +36,12 @@ pub fn analyze(context: &mut LatexAnalyzerContext, root: &latex::SyntaxNode) {
             .or_else(|| analyze_theorem_definition(context, node.clone()))
             .or_else(|| analyze_graphics_path(context, node));
     }
+
     context.extras.has_document_environment = context.extras.environment_names.contains("document");
+    context.extras.has_subfiles_package = context
+        .extras
+        .explicit_links
+        .iter()
+        .filter_map(ExplicitLink::as_component_name)
+        .any(|name| name == "subfiles.cls");
 }

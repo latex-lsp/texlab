@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fs::{self, FileType},
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -6,13 +7,13 @@ use std::{
 
 use anyhow::Result;
 use crossbeam_channel::Sender;
+use itertools::Itertools;
 use lsp_types::Url;
 use notify::Watcher;
-use petgraph::{graphmap::DiGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    component_db::COMPONENT_DATABASE, syntax::latex::ExplicitLink, Document, DocumentLanguage,
+    component_db::COMPONENT_DATABASE, syntax::latex::ExplicitLinkKind, Document, DocumentLanguage,
     Environment,
 };
 
@@ -135,76 +136,17 @@ impl Workspace {
     }
 
     pub fn slice(&self, uri: &Url) -> Self {
-        let all_uris: Vec<_> = self.documents_by_uri.keys().cloned().collect();
-
-        all_uris
-            .iter()
-            .position(|u| u.as_ref() == uri)
-            .map(|start| {
-                let mut edges = Vec::new();
-                for (i, uri) in all_uris.iter().enumerate() {
-                    let document = self.documents_by_uri.get(uri);
-                    if let Some(data) = document
-                        .as_ref()
-                        .and_then(|document| document.data().as_latex())
-                    {
-                        let extras = &data.extras;
-                        let mut all_targets =
-                            vec![&extras.implicit_links.aux, &extras.implicit_links.log];
-                        for link in &extras.explicit_links {
-                            all_targets.push(&link.targets);
-                        }
-
-                        for targets in all_targets {
-                            for target in targets {
-                                if let Some(j) = all_uris.iter().position(|uri| uri == target) {
-                                    edges.push((i, j, ()));
-
-                                    if target.as_str().ends_with(".tex")
-                                        || target.as_str().ends_with(".bib")
-                                        || target.as_str().ends_with(".rnw")
-                                    {
-                                        edges.push((j, i, ()));
-                                    }
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                let mut slice = self.clone();
-                slice.documents_by_uri = FxHashMap::default();
-                let graph = DiGraphMap::from_edges(edges);
-                let mut dfs = Dfs::new(&graph, start);
-                while let Some(i) = dfs.next(&graph) {
-                    let uri = &all_uris[i];
-                    let doc = self.documents_by_uri[uri].clone();
-                    slice.documents_by_uri.insert(Arc::clone(uri), doc);
-                }
-
-                slice
+        let mut slice = self.clone();
+        slice.documents_by_uri = self
+            .get(uri)
+            .map(|document| {
+                self.siblings(&document)
+                    .into_iter()
+                    .map(|document| (Arc::clone(document.uri()), document))
+                    .collect()
             })
-            .unwrap_or_default()
-    }
-
-    pub fn find_parent(&self, uri: &Url) -> Option<Document> {
-        self.slice(uri)
-            .documents_by_uri
-            .values()
-            .find(|document| {
-                document.data().as_latex().map_or(false, |data| {
-                    data.extras.has_document_environment
-                        && !data
-                            .extras
-                            .explicit_links
-                            .iter()
-                            .filter_map(ExplicitLink::as_component_name)
-                            .any(|name| name == "subfiles.cls")
-                })
-            })
-            .cloned()
+            .unwrap_or_default();
+        slice
     }
 
     fn expand_parent(&mut self, document: &Document) {
@@ -216,7 +158,7 @@ impl Workspace {
 
         if document.uri().scheme() == "file" {
             if let Ok(mut path) = document.uri().to_file_path() {
-                while path.pop() && self.find_parent(document.uri()).is_none() {
+                while path.pop() && self.parent(&document).is_none() {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()
@@ -265,4 +207,115 @@ impl Workspace {
             }
         }
     }
+
+    pub fn project_roots<'a>(&'a self) -> impl Iterator<Item = Document> + 'a {
+        self.iter().filter(|root| {
+            root.data().as_latex().map_or(false, |data| {
+                data.extras.has_document_environment && !data.extras.has_subfiles_package
+            })
+        })
+    }
+
+    pub fn parent(&self, child: &Document) -> Option<Document> {
+        self.project_roots().find(|root| {
+            self.dependencies(root)
+                .into_iter()
+                .any(|doc| doc.uri() == child.uri())
+        })
+    }
+
+    pub fn dependencies(&self, root: &Document) -> Vec<Document> {
+        fn go<'a>(
+            workspace: &Workspace,
+            root: &Document,
+            working_dir: &Url,
+            visited: &mut FxHashSet<Arc<Url>>,
+            results: &mut Vec<Document>,
+        ) {
+            if !visited.insert(Arc::clone(root.uri())) {
+                return;
+            }
+
+            results.push(root.clone());
+            if let Some(data) = root.data().as_latex() {
+                for link in &data.extras.explicit_links {
+                    if link
+                        .as_component_name()
+                        .and_then(|name| COMPONENT_DATABASE.find(&name))
+                        .is_some()
+                    {
+                        continue;
+                    }
+
+                    let suffixes: &[&str] = match link.kind {
+                        ExplicitLinkKind::Package => &[".sty"],
+                        ExplicitLinkKind::Class => &[".cls"],
+                        ExplicitLinkKind::Latex => &["", ".tex"],
+                        ExplicitLinkKind::Bibtex => &["", ".bib"],
+                    };
+
+                    let working_dir = link
+                        .working_dir
+                        .as_ref()
+                        .and_then(|path| working_dir.join(path).ok())
+                        .map_or(Cow::Borrowed(working_dir), Cow::Owned);
+
+                    for suffix in suffixes {
+                        let file_name = format!("{}{}", link.stem, suffix);
+
+                        if let Some(child) = working_dir
+                            .join(&file_name)
+                            .ok()
+                            .and_then(|uri| workspace.get(&uri))
+                        {
+                            go(workspace, &child, &working_dir, visited, results);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for extension in &["aux", "log"] {
+                if let Some(child) = change_extension(root.uri(), extension)
+                    .and_then(|file_name| working_dir.join(&file_name).ok())
+                    .and_then(|uri| workspace.get(&uri))
+                {
+                    go(workspace, &child, &working_dir, visited, results);
+                }
+            }
+        }
+
+        let mut results = Vec::new();
+        let working_dir = self
+            .environment
+            .options
+            .root_directory
+            .as_deref()
+            .and_then(|path| path.to_str())
+            .and_then(|path| root.uri().join(path).map(Arc::new).ok())
+            .unwrap_or_else(|| Arc::clone(root.uri()));
+
+        let mut visited = FxHashSet::default();
+        go(self, root, &working_dir, &mut visited, &mut results);
+        results
+    }
+
+    pub fn siblings(&self, child: &Document) -> Vec<Document> {
+        self.iter()
+            .map(|root| self.dependencies(&root))
+            .filter(|project| project.iter().any(|doc| doc.uri() == child.uri()))
+            .flatten()
+            .unique_by(|doc| Arc::clone(doc.uri()))
+            .collect()
+    }
+}
+
+fn change_extension(uri: &Url, extension: &str) -> Option<String> {
+    let file_name = uri.path_segments()?.last()?;
+    let file_stem = file_name
+        .rfind('.')
+        .map(|i| &file_name[..i])
+        .unwrap_or(file_name);
+
+    Some(format!("{}.{}", file_stem, extension))
 }
