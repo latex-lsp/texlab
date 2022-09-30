@@ -17,7 +17,7 @@ pub fn complete_labels<'a>(
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             for label in latex::SyntaxNode::new_root(data.green.clone())
                 .descendants()
                 .filter_map(latex::LabelDefinition::cast)

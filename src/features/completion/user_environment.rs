@@ -11,7 +11,7 @@ pub fn complete_user_environments<'a>(
     let (name, range) = context.find_environment_name()?;
 
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             for name in data
                 .extras
                 .environment_names

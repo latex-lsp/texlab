@@ -18,7 +18,7 @@ pub fn find_latex_symbols(
     buf: &mut Vec<InternalSymbol>,
 ) -> Option<()> {
     let document = request.main_document();
-    let data = document.data.as_latex()?;
+    let data = document.data().as_latex()?;
     let mut context = Context { request, data };
 
     let root = context.data.green.clone();
@@ -92,7 +92,7 @@ fn visit_section(context: &mut Context, node: latex::SyntaxNode) -> Option<Inter
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&section));
 
     let group = section.name()?;
@@ -154,7 +154,7 @@ fn visit_enum_item(context: &mut Context, node: latex::SyntaxNode) -> Option<Int
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&enum_item));
 
     let name = enum_item
@@ -195,7 +195,7 @@ fn visit_equation(context: &mut Context, node: latex::SyntaxNode) -> Option<Inte
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&equation));
 
     make_equation_symbol(context, equation.syntax(), full_range)
@@ -210,7 +210,7 @@ fn visit_equation_environment(
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&environment));
 
     make_equation_symbol(context, environment.syntax(), full_range)
@@ -264,7 +264,7 @@ fn visit_enumeration(
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&environment));
 
     let name = titlecase(env_name);
@@ -311,7 +311,7 @@ fn visit_float(
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&environment));
 
     let (float_kind, symbol_kind) = match float_kind {
@@ -366,7 +366,7 @@ fn visit_theorem(
         .request
         .workspace
         .iter()
-        .filter_map(|document| document.data.as_latex().cloned())
+        .filter_map(|document| document.data().as_latex().cloned())
         .find_map(|data| {
             data.extras
                 .theorem_environments
@@ -384,7 +384,7 @@ fn visit_theorem(
     let full_range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&node));
 
     let symbol = match find_label_by_parent(context, node.syntax()) {
@@ -448,7 +448,7 @@ fn find_label_by_parent(
     let range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(latex::small_range(&node));
 
     let number = find_label_number(&context.request.workspace, &name);

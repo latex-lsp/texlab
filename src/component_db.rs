@@ -41,7 +41,7 @@ impl ComponentDatabase {
     pub fn linked_components(&self, workspace: &Workspace) -> Vec<&Component> {
         let mut start_components = vec![self.kernel()];
         for document in workspace.iter() {
-            if let Some(data) = document.data.as_latex() {
+            if let Some(data) = document.data().as_latex() {
                 data.extras
                     .explicit_links
                     .iter()

@@ -39,7 +39,7 @@ pub fn find_hover(request: FeatureRequest<HoverParams>) -> Option<Hover> {
             context
                 .request
                 .main_document()
-                .line_index
+                .line_index()
                 .line_col_lsp_range(result.range),
         ),
     })

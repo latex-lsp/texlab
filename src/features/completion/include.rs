@@ -15,7 +15,7 @@ pub fn complete_includes<'a>(
     context: &'a CursorContext<CompletionParams>,
     items: &mut Vec<InternalCompletionItem<'a>>,
 ) -> Option<()> {
-    if context.request.main_document().uri.scheme() != "file" {
+    if context.request.main_document().uri().scheme() != "file" {
         return None;
     }
 
@@ -52,7 +52,7 @@ pub fn complete_includes<'a>(
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
         for document in context.request.workspace.iter() {
-            if let Some(data) = document.data.as_latex() {
+            if let Some(data) = document.data().as_latex() {
                 for graphics_path in &data.extras.graphics_paths {
                     dirs.push(current_dir(context, &path_text, Some(graphics_path)));
                 }
@@ -103,7 +103,12 @@ fn current_dir(
         .as_ref()
         .map_or_else(
             || {
-                let mut path = context.request.main_document().uri.to_file_path().unwrap();
+                let mut path = context
+                    .request
+                    .main_document()
+                    .uri()
+                    .to_file_path()
+                    .unwrap();
                 path.pop();
                 path
             },

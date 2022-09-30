@@ -42,7 +42,7 @@ pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> Docum
         }
         let mut new_buf: Vec<_> = new_buf
             .into_iter()
-            .map(|symbol| symbol.into_symbol_info(req.main_document().uri.as_ref().clone()))
+            .map(|symbol| symbol.into_symbol_info(req.main_document().uri().as_ref().clone()))
             .collect();
         sort_symbols(&req.workspace, &mut new_buf);
         DocumentSymbolResponse::Flat(new_buf)
@@ -64,13 +64,13 @@ pub fn find_workspace_symbols(
 
     for document in workspace.iter() {
         let request = FeatureRequest {
-            uri: Arc::clone(&document.uri),
+            uri: Arc::clone(document.uri()),
             params: DocumentSymbolParams {
-                text_document: TextDocumentIdentifier::new(document.uri.as_ref().clone()),
+                text_document: TextDocumentIdentifier::new(document.uri().as_ref().clone()),
                 partial_result_params: PartialResultParams::default(),
                 work_done_progress_params: WorkDoneProgressParams::default(),
             },
-            workspace: workspace.slice(&document.uri),
+            workspace: workspace.slice(document.uri()),
         };
 
         let mut buf = Vec::new();
@@ -85,7 +85,7 @@ pub fn find_workspace_symbols(
         for symbol in new_buf {
             symbols.push(WorkspaceSymbol {
                 search_text: symbol.search_text(),
-                info: symbol.into_symbol_info(document.uri.as_ref().clone()),
+                info: symbol.into_symbol_info(document.uri().as_ref().clone()),
             });
         }
     }

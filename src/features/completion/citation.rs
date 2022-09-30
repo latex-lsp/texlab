@@ -37,7 +37,7 @@ pub fn complete_citations<'a>(
 
     check_citation(context).or_else(|| check_acronym(context))?;
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_bibtex() {
+        if let Some(data) = document.data().as_bibtex() {
             for entry in bibtex::SyntaxNode::new_root(data.green.clone())
                 .children()
                 .filter_map(bibtex::Entry::cast)
@@ -104,7 +104,7 @@ fn make_item(
     Some(InternalCompletionItem::new(
         range,
         InternalCompletionItemData::Citation {
-            uri: Arc::clone(&document.uri),
+            uri: Arc::clone(document.uri()),
             key,
             text,
             ty,

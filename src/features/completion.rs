@@ -257,7 +257,7 @@ fn convert_internal_items(
     let range = context
         .request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp_range(item.range);
 
     let mut new_item = match item.data {

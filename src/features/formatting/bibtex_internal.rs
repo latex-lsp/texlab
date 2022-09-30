@@ -34,7 +34,7 @@ pub fn format_bibtex_internal(
         .unwrap_or(80);
 
     let document = request.main_document();
-    let data = document.data.as_bibtex()?;
+    let data = document.data().as_bibtex()?;
     let mut edits = Vec::new();
 
     for node in bibtex::SyntaxNode::new_root(data.green.clone())
@@ -52,12 +52,12 @@ pub fn format_bibtex_internal(
             indent.clone(),
             request.params.options.tab_size,
             line_length,
-            &document.line_index,
+            document.line_index(),
         );
 
         formatter.visit_node(node);
         edits.push(TextEdit {
-            range: document.line_index.line_col_lsp_range(range),
+            range: document.line_index().line_col_lsp_range(range),
             new_text: formatter.output,
         });
     }

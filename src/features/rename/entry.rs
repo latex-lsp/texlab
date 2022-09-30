@@ -33,8 +33,8 @@ pub(super) fn rename_entry(context: &CursorContext<RenameParams>) -> Option<Rena
 
     let mut changes = FxHashMap::default();
     for document in context.request.workspace.iter() {
-        let uri = Arc::clone(&document.uri);
-        match &document.data {
+        let uri = Arc::clone(document.uri());
+        match document.data() {
             DocumentData::Latex(data) => {
                 let root = latex::SyntaxNode::new_root(data.green.clone());
                 let edits: Vec<_> = root

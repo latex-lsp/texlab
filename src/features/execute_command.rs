@@ -49,7 +49,7 @@ fn clean_output_files(
 
     let uri = workspace
         .find_parent(&params.uri)
-        .map(|document| document.uri)
+        .map(|document| Arc::clone(document.uri()))
         .unwrap_or_else(|| Arc::new(params.uri));
 
     if let Some(cx) = BuildContext::find(workspace, &uri) {

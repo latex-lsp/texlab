@@ -228,7 +228,7 @@ impl Server {
             for event in event_receiver {
                 match event {
                     WorkspaceEvent::Changed(workspace, document) => {
-                        diagnostic_manager.push_syntax(&workspace, &document.uri);
+                        diagnostic_manager.push_syntax(&workspace, document.uri());
                         let delay = workspace.environment.options.diagnostics_delay;
                         diagnostic_tx.send(workspace, delay.0).unwrap();
                     }
@@ -335,7 +335,7 @@ impl Server {
             language.unwrap_or(DocumentLanguage::Latex),
         )?;
 
-        self.workspace.viewport.insert(Arc::clone(&document.uri));
+        self.workspace.viewport.insert(Arc::clone(document.uri()));
 
         if self.workspace.environment.options.chktex.on_open_and_save {
             self.run_chktex(document);
@@ -350,23 +350,23 @@ impl Server {
         let uri = Arc::new(params.text_document.uri);
         match self.workspace.get(&uri) {
             Some(old_document) => {
-                let mut text = old_document.text.to_string();
+                let mut text = old_document.text().to_string();
                 apply_document_edit(&mut text, params.content_changes);
-                let language = old_document.data.language();
+                let language = old_document.data().language();
                 let new_document =
                     self.workspace
                         .open(Arc::clone(&uri), Arc::new(text), language)?;
                 self.workspace
                     .viewport
-                    .insert(Arc::clone(&new_document.uri));
+                    .insert(Arc::clone(new_document.uri()));
 
                 self.build_engine.positions_by_uri.insert(
                     Arc::clone(&uri),
                     Position::new(
                         old_document
-                            .text
+                            .text()
                             .lines()
-                            .zip(new_document.text.lines())
+                            .zip(new_document.text().lines())
                             .position(|(a, b)| a != b)
                             .unwrap_or_default() as u32,
                         0,
@@ -398,7 +398,7 @@ impl Server {
             .filter(|_| self.workspace.environment.options.build.on_save)
             .map(|document| {
                 self.feature_request(
-                    Arc::clone(&document.uri),
+                    Arc::clone(document.uri()),
                     BuildParams {
                         text_document: TextDocumentIdentifier::new(uri.clone()),
                     },
@@ -439,7 +439,7 @@ impl Server {
         self.spawn(move |server| {
             server
                 .diagnostic_manager
-                .push_chktex(&server.workspace, &document.uri);
+                .push_chktex(&server.workspace, document.uri());
 
             let delay = server.workspace.environment.options.diagnostics_delay;
             server
@@ -538,7 +538,7 @@ impl Server {
                 CompletionItemData::Citation { uri, key } => {
                     if let Some(root) = server.workspace.get(&uri).and_then(|document| {
                         document
-                            .data
+                            .data()
                             .as_bibtex()
                             .map(|data| bibtex::SyntaxNode::new_root(data.green.clone()))
                     }) {
@@ -716,9 +716,9 @@ impl Server {
     fn reparse_all(&mut self) -> Result<()> {
         for document in self.workspace.iter().collect::<Vec<_>>() {
             self.workspace.open(
-                Arc::clone(&document.uri),
-                document.text.clone(),
-                document.data.language(),
+                Arc::clone(document.uri()),
+                Arc::new(document.text().to_string()),
+                document.data().language(),
             )?;
         }
 
@@ -875,15 +875,15 @@ fn publish_diagnostics(
     workspace: &Workspace,
 ) -> Result<()> {
     for document in workspace.iter() {
-        if matches!(document.data, DocumentData::BuildLog(_)) {
+        if matches!(document.data(), DocumentData::BuildLog(_)) {
             continue;
         }
 
-        let diagnostics = diagnostic_manager.publish(workspace, &document.uri);
+        let diagnostics = diagnostic_manager.publish(workspace, document.uri());
         send_notification::<PublishDiagnostics>(
             lsp_sender,
             PublishDiagnosticsParams {
-                uri: document.uri.as_ref().clone(),
+                uri: document.uri().as_ref().clone(),
                 version: None,
                 diagnostics,
             },

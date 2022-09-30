@@ -21,7 +21,7 @@ pub fn collect_chktex_diagnostics(
     uri: &Url,
 ) -> Option<()> {
     let document = workspace.get(uri)?;
-    document.data.as_latex()?;
+    document.data().as_latex()?;
 
     all_diagnostics.alter(uri, |_, mut diagnostics| {
         diagnostics.retain(|diag| !matches!(diag.code, DiagnosticCode::Chktex(_)));
@@ -41,8 +41,8 @@ pub fn collect_chktex_diagnostics(
             workspace
                 .find_parent(uri)
                 .or(Some(document.clone()))
-                .filter(|doc| doc.uri.scheme() == "file")
-                .and_then(|doc| doc.uri.to_file_path().ok())
+                .filter(|doc| doc.uri().scheme() == "file")
+                .and_then(|doc| doc.uri().to_file_path().ok())
                 .and_then(|path| path.parent().map(ToOwned::to_owned))
         })
         .unwrap_or_else(|| ".".into());
@@ -50,9 +50,9 @@ pub fn collect_chktex_diagnostics(
     log::debug!("Calling ChkTeX from directory: {}", current_dir.display());
 
     all_diagnostics
-        .entry(Arc::clone(&document.uri))
+        .entry(Arc::clone(document.uri()))
         .or_default()
-        .extend(lint(&document.text, &current_dir).unwrap_or_default());
+        .extend(lint(document.text(), &current_dir).unwrap_or_default());
 
     Some(())
 }
@@ -60,8 +60,8 @@ pub fn collect_chktex_diagnostics(
 static CHKTEXRC_FILES: &[&str] = &["chktexrc", ".chktexrc"];
 
 fn find_chktexrc_directory(document: &Document) -> Option<PathBuf> {
-    if document.uri.scheme() == "file" {
-        if let Ok(mut path) = document.uri.to_file_path() {
+    if document.uri().scheme() == "file" {
+        if let Ok(mut path) = document.uri().to_file_path() {
             while path.pop() {
                 if CHKTEXRC_FILES
                     .iter()

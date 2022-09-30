@@ -14,11 +14,11 @@ pub fn collect_latex_diagnostics(
     uri: &Url,
 ) -> Option<()> {
     let document = workspace.get(uri)?;
-    if !document.uri.as_str().ends_with(".tex") {
+    if !document.uri().as_str().ends_with(".tex") {
         return None;
     }
 
-    let data = document.data.as_latex()?;
+    let data = document.data().as_latex()?;
 
     all_diagnostics.alter(uri, |_, mut diagnostics| {
         diagnostics.retain(|diag| !matches!(diag.code, DiagnosticCode::Latex(_)));
@@ -32,11 +32,11 @@ pub fn collect_latex_diagnostics(
                 if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
                     let code = LatexCode::UnexpectedRCurly;
                     all_diagnostics
-                        .entry(Arc::clone(&document.uri))
+                        .entry(Arc::clone(document.uri()))
                         .or_default()
                         .push(Diagnostic {
                             severity: DiagnosticSeverity::ERROR,
-                            range: document.line_index.line_col_lsp_range(node.text_range()),
+                            range: document.line_index().line_col_lsp_range(node.text_range()),
                             code: DiagnosticCode::Latex(code),
                             message: String::from(code),
                         });
@@ -62,12 +62,12 @@ fn analyze_environment(
     if name1 != name2 {
         let code = LatexCode::MismatchedEnvironment;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(latex::small_range(&name1)),
                 code: DiagnosticCode::Latex(code),
                 message: String::from(code),
@@ -110,12 +110,12 @@ fn analyze_curly_group(
     {
         let code = LatexCode::RCurlyInserted;
         all_diagnostics
-            .entry(Arc::clone(&document.uri))
+            .entry(Arc::clone(document.uri()))
             .or_default()
             .push(Diagnostic {
                 severity: DiagnosticSeverity::ERROR,
                 range: document
-                    .line_index
+                    .line_index()
                     .line_col_lsp_range(TextRange::empty(node.text_range().end())),
                 code: DiagnosticCode::Latex(code),
                 message: String::from(code),

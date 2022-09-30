@@ -21,9 +21,9 @@ pub fn format_with_latexindent(
         .as_ref()
         .cloned()
         .or_else(|| {
-            if document.uri.scheme() == "file" {
+            if document.uri().scheme() == "file" {
                 document
-                    .uri
+                    .uri()
                     .to_file_path()
                     .unwrap()
                     .parent()
@@ -55,13 +55,13 @@ pub fn format_with_latexindent(
         path.join("latexindent.yaml"),
     );
 
-    let name = if document.data.language() == DocumentLanguage::Bibtex {
+    let name = if document.data().language() == DocumentLanguage::Bibtex {
         "file.bib"
     } else {
         "file.tex"
     };
 
-    fs::write(directory.path().join(name), document.text.as_str()).ok()?;
+    fs::write(directory.path().join(name), document.text()).ok()?;
 
     let mut args = Vec::new();
     if modify_line_breaks {
@@ -86,8 +86,8 @@ pub fn format_with_latexindent(
     } else {
         Some(vec![TextEdit {
             range: document
-                .line_index
-                .line_col_lsp_range(TextRange::new(0.into(), document.text.text_len())),
+                .line_index()
+                .line_col_lsp_range(TextRange::new(0.into(), document.text().text_len())),
             new_text,
         }])
     }

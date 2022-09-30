@@ -24,7 +24,7 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
 
     let mut changes = FxHashMap::default();
     for document in context.request.workspace.iter() {
-        if let Some(data) = document.data.as_latex() {
+        if let Some(data) = document.data().as_latex() {
             let mut edits = Vec::new();
             for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
                 if let Some(range) = latex::LabelDefinition::cast(node.clone())
@@ -76,7 +76,7 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
                 }
             }
 
-            changes.insert(Arc::clone(&document.uri), edits);
+            changes.insert(Arc::clone(document.uri()), edits);
         }
     }
 

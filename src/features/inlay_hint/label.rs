@@ -13,11 +13,11 @@ pub fn find_label_inlay_hints(
     hints: &mut Vec<InlayHint>,
 ) -> Option<()> {
     let main_document = request.main_document();
-    let data = main_document.data.as_latex()?;
+    let data = main_document.data().as_latex()?;
     let root = latex::SyntaxNode::new_root(data.green.clone());
 
     let range = main_document
-        .line_index
+        .line_index()
         .offset_lsp_range(request.params.range);
 
     hints.extend(
@@ -40,7 +40,7 @@ fn create_hint(
 
     let position = request
         .main_document()
-        .line_index
+        .line_index()
         .line_col_lsp(name.syntax().text_range().end());
 
     Some(InlayHint {
