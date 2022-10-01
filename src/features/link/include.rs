@@ -13,15 +13,23 @@ pub(super) fn find_include_links(
     let document = request.main_document();
     let data = document.data().as_latex()?;
 
+    let working_dir = request.workspace.working_dir(
+        request
+            .workspace
+            .parent(&document)
+            .as_ref()
+            .unwrap_or(&document),
+    );
+
     for include in &data.extras.explicit_links {
-        for target in &include.targets {
-            if request.workspace.get(&target).is_some() {
-                results.push(LinkResult {
-                    range: include.stem_range,
-                    target: Arc::clone(target),
-                });
-                break;
-            }
+        if let Some(target) = include
+            .targets(&working_dir, &request.workspace.environment.resolver)
+            .find_map(|uri| request.workspace.get(&uri))
+        {
+            results.push(LinkResult {
+                range: include.stem_range,
+                target: Arc::clone(target.uri()),
+            });
         }
     }
 

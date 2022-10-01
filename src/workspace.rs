@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     fs::{self, FileType},
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -12,10 +11,7 @@ use lsp_types::Url;
 use notify::Watcher;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{
-    component_db::COMPONENT_DATABASE, syntax::latex::ExplicitLinkKind, Document, DocumentLanguage,
-    Environment,
-};
+use crate::{component_db::COMPONENT_DATABASE, Document, DocumentLanguage, Environment};
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceEvent {
@@ -247,57 +243,41 @@ impl Workspace {
                         continue;
                     }
 
-                    let suffixes: &[&str] = match link.kind {
-                        ExplicitLinkKind::Package => &[".sty"],
-                        ExplicitLinkKind::Class => &[".cls"],
-                        ExplicitLinkKind::Latex => &["", ".tex"],
-                        ExplicitLinkKind::Bibtex => &["", ".bib"],
-                    };
-
-                    let working_dir = link
-                        .working_dir
-                        .as_ref()
-                        .and_then(|path| working_dir.join(path).ok())
-                        .map_or(Cow::Borrowed(working_dir), Cow::Owned);
-
-                    for suffix in suffixes {
-                        let file_name = format!("{}{}", link.stem, suffix);
-
-                        if let Some(child) = working_dir
-                            .join(&file_name)
-                            .ok()
-                            .and_then(|uri| workspace.get(&uri))
-                        {
-                            go(workspace, &child, &working_dir, visited, results);
-                            break;
-                        }
+                    if let Some(child) = link
+                        .targets(&working_dir, &workspace.environment.resolver)
+                        .find_map(|uri| workspace.get(&uri))
+                    {
+                        go(workspace, &child, &working_dir, visited, results);
                     }
                 }
-            }
 
-            for extension in &["aux", "log"] {
-                if let Some(child) = change_extension(root.uri(), extension)
-                    .and_then(|file_name| working_dir.join(&file_name).ok())
-                    .and_then(|uri| workspace.get(&uri))
-                {
-                    go(workspace, &child, &working_dir, visited, results);
+                for extension in &["aux", "log"] {
+                    if let Some(child) = change_extension(root.uri(), extension)
+                        .and_then(|file_name| working_dir.join(&file_name).ok())
+                        .and_then(|uri| workspace.get(&uri))
+                    {
+                        go(workspace, &child, &working_dir, visited, results);
+                    }
                 }
             }
         }
 
         let mut results = Vec::new();
-        let working_dir = self
-            .environment
+        let working_dir = self.working_dir(root);
+
+        let mut visited = FxHashSet::default();
+        go(self, root, &working_dir, &mut visited, &mut results);
+        results
+    }
+
+    pub fn working_dir(&self, root: &Document) -> Arc<Url> {
+        self.environment
             .options
             .root_directory
             .as_deref()
             .and_then(|path| path.to_str())
             .and_then(|path| root.uri().join(path).map(Arc::new).ok())
-            .unwrap_or_else(|| Arc::clone(root.uri()));
-
-        let mut visited = FxHashSet::default();
-        go(self, root, &working_dir, &mut visited, &mut results);
-        results
+            .unwrap_or_else(|| Arc::clone(root.uri()))
     }
 
     pub fn siblings(&self, child: &Document) -> Vec<Document> {

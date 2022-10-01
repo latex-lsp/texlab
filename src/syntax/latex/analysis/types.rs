@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use lsp_types::Url;
 use rowan::TextRange;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smol_str::SmolStr;
 
-use crate::Environment;
+use crate::{distro::Resolver, Environment};
 
 #[derive(Debug)]
 pub struct LatexAnalyzerContext<'a> {
@@ -60,6 +60,39 @@ impl ExplicitLink {
             ExplicitLinkKind::Class => Some(format!("{}.cls", self.stem)),
             ExplicitLinkKind::Latex | ExplicitLinkKind::Bibtex => None,
         }
+    }
+
+    pub fn targets<'a>(
+        &'a self,
+        base_dir: &'a Url,
+        resolver: &'a Resolver,
+    ) -> impl Iterator<Item = Url> + 'a {
+        let dir = self
+            .working_dir
+            .as_ref()
+            .and_then(|path| base_dir.join(path).ok())
+            .map_or(Cow::Borrowed(base_dir), Cow::Owned);
+
+        let suffixes: &[&str] = match self.kind {
+            ExplicitLinkKind::Package => &[".sty"],
+            ExplicitLinkKind::Class => &[".cls"],
+            ExplicitLinkKind::Latex => &["", ".tex"],
+            ExplicitLinkKind::Bibtex => &["", ".bib"],
+        };
+
+        suffixes
+            .iter()
+            .filter_map(move |suffix| {
+                let file_name = format!("{}{}", self.stem, suffix);
+                dir.join(&file_name).ok()
+            })
+            .chain(suffixes.iter().filter_map(move |suffix| {
+                let file_name = format!("{}{}", self.stem, suffix);
+                resolver
+                    .files_by_name
+                    .get(file_name.as_str())
+                    .and_then(|path| Url::from_file_path(path).ok())
+            }))
     }
 }
 
