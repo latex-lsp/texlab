@@ -558,10 +558,11 @@ dependencies = [
 
 [[package]]
 name = "human_name"
-version = "1.4.1"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74a1251b026225843ccccd0ce517b671155320da26aa6f9b4c87f4051d561aac"
+checksum = "42af7ece82db04720531abb16506781d40a72c8e62ecb0762d39746d2173255e"
 dependencies = [
+ "crossbeam-utils",
  "libc",
  "phf",
  "phf_codegen",
