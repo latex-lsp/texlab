@@ -49,7 +49,7 @@ fn clean_output_files(
 
     let uri = workspace
         .get(&params.uri)
-        .and_then(|child| workspace.parent(&child))
+        .and_then(|child| workspace.parents(&child).next())
         .map(|document| Arc::clone(document.uri()))
         .unwrap_or_else(|| Arc::new(params.uri));
 

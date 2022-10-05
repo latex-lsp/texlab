@@ -154,7 +154,7 @@ impl Workspace {
 
         if document.uri().scheme() == "file" {
             if let Ok(mut path) = document.uri().to_file_path() {
-                while path.pop() && self.parent(&document).is_none() {
+                while path.pop() && self.parents(&document).next().is_none() {
                     std::fs::read_dir(&path)
                         .into_iter()
                         .flatten()
@@ -206,68 +206,67 @@ impl Workspace {
 
     pub fn project_roots<'a>(&'a self) -> impl Iterator<Item = Document> + 'a {
         self.iter().filter(|root| {
-            root.data().as_latex().map_or(false, |data| {
-                data.extras.has_document_environment && !data.extras.has_subfiles_package
-            })
+            root.data()
+                .as_latex()
+                .map_or(false, |data| data.extras.can_be_root)
         })
     }
 
-    pub fn parent(&self, child: &Document) -> Option<Document> {
-        self.project_roots().find(|root| {
-            self.dependencies(root)
-                .into_iter()
-                .any(|doc| doc.uri() == child.uri())
-        })
+    pub fn project_files(&self, root: &Document) -> Vec<Document> {
+        let mut results = Vec::new();
+        let working_dir = root.uri();
+        let mut visited = FxHashSet::default();
+        self.visit_project(root, working_dir, &mut visited, &mut results);
+        results
     }
 
-    pub fn dependencies(&self, root: &Document) -> Vec<Document> {
-        fn go<'a>(
-            workspace: &Workspace,
-            root: &Document,
-            working_dir: &Url,
-            visited: &mut FxHashSet<Arc<Url>>,
-            results: &mut Vec<Document>,
-        ) {
-            if !visited.insert(Arc::clone(root.uri())) {
-                return;
-            }
+    fn visit_project(
+        &self,
+        root: &Document,
+        working_dir: &Url,
+        visited: &mut FxHashSet<Arc<Url>>,
+        results: &mut Vec<Document>,
+    ) {
+        if !visited.insert(Arc::clone(root.uri())) {
+            return;
+        }
 
-            results.push(root.clone());
-            if let Some(data) = root.data().as_latex() {
-                for link in &data.extras.explicit_links {
-                    if link
-                        .as_component_name()
-                        .and_then(|name| COMPONENT_DATABASE.find(&name))
-                        .is_some()
-                    {
-                        continue;
-                    }
-
-                    if let Some(child) = link
-                        .targets(&working_dir, &workspace.environment.resolver)
-                        .find_map(|uri| workspace.get(&uri))
-                    {
-                        go(workspace, &child, &working_dir, visited, results);
-                    }
+        results.push(root.clone());
+        if let Some(data) = root.data().as_latex() {
+            for link in &data.extras.explicit_links {
+                if link
+                    .as_component_name()
+                    .and_then(|name| COMPONENT_DATABASE.find(&name))
+                    .is_some()
+                {
+                    continue;
                 }
 
-                for extension in &["aux", "log"] {
-                    if let Some(child) = change_extension(root.uri(), extension)
-                        .and_then(|file_name| working_dir.join(&file_name).ok())
-                        .and_then(|uri| workspace.get(&uri))
-                    {
-                        go(workspace, &child, &working_dir, visited, results);
-                    }
+                if let Some(child) = link
+                    .targets(&working_dir, &self.environment.resolver)
+                    .find_map(|uri| self.get(&uri))
+                {
+                    self.visit_project(&child, &working_dir, visited, results);
+                }
+            }
+
+            for extension in &["aux", "log"] {
+                if let Some(child) = change_extension(root.uri(), extension)
+                    .and_then(|file_name| working_dir.join(&file_name).ok())
+                    .and_then(|uri| self.get(&uri))
+                {
+                    self.visit_project(&child, &working_dir, visited, results);
                 }
             }
         }
+    }
 
-        let mut results = Vec::new();
-        let working_dir = self.working_dir(root);
-
-        let mut visited = FxHashSet::default();
-        go(self, root, &working_dir, &mut visited, &mut results);
-        results
+    pub fn parents<'a>(&'a self, child: &'a Document) -> impl Iterator<Item = Document> + 'a {
+        self.project_roots().filter(|root| {
+            self.project_files(root)
+                .iter()
+                .any(|doc| doc.uri() == child.uri())
+        })
     }
 
     pub fn working_dir(&self, root: &Document) -> Arc<Url> {
@@ -282,7 +281,7 @@ impl Workspace {
 
     pub fn siblings(&self, child: &Document) -> Vec<Document> {
         self.iter()
-            .map(|root| self.dependencies(&root))
+            .map(|root| self.project_files(&root))
             .filter(|project| project.iter().any(|doc| doc.uri() == child.uri()))
             .flatten()
             .unique_by(|doc| Arc::clone(doc.uri()))

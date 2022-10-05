@@ -44,4 +44,10 @@ pub fn analyze(context: &mut LatexAnalyzerContext, root: &latex::SyntaxNode) {
         .iter()
         .filter_map(ExplicitLink::as_component_name)
         .any(|name| name == "subfiles.cls");
+
+    context.extras.can_be_root = context
+        .extras
+        .explicit_links
+        .iter()
+        .any(|link| link.kind == ExplicitLinkKind::Class && link.stem.as_str() != "subfiles")
 }

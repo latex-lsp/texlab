@@ -25,6 +25,7 @@ pub struct Extras {
     pub label_numbers_by_name: FxHashMap<String, String>,
     pub theorem_environments: Vec<TheoremEnvironment>,
     pub graphics_paths: FxHashSet<String>,
+    pub can_be_root: bool,
     pub has_document_environment: bool,
     pub has_subfiles_package: bool,
 }

@@ -14,8 +14,13 @@ pub(super) fn goto_document_definition(
     let data = document.data().as_latex()?;
 
     let workspace = &context.request.workspace;
-    let working_dir =
-        workspace.working_dir(workspace.parent(&document).as_ref().unwrap_or(&document));
+    let working_dir = workspace.working_dir(
+        workspace
+            .parents(&document)
+            .next()
+            .as_ref()
+            .unwrap_or(&document),
+    );
 
     for include in data
         .extras

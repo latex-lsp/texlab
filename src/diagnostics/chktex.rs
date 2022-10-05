@@ -39,7 +39,8 @@ pub fn collect_chktex_diagnostics(
         })
         .or_else(|| {
             workspace
-                .parent(&document)
+                .parents(&document)
+                .next()
                 .or(Some(document.clone()))
                 .filter(|doc| doc.uri().scheme() == "file")
                 .and_then(|doc| doc.uri().to_file_path().ok())

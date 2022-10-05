@@ -16,7 +16,8 @@ pub(super) fn find_include_links(
     let working_dir = request.workspace.working_dir(
         request
             .workspace
-            .parent(&document)
+            .parents(&document)
+            .next()
             .as_ref()
             .unwrap_or(&document),
     );
