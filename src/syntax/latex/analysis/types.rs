@@ -15,7 +15,7 @@ pub struct LatexAnalyzerContext<'a> {
     pub extras: Extras,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Extras {
     pub implicit_links: ImplicitLinks,
     pub explicit_links: Vec<ExplicitLink>,
@@ -45,7 +45,7 @@ pub enum ExplicitLinkKind {
     Bibtex,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ExplicitLink {
     pub stem: SmolStr,
     pub stem_range: TextRange,

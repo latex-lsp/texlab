@@ -2,6 +2,7 @@ mod capabilities;
 pub mod citation;
 mod client;
 pub mod component_db;
+pub mod db;
 mod debouncer;
 mod diagnostics;
 mod dispatch;
@@ -20,6 +21,8 @@ mod range;
 mod server;
 pub mod syntax;
 mod workspace;
+
+use std::sync::Arc;
 
 pub use self::{
     capabilities::ClientCapabilitiesExt,
@@ -53,4 +56,66 @@ pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
     }
 
     uri.set_fragment(None);
+}
+
+#[salsa::jar(db = Db)]
+pub struct Jar(
+    db::ServerContext,
+    db::FileId,
+    db::FileId_path,
+    db::FileId_stem,
+    db::FileId_language,
+    db::Document,
+    db::Document_parse,
+    db::Document_line_index,
+    db::Document_can_be_root,
+    db::TexDocumentData,
+    db::TexDocumentData_extras,
+    db::BibDocumentData,
+    db::LogDocumentData,
+    db::Dependency,
+    db::implicit_dependencies_of,
+    db::explicit_dependencies_of,
+    db::Project,
+    db::project_of,
+    db::ProjectGroup,
+    db::ProjectGroup_union,
+    db::project_group_of,
+);
+
+pub trait Db: salsa::DbWithJar<Jar> {
+    fn workspace(&self) -> Arc<db::Workspace>;
+}
+
+#[salsa::db(crate::Jar)]
+pub(crate) struct Database {
+    storage: salsa::Storage<Self>,
+    workspace: Arc<db::Workspace>,
+}
+
+impl Default for Database {
+    fn default() -> Self {
+        let storage = salsa::Storage::default();
+        let workspace = Arc::default();
+        let db = Self { storage, workspace };
+        db::ServerContext::new(&db, distro::Resolver::default(), ".".to_string());
+        db
+    }
+}
+
+impl salsa::Database for Database {}
+
+impl salsa::ParallelDatabase for Database {
+    fn snapshot(&self) -> salsa::Snapshot<Self> {
+        salsa::Snapshot::new(Self {
+            storage: self.storage.snapshot(),
+            workspace: self.workspace(),
+        })
+    }
+}
+
+impl Db for Database {
+    fn workspace(&self) -> Arc<db::Workspace> {
+        Arc::clone(&self.workspace)
+    }
 }

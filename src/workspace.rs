@@ -298,3 +298,44 @@ fn change_extension(uri: &Url, extension: &str) -> Option<String> {
 
     Some(format!("{}.{}", file_stem, extension))
 }
+
+// fn explore_project(
+//     root: &Document,
+//     working_dir: &Url,
+//     resolver: &Resolver,
+//     visited: &mut FxHashSet<Arc<Url>>,
+//     results: &mut Vec<Document>,
+// ) {
+//     if !visited.insert(Arc::clone(root.uri())) {
+//         return;
+//     }
+
+//     results.push(root.clone());
+//     if let Some(data) = root.data().as_latex() {
+//         for link in &data.extras.explicit_links {
+//             if link
+//                 .as_component_name()
+//                 .and_then(|name| COMPONENT_DATABASE.find(&name))
+//                 .is_some()
+//             {
+//                 continue;
+//             }
+
+//             if let Some(child) = link
+//                 .targets(&working_dir, resolver)
+//                 .find_map(|uri| self.get(&uri))
+//             {
+//                 explore_project(&child, &working_dir, visited, results);
+//             }
+//         }
+
+//         for extension in &["aux", "log"] {
+//             if let Some(child) = change_extension(root.uri(), extension)
+//                 .and_then(|file_name| working_dir.join(&file_name).ok())
+//                 .and_then(|uri| self.get(&uri))
+//             {
+//                 explore_project(&child, &working_dir, visited, results);
+//             }
+//         }
+//     }
+// }

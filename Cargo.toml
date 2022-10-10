@@ -76,6 +76,11 @@ version = "0.99.17"
 default-features = false
 features = ["from", "display"]
 
+[dependencies.salsa]
+git = "https://github.com/salsa-rs/salsa"
+branch = "master"
+package = "salsa-2022"
+
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.4.0" }
