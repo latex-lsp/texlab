@@ -40,7 +40,92 @@ enum InternalMessage {
     FileEvent(notify::Event),
 }
 
-#[derive(Clone)]
+struct ServerSnapshot {
+    connection: Arc<Connection>,
+    internal_tx: Sender<InternalMessage>,
+    req_queue: Arc<Mutex<ReqQueue>>,
+    workspace: Workspace,
+    diagnostic_tx: debouncer::Sender<Workspace>,
+    diagnostic_manager: DiagnosticManager,
+    build_engine: Arc<BuildEngine>,
+}
+
+impl ServerSnapshot {
+    fn register_config_capability(&self) {
+        if self
+            .workspace
+            .environment
+            .client_capabilities
+            .has_push_configuration_support()
+        {
+            let reg = Registration {
+                id: "pull-config".to_string(),
+                method: DidChangeConfiguration::METHOD.to_string(),
+                register_options: None,
+            };
+
+            let params = RegistrationParams {
+                registrations: vec![reg],
+            };
+
+            if let Err(why) =
+                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
+            {
+                error!(
+                    "Failed to register \"{}\" notification: {}",
+                    DidChangeConfiguration::METHOD,
+                    why
+                );
+            }
+        }
+    }
+
+    fn pull_config(&self) -> Result<()> {
+        if !self
+            .workspace
+            .environment
+            .client_capabilities
+            .has_pull_configuration_support()
+        {
+            return Ok(());
+        }
+
+        let params = ConfigurationParams {
+            items: vec![ConfigurationItem {
+                section: Some("texlab".to_string()),
+                scope_uri: None,
+            }],
+        };
+
+        match send_request::<WorkspaceConfiguration>(
+            &self.req_queue,
+            &self.connection.sender,
+            params,
+        ) {
+            Ok(mut json) => {
+                let value = json.pop().expect("invalid configuration request");
+                let options = parse_options(&self.connection.sender, value)?;
+                self.internal_tx
+                    .send(InternalMessage::SetOptions(Arc::new(options)))
+                    .unwrap();
+            }
+            Err(why) => {
+                error!("Retrieving configuration failed: {}", why);
+            }
+        };
+
+        Ok(())
+    }
+
+    fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
+        FeatureRequest {
+            params,
+            workspace: self.workspace.slice(&uri),
+            uri,
+        }
+    }
+}
+
 pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
@@ -79,8 +164,17 @@ impl Server {
         }
     }
 
-    fn spawn(&self, job: impl FnOnce(Self) + Send + 'static) {
-        let server = self.clone();
+    fn spawn(&self, job: impl FnOnce(ServerSnapshot) + Send + 'static) {
+        let server = ServerSnapshot {
+            connection: Arc::clone(&self.connection),
+            internal_tx: self.internal_tx.clone(),
+            workspace: self.workspace.clone(),
+            req_queue: Arc::clone(&self.req_queue),
+            diagnostic_tx: self.diagnostic_tx.clone(),
+            diagnostic_manager: self.diagnostic_manager.clone(),
+            build_engine: Arc::clone(&self.build_engine),
+        };
+
         self.pool.lock().unwrap().execute(move || job(server));
     }
 
@@ -191,35 +285,6 @@ impl Server {
         }
     }
 
-    fn register_config_capability(&self) {
-        if self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_push_configuration_support()
-        {
-            let reg = Registration {
-                id: "pull-config".to_string(),
-                method: DidChangeConfiguration::METHOD.to_string(),
-                register_options: None,
-            };
-
-            let params = RegistrationParams {
-                registrations: vec![reg],
-            };
-
-            if let Err(why) =
-                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
-            {
-                error!(
-                    "Failed to register \"{}\" notification: {}",
-                    DidChangeConfiguration::METHOD,
-                    why
-                );
-            }
-        }
-    }
-
     fn register_diagnostics_handler(&mut self) {
         let (event_sender, event_receiver) = crossbeam_channel::unbounded();
         let diagnostic_tx = self.diagnostic_tx.clone();
@@ -237,64 +302,6 @@ impl Server {
         });
 
         self.workspace.listeners.push(event_sender);
-    }
-
-    fn pull_config(&self) -> Result<()> {
-        if !self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_pull_configuration_support()
-        {
-            return Ok(());
-        }
-
-        let params = ConfigurationParams {
-            items: vec![ConfigurationItem {
-                section: Some("texlab".to_string()),
-                scope_uri: None,
-            }],
-        };
-
-        match send_request::<WorkspaceConfiguration>(
-            &self.req_queue,
-            &self.connection.sender,
-            params,
-        ) {
-            Ok(mut json) => {
-                let value = json.pop().expect("invalid configuration request");
-                let options = self.parse_options(value)?;
-                self.internal_tx
-                    .send(InternalMessage::SetOptions(Arc::new(options)))
-                    .unwrap();
-            }
-            Err(why) => {
-                error!("Retrieving configuration failed: {}", why);
-            }
-        };
-
-        Ok(())
-    }
-
-    fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
-        let options = match serde_json::from_value(value) {
-            Ok(new_options) => new_options,
-            Err(why) => {
-                send_notification::<ShowMessage>(
-                    &self.connection.sender,
-                    ShowMessageParams {
-                        message: format!(
-                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
-                        ),
-                        typ: MessageType::WARNING,
-                    },
-                )?;
-
-                None
-            }
-        };
-
-        Ok(options.unwrap_or_default())
     }
 
     fn cancel(&self, _params: CancelParams) -> Result<()> {
@@ -316,7 +323,7 @@ impl Server {
                 let _ = server.pull_config();
             });
         } else {
-            let options = self.parse_options(params.settings)?;
+            let options = parse_options(&self.connection.sender, params.settings)?;
             self.workspace.environment.options = Arc::new(options);
             self.reparse_all()?;
         }
@@ -851,6 +858,30 @@ impl Server {
         self.pool.lock().unwrap().join();
         Ok(())
     }
+}
+
+fn parse_options(
+    sender: &Sender<lsp_server::Message>,
+    value: serde_json::Value,
+) -> Result<Options> {
+    let options = match serde_json::from_value(value) {
+        Ok(new_options) => new_options,
+        Err(why) => {
+            send_notification::<ShowMessage>(
+                sender,
+                ShowMessageParams {
+                    message: format!(
+                        "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
+                    ),
+                    typ: MessageType::WARNING,
+                },
+            )?;
+
+            None
+        }
+    };
+
+    Ok(options.unwrap_or_default())
 }
 
 fn create_debouncer(
