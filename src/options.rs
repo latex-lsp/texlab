@@ -124,3 +124,10 @@ pub struct DiagnosticsOptions {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiagnosticsPattern(#[serde(with = "serde_regex")] pub Regex);
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct StartupOptions {
+    pub skip_distro: bool,
+}
