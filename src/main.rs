@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     setup_logger(opts);
 
     let (connection, threads) = Connection::stdio();
-    Server::with_connection(connection, env::current_dir()?, true).run()?;
+    Server::new(connection, env::current_dir()?).run()?;
     threads.join()?;
 
     Ok(())

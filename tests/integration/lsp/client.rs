@@ -69,7 +69,7 @@ impl Client {
         let (client, server) = Connection::memory();
         let incoming = IncomingHandler::spawn(client.receiver)?;
         let outgoing = client.sender;
-        let server = Server::with_connection(server, directory.path().to_path_buf(), false);
+        let server = Server::new(server, directory.path().to_path_buf());
         let _handle = jod_thread::spawn(move || {
             server.run().expect("server failed to run");
         });
@@ -93,7 +93,7 @@ impl Client {
             process_id: None,
             root_path: None,
             root_uri: None,
-            initialization_options: None,
+            initialization_options: Some(serde_json::json!({ "skipDistro": true })),
             capabilities: client_capabilities,
             trace: None,
             workspace_folders: None,

@@ -30,7 +30,7 @@ use crate::{
     normalize_uri,
     syntax::bibtex,
     ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
-    LineIndexExt, Options, Workspace, WorkspaceEvent,
+    LineIndexExt, Options, StartupOptions, Workspace, WorkspaceEvent,
 };
 
 #[derive(Debug)]
@@ -129,16 +129,11 @@ pub struct Server {
     diagnostic_tx: debouncer::Sender<Workspace>,
     diagnostic_manager: DiagnosticManager,
     pool: Arc<Mutex<ThreadPool>>,
-    load_resolver: bool,
     build_engine: Arc<BuildEngine>,
 }
 
 impl Server {
-    pub fn with_connection(
-        connection: Connection,
-        current_dir: PathBuf,
-        load_resolver: bool,
-    ) -> Self {
+    pub fn new(connection: Connection, current_dir: PathBuf) -> Self {
         let client = LspClient::new(connection.sender.clone());
         let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
@@ -153,7 +148,6 @@ impl Server {
             diagnostic_tx,
             diagnostic_manager,
             pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
-            load_resolver,
             build_engine: Arc::default(),
         }
     }
@@ -243,7 +237,11 @@ impl Server {
         self.connection
             .initialize_finish(id, serde_json::to_value(result)?)?;
 
-        if self.load_resolver {
+        let StartupOptions { skip_distro } =
+            serde_json::from_value(params.initialization_options.unwrap_or_default())
+                .unwrap_or_default();
+
+        if !skip_distro {
             self.spawn(move |server| {
                 let distro = Distribution::detect();
                 info!("Detected distribution: {}", distro.kind);
