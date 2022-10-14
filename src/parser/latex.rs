@@ -1316,18 +1316,29 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
+        let checkpoint = self.builder.checkpoint();
         if self.lexer.peek() == Some(L_CURLY) {
             self.eat();
             self.trivia();
 
-            while matches!(self.lexer.peek(), Some(L_CURLY)) {
-                self.curly_group_path();
+            if matches!(
+                self.lexer.peek(),
+                Some(WORD | EQUALITY_SIGN | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
+            ) {
+                self.builder
+                    .start_node_at(checkpoint, CURLY_GROUP_WORD.into());
+                self.path();
+            } else {
+                self.builder.start_node_at(checkpoint, CURLY_GROUP.into());
+                while matches!(self.lexer.peek(), Some(L_CURLY)) {
+                    self.curly_group_path();
+                }
             }
-        } else {
-            self.builder.token(MISSING.into(), "");
+
+            self.expect(R_CURLY);
+            self.builder.finish_node();
         }
 
-        self.expect(R_CURLY);
         self.builder.finish_node();
     }
 }
