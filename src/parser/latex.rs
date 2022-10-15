@@ -849,11 +849,16 @@ impl<'a> Parser<'a> {
     fn curly_group_path(&mut self) {
         self.builder.start_node(CURLY_GROUP_WORD.into());
         self.eat();
-        while matches!(
-            self.peek(),
-            Some(WORD | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
-        ) {
-            self.path();
+        self.trivia();
+
+        while let Some(kind) = self.lexer.peek() {
+            match kind {
+                COMMENT | WORD | EQUALITY_SIGN | COMMA | L_BRACK | R_BRACK
+                | GENERIC_COMMAND_NAME => self.path(),
+                L_CURLY => self.curly_group_path(),
+                WHITESPACE => self.eat(),
+                _ => break,
+            };
         }
 
         self.expect(R_CURLY);
@@ -863,29 +868,17 @@ impl<'a> Parser<'a> {
     fn curly_group_path_list(&mut self) {
         self.builder.start_node(CURLY_GROUP_WORD_LIST.into());
         self.eat();
+        self.trivia();
 
-        while self.peek().map_or(false, |kind| {
-            matches!(
-                kind,
-                LINE_BREAK
-                    | WHITESPACE
-                    | COMMENT
-                    | WORD
-                    | COMMA
-                    | EQUALITY_SIGN
-                    | L_BRACK
-                    | R_BRACK
-                    | GENERIC_COMMAND_NAME
-            )
-        }) {
-            if matches!(
-                self.peek(),
-                Some(WORD | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
-            ) {
-                self.path();
-            } else {
-                self.eat();
-            }
+        while let Some(kind) = self.peek() {
+            match kind {
+                COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME => {
+                    self.path()
+                }
+                WHITESPACE | LINE_BREAK | COMMA => self.eat(),
+                L_CURLY => self.curly_group_path(),
+                _ => break,
+            };
         }
 
         self.expect(R_CURLY);
@@ -895,22 +888,16 @@ impl<'a> Parser<'a> {
     fn path(&mut self) {
         self.builder.start_node(KEY.into());
         self.eat();
-        while self.peek().map_or(false, |kind| {
-            matches!(
-                kind,
-                WHITESPACE
-                    | COMMENT
-                    | WORD
-                    | EQUALITY_SIGN
-                    | L_BRACK
-                    | R_BRACK
-                    | GENERIC_COMMAND_NAME
-            )
-        }) {
-            self.eat();
+
+        while let Some(kind) = self.peek() {
+            match kind {
+                WHITESPACE | COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK
+                | GENERIC_COMMAND_NAME => self.eat(),
+                L_CURLY => self.curly_group_path(),
+                _ => break,
+            };
         }
 
-        self.trivia();
         self.builder.finish_node();
     }
 

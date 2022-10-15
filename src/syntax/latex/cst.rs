@@ -683,12 +683,6 @@ impl GraphicsPath {
     }
 
     pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord> {
-        self.syntax()
-            .children()
-            .filter_map(CurlyGroup::cast)
-            .take(1)
-            .flat_map(|group| group.syntax().children())
-            .chain(self.syntax().children())
-            .filter_map(CurlyGroupWord::cast)
+        self.syntax().descendants().filter_map(CurlyGroupWord::cast)
     }
 }
