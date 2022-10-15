@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
+use dashmap::DashMap;
 use log::{error, info, warn};
 use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
@@ -23,8 +24,8 @@ use crate::{
     features::{
         execute_command, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_foldings, find_hover, find_inlay_hints, find_workspace_symbols,
-        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
-        BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest, ForwardSearch,
+        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildParams,
+        BuildResult, BuildRunner, BuildStatus, CompletionItemData, FeatureRequest, ForwardSearch,
         ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
@@ -32,6 +33,8 @@ use crate::{
     ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
     LineIndexExt, Options, StartupOptions, Workspace, WorkspaceEvent,
 };
+
+static BUILD_LOCK: Mutex<()> = Mutex::new(());
 
 #[derive(Debug)]
 enum InternalMessage {
@@ -47,7 +50,7 @@ struct ServerSnapshot {
     workspace: Workspace,
     diagnostic_tx: debouncer::Sender<Workspace>,
     diagnostic_manager: DiagnosticManager,
-    build_engine: Arc<BuildEngine>,
+    cursor_positions: Arc<DashMap<Arc<Url>, Position>>,
 }
 
 impl ServerSnapshot {
@@ -111,6 +114,49 @@ impl ServerSnapshot {
         Ok(())
     }
 
+    fn build(&self, uri: &Url) -> BuildResult {
+        let guard = BUILD_LOCK.lock().unwrap();
+
+        let client_capabilities = &self.workspace.environment.client_capabilities;
+        let options = &self.workspace.environment.options.build;
+        let status = BuildRunner::builder()
+            .executable(&options.executable.0)
+            .args(&options.args.0)
+            .tex_uri(uri)
+            .client(&self.client)
+            .report_progress(client_capabilities.has_work_done_progress_support())
+            .workspace(&self.workspace)
+            .build()
+            .run()
+            .unwrap_or(BuildStatus::FAILURE);
+
+        if options.forward_search_after {
+            let line = self.cursor_positions.get(uri).map_or(0, |pos| pos.line);
+            self.forward_search(uri, line);
+        }
+
+        drop(guard);
+        BuildResult { status }
+    }
+
+    fn forward_search(&self, uri: &Url, line: u32) -> ForwardSearchResult {
+        let options = &self.workspace.environment.options.forward_search;
+        let status = match options.executable.as_deref().zip(options.args.as_deref()) {
+            Some((executable, args)) => ForwardSearch::builder()
+                .executable(executable)
+                .args(args)
+                .line(line)
+                .workspace(&self.workspace)
+                .tex_uri(uri)
+                .build()
+                .execute()
+                .unwrap_or(ForwardSearchStatus::ERROR),
+            None => ForwardSearchStatus::UNCONFIGURED,
+        };
+
+        ForwardSearchResult { status }
+    }
+
     fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
         FeatureRequest {
             params,
@@ -129,7 +175,7 @@ pub struct Server {
     diagnostic_tx: debouncer::Sender<Workspace>,
     diagnostic_manager: DiagnosticManager,
     pool: Arc<Mutex<ThreadPool>>,
-    build_engine: Arc<BuildEngine>,
+    cursor_positions: Arc<DashMap<Arc<Url>, Position>>,
 }
 
 impl Server {
@@ -147,8 +193,8 @@ impl Server {
             workspace,
             diagnostic_tx,
             diagnostic_manager,
+            cursor_positions: Arc::default(),
             pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
-            build_engine: Arc::default(),
         }
     }
 
@@ -160,7 +206,7 @@ impl Server {
             client: self.client.clone(),
             diagnostic_tx: self.diagnostic_tx.clone(),
             diagnostic_manager: self.diagnostic_manager.clone(),
-            build_engine: Arc::clone(&self.build_engine),
+            cursor_positions: Arc::clone(&self.cursor_positions),
         };
 
         self.pool.lock().unwrap().execute(move || job(server));
@@ -359,7 +405,7 @@ impl Server {
                     .viewport
                     .insert(Arc::clone(new_document.uri()));
 
-                self.build_engine.positions_by_uri.insert(
+                self.cursor_positions.insert(
                     Arc::clone(&uri),
                     Position::new(
                         old_document
@@ -374,7 +420,7 @@ impl Server {
 
                 if self.workspace.environment.options.chktex.on_edit {
                     self.run_chktex(new_document);
-                };
+                }
             }
             None => match uri.to_file_path() {
                 Ok(path) => {
@@ -390,38 +436,19 @@ impl Server {
     fn did_save(&mut self, params: DidSaveTextDocumentParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
+        let document = match self.workspace.get(&uri) {
+            Some(document) => document,
+            _ => return Ok(()),
+        };
 
-        if let Some(request) = self
-            .workspace
-            .get(&uri)
-            .filter(|_| self.workspace.environment.options.build.on_save)
-            .map(|document| {
-                self.feature_request(
-                    Arc::clone(document.uri()),
-                    BuildParams {
-                        text_document: TextDocumentIdentifier::new(uri.clone()),
-                    },
-                )
-            })
-        {
+        if self.workspace.environment.options.build.on_save {
+            let uri = Arc::clone(document.uri());
             self.spawn(move |server| {
-                server
-                    .build_engine
-                    .build(request, server.client)
-                    .unwrap_or_else(|why| {
-                        error!("Build failed: {}", why);
-                        BuildResult {
-                            status: BuildStatus::FAILURE,
-                        }
-                    });
+                server.build(&uri);
             });
         }
 
-        if let Some(document) = self
-            .workspace
-            .get(&uri)
-            .filter(|_| self.workspace.environment.options.chktex.on_open_and_save)
-        {
+        if self.workspace.environment.options.chktex.on_open_and_save {
             self.run_chktex(document);
         }
 
@@ -446,14 +473,6 @@ impl Server {
                 .send(server.workspace.clone(), delay.0)
                 .unwrap();
         });
-    }
-
-    fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
-        FeatureRequest {
-            params,
-            workspace: self.workspace.slice(&uri),
-            uri,
-        }
     }
 
     fn handle_feature_request<P, R, H>(
@@ -518,8 +537,7 @@ impl Server {
         normalize_uri(&mut params.text_document_position.text_document.uri);
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
 
-        self.build_engine
-            .positions_by_uri
+        self.cursor_positions
             .insert(Arc::clone(&uri), params.text_document_position.position);
 
         self.handle_feature_request(id, params, uri, crate::features::complete)?;
@@ -587,7 +605,8 @@ impl Server {
                 .uri
                 .clone(),
         );
-        self.build_engine.positions_by_uri.insert(
+
+        self.cursor_positions.insert(
             Arc::clone(&uri),
             params.text_document_position_params.position,
         );
@@ -684,42 +703,29 @@ impl Server {
 
     fn build(&self, id: RequestId, mut params: BuildParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        let client = self.client.clone();
-        let build_engine = Arc::clone(&self.build_engine);
-        self.handle_feature_request(id, params, uri, move |request| {
-            build_engine.build(request, client).unwrap_or_else(|why| {
-                error!("Build failed: {}", why);
-                BuildResult {
-                    status: BuildStatus::FAILURE,
-                }
-            })
-        })?;
+        self.spawn(move |server| {
+            let result = server.build(&params.text_document.uri);
+            server
+                .connection
+                .sender
+                .send(lsp_server::Response::new_ok(id, result).into())
+                .unwrap();
+        });
+
         Ok(())
     }
 
     fn forward_search(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, |req| {
-            let options = &req.workspace.environment.options.forward_search;
-            match options.executable.as_deref().zip(options.args.as_deref()) {
-                Some((executable, args)) => ForwardSearch::builder()
-                    .executable(executable)
-                    .args(args)
-                    .line(req.params.position.line)
-                    .workspace(&req.workspace)
-                    .tex_uri(&req.uri)
-                    .build()
-                    .execute()
-                    .unwrap_or(ForwardSearchResult {
-                        status: ForwardSearchStatus::ERROR,
-                    }),
-                None => ForwardSearchResult {
-                    status: ForwardSearchStatus::UNCONFIGURED,
-                },
-            }
-        })?;
+        self.spawn(move |server| {
+            let result = server.forward_search(&params.text_document.uri, params.position.line);
+            server
+                .connection
+                .sender
+                .send(lsp_server::Response::new_ok(id, result).into())
+                .unwrap();
+        });
+
         Ok(())
     }
 

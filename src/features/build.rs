@@ -2,27 +2,19 @@ use std::{
     io::{BufRead, BufReader, Read},
     path::Path,
     process::{Command, Stdio},
-    sync::{Arc, Mutex},
-    thread::{self, JoinHandle},
+    thread::JoinHandle,
 };
 
-use anyhow::Result;
-use crossbeam_channel::{Receiver, Sender};
-use dashmap::DashMap;
+use anyhow::{Ok, Result};
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use lsp_types::{
-    notification::{LogMessage, Progress},
-    LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
-    TextDocumentIdentifier, Url, WorkDoneProgress, WorkDoneProgressBegin,
-    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
-};
+use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifier, Url};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use uuid::Uuid;
+use typed_builder::TypedBuilder;
 
-use crate::{client::LspClient, ClientCapabilitiesExt, DocumentLanguage};
+use crate::{client::LspClient, DocumentLanguage, Workspace};
 
-use super::{FeatureRequest, ForwardSearch};
+use super::progress::ProgressReporter;
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -45,196 +37,93 @@ pub struct BuildResult {
     pub status: BuildStatus,
 }
 
-struct ProgressReporter<'a> {
-    supports_progress: bool,
-    client: LspClient,
-    token: &'a str,
+#[derive(TypedBuilder)]
+pub struct BuildRunner<'a> {
+    executable: &'a str,
+    args: &'a [String],
+    workspace: &'a Workspace,
+    tex_uri: &'a Url,
+    client: &'a LspClient,
+    report_progress: bool,
 }
 
-impl<'a> ProgressReporter<'a> {
-    pub fn start(&self, uri: &Url) -> Result<()> {
-        if self.supports_progress {
-            self.client
-                .send_request::<lsp_types::request::WorkDoneProgressCreate>(
-                    WorkDoneProgressCreateParams {
-                        token: NumberOrString::String(self.token.to_string()),
-                    },
-                )?;
-
-            self.client.send_notification::<Progress>(ProgressParams {
-                token: NumberOrString::String(self.token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                    WorkDoneProgressBegin {
-                        title: "Building".to_string(),
-                        message: Some(uri.as_str().to_string()),
-                        cancellable: Some(false),
-                        percentage: None,
-                    },
-                )),
-            })?;
-        };
-        Ok(())
-    }
-}
-
-impl<'a> Drop for ProgressReporter<'a> {
-    fn drop(&mut self) {
-        if self.supports_progress {
-            drop(self.client.send_notification::<Progress>(ProgressParams {
-                token: NumberOrString::String(self.token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
-                    message: None,
-                })),
-            }));
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct BuildEngine {
-    lock: Mutex<()>,
-    pub positions_by_uri: DashMap<Arc<Url>, Position>,
-}
-
-impl BuildEngine {
-    pub fn build(
-        &self,
-        request: FeatureRequest<BuildParams>,
-        client: LspClient,
-    ) -> Result<BuildResult> {
-        let lock = self.lock.lock().unwrap();
-
-        let document = request
+impl<'a> BuildRunner<'a> {
+    pub fn run(self) -> Result<BuildStatus> {
+        let path = match self
             .workspace
             .iter()
             .find(|document| {
-                if let Some(data) = document.data().as_latex() {
-                    data.extras.has_document_environment
-                } else {
-                    false
-                }
+                document
+                    .data()
+                    .as_latex()
+                    .map_or(false, |document| document.extras.can_be_built)
             })
-            .unwrap_or_else(|| request.main_document());
-
-        if document.data().language() != DocumentLanguage::Latex {
-            return Ok(BuildResult {
-                status: BuildStatus::SUCCESS,
-            });
-        }
-
-        if document.uri().scheme() != "file" {
-            return Ok(BuildResult {
-                status: BuildStatus::FAILURE,
-            });
-        }
-        let path = document.uri().to_file_path().unwrap();
-
-        let supports_progress = request
-            .workspace
-            .environment
-            .client_capabilities
-            .has_work_done_progress_support();
-
-        let token = format!("texlab-build-{}", Uuid::new_v4());
-        let progress_reporter = ProgressReporter {
-            supports_progress,
-            client: client.clone(),
-            token: &token,
+            .or_else(|| self.workspace.get(self.tex_uri))
+            .filter(|document| document.data().language() == DocumentLanguage::Latex)
+            .filter(|document| document.uri().scheme() == "file")
+            .and_then(|document| document.uri().to_file_path().ok())
+        {
+            Some(path) => path,
+            None => return Ok(BuildStatus::FAILURE),
         };
-        progress_reporter.start(document.uri())?;
 
-        let options = &request.workspace.environment.options;
+        let reporter = if self.report_progress {
+            Some(ProgressReporter::new(
+                self.client,
+                "Building".to_string(),
+                path.display().to_string(),
+            )?)
+        } else {
+            None
+        };
 
-        let build_dir = options
-            .root_directory
-            .as_ref()
-            .map(AsRef::as_ref)
-            .or_else(|| path.parent())
-            .unwrap();
-
-        let args: Vec<_> = options
-            .build
+        let args: Vec<_> = self
             .args
-            .0
             .iter()
             .map(|arg| replace_placeholder(arg.clone(), &path))
             .collect();
 
-        let mut process = Command::new(&options.build.executable.0)
+        let mut process = Command::new(self.executable)
             .args(args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
+            .current_dir(path.parent().unwrap())
             .stderr(Stdio::piped())
-            .current_dir(build_dir)
+            .stdout(Stdio::piped())
+            .stdin(Stdio::null())
             .spawn()?;
 
-        let (exit_sender, exit_receiver) = crossbeam_channel::bounded(1);
-        let log_handle = capture_output(&mut process, client, exit_receiver);
-        let success = process.wait().map(|status| status.success())?;
-        exit_sender.send(())?;
-        drop(exit_sender);
+        self.track_output(process.stdout.take().unwrap());
+        self.track_output(process.stderr.take().unwrap());
 
-        log_handle.join().unwrap();
-        let status = if success {
+        let status = if process.wait()?.success() {
             BuildStatus::SUCCESS
         } else {
-            BuildStatus::ERROR
+            BuildStatus::FAILURE
         };
 
-        drop(progress_reporter);
-        drop(lock);
-
-        if let Some((executable, args)) = options
-            .forward_search
-            .executable
-            .as_deref()
-            .zip(options.forward_search.args.as_deref())
-            .filter(|_| options.build.forward_search_after)
-        {
-            let position = self
-                .positions_by_uri
-                .get(&request.uri)
-                .map(|entry| *entry.value())
-                .unwrap_or_default();
-
-            ForwardSearch::builder()
-                .executable(executable)
-                .args(args)
-                .line(position.line)
-                .workspace(&request.workspace)
-                .tex_uri(&request.uri)
-                .build()
-                .execute();
-        }
-
-        Ok(BuildResult { status })
+        drop(reporter);
+        Ok(status)
     }
-}
 
-fn capture_output(
-    process: &mut std::process::Child,
-    client: LspClient,
-    exit_receiver: Receiver<()>,
-) -> JoinHandle<()> {
-    let (log_sender, log_receiver) = crossbeam_channel::unbounded();
-    track_output(process.stdout.take().unwrap(), log_sender.clone());
-    track_output(process.stderr.take().unwrap(), log_sender);
-    thread::spawn(move || loop {
-        crossbeam_channel::select! {
-            recv(&log_receiver) -> message => {
-                if let Ok(message) = message {
-                    client.send_notification::<LogMessage>(
-                        LogMessageParams {
-                            message,
-                            typ: lsp_types::MessageType::LOG,
-                        },
-                    )
+    fn track_output(&self, output: impl Read + Send + 'static) -> JoinHandle<()> {
+        let client = self.client.clone();
+        let reader = BufReader::new(
+            DecodeReaderBytesBuilder::new()
+                .encoding(Some(encoding_rs::UTF_8))
+                .utf8_passthru(true)
+                .strip_bom(true)
+                .build(output),
+        );
+
+        std::thread::spawn(move || {
+            for line in reader.lines() {
+                let message = line.unwrap();
+                let typ = lsp_types::MessageType::LOG;
+                client
+                    .send_notification::<LogMessage>(LogMessageParams { message, typ })
                     .unwrap();
-                }
-            },
-            recv(&exit_receiver) -> _ => break,
-        };
-    })
+            }
+        })
+    }
 }
 
 fn replace_placeholder(arg: String, file: &Path) -> String {
@@ -243,20 +132,4 @@ fn replace_placeholder(arg: String, file: &Path) -> String {
     } else {
         arg.replace("%f", &file.to_string_lossy())
     }
-}
-
-fn track_output(output: impl Read + Send + 'static, sender: Sender<String>) -> JoinHandle<()> {
-    let reader = BufReader::new(
-        DecodeReaderBytesBuilder::new()
-            .encoding(Some(encoding_rs::UTF_8))
-            .utf8_passthru(true)
-            .strip_bom(true)
-            .build(output),
-    );
-
-    thread::spawn(move || {
-        for line in reader.lines() {
-            sender.send(line.unwrap()).unwrap();
-        }
-    })
 }

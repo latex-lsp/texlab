@@ -11,6 +11,7 @@ mod hover;
 mod inlay_hint;
 mod link;
 mod lsp_kinds;
+pub(crate) mod progress;
 mod reference;
 mod rename;
 mod symbol;
@@ -22,7 +23,7 @@ use lsp_types::Url;
 use crate::{Document, Workspace};
 
 pub use self::{
-    build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
+    build::{BuildParams, BuildResult, BuildRunner, BuildStatus},
     completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     execute_command::execute_command,

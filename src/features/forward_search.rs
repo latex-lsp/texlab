@@ -37,22 +37,15 @@ pub struct ForwardSearch<'a> {
 }
 
 impl<'a> ForwardSearch<'a> {
-    pub fn execute(self) -> Option<ForwardSearchResult> {
+    pub fn execute(self) -> Option<ForwardSearchStatus> {
         let root_document = self
             .workspace
             .iter()
             .find(|document| {
-                if let Some(data) = document.data().as_latex() {
-                    data.extras.has_document_environment
-                        && !data
-                            .extras
-                            .explicit_links
-                            .iter()
-                            .filter_map(|link| link.as_component_name())
-                            .any(|name| name == "subfiles.cls")
-                } else {
-                    false
-                }
+                document
+                    .data()
+                    .as_latex()
+                    .map_or(false, |data| data.extras.can_be_root)
             })
             .filter(|document| document.uri().scheme() == "file")?;
 
@@ -81,7 +74,7 @@ impl<'a> ForwardSearch<'a> {
             }
         };
 
-        Some(ForwardSearchResult { status })
+        Some(status)
     }
 }
 
