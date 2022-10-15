@@ -35,3 +35,22 @@ pub use self::{
     server::Server,
     workspace::{Workspace, WorkspaceEvent},
 };
+
+pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
+    if let Some(mut segments) = uri.path_segments() {
+        if let Some(root) = segments
+            .next()
+            .filter(|name| name.is_ascii() && name.len() == 2 && name.ends_with(":"))
+        {
+            let mut path = root.to_ascii_uppercase();
+            for segment in segments {
+                path.push('/');
+                path.push_str(segment);
+            }
+
+            uri.set_path(&path);
+        }
+    }
+
+    uri.set_fragment(None);
+}

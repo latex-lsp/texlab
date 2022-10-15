@@ -27,6 +27,7 @@ use crate::{
         BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest,
         ForwardSearchResult, ForwardSearchStatus,
     },
+    normalize_uri,
     syntax::bibtex,
     ClientCapabilitiesExt, Document, DocumentData, DocumentLanguage, Environment, LineIndex,
     LineIndexExt, Options, Workspace, WorkspaceEvent,
@@ -323,7 +324,9 @@ impl Server {
         Ok(())
     }
 
-    fn did_open(&mut self, params: DidOpenTextDocumentParams) -> Result<()> {
+    fn did_open(&mut self, mut params: DidOpenTextDocumentParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
+
         let language_id = &params.text_document.language_id;
         let language = DocumentLanguage::by_language_id(language_id);
         let document = self.workspace.open(
@@ -341,7 +344,9 @@ impl Server {
         Ok(())
     }
 
-    fn did_change(&mut self, params: DidChangeTextDocumentParams) -> Result<()> {
+    fn did_change(&mut self, mut params: DidChangeTextDocumentParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
+
         let uri = Arc::new(params.text_document.uri);
         match self.workspace.documents_by_uri.get(&uri).cloned() {
             Some(old_document) => {
@@ -384,7 +389,8 @@ impl Server {
     }
 
     fn did_save(&mut self, params: DidSaveTextDocumentParams) -> Result<()> {
-        let uri = params.text_document.uri;
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
 
         if let Some(request) = self
             .workspace
@@ -426,7 +432,8 @@ impl Server {
         Ok(())
     }
 
-    fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
+    fn did_close(&mut self, mut params: DidCloseTextDocumentParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         self.workspace.close(&params.text_document.uri);
         Ok(())
     }
@@ -485,13 +492,15 @@ impl Server {
         Ok(())
     }
 
-    fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
+    fn document_link(&self, id: RequestId, mut params: DocumentLinkParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_document_links)?;
         Ok(())
     }
 
-    fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
+    fn document_symbols(&self, id: RequestId, mut params: DocumentSymbolParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_document_symbols)?;
         Ok(())
@@ -509,7 +518,8 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
+    fn completion(&self, id: RequestId, mut params: CompletionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
 
         self.build_engine
@@ -559,19 +569,22 @@ impl Server {
         Ok(())
     }
 
-    fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
+    fn folding_range(&self, id: RequestId, mut params: FoldingRangeParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_foldings)?;
         Ok(())
     }
 
-    fn references(&self, id: RequestId, params: ReferenceParams) -> Result<()> {
+    fn references(&self, id: RequestId, mut params: ReferenceParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_all_references)?;
         Ok(())
     }
 
-    fn hover(&self, id: RequestId, params: HoverParams) -> Result<()> {
+    fn hover(&self, id: RequestId, mut params: HoverParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
         let uri = Arc::new(
             params
                 .text_document_position_params
@@ -588,7 +601,8 @@ impl Server {
         Ok(())
     }
 
-    fn goto_definition(&self, id: RequestId, params: GotoDefinitionParams) -> Result<()> {
+    fn goto_definition(&self, id: RequestId, mut params: GotoDefinitionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
         let uri = Arc::new(
             params
                 .text_document_position_params
@@ -600,19 +614,22 @@ impl Server {
         Ok(())
     }
 
-    fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
+    fn prepare_rename(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, prepare_rename_all)?;
         Ok(())
     }
 
-    fn rename(&self, id: RequestId, params: RenameParams) -> Result<()> {
+    fn rename(&self, id: RequestId, mut params: RenameParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, rename_all)?;
         Ok(())
     }
 
-    fn document_highlight(&self, id: RequestId, params: DocumentHighlightParams) -> Result<()> {
+    fn document_highlight(&self, id: RequestId, mut params: DocumentHighlightParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
         let uri = Arc::new(
             params
                 .text_document_position_params
@@ -624,7 +641,8 @@ impl Server {
         Ok(())
     }
 
-    fn formatting(&self, id: RequestId, params: DocumentFormattingParams) -> Result<()> {
+    fn formatting(&self, id: RequestId, mut params: DocumentFormattingParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, format_source_code)?;
         Ok(())
@@ -648,7 +666,8 @@ impl Server {
         Ok(())
     }
 
-    fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
+    fn inlay_hints(&self, id: RequestId, mut params: InlayHintParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, find_inlay_hints)?;
         Ok(())
@@ -668,7 +687,8 @@ impl Server {
         Ok(())
     }
 
-    fn build(&self, id: RequestId, params: BuildParams) -> Result<()> {
+    fn build(&self, id: RequestId, mut params: BuildParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         let lsp_sender = self.connection.sender.clone();
         let req_queue = Arc::clone(&self.req_queue);
@@ -686,7 +706,8 @@ impl Server {
         Ok(())
     }
 
-    fn forward_search(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
+    fn forward_search(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, |req| {
             crate::features::execute_forward_search(req).unwrap_or(ForwardSearchResult {
@@ -819,9 +840,7 @@ impl Server {
                                     }
                                 }
                                 notify::EventKind::Remove(_) => {
-                                    for uri in
-                                        ev.paths.iter().flat_map(Url::from_file_path)
-                                    {
+                                    for uri in ev.paths.iter().flat_map(Url::from_file_path) {
                                         self.workspace.documents_by_uri.remove(&uri);
                                     }
                                 }

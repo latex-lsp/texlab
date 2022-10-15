@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::Stdio, sync::Arc};
 use anyhow::Result;
 use lsp_types::{TextDocumentIdentifier, Url};
 
-use crate::Workspace;
+use crate::{normalize_uri, Workspace};
 
 pub fn execute_command(
     workspace: &Workspace,
@@ -44,7 +44,8 @@ fn clean_output_files(
     options: CleanOptions,
     params: serde_json::Value,
 ) -> Result<()> {
-    let params: TextDocumentIdentifier = serde_json::from_value(params)?;
+    let mut params: TextDocumentIdentifier = serde_json::from_value(params)?;
+    normalize_uri(&mut params.uri);
 
     let uri = workspace
         .find_parent(&params.uri)
