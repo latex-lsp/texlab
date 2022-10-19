@@ -1,6 +1,6 @@
 use std::{
     fs::{self, FileType},
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -12,8 +12,8 @@ use petgraph::{graphmap::DiGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    component_db::COMPONENT_DATABASE, syntax::latex::ExplicitLink, Document, DocumentLanguage,
-    Environment,
+    component_db::COMPONENT_DATABASE, distro::Resolver, syntax::latex::ExplicitLink, Document,
+    DocumentLanguage, Environment,
 };
 
 #[derive(Debug, Clone)]
@@ -233,11 +233,7 @@ impl Workspace {
             let extras = &data.extras;
             let mut all_targets = vec![&extras.implicit_links.aux, &extras.implicit_links.log];
             for link in &extras.explicit_links {
-                if link
-                    .as_component_name()
-                    .and_then(|name| COMPONENT_DATABASE.find(&name))
-                    .is_none()
-                {
+                if should_follow_link(link, &self.environment.resolver) {
                     all_targets.push(&link.targets);
                 }
             }
@@ -254,5 +250,24 @@ impl Workspace {
                 }
             }
         }
+    }
+}
+
+fn should_follow_link(link: &ExplicitLink, resolver: &Resolver) -> bool {
+    match link.as_component_name() {
+        Some(name) => {
+            if COMPONENT_DATABASE.find(&name).is_some() {
+                return false;
+            }
+
+            resolver
+                .files_by_name
+                .get(name.as_str())
+                .map_or(true, |path| {
+                    path.components()
+                        .any(|comp| comp == Component::Normal("local".as_ref()))
+                })
+        }
+        None => true,
     }
 }
