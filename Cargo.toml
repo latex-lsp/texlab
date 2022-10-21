@@ -70,7 +70,7 @@ threadpool = "1.8.1"
 titlecase = "2.2.0"
 unicode-normalization = "0.1.22"
 url = { version = "2.3.1", features = ["serde"] }
-uuid = { version = "1.1.2", features = ["v4"] }
+uuid = { version = "1.2.1", features = ["v4"] }
 
 [dependencies.derive_more]
 version = "0.99.17"
