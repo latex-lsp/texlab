@@ -169,9 +169,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.0.7"
+version = "4.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a1af219c3e254a8b4649d6ddaef886b2015089f35f2ac5e1db31410c0566ab8"
+checksum = "335867764ed2de42325fafe6d18b8af74ba97ee0c590fa016f157535b42ab04b"
 dependencies = [
  "atty",
  "bitflags",
@@ -184,9 +184,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.0.7"
+version = "4.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd114ae53ce5a0670f43d2f169c1cd26c69b4896b0c121900cf1e4d06d67316c"
+checksum = "16a1b0f6422af32d5da0c58e2703320f379216ee70198241c84173a8c5ac28f3"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -1421,7 +1421,7 @@ dependencies = [
  "assert_unordered",
  "byteorder",
  "chrono",
- "clap 4.0.7",
+ "clap 4.0.18",
  "criterion",
  "crossbeam-channel",
  "dashmap",
