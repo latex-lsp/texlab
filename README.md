@@ -1,6 +1,7 @@
 [![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
 [![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
 ![Rust](https://img.shields.io/badge/rustc-1.60%2B-blue)
+[![Wiki](https://img.shields.io/badge/docs-Wiki-success)](https://github.com/latex-lsp/texlab/wiki)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
 [![crates.io](https://img.shields.io/crates/v/texlab)](https://crates.io/crates/texlab)
@@ -12,7 +13,7 @@ A cross-platform implementation of the [Language Server Protocol](https://micros
 providing rich cross-editing support for the [LaTeX](https://www.latex-project.org/) typesetting system.
 The server may be used with [any editor that implements the Language Server Protocol](https://microsoft.github.io/language-server-protocol/implementors/tools/).
 
-![Demo](docs/demo.gif)
+![Demo](images/demo.gif)
 
 ## Getting Started
 
@@ -59,7 +60,9 @@ There is no need for magic comments like `%!TEX root`
 and TexLab should figure out the dependencies of a file on its own.
 Note that you may need to set the `texlab.rootDirectory` option for some multi-folder projects.
 
-TexLab features a variety of [options](docs/options.md) which can be used to configure features like building or [forward search](docs/previewing.md).
+TexLab features a variety of options which can be used to configure features like building or forward search.
+
+See the [Wiki](https://github.com/latex-lsp/texlab/wiki) for more information.
 
 ## Development
 
@@ -74,8 +77,6 @@ cargo test
 ```
 
 in the project folder.
-
-For a list of custom messages, please see [here](docs/custom_messages.md).
 
 ## Contributing
 
