@@ -1,6 +1,6 @@
 use std::{
     fs::{self, FileType},
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -8,6 +8,7 @@ use anyhow::Result;
 use crossbeam_channel::Sender;
 use lsp_types::Url;
 use notify::Watcher;
+use once_cell::sync::Lazy;
 use petgraph::{graphmap::DiGraphMap, visit::Dfs};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -253,20 +254,20 @@ impl Workspace {
     }
 }
 
+static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
+
 fn should_follow_link(link: &ExplicitLink, resolver: &Resolver) -> bool {
     match link.as_component_name() {
+        Some(name) if COMPONENT_DATABASE.find(&name).is_some() => false,
         Some(name) => {
-            if COMPONENT_DATABASE.find(&name).is_some() {
-                return false;
+            let file = resolver.files_by_name.get(name.as_str());
+            let home = HOME_DIR.as_deref();
+            match (file, home) {
+                (Some(file), Some(home)) => file.starts_with(home),
+                (Some(_), None) => false,
+                (None, Some(_)) => true,
+                (None, None) => true,
             }
-
-            resolver
-                .files_by_name
-                .get(name.as_str())
-                .map_or(true, |path| {
-                    path.components()
-                        .any(|comp| comp == Component::Normal("local".as_ref()))
-                })
         }
         None => true,
     }
