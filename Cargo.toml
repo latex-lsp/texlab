@@ -67,7 +67,7 @@ smol_str = { version = "0.1.23", features = ["serde"] }
 strum = { version = "0.24.1", features = ["derive"] }
 tempfile = "3.3.0"
 threadpool = "1.8.1"
-titlecase = "2.2.0"
+titlecase = "2.2.1"
 unicode-normalization = "0.1.22"
 url = { version = "2.3.1", features = ["serde"] }
 uuid = { version = "1.2.1", features = ["v4"] }
