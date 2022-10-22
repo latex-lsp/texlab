@@ -16,7 +16,6 @@ mod line_index;
 mod line_index_ext;
 mod options;
 pub mod parser;
-mod range;
 mod server;
 pub mod syntax;
 mod workspace;
@@ -31,7 +30,6 @@ pub use self::{
     line_index::{LineCol, LineColUtf16, LineIndex},
     line_index_ext::LineIndexExt,
     options::*,
-    range::RangeExt,
     server::Server,
     workspace::{Workspace, WorkspaceEvent},
 };

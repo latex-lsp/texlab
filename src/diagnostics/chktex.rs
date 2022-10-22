@@ -6,12 +6,12 @@ use std::{
 };
 
 use dashmap::DashMap;
-use lsp_types::{DiagnosticSeverity, Range, Url};
+use lsp_types::{DiagnosticSeverity, Position, Range, Url};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use tempfile::tempdir;
 
-use crate::{Document, RangeExt, Workspace};
+use crate::{Document, Workspace};
 
 use super::{Diagnostic, DiagnosticCode};
 
@@ -104,7 +104,10 @@ fn lint(text: &str, current_dir: &Path) -> io::Result<Vec<Diagnostic>> {
         let kind = &captures[4];
         let code = &captures[5];
         let message = captures[6].into();
-        let range = Range::new_simple(line, character, line, character + digit);
+        let range = Range::new(
+            Position::new(line, character),
+            Position::new(line, character + digit),
+        );
         let severity = match kind {
             "Message" => DiagnosticSeverity::INFORMATION,
             "Warning" => DiagnosticSeverity::WARNING,
