@@ -1,57 +1,80 @@
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{AtomicI32, Ordering},
+    Arc,
+};
 
-use anyhow::{anyhow, Result};
-use crossbeam_channel::{Receiver, Sender};
-use lsp_server::{Message, ResponseError};
+use anyhow::{bail, Ok, Result};
+use crossbeam_channel::Sender;
+use dashmap::DashMap;
+use lsp_server::{Message, Request, RequestId, Response};
 use serde::{de::DeserializeOwned, Serialize};
 
-pub struct OutgoingData {
-    pub sender: Sender<Result<serde_json::Value, ResponseError>>,
+#[derive(Debug)]
+struct RawClient {
+    sender: Sender<Message>,
+    next_id: AtomicI32,
+    pending: DashMap<RequestId, Sender<Response>>,
 }
 
-pub type ReqQueue = lsp_server::ReqQueue<(), OutgoingData>;
-
-pub fn send_notification<N>(lsp_sender: &Sender<Message>, params: N::Params) -> Result<()>
-where
-    N: lsp_types::notification::Notification,
-    N::Params: Serialize,
-{
-    lsp_sender.send(lsp_server::Notification::new(N::METHOD.to_string(), params).into())?;
-    Ok(())
+#[derive(Debug, Clone)]
+pub struct LspClient {
+    raw: Arc<RawClient>,
 }
 
-pub fn send_request<R>(
-    req_queue: &Mutex<ReqQueue>,
-    lsp_sender: &Sender<Message>,
-    params: R::Params,
-) -> Result<R::Result>
-where
-    R: lsp_types::request::Request,
-    R::Params: Serialize,
-    R::Result: DeserializeOwned,
-{
-    let receiver = register_outgoing_request::<R>(req_queue, lsp_sender, params)?;
-    let params = receiver.recv()?.map_err(|err| anyhow!(err.message))?;
-    let result = serde_json::from_value(params)?;
-    Ok(result)
-}
+impl LspClient {
+    pub fn new(sender: Sender<Message>) -> Self {
+        let raw = Arc::new(RawClient {
+            sender,
+            next_id: AtomicI32::new(1),
+            pending: DashMap::default(),
+        });
 
-fn register_outgoing_request<R>(
-    req_queue: &Mutex<ReqQueue>,
-    lsp_sender: &Sender<Message>,
-    params: R::Params,
-) -> Result<Receiver<Result<serde_json::Value, ResponseError>>>
-where
-    R: lsp_types::request::Request,
-    R::Params: Serialize,
-    R::Result: DeserializeOwned,
-{
-    let mut req_queue = req_queue.lock().unwrap();
-    let (sender, receiver) = crossbeam_channel::bounded(1);
-    let method = R::METHOD.to_string();
-    let data = OutgoingData { sender };
-    let req = req_queue.outgoing.register(method, params, data);
-    drop(req_queue);
-    lsp_sender.send(req.into())?;
-    Ok(receiver)
+        Self { raw }
+    }
+
+    pub fn send_notification<N>(&self, params: N::Params) -> Result<()>
+    where
+        N: lsp_types::notification::Notification,
+        N::Params: Serialize,
+    {
+        self.raw
+            .sender
+            .send(lsp_server::Notification::new(N::METHOD.to_string(), params).into())?;
+        Ok(())
+    }
+
+    pub fn send_request<R>(&self, params: R::Params) -> Result<R::Result>
+    where
+        R: lsp_types::request::Request,
+        R::Params: Serialize,
+        R::Result: DeserializeOwned,
+    {
+        let id = RequestId::from(self.raw.next_id.fetch_add(1, Ordering::SeqCst));
+
+        let (tx, rx) = crossbeam_channel::bounded(1);
+        self.raw.pending.insert(id.clone(), tx);
+
+        self.raw
+            .sender
+            .send(Request::new(id, R::METHOD.to_string(), params).into())?;
+
+        let response = rx.recv()?;
+        let result = match response.error {
+            Some(error) => bail!(error.message),
+            None => response.result.unwrap_or_default(),
+        };
+
+        Ok(serde_json::from_value(result)?)
+    }
+
+    pub fn recv_response(&self, response: lsp_server::Response) -> Result<()> {
+        let (_, tx) = self
+            .raw
+            .pending
+            .remove(&response.id)
+            .expect("response with known request id received");
+
+        tx.send(response)?;
+        Ok(())
+    }
 }

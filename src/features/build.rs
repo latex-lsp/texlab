@@ -20,12 +20,9 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use uuid::Uuid;
 
-use crate::{
-    client::{self, ReqQueue},
-    ClientCapabilitiesExt, DocumentLanguage,
-};
+use crate::{client::LspClient, ClientCapabilitiesExt, DocumentLanguage};
 
-use super::{forward_search::ForwardSearch, FeatureRequest};
+use super::{FeatureRequest, ForwardSearch};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -50,35 +47,31 @@ pub struct BuildResult {
 
 struct ProgressReporter<'a> {
     supports_progress: bool,
-    req_queue: &'a Mutex<ReqQueue>,
-    lsp_sender: Sender<lsp_server::Message>,
+    client: LspClient,
     token: &'a str,
 }
 
 impl<'a> ProgressReporter<'a> {
     pub fn start(&self, uri: &Url) -> Result<()> {
         if self.supports_progress {
-            client::send_request::<lsp_types::request::WorkDoneProgressCreate>(
-                self.req_queue,
-                &self.lsp_sender,
-                WorkDoneProgressCreateParams {
-                    token: NumberOrString::String(self.token.to_string()),
-                },
-            )?;
-            client::send_notification::<Progress>(
-                &self.lsp_sender,
-                ProgressParams {
-                    token: NumberOrString::String(self.token.to_string()),
-                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                        WorkDoneProgressBegin {
-                            title: "Building".to_string(),
-                            message: Some(uri.as_str().to_string()),
-                            cancellable: Some(false),
-                            percentage: None,
-                        },
-                    )),
-                },
-            )?;
+            self.client
+                .send_request::<lsp_types::request::WorkDoneProgressCreate>(
+                    WorkDoneProgressCreateParams {
+                        token: NumberOrString::String(self.token.to_string()),
+                    },
+                )?;
+
+            self.client.send_notification::<Progress>(ProgressParams {
+                token: NumberOrString::String(self.token.to_string()),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
+                    WorkDoneProgressBegin {
+                        title: "Building".to_string(),
+                        message: Some(uri.as_str().to_string()),
+                        cancellable: Some(false),
+                        percentage: None,
+                    },
+                )),
+            })?;
         };
         Ok(())
     }
@@ -87,15 +80,12 @@ impl<'a> ProgressReporter<'a> {
 impl<'a> Drop for ProgressReporter<'a> {
     fn drop(&mut self) {
         if self.supports_progress {
-            drop(client::send_notification::<Progress>(
-                &self.lsp_sender,
-                ProgressParams {
-                    token: NumberOrString::String(self.token.to_string()),
-                    value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(
-                        WorkDoneProgressEnd { message: None },
-                    )),
-                },
-            ));
+            drop(self.client.send_notification::<Progress>(ProgressParams {
+                token: NumberOrString::String(self.token.to_string()),
+                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
+                    message: None,
+                })),
+            }));
         }
     }
 }
@@ -110,8 +100,7 @@ impl BuildEngine {
     pub fn build(
         &self,
         request: FeatureRequest<BuildParams>,
-        req_queue: &Mutex<ReqQueue>,
-        lsp_sender: &Sender<lsp_server::Message>,
+        client: LspClient,
     ) -> Result<BuildResult> {
         let lock = self.lock.lock().unwrap();
 
@@ -149,8 +138,7 @@ impl BuildEngine {
         let token = format!("texlab-build-{}", Uuid::new_v4());
         let progress_reporter = ProgressReporter {
             supports_progress,
-            req_queue,
-            lsp_sender: lsp_sender.clone(),
+            client: client.clone(),
             token: &token,
         };
         progress_reporter.start(document.uri())?;
@@ -181,7 +169,7 @@ impl BuildEngine {
             .spawn()?;
 
         let (exit_sender, exit_receiver) = crossbeam_channel::bounded(1);
-        let log_handle = capture_output(&mut process, lsp_sender, exit_receiver);
+        let log_handle = capture_output(&mut process, client, exit_receiver);
         let success = process.wait().map(|status| status.success())?;
         exit_sender.send(())?;
         drop(exit_sender);
@@ -225,19 +213,17 @@ impl BuildEngine {
 
 fn capture_output(
     process: &mut std::process::Child,
-    lsp_sender: &Sender<lsp_server::Message>,
+    client: LspClient,
     exit_receiver: Receiver<()>,
 ) -> JoinHandle<()> {
     let (log_sender, log_receiver) = crossbeam_channel::unbounded();
     track_output(process.stdout.take().unwrap(), log_sender.clone());
     track_output(process.stderr.take().unwrap(), log_sender);
-    let lsp_sender = lsp_sender.clone();
     thread::spawn(move || loop {
         crossbeam_channel::select! {
             recv(&log_receiver) -> message => {
                 if let Ok(message) = message {
-                    client::send_notification::<LogMessage>(
-                        &lsp_sender,
+                    client.send_notification::<LogMessage>(
                         LogMessageParams {
                             message,
                             typ: lsp_types::MessageType::LOG,

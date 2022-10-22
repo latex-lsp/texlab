@@ -14,7 +14,7 @@ use threadpool::ThreadPool;
 
 use crate::{
     citation,
-    client::{send_notification, send_request, ReqQueue},
+    client::LspClient,
     component_db::COMPONENT_DATABASE,
     debouncer,
     diagnostics::DiagnosticManager,
@@ -45,7 +45,7 @@ pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
     internal_rx: Receiver<InternalMessage>,
-    req_queue: Arc<Mutex<ReqQueue>>,
+    client: LspClient,
     workspace: Workspace,
     diagnostic_tx: debouncer::Sender<Workspace>,
     diagnostic_manager: DiagnosticManager,
@@ -60,16 +60,16 @@ impl Server {
         current_dir: PathBuf,
         load_resolver: bool,
     ) -> Self {
-        let req_queue = Arc::default();
+        let client = LspClient::new(connection.sender.clone());
         let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
         let diagnostic_manager = DiagnosticManager::default();
-        let diagnostic_tx = create_debouncer(connection.sender.clone(), diagnostic_manager.clone());
+        let diagnostic_tx = create_debouncer(client.clone(), diagnostic_manager.clone());
         Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
-            req_queue,
+            client,
             workspace,
             diagnostic_tx,
             diagnostic_manager,
@@ -208,9 +208,7 @@ impl Server {
                 registrations: vec![reg],
             };
 
-            if let Err(why) =
-                send_request::<RegisterCapability>(&self.req_queue, &self.connection.sender, params)
-            {
+            if let Err(why) = self.client.send_request::<RegisterCapability>(params) {
                 error!(
                     "Failed to register \"{}\" notification: {}",
                     DidChangeConfiguration::METHOD,
@@ -256,11 +254,7 @@ impl Server {
             }],
         };
 
-        match send_request::<WorkspaceConfiguration>(
-            &self.req_queue,
-            &self.connection.sender,
-            params,
-        ) {
+        match self.client.send_request::<WorkspaceConfiguration>(params) {
             Ok(mut json) => {
                 let value = json.pop().expect("invalid configuration request");
                 let options = self.parse_options(value)?;
@@ -280,8 +274,7 @@ impl Server {
         let options = match serde_json::from_value(value) {
             Ok(new_options) => new_options,
             Err(why) => {
-                send_notification::<ShowMessage>(
-                    &self.connection.sender,
+                self.client.send_notification::<ShowMessage>(
                     ShowMessageParams {
                         message: format!(
                             "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
@@ -408,7 +401,7 @@ impl Server {
             self.spawn(move |server| {
                 server
                     .build_engine
-                    .build(request, &server.req_queue, &server.connection.sender)
+                    .build(request, server.client)
                     .unwrap_or_else(|why| {
                         error!("Build failed: {}", why);
                         BuildResult {
@@ -686,18 +679,15 @@ impl Server {
     fn build(&self, id: RequestId, mut params: BuildParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
-        let lsp_sender = self.connection.sender.clone();
-        let req_queue = Arc::clone(&self.req_queue);
+        let client = self.client.clone();
         let build_engine = Arc::clone(&self.build_engine);
         self.handle_feature_request(id, params, uri, move |request| {
-            build_engine
-                .build(request, &req_queue, &lsp_sender)
-                .unwrap_or_else(|why| {
-                    error!("Build failed: {}", why);
-                    BuildResult {
-                        status: BuildStatus::FAILURE,
-                    }
-                })
+            build_engine.build(request, client).unwrap_or_else(|why| {
+                error!("Build failed: {}", why);
+                BuildResult {
+                    status: BuildStatus::FAILURE,
+                }
+            })
         })?;
         Ok(())
     }
@@ -815,14 +805,7 @@ impl Server {
                                 .default();
                         }
                         Message::Response(response) => {
-                            let mut req_queue = self.req_queue.lock().unwrap();
-                            if let Some(data) = req_queue.outgoing.complete(response.id) {
-                                let result = match response.error {
-                                    Some(error) => Err(error),
-                                    None => Ok(response.result.unwrap_or_default()),
-                                };
-                                data.sender.send(result)?;
-                            }
+                            self.client.recv_response(response)?;
                         }
                     };
                 },
@@ -868,13 +851,13 @@ impl Server {
 }
 
 fn create_debouncer(
-    lsp_sender: Sender<Message>,
+    client: LspClient,
     diagnostic_manager: DiagnosticManager,
 ) -> debouncer::Sender<Workspace> {
     let (tx, rx) = debouncer::unbounded();
     std::thread::spawn(move || {
         while let Ok(workspace) = rx.recv() {
-            if let Err(why) = publish_diagnostics(&lsp_sender, &diagnostic_manager, &workspace) {
+            if let Err(why) = publish_diagnostics(&client, &diagnostic_manager, &workspace) {
                 warn!("Failed to publish diagnostics: {}", why);
             }
         }
@@ -884,7 +867,7 @@ fn create_debouncer(
 }
 
 fn publish_diagnostics(
-    lsp_sender: &Sender<lsp_server::Message>,
+    client: &LspClient,
     diagnostic_manager: &DiagnosticManager,
     workspace: &Workspace,
 ) -> Result<()> {
@@ -894,14 +877,11 @@ fn publish_diagnostics(
         }
 
         let diagnostics = diagnostic_manager.publish(workspace, document.uri());
-        send_notification::<PublishDiagnostics>(
-            lsp_sender,
-            PublishDiagnosticsParams {
-                uri: document.uri().as_ref().clone(),
-                version: None,
-                diagnostics,
-            },
-        )?;
+        client.send_notification::<PublishDiagnostics>(PublishDiagnosticsParams {
+            uri: document.uri().as_ref().clone(),
+            version: None,
+            diagnostics,
+        })?;
     }
 
     Ok(())
