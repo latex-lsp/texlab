@@ -28,7 +28,7 @@ pub use self::{
     execute_command::execute_command,
     folding::find_foldings,
     formatting::format_source_code,
-    forward_search::{execute_forward_search, ForwardSearchResult, ForwardSearchStatus},
+    forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
     hover::find_hover,
     inlay_hint::find_inlay_hints,

@@ -5,11 +5,12 @@ use std::{
 };
 
 use log::error;
-use lsp_types::TextDocumentPositionParams;
+use lsp_types::Url;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use typed_builder::TypedBuilder;
 
-use super::FeatureRequest;
+use crate::Workspace;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
@@ -25,69 +26,68 @@ pub struct ForwardSearchResult {
     pub status: ForwardSearchStatus,
 }
 
-pub fn execute_forward_search(
-    request: FeatureRequest<TextDocumentPositionParams>,
-) -> Option<ForwardSearchResult> {
-    let options = &request.workspace.environment.options.forward_search;
+#[derive(TypedBuilder)]
+#[must_use]
+pub struct ForwardSearch<'a> {
+    executable: &'a str,
+    args: &'a [String],
+    workspace: &'a Workspace,
+    tex_uri: &'a Url,
+    line: u32,
+}
 
-    if options.executable.is_none() || options.args.is_none() {
-        return Some(ForwardSearchResult {
-            status: ForwardSearchStatus::UNCONFIGURED,
-        });
-    }
+impl<'a> ForwardSearch<'a> {
+    pub fn execute(self) -> Option<ForwardSearchResult> {
+        let root_document = self
+            .workspace
+            .iter()
+            .find(|document| {
+                if let Some(data) = document.data().as_latex() {
+                    data.extras.has_document_environment
+                        && !data
+                            .extras
+                            .explicit_links
+                            .iter()
+                            .filter_map(|link| link.as_component_name())
+                            .any(|name| name == "subfiles.cls")
+                } else {
+                    false
+                }
+            })
+            .filter(|document| document.uri().scheme() == "file")?;
 
-    let root_document = request
-        .workspace
-        .iter()
-        .find(|document| {
-            if let Some(data) = document.data().as_latex() {
-                data.extras.has_document_environment
-                    && !data
-                        .extras
-                        .explicit_links
-                        .iter()
-                        .filter_map(|link| link.as_component_name())
-                        .any(|name| name == "subfiles.cls")
-            } else {
-                false
+        let data = root_document.data().as_latex()?;
+        let pdf_path = data
+            .extras
+            .implicit_links
+            .pdf
+            .iter()
+            .filter_map(|uri| uri.to_file_path().ok())
+            .find(|path| path.exists())?;
+
+        let tex_path = self.tex_uri.to_file_path().ok()?;
+
+        let args: Vec<String> = self
+            .args
+            .iter()
+            .flat_map(|arg| replace_placeholder(&tex_path, &pdf_path, self.line, arg))
+            .collect();
+
+        let status = match run_process(self.executable, args) {
+            Ok(()) => ForwardSearchStatus::SUCCESS,
+            Err(why) => {
+                error!("Unable to execute forward search: {}", why);
+                ForwardSearchStatus::FAILURE
             }
-        })
-        .filter(|document| document.uri().scheme() == "file")?;
+        };
 
-    let data = root_document.data().as_latex()?;
-    let pdf_path = data
-        .extras
-        .implicit_links
-        .pdf
-        .iter()
-        .filter_map(|uri| uri.to_file_path().ok())
-        .find(|path| path.exists())?;
-
-    let tex_path = request.main_document().uri().to_file_path().ok()?;
-
-    let args: Vec<String> = options
-        .args
-        .as_ref()
-        .unwrap()
-        .iter()
-        .flat_map(|arg| {
-            replace_placeholder(&tex_path, &pdf_path, request.params.position.line, arg)
-        })
-        .collect();
-
-    let status = match run_process(options.executable.as_ref().unwrap(), args) {
-        Ok(()) => ForwardSearchStatus::SUCCESS,
-        Err(why) => {
-            error!("Unable to execute forward search: {}", why);
-            ForwardSearchStatus::FAILURE
-        }
-    };
-    Some(ForwardSearchResult { status })
+        Some(ForwardSearchResult { status })
+    }
 }
 
 /// Iterate overs chunks of a string. Either returns a slice of the
 /// original string, or the placeholder replacement.
-pub struct PlaceHolderIterator<'a> {
+struct PlaceHolderIterator<'a> {
     remainder: &'a str,
     tex_file: &'a str,
     pdf_file: &'a str,

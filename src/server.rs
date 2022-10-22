@@ -24,7 +24,7 @@ use crate::{
         execute_command, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_foldings, find_hover, find_inlay_hints, find_workspace_symbols,
         format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
-        BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest,
+        BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest, ForwardSearch,
         ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
@@ -706,9 +706,23 @@ impl Server {
         normalize_uri(&mut params.text_document.uri);
         let uri = Arc::new(params.text_document.uri.clone());
         self.handle_feature_request(id, params, uri, |req| {
-            crate::features::execute_forward_search(req).unwrap_or(ForwardSearchResult {
-                status: ForwardSearchStatus::ERROR,
-            })
+            let options = &req.workspace.environment.options.forward_search;
+            match options.executable.as_deref().zip(options.args.as_deref()) {
+                Some((executable, args)) => ForwardSearch::builder()
+                    .executable(executable)
+                    .args(args)
+                    .line(req.params.position.line)
+                    .workspace(&req.workspace)
+                    .tex_uri(&req.uri)
+                    .build()
+                    .execute()
+                    .unwrap_or(ForwardSearchResult {
+                        status: ForwardSearchStatus::ERROR,
+                    }),
+                None => ForwardSearchResult {
+                    status: ForwardSearchStatus::UNCONFIGURED,
+                },
+            }
         })?;
         Ok(())
     }

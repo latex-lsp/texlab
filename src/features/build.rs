@@ -13,8 +13,8 @@ use encoding_rs_io::DecodeReaderBytesBuilder;
 use lsp_types::{
     notification::{LogMessage, Progress},
     LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
-    TextDocumentIdentifier, TextDocumentPositionParams, Url, WorkDoneProgress,
-    WorkDoneProgressBegin, WorkDoneProgressCreateParams, WorkDoneProgressEnd,
+    TextDocumentIdentifier, Url, WorkDoneProgress, WorkDoneProgressBegin,
+    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
 };
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -25,7 +25,7 @@ use crate::{
     ClientCapabilitiesExt, DocumentLanguage,
 };
 
-use super::{forward_search, FeatureRequest};
+use super::{forward_search::ForwardSearch, FeatureRequest};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -196,20 +196,27 @@ impl BuildEngine {
         drop(progress_reporter);
         drop(lock);
 
-        if options.build.forward_search_after {
-            let request = FeatureRequest {
-                params: TextDocumentPositionParams {
-                    position: self
-                        .positions_by_uri
-                        .get(request.main_document().uri())
-                        .map(|guard| *guard)
-                        .unwrap_or_default(),
-                    text_document: TextDocumentIdentifier::new(request.uri.as_ref().clone()),
-                },
-                uri: request.uri,
-                workspace: request.workspace,
-            };
-            forward_search::execute_forward_search(request);
+        if let Some((executable, args)) = options
+            .forward_search
+            .executable
+            .as_deref()
+            .zip(options.forward_search.args.as_deref())
+            .filter(|_| options.build.forward_search_after)
+        {
+            let position = self
+                .positions_by_uri
+                .get(&request.uri)
+                .map(|entry| *entry.value())
+                .unwrap_or_default();
+
+            ForwardSearch::builder()
+                .executable(executable)
+                .args(args)
+                .line(position.line)
+                .workspace(&request.workspace)
+                .tex_uri(&request.uri)
+                .build()
+                .execute();
         }
 
         Ok(BuildResult { status })
