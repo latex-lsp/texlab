@@ -1,5 +1,6 @@
 use std::{
     fs,
+    path::Path,
     process::{Command, Stdio},
 };
 
@@ -7,16 +8,15 @@ use lsp_types::{DocumentFormattingParams, TextEdit};
 use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
-use crate::{features::FeatureRequest, DocumentLanguage, LineIndexExt};
+use crate::{features::FeatureRequest, DocumentLanguage, LatexindentOptions, LineIndexExt};
 
 pub fn format_with_latexindent(
     request: &FeatureRequest<DocumentFormattingParams>,
 ) -> Option<Vec<TextEdit>> {
-    let directory = tempdir().ok()?;
     let document = request.main_document();
-
     let options = &request.workspace.environment.options;
-    let current_dir = options
+    let target_dir = tempdir().ok()?;
+    let source_dir = options
         .root_directory
         .as_ref()
         .cloned()
@@ -34,49 +34,30 @@ pub fn format_with_latexindent(
         })
         .unwrap_or_else(|| ".".into());
 
-    let local = match &options.latexindent.local {
-        Some(local) => format!("--local={}", local),
-        None => "-l".to_string(),
-    };
+    let target_file =
+        target_dir
+            .path()
+            .join(if document.data().language() == DocumentLanguage::Bibtex {
+                "file.bib"
+            } else {
+                "file.tex"
+            });
+    fs::write(&target_file, document.text()).ok()?;
 
-    let modify_line_breaks = options.latexindent.modify_line_breaks;
+    let args = build_arguments(&options.latexindent, &target_file);
 
-    let path = directory.path();
-    let _ = fs::copy(
-        current_dir.join("localSettings.yaml"),
-        path.join("localSettings.yaml"),
+    log::debug!(
+        "Running latexindent in folder \"{}\" with args: {:?}",
+        source_dir.display(),
+        args,
     );
-    let _ = fs::copy(
-        current_dir.join(".localSettings.yaml"),
-        path.join(".localSettings.yaml"),
-    );
-    let _ = fs::copy(
-        current_dir.join("latexindent.yaml"),
-        path.join("latexindent.yaml"),
-    );
-
-    let name = if document.data().language() == DocumentLanguage::Bibtex {
-        "file.bib"
-    } else {
-        "file.tex"
-    };
-
-    fs::write(directory.path().join(name), document.text()).ok()?;
-
-    let mut args = Vec::new();
-    if modify_line_breaks {
-        args.push("--modifylinebreaks");
-    }
-    args.push(&local);
-    args.push(name);
 
     let output = Command::new("latexindent")
         .args(&args)
-        .current_dir(current_dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
-        .current_dir(directory.path())
+        .current_dir(source_dir)
         .output()
         .ok()?;
 
@@ -91,4 +72,20 @@ pub fn format_with_latexindent(
             new_text,
         }])
     }
+}
+
+fn build_arguments(options: &LatexindentOptions, target_file: &Path) -> Vec<String> {
+    let mut args = Vec::new();
+
+    args.push(match &options.local {
+        Some(yaml_file) => format!("--local={yaml_file}"),
+        None => "--local".to_string(),
+    });
+
+    if options.modify_line_breaks {
+        args.push("--modifylinebreaks".to_string());
+    }
+
+    args.push(target_file.display().to_string());
+    args
 }
