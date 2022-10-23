@@ -34,13 +34,21 @@ pub use self::{
     workspace::{Workspace, WorkspaceEvent},
 };
 
-pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
+pub fn normalize_uri(uri: &mut lsp_types::Url) {
+    fn fix_drive_letter(text: &str) -> Option<String> {
+        if !text.is_ascii() {
+            return None;
+        }
+
+        match &text[1..] {
+            ":" => Some(text.to_ascii_uppercase()),
+            "%3A" | "%3a" => Some(format!("{}:", text[0..1].to_ascii_uppercase())),
+            _ => None,
+        }
+    }
+
     if let Some(mut segments) = uri.path_segments() {
-        if let Some(root) = segments
-            .next()
-            .filter(|name| name.is_ascii() && name.len() == 2 && name.ends_with(":"))
-        {
-            let mut path = root.to_ascii_uppercase();
+        if let Some(mut path) = segments.next().and_then(|text| fix_drive_letter(text)) {
             for segment in segments {
                 path.push('/');
                 path.push_str(segment);
