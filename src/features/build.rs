@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use uuid::Uuid;
 
-use crate::{client::LspClient, ClientCapabilitiesExt, DocumentLanguage};
+use crate::{client::LspClient, ClientCapabilitiesExt};
 
 use super::{FeatureRequest, ForwardSearch};
 
@@ -108,15 +108,19 @@ impl BuildEngine {
             .workspace
             .iter()
             .find(|document| {
-                if let Some(data) = document.data().as_latex() {
-                    data.extras.has_document_environment
-                } else {
-                    false
-                }
+                document
+                    .data()
+                    .as_latex()
+                    .map_or(false, |data| data.extras.has_document_environment)
             })
             .unwrap_or_else(|| request.main_document());
 
-        if document.data().language() != DocumentLanguage::Latex {
+        if !document.can_be_compiled() {
+            log::info!(
+                "Document {} cannot be compiled; skipping...",
+                document.uri()
+            );
+
             return Ok(BuildResult {
                 status: BuildStatus::SUCCESS,
             });
@@ -127,6 +131,7 @@ impl BuildEngine {
                 status: BuildStatus::FAILURE,
             });
         }
+
         let path = document.uri().to_file_path().unwrap();
 
         let supports_progress = request

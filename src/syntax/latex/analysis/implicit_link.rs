@@ -5,6 +5,13 @@ use lsp_types::Url;
 use super::LatexAnalyzerContext;
 
 pub fn analyze_implicit_links(context: &mut LatexAnalyzerContext) {
+    if context.document_uri.as_str().ends_with(".sty")
+        || context.document_uri.as_str().ends_with(".cls")
+        || context.document_uri.as_str().ends_with(".aux")
+    {
+        return;
+    }
+
     context.extras.implicit_links.aux = find_by_extension(context, "aux").unwrap_or_default();
     context.extras.implicit_links.log = find_by_extension(context, "log").unwrap_or_default();
     context.extras.implicit_links.pdf = find_by_extension(context, "pdf").unwrap_or_default();

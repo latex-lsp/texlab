@@ -100,6 +100,14 @@ impl Document {
         &self.data
     }
 
+    pub fn can_be_compiled(&self) -> bool {
+        self.data.language() == DocumentLanguage::Latex
+            && !self.uri.as_str().ends_with(".sty")
+            && !self.uri.as_str().ends_with(".cls")
+            && !self.uri.as_str().ends_with(".aux")
+            && !self.uri.as_str().ends_with(".lco")
+    }
+
     #[must_use]
     pub fn parse(
         environment: &Environment,
