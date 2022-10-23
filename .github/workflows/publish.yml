@@ -61,6 +61,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
       - name: Compile
         uses: actions-rs/cargo@v1
         with:
