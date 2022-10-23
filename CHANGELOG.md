@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.1] - 22.10.2022
+
+### Fixed
+
+- Do not crash with a stack overflow when trying to load packages with many internal dependencies ([#793](https://github.com/latex-lsp/texlab/issues/793))
+- Normalize drive letters of all document URIs
+- Fix parsing commands that take file paths as arguments ([#789](https://github.com/latex-lsp/texlab/issues/789))
+- Use the correct working directory and command line arguments when calling `latexindent` ([#645](https://github.com/latex-lsp/texlab/issues/645))
+- Fix publishing to CTAN
+
 ## [4.3.0] - 25.09.2022
 
 ### Added
