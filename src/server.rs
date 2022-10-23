@@ -1,7 +1,4 @@
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -41,6 +38,106 @@ enum InternalMessage {
 }
 
 #[derive(Clone)]
+struct ServerFork {
+    connection: Arc<Connection>,
+    internal_tx: Sender<InternalMessage>,
+    client: LspClient,
+    workspace: Workspace,
+    diagnostic_tx: debouncer::Sender<Workspace>,
+    diagnostic_manager: DiagnosticManager,
+    build_engine: Arc<BuildEngine>,
+}
+
+impl ServerFork {
+    pub fn register_config_capability(&self) {
+        if self
+            .workspace
+            .environment
+            .client_capabilities
+            .has_push_configuration_support()
+        {
+            let reg = Registration {
+                id: "pull-config".to_string(),
+                method: DidChangeConfiguration::METHOD.to_string(),
+                register_options: None,
+            };
+
+            let params = RegistrationParams {
+                registrations: vec![reg],
+            };
+
+            if let Err(why) = self.client.send_request::<RegisterCapability>(params) {
+                error!(
+                    "Failed to register \"{}\" notification: {}",
+                    DidChangeConfiguration::METHOD,
+                    why
+                );
+            }
+        }
+    }
+
+    pub fn pull_config(&self) -> Result<()> {
+        if !self
+            .workspace
+            .environment
+            .client_capabilities
+            .has_pull_configuration_support()
+        {
+            return Ok(());
+        }
+
+        let params = ConfigurationParams {
+            items: vec![ConfigurationItem {
+                section: Some("texlab".to_string()),
+                scope_uri: None,
+            }],
+        };
+
+        match self.client.send_request::<WorkspaceConfiguration>(params) {
+            Ok(mut json) => {
+                let value = json.pop().expect("invalid configuration request");
+                let options = self.parse_options(value)?;
+                self.internal_tx
+                    .send(InternalMessage::SetOptions(Arc::new(options)))
+                    .unwrap();
+            }
+            Err(why) => {
+                error!("Retrieving configuration failed: {}", why);
+            }
+        };
+
+        Ok(())
+    }
+
+    pub fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
+        let options = match serde_json::from_value(value) {
+            Ok(new_options) => new_options,
+            Err(why) => {
+                self.client.send_notification::<ShowMessage>(
+                    ShowMessageParams {
+                        message: format!(
+                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
+                        ),
+                        typ: MessageType::WARNING,
+                    },
+                )?;
+
+                None
+            }
+        };
+
+        Ok(options.unwrap_or_default())
+    }
+
+    pub fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
+        FeatureRequest {
+            params,
+            workspace: self.workspace.slice(&uri),
+            uri,
+        }
+    }
+}
+
 pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
@@ -49,7 +146,7 @@ pub struct Server {
     workspace: Workspace,
     diagnostic_tx: debouncer::Sender<Workspace>,
     diagnostic_manager: DiagnosticManager,
-    pool: Arc<Mutex<ThreadPool>>,
+    pool: ThreadPool,
     build_engine: Arc<BuildEngine>,
 }
 
@@ -68,14 +165,26 @@ impl Server {
             workspace,
             diagnostic_tx,
             diagnostic_manager,
-            pool: Arc::new(Mutex::new(threadpool::Builder::new().build())),
+            pool: threadpool::Builder::new().build(),
             build_engine: Arc::default(),
         }
     }
 
-    fn spawn(&self, job: impl FnOnce(Self) + Send + 'static) {
-        let server = self.clone();
-        self.pool.lock().unwrap().execute(move || job(server));
+    fn spawn(&self, job: impl FnOnce(ServerFork) + Send + 'static) {
+        let fork = self.fork();
+        self.pool.execute(move || job(fork));
+    }
+
+    fn fork(&self) -> ServerFork {
+        ServerFork {
+            connection: self.connection.clone(),
+            internal_tx: self.internal_tx.clone(),
+            client: self.client.clone(),
+            workspace: self.workspace.clone(),
+            diagnostic_tx: self.diagnostic_tx.clone(),
+            diagnostic_manager: self.diagnostic_manager.clone(),
+            build_engine: self.build_engine.clone(),
+        }
     }
 
     fn capabilities(&self) -> ServerCapabilities {
@@ -189,33 +298,6 @@ impl Server {
         }
     }
 
-    fn register_config_capability(&self) {
-        if self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_push_configuration_support()
-        {
-            let reg = Registration {
-                id: "pull-config".to_string(),
-                method: DidChangeConfiguration::METHOD.to_string(),
-                register_options: None,
-            };
-
-            let params = RegistrationParams {
-                registrations: vec![reg],
-            };
-
-            if let Err(why) = self.client.send_request::<RegisterCapability>(params) {
-                error!(
-                    "Failed to register \"{}\" notification: {}",
-                    DidChangeConfiguration::METHOD,
-                    why
-                );
-            }
-        }
-    }
-
     fn register_diagnostics_handler(&mut self) {
         let (event_sender, event_receiver) = crossbeam_channel::unbounded();
         let diagnostic_tx = self.diagnostic_tx.clone();
@@ -233,59 +315,6 @@ impl Server {
         });
 
         self.workspace.listeners.push(event_sender);
-    }
-
-    fn pull_config(&self) -> Result<()> {
-        if !self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_pull_configuration_support()
-        {
-            return Ok(());
-        }
-
-        let params = ConfigurationParams {
-            items: vec![ConfigurationItem {
-                section: Some("texlab".to_string()),
-                scope_uri: None,
-            }],
-        };
-
-        match self.client.send_request::<WorkspaceConfiguration>(params) {
-            Ok(mut json) => {
-                let value = json.pop().expect("invalid configuration request");
-                let options = self.parse_options(value)?;
-                self.internal_tx
-                    .send(InternalMessage::SetOptions(Arc::new(options)))
-                    .unwrap();
-            }
-            Err(why) => {
-                error!("Retrieving configuration failed: {}", why);
-            }
-        };
-
-        Ok(())
-    }
-
-    fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
-        let options = match serde_json::from_value(value) {
-            Ok(new_options) => new_options,
-            Err(why) => {
-                self.client.send_notification::<ShowMessage>(
-                    ShowMessageParams {
-                        message: format!(
-                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
-                        ),
-                        typ: MessageType::WARNING,
-                    },
-                )?;
-
-                None
-            }
-        };
-
-        Ok(options.unwrap_or_default())
     }
 
     fn cancel(&self, _params: CancelParams) -> Result<()> {
@@ -307,7 +336,7 @@ impl Server {
                 let _ = server.pull_config();
             });
         } else {
-            let options = self.parse_options(params.settings)?;
+            let options = self.fork().parse_options(params.settings)?;
             self.workspace.environment.options = Arc::new(options);
             self.reparse_all()?;
         }
@@ -843,7 +872,7 @@ impl Server {
     pub fn run(mut self) -> Result<()> {
         self.initialize()?;
         self.process_messages()?;
-        self.pool.lock().unwrap().join();
+        self.pool.join();
         Ok(())
     }
 }
