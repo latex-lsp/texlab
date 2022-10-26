@@ -20,7 +20,7 @@ pub(super) fn goto_document_definition(
         .filter(|link| link.stem_range.contains_inclusive(context.offset))
     {
         for target in &include.targets {
-            if context.request.workspace.get(&target).is_some() {
+            if context.request.workspace.get(target).is_some() {
                 return Some(vec![DefinitionResult {
                     origin_selection_range: include.stem_range,
                     target_uri: Arc::clone(target),

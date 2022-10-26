@@ -124,7 +124,7 @@ impl FileRange {
     fn create(log: &str, result: Match) -> Self {
         let mut balance = 1;
         let mut end = result.start() + 1;
-        let chars = (&log[result.start() + 1..]).chars();
+        let chars = log[result.start() + 1..].chars();
         for c in chars {
             if balance <= 0 {
                 break;

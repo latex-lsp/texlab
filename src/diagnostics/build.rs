@@ -74,7 +74,7 @@ pub fn collect_build_diagnostics(
         } else {
             None
         })
-        .unwrap_or(Position::new(error.line.unwrap_or(0), 0));
+        .unwrap_or_else(|| Position::new(error.line.unwrap_or(0), 0));
 
         let severity = match error.level {
             BuildErrorLevel::Error => DiagnosticSeverity::ERROR,

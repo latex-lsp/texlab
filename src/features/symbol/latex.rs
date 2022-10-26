@@ -453,7 +453,7 @@ fn find_label_by_parent(
 
     let number = find_label_number(&context.request.workspace, &name);
     Some(NumberedLabel {
-        name: name.to_string(),
+        name,
         range,
         number,
     })

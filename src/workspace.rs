@@ -48,7 +48,7 @@ impl Workspace {
         self.documents_by_uri.remove(uri);
     }
 
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = Document> + 'a {
+    pub fn iter(&self) -> impl Iterator<Item = Document> + '_ {
         self.documents_by_uri.values().cloned()
     }
 
@@ -264,7 +264,7 @@ impl Workspace {
     }
 }
 
-static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
+static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
 
 fn should_follow_link(link: &ExplicitLink, resolver: &Resolver) -> bool {
     match link.as_component_name() {

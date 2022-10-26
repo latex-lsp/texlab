@@ -15,7 +15,7 @@ pub(super) fn find_include_links(
 
     for include in &data.extras.explicit_links {
         for target in &include.targets {
-            if request.workspace.get(&target).is_some() {
+            if request.workspace.get(target).is_some() {
                 results.push(LinkResult {
                     range: include.stem_range,
                     target: Arc::clone(target),

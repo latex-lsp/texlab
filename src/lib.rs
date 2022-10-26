@@ -48,7 +48,7 @@ pub fn normalize_uri(uri: &mut lsp_types::Url) {
     }
 
     if let Some(mut segments) = uri.path_segments() {
-        if let Some(mut path) = segments.next().and_then(|text| fix_drive_letter(text)) {
+        if let Some(mut path) = segments.next().and_then(fix_drive_letter) {
             for segment in segments {
                 path.push('/');
                 path.push_str(segment);
