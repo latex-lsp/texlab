@@ -21,7 +21,7 @@ use super::{
 #[salsa::input(singleton)]
 pub struct Workspace {
     #[return_ref]
-    pub documents: Vec<Document>,
+    pub documents: FxHashSet<Document>,
 
     #[return_ref]
     pub options: Options,
@@ -76,8 +76,8 @@ impl Workspace {
             }
             None => {
                 let document = Document::new(db, location, contents, language, owner, cursor);
-                let mut documents = self.set_documents(db).to(Vec::new());
-                documents.push(document);
+                let mut documents = self.set_documents(db).to(FxHashSet::default());
+                documents.insert(document);
                 self.set_documents(db).to(documents);
                 document
             }
@@ -107,11 +107,19 @@ impl Workspace {
         watcher: &mut dyn notify::Watcher,
         watched_dirs: &mut FxHashSet<PathBuf>,
     ) {
+        let output_dirs = self
+            .documents(db)
+            .iter()
+            .map(|document| self.working_dir(db, document.location(db)))
+            .map(|base_dir| self.output_dir(db, base_dir))
+            .filter_map(|location| location.path(db).as_deref());
+
         self.documents(db)
             .iter()
             .map(|document| document.location(db))
             .filter_map(|location| location.path(db).as_deref())
             .filter_map(|path| path.parent())
+            .chain(output_dirs)
             .filter(|path| watched_dirs.insert(path.to_path_buf()))
             .for_each(|path| {
                 let _ = watcher.watch(path, notify::RecursiveMode::NonRecursive);

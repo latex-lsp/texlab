@@ -5,7 +5,9 @@ use crossbeam_channel::{Receiver, Sender};
 use log::{error, info, warn};
 use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
-use rowan::ast::AstNode;
+use rowan::{ast::AstNode, TextSize};
+use rustc_hash::FxHashSet;
+use salsa::ParallelDatabase;
 use serde::Serialize;
 use threadpool::ThreadPool;
 
@@ -13,6 +15,12 @@ use crate::{
     citation,
     client::LspClient,
     component_db::COMPONENT_DATABASE,
+    db::{
+        self,
+        document::{Language, Owner},
+        workspace::Workspace,
+        Distro,
+    },
     debouncer,
     diagnostics::DiagnosticManager,
     dispatch::{NotificationDispatcher, RequestDispatcher},
@@ -26,109 +34,29 @@ use crate::{
     },
     normalize_uri,
     syntax::bibtex,
-    ClientCapabilitiesExt, Database, Document, DocumentData, DocumentLanguage, Environment,
-    LineIndex, LineIndexExt, Options, StartupOptions, Workspace, WorkspaceEvent,
+    ClientCapabilitiesExt, Database, Db, Document, DocumentData, Environment, LineIndexExt,
+    Options, StartupOptions, WorkspaceEvent,
 };
 
 #[derive(Debug)]
 enum InternalMessage {
     SetDistro(Distribution),
-    SetOptions(Arc<Options>),
+    SetOptions(Options),
     FileEvent(notify::Event),
 }
 
-#[derive(Clone)]
 struct ServerFork {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
     client: LspClient,
-    workspace: Workspace,
-    diagnostic_tx: debouncer::Sender<Workspace>,
+    db: salsa::Snapshot<Database>,
+    workspace: crate::Workspace,
+    diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
     build_engine: Arc<BuildEngine>,
 }
 
 impl ServerFork {
-    pub fn register_config_capability(&self) {
-        if self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_push_configuration_support()
-        {
-            let reg = Registration {
-                id: "pull-config".to_string(),
-                method: DidChangeConfiguration::METHOD.to_string(),
-                register_options: None,
-            };
-
-            let params = RegistrationParams {
-                registrations: vec![reg],
-            };
-
-            if let Err(why) = self.client.send_request::<RegisterCapability>(params) {
-                error!(
-                    "Failed to register \"{}\" notification: {}",
-                    DidChangeConfiguration::METHOD,
-                    why
-                );
-            }
-        }
-    }
-
-    pub fn pull_config(&self) -> Result<()> {
-        if !self
-            .workspace
-            .environment
-            .client_capabilities
-            .has_pull_configuration_support()
-        {
-            return Ok(());
-        }
-
-        let params = ConfigurationParams {
-            items: vec![ConfigurationItem {
-                section: Some("texlab".to_string()),
-                scope_uri: None,
-            }],
-        };
-
-        match self.client.send_request::<WorkspaceConfiguration>(params) {
-            Ok(mut json) => {
-                let value = json.pop().expect("invalid configuration request");
-                let options = self.parse_options(value)?;
-                self.internal_tx
-                    .send(InternalMessage::SetOptions(Arc::new(options)))
-                    .unwrap();
-            }
-            Err(why) => {
-                error!("Retrieving configuration failed: {}", why);
-            }
-        };
-
-        Ok(())
-    }
-
-    pub fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
-        let options = match serde_json::from_value(value) {
-            Ok(new_options) => new_options,
-            Err(why) => {
-                self.client.send_notification::<ShowMessage>(
-                    ShowMessageParams {
-                        message: format!(
-                            "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
-                        ),
-                        typ: MessageType::WARNING,
-                    },
-                )?;
-
-                None
-            }
-        };
-
-        Ok(options.unwrap_or_default())
-    }
-
     pub fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
         FeatureRequest {
             params,
@@ -144,8 +72,9 @@ pub struct Server {
     internal_rx: Receiver<InternalMessage>,
     client: LspClient,
     db: Database,
-    workspace: Workspace,
-    diagnostic_tx: debouncer::Sender<Workspace>,
+    watcher: FileWatcher,
+    workspace: crate::Workspace,
+    diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
     pool: ThreadPool,
     build_engine: Arc<BuildEngine>,
@@ -154,17 +83,22 @@ pub struct Server {
 impl Server {
     pub fn new(connection: Connection, current_dir: PathBuf) -> Self {
         let client = LspClient::new(connection.sender.clone());
-        let db = Database::default();
-        let workspace = Workspace::new(Environment::new(Arc::new(current_dir)));
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
+
+        let workspace = crate::Workspace::new(Environment::new(Arc::new(current_dir)));
         let diagnostic_manager = DiagnosticManager::default();
         let diagnostic_tx = create_debouncer(client.clone(), diagnostic_manager.clone());
+
+        let db = Database::default();
+        let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
+
         Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
             client,
             db,
+            watcher,
             workspace,
             diagnostic_tx,
             diagnostic_manager,
@@ -183,6 +117,7 @@ impl Server {
             connection: self.connection.clone(),
             internal_tx: self.internal_tx.clone(),
             client: self.client.clone(),
+            db: self.db.snapshot(),
             workspace: self.workspace.clone(),
             diagnostic_tx: self.diagnostic_tx.clone(),
             diagnostic_manager: self.diagnostic_manager.clone(),
@@ -247,8 +182,16 @@ impl Server {
         let (id, params) = self.connection.initialize_start()?;
         let params: InitializeParams = serde_json::from_value(params)?;
 
-        self.workspace.environment.client_capabilities = Arc::new(params.capabilities);
-        self.workspace.environment.client_info = params.client_info.map(Arc::new);
+        let workspace = Workspace::get(&self.db);
+        workspace
+            .set_client_capabilities(&mut self.db)
+            .with_durability(salsa::Durability::HIGH)
+            .to(params.capabilities);
+
+        workspace
+            .set_client_info(&mut self.db)
+            .with_durability(salsa::Durability::HIGH)
+            .to(params.client_info);
 
         let result = InitializeResult {
             capabilities: self.capabilities(),
@@ -278,26 +221,37 @@ impl Server {
         }
 
         self.register_diagnostics_handler();
-        self.register_file_watching();
-
-        self.spawn(move |server| {
-            server.register_config_capability();
-            let _ = server.pull_config();
-        });
-
+        self.register_configuration();
+        self.pull_options();
         Ok(())
     }
 
-    fn register_file_watching(&mut self) {
-        let tx = self.internal_tx.clone();
-        let watcher = notify::recommended_watcher(move |ev: Result<_, _>| {
-            if let Ok(ev) = ev {
-                let _ = tx.send(InternalMessage::FileEvent(ev));
-            }
-        });
+    fn register_configuration(&mut self) {
+        let workspace = Workspace::get(&self.db);
+        if workspace
+            .client_capabilities(&self.db)
+            .has_push_configuration_support()
+        {
+            let registration = Registration {
+                id: "pull-config".to_string(),
+                method: DidChangeConfiguration::METHOD.to_string(),
+                register_options: None,
+            };
 
-        if let Ok(watcher) = watcher {
-            self.workspace.register_watcher(watcher);
+            let params = RegistrationParams {
+                registrations: vec![registration],
+            };
+
+            let client = self.client.clone();
+            self.pool.execute(move || {
+                if let Err(why) = client.send_request::<RegisterCapability>(params) {
+                    log::error!(
+                        "Failed to register \"{}\" notification: {}",
+                        DidChangeConfiguration::METHOD,
+                        why
+                    );
+                }
+            });
         }
     }
 
@@ -320,6 +274,50 @@ impl Server {
         self.workspace.listeners.push(event_sender);
     }
 
+    fn pull_options(&mut self) {
+        let workspace = Workspace::get(&self.db);
+        if !workspace
+            .client_capabilities(&self.db)
+            .has_pull_configuration_support()
+        {
+            return;
+        }
+
+        let params = ConfigurationParams {
+            items: vec![ConfigurationItem {
+                section: Some("texlab".to_string()),
+                scope_uri: None,
+            }],
+        };
+
+        let client = self.client.clone();
+        let sender = self.internal_tx.clone();
+        self.pool.execute(move || {
+            match client.send_request::<WorkspaceConfiguration>(params) {
+                Ok(mut json) => {
+                    let options = client
+                        .parse_options(json.pop().expect("invalid configuration request"))
+                        .unwrap();
+
+                    sender.send(InternalMessage::SetOptions(options)).unwrap();
+                }
+                Err(why) => {
+                    error!("Retrieving configuration failed: {}", why);
+                }
+            };
+        });
+    }
+
+    fn update_options(&mut self, options: Options) {
+        let workspace = Workspace::get(&self.db);
+        workspace
+            .set_options(&mut self.db)
+            .with_durability(salsa::Durability::MEDIUM)
+            .to(options);
+
+        self.watcher.watch(&self.db);
+    }
+
     fn cancel(&self, _params: CancelParams) -> Result<()> {
         Ok(())
     }
@@ -329,19 +327,15 @@ impl Server {
     }
 
     fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
-        if self
-            .workspace
-            .environment
-            .client_capabilities
+        let workspace = Workspace::get(&self.db);
+        if workspace
+            .client_capabilities(&self.db)
             .has_pull_configuration_support()
         {
-            self.spawn(move |server| {
-                let _ = server.pull_config();
-            });
+            self.pull_options();
         } else {
-            let options = self.fork().parse_options(params.settings)?;
-            self.workspace.environment.options = Arc::new(options);
-            self.reparse_all()?;
+            let options = self.client.parse_options(params.settings)?;
+            self.update_options(options);
         }
 
         Ok(())
@@ -350,19 +344,22 @@ impl Server {
     fn did_open(&mut self, mut params: DidOpenTextDocumentParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
 
+        let workspace = Workspace::get(&self.db);
         let language_id = &params.text_document.language_id;
-        let language = DocumentLanguage::by_language_id(language_id);
-        let document = self.workspace.open(
-            Arc::new(params.text_document.uri),
-            Arc::new(params.text_document.text),
-            language.unwrap_or(DocumentLanguage::Latex),
-        )?;
+        let language = Language::from_id(language_id).unwrap_or(Language::Tex);
+        let document = workspace.open(
+            &mut self.db,
+            params.text_document.uri,
+            params.text_document.text,
+            language,
+            Owner::Client,
+        );
 
-        self.workspace.viewport.insert(Arc::clone(document.uri()));
+        workspace.discover(&mut self.db);
 
-        if self.workspace.environment.options.chktex.on_open_and_save {
-            self.run_chktex(document);
-        }
+        // if self.workspace.environment.options.chktex.on_open_and_save {
+        //     self.run_chktex(document);
+        // }
 
         Ok(())
     }
@@ -370,43 +367,44 @@ impl Server {
     fn did_change(&mut self, mut params: DidChangeTextDocumentParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
 
-        let uri = Arc::new(params.text_document.uri);
-        match self.workspace.get(&uri) {
-            Some(old_document) => {
-                let mut text = old_document.text().to_string();
-                apply_document_edit(&mut text, params.content_changes);
-                let language = old_document.data().language();
-                let new_document =
-                    self.workspace
-                        .open(Arc::clone(&uri), Arc::new(text), language)?;
-                self.workspace
-                    .viewport
-                    .insert(Arc::clone(new_document.uri()));
-
-                self.build_engine.positions_by_uri.insert(
-                    Arc::clone(&uri),
-                    Position::new(
-                        old_document
-                            .text()
-                            .lines()
-                            .zip(new_document.text().lines())
-                            .position(|(a, b)| a != b)
-                            .unwrap_or_default() as u32,
-                        0,
-                    ),
-                );
-
-                if self.workspace.environment.options.chktex.on_edit {
-                    self.run_chktex(new_document);
-                };
-            }
-            None => match uri.to_file_path() {
-                Ok(path) => {
-                    self.workspace.load(path)?;
-                }
-                Err(_) => return Ok(()),
-            },
+        let workspace = Workspace::get(&self.db);
+        let location = db::document::Location::new(&self.db, params.text_document.uri);
+        let document = match workspace.lookup(&self.db, location) {
+            Some(document) => document,
+            None => return Ok(()),
         };
+
+        for change in params.content_changes {
+            match change.range {
+                Some(range) => {
+                    let range = document
+                        .contents(&self.db)
+                        .line_index(&self.db)
+                        .offset_lsp_range(range);
+
+                    document.edit(&mut self.db, range, &change.text);
+                }
+                None => {
+                    document
+                        .contents(&self.db)
+                        .set_text(&mut self.db)
+                        .with_durability(salsa::Durability::LOW)
+                        .to(change.text);
+
+                    document
+                        .set_cursor(&mut self.db)
+                        .with_durability(salsa::Durability::LOW)
+                        .to(TextSize::from(0));
+                }
+            };
+        }
+
+        workspace.discover(&mut self.db);
+
+        // TODO: ChkTeX
+        // if self.workspace.environment.options.chktex.on_edit {
+        //     self.run_chktex(new_document);
+        // }
 
         Ok(())
     }
@@ -452,9 +450,18 @@ impl Server {
         Ok(())
     }
 
-    fn did_close(&mut self, mut params: DidCloseTextDocumentParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        self.workspace.close(&params.text_document.uri);
+    fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+
+        let location = db::document::Location::new(&self.db, uri);
+        if let Some(document) = Workspace::get(&self.db).lookup(&self.db, location) {
+            document
+                .set_owner(&mut self.db)
+                .with_durability(salsa::Durability::LOW)
+                .to(Owner::Server);
+        }
+
         Ok(())
     }
 
@@ -538,14 +545,9 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&self, id: RequestId, mut params: CompletionParams) -> Result<()> {
+    fn completion(&mut self, id: RequestId, mut params: CompletionParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position.text_document.uri);
         let uri = Arc::new(params.text_document_position.text_document.uri.clone());
-
-        self.build_engine
-            .positions_by_uri
-            .insert(Arc::clone(&uri), params.text_document_position.position);
-
         self.handle_feature_request(id, params, uri, crate::features::complete)?;
         Ok(())
     }
@@ -602,7 +604,7 @@ impl Server {
         Ok(())
     }
 
-    fn hover(&self, id: RequestId, mut params: HoverParams) -> Result<()> {
+    fn hover(&mut self, id: RequestId, mut params: HoverParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position_params.text_document.uri);
         let uri = Arc::new(
             params
@@ -611,10 +613,20 @@ impl Server {
                 .uri
                 .clone(),
         );
-        self.build_engine.positions_by_uri.insert(
-            Arc::clone(&uri),
-            params.text_document_position_params.position,
-        );
+
+        let workspace = Workspace::get(&self.db);
+        let location = db::document::Location::new(&self.db, uri.as_ref().clone());
+        if let Some(document) = workspace.lookup(&self.db, location) {
+            let position = document
+                .contents(&self.db)
+                .line_index(&self.db)
+                .offset_lsp(params.text_document_position_params.position);
+
+            document
+                .set_cursor(&mut self.db)
+                .with_durability(salsa::Durability::LOW)
+                .to(position);
+        }
 
         self.handle_feature_request(id, params, uri, find_hover)?;
         Ok(())
@@ -747,21 +759,41 @@ impl Server {
         Ok(())
     }
 
-    fn reparse_all(&mut self) -> Result<()> {
-        for document in self.workspace.iter().collect::<Vec<_>>() {
-            self.workspace.open(
-                Arc::clone(document.uri()),
-                Arc::new(document.text().to_string()),
-                document.data().language(),
-            )?;
-        }
+    fn handle_file_event(&mut self, event: notify::Event) {
+        let workspace = Workspace::get(&self.db);
+        match event.kind {
+            notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
+                for path in event.paths {
+                    if workspace
+                        .lookup_path(&self.db, &path)
+                        .map_or(true, |document| document.owner(&self.db) == Owner::Server)
+                    {
+                        if let Some(language) = Language::from_path(&path) {
+                            workspace.load(&mut self.db, &path, language, Owner::Server);
+                        }
+                    }
+                }
+            }
+            notify::EventKind::Remove(_) => {
+                for path in event.paths {
+                    if let Some(document) = workspace.lookup_path(&self.db, &path) {
+                        if document.owner(&self.db) == Owner::Server {
+                            let mut documents = workspace
+                                .set_documents(&mut self.db)
+                                .with_durability(salsa::Durability::LOW)
+                                .to(FxHashSet::default());
 
-        match &self.workspace.environment.options.aux_directory {
-            Some(path) => self.workspace.watch_dir(path),
-            None => self.workspace.watch_dir(&PathBuf::from(".")),
+                            documents.remove(&document);
+                            workspace
+                                .set_documents(&mut self.db)
+                                .with_durability(salsa::Durability::MEDIUM)
+                                .to(documents);
+                        }
+                    }
+                }
+            }
+            notify::EventKind::Any | notify::EventKind::Access(_) | notify::EventKind::Other => {}
         };
-
-        Ok(())
     }
 
     fn process_messages(&mut self) -> Result<()> {
@@ -842,29 +874,16 @@ impl Server {
                 recv(&self.internal_rx) -> msg => {
                     match msg? {
                         InternalMessage::SetDistro(distro) => {
-                            self.workspace.environment.resolver = Arc::new(distro.resolver);
-                            self.reparse_all()?;
+                            Distro::get(&self.db)
+                                .set_file_name_db(&mut self.db)
+                                .with_durability(salsa::Durability::HIGH)
+                                .to(distro.resolver);
                         }
                         InternalMessage::SetOptions(options) => {
-                            self.workspace.environment.options = options;
-                            self.reparse_all()?;
+                            self.update_options(options);
                         }
-                        InternalMessage::FileEvent(ev) => {
-                            match ev.kind {
-                                notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
-                                    for path in ev.paths {
-                                        let _ = self.workspace.reload(path);
-                                    }
-                                }
-                                notify::EventKind::Remove(_) => {
-                                    for uri in ev.paths.iter().flat_map(Url::from_file_path) {
-                                        self.workspace.remove(&uri);
-                                    }
-                                }
-                                notify::EventKind::Any
-                                | notify::EventKind::Access(_)
-                                | notify::EventKind::Other => {}
-                            };
+                        InternalMessage::FileEvent(event) => {
+                            self.handle_file_event(event);
                         }
                     };
                 }
@@ -883,7 +902,7 @@ impl Server {
 fn create_debouncer(
     client: LspClient,
     diagnostic_manager: DiagnosticManager,
-) -> debouncer::Sender<Workspace> {
+) -> debouncer::Sender<crate::Workspace> {
     let (tx, rx) = debouncer::unbounded();
     std::thread::spawn(move || {
         while let Ok(workspace) = rx.recv() {
@@ -899,7 +918,7 @@ fn create_debouncer(
 fn publish_diagnostics(
     client: &LspClient,
     diagnostic_manager: &DiagnosticManager,
-    workspace: &Workspace,
+    workspace: &crate::Workspace,
 ) -> Result<()> {
     for document in workspace.iter() {
         if matches!(document.data(), DocumentData::BuildLog(_)) {
@@ -917,18 +936,28 @@ fn publish_diagnostics(
     Ok(())
 }
 
-fn apply_document_edit(old_text: &mut String, changes: Vec<TextDocumentContentChangeEvent>) {
-    for change in changes {
-        let line_index = LineIndex::new(old_text);
-        match change.range {
-            Some(range) => {
-                let range = std::ops::Range::<usize>::from(line_index.offset_lsp_range(range));
-                old_text.replace_range(range, &change.text);
-            }
-            None => {
-                *old_text = change.text;
+struct FileWatcher {
+    watcher: notify::RecommendedWatcher,
+    watched_dirs: FxHashSet<PathBuf>,
+}
+
+impl FileWatcher {
+    pub fn new(sender: Sender<InternalMessage>) -> Result<Self> {
+        let handle = move |event| {
+            if let Ok(event) = event {
+                sender.send(InternalMessage::FileEvent(event)).unwrap();
             }
         };
+
+        Ok(Self {
+            watcher: notify::recommended_watcher(handle)?,
+            watched_dirs: FxHashSet::default(),
+        })
+    }
+
+    pub fn watch(&mut self, db: &dyn Db) {
+        let workspace = Workspace::get(db);
+        workspace.watch(db, &mut self.watcher, &mut self.watched_dirs);
     }
 }
 
