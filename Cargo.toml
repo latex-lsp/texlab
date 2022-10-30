@@ -73,6 +73,11 @@ unicode-normalization = "0.1.22"
 url = { version = "2.3.1", features = ["serde"] }
 uuid = { version = "1.2.2", features = ["v4"] }
 
+[dependencies.salsa]
+git = "https://github.com/salsa-rs/salsa"
+rev = "30b5e9760aadc3570dc2ba176f4d74448c4152ed"
+package = "salsa-2022"
+
 [dependencies.derive_more]
 version = "0.99.17"
 default-features = false

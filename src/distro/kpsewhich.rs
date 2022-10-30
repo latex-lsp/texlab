@@ -22,6 +22,10 @@ impl Resolver {
     pub fn new(files_by_name: FxHashMap<SmolStr, PathBuf>) -> Self {
         Self { files_by_name }
     }
+
+    pub fn get(&self, name: &str) -> Option<&PathBuf> {
+        self.files_by_name.get(name)
+    }
 }
 
 pub fn parse_database(

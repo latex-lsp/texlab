@@ -1,0 +1,300 @@
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
+
+use lsp_types::{ClientCapabilities, ClientInfo, Url};
+use rowan::TextSize;
+use rustc_hash::FxHashSet;
+
+use crate::{
+    db::document::{Document, Location},
+    Db, Options,
+};
+
+use super::{
+    dependency,
+    document::{Contents, Language, Owner},
+    Distro,
+};
+
+#[salsa::input(singleton)]
+pub struct Workspace {
+    #[return_ref]
+    pub documents: Vec<Document>,
+
+    #[return_ref]
+    pub options: Options,
+
+    #[return_ref]
+    pub client_capabilities: ClientCapabilities,
+
+    #[return_ref]
+    pub client_info: Option<ClientInfo>,
+}
+
+impl Workspace {
+    pub fn lookup(self, db: &dyn Db, location: Location) -> Option<Document> {
+        self.documents(db)
+            .iter()
+            .find(|document| document.location(db) == location)
+            .copied()
+    }
+
+    pub fn lookup_path(self, db: &dyn Db, path: &Path) -> Option<Document> {
+        self.documents(db)
+            .iter()
+            .find(|document| document.location(db).path(db).as_deref() == Some(path))
+            .copied()
+    }
+
+    pub fn index_files<'db>(self, db: &'db dyn Db) -> impl Iterator<Item = Document> + 'db {
+        self.documents(db)
+            .iter()
+            .copied()
+            .filter(|&document| document.can_be_index(db))
+    }
+
+    pub fn open(
+        self,
+        db: &mut dyn Db,
+        uri: Url,
+        text: String,
+        language: Language,
+        owner: Owner,
+    ) -> Document {
+        let location = Location::new(db, uri);
+        let contents = Contents::new(db, text);
+        let cursor = TextSize::from(0);
+        match self.lookup(db, location) {
+            Some(document) => {
+                document.set_contents(db).to(contents);
+                document.set_language(db).to(language);
+                document.set_owner(db).to(owner);
+                document.set_cursor(db).to(cursor);
+                document
+            }
+            None => {
+                let document = Document::new(db, location, contents, language, owner, cursor);
+                let mut documents = self.set_documents(db).to(Vec::new());
+                documents.push(document);
+                self.set_documents(db).to(documents);
+                document
+            }
+        }
+    }
+
+    pub fn load(
+        self,
+        db: &mut dyn Db,
+        path: &Path,
+        language: Language,
+        owner: Owner,
+    ) -> Option<Document> {
+        let uri = Url::from_file_path(path).ok()?;
+        let data = std::fs::read(path).ok()?;
+        let text = match String::from_utf8_lossy(&data) {
+            Cow::Borrowed(_) => unsafe { String::from_utf8_unchecked(data) },
+            Cow::Owned(text) => text,
+        };
+
+        Some(self.open(db, uri, text, language, owner))
+    }
+
+    pub fn watch(
+        self,
+        db: &dyn Db,
+        watcher: &mut dyn notify::Watcher,
+        watched_dirs: &mut FxHashSet<PathBuf>,
+    ) {
+        self.documents(db)
+            .iter()
+            .map(|document| document.location(db))
+            .filter_map(|location| location.path(db).as_deref())
+            .filter_map(|path| path.parent())
+            .filter(|path| watched_dirs.insert(path.to_path_buf()))
+            .for_each(|path| {
+                let _ = watcher.watch(path, notify::RecursiveMode::NonRecursive);
+            });
+    }
+
+    pub fn discover(self, db: &mut dyn Db) {
+        let distro = Distro::get(db);
+        loop {
+            let mut changed = false;
+
+            let dirs: FxHashSet<PathBuf> = self
+                .documents(db)
+                .iter()
+                .filter_map(|document| document.location(db).path(db).as_deref())
+                .filter_map(|path| path.parent())
+                .flat_map(|path| path.ancestors())
+                .map(ToOwned::to_owned)
+                .collect();
+
+            for dir in dirs {
+                let files = std::fs::read_dir(dir)
+                    .into_iter()
+                    .flatten()
+                    .flatten()
+                    .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
+                    .map(|entry| entry.path())
+                    .filter(|path| Language::from_path(&path) == Some(Language::Tex));
+
+                for file in files {
+                    if !self
+                        .documents(db)
+                        .iter()
+                        .any(|document| document.location(db).path(db).as_deref() == Some(&file))
+                    {
+                        changed |= self.load(db, &file, Language::Tex, Owner::Server).is_some();
+                    }
+                }
+            }
+
+            let paths: FxHashSet<_> = self
+                .documents(db)
+                .iter()
+                .map(|&document| self.graph(db, document, distro))
+                .flat_map(|graph| graph.items(db).iter())
+                .flat_map(|item| item.origin(db).into_locations(db, distro))
+                .filter_map(|location| location.path(db).as_deref())
+                .map(|path| path.to_path_buf())
+                .collect();
+
+            for path in paths {
+                let language = Language::from_path(&path).unwrap_or(Language::Tex);
+                changed |= self.load(db, &path, language, Owner::Server).is_some();
+            }
+
+            if !changed {
+                break;
+            }
+        }
+    }
+}
+
+#[salsa::tracked]
+impl Workspace {
+    #[salsa::tracked]
+    pub fn working_dir(self, db: &dyn Db, base_dir: Location) -> Location {
+        let path = self
+            .options(db)
+            .root_directory
+            .as_deref()
+            .and_then(|path| path.to_str())
+            .unwrap_or(".");
+
+        base_dir.join(db, path).unwrap_or(base_dir)
+    }
+
+    #[salsa::tracked]
+    pub fn output_dir(self, db: &dyn Db, base_dir: Location) -> Location {
+        let path = self
+            .options(db)
+            .aux_directory
+            .as_deref()
+            .and_then(|path| path.to_str())
+            .unwrap_or(".");
+
+        base_dir.join(db, path).unwrap_or(base_dir)
+    }
+
+    #[salsa::tracked]
+    pub fn graph(self, db: &dyn Db, document: Document, distro: Distro) -> dependency::Graph {
+        let base_dir = self.working_dir(db, document.location(db));
+        let mut items = Vec::new();
+        let mut stack = vec![(document, base_dir)];
+        let mut visited = FxHashSet::default();
+
+        while let Some((source, dir)) = stack.pop() {
+            for item in self
+                .explicit_links(db, source, dir, distro)
+                .as_deref()
+                .unwrap_or_default()
+            {
+                let link = item.origin(db).into_explicit().unwrap().link;
+
+                if let Some(target) = item.target(db) {
+                    if visited.insert(target) {
+                        let new_dir = link
+                            .working_dir(db)
+                            .and_then(|path| dir.join(db, &path.text(db)))
+                            .unwrap_or(dir);
+
+                        stack.push((target, new_dir));
+                    }
+                }
+
+                items.push(*item);
+            }
+
+            items.extend(self.implicit_links(db, source, dir, "aux"));
+            items.extend(self.implicit_links(db, source, dir, "log"));
+        }
+
+        dependency::Graph::new(db, items, document)
+    }
+
+    #[salsa::tracked(return_ref)]
+    pub fn explicit_links(
+        self,
+        db: &dyn Db,
+        document: Document,
+        base_dir: Location,
+        distro: Distro,
+    ) -> Option<Vec<dependency::Resolved>> {
+        let data = document.parse(db).as_tex()?;
+
+        let mut items = Vec::new();
+        for link in data.analyze(db).links(db).iter().copied() {
+            let origin = dependency::Origin::Explicit(dependency::Explicit { link, base_dir });
+            let target = link
+                .locations(db, base_dir, distro)
+                .iter()
+                .find_map(|location| self.lookup(db, *location));
+
+            items.push(dependency::Resolved::new(db, document, target, origin));
+        }
+
+        Some(items)
+    }
+
+    #[salsa::tracked]
+    pub fn implicit_links(
+        self,
+        db: &dyn Db,
+        document: Document,
+        base_dir: Location,
+        extension: &'static str,
+    ) -> Option<dependency::Resolved> {
+        let stem = document.location(db).stem(db)?;
+        let name = format!("{stem}.{extension}");
+        let location = self.output_dir(db, base_dir).join(db, &name)?;
+        let target = self.lookup(db, location);
+        let origin = dependency::Origin::Implicit(dependency::Implicit::new(db, vec![location]));
+        Some(dependency::Resolved::new(db, document, target, origin))
+    }
+
+    #[salsa::tracked(return_ref)]
+    pub fn parents(self, db: &dyn Db, distro: Distro, child: Document) -> Vec<Document> {
+        self.index_files(db)
+            .filter(|&document| {
+                self.graph(db, document, distro)
+                    .preorder(db)
+                    .contains(&child)
+            })
+            .collect()
+    }
+
+    #[salsa::tracked(return_ref)]
+    pub fn related(self, db: &dyn Db, distro: Distro, child: Document) -> FxHashSet<Document> {
+        self.index_files(db)
+            .chain(self.documents(db).iter().copied())
+            .map(|document| self.graph(db, document, distro).preorder(db))
+            .filter(|project| project.contains(&child))
+            .flatten()
+            .copied()
+            .collect()
+    }
+}
