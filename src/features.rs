@@ -4,7 +4,7 @@ mod cursor;
 mod definition;
 mod execute_command;
 pub mod folding;
-mod formatting;
+pub mod formatting;
 mod forward_search;
 mod highlight;
 mod hover;
@@ -25,7 +25,6 @@ pub use self::{
     completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     execute_command::execute_command,
-    formatting::format_source_code,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
     hover::find_hover,

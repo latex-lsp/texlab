@@ -1,48 +1,36 @@
 use std::{
-    fs,
     path::Path,
     process::{Command, Stdio},
 };
 
-use lsp_types::{DocumentFormattingParams, TextEdit};
+use lsp_types::TextEdit;
 use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
-use crate::{features::FeatureRequest, DocumentLanguage, LatexindentOptions, LineIndexExt};
+use crate::{
+    db::{
+        document::{Document, Language},
+        workspace::Workspace,
+    },
+    Db, LatexindentOptions, LineIndexExt,
+};
 
-pub fn format_with_latexindent(
-    request: &FeatureRequest<DocumentFormattingParams>,
-) -> Option<Vec<TextEdit>> {
-    let document = request.main_document();
-    let options = &request.workspace.environment.options;
+pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {
+    let options = Workspace::get(db).options(db);
     let target_dir = tempdir().ok()?;
-    let source_dir = options
-        .root_directory
-        .as_ref()
-        .cloned()
-        .or_else(|| {
-            if document.uri().scheme() == "file" {
-                document
-                    .uri()
-                    .to_file_path()
-                    .unwrap()
-                    .parent()
-                    .map(ToOwned::to_owned)
-            } else {
-                None
-            }
-        })
-        .unwrap_or_else(|| ".".into());
+    let source_dir = Workspace::get(db)
+        .working_dir(db, document.location(db))
+        .path(db)
+        .as_deref()?;
 
-    let target_file =
-        target_dir
-            .path()
-            .join(if document.data().language() == DocumentLanguage::Bibtex {
-                "file.bib"
-            } else {
-                "file.tex"
-            });
-    fs::write(&target_file, document.text()).ok()?;
+    let target_file = target_dir
+        .path()
+        .join(if document.language(db) == Language::Bib {
+            "file.bib"
+        } else {
+            "file.tex"
+        });
+    std::fs::write(&target_file, document.contents(db).text(db)).ok()?;
 
     let args = build_arguments(&options.latexindent, &target_file);
 
@@ -61,14 +49,14 @@ pub fn format_with_latexindent(
         .output()
         .ok()?;
 
+    let old_text = document.contents(db).text(db);
     let new_text = String::from_utf8_lossy(&output.stdout).into_owned();
     if new_text.is_empty() {
         None
     } else {
+        let line_index = document.contents(db).line_index(db);
         Some(vec![TextEdit {
-            range: document
-                .line_index()
-                .line_col_lsp_range(TextRange::new(0.into(), document.text().text_len())),
+            range: line_index.line_col_lsp_range(TextRange::new(0.into(), old_text.text_len())),
             new_text,
         }])
     }

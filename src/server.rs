@@ -31,7 +31,7 @@ use crate::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         execute_command, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_hover, find_inlay_hints, find_workspace_symbols, folding,
-        format_source_code, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
+        formatting, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
         FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
@@ -651,10 +651,13 @@ impl Server {
         Ok(())
     }
 
-    fn formatting(&self, id: RequestId, mut params: DocumentFormattingParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, format_source_code)?;
+    fn formatting(&self, id: RequestId, params: DocumentFormattingParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| {
+            formatting::format_source_code(db, &uri, &params.options)
+        });
+
         Ok(())
     }
 
