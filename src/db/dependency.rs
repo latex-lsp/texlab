@@ -59,7 +59,7 @@ pub struct Implicit {
 #[salsa::tracked]
 pub struct Graph {
     #[return_ref]
-    pub items: Vec<Resolved>,
+    pub edges: Vec<Resolved>,
     pub start: Document,
 }
 
@@ -68,7 +68,7 @@ impl Graph {
     #[salsa::tracked(return_ref)]
     pub fn preorder(self, db: &dyn Db) -> Vec<Document> {
         std::iter::once(self.start(db))
-            .chain(self.items(db).iter().filter_map(|group| group.target(db)))
+            .chain(self.edges(db).iter().filter_map(|group| group.target(db)))
             .unique()
             .collect()
     }

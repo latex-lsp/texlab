@@ -9,7 +9,7 @@ mod forward_search;
 mod highlight;
 mod hover;
 mod inlay_hint;
-mod link;
+pub mod link;
 mod lsp_kinds;
 mod reference;
 mod rename;
@@ -29,7 +29,6 @@ pub use self::{
     highlight::find_document_highlights,
     hover::find_hover,
     inlay_hint::find_inlay_hints,
-    link::find_document_links,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
     symbol::{find_document_symbols, find_workspace_symbols},

@@ -100,20 +100,96 @@ impl TexLinkKind {
 }
 
 #[salsa::tracked]
+pub struct TexLabelName {
+    pub kind: TexLabelKind,
+    pub name: Word,
+    pub range: TextRange,
+}
+
+impl TexLabelName {
+    fn of_definition(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
+        let label = latex::LabelDefinition::cast(node)?;
+        let name = label.name()?.key()?;
+        results.push(TexLabelName::new(
+            db,
+            TexLabelKind::Definition,
+            Word::new(db, name.to_string()),
+            latex::small_range(&name),
+        ));
+
+        Some(())
+    }
+
+    fn of_reference(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
+        let label = latex::LabelReference::cast(node)?;
+        for name in label.name_list()?.keys() {
+            results.push(TexLabelName::new(
+                db,
+                TexLabelKind::Reference,
+                Word::new(db, name.to_string()),
+                latex::small_range(&name),
+            ));
+        }
+
+        Some(())
+    }
+
+    fn of_reference_range(
+        db: &dyn Db,
+        node: latex::SyntaxNode,
+        results: &mut Vec<Self>,
+    ) -> Option<()> {
+        let label = latex::LabelReferenceRange::cast(node)?;
+        if let Some(name) = label.from().and_then(|name| name.key()) {
+            results.push(TexLabelName::new(
+                db,
+                TexLabelKind::Reference,
+                Word::new(db, name.to_string()),
+                latex::small_range(&name),
+            ));
+        }
+
+        if let Some(name) = label.to().and_then(|name| name.key()) {
+            results.push(TexLabelName::new(
+                db,
+                TexLabelKind::Reference,
+                Word::new(db, name.to_string()),
+                latex::small_range(&name),
+            ));
+        }
+
+        Some(())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum TexLabelKind {
+    Definition,
+    Reference,
+}
+
+#[salsa::tracked]
 pub struct TexAnalysis {
     #[return_ref]
     pub links: Vec<TexLink>,
+
+    #[return_ref]
+    pub labels: Vec<TexLabelName>,
 }
 
 impl TexAnalysis {
     pub(super) fn analyze(db: &dyn Db, root: &latex::SyntaxNode) -> Self {
         let mut links = Vec::new();
+        let mut labels = Vec::new();
 
         for node in root.descendants() {
             TexLink::of_include(db, node.clone(), &mut links)
-                .or_else(|| TexLink::of_import(db, node.clone(), &mut links));
+                .or_else(|| TexLink::of_import(db, node.clone(), &mut links))
+                .or_else(|| TexLabelName::of_definition(db, node.clone(), &mut labels))
+                .or_else(|| TexLabelName::of_reference(db, node.clone(), &mut labels))
+                .or_else(|| TexLabelName::of_reference_range(db, node.clone(), &mut labels));
         }
 
-        Self::new(db, links)
+        Self::new(db, links, labels)
     }
 }

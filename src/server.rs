@@ -29,10 +29,10 @@ use crate::{
     distro::Distribution,
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
-        execute_command, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_hover, find_inlay_hints, find_workspace_symbols, folding,
-        formatting, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
-        FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
+        execute_command, find_all_references, find_document_highlights, find_document_symbols,
+        find_hover, find_inlay_hints, find_workspace_symbols, folding, formatting, goto_definition,
+        link, prepare_rename_all, rename_all, CompletionItemData, FeatureRequest, ForwardSearch,
+        ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -358,7 +358,7 @@ impl Server {
         let workspace = Workspace::get(&self.db);
         let language_id = &params.text_document.language_id;
         let language = Language::from_id(language_id).unwrap_or(Language::Tex);
-        let document = workspace.open(
+        workspace.open(
             &mut self.db,
             params.text_document.uri,
             params.text_document.text,
@@ -499,10 +499,10 @@ impl Server {
         Ok(())
     }
 
-    fn document_link(&self, id: RequestId, mut params: DocumentLinkParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, find_document_links)?;
+    fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| link::find_all(db, &uri));
         Ok(())
     }
 

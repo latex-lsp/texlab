@@ -171,7 +171,7 @@ impl Workspace {
                 .documents(db)
                 .iter()
                 .map(|&document| self.graph(db, document, distro))
-                .flat_map(|graph| graph.items(db).iter())
+                .flat_map(|graph| graph.edges(db).iter())
                 .flat_map(|item| item.origin(db).into_locations(db, distro))
                 .filter_map(|location| location.path(db).as_deref())
                 .map(|path| path.to_path_buf())

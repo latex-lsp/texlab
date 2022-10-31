@@ -61,8 +61,8 @@ fn document_import() -> Result<()> {
     check(
         r#"
 %TEX foo.tex
-%SRC \import{bar/}{baz}
-%1.1               ^^^
+%SRC \import{.}{bar/baz}
+%1.1            ^^^^^^^
 %CUR ^
 
 %TEX bar/baz.tex

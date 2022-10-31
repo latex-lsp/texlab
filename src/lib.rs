@@ -55,6 +55,7 @@ pub struct Jar(
     db::parse::LogDocumentData,
     db::analysis::TexLink,
     db::analysis::TexLink_locations,
+    db::analysis::TexLabelName,
     db::analysis::TexAnalysis,
     db::dependency::Resolved,
     db::dependency::Implicit,
