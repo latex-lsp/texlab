@@ -70,6 +70,11 @@ impl LspClient {
         Ok(serde_json::from_value(result)?)
     }
 
+    pub fn send_response(&self, response: lsp_server::Response) -> Result<()> {
+        self.raw.sender.send(response.into())?;
+        Ok(())
+    }
+
     pub fn recv_response(&self, response: lsp_server::Response) -> Result<()> {
         let (_, tx) = self
             .raw

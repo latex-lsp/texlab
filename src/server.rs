@@ -1,4 +1,7 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -26,11 +29,11 @@ use crate::{
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
+        building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         execute_command, find_all_references, find_document_highlights, find_document_links,
         find_document_symbols, find_foldings, find_hover, find_inlay_hints, find_workspace_symbols,
-        format_source_code, goto_definition, prepare_rename_all, rename_all, BuildEngine,
-        BuildParams, BuildResult, BuildStatus, CompletionItemData, FeatureRequest, ForwardSearch,
-        ForwardSearchResult, ForwardSearchStatus,
+        format_source_code, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
+        FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -43,17 +46,16 @@ enum InternalMessage {
     SetDistro(Distribution),
     SetOptions(Options),
     FileEvent(notify::Event),
+    ForwardSearch(Url),
 }
 
 struct ServerFork {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
-    client: LspClient,
     db: salsa::Snapshot<Database>,
     workspace: crate::Workspace,
     diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
-    build_engine: Arc<BuildEngine>,
 }
 
 impl ServerFork {
@@ -77,7 +79,6 @@ pub struct Server {
     diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
     pool: ThreadPool,
-    build_engine: Arc<BuildEngine>,
 }
 
 impl Server {
@@ -103,7 +104,6 @@ impl Server {
             diagnostic_tx,
             diagnostic_manager,
             pool: threadpool::Builder::new().build(),
-            build_engine: Arc::default(),
         }
     }
 
@@ -116,12 +116,10 @@ impl Server {
         ServerFork {
             connection: self.connection.clone(),
             internal_tx: self.internal_tx.clone(),
-            client: self.client.clone(),
             db: self.db.snapshot(),
             workspace: self.workspace.clone(),
             diagnostic_tx: self.diagnostic_tx.clone(),
             diagnostic_manager: self.diagnostic_manager.clone(),
-            build_engine: self.build_engine.clone(),
         }
     }
 
@@ -413,30 +411,8 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        if let Some(request) = self
-            .workspace
-            .get(&uri)
-            .filter(|_| self.workspace.environment.options.build.on_save)
-            .map(|document| {
-                self.feature_request(
-                    Arc::clone(document.uri()),
-                    BuildParams {
-                        text_document: TextDocumentIdentifier::new(uri.clone()),
-                    },
-                )
-            })
-        {
-            self.spawn(move |server| {
-                server
-                    .build_engine
-                    .build(request, server.client)
-                    .unwrap_or_else(|why| {
-                        error!("Build failed: {}", why);
-                        BuildResult {
-                            status: BuildStatus::FAILURE,
-                        }
-                    });
-            });
+        if Workspace::get(&self.db).options(&self.db).build.on_save {
+            self.build_internal(uri.clone(), |_| ())?;
         }
 
         if let Some(document) = self
@@ -477,14 +453,6 @@ impl Server {
                 .send(server.workspace.clone(), delay.0)
                 .unwrap();
         });
-    }
-
-    fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
-        FeatureRequest {
-            params,
-            workspace: self.workspace.slice(&uri),
-            uri,
-        }
     }
 
     fn handle_feature_request<P, R, H>(
@@ -718,44 +686,110 @@ impl Server {
         Ok(())
     }
 
-    fn build(&self, id: RequestId, mut params: BuildParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
+    fn build(&mut self, id: RequestId, params: BuildParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+
         let client = self.client.clone();
-        let build_engine = Arc::clone(&self.build_engine);
-        self.handle_feature_request(id, params, uri, move |request| {
-            build_engine.build(request, client).unwrap_or_else(|why| {
-                error!("Build failed: {}", why);
-                BuildResult {
-                    status: BuildStatus::FAILURE,
-                }
-            })
+        self.build_internal(uri, move |status| {
+            let result = BuildResult { status };
+            client
+                .send_response(lsp_server::Response::new_ok(id, result))
+                .unwrap();
         })?;
+
         Ok(())
     }
 
-    fn forward_search(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, |req| {
-            let options = &req.workspace.environment.options.forward_search;
-            match options.executable.as_deref().zip(options.args.as_deref()) {
-                Some((executable, args)) => ForwardSearch::builder()
-                    .executable(executable)
-                    .args(args)
-                    .line(req.params.position.line)
-                    .workspace(&req.workspace)
-                    .tex_uri(&req.uri)
-                    .build()
-                    .execute()
-                    .unwrap_or(ForwardSearchResult {
-                        status: ForwardSearchStatus::ERROR,
-                    }),
-                None => ForwardSearchResult {
-                    status: ForwardSearchStatus::UNCONFIGURED,
-                },
+    fn build_internal(
+        &mut self,
+        uri: Url,
+        callback: impl FnOnce(BuildStatus) + Send + 'static,
+    ) -> Result<()> {
+        static LOCK: Mutex<()> = Mutex::new(());
+
+        let compiler = match TexCompiler::configure(&self.db, uri.clone(), self.client.clone()) {
+            Some(compiler) => compiler,
+            None => {
+                callback(BuildStatus::FAILURE);
+                return Ok(());
             }
+        };
+
+        let forward_search_after = Workspace::get(&self.db)
+            .options(&self.db)
+            .build
+            .forward_search_after;
+
+        let sender = self.internal_tx.clone();
+        self.pool.execute(move || {
+            let guard = LOCK.lock().unwrap();
+
+            let status = compiler.run();
+            if forward_search_after {
+                sender.send(InternalMessage::ForwardSearch(uri)).unwrap();
+            }
+
+            drop(guard);
+            callback(status);
+        });
+
+        Ok(())
+    }
+
+    fn forward_search(&mut self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+
+        let client = self.client.clone();
+        self.forward_search_internal(uri, Some(params.position), move |status| {
+            let result = ForwardSearchResult { status };
+            client
+                .send_response(lsp_server::Response::new_ok(id, result))
+                .unwrap();
         })?;
+
+        Ok(())
+    }
+
+    fn forward_search_internal(
+        &mut self,
+        uri: Url,
+        position: Option<Position>,
+        callback: impl FnOnce(ForwardSearchStatus) + Send + 'static,
+    ) -> Result<()> {
+        let workspace = Workspace::get(&self.db);
+        let location = db::document::Location::new(&self.db, uri.clone());
+        let document = match workspace.lookup(&self.db, location) {
+            Some(document) => document,
+            None => {
+                callback(ForwardSearchStatus::FAILURE);
+                return Ok(());
+            }
+        };
+
+        let position = position.unwrap_or_else(|| {
+            document
+                .contents(&self.db)
+                .line_index(&self.db)
+                .line_col_lsp(document.cursor(&self.db))
+        });
+
+        let options = &workspace.options(&self.db).forward_search;
+        let status = match options.executable.as_deref().zip(options.args.as_deref()) {
+            Some((executable, args)) => ForwardSearch::builder()
+                .line(position.line)
+                .tex_uri(&uri)
+                .executable(executable)
+                .args(args)
+                .workspace(&self.workspace)
+                .build()
+                .execute()
+                .map_or(ForwardSearchStatus::FAILURE, |result| result.status),
+            None => ForwardSearchStatus::UNCONFIGURED,
+        };
+
+        callback(status);
         Ok(())
     }
 
@@ -884,6 +918,9 @@ impl Server {
                         }
                         InternalMessage::FileEvent(event) => {
                             self.handle_file_event(event);
+                        }
+                        InternalMessage::ForwardSearch(uri) => {
+                            self.forward_search_internal(uri, None, |_| ())?;
                         }
                     };
                 }

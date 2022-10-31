@@ -1,4 +1,4 @@
-mod build;
+pub mod building;
 mod completion;
 mod cursor;
 mod definition;
@@ -22,7 +22,6 @@ use lsp_types::Url;
 use crate::{Document, Workspace};
 
 pub use self::{
-    build::{BuildEngine, BuildParams, BuildResult, BuildStatus},
     completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     execute_command::execute_command,
