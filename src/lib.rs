@@ -21,6 +21,7 @@ mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
+pub(crate) mod util;
 mod workspace;
 
 pub use self::{
@@ -55,7 +56,9 @@ pub struct Jar(
     db::parse::LogDocumentData,
     db::analysis::TexLink,
     db::analysis::TexLink_locations,
-    db::analysis::TexLabelName,
+    db::analysis::label::Number,
+    db::analysis::label::Name,
+    db::analysis::TheoremEnvironment,
     db::analysis::TexAnalysis,
     db::dependency::Resolved,
     db::dependency::Implicit,
@@ -69,6 +72,7 @@ pub struct Jar(
     db::workspace::Workspace_implicit_links,
     db::workspace::Workspace_parents,
     db::workspace::Workspace_related,
+    db::workspace::Workspace_number_of_label,
 );
 
 pub trait Db: salsa::DbWithJar<Jar> {}

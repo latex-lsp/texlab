@@ -30,8 +30,8 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         execute_command, find_all_references, find_document_highlights, find_document_symbols,
-        find_hover, find_inlay_hints, find_workspace_symbols, folding, formatting, goto_definition,
-        link, prepare_rename_all, rename_all, CompletionItemData, FeatureRequest, ForwardSearch,
+        find_hover, find_workspace_symbols, folding, formatting, goto_definition, inlay_hint, link,
+        prepare_rename_all, rename_all, CompletionItemData, FeatureRequest, ForwardSearch,
         ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
@@ -679,10 +679,10 @@ impl Server {
         Ok(())
     }
 
-    fn inlay_hints(&self, id: RequestId, mut params: InlayHintParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, find_inlay_hints)?;
+    fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| inlay_hint::find_all(db, &uri, params.range));
         Ok(())
     }
 

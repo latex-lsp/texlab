@@ -1,7 +1,12 @@
+pub mod label;
+
 use lsp_types::Url;
 use rowan::{ast::AstNode, TextRange};
 
-use crate::{syntax::latex, Db};
+use crate::{
+    syntax::latex::{self, HasCurly},
+    Db,
+};
 
 use super::{document::Location, Distro, Word};
 
@@ -100,72 +105,26 @@ impl TexLinkKind {
 }
 
 #[salsa::tracked]
-pub struct TexLabelName {
-    pub kind: TexLabelKind,
+pub struct TheoremEnvironment {
     pub name: Word,
-    pub range: TextRange,
+    pub description: Word,
 }
 
-impl TexLabelName {
+impl TheoremEnvironment {
     fn of_definition(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
-        let label = latex::LabelDefinition::cast(node)?;
-        let name = label.name()?.key()?;
-        results.push(TexLabelName::new(
+        let theorem = latex::TheoremDefinition::cast(node)?;
+        let name = theorem.name()?.key()?.to_string();
+        let description = theorem.description()?;
+        let description = description.content_text()?;
+
+        results.push(Self::new(
             db,
-            TexLabelKind::Definition,
-            Word::new(db, name.to_string()),
-            latex::small_range(&name),
+            Word::new(db, name),
+            Word::new(db, description),
         ));
 
         Some(())
     }
-
-    fn of_reference(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
-        let label = latex::LabelReference::cast(node)?;
-        for name in label.name_list()?.keys() {
-            results.push(TexLabelName::new(
-                db,
-                TexLabelKind::Reference,
-                Word::new(db, name.to_string()),
-                latex::small_range(&name),
-            ));
-        }
-
-        Some(())
-    }
-
-    fn of_reference_range(
-        db: &dyn Db,
-        node: latex::SyntaxNode,
-        results: &mut Vec<Self>,
-    ) -> Option<()> {
-        let label = latex::LabelReferenceRange::cast(node)?;
-        if let Some(name) = label.from().and_then(|name| name.key()) {
-            results.push(TexLabelName::new(
-                db,
-                TexLabelKind::Reference,
-                Word::new(db, name.to_string()),
-                latex::small_range(&name),
-            ));
-        }
-
-        if let Some(name) = label.to().and_then(|name| name.key()) {
-            results.push(TexLabelName::new(
-                db,
-                TexLabelKind::Reference,
-                Word::new(db, name.to_string()),
-                latex::small_range(&name),
-            ));
-        }
-
-        Some(())
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
-pub enum TexLabelKind {
-    Definition,
-    Reference,
 }
 
 #[salsa::tracked]
@@ -174,22 +133,41 @@ pub struct TexAnalysis {
     pub links: Vec<TexLink>,
 
     #[return_ref]
-    pub labels: Vec<TexLabelName>,
+    pub labels: Vec<label::Name>,
+
+    #[return_ref]
+    pub label_numbers: Vec<label::Number>,
+
+    #[return_ref]
+    pub theorem_environments: Vec<TheoremEnvironment>,
 }
 
 impl TexAnalysis {
     pub(super) fn analyze(db: &dyn Db, root: &latex::SyntaxNode) -> Self {
         let mut links = Vec::new();
         let mut labels = Vec::new();
+        let mut label_numbers = Vec::new();
+        let mut theorem_environments = Vec::new();
 
         for node in root.descendants() {
             TexLink::of_include(db, node.clone(), &mut links)
                 .or_else(|| TexLink::of_import(db, node.clone(), &mut links))
-                .or_else(|| TexLabelName::of_definition(db, node.clone(), &mut labels))
-                .or_else(|| TexLabelName::of_reference(db, node.clone(), &mut labels))
-                .or_else(|| TexLabelName::of_reference_range(db, node.clone(), &mut labels));
+                .or_else(|| label::Name::of_definition(db, node.clone(), &mut labels))
+                .or_else(|| label::Name::of_reference(db, node.clone(), &mut labels))
+                .or_else(|| label::Name::of_reference_range(db, node.clone(), &mut labels))
+                .or_else(|| label::Number::of_number(db, node.clone(), &mut label_numbers))
+                .or_else(|| {
+                    TheoremEnvironment::of_definition(db, node.clone(), &mut theorem_environments)
+                });
         }
 
-        Self::new(db, links, labels)
+        Self::new(db, links, labels, label_numbers, theorem_environments)
+    }
+
+    pub fn find_label_number(self, db: &dyn Db, name: Word) -> Option<Word> {
+        self.label_numbers(db)
+            .iter()
+            .find(|number| number.name(db) == name)
+            .map(|number| number.text(db))
     }
 }

@@ -15,7 +15,7 @@ use crate::{
 use super::{
     dependency,
     document::{Contents, Language, Owner},
-    Distro,
+    Distro, Word,
 };
 
 #[salsa::input(singleton)]
@@ -311,5 +311,21 @@ impl Workspace {
             .flatten()
             .copied()
             .collect()
+    }
+
+    #[salsa::tracked]
+    pub fn number_of_label(
+        self,
+        db: &dyn Db,
+        distro: Distro,
+        child: Document,
+        name: Word,
+    ) -> Option<Word> {
+        self.related(db, distro, child)
+            .iter()
+            .filter_map(|document| document.parse(db).as_tex())
+            .flat_map(|data| data.analyze(db).label_numbers(db))
+            .find(|number| number.name(db) == name)
+            .map(|number| number.text(db))
     }
 }

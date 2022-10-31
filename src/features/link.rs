@@ -17,7 +17,7 @@ pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<DocumentLink>> {
     };
 
     include::find_links(db, document, &mut builder);
-    Some(builder.finish())
+    Some(builder.links)
 }
 
 struct LinkBuilder<'db> {
@@ -36,9 +36,5 @@ impl<'db> LinkBuilder<'db> {
             tooltip: None,
             data: None,
         });
-    }
-
-    pub fn finish(self) -> Vec<DocumentLink> {
-        self.links
     }
 }
