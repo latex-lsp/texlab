@@ -10,7 +10,7 @@ use lsp_server::{Connection, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
-use salsa::ParallelDatabase;
+use salsa::{DbWithJar, ParallelDatabase};
 use serde::Serialize;
 use threadpool::ThreadPool;
 
@@ -19,7 +19,6 @@ use crate::{
     client::LspClient,
     component_db::COMPONENT_DATABASE,
     db::{
-        self,
         document::{Language, Owner},
         workspace::Workspace,
         Distro,
@@ -31,7 +30,7 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         execute_command, find_all_references, find_document_highlights, find_document_links,
-        find_document_symbols, find_foldings, find_hover, find_inlay_hints, find_workspace_symbols,
+        find_document_symbols, find_hover, find_inlay_hints, find_workspace_symbols, folding,
         format_source_code, goto_definition, prepare_rename_all, rename_all, CompletionItemData,
         FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
     },
@@ -52,7 +51,6 @@ enum InternalMessage {
 struct ServerFork {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
-    db: salsa::Snapshot<Database>,
     workspace: crate::Workspace,
     diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
@@ -107,6 +105,22 @@ impl Server {
         }
     }
 
+    fn run_async_query<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Serialize + Default,
+        Q: FnOnce(&dyn Db) -> Option<R> + Send + 'static,
+    {
+        let snapshot = self.db.snapshot();
+        let client = self.client.clone();
+        self.pool.execute(move || {
+            let db = snapshot.as_jar_db();
+            let result = query(db).unwrap_or_default();
+            client
+                .send_response(lsp_server::Response::new_ok(id, result))
+                .unwrap();
+        });
+    }
+
     fn spawn(&self, job: impl FnOnce(ServerFork) + Send + 'static) {
         let fork = self.fork();
         self.pool.execute(move || job(fork));
@@ -116,7 +130,6 @@ impl Server {
         ServerFork {
             connection: self.connection.clone(),
             internal_tx: self.internal_tx.clone(),
-            db: self.db.snapshot(),
             workspace: self.workspace.clone(),
             diagnostic_tx: self.diagnostic_tx.clone(),
             diagnostic_manager: self.diagnostic_manager.clone(),
@@ -362,12 +375,12 @@ impl Server {
         Ok(())
     }
 
-    fn did_change(&mut self, mut params: DidChangeTextDocumentParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
+    fn did_change(&mut self, params: DidChangeTextDocumentParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
 
         let workspace = Workspace::get(&self.db);
-        let location = db::document::Location::new(&self.db, params.text_document.uri);
-        let document = match workspace.lookup(&self.db, location) {
+        let document = match workspace.lookup_uri(&self.db, &uri) {
             Some(document) => document,
             None => return Ok(()),
         };
@@ -430,8 +443,7 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let location = db::document::Location::new(&self.db, uri);
-        if let Some(document) = Workspace::get(&self.db).lookup(&self.db, location) {
+        if let Some(document) = Workspace::get(&self.db).lookup_uri(&self.db, &uri) {
             document
                 .set_owner(&mut self.db)
                 .with_durability(salsa::Durability::LOW)
@@ -558,10 +570,10 @@ impl Server {
         Ok(())
     }
 
-    fn folding_range(&self, id: RequestId, mut params: FoldingRangeParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, find_foldings)?;
+    fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| folding::find_all(db.as_jar_db(), &uri));
         Ok(())
     }
 
@@ -583,8 +595,7 @@ impl Server {
         );
 
         let workspace = Workspace::get(&self.db);
-        let location = db::document::Location::new(&self.db, uri.as_ref().clone());
-        if let Some(document) = workspace.lookup(&self.db, location) {
+        if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
             let position = document
                 .contents(&self.db)
                 .line_index(&self.db)
@@ -759,8 +770,7 @@ impl Server {
         callback: impl FnOnce(ForwardSearchStatus) + Send + 'static,
     ) -> Result<()> {
         let workspace = Workspace::get(&self.db);
-        let location = db::document::Location::new(&self.db, uri.clone());
-        let document = match workspace.lookup(&self.db, location) {
+        let document = match workspace.lookup_uri(&self.db, &uri) {
             Some(document) => document,
             None => {
                 callback(ForwardSearchStatus::FAILURE);

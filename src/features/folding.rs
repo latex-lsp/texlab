@@ -1,49 +1,51 @@
-use lsp_types::{FoldingRange, FoldingRangeKind, FoldingRangeParams, Range};
+use lsp_types::{FoldingRange, FoldingRangeKind, Range, Url};
 use rowan::ast::AstNode;
 
 use crate::{
+    db::{parse::DocumentData, workspace::Workspace},
     syntax::{bibtex, latex},
-    DocumentData, LineIndexExt,
+    Db, LineIndexExt,
 };
 
-use super::FeatureRequest;
-
-pub fn find_foldings(request: FeatureRequest<FoldingRangeParams>) -> Vec<FoldingRange> {
-    let mut foldings = Vec::new();
-    let main_document = request.main_document();
-    match main_document.data() {
-        DocumentData::Latex(data) => {
-            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
+pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
+    let document = Workspace::get(db).lookup_uri(db, uri)?;
+    let line_index = document.contents(db).line_index(db);
+    let foldings = match document.parse(db) {
+        DocumentData::Tex(data) => {
+            let mut results = Vec::new();
+            let root = data.root(db);
+            for node in root.descendants() {
                 if let Some(folding) = latex::Environment::cast(node.clone())
                     .map(|node| latex::small_range(&node))
                     .or_else(|| {
                         latex::Section::cast(node.clone()).map(|node| latex::small_range(&node))
                     })
                     .or_else(|| latex::EnumItem::cast(node).map(|node| latex::small_range(&node)))
-                    .map(|node| main_document.line_index().line_col_lsp_range(node))
+                    .map(|node| line_index.line_col_lsp_range(node))
                     .map(create_range)
                 {
-                    foldings.push(folding);
+                    results.push(folding);
                 }
             }
+
+            results
         }
-        DocumentData::Bibtex(data) => {
-            for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
-                if matches!(
-                    node.kind(),
-                    bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
-                ) {
-                    foldings.push(create_range(
-                        main_document
-                            .line_index()
-                            .line_col_lsp_range(node.text_range()),
-                    ));
-                }
-            }
+        DocumentData::Bib(data) => {
+            let root = data.root(db);
+            root.descendants()
+                .filter(|node| {
+                    matches!(
+                        node.kind(),
+                        bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
+                    )
+                })
+                .map(|node| create_range(line_index.line_col_lsp_range(node.text_range())))
+                .collect()
         }
-        DocumentData::BuildLog(_) => {}
-    }
-    foldings
+        DocumentData::Log(_) => return None,
+    };
+
+    Some(foldings)
 }
 
 fn create_range(range: Range) -> FoldingRange {

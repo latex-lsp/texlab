@@ -1,12 +1,18 @@
 use crate::{
     db::analysis::TexAnalysis,
-    syntax::{latex, BuildLog},
+    syntax::{bibtex, latex, BuildLog},
     Db,
 };
 
 #[salsa::interned]
 pub struct TexDocumentData {
     pub green: rowan::GreenNode,
+}
+
+impl TexDocumentData {
+    pub fn root(self, db: &dyn Db) -> latex::SyntaxNode {
+        latex::SyntaxNode::new_root(self.green(db))
+    }
 }
 
 #[salsa::tracked]
@@ -21,6 +27,12 @@ impl TexDocumentData {
 #[salsa::interned]
 pub struct BibDocumentData {
     pub green: rowan::GreenNode,
+}
+
+impl BibDocumentData {
+    pub fn root(self, db: &dyn Db) -> bibtex::SyntaxNode {
+        bibtex::SyntaxNode::new_root(self.green(db))
+    }
 }
 
 #[salsa::interned]

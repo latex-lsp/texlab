@@ -41,6 +41,13 @@ impl Workspace {
             .copied()
     }
 
+    pub fn lookup_uri(self, db: &dyn Db, uri: &Url) -> Option<Document> {
+        self.documents(db)
+            .iter()
+            .find(|document| document.location(db).uri(db) == uri)
+            .copied()
+    }
+
     pub fn lookup_path(self, db: &dyn Db, path: &Path) -> Option<Document> {
         self.documents(db)
             .iter()
