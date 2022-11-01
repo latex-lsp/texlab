@@ -14,7 +14,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::{
     client::LspClient,
-    db::{document::Location, workspace::Workspace, Distro},
+    db::{workspace::Workspace, Distro},
     ClientCapabilitiesExt, Db,
 };
 
@@ -50,8 +50,7 @@ pub struct TexCompiler {
 impl TexCompiler {
     pub fn configure(db: &dyn Db, uri: Url, client: LspClient) -> Option<Self> {
         let workspace = Workspace::get(db);
-        let location = Location::new(db, uri);
-        let document = match workspace.lookup(db, location) {
+        let document = match workspace.lookup_uri(db, &uri) {
             Some(child) => workspace
                 .parents(db, Distro::get(db), child)
                 .iter()
@@ -61,8 +60,7 @@ impl TexCompiler {
             None => return None,
         };
 
-        let uri = location.uri(db);
-        if uri.scheme() != "file" {
+        if document.location(db).path(db).is_none() {
             log::warn!("Document {uri} cannot be compiled; skipping...");
             return None;
         }
@@ -73,9 +71,14 @@ impl TexCompiler {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(workspace.working_dir(db, location).path(db).as_deref()?);
+            .current_dir(
+                workspace
+                    .working_dir(db, document.location(db))
+                    .path(db)
+                    .as_deref()?,
+            );
 
-        let path = location.path(db).as_deref().unwrap();
+        let path = document.location(db).path(db).as_deref().unwrap();
         for arg in options.args.0.iter() {
             command.arg(replace_placeholder(arg, path));
         }
