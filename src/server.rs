@@ -31,8 +31,8 @@ use crate::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
         definition, execute_command, find_all_references, find_document_highlights, folding,
-        formatting, hover, inlay_hint, link, prepare_rename_all, rename_all, symbol,
-        FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
+        formatting, hover, inlay_hint, link, rename, symbol, FeatureRequest, ForwardSearch,
+        ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -505,7 +505,7 @@ impl Server {
         Ok(())
     }
 
-    fn document_symbols(&self, id: RequestId, mut params: DocumentSymbolParams) -> Result<()> {
+    fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
         self.run_async_query(id, move |db| symbol::find_document_symbols(db, &uri));
@@ -607,17 +607,24 @@ impl Server {
         Ok(())
     }
 
-    fn prepare_rename(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, prepare_rename_all)?;
+    fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| {
+            rename::prepare_rename_all(db, &uri, params.position)
+        });
+
         Ok(())
     }
 
-    fn rename(&self, id: RequestId, mut params: RenameParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
-        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, rename_all)?;
+    fn rename(&self, id: RequestId, params: RenameParams) -> Result<()> {
+        let mut uri = params.text_document_position.text_document.uri;
+        normalize_uri(&mut uri);
+        let position = params.text_document_position.position;
+        self.run_async_query(id, move |db| {
+            rename::rename_all(db, &uri, position, params.new_name)
+        });
+
         Ok(())
     }
 

@@ -12,7 +12,7 @@ pub mod inlay_hint;
 pub mod link;
 mod lsp_kinds;
 mod reference;
-mod rename;
+pub mod rename;
 pub mod symbol;
 
 use std::sync::Arc;
@@ -26,7 +26,6 @@ pub use self::{
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
     reference::find_all_references,
-    rename::{prepare_rename_all, rename_all},
 };
 
 #[derive(Clone)]

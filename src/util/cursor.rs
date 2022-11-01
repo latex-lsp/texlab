@@ -119,18 +119,18 @@ impl Cursor {
     }
 }
 
-pub struct CursorContext<'db, P = ()> {
+pub struct CursorContext<'db, T = ()> {
     pub db: &'db dyn Db,
     pub document: Document,
     pub workspace: Workspace,
     pub distro: Distro,
     pub cursor: Cursor,
     pub offset: TextSize,
-    pub params: P,
+    pub params: T,
 }
 
-impl<'db, P> CursorContext<'db, P> {
-    pub fn new(db: &'db dyn Db, document: Document, position: Position, params: P) -> Self {
+impl<'db, T> CursorContext<'db, T> {
+    pub fn new(db: &'db dyn Db, document: Document, position: Position, params: T) -> Self {
         let offset = document.contents(db).line_index(db).offset_lsp(position);
 
         let cursor = match document.parse(db) {

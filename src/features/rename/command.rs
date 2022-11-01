@@ -1,29 +1,21 @@
-use std::sync::Arc;
-
-use lsp_types::RenameParams;
 use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    features::cursor::{CursorContext, HasPosition},
-    syntax::latex,
-};
+use crate::util::cursor::CursorContext;
 
-use super::{Indel, RenameResult};
+use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_command_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-) -> Option<TextRange> {
+pub(super) fn prepare_command_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     context.cursor.command_range(context.offset)
 }
 
-pub(super) fn rename_command(context: &CursorContext<RenameParams>) -> Option<RenameResult> {
+pub(super) fn rename_command(context: &CursorContext<Params>) -> Option<RenameResult> {
     prepare_command_rename(context)?;
-    let name = context.cursor.as_latex()?.text();
+    let name = context.cursor.as_tex()?.text();
     let mut changes = FxHashMap::default();
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
-            let root = latex::SyntaxNode::new_root(data.green.clone());
+    for document in context.related() {
+        if let Some(data) = document.parse(context.db).as_tex() {
+            let root = data.root(context.db);
             let edits = root
                 .descendants_with_tokens()
                 .filter_map(|element| element.into_token())
@@ -32,12 +24,12 @@ pub(super) fn rename_command(context: &CursorContext<RenameParams>) -> Option<Re
                     let range = token.text_range();
                     Indel {
                         delete: TextRange::new(range.start() + TextSize::from(1), range.end()),
-                        insert: context.request.params.new_name.clone(),
+                        insert: context.params.new_name.clone(),
                     }
                 })
                 .collect();
 
-            changes.insert(Arc::clone(document.uri()), edits);
+            changes.insert(document, edits);
         }
     }
 

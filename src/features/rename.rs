@@ -2,60 +2,61 @@ mod command;
 mod entry;
 mod label;
 
-use std::sync::Arc;
-
-use lsp_types::{Range, RenameParams, TextDocumentPositionParams, TextEdit, Url, WorkspaceEdit};
+use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
 use rowan::TextRange;
 use rustc_hash::FxHashMap;
 
-use crate::LineIndexExt;
-
-use self::{
-    command::{prepare_command_rename, rename_command},
-    entry::{prepare_entry_rename, rename_entry},
-    label::{prepare_label_rename, rename_label},
+use crate::{
+    db::{document::Document, workspace::Workspace},
+    util::cursor::CursorContext,
+    Db, LineIndexExt,
 };
 
-use super::{cursor::CursorContext, FeatureRequest};
+pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<Range> {
+    let document = Workspace::get(db).lookup_uri(db, uri)?;
+    let context = CursorContext::new(db, document, position, ());
+    let range = entry::prepare_entry_rename(&context)
+        .or_else(|| label::prepare_label_rename(&context))
+        .or_else(|| command::prepare_command_rename(&context))?;
 
-pub fn prepare_rename_all(request: FeatureRequest<TextDocumentPositionParams>) -> Option<Range> {
-    let context = CursorContext::new(request);
-    let range = prepare_entry_rename(&context)
-        .or_else(|| prepare_label_rename(&context))
-        .or_else(|| prepare_command_rename(&context))?;
-
-    Some(
-        context
-            .request
-            .main_document()
-            .line_index()
-            .line_col_lsp_range(range),
-    )
+    let line_index = context.document.contents(db).line_index(db);
+    Some(line_index.line_col_lsp_range(range))
 }
 
-pub fn rename_all(request: FeatureRequest<RenameParams>) -> Option<WorkspaceEdit> {
-    let context = CursorContext::new(request);
-    let result = rename_entry(&context)
-        .or_else(|| rename_label(&context))
-        .or_else(|| rename_command(&context))?;
+pub fn rename_all(
+    db: &dyn Db,
+    uri: &Url,
+    position: Position,
+    new_name: String,
+) -> Option<WorkspaceEdit> {
+    let document = Workspace::get(db).lookup_uri(db, uri)?;
+    let context = CursorContext::new(db, document, position, Params { new_name });
+    let result = entry::rename_entry(&context)
+        .or_else(|| label::rename_label(&context))
+        .or_else(|| command::rename_command(&context))?;
 
     let changes = result
         .changes
         .into_iter()
-        .map(|(uri, old_edits)| {
-            let document = &context.request.workspace.get(&uri).unwrap();
+        .map(|(document, old_edits)| {
+            let line_index = document.contents(db).line_index(db);
             let new_edits = old_edits
                 .into_iter()
                 .map(|Indel { delete, insert }| {
-                    TextEdit::new(document.line_index().line_col_lsp_range(delete), insert)
+                    TextEdit::new(line_index.line_col_lsp_range(delete), insert)
                 })
                 .collect();
 
-            (uri.as_ref().clone(), new_edits)
+            (document.location(db).uri(db).clone(), new_edits)
         })
         .collect();
 
     Some(WorkspaceEdit::new(changes))
+}
+
+#[derive(Debug)]
+struct Params {
+    new_name: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -66,5 +67,5 @@ struct Indel {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct RenameResult {
-    changes: FxHashMap<Arc<Url>, Vec<Indel>>,
+    changes: FxHashMap<Document, Vec<Indel>>,
 }

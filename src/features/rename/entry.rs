@@ -1,23 +1,18 @@
-use std::sync::Arc;
-
-use lsp_types::RenameParams;
 use rowan::{ast::AstNode, TextRange};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    features::cursor::{CursorContext, HasPosition},
+    db::parse::DocumentData,
     syntax::{
         bibtex::{self, HasName},
         latex,
     },
-    DocumentData,
+    util::cursor::CursorContext,
 };
 
-use super::{Indel, RenameResult};
+use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_entry_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-) -> Option<TextRange> {
+pub(super) fn prepare_entry_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     let (_, range) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
@@ -25,18 +20,17 @@ pub(super) fn prepare_entry_rename<P: HasPosition>(
     Some(range)
 }
 
-pub(super) fn rename_entry(context: &CursorContext<RenameParams>) -> Option<RenameResult> {
+pub(super) fn rename_entry(context: &CursorContext<Params>) -> Option<RenameResult> {
     prepare_entry_rename(context)?;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = FxHashMap::default();
-    for document in context.request.workspace.iter() {
-        let uri = Arc::clone(document.uri());
-        match document.data() {
-            DocumentData::Latex(data) => {
-                let root = latex::SyntaxNode::new_root(data.green.clone());
+    for document in context.related() {
+        match document.parse(context.db) {
+            DocumentData::Tex(data) => {
+                let root = data.root(context.db);
                 let edits: Vec<_> = root
                     .descendants()
                     .filter_map(latex::Citation::cast)
@@ -45,13 +39,13 @@ pub(super) fn rename_entry(context: &CursorContext<RenameParams>) -> Option<Rena
                     .filter(|key| key.to_string() == key_text)
                     .map(|key| Indel {
                         delete: latex::small_range(&key),
-                        insert: context.request.params.new_name.clone(),
+                        insert: context.params.new_name.clone(),
                     })
                     .collect();
-                changes.insert(uri, edits);
+                changes.insert(document, edits);
             }
-            DocumentData::Bibtex(data) => {
-                let root = bibtex::SyntaxNode::new_root(data.green.clone());
+            DocumentData::Bib(data) => {
+                let root = data.root(context.db);
                 let edits: Vec<_> = root
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
@@ -59,12 +53,12 @@ pub(super) fn rename_entry(context: &CursorContext<RenameParams>) -> Option<Rena
                     .filter(|key| key.text() == key_text)
                     .map(|key| Indel {
                         delete: key.text_range(),
-                        insert: context.request.params.new_name.clone(),
+                        insert: context.params.new_name.clone(),
                     })
                     .collect();
-                changes.insert(uri, edits);
+                changes.insert(document, edits);
             }
-            DocumentData::BuildLog(_) => {}
+            DocumentData::Log(_) => {}
         }
     }
 
