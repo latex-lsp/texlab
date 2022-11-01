@@ -30,10 +30,9 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
-        definition, execute_command, find_all_references, find_document_highlights,
-        find_document_symbols, find_workspace_symbols, folding, formatting, hover, inlay_hint,
-        link, prepare_rename_all, rename_all, FeatureRequest, ForwardSearch, ForwardSearchResult,
-        ForwardSearchStatus,
+        definition, execute_command, find_all_references, find_document_highlights, folding,
+        formatting, hover, inlay_hint, link, prepare_rename_all, rename_all, symbol,
+        FeatureRequest, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -507,21 +506,14 @@ impl Server {
     }
 
     fn document_symbols(&self, id: RequestId, mut params: DocumentSymbolParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-        let uri = Arc::new(params.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, find_document_symbols)?;
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+        self.run_async_query(id, move |db| symbol::find_document_symbols(db, &uri));
         Ok(())
     }
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
-        self.spawn(move |server| {
-            let result = find_workspace_symbols(&server.workspace, &params);
-            server
-                .connection
-                .sender
-                .send(lsp_server::Response::new_ok(id, result).into())
-                .unwrap();
-        });
+        self.run_async_query(id, move |db| symbol::find_workspace_symbols(db, &params));
         Ok(())
     }
 

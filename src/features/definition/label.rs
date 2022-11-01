@@ -10,8 +10,6 @@ pub(super) fn goto_label_definition(context: &CursorContext) -> Option<Vec<Defin
 
     for document in context.related() {
         if let Some(data) = document.parse(db).as_tex() {
-            let root = data.root(db);
-
             if let Some(label) = data
                 .analyze(db)
                 .labels(db)

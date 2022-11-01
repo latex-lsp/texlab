@@ -145,7 +145,7 @@ impl Document {
                 .links(db)
                 .iter()
                 .filter(|link| link.kind(db) == TexLinkKind::Cls)
-                .all(|link| link.path(db).text(db) != "subfiles")
+                .any(|link| link.path(db).text(db) != "subfiles")
         })
     }
 

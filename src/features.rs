@@ -13,7 +13,7 @@ pub mod link;
 mod lsp_kinds;
 mod reference;
 mod rename;
-mod symbol;
+pub mod symbol;
 
 use std::sync::Arc;
 
@@ -27,7 +27,6 @@ pub use self::{
     highlight::find_document_highlights,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
-    symbol::{find_document_symbols, find_workspace_symbols},
 };
 
 #[derive(Clone)]
