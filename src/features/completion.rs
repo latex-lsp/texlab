@@ -32,7 +32,10 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     syntax::{bibtex, latex},
-    util::cursor::{Cursor, CursorContext},
+    util::{
+        cursor::{Cursor, CursorContext},
+        lsp_enums::Structure,
+    },
     Db, LineIndexExt,
 };
 
@@ -60,8 +63,6 @@ use self::{
 };
 
 pub use self::types::CompletionItemData;
-
-use super::lsp_kinds::Structure;
 
 pub const COMPLETION_LIMIT: usize = 50;
 

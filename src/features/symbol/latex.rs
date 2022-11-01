@@ -6,9 +6,8 @@ use titlecase::titlecase;
 
 use crate::{
     db::{document::Document, workspace::Workspace, Distro, Word},
-    find_caption_by_parent,
     syntax::latex::{self, HasBrack, HasCurly},
-    util::label::LabeledFloatKind,
+    util::label::{find_caption_by_parent, LabeledFloatKind},
     Db, LineIndexExt, LANGUAGE_DATA,
 };
 

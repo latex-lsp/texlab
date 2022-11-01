@@ -31,8 +31,7 @@ use crate::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
         definition, execute_command, folding, formatting, highlight, hover, inlay_hint, link,
-        reference, rename, symbol, FeatureRequest, ForwardSearch, ForwardSearchResult,
-        ForwardSearchStatus,
+        reference, rename, symbol, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -54,16 +53,6 @@ struct ServerFork {
     workspace: crate::Workspace,
     diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
-}
-
-impl ServerFork {
-    pub fn feature_request<P>(&self, uri: Arc<Url>, params: P) -> FeatureRequest<P> {
-        FeatureRequest {
-            params,
-            workspace: self.workspace.slice(&uri),
-            uri,
-        }
-    }
 }
 
 pub struct Server {
@@ -466,38 +455,6 @@ impl Server {
         });
     }
 
-    fn handle_feature_request<P, R, H>(
-        &self,
-        id: RequestId,
-        params: P,
-        uri: Arc<Url>,
-        handler: H,
-    ) -> Result<()>
-    where
-        P: Send + 'static,
-        R: Serialize,
-        H: FnOnce(FeatureRequest<P>) -> R + Send + 'static,
-    {
-        self.spawn(move |server| {
-            let request = server.feature_request(uri, params);
-            if request.workspace.iter().next().is_none() {
-                let code = lsp_server::ErrorCode::InvalidRequest as i32;
-                let message = "unknown document".to_string();
-                let response = lsp_server::Response::new_err(id, code, message);
-                server.connection.sender.send(response.into()).unwrap();
-            } else {
-                let result = handler(request);
-                server
-                    .connection
-                    .sender
-                    .send(lsp_server::Response::new_ok(id, result).into())
-                    .unwrap();
-            }
-        });
-
-        Ok(())
-    }
-
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
@@ -632,7 +589,7 @@ impl Server {
         Ok(())
     }
 
-    fn document_highlight(&self, id: RequestId, mut params: DocumentHighlightParams) -> Result<()> {
+    fn document_highlight(&self, id: RequestId, params: DocumentHighlightParams) -> Result<()> {
         let mut uri = params.text_document_position_params.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position_params.position;

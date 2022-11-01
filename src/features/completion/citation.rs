@@ -4,12 +4,11 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     db::document::Document,
-    features::lsp_kinds::Structure,
     syntax::{
         bibtex::{self, HasName, HasType},
         latex,
     },
-    util::cursor::CursorContext,
+    util::{cursor::CursorContext, lsp_enums::Structure},
     BibtexEntryTypeCategory, Db, LANGUAGE_DATA,
 };
 

@@ -3,7 +3,7 @@ use rowan::TextRange;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::{features::lsp_kinds::Structure, BibtexEntryTypeDoc, BibtexFieldDoc};
+use crate::{util::lsp_enums::Structure, BibtexEntryTypeDoc, BibtexFieldDoc};
 
 #[derive(Debug, Clone)]
 pub struct InternalCompletionItem<'db> {

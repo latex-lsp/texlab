@@ -12,7 +12,6 @@ pub mod distro;
 mod document;
 mod environment;
 pub mod features;
-mod label;
 mod lang_data;
 mod language;
 mod line_index;
@@ -28,7 +27,6 @@ pub use self::{
     capabilities::ClientCapabilitiesExt,
     document::*,
     environment::Environment,
-    label::*,
     lang_data::*,
     language::DocumentLanguage,
     line_index::{LineCol, LineColUtf16, LineIndex},

@@ -219,11 +219,4 @@ impl TexAnalysis {
             environment_names,
         )
     }
-
-    pub fn find_label_number(self, db: &dyn Db, name: Word) -> Option<Word> {
-        self.label_numbers(db)
-            .iter()
-            .find(|number| number.name(db) == name)
-            .map(|number| number.text(db))
-    }
 }

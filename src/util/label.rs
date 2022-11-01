@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use lsp_types::{MarkupContent, MarkupKind};
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
@@ -117,13 +116,6 @@ impl RenderedLabel {
             }
         }
     }
-
-    pub fn documentation(&self, db: &dyn Db) -> MarkupContent {
-        MarkupContent {
-            kind: MarkupKind::PlainText,
-            value: self.reference(db),
-        }
-    }
 }
 
 pub fn render(db: &dyn Db, document: Document, label_def: label::Name) -> Option<RenderedLabel> {
@@ -165,14 +157,6 @@ pub fn find_label_definition(
 
             Some((*document, *label))
         })
-}
-
-pub fn find_label_number(db: &dyn Db, witness: Document, name: Word) -> Option<Word> {
-    Workspace::get(db)
-        .related(db, Distro::get(db), witness)
-        .iter()
-        .filter_map(|document| document.parse(db).as_tex())
-        .find_map(|data| data.analyze(db).find_label_number(db, name))
 }
 
 fn render_label_float(parent: latex::SyntaxNode, number: Option<Word>) -> Option<RenderedLabel> {

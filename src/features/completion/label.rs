@@ -1,9 +1,8 @@
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    features::lsp_kinds::Structure,
     syntax::latex,
-    util::{self, cursor::CursorContext, label::LabeledObject},
+    util::{self, cursor::CursorContext, label::LabeledObject, lsp_enums::Structure},
 };
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
