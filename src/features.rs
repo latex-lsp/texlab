@@ -6,7 +6,7 @@ mod execute_command;
 pub mod folding;
 pub mod formatting;
 mod forward_search;
-mod highlight;
+pub mod highlight;
 pub mod hover;
 pub mod inlay_hint;
 pub mod link;
@@ -24,7 +24,6 @@ use crate::{Document, Workspace};
 pub use self::{
     execute_command::execute_command,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
-    highlight::find_document_highlights,
 };
 
 #[derive(Clone)]
