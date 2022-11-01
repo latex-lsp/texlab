@@ -146,6 +146,27 @@ pub fn render(db: &dyn Db, document: Document, label_def: label::Name) -> Option
         })
 }
 
+pub fn find_label_definition(
+    db: &dyn Db,
+    child: Document,
+    name: Word,
+) -> Option<(Document, label::Name)> {
+    Workspace::get(db)
+        .related(db, Distro::get(db), child)
+        .iter()
+        .find_map(|document| {
+            let data = document.parse(db).as_tex()?;
+            let label = data
+                .analyze(db)
+                .labels(db)
+                .iter()
+                .filter(|label| label.origin(db).as_definition().is_some())
+                .find(|label| label.name(db) == name)?;
+
+            Some((*document, *label))
+        })
+}
+
 pub fn find_label_number(db: &dyn Db, witness: Document, name: Word) -> Option<Word> {
     Workspace::get(db)
         .related(db, Distro::get(db), witness)

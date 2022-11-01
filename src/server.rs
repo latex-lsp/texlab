@@ -30,7 +30,7 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         execute_command, find_all_references, find_document_highlights, find_document_symbols,
-        find_hover, find_workspace_symbols, folding, formatting, goto_definition, inlay_hint, link,
+        find_workspace_symbols, folding, formatting, goto_definition, hover, inlay_hint, link,
         prepare_rename_all, rename_all, CompletionItemData, FeatureRequest, ForwardSearch,
         ForwardSearchResult, ForwardSearchStatus,
     },
@@ -107,16 +107,15 @@ impl Server {
 
     fn run_async_query<R, Q>(&self, id: RequestId, query: Q)
     where
-        R: Serialize + Default,
-        Q: FnOnce(&dyn Db) -> Option<R> + Send + 'static,
+        R: Serialize,
+        Q: FnOnce(&dyn Db) -> R + Send + 'static,
     {
         let snapshot = self.db.snapshot();
         let client = self.client.clone();
         self.pool.execute(move || {
             let db = snapshot.as_jar_db();
-            let result = query(db).unwrap_or_default();
             client
-                .send_response(lsp_server::Response::new_ok(id, result))
+                .send_response(lsp_server::Response::new_ok(id, query(db)))
                 .unwrap();
         });
     }
@@ -502,7 +501,7 @@ impl Server {
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| link::find_all(db, &uri));
+        self.run_async_query(id, move |db| link::find_all(db, &uri).unwrap_or_default());
         Ok(())
     }
 
@@ -573,7 +572,9 @@ impl Server {
     fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| folding::find_all(db.as_jar_db(), &uri));
+        self.run_async_query(id, move |db| {
+            folding::find_all(db.as_jar_db(), &uri).unwrap_or_default()
+        });
         Ok(())
     }
 
@@ -584,15 +585,9 @@ impl Server {
         Ok(())
     }
 
-    fn hover(&mut self, id: RequestId, mut params: HoverParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position_params.text_document.uri);
-        let uri = Arc::new(
-            params
-                .text_document_position_params
-                .text_document
-                .uri
-                .clone(),
-        );
+    fn hover(&mut self, id: RequestId, params: HoverParams) -> Result<()> {
+        let mut uri = params.text_document_position_params.text_document.uri;
+        normalize_uri(&mut uri);
 
         let workspace = Workspace::get(&self.db);
         if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
@@ -607,7 +602,9 @@ impl Server {
                 .to(position);
         }
 
-        self.handle_feature_request(id, params, uri, find_hover)?;
+        let position = params.text_document_position_params.position;
+        self.run_async_query(id, move |db| hover::find(db, &uri, position));
+
         Ok(())
     }
 
@@ -682,7 +679,9 @@ impl Server {
     fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| inlay_hint::find_all(db, &uri, params.range));
+        self.run_async_query(id, move |db| {
+            inlay_hint::find_all(db, &uri, params.range).unwrap_or_default()
+        });
         Ok(())
     }
 

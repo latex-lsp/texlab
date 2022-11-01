@@ -1,30 +1,28 @@
-use lsp_types::{HoverParams, MarkupKind};
+use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
 
 use crate::{
     citation::field::text::TextFieldData,
-    features::cursor::CursorContext,
     syntax::bibtex::{self, HasName, HasValue},
+    util::cursor::CursorContext,
 };
 
 use super::HoverResult;
 
-pub(super) fn find_string_reference_hover(
-    context: &CursorContext<HoverParams>,
-) -> Option<HoverResult> {
-    let document = context.request.main_document();
-    let data = document.data().as_bibtex()?;
+pub(super) fn find_string_reference_hover(context: &CursorContext) -> Option<HoverResult> {
+    let data = context.document.parse(context.db).as_bib()?;
 
     let name = context
         .cursor
-        .as_bibtex()
+        .as_bib()
         .filter(|token| token.kind() == bibtex::NAME)
         .filter(|token| {
             let parent = token.parent().unwrap();
             bibtex::Value::can_cast(parent.kind()) || bibtex::StringDef::can_cast(parent.kind())
         })?;
 
-    for string in bibtex::SyntaxNode::new_root(data.green.clone())
+    for string in data
+        .root(context.db)
         .children()
         .filter_map(bibtex::StringDef::cast)
     {

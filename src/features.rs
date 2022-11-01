@@ -7,7 +7,7 @@ pub mod folding;
 pub mod formatting;
 mod forward_search;
 mod highlight;
-mod hover;
+pub mod hover;
 pub mod inlay_hint;
 pub mod link;
 mod lsp_kinds;
@@ -27,7 +27,6 @@ pub use self::{
     execute_command::execute_command,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
-    hover::find_hover,
     reference::find_all_references,
     rename::{prepare_rename_all, rename_all},
     symbol::{find_document_symbols, find_workspace_symbols},
