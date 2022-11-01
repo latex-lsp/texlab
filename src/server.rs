@@ -534,7 +534,7 @@ impl Server {
     }
 
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
-        self.spawn(move |server| {
+        self.run_async_query(id, move |db| {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 CompletionItemData::Package | CompletionItemData::Class => {
                     item.documentation = COMPONENT_DATABASE
@@ -542,12 +542,10 @@ impl Server {
                         .map(Documentation::MarkupContent);
                 }
                 CompletionItemData::Citation { uri, key } => {
-                    if let Some(root) = server.workspace.get(&uri).and_then(|document| {
-                        document
-                            .data()
-                            .as_bibtex()
-                            .map(|data| bibtex::SyntaxNode::new_root(data.green.clone()))
-                    }) {
+                    if let Some(root) = Workspace::get(db)
+                        .lookup_uri(db, &uri)
+                        .and_then(|document| document.parse(db).as_bib().map(|data| data.root(db)))
+                    {
                         item.documentation = bibtex::Root::cast(root)
                             .and_then(|root| root.find_entry(&key))
                             .and_then(|entry| citation::render(&entry))
@@ -562,12 +560,9 @@ impl Server {
                 _ => {}
             };
 
-            server
-                .connection
-                .sender
-                .send(lsp_server::Response::new_ok(id, item).into())
-                .unwrap();
+            item
         });
+
         Ok(())
     }
 
