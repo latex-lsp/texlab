@@ -1,16 +1,14 @@
-use lsp_types::CompletionParams;
-
-use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext};
+use crate::{component_db::COMPONENT_DATABASE, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_component_environments<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_component_environments<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let (_, range) = context.find_environment_name()?;
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
+    for component in COMPONENT_DATABASE.linked_components(context.db, context.document) {
         for name in &component.environments {
             items.push(InternalCompletionItem::new(
                 range,

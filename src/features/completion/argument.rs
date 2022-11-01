@@ -1,15 +1,14 @@
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
-use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
+use crate::{component_db::COMPONENT_DATABASE, syntax::latex, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_arguments<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_arguments<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
-    let token = context.cursor.as_latex()?;
+    let token = context.cursor.as_tex()?;
 
     let range = if token.kind() == latex::WORD {
         token.text_range()
@@ -37,7 +36,7 @@ pub fn complete_arguments<'a>(
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
+    for component in COMPONENT_DATABASE.linked_components(context.db, context.document) {
         for component_command in component
             .commands
             .iter()

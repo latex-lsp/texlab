@@ -1,20 +1,21 @@
-use lsp_types::CompletionParams;
-
-use crate::features::cursor::CursorContext;
+use crate::util::cursor::CursorContext;
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_user_environments<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_user_environments<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let (name, range) = context.find_environment_name()?;
 
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
+    for document in context
+        .workspace
+        .related(context.db, context.distro, context.document)
+    {
+        if let Some(data) = document.parse(context.db).as_tex() {
             for name in data
-                .extras
-                .environment_names
+                .analyze(context.db)
+                .environment_names(context.db)
                 .iter()
                 .filter(|n| n.as_str() != name)
                 .cloned()

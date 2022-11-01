@@ -1,17 +1,16 @@
-use lsp_types::CompletionParams;
 use rowan::{TextRange, TextSize};
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LANGUAGE_DATA};
+use crate::{syntax::bibtex, util::cursor::CursorContext, LANGUAGE_DATA};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_entry_types<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_entry_types<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let range = context
         .cursor
-        .as_bibtex()
+        .as_bib()
         .filter(|token| token.kind() == bibtex::TYPE)
         .map(bibtex::SyntaxToken::text_range)
         .filter(|range| range.start() != context.offset)

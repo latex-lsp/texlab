@@ -1,21 +1,22 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use smol_str::SmolStr;
 
-use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
+use crate::{
+    component_db::COMPONENT_DATABASE, db::Distro, syntax::latex, util::cursor::CursorContext,
+};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_imports<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_imports<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
     let (extension, mut factory): (
         &str,
-        Box<dyn FnMut(SmolStr) -> InternalCompletionItemData<'a>>,
+        Box<dyn FnMut(SmolStr) -> InternalCompletionItemData<'db>>,
     ) = match group.syntax().parent()?.kind() {
         latex::PACKAGE_INCLUDE => (
             "sty",
@@ -41,8 +42,8 @@ pub fn complete_imports<'a>(
         items.push(InternalCompletionItem::new(range, data));
     }
 
-    let resolver = &context.request.workspace.environment.resolver;
-    for file_name in resolver
+    let file_name_db = Distro::get(context.db).file_name_db(context.db);
+    for file_name in file_name_db
         .files_by_name
         .keys()
         .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))

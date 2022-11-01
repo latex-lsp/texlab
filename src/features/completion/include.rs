@@ -4,18 +4,22 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange, TextSize};
 
-use crate::{features::cursor::CursorContext, syntax::latex};
+use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_includes<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_includes<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
-    if context.request.main_document().uri().scheme() != "file" {
+    if context
+        .document
+        .location(context.db)
+        .path(context.db)
+        .is_none()
+    {
         return None;
     }
 
@@ -51,10 +55,18 @@ pub fn complete_includes<'a>(
 
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in context.request.workspace.iter() {
-            if let Some(data) = document.data().as_latex() {
-                for graphics_path in &data.extras.graphics_paths {
-                    dirs.push(current_dir(context, &path_text, Some(graphics_path)));
+        for document in context
+            .workspace
+            .related(context.db, context.distro, context.document)
+        {
+            if let Some(data) = document.parse(context.db).as_tex() {
+                for path in data
+                    .analyze(context.db)
+                    .graphics_paths(context.db)
+                    .iter()
+                    .map(|node| node.path(context.db))
+                {
+                    dirs.push(current_dir(context, &path_text, Some(path)));
                 }
             }
         }
@@ -90,39 +102,24 @@ pub fn complete_includes<'a>(
 }
 
 fn current_dir(
-    context: &CursorContext<CompletionParams>,
+    context: &CursorContext,
     path_text: &str,
     graphics_path: Option<&str>,
 ) -> Option<PathBuf> {
-    let mut path = context
-        .request
+    let parent = context
         .workspace
-        .environment
-        .options
-        .root_directory
-        .as_ref()
-        .map_or_else(
-            || {
-                let mut path = context
-                    .request
-                    .main_document()
-                    .uri()
-                    .to_file_path()
-                    .unwrap();
-                path.pop();
-                path
-            },
-            |root_directory| {
-                context
-                    .request
-                    .workspace
-                    .environment
-                    .current_directory
-                    .join(root_directory)
-            },
-        );
+        .parents(context.db, context.distro, context.document)
+        .iter()
+        .next()
+        .map_or(context.document, Clone::clone);
 
-    path = PathBuf::from(path.to_str()?.replace('\\', "/"));
+    let path = context
+        .workspace
+        .working_dir(context.db, parent.location(context.db))
+        .path(context.db)
+        .as_deref()?;
+
+    let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
     if !path_text.is_empty() {
         if let Some(graphics_path) = graphics_path {
             path.push(graphics_path);

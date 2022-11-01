@@ -1,11 +1,9 @@
-use lsp_types::CompletionParams;
-
-use crate::features::cursor::CursorContext;
+use crate::util::cursor::CursorContext;
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
 pub fn complete_begin_command(
-    context: &CursorContext<CompletionParams>,
+    context: &CursorContext,
     items: &mut Vec<InternalCompletionItem>,
 ) -> Option<()> {
     let range = context.cursor.command_range(context.offset)?;

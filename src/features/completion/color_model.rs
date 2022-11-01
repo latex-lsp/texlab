@@ -1,15 +1,14 @@
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
-use crate::{features::cursor::CursorContext, syntax::latex};
+use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
-pub fn complete_color_models<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_color_models<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let range = check_color_definition(context).or_else(|| check_color_definition_set(context))?;
 
@@ -23,7 +22,7 @@ pub fn complete_color_models<'a>(
     Some(())
 }
 
-fn check_color_definition(context: &CursorContext<CompletionParams>) -> Option<TextRange> {
+fn check_color_definition(context: &CursorContext) -> Option<TextRange> {
     let (_, range, group) = context.find_curly_group_word()?;
 
     let definition = latex::ColorDefinition::cast(group.syntax().parent()?)?;
@@ -33,7 +32,7 @@ fn check_color_definition(context: &CursorContext<CompletionParams>) -> Option<T
     Some(range)
 }
 
-fn check_color_definition_set(context: &CursorContext<CompletionParams>) -> Option<TextRange> {
+fn check_color_definition_set(context: &CursorContext) -> Option<TextRange> {
     let (_, range, group) = context.find_curly_group_word_list()?;
     let definition = latex::ColorSetDefinition::cast(group.syntax().parent()?)?;
     definition

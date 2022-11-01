@@ -1,13 +1,12 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::latex, LANGUAGE_DATA};
+use crate::{syntax::latex, util::cursor::CursorContext, LANGUAGE_DATA};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_tikz_libraries<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_tikz_libraries<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 

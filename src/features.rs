@@ -1,5 +1,5 @@
 pub mod building;
-mod completion;
+pub mod completion;
 mod cursor;
 mod definition;
 mod execute_command;
@@ -22,7 +22,6 @@ use lsp_types::Url;
 use crate::{Document, Workspace};
 
 pub use self::{
-    completion::{complete, CompletionItemData, COMPLETION_LIMIT},
     definition::goto_definition,
     execute_command::execute_command,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},

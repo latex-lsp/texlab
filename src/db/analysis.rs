@@ -128,6 +128,27 @@ impl TheoremEnvironment {
 }
 
 #[salsa::tracked]
+pub struct GraphicsPath {
+    #[return_ref]
+    pub path: String,
+}
+
+impl GraphicsPath {
+    pub fn of_command(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
+        let definition = latex::GraphicsPath::cast(node)?;
+        for path in definition
+            .path_list()
+            .filter_map(|group| group.key())
+            .map(|path| path.to_string())
+        {
+            results.push(GraphicsPath::new(db, path));
+        }
+
+        Some(())
+    }
+}
+
+#[salsa::tracked]
 pub struct TexAnalysis {
     #[return_ref]
     pub links: Vec<TexLink>,
@@ -140,6 +161,15 @@ pub struct TexAnalysis {
 
     #[return_ref]
     pub theorem_environments: Vec<TheoremEnvironment>,
+
+    #[return_ref]
+    pub graphics_paths: Vec<GraphicsPath>,
+
+    #[return_ref]
+    pub command_name_ranges: Vec<TextRange>,
+
+    #[return_ref]
+    pub environment_names: Vec<String>,
 }
 
 impl TexAnalysis {
@@ -148,6 +178,9 @@ impl TexAnalysis {
         let mut labels = Vec::new();
         let mut label_numbers = Vec::new();
         let mut theorem_environments = Vec::new();
+        let mut graphics_paths = Vec::new();
+        let mut command_name_ranges = Vec::new();
+        let mut environment_names = Vec::new();
 
         for node in root.descendants() {
             TexLink::of_include(db, node.clone(), &mut links)
@@ -158,10 +191,33 @@ impl TexAnalysis {
                 .or_else(|| label::Number::of_number(db, node.clone(), &mut label_numbers))
                 .or_else(|| {
                     TheoremEnvironment::of_definition(db, node.clone(), &mut theorem_environments)
+                })
+                .or_else(|| GraphicsPath::of_command(db, node.clone(), &mut graphics_paths))
+                .or_else(|| {
+                    let range = latex::GenericCommand::cast(node.clone())?
+                        .name()?
+                        .text_range();
+
+                    command_name_ranges.push(range);
+                    Some(())
+                })
+                .or_else(|| {
+                    let begin = latex::Begin::cast(node.clone())?;
+                    environment_names.push(begin.name()?.key()?.to_string());
+                    Some(())
                 });
         }
 
-        Self::new(db, links, labels, label_numbers, theorem_environments)
+        Self::new(
+            db,
+            links,
+            labels,
+            label_numbers,
+            theorem_environments,
+            graphics_paths,
+            command_name_ranges,
+            environment_names,
+        )
     }
 
     pub fn find_label_number(self, db: &dyn Db, name: Word) -> Option<Word> {

@@ -29,10 +29,11 @@ use crate::{
     distro::Distribution,
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
+        completion::{self, CompletionItemData},
         execute_command, find_all_references, find_document_highlights, find_document_symbols,
         find_workspace_symbols, folding, formatting, goto_definition, hover, inlay_hint, link,
-        prepare_rename_all, rename_all, CompletionItemData, FeatureRequest, ForwardSearch,
-        ForwardSearchResult, ForwardSearchStatus,
+        prepare_rename_all, rename_all, FeatureRequest, ForwardSearch, ForwardSearchResult,
+        ForwardSearchStatus,
     },
     normalize_uri,
     syntax::bibtex,
@@ -524,10 +525,11 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&mut self, id: RequestId, mut params: CompletionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
-        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, crate::features::complete)?;
+    fn completion(&mut self, id: RequestId, params: CompletionParams) -> Result<()> {
+        let mut uri = params.text_document_position.text_document.uri;
+        normalize_uri(&mut uri);
+        let position = params.text_document_position.position;
+        self.run_async_query(id, move |db| completion::complete(db, &uri, position));
         Ok(())
     }
 

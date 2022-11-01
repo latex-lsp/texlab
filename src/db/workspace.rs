@@ -6,6 +6,7 @@ use std::{
 use lsp_types::{ClientCapabilities, ClientInfo, Url};
 use rowan::TextSize;
 use rustc_hash::FxHashSet;
+use salsa::DebugWithDb;
 
 use crate::{
     db::document::{Document, Location},

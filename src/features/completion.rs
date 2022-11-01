@@ -24,18 +24,20 @@ use std::borrow::Cow;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use lsp_types::{
-    CompletionItem, CompletionList, CompletionParams, CompletionTextEdit, Documentation,
-    InsertTextFormat, MarkupContent, MarkupKind, TextEdit,
+    CompletionItem, CompletionList, CompletionTextEdit, Documentation, InsertTextFormat,
+    MarkupContent, MarkupKind, Position, TextEdit, Url,
 };
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 
 use crate::{
+    db::workspace::Workspace,
     syntax::{
         bibtex::{self},
         latex,
     },
-    LineIndexExt,
+    util::cursor::{Cursor, CursorContext},
+    Db, LineIndexExt,
 };
 
 use self::{
@@ -63,18 +65,15 @@ use self::{
 
 pub use self::types::CompletionItemData;
 
-use super::{
-    cursor::{Cursor, CursorContext},
-    lsp_kinds::Structure,
-    FeatureRequest,
-};
+use super::lsp_kinds::Structure;
 
 pub const COMPLETION_LIMIT: usize = 50;
 
 #[must_use]
-pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionList> {
+pub fn complete(db: &dyn Db, uri: &Url, position: Position) -> Option<CompletionList> {
+    let document = Workspace::get(db).lookup_uri(db, uri)?;
     let mut items = Vec::new();
-    let context = CursorContext::new(request);
+    let context = CursorContext::new(db, document, position, ());
     log::debug!("[Completion] Cursor: {:?}", context.cursor);
     complete_entry_types(&context, &mut items);
     complete_fields(&context, &mut items);
@@ -117,11 +116,8 @@ pub fn complete(request: FeatureRequest<CompletionParams>) -> Option<CompletionL
         .collect();
 
     let is_incomplete = if context
-        .request
         .workspace
-        .environment
-        .client_info
-        .as_ref()
+        .client_info(context.db)
         .as_ref()
         .map_or(false, |info| info.name.as_str() == "Visual Studio Code")
     {
@@ -150,9 +146,9 @@ fn dedup(items: Vec<InternalCompletionItem>) -> Vec<InternalCompletionItem> {
         .collect()
 }
 
-fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalCompletionItem>) {
+fn score(context: &CursorContext, items: &mut Vec<InternalCompletionItem>) {
     let pattern: Cow<str> = match &context.cursor {
-        Cursor::Latex(token) if token.kind().is_command_name() => {
+        Cursor::Tex(token) if token.kind().is_command_name() => {
             if token.text_range().start() + TextSize::from(1) == context.offset {
                 // Handle cases similar to this one correctly:
                 // $\|$ % (| is the cursor)
@@ -161,7 +157,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                 token.text().trim_end().into()
             }
         }
-        Cursor::Latex(token) if token.kind() == latex::WORD => {
+        Cursor::Tex(token) if token.kind() == latex::WORD => {
             if let Some(key) = token.parent().and_then(latex::Key::cast) {
                 key.words()
                     .take_while(|word| word.text_range() != token.text_range())
@@ -173,7 +169,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
                 token.text().into()
             }
         }
-        Cursor::Bibtex(token)
+        Cursor::Bib(token)
             if matches!(
                 token.kind(),
                 bibtex::TYPE
@@ -185,7 +181,7 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
         {
             token.text().into()
         }
-        Cursor::Latex(_) | Cursor::Bibtex(_) | Cursor::Nothing => "".into(),
+        Cursor::Tex(_) | Cursor::Bib(_) | Cursor::Nothing => "".into(),
     };
 
     let file_pattern = pattern.split('/').last().unwrap();
@@ -232,11 +228,8 @@ fn score(context: &CursorContext<CompletionParams>, items: &mut Vec<InternalComp
     }
 }
 
-fn preselect(
-    context: &CursorContext<CompletionParams>,
-    items: &mut [InternalCompletionItem],
-) -> Option<()> {
-    let name = context.cursor.as_latex()?;
+fn preselect(context: &CursorContext, items: &mut [InternalCompletionItem]) -> Option<()> {
+    let name = context.cursor.as_tex()?;
     let group = latex::CurlyGroupWord::cast(name.parent()?)?;
     let end = latex::End::cast(group.syntax().parent()?)?;
     let environment = latex::Environment::cast(end.syntax().parent()?)?;
@@ -250,14 +243,11 @@ fn preselect(
     Some(())
 }
 
-fn convert_internal_items(
-    context: &CursorContext<CompletionParams>,
-    item: InternalCompletionItem,
-) -> CompletionItem {
+fn convert_internal_items(context: &CursorContext, item: InternalCompletionItem) -> CompletionItem {
     let range = context
-        .request
-        .main_document()
-        .line_index()
+        .document
+        .contents(context.db)
+        .line_index(context.db)
         .line_col_lsp_range(item.range);
 
     let mut new_item = match item.data {
@@ -299,17 +289,14 @@ fn convert_internal_items(
                 kind: Some(Structure::Argument.completion_kind()),
                 data: Some(serde_json::to_value(CompletionItemData::Argument).unwrap()),
                 text_edit: Some(CompletionTextEdit::Edit(text_edit)),
-                documentation: image
-                    .and_then(|image| image_documentation(&context.request, name, image)),
+                documentation: image.and_then(|image| image_documentation(&context, name, image)),
                 ..CompletionItem::default()
             }
         }
         InternalCompletionItemData::BeginCommand => {
             if context
-                .request
                 .workspace
-                .environment
-                .client_capabilities
+                .client_capabilities(context.db)
                 .text_document
                 .as_ref()
                 .and_then(|cap| cap.completion.as_ref())
@@ -328,10 +315,7 @@ fn convert_internal_items(
             } else {
                 let text_edit = TextEdit::new(range, "begin".to_string());
                 CompletionItem {
-                    kind: Some(adjust_kind(
-                        &context.request,
-                        Structure::Command.completion_kind(),
-                    )),
+                    kind: Some(adjust_kind(context, Structure::Command.completion_kind())),
                     data: Some(serde_json::to_value(CompletionItemData::Command).unwrap()),
                     text_edit: Some(CompletionTextEdit::Edit(text_edit)),
                     ..CompletionItem::new_simple("begin".to_string(), component_detail(&[]))
@@ -347,7 +331,7 @@ fn convert_internal_items(
                 sort_text: Some(text),
                 data: Some(
                     serde_json::to_value(CompletionItemData::Citation {
-                        uri: uri.as_ref().clone(),
+                        uri,
                         key: key.into(),
                     })
                     .unwrap(),
@@ -366,8 +350,7 @@ fn convert_internal_items(
                 || component_detail(file_names),
                 |glyph| format!("{}, {}", glyph, component_detail(file_names)),
             );
-            let documentation =
-                image.and_then(|img| image_documentation(&context.request, name, img));
+            let documentation = image.and_then(|img| image_documentation(context, name, img));
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
                 kind: Some(Structure::Command.completion_kind()),
@@ -475,7 +458,7 @@ fn convert_internal_items(
         } => {
             let text_edit = TextEdit::new(range, name.to_string());
             CompletionItem {
-                label: name,
+                label: name.to_string(),
                 kind: Some(kind.completion_kind()),
                 detail: header,
                 documentation: footer.map(Documentation::String),
@@ -529,9 +512,7 @@ fn convert_internal_items(
         }
     };
 
-    new_item.kind = new_item
-        .kind
-        .map(|kind| adjust_kind(&context.request, kind));
+    new_item.kind = new_item.kind.map(|kind| adjust_kind(&context, kind));
     new_item.preselect = Some(item.preselect);
     new_item
 }

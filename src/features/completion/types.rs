@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use lsp_types::Url;
 use rowan::TextRange;
 use serde::{Deserialize, Serialize};
@@ -8,15 +6,15 @@ use smol_str::SmolStr;
 use crate::{features::lsp_kinds::Structure, BibtexEntryTypeDoc, BibtexFieldDoc};
 
 #[derive(Debug, Clone)]
-pub struct InternalCompletionItem<'a> {
+pub struct InternalCompletionItem<'db> {
     pub range: TextRange,
-    pub data: InternalCompletionItemData<'a>,
+    pub data: InternalCompletionItemData<'db>,
     pub preselect: bool,
     pub score: Option<i64>,
 }
 
-impl<'a> InternalCompletionItem<'a> {
-    pub fn new(range: TextRange, data: InternalCompletionItemData<'a>) -> Self {
+impl<'db> InternalCompletionItem<'db> {
+    pub fn new(range: TextRange, data: InternalCompletionItemData<'db>) -> Self {
         Self {
             range,
             data,
@@ -27,33 +25,33 @@ impl<'a> InternalCompletionItem<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub enum InternalCompletionItemData<'a> {
+pub enum InternalCompletionItemData<'db> {
     EntryType {
-        ty: &'a BibtexEntryTypeDoc,
+        ty: &'db BibtexEntryTypeDoc,
     },
     Field {
-        field: &'a BibtexFieldDoc,
+        field: &'db BibtexFieldDoc,
     },
     Argument {
-        name: &'a str,
-        image: Option<&'a str>,
+        name: &'db str,
+        image: Option<&'db str>,
     },
     BeginCommand,
     Citation {
-        uri: Arc<Url>,
+        uri: Url,
         key: String,
         text: String,
         ty: Structure,
     },
     ComponentCommand {
-        name: &'a SmolStr,
-        image: Option<&'a str>,
-        glyph: Option<&'a str>,
-        file_names: &'a [SmolStr],
+        name: &'db SmolStr,
+        image: Option<&'db str>,
+        glyph: Option<&'db str>,
+        file_names: &'db [SmolStr],
     },
     ComponentEnvironment {
-        name: &'a SmolStr,
-        file_names: &'a [SmolStr],
+        name: &'db SmolStr,
+        file_names: &'db [SmolStr],
     },
     Class {
         name: SmolStr,
@@ -62,10 +60,10 @@ pub enum InternalCompletionItemData<'a> {
         name: SmolStr,
     },
     Color {
-        name: &'a str,
+        name: &'db str,
     },
     ColorModel {
-        name: &'a str,
+        name: &'db str,
     },
     Acronym {
         name: String,
@@ -80,23 +78,23 @@ pub enum InternalCompletionItemData<'a> {
         name: SmolStr,
     },
     Label {
-        name: String,
+        name: &'db str,
         kind: Structure,
         header: Option<String>,
         footer: Option<String>,
         text: String,
     },
     UserCommand {
-        name: SmolStr,
+        name: &'db str,
     },
     UserEnvironment {
         name: String,
     },
     PgfLibrary {
-        name: &'a str,
+        name: &'db str,
     },
     TikzLibrary {
-        name: &'a str,
+        name: &'db str,
     },
 }
 

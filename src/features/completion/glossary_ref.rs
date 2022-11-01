@@ -1,20 +1,22 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::latex};
+use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
-pub fn complete_glossary_entries<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete_glossary_entries<'db>(
+    context: &'db CursorContext,
+    items: &mut Vec<InternalCompletionItem<'db>>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
 
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
-            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
+    for document in context
+        .workspace
+        .related(context.db, context.distro, context.document)
+    {
+        if let Some(data) = document.parse(context.db).as_tex() {
+            for node in data.root(context.db).descendants() {
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())
                     .and_then(|entry| entry.name())
                     .and_then(|name| name.key())

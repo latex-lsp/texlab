@@ -7,7 +7,10 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
-use crate::{syntax::latex::ExplicitLink, Workspace};
+use crate::{
+    db::{analysis::TexLinkKind, document::Document, workspace::Workspace, Distro},
+    Db,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,32 +41,27 @@ impl ComponentDatabase {
     }
 
     #[must_use]
-    pub fn linked_components(&self, workspace: &Workspace) -> Vec<&Component> {
-        let mut start_components = vec![self.kernel()];
-        for document in workspace.iter() {
-            if let Some(data) = document.data().as_latex() {
-                data.extras
-                    .explicit_links
+    pub fn linked_components(&self, db: &dyn Db, child: Document) -> Vec<&Component> {
+        log::info!("Linked comps");
+        Workspace::get(db)
+            .related(db, Distro::get(db), child)
+            .iter()
+            .filter_map(|document| document.parse(db).as_tex())
+            .flat_map(|data| data.analyze(db).links(db))
+            .filter_map(|link| match link.kind(db) {
+                TexLinkKind::Sty => Some(format!("{}.sty", link.path(db).text(db))),
+                TexLinkKind::Cls => Some(format!("{}.cls", link.path(db).text(db))),
+                _ => None,
+            })
+            .filter_map(|name| self.find(&name))
+            .chain(std::iter::once(self.kernel()))
+            .flat_map(|comp| {
+                comp.references
                     .iter()
-                    .filter_map(ExplicitLink::as_component_name)
-                    .filter_map(|name| self.find(&name))
-                    .for_each(|component| start_components.push(component));
-            }
-        }
-
-        let mut all_components = Vec::new();
-        for component in start_components {
-            all_components.push(component);
-            component
-                .references
-                .iter()
-                .filter_map(|file| self.find(file))
-                .for_each(|component| all_components.push(component));
-        }
-
-        all_components
-            .into_iter()
-            .unique_by(|component| &component.file_names)
+                    .filter_map(|name| self.find(name))
+                    .chain(std::iter::once(comp))
+            })
+            .unique_by(|comp| &comp.file_names)
             .collect()
     }
 

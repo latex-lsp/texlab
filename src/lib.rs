@@ -59,6 +59,7 @@ pub struct Jar(
     db::analysis::label::Number,
     db::analysis::label::Name,
     db::analysis::TheoremEnvironment,
+    db::analysis::GraphicsPath,
     db::analysis::TexAnalysis,
     db::dependency::Resolved,
     db::dependency::Implicit,
@@ -80,7 +81,7 @@ pub trait Db: salsa::DbWithJar<Jar> {}
 impl<DB> Db for DB where DB: ?Sized + salsa::DbWithJar<Jar> {}
 
 #[salsa::db(crate::Jar)]
-pub(crate) struct Database {
+pub struct Database {
     storage: salsa::Storage<Self>,
 }
 
