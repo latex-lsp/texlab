@@ -9,10 +9,7 @@ pub fn complete_theorem_environments<'db>(
     let (_, range) = context.find_environment_name()?;
 
     let db = context.db;
-    for document in context
-        .workspace
-        .related(db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(db).as_tex() {
             for environment in data.analyze(db).theorem_environments(db) {
                 items.push(InternalCompletionItem::new(

@@ -1,35 +1,29 @@
-use std::sync::Arc;
-
-use lsp_types::GotoDefinitionParams;
 use rowan::TextRange;
 
-use crate::features::cursor::CursorContext;
+use crate::util::cursor::CursorContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_document_definition(
-    context: &CursorContext<GotoDefinitionParams>,
-) -> Option<Vec<DefinitionResult>> {
-    let document = context.request.main_document();
-    let data = document.data().as_latex()?;
-
-    for include in data
-        .extras
-        .explicit_links
+pub(super) fn goto_document_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
+    let db = context.db;
+    context
+        .workspace
+        .parents(db, context.distro, context.document)
         .iter()
-        .filter(|link| link.stem_range.contains_inclusive(context.offset))
-    {
-        for target in &include.targets {
-            if context.request.workspace.get(target).is_some() {
-                return Some(vec![DefinitionResult {
-                    origin_selection_range: include.stem_range,
-                    target_uri: Arc::clone(target),
+        .map(|&parent| context.workspace.graph(db, parent, context.distro))
+        .flat_map(|graph| graph.edges(db))
+        .filter(|edge| edge.source(db) == context.document)
+        .find_map(|edge| {
+            let range = edge.origin(db).into_explicit()?.link.range(db);
+            if range.contains_inclusive(context.offset) {
+                Some(vec![DefinitionResult {
+                    origin_selection_range: range,
+                    target: edge.target(db)?,
                     target_range: TextRange::default(),
                     target_selection_range: TextRange::default(),
-                }]);
+                }])
+            } else {
+                None
             }
-        }
-    }
-
-    None
+        })
 }

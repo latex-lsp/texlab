@@ -1,7 +1,7 @@
 pub mod building;
 pub mod completion;
 mod cursor;
-mod definition;
+pub mod definition;
 mod execute_command;
 pub mod folding;
 pub mod formatting;
@@ -22,7 +22,6 @@ use lsp_types::Url;
 use crate::{Document, Workspace};
 
 pub use self::{
-    definition::goto_definition,
     execute_command::execute_command,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,

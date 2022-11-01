@@ -11,11 +11,7 @@ pub fn complete_acronyms<'db>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
 
-    for document in context
-        .workspace
-        .related(context.db, context.distro, context.document)
-        .iter()
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(context.db).as_tex() {
             for name in data
                 .root(context.db)

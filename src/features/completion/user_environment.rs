@@ -8,10 +8,7 @@ pub fn complete_user_environments<'db>(
 ) -> Option<()> {
     let (name, range) = context.find_environment_name()?;
 
-    for document in context
-        .workspace
-        .related(context.db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(context.db).as_tex() {
             for name in data
                 .analyze(context.db)

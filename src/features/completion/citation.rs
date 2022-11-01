@@ -35,17 +35,14 @@ pub fn complete_citations<'db>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in context
-        .workspace
-        .related(context.db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(context.db).as_bib() {
             for entry in data
                 .root(context.db)
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(item) = make_item(context.db, *document, &entry, range) {
+                if let Some(item) = make_item(context.db, document, &entry, range) {
                     items.push(item);
                 }
             }

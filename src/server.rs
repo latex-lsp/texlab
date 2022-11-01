@@ -30,9 +30,9 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
-        execute_command, find_all_references, find_document_highlights, find_document_symbols,
-        find_workspace_symbols, folding, formatting, goto_definition, hover, inlay_hint, link,
-        prepare_rename_all, rename_all, FeatureRequest, ForwardSearch, ForwardSearchResult,
+        definition, execute_command, find_all_references, find_document_highlights,
+        find_document_symbols, find_workspace_symbols, folding, formatting, hover, inlay_hint,
+        link, prepare_rename_all, rename_all, FeatureRequest, ForwardSearch, ForwardSearchResult,
         ForwardSearchStatus,
     },
     normalize_uri,
@@ -605,16 +605,13 @@ impl Server {
         Ok(())
     }
 
-    fn goto_definition(&self, id: RequestId, mut params: GotoDefinitionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position_params.text_document.uri);
-        let uri = Arc::new(
-            params
-                .text_document_position_params
-                .text_document
-                .uri
-                .clone(),
-        );
-        self.handle_feature_request(id, params, uri, goto_definition)?;
+    fn goto_definition(&self, id: RequestId, params: GotoDefinitionParams) -> Result<()> {
+        let mut uri = params.text_document_position_params.text_document.uri;
+        normalize_uri(&mut uri);
+        let position = params.text_document_position_params.position;
+        self.run_async_query(id, move |db| {
+            definition::goto_definition(db, &uri, position)
+        });
         Ok(())
     }
 

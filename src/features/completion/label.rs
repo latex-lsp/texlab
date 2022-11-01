@@ -15,10 +15,7 @@ pub fn complete_labels<'db>(
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
     let db = context.db;
-    for document in context
-        .workspace
-        .related(db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(db).as_tex() {
             for label in data
                 .analyze(db)
@@ -26,7 +23,7 @@ pub fn complete_labels<'db>(
                 .iter()
                 .filter(|label| label.origin(db).as_definition().is_some())
             {
-                match util::label::render(db, *document, *label) {
+                match util::label::render(db, document, *label) {
                     Some(rendered_label) => {
                         let kind = match &rendered_label.object {
                             LabeledObject::Section { .. } => Structure::Section,

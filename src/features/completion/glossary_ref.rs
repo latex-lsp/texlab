@@ -11,10 +11,7 @@ pub fn complete_glossary_entries<'db>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
 
-    for document in context
-        .workspace
-        .related(context.db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(context.db).as_tex() {
             for node in data.root(context.db).descendants() {
                 if let Some(name) = latex::GlossaryEntryDefinition::cast(node.clone())

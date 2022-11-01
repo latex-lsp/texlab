@@ -160,6 +160,13 @@ impl<'db, P> CursorContext<'db, P> {
         }
     }
 
+    pub fn related(&self) -> impl Iterator<Item = Document> + '_ {
+        self.workspace
+            .related(self.db, self.distro, self.document)
+            .iter()
+            .copied()
+    }
+
     pub fn is_inside_latex_curly(&self, group: &impl latex::HasCurly) -> bool {
         latex::small_range(group).contains(self.offset) || group.right_curly().is_none()
     }

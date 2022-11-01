@@ -10,10 +10,7 @@ pub fn complete_user_commands<'db>(
     let token = context.cursor.as_tex()?;
 
     let db = context.db;
-    for document in context
-        .workspace
-        .related(db, context.distro, context.document)
-    {
+    for document in context.related() {
         if let Some(data) = document.parse(db).as_tex() {
             let text = document.contents(db).text(db);
             for name in data

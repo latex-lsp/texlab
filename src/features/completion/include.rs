@@ -55,10 +55,7 @@ pub fn complete_includes<'db>(
 
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in context
-            .workspace
-            .related(context.db, context.distro, context.document)
-        {
+        for document in context.related() {
             if let Some(data) = document.parse(context.db).as_tex() {
                 for path in data
                     .analyze(context.db)
