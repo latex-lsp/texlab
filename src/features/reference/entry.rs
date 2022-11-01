@@ -1,32 +1,31 @@
-use std::sync::Arc;
-
-use lsp_types::ReferenceParams;
+use lsp_types::ReferenceContext;
 use rowan::ast::AstNode;
 
 use crate::{
-    features::cursor::CursorContext,
+    db::parse::DocumentData,
     syntax::{
         bibtex::{self, HasName},
         latex,
     },
-    DocumentData,
+    util::cursor::CursorContext,
 };
 
 use super::ReferenceResult;
 
 pub(super) fn find_entry_references(
-    context: &CursorContext<ReferenceParams>,
+    context: &CursorContext<&ReferenceContext>,
     results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {
+    let db = context.db;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
 
-    for document in context.request.workspace.iter() {
-        match document.data() {
-            DocumentData::Latex(data) => {
-                latex::SyntaxNode::new_root(data.green.clone())
+    for document in context.related() {
+        match document.parse(db) {
+            DocumentData::Tex(data) => {
+                data.root(db)
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
@@ -34,24 +33,22 @@ pub(super) fn find_entry_references(
                     .filter(|key| key.to_string() == key_text)
                     .map(|key| latex::small_range(&key))
                     .for_each(|range| {
-                        let uri = Arc::clone(document.uri());
-                        results.push(ReferenceResult { uri, range });
+                        results.push(ReferenceResult { document, range });
                     });
             }
-            DocumentData::Bibtex(data) if context.request.params.context.include_declaration => {
-                bibtex::SyntaxNode::new_root(data.green.clone())
+            DocumentData::Bib(data) if context.params.include_declaration => {
+                data.root(db)
                     .children()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.name_token())
                     .filter(|key| key.text() == key_text)
                     .map(|key| key.text_range())
                     .for_each(|range| {
-                        let uri = Arc::clone(document.uri());
-                        results.push(ReferenceResult { uri, range });
+                        results.push(ReferenceResult { document, range });
                     });
             }
-            DocumentData::Bibtex(_) | DocumentData::BuildLog(_) => {}
-        }
+            DocumentData::Bib(_) | DocumentData::Log(_) => {}
+        };
     }
 
     Some(())

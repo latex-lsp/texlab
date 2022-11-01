@@ -6,15 +6,10 @@ use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
 use rowan::TextRange;
 use rustc_hash::FxHashMap;
 
-use crate::{
-    db::{document::Document, workspace::Workspace},
-    util::cursor::CursorContext,
-    Db, LineIndexExt,
-};
+use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
 
 pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<Range> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let context = CursorContext::new(db, document, position, ());
+    let context = CursorContext::new(db, uri, position, ())?;
     let range = entry::prepare_entry_rename(&context)
         .or_else(|| label::prepare_label_rename(&context))
         .or_else(|| command::prepare_command_rename(&context))?;
@@ -29,8 +24,7 @@ pub fn rename_all(
     position: Position,
     new_name: String,
 ) -> Option<WorkspaceEdit> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let context = CursorContext::new(db, document, position, Params { new_name });
+    let context = CursorContext::new(db, uri, position, Params { new_name })?;
     let result = entry::rename_entry(&context)
         .or_else(|| label::rename_label(&context))
         .or_else(|| command::rename_command(&context))?;

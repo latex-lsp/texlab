@@ -11,7 +11,7 @@ pub mod hover;
 pub mod inlay_hint;
 pub mod link;
 mod lsp_kinds;
-mod reference;
+pub mod reference;
 pub mod rename;
 pub mod symbol;
 
@@ -25,7 +25,6 @@ pub use self::{
     execute_command::execute_command,
     forward_search::{ForwardSearch, ForwardSearchResult, ForwardSearchStatus},
     highlight::find_document_highlights,
-    reference::find_all_references,
 };
 
 #[derive(Clone)]

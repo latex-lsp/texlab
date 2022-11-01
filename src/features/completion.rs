@@ -31,11 +31,7 @@ use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    db::workspace::Workspace,
-    syntax::{
-        bibtex::{self},
-        latex,
-    },
+    syntax::{bibtex, latex},
     util::cursor::{Cursor, CursorContext},
     Db, LineIndexExt,
 };
@@ -71,9 +67,8 @@ pub const COMPLETION_LIMIT: usize = 50;
 
 #[must_use]
 pub fn complete(db: &dyn Db, uri: &Url, position: Position) -> Option<CompletionList> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
     let mut items = Vec::new();
-    let context = CursorContext::new(db, document, position, ());
+    let context = CursorContext::new(db, uri, position, ())?;
     log::debug!("[Completion] Cursor: {:?}", context.cursor);
     complete_entry_types(&context, &mut items);
     complete_fields(&context, &mut items);

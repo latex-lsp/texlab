@@ -7,22 +7,16 @@ mod string;
 use lsp_types::{GotoDefinitionResponse, LocationLink, Position, Url};
 use rowan::TextRange;
 
-use crate::{
-    db::{document::Document, workspace::Workspace},
-    util::cursor::CursorContext,
-    Db, LineIndexExt,
-};
+use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
 
 pub fn goto_definition(
     db: &dyn Db,
     uri: &Url,
     position: Position,
 ) -> Option<GotoDefinitionResponse> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let context = CursorContext::new(db, document, position, ());
+    let context = CursorContext::new(db, uri, position, ())?;
     log::debug!("[Definition] Cursor: {:?}", context.cursor);
 
-    let origin_document = context.document;
     let links: Vec<_> = command::goto_command_definition(&context)
         .or_else(|| document::goto_document_definition(&context))
         .or_else(|| entry::goto_entry_definition(&context))
@@ -31,7 +25,8 @@ pub fn goto_definition(
         .into_iter()
         .map(|result| {
             let origin_selection_range = Some(
-                origin_document
+                context
+                    .document
                     .contents(db)
                     .line_index(db)
                     .line_col_lsp_range(result.origin_selection_range),

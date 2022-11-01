@@ -1,4 +1,4 @@
-use lsp_types::Position;
+use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{
@@ -130,7 +130,9 @@ pub struct CursorContext<'db, T = ()> {
 }
 
 impl<'db, T> CursorContext<'db, T> {
-    pub fn new(db: &'db dyn Db, document: Document, position: Position, params: T) -> Self {
+    pub fn new(db: &'db dyn Db, uri: &Url, position: Position, params: T) -> Option<Self> {
+        let workspace = Workspace::get(db);
+        let document = workspace.lookup_uri(db, uri)?;
         let offset = document.contents(db).line_index(db).offset_lsp(position);
 
         let cursor = match document.parse(db) {
@@ -149,15 +151,15 @@ impl<'db, T> CursorContext<'db, T> {
             DocumentData::Log(_) => None,
         };
 
-        Self {
+        Some(Self {
             db,
             document,
-            workspace: Workspace::get(db),
+            workspace,
             distro: Distro::get(db),
             cursor: cursor.unwrap_or(Cursor::Nothing),
             offset,
             params,
-        }
+        })
     }
 
     pub fn related(&self) -> impl Iterator<Item = Document> + '_ {

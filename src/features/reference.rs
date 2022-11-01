@@ -2,44 +2,41 @@ mod entry;
 mod label;
 mod string;
 
-use std::sync::Arc;
-
-use lsp_types::{Location, ReferenceParams, Url};
+use lsp_types::{Location, Position, ReferenceContext, Url};
 use rowan::TextRange;
 
-use crate::LineIndexExt;
+use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
 
-use self::{
-    entry::find_entry_references, label::find_label_references, string::find_string_references,
-};
-
-use super::{cursor::CursorContext, FeatureRequest};
-
-pub fn find_all_references(request: FeatureRequest<ReferenceParams>) -> Vec<Location> {
+pub fn find_all(
+    db: &dyn Db,
+    uri: &Url,
+    position: Position,
+    params: &ReferenceContext,
+) -> Option<Vec<Location>> {
     let mut results = Vec::new();
-    let context = CursorContext::new(request);
+    let context = CursorContext::new(db, uri, position, params)?;
     log::debug!("[References] Cursor: {:?}", context.cursor);
-    find_label_references(&context, &mut results);
-    find_entry_references(&context, &mut results);
-    find_string_references(&context, &mut results);
+    label::find_label_references(&context, &mut results);
+    entry::find_entry_references(&context, &mut results);
+    string::find_string_references(&context, &mut results);
 
-    results
+    let locations = results
         .into_iter()
         .map(|result| Location {
-            uri: result.uri.as_ref().clone(),
-            range: context
-                .request
-                .workspace
-                .get(&result.uri)
-                .unwrap()
-                .line_index()
+            uri: result.document.location(db).uri(db).clone(),
+            range: result
+                .document
+                .contents(db)
+                .line_index(db)
                 .line_col_lsp_range(result.range),
         })
-        .collect()
+        .collect();
+
+    Some(locations)
 }
 
 #[derive(Debug, Clone)]
 struct ReferenceResult {
-    uri: Arc<Url>,
+    document: Document,
     range: TextRange,
 }

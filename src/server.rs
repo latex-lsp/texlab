@@ -30,8 +30,8 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
-        definition, execute_command, find_all_references, find_document_highlights, folding,
-        formatting, hover, inlay_hint, link, rename, symbol, FeatureRequest, ForwardSearch,
+        definition, execute_command, find_document_highlights, folding, formatting, hover,
+        inlay_hint, link, reference, rename, symbol, FeatureRequest, ForwardSearch,
         ForwardSearchResult, ForwardSearchStatus,
     },
     normalize_uri,
@@ -562,15 +562,19 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
         self.run_async_query(id, move |db| {
-            folding::find_all(db.as_jar_db(), &uri).unwrap_or_default()
+            folding::find_all(db, &uri).unwrap_or_default()
         });
         Ok(())
     }
 
-    fn references(&self, id: RequestId, mut params: ReferenceParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
-        let uri = Arc::new(params.text_document_position.text_document.uri.clone());
-        self.handle_feature_request(id, params, uri, find_all_references)?;
+    fn references(&self, id: RequestId, params: ReferenceParams) -> Result<()> {
+        let mut uri = params.text_document_position.text_document.uri;
+        normalize_uri(&mut uri);
+        let position = params.text_document_position.position;
+        self.run_async_query(id, move |db| {
+            reference::find_all(db, &uri, position, &params.context)
+        });
+
         Ok(())
     }
 

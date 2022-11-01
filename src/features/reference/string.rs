@@ -1,22 +1,21 @@
-use std::sync::Arc;
-
-use lsp_types::ReferenceParams;
+use lsp_types::ReferenceContext;
 use rowan::ast::AstNode;
 
 use crate::{
-    features::cursor::CursorContext,
     syntax::bibtex::{self, HasName},
+    util::cursor::CursorContext,
 };
 
 use super::ReferenceResult;
 
 pub(super) fn find_string_references(
-    context: &CursorContext<ReferenceParams>,
+    context: &CursorContext<&ReferenceContext>,
     results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {
+    let db = context.db;
     let name_text = context
         .cursor
-        .as_bibtex()
+        .as_bib()
         .filter(|token| token.kind() == bibtex::NAME)
         .filter(|token| {
             let parent = token.parent().unwrap();
@@ -24,14 +23,11 @@ pub(super) fn find_string_references(
         })?
         .text();
 
-    let document = context.request.main_document();
-    let data = document.data().as_bibtex()?;
-    for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
+    let data = context.document.parse(db).as_bib()?;
+    for node in data.root(db).descendants() {
         if let Some(name) = bibtex::StringDef::cast(node.clone())
             .and_then(|string| string.name_token())
-            .filter(|name| {
-                context.request.params.context.include_declaration && name.text() == name_text
-            })
+            .filter(|name| context.params.include_declaration && name.text() == name_text)
             .or_else(|| {
                 bibtex::Value::cast(node)
                     .and_then(|token| token.syntax().first_token())
@@ -39,7 +35,7 @@ pub(super) fn find_string_references(
             })
         {
             results.push(ReferenceResult {
-                uri: Arc::clone(document.uri()),
+                document: context.document,
                 range: name.text_range(),
             });
         }

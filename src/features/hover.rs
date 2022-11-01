@@ -8,11 +8,10 @@ mod string_ref;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position, Url};
 use rowan::TextRange;
 
-use crate::{db::workspace::Workspace, util::cursor::CursorContext, Db, LineIndexExt};
+use crate::{util::cursor::CursorContext, Db, LineIndexExt};
 
 pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let context = CursorContext::new(db, document, position, ());
+    let context = CursorContext::new(db, uri, position, ())?;
     log::debug!("[Hover] Cursor: {:?}", context.cursor);
 
     let result = label::find_label_hover(&context)
@@ -22,7 +21,7 @@ pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
         .or_else(|| field::find_field_hover(&context))
         .or_else(|| entry_type::find_entry_type_hover(&context))?;
 
-    let line_index = document.contents(db).line_index(db);
+    let line_index = context.document.contents(db).line_index(db);
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: result.value_kind,
