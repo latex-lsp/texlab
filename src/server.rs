@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use log::{error, info, warn};
-use lsp_server::{Connection, Message, RequestId};
+use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
@@ -31,8 +31,8 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
-        definition, execute_command, folding, formatting, forward_search, highlight, hover,
-        inlay_hint, link, reference, rename, symbol,
+        definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
+        reference, rename, symbol, workspace_command,
     },
     normalize_uri,
     syntax::bibtex,
@@ -49,8 +49,6 @@ enum InternalMessage {
 }
 
 struct ServerFork {
-    connection: Arc<Connection>,
-    internal_tx: Sender<InternalMessage>,
     workspace: crate::Workspace,
     diagnostic_tx: debouncer::Sender<crate::Workspace>,
     diagnostic_manager: DiagnosticManager,
@@ -117,8 +115,6 @@ impl Server {
 
     fn fork(&self) -> ServerFork {
         ServerFork {
-            connection: self.connection.clone(),
-            internal_tx: self.internal_tx.clone(),
             workspace: self.workspace.clone(),
             diagnostic_tx: self.diagnostic_tx.clone(),
             diagnostic_manager: self.diagnostic_manager.clone(),
@@ -209,14 +205,11 @@ impl Server {
                 .unwrap_or_default();
 
         if !skip_distro {
-            self.spawn(move |server| {
+            let sender = self.internal_tx.clone();
+            self.pool.execute(move || {
                 let distro = Distribution::detect();
                 info!("Detected distribution: {}", distro.kind);
-
-                server
-                    .internal_tx
-                    .send(InternalMessage::SetDistro(distro))
-                    .unwrap();
+                sender.send(InternalMessage::SetDistro(distro)).unwrap();
             });
         }
 
@@ -611,19 +604,29 @@ impl Server {
     }
 
     fn execute_command(&self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
-        self.spawn(move |server| {
-            let result = execute_command(&server.workspace, &params.command, params.arguments);
-            let response = match result {
-                Ok(()) => lsp_server::Response::new_ok(id, ()),
-                Err(why) => lsp_server::Response::new_err(
-                    id,
-                    lsp_server::ErrorCode::InternalError as i32,
-                    why.to_string(),
-                ),
-            };
-
-            server.connection.sender.send(response.into()).unwrap();
-        });
+        match workspace_command::select(&self.db, &params.command, params.arguments) {
+            Ok(command) => {
+                let client = self.client.clone();
+                self.pool.execute(move || {
+                    match command.run() {
+                        Ok(()) => {
+                            client
+                                .send_response(lsp_server::Response::new_ok(id, ()))
+                                .unwrap();
+                        }
+                        Err(why) => {
+                            client
+                                .send_error(id, ErrorCode::InternalError, why.to_string())
+                                .unwrap();
+                        }
+                    };
+                });
+            }
+            Err(why) => {
+                self.client
+                    .send_error(id, ErrorCode::InvalidParams, why.to_string())?;
+            }
+        };
 
         Ok(())
     }

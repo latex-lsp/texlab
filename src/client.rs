@@ -6,7 +6,7 @@ use std::sync::{
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use dashmap::DashMap;
-use lsp_server::{Message, Request, RequestId, Response};
+use lsp_server::{ErrorCode, Message, Request, RequestId, Response};
 use lsp_types::{notification::ShowMessage, MessageType, ShowMessageParams};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -72,6 +72,11 @@ impl LspClient {
 
     pub fn send_response(&self, response: lsp_server::Response) -> Result<()> {
         self.raw.sender.send(response.into())?;
+        Ok(())
+    }
+
+    pub fn send_error(&self, id: RequestId, code: ErrorCode, message: String) -> Result<()> {
+        self.send_response(lsp_server::Response::new_err(id, code as i32, message))?;
         Ok(())
     }
 
