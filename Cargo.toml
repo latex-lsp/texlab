@@ -67,6 +67,7 @@ serde_repr = "0.1.9"
 smol_str = { version = "0.1.23", features = ["serde"] }
 strum = { version = "0.24.1", features = ["derive"] }
 tempfile = "3.3.0"
+thiserror = "1.0.37"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
 typed-builder = "0.11.0"

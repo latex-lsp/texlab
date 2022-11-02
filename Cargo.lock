@@ -1640,6 +1640,7 @@ dependencies = [
  "smol_str",
  "strum",
  "tempfile",
+ "thiserror",
  "threadpool",
  "titlecase",
  "typed-builder",

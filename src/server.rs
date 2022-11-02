@@ -11,7 +11,8 @@ use lsp_types::{notification::*, request::*, *};
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 use salsa::{DbWithJar, ParallelDatabase};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use threadpool::ThreadPool;
 
 use crate::{
@@ -30,8 +31,8 @@ use crate::{
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
         completion::{self, CompletionItemData},
-        definition, execute_command, folding, formatting, highlight, hover, inlay_hint, link,
-        reference, rename, symbol, ForwardSearch, ForwardSearchResult, ForwardSearchStatus,
+        definition, execute_command, folding, formatting, forward_search, highlight, hover,
+        inlay_hint, link, reference, rename, symbol,
     },
     normalize_uri,
     syntax::bibtex,
@@ -722,37 +723,23 @@ impl Server {
         position: Option<Position>,
         callback: impl FnOnce(ForwardSearchStatus) + Send + 'static,
     ) -> Result<()> {
-        let workspace = Workspace::get(&self.db);
-        let document = match workspace.lookup_uri(&self.db, &uri) {
-            Some(document) => document,
-            None => {
-                callback(ForwardSearchStatus::FAILURE);
+        let command = match forward_search::Command::configure(&self.db, &uri, position) {
+            Ok(command) => command,
+            Err(why) => {
+                log::error!("Forward search failed: {}", why);
+                callback(why.into());
                 return Ok(());
             }
         };
 
-        let position = position.unwrap_or_else(|| {
-            document
-                .contents(&self.db)
-                .line_index(&self.db)
-                .line_col_lsp(document.cursor(&self.db))
+        self.pool.execute(move || {
+            let status = command
+                .run()
+                .map_or_else(ForwardSearchStatus::from, |()| ForwardSearchStatus::SUCCESS);
+
+            callback(status);
         });
 
-        let options = &workspace.options(&self.db).forward_search;
-        let status = match options.executable.as_deref().zip(options.args.as_deref()) {
-            Some((executable, args)) => ForwardSearch::builder()
-                .line(position.line)
-                .tex_uri(&uri)
-                .executable(executable)
-                .args(args)
-                .workspace(&self.workspace)
-                .build()
-                .execute()
-                .map_or(ForwardSearchStatus::FAILURE, |result| result.status),
-            None => ForwardSearchStatus::UNCONFIGURED,
-        };
-
-        callback(status);
         Ok(())
     }
 
@@ -979,4 +966,30 @@ impl lsp_types::request::Request for ForwardSearchRequest {
     type Result = ForwardSearchResult;
 
     const METHOD: &'static str = "textDocument/forwardSearch";
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
+#[repr(i32)]
+pub enum ForwardSearchStatus {
+    SUCCESS = 0,
+    ERROR = 1,
+    FAILURE = 2,
+    UNCONFIGURED = 3,
+}
+
+impl From<forward_search::Error> for ForwardSearchStatus {
+    fn from(err: forward_search::Error) -> Self {
+        match err {
+            forward_search::Error::TexNotFound(_) => ForwardSearchStatus::FAILURE,
+            forward_search::Error::PdfNotFound(_) => ForwardSearchStatus::ERROR,
+            forward_search::Error::NoLocalFile(_) => ForwardSearchStatus::FAILURE,
+            forward_search::Error::Unconfigured => ForwardSearchStatus::UNCONFIGURED,
+            forward_search::Error::Spawn(_) => ForwardSearchStatus::ERROR,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+pub struct ForwardSearchResult {
+    pub status: ForwardSearchStatus,
 }
