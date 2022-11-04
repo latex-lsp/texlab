@@ -20,6 +20,7 @@ use crate::{
     client::LspClient,
     component_db::COMPONENT_DATABASE,
     db::{
+        self,
         document::{Language, Owner},
         workspace::Workspace,
         Distro,
@@ -46,6 +47,7 @@ enum InternalMessage {
     SetOptions(Options),
     FileEvent(notify::Event),
     ForwardSearch(Url),
+    Diagnostics,
 }
 
 struct ServerFork {
@@ -213,7 +215,6 @@ impl Server {
             });
         }
 
-        self.register_diagnostics_handler();
         self.register_configuration();
         self.pull_options();
         Ok(())
@@ -246,6 +247,45 @@ impl Server {
                 }
             });
         }
+    }
+
+    fn update_workspace(&mut self) {
+        Workspace::get(&self.db).discover(&mut self.db);
+        self.watcher.watch(&self.db);
+        self.publish_diagnostics_with_delay();
+    }
+
+    fn publish_diagnostics(&mut self) -> Result<()> {
+        let all_diagnostics = db::diagnostics::collect_filtered(
+            &self.db,
+            Workspace::get(&self.db),
+            Distro::get(&self.db),
+        );
+
+        for (document, diagnostics) in all_diagnostics {
+            let uri = document.location(&self.db).uri(&self.db).clone();
+            self.client
+                .send_notification::<PublishDiagnostics>(PublishDiagnosticsParams {
+                    uri,
+                    diagnostics,
+                    version: None,
+                })?;
+        }
+
+        Ok(())
+    }
+
+    fn publish_diagnostics_with_delay(&mut self) {
+        let sender = self.internal_tx.clone();
+        let delay = Workspace::get(&self.db)
+            .options(&self.db)
+            .diagnostics_delay
+            .0;
+
+        self.pool.execute(move || {
+            std::thread::sleep(delay);
+            sender.send(InternalMessage::Diagnostics).unwrap();
+        });
     }
 
     fn register_diagnostics_handler(&mut self) {
@@ -348,7 +388,7 @@ impl Server {
             Owner::Client,
         );
 
-        workspace.discover(&mut self.db);
+        self.update_workspace();
 
         // if self.workspace.environment.options.chktex.on_open_and_save {
         //     self.run_chktex(document);
@@ -392,7 +432,7 @@ impl Server {
             };
         }
 
-        workspace.discover(&mut self.db);
+        self.update_workspace();
 
         // TODO: ChkTeX
         // if self.workspace.environment.options.chktex.on_edit {
@@ -409,6 +449,8 @@ impl Server {
         if Workspace::get(&self.db).options(&self.db).build.on_save {
             self.build_internal(uri.clone(), |_| ())?;
         }
+
+        self.publish_diagnostics_with_delay();
 
         if let Some(document) = self
             .workspace
@@ -432,21 +474,22 @@ impl Server {
                 .to(Owner::Server);
         }
 
+        self.publish_diagnostics_with_delay();
         Ok(())
     }
 
     fn run_chktex(&mut self, document: Document) {
-        self.spawn(move |server| {
-            server
-                .diagnostic_manager
-                .push_chktex(&server.workspace, document.uri());
+        // self.spawn(move |server| {
+        //     server
+        //         .diagnostic_manager
+        //         .push_chktex(&server.workspace, document.uri());
 
-            let delay = server.workspace.environment.options.diagnostics_delay;
-            server
-                .diagnostic_tx
-                .send(server.workspace.clone(), delay.0)
-                .unwrap();
-        });
+        //     let delay = server.workspace.environment.options.diagnostics_delay;
+        //     server
+        //         .diagnostic_tx
+        //         .send(server.workspace.clone(), delay.0)
+        //         .unwrap();
+        // });
     }
 
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
@@ -747,6 +790,8 @@ impl Server {
     }
 
     fn handle_file_event(&mut self, event: notify::Event) {
+        let mut changed = false;
+
         let workspace = Workspace::get(&self.db);
         match event.kind {
             notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
@@ -757,6 +802,7 @@ impl Server {
                     {
                         if let Some(language) = Language::from_path(&path) {
                             workspace.load(&mut self.db, &path, language, Owner::Server);
+                            changed = true;
                         }
                     }
                 }
@@ -775,12 +821,18 @@ impl Server {
                                 .set_documents(&mut self.db)
                                 .with_durability(salsa::Durability::MEDIUM)
                                 .to(documents);
+
+                            changed = true;
                         }
                     }
                 }
             }
             notify::EventKind::Any | notify::EventKind::Access(_) | notify::EventKind::Other => {}
         };
+
+        if changed {
+            self.publish_diagnostics_with_delay();
+        }
     }
 
     fn process_messages(&mut self) -> Result<()> {
@@ -874,6 +926,9 @@ impl Server {
                         }
                         InternalMessage::ForwardSearch(uri) => {
                             self.forward_search_internal(uri, None, |_| ())?;
+                        }
+                        InternalMessage::Diagnostics => {
+                            self.publish_diagnostics()?;
                         }
                     };
                 }

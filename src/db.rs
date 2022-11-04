@@ -1,5 +1,6 @@
 pub mod analysis;
 pub mod dependency;
+pub mod diagnostics;
 pub mod document;
 pub mod parse;
 pub mod workspace;

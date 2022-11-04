@@ -1,11 +1,8 @@
 use anyhow::Result;
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
-    notification::{
-        DidChangeConfiguration, DidChangeWatchedFiles, Notification, PublishDiagnostics,
-    },
-    ClientCapabilities, Diagnostic, DidChangeConfigurationParams, DidChangeWatchedFilesParams,
-    FileChangeType, FileEvent, PublishDiagnosticsParams, Url,
+    notification::{DidChangeConfiguration, Notification, PublishDiagnostics},
+    ClientCapabilities, Diagnostic, DidChangeConfigurationParams, PublishDiagnosticsParams, Url,
 };
 use rustc_hash::FxHashMap;
 
@@ -20,23 +17,13 @@ fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> Result<Diagno
     let mut client = Client::spawn()?;
     client.initialize(ClientCapabilities::default(), None)?;
 
-    let mut disk_files = Vec::new();
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        if file.lang == "log" {
-            client.store_on_disk(file.name, &file.text)?;
-            disk_files.push(client.uri(file.name)?);
-        } else {
+        client.store_on_disk(file.name, &file.text)?;
+        if file.lang != "log" {
             client.open(file.name, file.lang, file.text)?;
         }
     }
-
-    client.notify::<DidChangeWatchedFiles>(DidChangeWatchedFilesParams {
-        changes: disk_files
-            .into_iter()
-            .map(|uri| FileEvent::new(uri, FileChangeType::CHANGED))
-            .collect(),
-    })?;
 
     client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings })?;
 

@@ -8,7 +8,6 @@ mod folding_range;
 mod formatting;
 mod hover;
 mod inlay_hint;
-// TODO
-// mod publish_diagnostics;
+mod publish_diagnostics;
 mod references;
 mod rename;

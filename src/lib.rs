@@ -72,6 +72,11 @@ pub struct Jar(
     db::workspace::Workspace_parents,
     db::workspace::Workspace_related,
     db::workspace::Workspace_number_of_label,
+    db::diagnostics::tex::collect,
+    db::diagnostics::bib::collect,
+    db::diagnostics::log::collect,
+    db::diagnostics::collect,
+    db::diagnostics::collect_filtered,
 );
 
 pub trait Db: salsa::DbWithJar<Jar> {}
