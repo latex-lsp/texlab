@@ -120,12 +120,13 @@ impl TexCompiler {
 
             loop {
                 let done = flume::Selector::new()
-                    .recv(&line_receiver, |line| {
-                        let message = line.unwrap();
-                        client
-                            .send_notification::<LogMessage>(LogMessageParams { message, typ })
-                            .unwrap();
-                        false
+                    .recv(&line_receiver, |line| match line {
+                        Ok(message) => {
+                            let params = LogMessageParams { message, typ };
+                            client.send_notification::<LogMessage>(params).unwrap();
+                            false
+                        }
+                        Err(_) => true,
                     })
                     .recv(&exit_receiver, |_| true)
                     .wait();
@@ -144,9 +145,7 @@ impl TexCompiler {
             }
         });
 
-        exit_sender
-            .send(())
-            .expect("send exit signal to output reader");
+        let _ = exit_sender.send(());
         handle.join().unwrap();
 
         drop(reporter);
