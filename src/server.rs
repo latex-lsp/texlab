@@ -101,27 +101,12 @@ impl Server {
         R: Serialize,
         Q: FnOnce(&dyn Db) -> R + Send + 'static,
     {
-        let snapshot = self.db.snapshot();
+        // TODO: Use threadpool here
         let client = self.client.clone();
-        self.pool.execute(move || {
-            let db = snapshot.as_jar_db();
-            client
-                .send_response(lsp_server::Response::new_ok(id, query(db)))
-                .unwrap();
-        });
-    }
-
-    fn spawn(&self, job: impl FnOnce(ServerFork) + Send + 'static) {
-        let fork = self.fork();
-        self.pool.execute(move || job(fork));
-    }
-
-    fn fork(&self) -> ServerFork {
-        ServerFork {
-            workspace: self.workspace.clone(),
-            diagnostic_tx: self.diagnostic_tx.clone(),
-            diagnostic_manager: self.diagnostic_manager.clone(),
-        }
+        let result = query(&self.db);
+        client
+            .send_response(lsp_server::Response::new_ok(id, result))
+            .unwrap();
     }
 
     fn capabilities(&self) -> ServerCapabilities {
@@ -455,7 +440,7 @@ impl Server {
 
         if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
             if workspace.options(&self.db).chktex.on_open_and_save {
-            self.run_chktex(document);
+                self.run_chktex(document);
             }
         }
 
