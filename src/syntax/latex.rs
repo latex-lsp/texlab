@@ -1,9 +1,7 @@
-mod analysis;
 mod cst;
 mod kind;
 
 pub use self::{
-    analysis::*,
     cst::*,
     kind::SyntaxKind::{self, *},
 };

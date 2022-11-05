@@ -69,7 +69,7 @@ impl Client {
         let (client, server) = Connection::memory();
         let incoming = IncomingHandler::spawn(client.receiver)?;
         let outgoing = client.sender;
-        let server = Server::new(server, directory.path().to_path_buf());
+        let server = Server::new(server);
         let _handle = jod_thread::spawn(move || {
             server.run().expect("server failed to run");
         });

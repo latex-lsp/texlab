@@ -10,7 +10,7 @@ use anyhow::Result;
 use rustc_hash::FxHashMap;
 use smol_str::SmolStr;
 
-use crate::DocumentLanguage;
+use crate::db::document::Language;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Resolver {
@@ -35,7 +35,7 @@ pub fn parse_database(
     let mut files_by_name = FxHashMap::default();
     for directory in root_directories {
         for path in reader(directory)? {
-            if DocumentLanguage::by_path(&path).is_some() {
+            if Language::from_path(&path).is_some() {
                 if let Some(path) = make_absolute(root_directories, &path) {
                     if let Some(name) = path.file_name().and_then(OsStr::to_str).map(Into::into) {
                         files_by_name.insert(name, path);

@@ -5,15 +5,10 @@ pub mod citation;
 mod client;
 pub mod component_db;
 pub mod db;
-mod debouncer;
-mod diagnostics;
 mod dispatch;
 pub mod distro;
-mod document;
-mod environment;
 pub mod features;
 mod lang_data;
-mod language;
 mod line_index;
 mod line_index_ext;
 mod options;
@@ -21,19 +16,14 @@ pub mod parser;
 mod server;
 pub mod syntax;
 pub(crate) mod util;
-mod workspace;
 
 pub use self::{
     capabilities::ClientCapabilitiesExt,
-    document::*,
-    environment::Environment,
     lang_data::*,
-    language::DocumentLanguage,
     line_index::{LineCol, LineColUtf16, LineIndex},
     line_index_ext::LineIndexExt,
     options::*,
     server::Server,
-    workspace::{Workspace, WorkspaceEvent},
 };
 
 #[salsa::jar(db = Db)]
@@ -116,7 +106,7 @@ impl salsa::ParallelDatabase for Database {
     }
 }
 
-pub fn normalize_uri(uri: &mut lsp_types::Url) {
+pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
     fn fix_drive_letter(text: &str) -> Option<String> {
         if !text.is_ascii() {
             return None;

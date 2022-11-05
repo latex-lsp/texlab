@@ -5,12 +5,11 @@ use std::{
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
-use log::{error, info, warn};
+use log::{error, info};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
-use salsa::{DbWithJar, ParallelDatabase};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use threadpool::ThreadPool;
@@ -25,8 +24,6 @@ use crate::{
         workspace::Workspace,
         Distro,
     },
-    debouncer,
-    diagnostics::DiagnosticManager,
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
@@ -37,8 +34,7 @@ use crate::{
     },
     normalize_uri,
     syntax::bibtex,
-    util, ClientCapabilitiesExt, Database, Db, DocumentData, Environment, LineIndexExt, Options,
-    StartupOptions, WorkspaceEvent,
+    util, ClientCapabilitiesExt, Database, Db, LineIndexExt, Options, StartupOptions,
 };
 
 #[derive(Debug)]
@@ -51,12 +47,6 @@ enum InternalMessage {
     ChktexResult(Url, Vec<db::diagnostics::Diagnostic>),
 }
 
-struct ServerFork {
-    workspace: crate::Workspace,
-    diagnostic_tx: debouncer::Sender<crate::Workspace>,
-    diagnostic_manager: DiagnosticManager,
-}
-
 pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
@@ -64,24 +54,15 @@ pub struct Server {
     client: LspClient,
     db: Database,
     watcher: FileWatcher,
-    workspace: crate::Workspace,
-    diagnostic_tx: debouncer::Sender<crate::Workspace>,
-    diagnostic_manager: DiagnosticManager,
     pool: ThreadPool,
 }
 
 impl Server {
-    pub fn new(connection: Connection, current_dir: PathBuf) -> Self {
+    pub fn new(connection: Connection) -> Self {
         let client = LspClient::new(connection.sender.clone());
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
-
-        let workspace = crate::Workspace::new(Environment::new(Arc::new(current_dir)));
-        let diagnostic_manager = DiagnosticManager::default();
-        let diagnostic_tx = create_debouncer(client.clone(), diagnostic_manager.clone());
-
         let db = Database::default();
         let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
-
         Self {
             connection: Arc::new(connection),
             internal_tx,
@@ -89,9 +70,6 @@ impl Server {
             client,
             db,
             watcher,
-            workspace,
-            diagnostic_tx,
-            diagnostic_manager,
             pool: threadpool::Builder::new().build(),
         }
     }
@@ -272,25 +250,6 @@ impl Server {
             std::thread::sleep(delay);
             sender.send(InternalMessage::Diagnostics).unwrap();
         });
-    }
-
-    fn register_diagnostics_handler(&mut self) {
-        let (event_sender, event_receiver) = crossbeam_channel::unbounded();
-        let diagnostic_tx = self.diagnostic_tx.clone();
-        let diagnostic_manager = self.diagnostic_manager.clone();
-        std::thread::spawn(move || {
-            for event in event_receiver {
-                match event {
-                    WorkspaceEvent::Changed(workspace, document) => {
-                        diagnostic_manager.push_syntax(&workspace, document.uri());
-                        let delay = workspace.environment.options.diagnostics_delay;
-                        diagnostic_tx.send(workspace, delay.0).unwrap();
-                    }
-                };
-            }
-        });
-
-        self.workspace.listeners.push(event_sender);
     }
 
     fn pull_options(&mut self) {
@@ -933,43 +892,6 @@ impl Server {
         self.pool.join();
         Ok(())
     }
-}
-
-fn create_debouncer(
-    client: LspClient,
-    diagnostic_manager: DiagnosticManager,
-) -> debouncer::Sender<crate::Workspace> {
-    let (tx, rx) = debouncer::unbounded();
-    std::thread::spawn(move || {
-        while let Ok(workspace) = rx.recv() {
-            if let Err(why) = publish_diagnostics(&client, &diagnostic_manager, &workspace) {
-                warn!("Failed to publish diagnostics: {}", why);
-            }
-        }
-    });
-
-    tx
-}
-
-fn publish_diagnostics(
-    client: &LspClient,
-    diagnostic_manager: &DiagnosticManager,
-    workspace: &crate::Workspace,
-) -> Result<()> {
-    for document in workspace.iter() {
-        if matches!(document.data(), DocumentData::BuildLog(_)) {
-            continue;
-        }
-
-        let diagnostics = diagnostic_manager.publish(workspace, document.uri());
-        client.send_notification::<PublishDiagnostics>(PublishDiagnosticsParams {
-            uri: document.uri().as_ref().clone(),
-            version: None,
-            diagnostics,
-        })?;
-    }
-
-    Ok(())
 }
 
 struct FileWatcher {

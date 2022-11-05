@@ -1,4 +1,4 @@
-use std::{env, fs::OpenOptions, io, path::PathBuf};
+use std::{fs::OpenOptions, io, path::PathBuf};
 
 use anyhow::Result;
 use clap::{ArgAction, Parser};
@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     setup_logger(opts);
 
     let (connection, threads) = Connection::stdio();
-    Server::new(connection, env::current_dir()?).run()?;
+    Server::new(connection).run()?;
     threads.join()?;
 
     Ok(())
