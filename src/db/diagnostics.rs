@@ -141,6 +141,10 @@ pub fn collect_filtered(
     let options = &workspace.options(db).diagnostics;
     for document in workspace.documents(db) {
         let mut filtered = Vec::new();
+        if !matches!(document.language(db), Language::Tex | Language::Bib) {
+            continue;
+        }
+
         if let Some(diagnostics) = all_diagnostics.get(document) {
             for diagnostic in diagnostics.iter() {
                 if !options.allowed_patterns.is_empty()

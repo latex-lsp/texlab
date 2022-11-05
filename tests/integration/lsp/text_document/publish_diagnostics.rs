@@ -17,6 +17,8 @@ fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> Result<Diagno
     let mut client = Client::spawn()?;
     client.initialize(ClientCapabilities::default(), None)?;
 
+    client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings })?;
+
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
         client.store_on_disk(file.name, &file.text)?;
@@ -25,7 +27,7 @@ fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> Result<Diagno
         }
     }
 
-    client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings })?;
+    std::thread::sleep(std::time::Duration::from_secs(1));
 
     let result = client.shutdown()?;
 
@@ -218,7 +220,12 @@ static BUILD_LOG_FIXTURE: &str = r#"
 
 #[test]
 fn build_log_filter_none() -> Result<()> {
-    assert_symbols!(find_diagnostics(BUILD_LOG_FIXTURE, serde_json::json!({}))?);
+    assert_symbols!(find_diagnostics(
+        BUILD_LOG_FIXTURE,
+        serde_json::json!({
+            "diagnosticsDelay": 0,
+        })
+    )?);
     Ok(())
 }
 
@@ -227,6 +234,7 @@ fn build_log_filter_allowed() -> Result<()> {
     assert_symbols!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
+            "diagnosticsDelay": 0,
             "diagnostics": {
                 "allowedPatterns": ["Overfull \\\\[hv]box"]
             }
@@ -241,6 +249,7 @@ fn build_log_filter_ignored() -> Result<()> {
     assert_symbols!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
+            "diagnosticsDelay": 0,
             "diagnostics": {
                 "ignoredPatterns": ["Overfull \\\\[hv]box"]
             }
@@ -305,7 +314,9 @@ fn build_log_spaces_in_path() -> Result<()> {
 %SRC c:/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
 %SRC Output written on main.pdf (1 page, 9741 bytes).
 "#,
-        serde_json::Value::Null
+        serde_json::json!({
+            "diagnosticsDelay": 0,
+        })
     )?);
     Ok(())
 }
