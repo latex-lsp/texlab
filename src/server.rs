@@ -1,3 +1,5 @@
+mod query;
+
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
@@ -34,7 +36,7 @@ use crate::{
     },
     normalize_uri,
     syntax::bibtex,
-    util, ClientCapabilitiesExt, Database, Db, LineIndexExt, Options, StartupOptions,
+    util, ClientCapabilitiesExt, Db, LineIndexExt, Options, StartupOptions,
 };
 
 #[derive(Debug)]
@@ -52,7 +54,7 @@ pub struct Server {
     internal_tx: Sender<InternalMessage>,
     internal_rx: Receiver<InternalMessage>,
     client: LspClient,
-    db: Database,
+    engine: query::Engine,
     watcher: FileWatcher,
     pool: ThreadPool,
 }
@@ -61,30 +63,28 @@ impl Server {
     pub fn new(connection: Connection) -> Self {
         let client = LspClient::new(connection.sender.clone());
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
-        let db = Database::default();
         let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
         Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
             client,
-            db,
+            engine: query::Engine::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
         }
     }
 
-    fn run_async_query<R, Q>(&self, id: RequestId, query: Q)
+    fn run_with_db<R, Q>(&self, id: RequestId, query: Q)
     where
         R: Serialize,
         Q: FnOnce(&dyn Db) -> R + Send + 'static,
     {
-        // TODO: Use threadpool here
         let client = self.client.clone();
-        let result = query(&self.db);
-        client
-            .send_response(lsp_server::Response::new_ok(id, result))
-            .unwrap();
+        self.engine.fork(move |db| {
+            let response = lsp_server::Response::new_ok(id, query(db));
+            client.send_response(response).unwrap();
+        });
     }
 
     fn capabilities(&self) -> ServerCapabilities {
@@ -144,14 +144,15 @@ impl Server {
         let (id, params) = self.connection.initialize_start()?;
         let params: InitializeParams = serde_json::from_value(params)?;
 
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
         workspace
-            .set_client_capabilities(&mut self.db)
+            .set_client_capabilities(db)
             .with_durability(salsa::Durability::HIGH)
             .to(params.capabilities);
 
         workspace
-            .set_client_info(&mut self.db)
+            .set_client_info(db)
             .with_durability(salsa::Durability::HIGH)
             .to(params.client_info);
 
@@ -185,9 +186,10 @@ impl Server {
     }
 
     fn register_configuration(&mut self) {
-        let workspace = Workspace::get(&self.db);
-        if workspace
-            .client_capabilities(&self.db)
+        let db = self.engine.read();
+
+        if Workspace::get(db)
+            .client_capabilities(db)
             .has_push_configuration_support()
         {
             let registration = Registration {
@@ -214,20 +216,20 @@ impl Server {
     }
 
     fn update_workspace(&mut self) {
-        Workspace::get(&self.db).discover(&mut self.db);
-        self.watcher.watch(&self.db);
+        let db = self.engine.write();
+        Workspace::get(db).discover(db);
+        self.watcher.watch(db);
         self.publish_diagnostics_with_delay();
     }
 
     fn publish_diagnostics(&mut self) -> Result<()> {
-        let all_diagnostics = db::diagnostics::collect_filtered(
-            &self.db,
-            Workspace::get(&self.db),
-            Distro::get(&self.db),
-        );
+        let db = self.engine.read();
+
+        let all_diagnostics =
+            db::diagnostics::collect_filtered(db, Workspace::get(db), Distro::get(db));
 
         for (document, diagnostics) in all_diagnostics {
-            let uri = document.location(&self.db).uri(&self.db).clone();
+            let uri = document.location(db).uri(db).clone();
             self.client
                 .send_notification::<PublishDiagnostics>(PublishDiagnosticsParams {
                     uri,
@@ -240,12 +242,9 @@ impl Server {
     }
 
     fn publish_diagnostics_with_delay(&mut self) {
+        let db = self.engine.read();
         let sender = self.internal_tx.clone();
-        let delay = Workspace::get(&self.db)
-            .options(&self.db)
-            .diagnostics_delay
-            .0;
-
+        let delay = Workspace::get(db).options(db).diagnostics_delay.0;
         self.pool.execute(move || {
             std::thread::sleep(delay);
             sender.send(InternalMessage::Diagnostics).unwrap();
@@ -253,9 +252,10 @@ impl Server {
     }
 
     fn pull_options(&mut self) {
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.read();
+        let workspace = Workspace::get(db);
         if !workspace
-            .client_capabilities(&self.db)
+            .client_capabilities(db)
             .has_pull_configuration_support()
         {
             return;
@@ -287,13 +287,14 @@ impl Server {
     }
 
     fn update_options(&mut self, options: Options) {
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
         workspace
-            .set_options(&mut self.db)
+            .set_options(db)
             .with_durability(salsa::Durability::MEDIUM)
             .to(options);
 
-        self.watcher.watch(&self.db);
+        self.watcher.watch(db);
     }
 
     fn cancel(&self, _params: CancelParams) -> Result<()> {
@@ -305,9 +306,10 @@ impl Server {
     }
 
     fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.read();
+        let workspace = Workspace::get(db);
         if workspace
-            .client_capabilities(&self.db)
+            .client_capabilities(db)
             .has_pull_configuration_support()
         {
             self.pull_options();
@@ -322,11 +324,12 @@ impl Server {
     fn did_open(&mut self, mut params: DidOpenTextDocumentParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
 
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
         let language_id = &params.text_document.language_id;
         let language = Language::from_id(language_id).unwrap_or(Language::Tex);
         let document = workspace.open(
-            &mut self.db,
+            db,
             params.text_document.uri,
             params.text_document.text,
             language,
@@ -335,7 +338,11 @@ impl Server {
 
         self.update_workspace();
 
-        if workspace.options(&self.db).chktex.on_open_and_save {
+        if workspace
+            .options(self.engine.read())
+            .chktex
+            .on_open_and_save
+        {
             self.run_chktex(document);
         }
 
@@ -346,8 +353,9 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let workspace = Workspace::get(&self.db);
-        let document = match workspace.lookup_uri(&self.db, &uri) {
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
+        let document = match workspace.lookup_uri(db, &uri) {
             Some(document) => document,
             None => return Ok(()),
         };
@@ -355,22 +363,18 @@ impl Server {
         for change in params.content_changes {
             match change.range {
                 Some(range) => {
-                    let range = document
-                        .contents(&self.db)
-                        .line_index(&self.db)
-                        .offset_lsp_range(range);
-
-                    document.edit(&mut self.db, range, &change.text);
+                    let range = document.contents(db).line_index(db).offset_lsp_range(range);
+                    document.edit(db, range, &change.text);
                 }
                 None => {
                     document
-                        .contents(&self.db)
-                        .set_text(&mut self.db)
+                        .contents(db)
+                        .set_text(db)
                         .with_durability(salsa::Durability::LOW)
                         .to(change.text);
 
                     document
-                        .set_cursor(&mut self.db)
+                        .set_cursor(db)
                         .with_durability(salsa::Durability::LOW)
                         .to(TextSize::from(0));
                 }
@@ -379,7 +383,7 @@ impl Server {
 
         self.update_workspace();
 
-        if workspace.options(&self.db).chktex.on_edit {
+        if workspace.options(self.engine.read()).chktex.on_edit {
             self.run_chktex(document);
         }
 
@@ -390,15 +394,17 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let workspace = Workspace::get(&self.db);
-        if workspace.options(&self.db).build.on_save {
+        let db = self.engine.read();
+        let workspace = Workspace::get(db);
+        if workspace.options(db).build.on_save {
             self.build_internal(uri.clone(), |_| ())?;
         }
 
         self.publish_diagnostics_with_delay();
 
-        if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
-            if workspace.options(&self.db).chktex.on_open_and_save {
+        let db = self.engine.read();
+        if let Some(document) = workspace.lookup_uri(db, &uri) {
+            if workspace.options(db).chktex.on_open_and_save {
                 self.run_chktex(document);
             }
         }
@@ -410,9 +416,10 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        if let Some(document) = Workspace::get(&self.db).lookup_uri(&self.db, &uri) {
+        let db = self.engine.write();
+        if let Some(document) = Workspace::get(db).lookup_uri(db, &uri) {
             document
-                .set_owner(&mut self.db)
+                .set_owner(db)
                 .with_durability(salsa::Durability::LOW)
                 .to(Owner::Server);
         }
@@ -422,9 +429,10 @@ impl Server {
     }
 
     fn run_chktex(&mut self, document: Document) {
-        if let Some(command) = util::chktex::Command::new(&self.db, document) {
+        let db = self.engine.read();
+        if let Some(command) = util::chktex::Command::new(db, document) {
             let sender = self.internal_tx.clone();
-            let uri = document.location(&self.db).uri(&self.db).clone();
+            let uri = document.location(db).uri(db).clone();
             self.pool.execute(move || {
                 let diagnostics = command.run().unwrap_or_default();
                 sender
@@ -437,19 +445,19 @@ impl Server {
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| link::find_all(db, &uri).unwrap_or_default());
+        self.run_with_db(id, move |db| link::find_all(db, &uri).unwrap_or_default());
         Ok(())
     }
 
     fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| symbol::find_document_symbols(db, &uri));
+        self.run_with_db(id, move |db| symbol::find_document_symbols(db, &uri));
         Ok(())
     }
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
-        self.run_async_query(id, move |db| symbol::find_workspace_symbols(db, &params));
+        self.run_with_db(id, move |db| symbol::find_workspace_symbols(db, &params));
         Ok(())
     }
 
@@ -457,12 +465,12 @@ impl Server {
         let mut uri = params.text_document_position.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position.position;
-        self.run_async_query(id, move |db| completion::complete(db, &uri, position));
+        self.run_with_db(id, move |db| completion::complete(db, &uri, position));
         Ok(())
     }
 
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
                 CompletionItemData::Package | CompletionItemData::Class => {
                     item.documentation = COMPONENT_DATABASE
@@ -497,7 +505,7 @@ impl Server {
     fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             folding::find_all(db, &uri).unwrap_or_default()
         });
         Ok(())
@@ -507,7 +515,7 @@ impl Server {
         let mut uri = params.text_document_position.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position.position;
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             reference::find_all(db, &uri, position, &params.context).unwrap_or_default()
         });
 
@@ -518,22 +526,22 @@ impl Server {
         let mut uri = params.text_document_position_params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let workspace = Workspace::get(&self.db);
-        if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
+        if let Some(document) = workspace.lookup_uri(db, &uri) {
             let position = document
-                .contents(&self.db)
-                .line_index(&self.db)
+                .contents(db)
+                .line_index(db)
                 .offset_lsp(params.text_document_position_params.position);
 
             document
-                .set_cursor(&mut self.db)
+                .set_cursor(db)
                 .with_durability(salsa::Durability::LOW)
                 .to(position);
         }
 
         let position = params.text_document_position_params.position;
-        self.run_async_query(id, move |db| hover::find(db, &uri, position));
-
+        self.run_with_db(id, move |db| hover::find(db, &uri, position));
         Ok(())
     }
 
@@ -541,16 +549,17 @@ impl Server {
         let mut uri = params.text_document_position_params.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position_params.position;
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             definition::goto_definition(db, &uri, position)
         });
+
         Ok(())
     }
 
     fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             rename::prepare_rename_all(db, &uri, params.position)
         });
 
@@ -561,7 +570,7 @@ impl Server {
         let mut uri = params.text_document_position.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position.position;
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             rename::rename_all(db, &uri, position, params.new_name)
         });
 
@@ -572,7 +581,7 @@ impl Server {
         let mut uri = params.text_document_position_params.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position_params.position;
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             highlight::find_all(db, &uri, position).unwrap_or_default()
         });
         Ok(())
@@ -581,15 +590,16 @@ impl Server {
     fn formatting(&self, id: RequestId, params: DocumentFormattingParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             formatting::format_source_code(db, &uri, &params.options)
         });
 
         Ok(())
     }
 
-    fn execute_command(&self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
-        match workspace_command::select(&self.db, &params.command, params.arguments) {
+    fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
+        let db = self.engine.read();
+        match workspace_command::select(db, &params.command, params.arguments) {
             Ok(command) => {
                 let client = self.client.clone();
                 self.pool.execute(move || {
@@ -609,7 +619,8 @@ impl Server {
             }
             Err(why) => {
                 self.client
-                    .send_error(id, ErrorCode::InvalidParams, why.to_string())?;
+                    .send_error(id, ErrorCode::InvalidParams, why.to_string())
+                    .unwrap();
             }
         };
 
@@ -619,7 +630,7 @@ impl Server {
     fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        self.run_async_query(id, move |db| {
+        self.run_with_db(id, move |db| {
             inlay_hint::find_all(db, &uri, params.range).unwrap_or_default()
         });
         Ok(())
@@ -661,7 +672,8 @@ impl Server {
     ) -> Result<()> {
         static LOCK: Mutex<()> = Mutex::new(());
 
-        let compiler = match TexCompiler::configure(&self.db, uri.clone(), self.client.clone()) {
+        let db = self.engine.read();
+        let compiler = match TexCompiler::configure(db, uri.clone(), self.client.clone()) {
             Some(compiler) => compiler,
             None => {
                 callback(BuildStatus::FAILURE);
@@ -669,10 +681,7 @@ impl Server {
             }
         };
 
-        let forward_search_after = Workspace::get(&self.db)
-            .options(&self.db)
-            .build
-            .forward_search_after;
+        let forward_search_after = Workspace::get(db).options(db).build.forward_search_after;
 
         let sender = self.internal_tx.clone();
         self.pool.execute(move || {
@@ -711,7 +720,8 @@ impl Server {
         position: Option<Position>,
         callback: impl FnOnce(ForwardSearchStatus) + Send + 'static,
     ) -> Result<()> {
-        let command = match forward_search::Command::configure(&self.db, &uri, position) {
+        let db = self.engine.read();
+        let command = match forward_search::Command::configure(db, &uri, position) {
             Ok(command) => command,
             Err(why) => {
                 log::error!("Forward search failed: {}", why);
@@ -734,16 +744,17 @@ impl Server {
     fn handle_file_event(&mut self, event: notify::Event) {
         let mut changed = false;
 
-        let workspace = Workspace::get(&self.db);
+        let db = self.engine.write();
+        let workspace = Workspace::get(db);
         match event.kind {
             notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
                 for path in event.paths {
                     if workspace
-                        .lookup_path(&self.db, &path)
-                        .map_or(true, |document| document.owner(&self.db) == Owner::Server)
+                        .lookup_path(db, &path)
+                        .map_or(true, |document| document.owner(db) == Owner::Server)
                     {
                         if let Some(language) = Language::from_path(&path) {
-                            workspace.load(&mut self.db, &path, language, Owner::Server);
+                            workspace.load(db, &path, language, Owner::Server);
                             changed = true;
                         }
                     }
@@ -751,16 +762,16 @@ impl Server {
             }
             notify::EventKind::Remove(_) => {
                 for path in event.paths {
-                    if let Some(document) = workspace.lookup_path(&self.db, &path) {
-                        if document.owner(&self.db) == Owner::Server {
+                    if let Some(document) = workspace.lookup_path(db, &path) {
+                        if document.owner(db) == Owner::Server {
                             let mut documents = workspace
-                                .set_documents(&mut self.db)
+                                .set_documents(db)
                                 .with_durability(salsa::Durability::LOW)
                                 .to(FxHashSet::default());
 
                             documents.remove(&document);
                             workspace
-                                .set_documents(&mut self.db)
+                                .set_documents(db)
                                 .with_durability(salsa::Durability::MEDIUM)
                                 .to(documents);
 
@@ -855,8 +866,9 @@ impl Server {
                 recv(&self.internal_rx) -> msg => {
                     match msg? {
                         InternalMessage::SetDistro(distro) => {
-                            Distro::get(&self.db)
-                                .set_file_name_db(&mut self.db)
+                            let db = self.engine.write();
+                            Distro::get(db)
+                                .set_file_name_db(db)
                                 .with_durability(salsa::Durability::HIGH)
                                 .to(distro.resolver);
                         }
@@ -873,9 +885,10 @@ impl Server {
                             self.publish_diagnostics()?;
                         }
                         InternalMessage::ChktexResult(uri, diagnostics) => {
-                            let workspace = Workspace::get(&self.db);
-                            if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
-                                document.linter(&self.db).set_chktex(&mut self.db).to(diagnostics);
+                            let db = self.engine.write();
+                            let workspace = Workspace::get(db);
+                            if let Some(document) = workspace.lookup_uri(db, &uri) {
+                                document.linter(db).set_chktex(db).to(diagnostics);
                             }
 
                             self.publish_diagnostics()?;
@@ -890,6 +903,7 @@ impl Server {
         self.initialize()?;
         self.process_messages()?;
         self.pool.join();
+        self.engine.finish();
         Ok(())
     }
 }
