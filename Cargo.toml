@@ -70,7 +70,6 @@ tempfile = "3.3.0"
 thiserror = "1.0.37"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
-typed-builder = "0.11.0"
 unicode-normalization = "0.1.22"
 url = { version = "2.3.1", features = ["serde"] }
 
@@ -83,11 +82,6 @@ package = "salsa-2022"
 version = "0.99.17"
 default-features = false
 features = ["from", "display"]
-
-[dependencies.petgraph]
-version = "0.6.2"
-default_features = false
-features = ["graphmap"]
 
 [dev-dependencies]
 assert_unordered = "0.3.5"
