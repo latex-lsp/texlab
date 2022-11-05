@@ -1,6 +1,9 @@
 pub mod label;
 
+use std::path::PathBuf;
+
 use lsp_types::Url;
+use once_cell::sync::Lazy;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
@@ -9,6 +12,8 @@ use crate::{
 };
 
 use super::{document::Location, Distro, Word};
+
+static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
 
 #[salsa::tracked]
 pub struct TexLink {
@@ -33,6 +38,11 @@ impl TexLink {
         let distro_files = std::iter::once(stem.to_string())
             .chain(paths.clone())
             .filter_map(|path| file_name_db.get(path.as_str()))
+            .filter(|path| {
+                HOME_DIR
+                    .as_deref()
+                    .map_or(false, |dir| path.starts_with(dir))
+            })
             .flat_map(|path| Url::from_file_path(path))
             .map(|uri| Location::new(db, uri));
 

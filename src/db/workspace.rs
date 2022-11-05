@@ -98,6 +98,8 @@ impl Workspace {
         language: Language,
         owner: Owner,
     ) -> Option<Document> {
+        log::debug!("Loading document {} from disk...", path.display());
+
         let uri = Url::from_file_path(path).ok()?;
         let data = std::fs::read(path).ok()?;
         let text = match String::from_utf8_lossy(&data) {
@@ -157,11 +159,7 @@ impl Workspace {
                     .filter(|path| Language::from_path(&path) == Some(Language::Tex));
 
                 for file in files {
-                    if !self
-                        .documents(db)
-                        .iter()
-                        .any(|document| document.location(db).path(db).as_deref() == Some(&file))
-                    {
+                    if self.lookup_path(db, &file).is_none() {
                         changed |= self.load(db, &file, Language::Tex, Owner::Server).is_some();
                     }
                 }
@@ -174,12 +172,15 @@ impl Workspace {
                 .flat_map(|graph| graph.edges(db).iter())
                 .flat_map(|item| item.origin(db).into_locations(db, distro))
                 .filter_map(|location| location.path(db).as_deref())
-                .map(|path| path.to_path_buf())
+                .filter(|path| path.is_file())
+                .map(ToOwned::to_owned)
                 .collect();
 
             for path in paths {
-                let language = Language::from_path(&path).unwrap_or(Language::Tex);
-                changed |= self.load(db, &path, language, Owner::Server).is_some();
+                if self.lookup_path(db, &path).is_none() {
+                    let language = Language::from_path(&path).unwrap_or(Language::Tex);
+                    changed |= self.load(db, &path, language, Owner::Server).is_some();
+                }
             }
 
             if !changed {
