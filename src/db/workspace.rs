@@ -14,7 +14,7 @@ use crate::{
 
 use super::{
     dependency,
-    document::{Contents, Language, Owner},
+    document::{Contents, Language, LinterData, Owner},
     Distro, Word,
 };
 
@@ -82,7 +82,16 @@ impl Workspace {
                 document
             }
             None => {
-                let document = Document::new(db, location, contents, language, owner, cursor);
+                let document = Document::new(
+                    db,
+                    location,
+                    contents,
+                    language,
+                    owner,
+                    cursor,
+                    LinterData::new(db, Vec::new()),
+                );
+
                 let mut documents = self.set_documents(db).to(FxHashSet::default());
                 documents.insert(document);
                 self.set_documents(db).to(documents);

@@ -7,7 +7,10 @@ use lsp_types::Url;
 use rowan::{TextRange, TextSize};
 
 use crate::{
-    db::parse::{BibDocumentData, LogDocumentData, TexDocumentData},
+    db::{
+        diagnostics::Diagnostic,
+        parse::{BibDocumentData, LogDocumentData, TexDocumentData},
+    },
     parser::{parse_bibtex, parse_build_log, parse_latex},
     Db, LineIndex,
 };
@@ -100,12 +103,19 @@ impl Language {
 }
 
 #[salsa::input]
+pub struct LinterData {
+    #[return_ref]
+    pub chktex: Vec<Diagnostic>,
+}
+
+#[salsa::input]
 pub struct Document {
     pub location: Location,
     pub contents: Contents,
     pub language: Language,
     pub owner: Owner,
     pub cursor: TextSize,
+    pub linter: LinterData,
 }
 
 impl Document {

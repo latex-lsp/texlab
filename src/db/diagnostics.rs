@@ -100,16 +100,18 @@ pub fn collect(
     for document in workspace.documents(db).iter().copied() {
         match document.language(db) {
             Language::Tex => {
-                results
-                    .entry(document)
-                    .or_default()
-                    .extend(tex::collect(db, document).clone());
+                results.entry(document).or_default().extend(
+                    tex::collect(db, document)
+                        .iter()
+                        .chain(document.linter(db).chktex(db))
+                        .cloned(),
+                );
             }
             Language::Bib => {
                 results
                     .entry(document)
                     .or_default()
-                    .extend(bib::collect(db, document).clone());
+                    .extend(bib::collect(db, document).iter().cloned());
             }
             Language::Log => {
                 log::collect(db, workspace, distro, document)

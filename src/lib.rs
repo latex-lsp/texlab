@@ -44,6 +44,7 @@ pub struct Jar(
     db::document::Location_path,
     db::document::Contents,
     db::document::Contents_line_index,
+    db::document::LinterData,
     db::document::Document,
     db::document::Document_parse,
     db::document::Document_can_be_index,

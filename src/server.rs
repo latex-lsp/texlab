@@ -21,7 +21,7 @@ use crate::{
     component_db::COMPONENT_DATABASE,
     db::{
         self,
-        document::{Language, Owner},
+        document::{Document, Language, Owner},
         workspace::Workspace,
         Distro,
     },
@@ -37,8 +37,8 @@ use crate::{
     },
     normalize_uri,
     syntax::bibtex,
-    ClientCapabilitiesExt, Database, Db, Document, DocumentData, Environment, LineIndexExt,
-    Options, StartupOptions, WorkspaceEvent,
+    util, ClientCapabilitiesExt, Database, Db, DocumentData, Environment, LineIndexExt, Options,
+    StartupOptions, WorkspaceEvent,
 };
 
 #[derive(Debug)]
@@ -48,6 +48,7 @@ enum InternalMessage {
     FileEvent(notify::Event),
     ForwardSearch(Url),
     Diagnostics,
+    ChktexResult(Url, Vec<db::diagnostics::Diagnostic>),
 }
 
 struct ServerFork {
@@ -380,7 +381,7 @@ impl Server {
         let workspace = Workspace::get(&self.db);
         let language_id = &params.text_document.language_id;
         let language = Language::from_id(language_id).unwrap_or(Language::Tex);
-        workspace.open(
+        let document = workspace.open(
             &mut self.db,
             params.text_document.uri,
             params.text_document.text,
@@ -390,9 +391,9 @@ impl Server {
 
         self.update_workspace();
 
-        // if self.workspace.environment.options.chktex.on_open_and_save {
-        //     self.run_chktex(document);
-        // }
+        if workspace.options(&self.db).chktex.on_open_and_save {
+            self.run_chktex(document);
+        }
 
         Ok(())
     }
@@ -434,10 +435,9 @@ impl Server {
 
         self.update_workspace();
 
-        // TODO: ChkTeX
-        // if self.workspace.environment.options.chktex.on_edit {
-        //     self.run_chktex(new_document);
-        // }
+        if workspace.options(&self.db).chktex.on_edit {
+            self.run_chktex(document);
+        }
 
         Ok(())
     }
@@ -446,18 +446,17 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        if Workspace::get(&self.db).options(&self.db).build.on_save {
+        let workspace = Workspace::get(&self.db);
+        if workspace.options(&self.db).build.on_save {
             self.build_internal(uri.clone(), |_| ())?;
         }
 
         self.publish_diagnostics_with_delay();
 
-        if let Some(document) = self
-            .workspace
-            .get(&uri)
-            .filter(|_| self.workspace.environment.options.chktex.on_open_and_save)
-        {
+        if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
+            if workspace.options(&self.db).chktex.on_open_and_save {
             self.run_chktex(document);
+            }
         }
 
         Ok(())
@@ -479,17 +478,16 @@ impl Server {
     }
 
     fn run_chktex(&mut self, document: Document) {
-        // self.spawn(move |server| {
-        //     server
-        //         .diagnostic_manager
-        //         .push_chktex(&server.workspace, document.uri());
-
-        //     let delay = server.workspace.environment.options.diagnostics_delay;
-        //     server
-        //         .diagnostic_tx
-        //         .send(server.workspace.clone(), delay.0)
-        //         .unwrap();
-        // });
+        if let Some(command) = util::chktex::Command::new(&self.db, document) {
+            let sender = self.internal_tx.clone();
+            let uri = document.location(&self.db).uri(&self.db).clone();
+            self.pool.execute(move || {
+                let diagnostics = command.run().unwrap_or_default();
+                sender
+                    .send(InternalMessage::ChktexResult(uri, diagnostics))
+                    .unwrap();
+            });
+        }
     }
 
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
@@ -928,6 +926,14 @@ impl Server {
                             self.forward_search_internal(uri, None, |_| ())?;
                         }
                         InternalMessage::Diagnostics => {
+                            self.publish_diagnostics()?;
+                        }
+                        InternalMessage::ChktexResult(uri, diagnostics) => {
+                            let workspace = Workspace::get(&self.db);
+                            if let Some(document) = workspace.lookup_uri(&self.db, &uri) {
+                                document.linter(&self.db).set_chktex(&mut self.db).to(diagnostics);
+                            }
+
                             self.publish_diagnostics()?;
                         }
                     };
