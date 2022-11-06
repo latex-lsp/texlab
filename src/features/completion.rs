@@ -28,7 +28,6 @@ use lsp_types::{
     MarkupContent, MarkupKind, Position, TextEdit, Url,
 };
 use rowan::{ast::AstNode, TextSize};
-use rustc_hash::FxHashSet;
 
 use crate::{
     syntax::{bibtex, latex},
@@ -66,7 +65,6 @@ pub use self::types::CompletionItemData;
 
 pub const COMPLETION_LIMIT: usize = 50;
 
-#[must_use]
 pub fn complete(db: &dyn Db, uri: &Url, position: Position) -> Option<CompletionList> {
     let mut items = Vec::new();
     let context = CursorContext::new(db, uri, position, ())?;
@@ -128,18 +126,10 @@ pub fn complete(db: &dyn Db, uri: &Url, position: Position) -> Option<Completion
     })
 }
 
-fn dedup(items: Vec<InternalCompletionItem>) -> Vec<InternalCompletionItem> {
-    let mut labels = FxHashSet::default();
-    let mut insert = vec![false; items.len()];
-    for (i, item) in items.iter().enumerate() {
-        insert[i] = labels.insert(item.data.label());
-    }
+fn dedup(mut items: Vec<InternalCompletionItem>) -> Vec<InternalCompletionItem> {
+    items.sort_by(|a, b| a.data.label().cmp(b.data.label()));
+    items.dedup_by(|a, b| a.data.label() == b.data.label());
     items
-        .into_iter()
-        .enumerate()
-        .filter(|(i, _)| insert[*i])
-        .map(|(_, item)| item)
-        .collect()
 }
 
 fn score(context: &CursorContext, items: &mut Vec<InternalCompletionItem>) {

@@ -98,8 +98,8 @@ pub enum InternalCompletionItemData<'db> {
     },
 }
 
-impl<'a> InternalCompletionItemData<'a> {
-    pub fn label<'b: 'a>(&'b self) -> &'a str {
+impl<'db> InternalCompletionItemData<'db> {
+    pub fn label<'this: 'db>(&'this self) -> &'db str {
         match self {
             Self::EntryType { ty } => &ty.name,
             Self::Field { field } => &field.name,
