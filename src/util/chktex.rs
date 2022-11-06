@@ -14,7 +14,6 @@ use crate::{
         diagnostics::{Diagnostic, DiagnosticCode},
         document::Document,
         workspace::Workspace,
-        Distro,
     },
     Db,
 };
@@ -31,7 +30,7 @@ impl Command {
 
         let workspace = Workspace::get(db);
         let parent = workspace
-            .parents(db, Distro::get(db), document)
+            .parents(db, document)
             .iter()
             .next()
             .map_or(document, Clone::clone);

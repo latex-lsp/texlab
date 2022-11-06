@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
 use crate::{
-    db::{analysis::TexLinkKind, document::Document, workspace::Workspace, Distro},
+    db::{analysis::TexLinkKind, document::Document, workspace::Workspace},
     Db,
 };
 
@@ -42,9 +42,8 @@ impl ComponentDatabase {
 
     #[must_use]
     pub fn linked_components(&self, db: &dyn Db, child: Document) -> Vec<&Component> {
-        log::info!("Linked comps");
         Workspace::get(db)
-            .related(db, Distro::get(db), child)
+            .related(db, child)
             .iter()
             .filter_map(|document| document.parse(db).as_tex())
             .flat_map(|data| data.analyze(db).links(db))

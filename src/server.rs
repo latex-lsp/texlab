@@ -24,7 +24,6 @@ use crate::{
         self,
         document::{Document, Language, Owner},
         workspace::Workspace,
-        Distro,
     },
     dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
@@ -225,8 +224,7 @@ impl Server {
     fn publish_diagnostics(&mut self) -> Result<()> {
         let db = self.engine.read();
 
-        let all_diagnostics =
-            db::diagnostics::collect_filtered(db, Workspace::get(db), Distro::get(db));
+        let all_diagnostics = db::diagnostics::collect_filtered(db, Workspace::get(db));
 
         for (document, diagnostics) in all_diagnostics {
             let uri = document.location(db).uri(db).clone();
@@ -867,7 +865,7 @@ impl Server {
                     match msg? {
                         InternalMessage::SetDistro(distro) => {
                             let db = self.engine.write();
-                            Distro::get(db)
+                            Workspace::get(db)
                                 .set_file_name_db(db)
                                 .with_durability(salsa::Durability::HIGH)
                                 .to(distro.resolver);

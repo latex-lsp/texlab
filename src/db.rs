@@ -10,9 +10,3 @@ pub struct Word {
     #[return_ref]
     pub text: String,
 }
-
-#[salsa::input(singleton)]
-pub struct Distro {
-    #[return_ref]
-    pub file_name_db: crate::distro::Resolver,
-}

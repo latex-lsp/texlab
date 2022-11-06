@@ -2,9 +2,7 @@ use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use smol_str::SmolStr;
 
-use crate::{
-    component_db::COMPONENT_DATABASE, db::Distro, syntax::latex, util::cursor::CursorContext,
-};
+use crate::{component_db::COMPONENT_DATABASE, syntax::latex, util::cursor::CursorContext};
 
 use super::types::{InternalCompletionItem, InternalCompletionItemData};
 
@@ -42,7 +40,7 @@ pub fn complete_imports<'db>(
         items.push(InternalCompletionItem::new(range, data));
     }
 
-    let file_name_db = Distro::get(context.db).file_name_db(context.db);
+    let file_name_db = context.workspace.file_name_db(context.db);
     for file_name in file_name_db
         .files_by_name
         .keys()

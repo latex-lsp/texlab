@@ -12,11 +12,7 @@ use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifi
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{
-    client::LspClient,
-    db::{workspace::Workspace, Distro},
-    ClientCapabilitiesExt, Db,
-};
+use crate::{client::LspClient, db::workspace::Workspace, ClientCapabilitiesExt, Db};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,7 +48,7 @@ impl TexCompiler {
         let workspace = Workspace::get(db);
         let document = match workspace.lookup_uri(db, &uri) {
             Some(child) => workspace
-                .parents(db, Distro::get(db), child)
+                .parents(db, child)
                 .iter()
                 .next()
                 .copied()

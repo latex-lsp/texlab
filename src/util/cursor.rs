@@ -2,7 +2,7 @@ use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{
-    db::{document::Document, parse::DocumentData, workspace::Workspace, Distro},
+    db::{document::Document, parse::DocumentData, workspace::Workspace},
     syntax::{bibtex, latex},
     Db, LineIndexExt,
 };
@@ -123,7 +123,6 @@ pub struct CursorContext<'db, T = ()> {
     pub db: &'db dyn Db,
     pub document: Document,
     pub workspace: Workspace,
-    pub distro: Distro,
     pub cursor: Cursor,
     pub offset: TextSize,
     pub params: T,
@@ -155,7 +154,6 @@ impl<'db, T> CursorContext<'db, T> {
             db,
             document,
             workspace,
-            distro: Distro::get(db),
             cursor: cursor.unwrap_or(Cursor::Nothing),
             offset,
             params,
@@ -164,7 +162,7 @@ impl<'db, T> CursorContext<'db, T> {
 
     pub fn related(&self) -> impl Iterator<Item = Document> + '_ {
         self.workspace
-            .related(self.db, self.distro, self.document)
+            .related(self.db, self.document)
             .iter()
             .copied()
     }

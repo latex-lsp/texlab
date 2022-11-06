@@ -105,7 +105,7 @@ fn current_dir(
 ) -> Option<PathBuf> {
     let parent = context
         .workspace
-        .parents(context.db, context.distro, context.document)
+        .parents(context.db, context.document)
         .iter()
         .next()
         .map_or(context.document, Clone::clone);

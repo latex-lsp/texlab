@@ -8,10 +8,7 @@ use log::error;
 use lsp_types::{Position, Url};
 use thiserror::Error;
 
-use crate::{
-    db::{workspace::Workspace, Distro},
-    Db, LineIndexExt,
-};
+use crate::{db::workspace::Workspace, Db, LineIndexExt};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -44,7 +41,7 @@ impl Command {
             .ok_or_else(|| Error::TexNotFound(uri.clone()))?;
 
         let parent = workspace
-            .parents(db, Distro::get(db), child)
+            .parents(db, child)
             .iter()
             .copied()
             .next()

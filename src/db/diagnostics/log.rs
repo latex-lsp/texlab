@@ -2,7 +2,7 @@ use lsp_types::{DiagnosticSeverity, Position, Range, Url};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    db::{document::Document, workspace::Workspace, Distro},
+    db::{document::Document, workspace::Workspace},
     syntax::BuildErrorLevel,
     Db,
 };
@@ -13,7 +13,6 @@ use super::{Diagnostic, DiagnosticCode};
 pub fn collect(
     db: &dyn Db,
     workspace: Workspace,
-    distro: Distro,
     log_document: Document,
 ) -> FxHashMap<Document, Vec<Diagnostic>> {
     let mut results = FxHashMap::default();
@@ -26,7 +25,7 @@ pub fn collect(
     let root_document = match workspace
         .documents(db)
         .iter()
-        .map(|document| workspace.graph(db, *document, distro))
+        .map(|document| workspace.graph(db, *document))
         .flat_map(|graph| graph.edges(db))
         .find(|edge| edge.target(db) == Some(log_document))
         .map(|edge| edge.source(db))

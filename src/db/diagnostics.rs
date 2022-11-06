@@ -7,10 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{db::workspace::Workspace, Db};
 
-use super::{
-    document::{Document, Language},
-    Distro,
-};
+use super::document::{Document, Language};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Diagnostic {
@@ -90,11 +87,7 @@ impl From<BibCode> for NumberOrString {
 }
 
 #[salsa::tracked(return_ref)]
-pub fn collect(
-    db: &dyn Db,
-    workspace: Workspace,
-    distro: Distro,
-) -> FxHashMap<Document, Vec<Diagnostic>> {
+pub fn collect(db: &dyn Db, workspace: Workspace) -> FxHashMap<Document, Vec<Diagnostic>> {
     let mut results: FxHashMap<Document, Vec<Diagnostic>> = FxHashMap::default();
 
     for document in workspace.documents(db).iter().copied() {
@@ -114,7 +107,7 @@ pub fn collect(
                     .extend(bib::collect(db, document).iter().cloned());
             }
             Language::Log => {
-                log::collect(db, workspace, distro, document)
+                log::collect(db, workspace, document)
                     .iter()
                     .for_each(|(document, diagnostics)| {
                         results
@@ -133,9 +126,8 @@ pub fn collect(
 pub fn collect_filtered(
     db: &dyn Db,
     workspace: Workspace,
-    distro: Distro,
 ) -> FxHashMap<Document, Vec<lsp_types::Diagnostic>> {
-    let all_diagnostics = collect(db, workspace, distro);
+    let all_diagnostics = collect(db, workspace);
     let mut all_filtered: FxHashMap<Document, Vec<lsp_types::Diagnostic>> = FxHashMap::default();
 
     let options = &workspace.options(db).diagnostics;

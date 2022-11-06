@@ -29,7 +29,6 @@ pub use self::{
 #[salsa::jar(db = Db)]
 pub struct Jar(
     db::Word,
-    db::Distro,
     db::document::Location,
     db::document::Location_path,
     db::document::Contents,
@@ -44,7 +43,6 @@ pub struct Jar(
     db::parse::BibDocumentData,
     db::parse::LogDocumentData,
     db::analysis::TexLink,
-    db::analysis::TexLink_locations,
     db::analysis::label::Number,
     db::analysis::label::Name,
     db::analysis::TheoremEnvironment,
@@ -58,6 +56,7 @@ pub struct Jar(
     db::workspace::Workspace_working_dir,
     db::workspace::Workspace_output_dir,
     db::workspace::Workspace_graph,
+    db::workspace::Workspace_link_locations,
     db::workspace::Workspace_explicit_links,
     db::workspace::Workspace_implicit_links,
     db::workspace::Workspace_parents,
@@ -89,9 +88,9 @@ impl Default for Database {
             Default::default(),
             Default::default(),
             Default::default(),
+            Default::default(),
         );
 
-        db::Distro::new(&db, Default::default());
         db
     }
 }

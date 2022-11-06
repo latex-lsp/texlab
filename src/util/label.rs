@@ -3,7 +3,7 @@ use std::str::FromStr;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    db::{analysis::label, document::Document, workspace::Workspace, Distro, Word},
+    db::{analysis::label, document::Document, workspace::Workspace, Word},
     syntax::latex::{self, HasBrack, HasCurly},
     Db, LANGUAGE_DATA,
 };
@@ -120,7 +120,7 @@ impl RenderedLabel {
 
 pub fn render(db: &dyn Db, document: Document, label_def: label::Name) -> Option<RenderedLabel> {
     let workspace = Workspace::get(db);
-    let label_num = workspace.number_of_label(db, Distro::get(db), document, label_def.name(db));
+    let label_num = workspace.number_of_label(db, document, label_def.name(db));
     let root = document.parse(db).as_tex()?.root(db);
 
     label_def
@@ -144,7 +144,7 @@ pub fn find_label_definition(
     name: Word,
 ) -> Option<(Document, label::Name)> {
     Workspace::get(db)
-        .related(db, Distro::get(db), child)
+        .related(db, child)
         .iter()
         .find_map(|document| {
             let data = document.parse(db).as_tex()?;
@@ -244,7 +244,7 @@ fn render_label_theorem(
     let environment_name = begin.name()?.key()?.to_string();
 
     let kind = Workspace::get(db)
-        .related(db, Distro::get(db), document)
+        .related(db, document)
         .iter()
         .filter_map(|document| document.parse(db).as_tex())
         .flat_map(|data| data.analyze(db).theorem_environments(db))

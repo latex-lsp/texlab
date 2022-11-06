@@ -5,7 +5,7 @@ use crate::Db;
 use super::{
     analysis::TexLink,
     document::{Document, Location},
-    Distro,
+    workspace::Workspace,
 };
 
 #[salsa::tracked]
@@ -36,9 +36,9 @@ impl Origin {
         }
     }
 
-    pub fn into_locations(self, db: &dyn Db, distro: Distro) -> &Vec<Location> {
+    pub fn into_locations(self, db: &dyn Db, workspace: Workspace) -> &Vec<Location> {
         match self {
-            Self::Explicit(data) => data.link.locations(db, data.base_dir, distro),
+            Self::Explicit(data) => workspace.link_locations(db, data.link, data.base_dir),
             Self::Implicit(data) => data.locations(db),
         }
     }

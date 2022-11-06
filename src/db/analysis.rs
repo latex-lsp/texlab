@@ -1,9 +1,5 @@
 pub mod label;
 
-use std::path::PathBuf;
-
-use lsp_types::Url;
-use once_cell::sync::Lazy;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
@@ -11,9 +7,7 @@ use crate::{
     Db,
 };
 
-use super::{document::Location, Distro, Word};
-
-static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
+use super::Word;
 
 #[salsa::tracked]
 pub struct TexLink {
@@ -21,38 +15,6 @@ pub struct TexLink {
     pub path: Word,
     pub range: TextRange,
     pub working_dir: Option<Word>,
-}
-
-#[salsa::tracked]
-impl TexLink {
-    #[salsa::tracked(return_ref)]
-    pub fn locations(self, db: &dyn Db, base_dir: Location, distro: Distro) -> Vec<Location> {
-        let stem = self.path(db).text(db);
-        let paths = self
-            .kind(db)
-            .extensions()
-            .iter()
-            .map(|ext| format!("{stem}.{ext}"));
-
-        let file_name_db = distro.file_name_db(db);
-        let distro_files = std::iter::once(stem.to_string())
-            .chain(paths.clone())
-            .filter_map(|path| file_name_db.get(path.as_str()))
-            .filter(|path| {
-                HOME_DIR
-                    .as_deref()
-                    .map_or(false, |dir| path.starts_with(dir))
-            })
-            .flat_map(|path| Url::from_file_path(path))
-            .map(|uri| Location::new(db, uri));
-
-        std::iter::once(stem.to_string())
-            .chain(paths)
-            .flat_map(|path| base_dir.uri(db).join(&path))
-            .map(|uri| Location::new(db, uri))
-            .chain(distro_files)
-            .collect()
-    }
 }
 
 impl TexLink {

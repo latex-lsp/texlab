@@ -8,11 +8,11 @@ pub(super) fn goto_document_definition(context: &CursorContext) -> Option<Vec<De
     let db = context.db;
     context
         .workspace
-        .parents(db, context.distro, context.document)
+        .parents(db, context.document)
         .iter()
         .copied()
         .chain(std::iter::once(context.document))
-        .map(|parent| context.workspace.graph(db, parent, context.distro))
+        .map(|parent| context.workspace.graph(db, parent))
         .flat_map(|graph| graph.edges(db))
         .filter(|edge| edge.source(db) == context.document)
         .find_map(|edge| {

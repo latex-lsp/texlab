@@ -5,7 +5,7 @@ use rowan::ast::AstNode;
 use titlecase::titlecase;
 
 use crate::{
-    db::{document::Document, workspace::Workspace, Distro, Word},
+    db::{document::Document, workspace::Workspace, Word},
     syntax::latex::{self, HasBrack, HasCurly},
     util::label::{find_caption_by_parent, LabeledFloatKind},
     Db, LineIndexExt, LANGUAGE_DATA,
@@ -369,7 +369,7 @@ fn visit_theorem(
     environment_name: &str,
 ) -> Option<InternalSymbol> {
     let definition = Workspace::get(db)
-        .related(db, Distro::get(db), document)
+        .related(db, document)
         .iter()
         .filter_map(|document| document.parse(db).as_tex())
         .flat_map(|data| data.analyze(db).theorem_environments(db))
@@ -458,7 +458,7 @@ fn find_label_by_parent(
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&node));
 
-    let number = Workspace::get(db).number_of_label(db, Distro::get(db), document, name);
+    let number = Workspace::get(db).number_of_label(db, document, name);
     Some(NumberedLabel {
         name,
         range,
