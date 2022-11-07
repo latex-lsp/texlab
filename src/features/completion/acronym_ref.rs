@@ -2,11 +2,11 @@ use rowan::ast::AstNode;
 
 use crate::{syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_acronyms<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
@@ -19,14 +19,11 @@ pub fn complete_acronyms<'db>(
                 .filter_map(latex::AcronymDefinition::cast)
                 .filter_map(|node| node.name())
                 .filter_map(|name| name.key())
-                .map(|name| name.to_string())
             {
-                items.push(InternalCompletionItem::new(
-                    range,
-                    InternalCompletionItemData::Acronym { name },
-                ));
+                builder.glossary_entry(range, name.to_string());
             }
         }
     }
+
     Some(())
 }

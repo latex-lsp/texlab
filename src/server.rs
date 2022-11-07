@@ -29,7 +29,7 @@ use crate::{
     distro::Distribution,
     features::{
         building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
-        completion::{self, CompletionItemData},
+        completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol, workspace_command,
     },
@@ -469,13 +469,17 @@ impl Server {
 
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
         self.run_with_db(id, move |db| {
-            match serde_json::from_value(item.data.clone().unwrap()).unwrap() {
-                CompletionItemData::Package | CompletionItemData::Class => {
+            match item
+                .data
+                .clone()
+                .map(|data| serde_json::from_value(data).unwrap())
+            {
+                Some(CompletionItemData::Package | CompletionItemData::Class) => {
                     item.documentation = COMPONENT_DATABASE
                         .documentation(&item.label)
                         .map(Documentation::MarkupContent);
                 }
-                CompletionItemData::Citation { uri, key } => {
+                Some(CompletionItemData::Citation { uri, key }) => {
                     if let Some(root) = Workspace::get(db)
                         .lookup_uri(db, &uri)
                         .and_then(|document| document.parse(db).as_bib().map(|data| data.root(db)))
@@ -491,7 +495,7 @@ impl Server {
                             });
                     }
                 }
-                _ => {}
+                None => {}
             };
 
             item

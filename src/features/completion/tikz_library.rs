@@ -2,11 +2,11 @@ use rowan::ast::AstNode;
 
 use crate::{syntax::latex, util::cursor::CursorContext, LANGUAGE_DATA};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_tikz_libraries<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
@@ -14,17 +14,11 @@ pub fn complete_tikz_libraries<'db>(
 
     if import.command()?.text() == "\\usepgflibrary" {
         for name in &LANGUAGE_DATA.pgf_libraries {
-            items.push(InternalCompletionItem::new(
-                range,
-                InternalCompletionItemData::PgfLibrary { name },
-            ));
+            builder.tikz_library(range, name);
         }
     } else {
         for name in &LANGUAGE_DATA.tikz_libraries {
-            items.push(InternalCompletionItem::new(
-                range,
-                InternalCompletionItemData::TikzLibrary { name },
-            ));
+            builder.tikz_library(range, name);
         }
     }
 

@@ -1,10 +1,10 @@
 use crate::util::cursor::CursorContext;
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_user_environments<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (name, range) = context.find_environment_name()?;
 
@@ -15,12 +15,8 @@ pub fn complete_user_environments<'db>(
                 .environment_names(context.db)
                 .iter()
                 .filter(|n| n.as_str() != name)
-                .cloned()
             {
-                items.push(InternalCompletionItem::new(
-                    range,
-                    InternalCompletionItemData::UserEnvironment { name },
-                ));
+                builder.user_environment(range, name);
             }
         }
     }

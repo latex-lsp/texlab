@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 159
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\mathbb{}\n%CUR         ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "A",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\m
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "B",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\m
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "C",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\m
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "D",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\m
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "E",

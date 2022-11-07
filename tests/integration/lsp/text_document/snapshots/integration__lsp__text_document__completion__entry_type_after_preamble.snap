@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 565
 expression: "complete(r#\"\n%BIB main.bib\n%SRC @preamble{\n%CUR          ^\n%1.1  ^^^^^^^^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "kind": 1,
     "label": "preamble",
     "preselect": false,

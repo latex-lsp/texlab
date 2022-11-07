@@ -2,11 +2,11 @@ use rowan::ast::AstNode;
 
 use crate::{syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_glossary_entries<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
@@ -19,19 +19,13 @@ pub fn complete_glossary_entries<'db>(
                     .and_then(|name| name.key())
                     .map(|name| name.to_string())
                 {
-                    items.push(InternalCompletionItem::new(
-                        range,
-                        InternalCompletionItemData::GlossaryEntry { name },
-                    ));
+                    builder.glossary_entry(range, name);
                 } else if let Some(name) = latex::AcronymDefinition::cast(node)
                     .and_then(|entry| entry.name())
                     .and_then(|name| name.key())
                     .map(|name| name.to_string())
                 {
-                    items.push(InternalCompletionItem::new(
-                        range,
-                        InternalCompletionItemData::Acronym { name },
-                    ));
+                    builder.glossary_entry(range, name);
                 }
             }
         }

@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 334
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolor{foo}{\n%CUR                   ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "kind": 1,
     "label": "HTML",
     "preselect": false,
@@ -16,7 +14,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolor{foo}{\n%CUR       
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "RGB",
     "preselect": false,
@@ -27,7 +24,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolor{foo}{\n%CUR       
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "cmyk",
     "preselect": false,
@@ -38,7 +34,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolor{foo}{\n%CUR       
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "gray",
     "preselect": false,
@@ -49,7 +44,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\definecolor{foo}{\n%CUR       
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "rgb",
     "preselect": false,

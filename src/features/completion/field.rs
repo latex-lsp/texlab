@@ -6,11 +6,11 @@ use crate::{
     LANGUAGE_DATA,
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_fields<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let token = context.cursor.as_bib()?;
 
@@ -30,9 +30,8 @@ pub fn complete_fields<'db>(
     }
 
     for field in &LANGUAGE_DATA.fields {
-        let data = InternalCompletionItemData::Field { field };
-        let item = InternalCompletionItem::new(range, data);
-        items.push(item);
+        builder.field(range, field);
     }
+
     Some(())
 }

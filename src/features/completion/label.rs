@@ -5,11 +5,11 @@ use crate::{
     util::{self, cursor::CursorContext, label::LabeledObject, lsp_enums::Structure},
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_labels<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
@@ -48,34 +48,14 @@ pub fn complete_labels<'db>(
                             rendered_label.reference(db)
                         );
 
-                        let item = InternalCompletionItem::new(
-                            range,
-                            InternalCompletionItemData::Label {
-                                name: label.name(db).text(db),
-                                kind,
-                                header,
-                                footer,
-                                text,
-                            },
-                        );
-                        items.push(item);
+                        builder.label(range, label.name(db).text(db), kind, header, footer, text);
                     }
                     None => {
                         let kind = Structure::Label;
                         let header = None;
                         let footer = None;
                         let text = label.name(db).text(db).clone();
-                        let item = InternalCompletionItem::new(
-                            range,
-                            InternalCompletionItemData::Label {
-                                name: label.name(db).text(db),
-                                kind,
-                                header,
-                                footer,
-                                text,
-                            },
-                        );
-                        items.push(item);
+                        builder.label(range, label.name(db).text(db), kind, header, footer, text);
                     }
                 }
             }

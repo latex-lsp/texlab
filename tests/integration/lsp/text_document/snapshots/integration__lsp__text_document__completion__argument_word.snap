@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 172
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{amsfonts}\n%SRC \\mathbb{A}\n%CUR         ^\n%1.1         ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "A",

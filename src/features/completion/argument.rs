@@ -2,11 +2,11 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{component_db::COMPONENT_DATABASE, syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_arguments<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let token = context.cursor.as_tex()?;
 
@@ -49,14 +49,7 @@ pub fn complete_arguments<'db>(
                 .filter(|(i, _)| *i == index)
             {
                 for arg in &param.0 {
-                    let item = InternalCompletionItem::new(
-                        range,
-                        InternalCompletionItemData::Argument {
-                            name: &arg.name,
-                            image: arg.image.as_deref(),
-                        },
-                    );
-                    items.push(item);
+                    builder.generic_argument(range, &arg.name, arg.image.as_deref());
                 }
             }
         }

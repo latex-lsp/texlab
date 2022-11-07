@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 215
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "begin",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "begingroup",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "AtBeginDocument",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "AtBeginDvi",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\beg\n%CUR     ^\n%1.1  ^^^\"#)
     }
   },
   {
-    "data": "[data]",
     "detail": "⋀, built-in",
     "documentation": "[documentation]",
     "kind": 1,

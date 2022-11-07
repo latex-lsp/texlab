@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 432
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lips\n%CUR    ^\n%1.1  ^^^^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "detail": "lipsum.sty",
     "kind": 1,
     "label": "lipsum",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lip
     }
   },
   {
-    "data": "[data]",
     "detail": "lipsum.sty",
     "kind": 1,
     "label": "lipsumexp",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lip
     }
   },
   {
-    "data": "[data]",
     "detail": "lipsum.sty",
     "kind": 1,
     "label": "LipsumPar",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lip
     }
   },
   {
-    "data": "[data]",
     "detail": "lipsum.sty",
     "kind": 1,
     "label": "LipsumProtect",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lipsum}\n%SRC \\lip
     }
   },
   {
-    "data": "[data]",
     "detail": "lipsum.sty",
     "kind": 1,
     "label": "LipsumRestoreAll",

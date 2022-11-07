@@ -46,7 +46,7 @@ encoding_rs_io = "0.1.7"
 fern = "0.6.1"
 flate2 = "1.0.24"
 flume = "0.10.14"
-fuzzy-matcher = { version = "0.3.7" }
+fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 human_name = { version = "2.0.1", default-features = false }
 isocountry = "0.3.2"
 itertools = "0.10.5"

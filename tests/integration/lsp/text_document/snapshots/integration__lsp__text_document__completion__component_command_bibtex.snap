@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 446
 expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{b, \n%SRC     c = {\\LaT }\n%CUR            ^\n%1.1           ^^^\n%SRC }\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "LaTeX",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{b, \n%SRC     c = {\\La
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "LaTeXe",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{b, \n%SRC     c = {\\La
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "latexreleaseversion",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{b, \n%SRC     c = {\\La
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "LastDeclaredEncoding",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{b, \n%SRC     c = {\\La
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "last",

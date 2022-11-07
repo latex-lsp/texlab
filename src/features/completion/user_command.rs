@@ -1,10 +1,10 @@
 use crate::util::cursor::CursorContext;
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_user_commands<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let range = context.cursor.command_range(context.offset)?;
     let token = context.cursor.as_tex()?;
@@ -21,10 +21,7 @@ pub fn complete_user_commands<'db>(
                 .filter(|range| *range != token.text_range())
                 .map(|range| &text[std::ops::Range::<usize>::from(range)])
             {
-                items.push(InternalCompletionItem::new(
-                    range,
-                    InternalCompletionItemData::UserCommand { name },
-                ));
+                builder.user_command(range, name);
             }
         }
     }

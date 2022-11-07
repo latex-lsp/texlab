@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 641
 expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit\n%CUR                              ^\n%1.1                             ^^^^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "edition",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "editor",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "editora",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "editoratype",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "editorb",

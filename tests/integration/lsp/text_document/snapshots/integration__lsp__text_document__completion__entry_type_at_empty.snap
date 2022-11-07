@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 514
 expression: "complete(r#\"\n%BIB main.bib\n%SRC @\n%CUR  ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "article",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @\n%CUR  ^\"#)?"
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "artwork",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @\n%CUR  ^\"#)?"
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "audio",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @\n%CUR  ^\"#)?"
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "bibnote",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%BIB main.bib\n%SRC @\n%CUR  ^\"#)?"
     }
   },
   {
-    "data": "[data]",
     "documentation": "[documentation]",
     "kind": 1,
     "label": "book",

@@ -8,11 +8,11 @@ use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_includes<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     if context
         .document
@@ -83,15 +83,12 @@ pub fn complete_includes<'db>(
             if !include_extension {
                 remove_extension(&mut path);
             }
+
             let name = path.file_name()?.to_str()?.into();
-            let data = InternalCompletionItemData::File { name };
-            let item = InternalCompletionItem::new(segment_range, data);
-            items.push(item);
+            builder.file(segment_range, name);
         } else if file_type.is_dir() {
             let name = path.file_name()?.to_str()?.into();
-            let data = InternalCompletionItemData::Directory { name };
-            let item = InternalCompletionItem::new(segment_range, data);
-            items.push(item);
+            builder.directory(segment_range, name);
         }
     }
 

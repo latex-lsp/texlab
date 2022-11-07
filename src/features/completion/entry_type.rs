@@ -2,11 +2,11 @@ use rowan::{TextRange, TextSize};
 
 use crate::{syntax::bibtex, util::cursor::CursorContext, LANGUAGE_DATA};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_entry_types<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let range = context
         .cursor
@@ -16,10 +16,8 @@ pub fn complete_entry_types<'db>(
         .filter(|range| range.start() != context.offset)
         .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))?;
 
-    for ty in &LANGUAGE_DATA.entry_types {
-        let data = InternalCompletionItemData::EntryType { ty };
-        let item = InternalCompletionItem::new(range, data);
-        items.push(item);
+    for entry_type in &LANGUAGE_DATA.entry_types {
+        builder.entry_type(range, entry_type);
     }
 
     Some(())

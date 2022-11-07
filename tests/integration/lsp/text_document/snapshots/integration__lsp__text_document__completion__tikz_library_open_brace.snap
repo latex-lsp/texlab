@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 814
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepgflibrary{\n%CUR                ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "kind": 1,
     "label": "arrows",
     "preselect": false,
@@ -16,7 +14,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepgflibrary{\n%CUR          
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "arrows.meta",
     "preselect": false,
@@ -27,7 +24,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepgflibrary{\n%CUR          
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "arrows.spaced",
     "preselect": false,
@@ -38,7 +34,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepgflibrary{\n%CUR          
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "curvilinear",
     "preselect": false,
@@ -49,7 +44,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepgflibrary{\n%CUR          
     }
   },
   {
-    "data": "[data]",
     "kind": 1,
     "label": "datavisualization.barcharts",
     "preselect": false,

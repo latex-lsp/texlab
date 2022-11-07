@@ -4,7 +4,7 @@ use rowan::{ast::AstNode, TextRange, TextSize};
 use crate::{
     db::{document::Document, parse::DocumentData, workspace::Workspace},
     syntax::{bibtex, latex},
-    Db, LineIndexExt,
+    Db, LineIndex, LineIndexExt,
 };
 
 #[derive(Debug)]
@@ -122,6 +122,7 @@ impl Cursor {
 pub struct CursorContext<'db, T = ()> {
     pub db: &'db dyn Db,
     pub document: Document,
+    pub line_index: &'db LineIndex,
     pub workspace: Workspace,
     pub cursor: Cursor,
     pub offset: TextSize,
@@ -132,7 +133,8 @@ impl<'db, T> CursorContext<'db, T> {
     pub fn new(db: &'db dyn Db, uri: &Url, position: Position, params: T) -> Option<Self> {
         let workspace = Workspace::get(db);
         let document = workspace.lookup_uri(db, uri)?;
-        let offset = document.contents(db).line_index(db).offset_lsp(position);
+        let line_index = document.contents(db).line_index(db);
+        let offset = line_index.offset_lsp(position);
 
         let cursor = match document.parse(db) {
             DocumentData::Tex(data) => {
@@ -153,6 +155,7 @@ impl<'db, T> CursorContext<'db, T> {
         Some(Self {
             db,
             document,
+            line_index,
             workspace,
             cursor: cursor.unwrap_or(Cursor::Nothing),
             offset,

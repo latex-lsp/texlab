@@ -1,11 +1,9 @@
 ---
 source: tests/integration/lsp/text_document/completion.rs
-assertion_line: 474
 expression: "complete(r#\"\n%TEX main.tex\n%SRC \\begin{document}\n%SRC \\end{\n%CUR      ^\"#)?"
 ---
 [
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "document",
@@ -17,7 +15,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\begin{document}\n%SRC \\end{\n
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "abstract",
@@ -29,7 +26,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\begin{document}\n%SRC \\end{\n
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "array",
@@ -41,7 +37,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\begin{document}\n%SRC \\end{\n
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "center",
@@ -53,7 +48,6 @@ expression: "complete(r#\"\n%TEX main.tex\n%SRC \\begin{document}\n%SRC \\end{\n
     }
   },
   {
-    "data": "[data]",
     "detail": "built-in",
     "kind": 1,
     "label": "csname",

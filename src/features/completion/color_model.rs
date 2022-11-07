@@ -2,21 +2,18 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
 pub fn complete_color_models<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let range = check_color_definition(context).or_else(|| check_color_definition_set(context))?;
 
     for name in MODEL_NAMES {
-        items.push(InternalCompletionItem::new(
-            range,
-            InternalCompletionItemData::ColorModel { name },
-        ));
+        builder.color_model(range, name);
     }
 
     Some(())

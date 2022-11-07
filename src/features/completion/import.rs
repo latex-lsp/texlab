@@ -1,30 +1,21 @@
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
-use smol_str::SmolStr;
 
 use crate::{component_db::COMPONENT_DATABASE, syntax::latex, util::cursor::CursorContext};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_imports<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
-    let (extension, mut factory): (
-        &str,
-        Box<dyn FnMut(SmolStr) -> InternalCompletionItemData<'db>>,
-    ) = match group.syntax().parent()?.kind() {
-        latex::PACKAGE_INCLUDE => (
-            "sty",
-            Box::new(|name| InternalCompletionItemData::Package { name }),
-        ),
-        latex::CLASS_INCLUDE => (
-            "cls",
-            Box::new(|name| InternalCompletionItemData::Class { name }),
-        ),
-        _ => return None,
+    let kind = group.syntax().parent()?.kind();
+    let extension = match kind {
+        latex::PACKAGE_INCLUDE => "sty",
+        latex::CLASS_INCLUDE => "cls",
+        _ => return Some(()),
     };
 
     let mut file_names = FxHashSet::default();
@@ -36,8 +27,11 @@ pub fn complete_imports<'db>(
     {
         file_names.insert(file_name);
         let stem = &file_name[0..file_name.len() - 4];
-        let data = factory(stem.into());
-        items.push(InternalCompletionItem::new(range, data));
+        if kind == latex::PACKAGE_INCLUDE {
+            builder.package(range, stem);
+        } else {
+            builder.class(range, stem);
+        }
     }
 
     let file_name_db = context.workspace.file_name_db(context.db);
@@ -47,8 +41,11 @@ pub fn complete_imports<'db>(
         .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))
     {
         let stem = &file_name[0..file_name.len() - 4];
-        let data = factory(stem.into());
-        items.push(InternalCompletionItem::new(range, data));
+        if kind == latex::PACKAGE_INCLUDE {
+            builder.package(range, stem);
+        } else {
+            builder.class(range, stem);
+        }
     }
 
     Some(())

@@ -1,22 +1,15 @@
-use once_cell::sync::Lazy;
-use regex::Regex;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    db::document::Document,
-    syntax::{
-        bibtex::{self, HasName, HasType},
-        latex,
-    },
-    util::{cursor::CursorContext, lsp_enums::Structure},
-    BibtexEntryTypeCategory, Db, LANGUAGE_DATA,
+    syntax::{bibtex, latex},
+    util::cursor::CursorContext,
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
 pub fn complete_citations<'db>(
     context: &'db CursorContext,
-    items: &mut Vec<InternalCompletionItem<'db>>,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let token = context.cursor.as_tex()?;
 
@@ -41,9 +34,7 @@ pub fn complete_citations<'db>(
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(item) = make_item(context.db, document, &entry, range) {
-                    items.push(item);
-                }
+                builder.citation(range, document, &entry);
             }
         }
     }
@@ -70,46 +61,3 @@ fn check_acronym(context: &CursorContext) -> Option<()> {
     latex::AcronymDeclaration::cast(pair.syntax().parent()?.parent()?.parent()?)?;
     Some(())
 }
-
-fn make_item(
-    db: &dyn Db,
-    document: Document,
-    entry: &bibtex::Entry,
-    range: TextRange,
-) -> Option<InternalCompletionItem<'static>> {
-    let key = entry.name_token()?.to_string();
-    let ty = LANGUAGE_DATA
-        .find_entry_type(&entry.type_token()?.text()[1..])
-        .map_or_else(
-            || Structure::Entry(BibtexEntryTypeCategory::Misc),
-            |ty| Structure::Entry(ty.category),
-        );
-
-    let entry_code = entry.syntax().text().to_string();
-    let text = format!(
-        "{} {}",
-        key,
-        WHITESPACE_REGEX
-            .replace_all(
-                &entry_code
-                    .replace('{', " ")
-                    .replace('}', " ")
-                    .replace(',', " ")
-                    .replace('=', " "),
-                " "
-            )
-            .trim(),
-    );
-
-    Some(InternalCompletionItem::new(
-        range,
-        InternalCompletionItemData::Citation {
-            uri: document.location(db).uri(db).clone(),
-            key,
-            text,
-            ty,
-        },
-    ))
-}
-
-static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());

@@ -2,15 +2,27 @@ use anyhow::Result;
 use insta::assert_json_snapshot;
 use lsp_types::{
     request::{Completion, ResolveCompletionItem},
-    ClientCapabilities, CompletionItem, CompletionList, CompletionParams, CompletionResponse,
-    CompletionTextEdit, Range,
+    CompletionItem, CompletionList, CompletionParams, CompletionResponse, CompletionTextEdit,
+    Range,
 };
 
 use crate::lsp::{client::Client, fixture};
 
 fn complete(fixture: &str) -> Result<Vec<CompletionItem>, anyhow::Error> {
     let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+    client.initialize(
+        serde_json::from_value(serde_json::json!({
+            "textDocument": {
+                "completion": {
+                    "completionItem": {
+                        "documentationFormat": ["plaintext", "markdown"]
+                    }
+                }
+            }
+        }))
+        .unwrap(),
+        None,
+    )?;
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
         client.open(file.name, file.lang, file.text)?;

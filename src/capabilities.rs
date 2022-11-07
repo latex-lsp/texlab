@@ -7,6 +7,8 @@ pub trait ClientCapabilitiesExt {
 
     fn has_work_done_progress_support(&self) -> bool;
 
+    fn has_completion_markdown_support(&self) -> bool;
+
     fn has_hover_markdown_support(&self) -> bool;
 
     fn has_pull_configuration_support(&self) -> bool;
@@ -14,6 +16,8 @@ pub trait ClientCapabilitiesExt {
     fn has_push_configuration_support(&self) -> bool;
 
     fn has_file_watching_support(&self) -> bool;
+
+    fn has_snippet_support(&self) -> bool;
 }
 
 impl ClientCapabilitiesExt for ClientCapabilities {
@@ -37,13 +41,21 @@ impl ClientCapabilitiesExt for ClientCapabilities {
         self.window.as_ref().and_then(|cap| cap.work_done_progress) == Some(true)
     }
 
+    fn has_completion_markdown_support(&self) -> bool {
+        self.text_document
+            .as_ref()
+            .and_then(|cap| cap.completion.as_ref())
+            .and_then(|cap| cap.completion_item.as_ref())
+            .and_then(|cap| cap.documentation_format.as_ref())
+            .map_or(false, |formats| formats.contains(&MarkupKind::Markdown))
+    }
+
     fn has_hover_markdown_support(&self) -> bool {
         self.text_document
             .as_ref()
             .and_then(|cap| cap.hover.as_ref())
             .and_then(|cap| cap.content_format.as_ref())
-            .filter(|formats| formats.contains(&MarkupKind::Markdown))
-            .is_some()
+            .map_or(false, |formats| formats.contains(&MarkupKind::Markdown))
     }
 
     fn has_pull_configuration_support(&self) -> bool {
@@ -63,6 +75,15 @@ impl ClientCapabilitiesExt for ClientCapabilities {
             .as_ref()
             .and_then(|cap| cap.did_change_watched_files)
             .and_then(|cap| cap.dynamic_registration)
+            == Some(true)
+    }
+
+    fn has_snippet_support(&self) -> bool {
+        self.text_document
+            .as_ref()
+            .and_then(|cap| cap.completion.as_ref())
+            .and_then(|cap| cap.completion_item.as_ref())
+            .and_then(|cap| cap.snippet_support)
             == Some(true)
     }
 }
