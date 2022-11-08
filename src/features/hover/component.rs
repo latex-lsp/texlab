@@ -1,7 +1,8 @@
 use lsp_types::MarkupKind;
 
 use crate::{
-    component_db::COMPONENT_DATABASE, db::analysis::TexLinkKind, util::cursor::CursorContext,
+    db::analysis::TexLinkKind,
+    util::{components::COMPONENT_DATABASE, cursor::CursorContext},
 };
 
 use super::HoverResult;

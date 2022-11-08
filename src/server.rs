@@ -19,7 +19,6 @@ use threadpool::ThreadPool;
 use crate::{
     citation,
     client::LspClient,
-    component_db::COMPONENT_DATABASE,
     db::{
         self,
         document::{Document, Language, Owner},
@@ -35,7 +34,8 @@ use crate::{
     },
     normalize_uri,
     syntax::bibtex,
-    util, ClientCapabilitiesExt, Db, LineIndexExt, Options, StartupOptions,
+    util::{self, components::COMPONENT_DATABASE},
+    ClientCapabilitiesExt, Db, LineIndexExt, Options, StartupOptions,
 };
 
 #[derive(Debug)]

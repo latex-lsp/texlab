@@ -3,7 +3,7 @@ use lsp_types::{
     request::HoverRequest, ClientCapabilities, Hover, HoverContents, HoverParams, MarkupContent,
     MarkupKind,
 };
-use texlab::{component_db::COMPONENT_DATABASE, LANGUAGE_DATA};
+use texlab::{util::components::COMPONENT_DATABASE, LANGUAGE_DATA};
 
 use crate::lsp::{client::Client, fixture};
 

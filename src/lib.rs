@@ -3,7 +3,6 @@
 mod capabilities;
 pub mod citation;
 mod client;
-pub mod component_db;
 pub mod db;
 mod dispatch;
 pub mod distro;
@@ -15,7 +14,7 @@ mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
-pub(crate) mod util;
+pub mod util;
 
 pub use self::{
     capabilities::ClientCapabilitiesExt,

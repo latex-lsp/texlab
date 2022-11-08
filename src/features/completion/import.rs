@@ -1,7 +1,10 @@
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 
-use crate::{component_db::COMPONENT_DATABASE, syntax::latex, util::cursor::CursorContext};
+use crate::{
+    syntax::latex,
+    util::{components::COMPONENT_DATABASE, cursor::CursorContext},
+};
 
 use super::builder::CompletionBuilder;
 

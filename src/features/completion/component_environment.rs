@@ -1,4 +1,4 @@
-use crate::{component_db::COMPONENT_DATABASE, util::cursor::CursorContext};
+use crate::util::{components::COMPONENT_DATABASE, cursor::CursorContext};
 
 use super::builder::CompletionBuilder;
 
