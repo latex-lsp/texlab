@@ -133,9 +133,9 @@ fn curly_group(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
             | ContentToken::Nbsp
             | ContentToken::Comma
             | ContentToken::Integer
+            | ContentToken::Quote
             | ContentToken::Word => ptr.bump(),
             ContentToken::LCurly => ptr = curly_group(ptr),
-            ContentToken::Quote => ptr = quote_group(ptr),
             ContentToken::AccentName => ptr = accent(ptr),
             ContentToken::CommandName => ptr = command(ptr),
         };

@@ -1,0 +1,3 @@
+@article{issue_809,
+  title = {foo (" bar) baz},
+}
