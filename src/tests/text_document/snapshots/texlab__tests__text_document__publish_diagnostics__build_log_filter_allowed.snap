@@ -1,0 +1,23 @@
+---
+source: src/tests/text_document/publish_diagnostics.rs
+expression: result.all_diagnostics
+---
+{
+  "[tmp]/main.tex": [
+    {
+      "range": {
+        "start": {
+          "line": 7,
+          "character": 0
+        },
+        "end": {
+          "line": 7,
+          "character": 0
+        }
+      },
+      "severity": 2,
+      "source": "latex-build",
+      "message": "Overfull \\hbox (80.00125pt too wide) in paragraph at lines 8--9"
+    }
+  ]
+}

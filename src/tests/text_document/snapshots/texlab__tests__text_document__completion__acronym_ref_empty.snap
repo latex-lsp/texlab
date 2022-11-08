@@ -1,0 +1,16 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}\n%SRC \\acrshort{}\n%CUR           ^\"#)?"
+---
+[
+  {
+    "kind": 1,
+    "label": "fpsLabel",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "fpsLabel"
+    }
+  }
+]

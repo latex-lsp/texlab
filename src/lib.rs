@@ -130,3 +130,6 @@ pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
 
     uri.set_fragment(None);
 }
+
+#[cfg(test)]
+mod tests;

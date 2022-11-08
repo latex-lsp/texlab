@@ -1,0 +1,61 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%BIB main.bib\n%SRC @article{foo, author = bar, edit}\n%CUR                              ^\n%1.1                             ^^^^\"#)?"
+---
+[
+  {
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "edition",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "edition"
+    }
+  },
+  {
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "editor",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "editor"
+    }
+  },
+  {
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "editora",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "editora"
+    }
+  },
+  {
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "editoratype",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "editoratype"
+    }
+  },
+  {
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "editorb",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "editorb"
+    }
+  }
+]

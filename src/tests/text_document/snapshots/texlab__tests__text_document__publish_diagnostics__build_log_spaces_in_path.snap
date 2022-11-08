@@ -1,0 +1,23 @@
+---
+source: src/tests/text_document/publish_diagnostics.rs
+expression: result.all_diagnostics
+---
+{
+  "[tmp]/foo%20bar/main.tex": [
+    {
+      "range": {
+        "start": {
+          "line": 3,
+          "character": 3
+        },
+        "end": {
+          "line": 3,
+          "character": 3
+        }
+      },
+      "severity": 1,
+      "source": "latex-build",
+      "message": "Undefined control sequence."
+    }
+  ]
+}

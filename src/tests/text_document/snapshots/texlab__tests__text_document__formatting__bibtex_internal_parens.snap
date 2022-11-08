@@ -1,0 +1,7 @@
+---
+source: src/tests/text_document/formatting.rs
+expression: "format(r#\"\n%BIB main.bib\n%SRC @article(foo,)\"#)?"
+---
+@article{foo,
+}
+

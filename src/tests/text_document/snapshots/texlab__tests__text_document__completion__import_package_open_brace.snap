@@ -1,0 +1,66 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\usepackage{lips\n%CUR              ^\n%1.1             ^^^^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "lips",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lips"
+    }
+  },
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "lipsum",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lipsum"
+    }
+  },
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "lisp-simple-alloc",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lisp-simple-alloc"
+    }
+  },
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "lisp-string",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lisp-string"
+    }
+  },
+  {
+    "data": "[data]",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "lwarp-lips",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "lwarp-lips"
+    }
+  }
+]
