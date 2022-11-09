@@ -1,6 +1,9 @@
 use lsp_types::{DocumentHighlight, DocumentHighlightKind};
 
-use crate::{db::analysis::label, util::cursor::CursorContext, LineIndexExt};
+use crate::{
+    db::analysis::label,
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+};
 
 pub fn find_label_highlights(context: &CursorContext) -> Option<Vec<DocumentHighlight>> {
     let db = context.db;

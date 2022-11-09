@@ -65,6 +65,6 @@ impl LanguageData {
 }
 
 pub static LANGUAGE_DATA: Lazy<LanguageData> = Lazy::new(|| {
-    const JSON: &str = include_str!("../data/lang_data.json");
+    const JSON: &str = include_str!("../../data/lang_data.json");
     serde_json::from_str(JSON).expect("Failed to deserialize language.json")
 });

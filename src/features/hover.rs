@@ -8,7 +8,10 @@ mod string_ref;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position, Url};
 use rowan::TextRange;
 
-use crate::{util::cursor::CursorContext, Db, LineIndexExt};
+use crate::{
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+    Db,
+};
 
 pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
     let context = CursorContext::new(db, uri, position, ())?;

@@ -5,10 +5,12 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{
     db::{analysis::label, document::Document, workspace::Workspace, Word},
     syntax::latex::{self, HasBrack, HasCurly},
-    Db, LANGUAGE_DATA,
+    Db,
 };
 
 use self::LabeledObject::*;
+
+use super::lang_data::LANGUAGE_DATA;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LabeledFloatKind {

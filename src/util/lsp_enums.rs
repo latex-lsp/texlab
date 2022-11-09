@@ -1,6 +1,6 @@
 use lsp_types::{CompletionItemKind, SymbolKind};
 
-use crate::BibtexEntryTypeCategory;
+use super::lang_data::BibtexEntryTypeCategory;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Structure {

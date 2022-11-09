@@ -4,6 +4,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     db::{document::Document, workspace::Workspace},
     syntax::BuildErrorLevel,
+    util::line_index::LineCol,
     Db,
 };
 
@@ -64,7 +65,7 @@ pub fn collect(
             let hint: &String = error.hint.as_ref().unwrap();
             if let Some(hint_line) = doc.contents(db).text(db).lines().nth(line as usize) {
                 hint_line.find(hint).map(|col| {
-                    let lc = doc.contents(db).line_index(db).to_utf16(crate::LineCol {
+                    let lc = doc.contents(db).line_index(db).to_utf16(LineCol {
                         line,
                         col: (col + hint.len() - 1) as u32,
                     });

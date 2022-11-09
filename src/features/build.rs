@@ -2,8 +2,8 @@ mod progress;
 
 use std::{
     io::{BufRead, BufReader, Read},
-    path::Path,
-    process::{Command, Stdio},
+    path::{Path, PathBuf},
+    process::Stdio,
     thread::{self, JoinHandle},
 };
 
@@ -12,7 +12,9 @@ use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifi
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{client::LspClient, db::workspace::Workspace, ClientCapabilitiesExt, Db};
+use crate::{
+    client::LspClient, db::workspace::Workspace, util::capabilities::ClientCapabilitiesExt, Db,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,15 +38,17 @@ pub enum BuildStatus {
 }
 
 #[derive(Debug)]
-pub struct TexCompiler {
+pub struct Command {
     uri: Url,
     progress: bool,
-    command: Command,
+    executable: String,
+    args: Vec<String>,
+    working_dir: PathBuf,
     client: LspClient,
 }
 
-impl TexCompiler {
-    pub fn configure(db: &dyn Db, uri: Url, client: LspClient) -> Option<Self> {
+impl Command {
+    pub fn new(db: &dyn Db, uri: Url, client: LspClient) -> Option<Self> {
         let workspace = Workspace::get(db);
         let document = match workspace.lookup_uri(db, &uri) {
             Some(child) => workspace
@@ -62,34 +66,33 @@ impl TexCompiler {
         }
 
         let options = &workspace.options(db).build;
-        let mut command = Command::new(&options.executable.0);
-        command
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .current_dir(
-                workspace
-                    .working_dir(db, document.location(db))
-                    .path(db)
-                    .as_deref()?,
-            );
-
+        let executable = options.executable.0.clone();
         let path = document.location(db).path(db).as_deref().unwrap();
-        for arg in options.args.0.iter() {
-            command.arg(replace_placeholder(arg, path));
-        }
+        let args = options
+            .args
+            .0
+            .iter()
+            .map(|arg| replace_placeholder(arg, path))
+            .collect();
+
+        let working_dir = workspace
+            .working_dir(db, document.location(db))
+            .path(db)
+            .clone()?;
 
         Some(Self {
             uri: document.location(db).uri(db).clone(),
             progress: workspace
                 .client_capabilities(db)
                 .has_work_done_progress_support(),
-            command,
+            executable,
+            args,
+            working_dir,
             client,
         })
     }
 
-    pub fn run(mut self) -> BuildStatus {
+    pub fn run(self) -> BuildStatus {
         let reporter = if self.progress {
             let inner = progress::Reporter::new(&self.client);
             inner.start(&self.uri).expect("report progress");
@@ -98,10 +101,17 @@ impl TexCompiler {
             None
         };
 
-        let mut process = match self.command.spawn() {
+        let mut process = match std::process::Command::new(&self.executable)
+            .args(self.args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(self.working_dir)
+            .spawn()
+        {
             Ok(process) => process,
             Err(_) => {
-                log::error!("Failed to spawn process: {:?}", self.command.get_program());
+                log::error!("Failed to spawn process: {:?}", self.executable);
                 return BuildStatus::FAILURE;
             }
         };

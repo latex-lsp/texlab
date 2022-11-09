@@ -1,6 +1,9 @@
 use rowan::ast::AstNode;
 
-use crate::{syntax::latex, util::cursor::CursorContext, LANGUAGE_DATA};
+use crate::{
+    syntax::latex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
 use super::builder::CompletionBuilder;
 

@@ -1,7 +1,7 @@
 use lsp_types::{Position, Range};
 use rowan::{TextRange, TextSize};
 
-use crate::{LineColUtf16, LineIndex};
+use super::line_index::{LineColUtf16, LineIndex};
 
 pub trait LineIndexExt {
     fn offset_lsp(&self, line_col: Position) -> TextSize;

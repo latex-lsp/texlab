@@ -4,8 +4,10 @@ use rowan::{ast::AstNode, TextRange, TextSize};
 use crate::{
     db::{document::Document, parse::DocumentData, workspace::Workspace},
     syntax::{bibtex, latex},
-    Db, LineIndex, LineIndexExt,
+    Db,
 };
+
+use super::{line_index::LineIndex, line_index_ext::LineIndexExt};
 
 #[derive(Debug)]
 pub enum Cursor {

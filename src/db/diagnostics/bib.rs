@@ -4,7 +4,8 @@ use rowan::{ast::AstNode, TextRange};
 use crate::{
     db::document::Document,
     syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue},
-    Db, LineIndexExt,
+    util::line_index_ext::LineIndexExt,
+    Db,
 };
 
 use super::{BibCode, Diagnostic, DiagnosticCode};

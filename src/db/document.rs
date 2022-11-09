@@ -12,7 +12,8 @@ use crate::{
         parse::{BibDocumentData, LogDocumentData, TexDocumentData},
     },
     parser::{parse_bibtex, parse_build_log, parse_latex},
-    Db, LineIndex,
+    util::line_index::LineIndex,
+    Db,
 };
 
 use super::{

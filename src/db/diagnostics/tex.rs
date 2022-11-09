@@ -1,7 +1,7 @@
 use lsp_types::DiagnosticSeverity;
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
-use crate::{db::document::Document, syntax::latex, Db, LineIndexExt};
+use crate::{db::document::Document, syntax::latex, util::line_index_ext::LineIndexExt, Db};
 
 use super::{Diagnostic, DiagnosticCode, TexCode};
 

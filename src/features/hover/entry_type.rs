@@ -1,6 +1,9 @@
 use lsp_types::MarkupKind;
 
-use crate::{syntax::bibtex, util::cursor::CursorContext, LANGUAGE_DATA};
+use crate::{
+    syntax::bibtex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
 use super::HoverResult;
 

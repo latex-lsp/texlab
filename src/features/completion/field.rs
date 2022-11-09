@@ -2,8 +2,7 @@ use rowan::{ast::AstNode, TextRange};
 
 use crate::{
     syntax::bibtex::{self, HasName},
-    util::cursor::CursorContext,
-    LANGUAGE_DATA,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
 };
 
 use super::builder::CompletionBuilder;

@@ -3,7 +3,12 @@ use rowan::ast::AstNode;
 use crate::{
     db::document::Document,
     syntax::bibtex::{self, HasName, HasType},
-    BibtexEntryTypeCategory, Db, LineIndex, LineIndexExt, LANGUAGE_DATA,
+    util::{
+        lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},
+        line_index::LineIndex,
+        line_index_ext::LineIndexExt,
+    },
+    Db,
 };
 
 use super::types::{InternalSymbol, InternalSymbolKind};

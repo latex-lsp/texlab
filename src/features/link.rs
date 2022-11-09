@@ -5,7 +5,8 @@ use rowan::TextRange;
 
 use crate::{
     db::{document::Document, workspace::Workspace},
-    Db, LineIndex, LineIndexExt,
+    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
+    Db,
 };
 
 pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<DocumentLink>> {

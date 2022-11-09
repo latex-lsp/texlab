@@ -17,11 +17,12 @@ use crate::{
         latex,
     },
     util::{
+        capabilities::ClientCapabilitiesExt,
         cursor::{Cursor, CursorContext},
+        lang_data::{BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, LANGUAGE_DATA},
+        line_index_ext::LineIndexExt,
         lsp_enums::Structure,
     },
-    BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, ClientCapabilitiesExt,
-    LineIndexExt, LANGUAGE_DATA,
 };
 
 use super::COMPLETION_LIMIT;

@@ -6,7 +6,11 @@ use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
 use rowan::TextRange;
 use rustc_hash::FxHashMap;
 
-use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
+use crate::{
+    db::document::Document,
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+    Db,
+};
 
 pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<Range> {
     let context = CursorContext::new(db, uri, position, ())?;

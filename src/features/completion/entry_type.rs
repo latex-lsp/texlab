@@ -1,6 +1,9 @@
 use rowan::{TextRange, TextSize};
 
-use crate::{syntax::bibtex, util::cursor::CursorContext, LANGUAGE_DATA};
+use crate::{
+    syntax::bibtex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
 use super::builder::CompletionBuilder;
 

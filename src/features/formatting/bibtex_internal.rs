@@ -4,7 +4,8 @@ use rowan::{ast::AstNode, NodeOrToken};
 use crate::{
     db::{document::Document, workspace::Workspace},
     syntax::bibtex::{self, HasName, HasType, HasValue},
-    Db, LineIndex, LineIndexExt,
+    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
+    Db,
 };
 
 pub fn format_bibtex_internal(

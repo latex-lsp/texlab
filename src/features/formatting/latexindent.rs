@@ -12,7 +12,8 @@ use crate::{
         document::{Document, Language},
         workspace::Workspace,
     },
-    Db, LatexindentOptions, LineIndexExt,
+    util::line_index_ext::LineIndexExt,
+    Db, LatexindentOptions,
 };
 
 pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {

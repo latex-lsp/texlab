@@ -1,29 +1,17 @@
 #![allow(clippy::needless_lifetimes)]
 
-mod capabilities;
-pub mod citation;
+pub(crate) mod citation;
 mod client;
 pub mod db;
-mod dispatch;
-pub mod distro;
+pub(crate) mod distro;
 pub mod features;
-mod lang_data;
-mod line_index;
-mod line_index_ext;
 mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
-pub mod util;
+pub(crate) mod util;
 
-pub use self::{
-    capabilities::ClientCapabilitiesExt,
-    lang_data::*,
-    line_index::{LineCol, LineColUtf16, LineIndex},
-    line_index_ext::LineIndexExt,
-    options::*,
-    server::Server,
-};
+pub use self::{options::*, server::Server};
 
 #[salsa::jar(db = Db)]
 pub struct Jar(

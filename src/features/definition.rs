@@ -7,7 +7,11 @@ mod string;
 use lsp_types::{GotoDefinitionResponse, LocationLink, Position, Url};
 use rowan::TextRange;
 
-use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
+use crate::{
+    db::document::Document,
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+    Db,
+};
 
 pub fn goto_definition(
     db: &dyn Db,

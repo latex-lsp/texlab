@@ -3,7 +3,11 @@ mod label;
 use lsp_types::{InlayHint, InlayHintLabel, Range, Url};
 use rowan::TextSize;
 
-use crate::{db::workspace::Workspace, Db, LineIndex, LineIndexExt};
+use crate::{
+    db::workspace::Workspace,
+    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
+    Db,
+};
 
 pub fn find_all(db: &dyn Db, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
     let document = Workspace::get(db).lookup_uri(db, uri)?;

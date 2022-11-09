@@ -4,7 +4,8 @@ use rowan::ast::AstNode;
 use crate::{
     db::{parse::DocumentData, workspace::Workspace},
     syntax::{bibtex, latex},
-    Db, LineIndexExt,
+    util::line_index_ext::LineIndexExt,
+    Db,
 };
 
 pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {

@@ -6,8 +6,7 @@ use lsp_types::{
 
 use crate::{
     tests::{client::Client, fixture},
-    util::components::COMPONENT_DATABASE,
-    LANGUAGE_DATA,
+    util::{components::COMPONENT_DATABASE, lang_data::LANGUAGE_DATA},
 };
 
 fn check(fixture: &str, contents: Option<HoverContents>) -> Result<()> {

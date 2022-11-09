@@ -1,3 +1,4 @@
+mod dispatch;
 mod query;
 
 use std::{
@@ -24,18 +25,20 @@ use crate::{
         document::{Document, Language, Owner},
         workspace::Workspace,
     },
-    dispatch::{NotificationDispatcher, RequestDispatcher},
     distro::Distribution,
     features::{
-        building::{BuildParams, BuildResult, BuildStatus, TexCompiler},
+        build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol, workspace_command,
     },
     normalize_uri,
     syntax::bibtex,
-    util::{self, components::COMPONENT_DATABASE},
-    ClientCapabilitiesExt, Db, LineIndexExt, Options, StartupOptions,
+    util::{
+        self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
+        line_index_ext::LineIndexExt,
+    },
+    Db, Options, StartupOptions,
 };
 
 #[derive(Debug)]
@@ -675,7 +678,7 @@ impl Server {
         static LOCK: Mutex<()> = Mutex::new(());
 
         let db = self.engine.read();
-        let compiler = match TexCompiler::configure(db, uri.clone(), self.client.clone()) {
+        let compiler = match build::Command::new(db, uri.clone(), self.client.clone()) {
             Some(compiler) => compiler,
             None => {
                 callback(BuildStatus::FAILURE);
@@ -800,7 +803,7 @@ impl Server {
                                 return Ok(());
                             }
 
-                            if let Some(response) = RequestDispatcher::new(request)
+                            if let Some(response) = dispatch::RequestDispatcher::new(request)
                                 .on::<DocumentLinkRequest, _>(|id, params| self.document_link(id, params))?
                                 .on::<FoldingRangeRequest, _>(|id, params| self.folding_range(id, params))?
                                 .on::<References, _>(|id, params| self.references(id, params))?
@@ -846,7 +849,7 @@ impl Server {
                             }
                         }
                         Message::Notification(notification) => {
-                            NotificationDispatcher::new(notification)
+                            dispatch::NotificationDispatcher::new(notification)
                                 .on::<Cancel, _>(|params| self.cancel(params))?
                                 .on::<DidChangeConfiguration, _>(|params| {
                                     self.did_change_configuration(params)

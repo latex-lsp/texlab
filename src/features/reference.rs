@@ -5,7 +5,11 @@ mod string;
 use lsp_types::{Location, Position, ReferenceContext, Url};
 use rowan::TextRange;
 
-use crate::{db::document::Document, util::cursor::CursorContext, Db, LineIndexExt};
+use crate::{
+    db::document::Document,
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+    Db,
+};
 
 pub fn find_all(
     db: &dyn Db,

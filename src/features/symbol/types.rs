@@ -1,6 +1,10 @@
 use lsp_types::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, Url};
 
-use crate::{db::Word, util::lsp_enums::Structure, BibtexEntryTypeCategory, Db};
+use crate::{
+    db::Word,
+    util::{lang_data::BibtexEntryTypeCategory, lsp_enums::Structure},
+    Db,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum InternalSymbolKind {
