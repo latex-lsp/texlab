@@ -4,7 +4,7 @@ use crate::util::cursor::CursorContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_document_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
+pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
     let db = context.db;
     context
         .workspace

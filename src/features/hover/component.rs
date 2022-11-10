@@ -7,7 +7,7 @@ use crate::{
 
 use super::HoverResult;
 
-pub(super) fn find_component_hover(context: &CursorContext) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let db = context.db;
     let links = context.document.parse(db).as_tex()?.analyze(db).links(db);
     links

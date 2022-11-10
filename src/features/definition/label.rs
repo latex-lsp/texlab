@@ -2,7 +2,7 @@ use crate::util::{self, cursor::CursorContext};
 
 use super::DefinitionResult;
 
-pub(super) fn goto_label_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
+pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
     let db = context.db;
     let (name_text, origin_selection_range) = context
         .find_label_name_key()

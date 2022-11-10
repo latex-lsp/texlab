@@ -17,11 +17,7 @@ use crate::{
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_latex_symbols(
-    db: &dyn Db,
-    document: Document,
-    buf: &mut Vec<InternalSymbol>,
-) -> Option<()> {
+pub fn find_symbols(db: &dyn Db, document: Document, buf: &mut Vec<InternalSymbol>) -> Option<()> {
     let data = document.parse(db).as_tex()?;
     let mut symbols = visit(db, document, data.root(db));
     buf.append(&mut symbols);

@@ -8,7 +8,7 @@ use crate::{
 
 use super::HoverResult;
 
-pub(super) fn find_field_hover(context: &CursorContext) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let name = context
         .cursor
         .as_bib()

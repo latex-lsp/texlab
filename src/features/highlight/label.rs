@@ -5,7 +5,7 @@ use crate::{
     util::{cursor::CursorContext, line_index_ext::LineIndexExt},
 };
 
-pub fn find_label_highlights(context: &CursorContext) -> Option<Vec<DocumentHighlight>> {
+pub fn find_highlights(context: &CursorContext) -> Option<Vec<DocumentHighlight>> {
     let db = context.db;
     let (name_text, _) = context.find_label_name_key()?;
     let data = context.document.parse(db).as_tex()?;

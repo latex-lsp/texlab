@@ -14,9 +14,9 @@ use crate::{
 
 pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<Range> {
     let context = CursorContext::new(db, uri, position, ())?;
-    let range = entry::prepare_entry_rename(&context)
-        .or_else(|| label::prepare_label_rename(&context))
-        .or_else(|| command::prepare_command_rename(&context))?;
+    let range = entry::prepare_rename(&context)
+        .or_else(|| label::prepare_rename(&context))
+        .or_else(|| command::prepare_rename(&context))?;
 
     let line_index = context.document.contents(db).line_index(db);
     Some(line_index.line_col_lsp_range(range))
@@ -29,9 +29,9 @@ pub fn rename_all(
     new_name: String,
 ) -> Option<WorkspaceEdit> {
     let context = CursorContext::new(db, uri, position, Params { new_name })?;
-    let result = entry::rename_entry(&context)
-        .or_else(|| label::rename_label(&context))
-        .or_else(|| command::rename_command(&context))?;
+    let result = entry::rename(&context)
+        .or_else(|| label::rename(&context))
+        .or_else(|| command::rename(&context))?;
 
     let changes = result
         .changes

@@ -13,11 +13,7 @@ use crate::{
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_bibtex_symbols(
-    db: &dyn Db,
-    document: Document,
-    buf: &mut Vec<InternalSymbol>,
-) -> Option<()> {
+pub fn find_symbols(db: &dyn Db, document: Document, buf: &mut Vec<InternalSymbol>) -> Option<()> {
     let data = document.parse(db).as_bib()?;
     let line_index = document.contents(db).line_index(db);
     for node in data.root(db).children() {

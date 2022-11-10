@@ -20,9 +20,9 @@ pub fn find_all(
     let mut results = Vec::new();
     let context = CursorContext::new(db, uri, position, params)?;
     log::debug!("[References] Cursor: {:?}", context.cursor);
-    label::find_label_references(&context, &mut results);
-    entry::find_entry_references(&context, &mut results);
-    string::find_string_references(&context, &mut results);
+    label::find_all_references(&context, &mut results);
+    entry::find_all_references(&context, &mut results);
+    string::find_all_references(&context, &mut results);
 
     let locations = results
         .into_iter()

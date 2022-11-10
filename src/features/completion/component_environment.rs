@@ -2,7 +2,7 @@ use crate::util::{components::COMPONENT_DATABASE, cursor::CursorContext};
 
 use super::builder::CompletionBuilder;
 
-pub fn complete_component_environments<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {

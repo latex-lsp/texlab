@@ -9,17 +9,15 @@ use lsp_types::{DocumentSymbolResponse, SymbolInformation, Url, WorkspaceSymbolP
 
 use crate::{db::workspace::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
-use self::{
-    bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
-};
+use self::project_order::ProjectOrdering;
 
 pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolResponse> {
     let workspace = Workspace::get(db);
     let document = workspace.lookup_uri(db, uri)?;
 
     let mut buf = Vec::new();
-    find_latex_symbols(db, document, &mut buf);
-    find_bibtex_symbols(db, document, &mut buf);
+    latex::find_symbols(db, document, &mut buf);
+    bibtex::find_symbols(db, document, &mut buf);
     if workspace
         .client_capabilities(db)
         .has_hierarchical_document_symbol_support()
@@ -62,8 +60,8 @@ pub fn find_workspace_symbols(
     let workspace = Workspace::get(db);
     for document in workspace.documents(db).iter().copied() {
         let mut buf = Vec::new();
-        find_latex_symbols(db, document, &mut buf);
-        find_bibtex_symbols(db, document, &mut buf);
+        latex::find_symbols(db, document, &mut buf);
+        bibtex::find_symbols(db, document, &mut buf);
         let mut new_buf = Vec::new();
 
         for symbol in buf {

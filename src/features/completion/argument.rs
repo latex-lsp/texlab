@@ -7,7 +7,7 @@ use crate::{
 
 use super::builder::CompletionBuilder;
 
-pub fn complete_arguments<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {

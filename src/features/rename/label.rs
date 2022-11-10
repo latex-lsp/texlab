@@ -5,13 +5,13 @@ use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_label_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
+pub(super) fn prepare_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     let (_, range) = context.find_label_name_key()?;
     Some(range)
 }
 
-pub(super) fn rename_label(context: &CursorContext<Params>) -> Option<RenameResult> {
-    prepare_label_rename(context)?;
+pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
+    prepare_rename(context)?;
     let (name_text, _) = context.find_label_name_key()?;
 
     let mut changes = FxHashMap::default();

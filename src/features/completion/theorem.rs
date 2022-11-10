@@ -2,7 +2,7 @@ use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
-pub fn complete_theorem_environments<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {

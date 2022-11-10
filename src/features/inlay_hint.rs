@@ -19,7 +19,7 @@ pub fn find_all(db: &dyn Db, uri: &Url, range: Range) -> Option<Vec<InlayHint>> 
     };
 
     let range = line_index.offset_lsp_range(range);
-    label::find_label_inlay_hints(db, document, range, &mut builder);
+    label::find_hints(db, document, range, &mut builder);
     Some(builder.hints)
 }
 

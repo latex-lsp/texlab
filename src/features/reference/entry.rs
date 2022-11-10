@@ -12,7 +12,7 @@ use crate::{
 
 use super::ReferenceResult;
 
-pub(super) fn find_entry_references(
+pub(super) fn find_all_references(
     context: &CursorContext<&ReferenceContext>,
     results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {

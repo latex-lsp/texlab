@@ -6,7 +6,7 @@ use super::builder::CompletionBuilder;
 
 const MODEL_NAMES: &[&str] = &["gray", "rgb", "RGB", "HTML", "cmyk"];
 
-pub fn complete_color_models<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {

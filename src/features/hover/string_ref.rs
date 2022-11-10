@@ -9,7 +9,7 @@ use crate::{
 
 use super::HoverResult;
 
-pub(super) fn find_string_reference_hover(context: &CursorContext) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let data = context.document.parse(context.db).as_bib()?;
 
     let name = context

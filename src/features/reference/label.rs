@@ -4,7 +4,7 @@ use crate::util::cursor::CursorContext;
 
 use super::ReferenceResult;
 
-pub(super) fn find_label_references(
+pub(super) fn find_all_references(
     context: &CursorContext<&ReferenceContext>,
     results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {

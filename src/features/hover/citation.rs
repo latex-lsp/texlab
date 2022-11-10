@@ -5,7 +5,7 @@ use crate::{citation, syntax::bibtex, util::cursor::CursorContext};
 
 use super::HoverResult;
 
-pub(super) fn find_citation_hover(context: &CursorContext) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let (key, range) = context
         .find_citation_key_word()
         .or_else(|| context.find_citation_key_command())

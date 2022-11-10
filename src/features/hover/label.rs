@@ -7,7 +7,7 @@ use crate::{
 
 use super::HoverResult;
 
-pub(super) fn find_label_hover(context: &CursorContext) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let (name_text, range) = context
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;

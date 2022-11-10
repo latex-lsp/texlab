@@ -5,12 +5,12 @@ use crate::util::cursor::CursorContext;
 
 use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_command_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
+pub(super) fn prepare_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     context.cursor.command_range(context.offset)
 }
 
-pub(super) fn rename_command(context: &CursorContext<Params>) -> Option<RenameResult> {
-    prepare_command_rename(context)?;
+pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
+    prepare_rename(context)?;
     let name = context.cursor.as_tex()?.text();
     let mut changes = FxHashMap::default();
     for document in context.related() {

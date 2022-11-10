@@ -4,7 +4,7 @@ use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::DefinitionResult;
 
-pub(super) fn goto_command_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
+pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
     let name = context
         .cursor
         .as_tex()

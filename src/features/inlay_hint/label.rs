@@ -7,7 +7,7 @@ use crate::{
 
 use super::InlayHintBuilder;
 
-pub(super) fn find_label_inlay_hints(
+pub(super) fn find_hints(
     db: &dyn Db,
     document: Document,
     range: TextRange,

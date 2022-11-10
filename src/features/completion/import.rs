@@ -8,7 +8,7 @@ use crate::{
 
 use super::builder::CompletionBuilder;
 
-pub fn complete_imports<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {

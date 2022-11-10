@@ -21,11 +21,11 @@ pub fn goto_definition(
     let context = CursorContext::new(db, uri, position, ())?;
     log::debug!("[Definition] Cursor: {:?}", context.cursor);
 
-    let links: Vec<_> = command::goto_command_definition(&context)
-        .or_else(|| document::goto_document_definition(&context))
-        .or_else(|| entry::goto_entry_definition(&context))
-        .or_else(|| label::goto_label_definition(&context))
-        .or_else(|| string::goto_string_definition(&context))?
+    let links: Vec<_> = command::goto_definition(&context)
+        .or_else(|| document::goto_definition(&context))
+        .or_else(|| entry::goto_definition(&context))
+        .or_else(|| label::goto_definition(&context))
+        .or_else(|| string::goto_definition(&context))?
         .into_iter()
         .map(|result| {
             let origin_selection_range = Some(

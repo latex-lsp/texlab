@@ -12,7 +12,7 @@ use crate::{
 
 use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_entry_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
+pub(super) fn prepare_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     let (_, range) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
@@ -20,8 +20,8 @@ pub(super) fn prepare_entry_rename<T>(context: &CursorContext<T>) -> Option<Text
     Some(range)
 }
 
-pub(super) fn rename_entry(context: &CursorContext<Params>) -> Option<RenameResult> {
-    prepare_entry_rename(context)?;
+pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
+    prepare_rename(context)?;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;

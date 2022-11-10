@@ -4,7 +4,7 @@ use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::builder::CompletionBuilder;
 
-pub fn complete_acronyms<'db>(
+pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
