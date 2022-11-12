@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::assert_json_snapshot;
 use lsp_types::{
     request::InlayHintRequest, ClientCapabilities, InlayHint, InlayHintParams, Position, Range,
@@ -7,15 +6,15 @@ use lsp_types::{
 
 use crate::tests::{client::Client, fixture};
 
-fn check(fixture: &str) -> Result<Vec<InlayHint>> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str) -> Vec<InlayHint> {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
-    let uri = client.uri(fixture.files[0].name)?;
+    let uri = client.uri(fixture.files[0].name);
 
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let actual_hints = client
@@ -23,16 +22,16 @@ fn check(fixture: &str) -> Result<Vec<InlayHint>> {
             text_document: TextDocumentIdentifier::new(uri),
             range: Range::new(Position::new(0, 0), Position::new(12, 0)),
             work_done_progress_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    client.shutdown()?;
-
-    Ok(actual_hints)
+    client.shutdown();
+    actual_hints
 }
 
 #[test]
-fn label_definition() -> Result<()> {
+fn label_definition() {
     assert_json_snapshot!(check(
         r#"
 %TEX main.tex
@@ -62,7 +61,5 @@ fn label_definition() -> Result<()> {
 %SRC \newlabel{sec:baz}{{2.1}{1}}
 %SRC \gdef \@abspage@last{1}
 "#,
-    )?);
-
-    Ok(())
+    ));
 }

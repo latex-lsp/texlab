@@ -1,43 +1,42 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
 use lsp_types::{request::Rename, ClientCapabilities, RenameParams, TextEdit, Url, WorkspaceEdit};
 
 use crate::tests::{client::Client, fixture};
 
-fn check(fixture: &str, new_name: &str) -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str, new_name: &str) {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let mut expected_changes: HashMap<Url, Vec<TextEdit>> = HashMap::new();
     for ranges in fixture.ranges.values() {
         expected_changes
-            .entry(client.uri(ranges[&1].name)?)
+            .entry(client.uri(ranges[&1].name))
             .or_default()
             .push(TextEdit::new(ranges[&1].range, new_name.to_string()));
     }
 
     let actual_edit = client
         .request::<Rename>(RenameParams {
-            text_document_position: fixture.cursor.unwrap().into_params(&client)?,
+            text_document_position: fixture.cursor.unwrap().into_params(&client),
             new_name: new_name.to_string(),
             work_done_progress_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    client.shutdown()?;
+    client.shutdown();
 
     assert_eq!(actual_edit, WorkspaceEdit::new(expected_changes));
-    Ok(())
 }
 
 #[test]
-fn command() -> Result<()> {
+fn command() {
     check(
         r#"
 %TEX foo.tex
@@ -55,7 +54,7 @@ fn command() -> Result<()> {
 }
 
 #[test]
-fn entry() -> Result<()> {
+fn entry() {
     check(
         r#"
 %BIB main.bib
@@ -73,7 +72,7 @@ fn entry() -> Result<()> {
 }
 
 #[test]
-fn citation() -> Result<()> {
+fn citation() {
     check(
         r#"
 %BIB main.bib
@@ -91,7 +90,7 @@ fn citation() -> Result<()> {
 }
 
 #[test]
-fn label() -> Result<()> {
+fn label() {
     check(
         r#"
 %TEX foo.tex

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use assert_unordered::assert_eq_unordered;
 use lsp_types::{
     request::FoldingRangeRequest, ClientCapabilities, FoldingRange, FoldingRangeKind,
@@ -7,24 +6,25 @@ use lsp_types::{
 
 use crate::tests::{client::Client, fixture};
 
-fn check(fixture: &str, expected_ranges: Vec<(u32, u32, u32, u32)>) -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str, expected_ranges: Vec<(u32, u32, u32, u32)>) {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let actual_foldings = client
         .request::<FoldingRangeRequest>(FoldingRangeParams {
-            text_document: TextDocumentIdentifier::new(client.uri(fixture.cursor.unwrap().name)?),
+            text_document: TextDocumentIdentifier::new(client.uri(fixture.cursor.unwrap().name)),
             work_done_progress_params: Default::default(),
             partial_result_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    client.shutdown()?;
+    client.shutdown();
 
     let expected_foldings = expected_ranges
         .into_iter()
@@ -40,11 +40,10 @@ fn check(fixture: &str, expected_ranges: Vec<(u32, u32, u32, u32)>) -> Result<()
         .collect();
 
     assert_eq_unordered!(actual_foldings, expected_foldings);
-    Ok(())
 }
 
 #[test]
-fn latex() -> Result<()> {
+fn latex() {
     check(
         r#"
 %TEX main.tex
@@ -70,7 +69,7 @@ fn latex() -> Result<()> {
 }
 
 #[test]
-fn bibtex() -> Result<()> {
+fn bibtex() {
     check(
         r#"
 %BIB main.bib

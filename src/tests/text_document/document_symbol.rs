@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
     request::DocumentSymbolRequest, DocumentSymbolParams, DocumentSymbolResponse,
@@ -12,31 +11,33 @@ struct SymbolResult {
     uri_redaction: Redaction,
 }
 
-fn find_symbols(fixture: &str, client_capabilities: serde_json::Value) -> Result<SymbolResult> {
-    let mut client = Client::spawn()?;
-    client.initialize(serde_json::from_value(client_capabilities)?, None)?;
+fn find_symbols(fixture: &str, client_capabilities: serde_json::Value) -> SymbolResult {
+    let mut client = Client::spawn();
+    client.initialize(serde_json::from_value(client_capabilities).unwrap(), None);
 
     let fixture = fixture::parse(fixture);
     let file = fixture.files.into_iter().next().unwrap();
-    client.open(file.name, file.lang, file.text)?;
+    client.open(file.name, file.lang, file.text);
 
-    let response = client.request::<DocumentSymbolRequest>(DocumentSymbolParams {
-        text_document: TextDocumentIdentifier::new(client.uri(file.name)?),
-        work_done_progress_params: Default::default(),
-        partial_result_params: Default::default(),
-    })?;
+    let response = client
+        .request::<DocumentSymbolRequest>(DocumentSymbolParams {
+            text_document: TextDocumentIdentifier::new(client.uri(file.name)),
+            work_done_progress_params: Default::default(),
+            partial_result_params: Default::default(),
+        })
+        .unwrap();
 
-    let result = client.shutdown()?;
+    let result = client.shutdown();
 
     let uri = Url::from_directory_path(result.directory.path()).unwrap();
     let uri_redaction = insta::dynamic_redaction(move |content, _path| {
         content.as_str().unwrap().replace(uri.as_str(), "[tmp]/")
     });
 
-    Ok(SymbolResult {
+    SymbolResult {
         response,
         uri_redaction,
-    })
+    }
 }
 
 macro_rules! assert_symbols {
@@ -49,7 +50,7 @@ macro_rules! assert_symbols {
 }
 
 #[test]
-fn enumerate_nested() -> Result<()> {
+fn enumerate_nested() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -78,13 +79,11 @@ fn enumerate_nested() -> Result<()> {
                 },
             },
         }),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn enumerate_flat() -> Result<()> {
+fn enumerate_flat() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -107,13 +106,11 @@ fn enumerate_flat() -> Result<()> {
 %SRC \newlabel{it:qux}{{2}{1}}
 "#,
         serde_json::json!({}),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn equation_nested() -> Result<()> {
+fn equation_nested() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -146,13 +143,11 @@ fn equation_nested() -> Result<()> {
                 },
             },
         }),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn equation_flat() -> Result<()> {
+fn equation_flat() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -179,13 +174,11 @@ fn equation_flat() -> Result<()> {
 %SRC \newlabel{eq:foo}{{1}{1}}
 "#,
         serde_json::json!({}),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn float_nested() -> Result<()> {
+fn float_nested() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -228,13 +221,11 @@ fn float_nested() -> Result<()> {
                 },
             },
         }),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn float_flat() -> Result<()> {
+fn float_flat() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -271,13 +262,11 @@ fn float_flat() -> Result<()> {
 %SRC \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Baz}}{1}\protected@file@percent }
 "#,
         serde_json::json!({}),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn section_nested() -> Result<()> {
+fn section_nested() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -306,13 +295,11 @@ fn section_nested() -> Result<()> {
                 },
             },
         }),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn section_flat() -> Result<()> {
+fn section_flat() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -335,13 +322,11 @@ fn section_flat() -> Result<()> {
 %SRC \newlabel{sec:bar}{{2}{1}}
 "#,
         serde_json::json!({}),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn theorem_nested() -> Result<()> {
+fn theorem_nested() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -381,13 +366,11 @@ fn theorem_nested() -> Result<()> {
                 },
             },
         }),
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn theorem_flat() -> Result<()> {
+fn theorem_flat() {
     assert_symbols!(find_symbols(
         r#"
 %TEX main.tex
@@ -421,7 +404,5 @@ fn theorem_flat() -> Result<()> {
 %SRC \newlabel{thm:bar}{{2}{1}}
 "#,
         serde_json::json!({}),
-    )?);
-
-    Ok(())
+    ));
 }

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use assert_unordered::assert_eq_unordered;
 use lsp_types::{
     request::DocumentLinkRequest, ClientCapabilities, DocumentLink, DocumentLinkParams,
@@ -7,20 +6,20 @@ use lsp_types::{
 
 use crate::tests::{client::Client, fixture};
 
-fn check(fixture: &str) -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str) {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let mut expected_links = Vec::new();
     for ranges in fixture.ranges.values() {
         expected_links.push(DocumentLink {
             range: ranges[&1].range,
-            target: Some(client.uri(ranges[&2].name)?),
+            target: Some(client.uri(ranges[&2].name)),
             tooltip: None,
             data: None,
         });
@@ -28,20 +27,19 @@ fn check(fixture: &str) -> Result<()> {
 
     let actual_links = client
         .request::<DocumentLinkRequest>(DocumentLinkParams {
-            text_document: TextDocumentIdentifier::new(client.uri(fixture.cursor.unwrap().name)?),
+            text_document: TextDocumentIdentifier::new(client.uri(fixture.cursor.unwrap().name)),
             work_done_progress_params: Default::default(),
             partial_result_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    client.shutdown()?;
-
+    client.shutdown();
     assert_eq_unordered!(actual_links, expected_links);
-    Ok(())
 }
 
 #[test]
-fn document_include() -> Result<()> {
+fn document_include() {
     check(
         r#"
 %TEX foo.tex
@@ -57,7 +55,7 @@ fn document_include() -> Result<()> {
 }
 
 #[test]
-fn document_import() -> Result<()> {
+fn document_import() {
     check(
         r#"
 %TEX foo.tex

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
     request::WorkspaceSymbol, ClientCapabilities, SymbolInformation, Url, WorkspaceSymbolParams,
@@ -11,13 +10,13 @@ struct SymbolResult {
     uri_redaction: Redaction,
 }
 
-fn find_symbols(fixture: &str, query: &str) -> Result<SymbolResult> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn find_symbols(fixture: &str, query: &str) -> SymbolResult {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let actual_symbols = client
@@ -25,20 +24,21 @@ fn find_symbols(fixture: &str, query: &str) -> Result<SymbolResult> {
             query: query.to_string(),
             work_done_progress_params: Default::default(),
             partial_result_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    let result = client.shutdown()?;
+    let result = client.shutdown();
 
     let uri = Url::from_directory_path(result.directory.path()).unwrap();
     let uri_redaction = insta::dynamic_redaction(move |content, _path| {
         content.as_str().unwrap().replace(uri.as_str(), "[tmp]/")
     });
 
-    Ok(SymbolResult {
+    SymbolResult {
         actual_symbols,
         uri_redaction,
-    })
+    }
 }
 
 macro_rules! assert_symbols {
@@ -117,31 +117,26 @@ const FIXTURE: &str = r#"
 %SRC @string{bar = "bar"}"#;
 
 #[test]
-fn filter_type_section() -> Result<()> {
-    assert_symbols!(find_symbols(FIXTURE, "section")?);
-    Ok(())
+fn filter_type_section() {
+    assert_symbols!(find_symbols(FIXTURE, "section"));
 }
 
 #[test]
-fn filter_type_figure() -> Result<()> {
-    assert_symbols!(find_symbols(FIXTURE, "figure")?);
-    Ok(())
+fn filter_type_figure() {
+    assert_symbols!(find_symbols(FIXTURE, "figure"));
 }
 
 #[test]
-fn filter_type_item() -> Result<()> {
-    assert_symbols!(find_symbols(FIXTURE, "item")?);
-    Ok(())
+fn filter_type_item() {
+    assert_symbols!(find_symbols(FIXTURE, "item"));
 }
 
 #[test]
-fn filter_type_math() -> Result<()> {
-    assert_symbols!(find_symbols(FIXTURE, "math")?);
-    Ok(())
+fn filter_type_math() {
+    assert_symbols!(find_symbols(FIXTURE, "math"));
 }
 
 #[test]
-fn filter_bibtex() -> Result<()> {
-    assert_symbols!(find_symbols(FIXTURE, "bibtex")?);
-    Ok(())
+fn filter_bibtex() {
+    assert_symbols!(find_symbols(FIXTURE, "bibtex"));
 }

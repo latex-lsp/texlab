@@ -1,4 +1,3 @@
-use anyhow::Result;
 use assert_unordered::assert_eq_unordered;
 use lsp_types::{
     request::DocumentHighlightRequest, ClientCapabilities, DocumentHighlight,
@@ -7,13 +6,13 @@ use lsp_types::{
 
 use crate::tests::{client::Client, fixture};
 
-fn check(fixture: &str) -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str) {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let mut expected_highlights = Vec::new();
@@ -34,20 +33,19 @@ fn check(fixture: &str) -> Result<()> {
 
     let actual_highlights = client
         .request::<DocumentHighlightRequest>(DocumentHighlightParams {
-            text_document_position_params: fixture.cursor.unwrap().into_params(&client)?,
+            text_document_position_params: fixture.cursor.unwrap().into_params(&client),
             partial_result_params: Default::default(),
             work_done_progress_params: Default::default(),
-        })?
+        })
+        .unwrap()
         .unwrap_or_default();
 
-    client.shutdown()?;
-
+    client.shutdown();
     assert_eq_unordered!(actual_highlights, expected_highlights);
-    Ok(())
 }
 
 #[test]
-fn test_label() -> Result<()> {
+fn test_label() {
     check(
         r#"
 %TEX main.tex

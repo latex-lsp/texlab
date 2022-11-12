@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
     notification::{DidChangeConfiguration, Notification, PublishDiagnostics},
@@ -13,23 +12,23 @@ struct DiagnosticResult {
     uri_redaction: Redaction,
 }
 
-fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> Result<DiagnosticResult> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> DiagnosticResult {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
-    client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings })?;
+    client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings });
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.store_on_disk(file.name, &file.text)?;
+        client.store_on_disk(file.name, &file.text);
         if file.lang != "log" {
-            client.open(file.name, file.lang, file.text)?;
+            client.open(file.name, file.lang, file.text);
         }
     }
 
     std::thread::sleep(std::time::Duration::from_secs(1));
 
-    let result = client.shutdown()?;
+    let result = client.shutdown();
 
     let uri = Url::from_directory_path(result.directory.path()).unwrap();
     let uri_redaction = insta::dynamic_redaction(move |content, _path| {
@@ -48,10 +47,10 @@ fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> Result<Diagno
         .map(|params| (params.uri, params.diagnostics))
         .collect();
 
-    Ok(DiagnosticResult {
+    DiagnosticResult {
         all_diagnostics,
         uri_redaction,
-    })
+    }
 }
 
 macro_rules! assert_symbols {
@@ -219,18 +218,17 @@ static BUILD_LOG_FIXTURE: &str = r#"
 %SRC  1 words of extra memory for PDF output out of 10000 (max. 10000000)"#;
 
 #[test]
-fn build_log_filter_none() -> Result<()> {
+fn build_log_filter_none() {
     assert_symbols!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
             "diagnosticsDelay": 0,
         })
-    )?);
-    Ok(())
+    ));
 }
 
 #[test]
-fn build_log_filter_allowed() -> Result<()> {
+fn build_log_filter_allowed() {
     assert_symbols!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
@@ -239,13 +237,11 @@ fn build_log_filter_allowed() -> Result<()> {
                 "allowedPatterns": ["Overfull \\\\[hv]box"]
             }
         })
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn build_log_filter_ignored() -> Result<()> {
+fn build_log_filter_ignored() {
     assert_symbols!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
@@ -254,13 +250,11 @@ fn build_log_filter_ignored() -> Result<()> {
                 "ignoredPatterns": ["Overfull \\\\[hv]box"]
             }
         })
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn build_log_spaces_in_path() -> Result<()> {
+fn build_log_spaces_in_path() {
     assert_symbols!(find_diagnostics(
         r#"
 %TEX foo bar/main.tex
@@ -317,6 +311,5 @@ fn build_log_spaces_in_path() -> Result<()> {
         serde_json::json!({
             "diagnosticsDelay": 0,
         })
-    )?);
-    Ok(())
+    ));
 }

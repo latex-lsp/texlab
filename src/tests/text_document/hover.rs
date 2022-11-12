@@ -1,4 +1,3 @@
-use anyhow::Result;
 use lsp_types::{
     request::HoverRequest, ClientCapabilities, Hover, HoverContents, HoverParams, MarkupContent,
     MarkupKind,
@@ -9,13 +8,13 @@ use crate::{
     util::{components::COMPONENT_DATABASE, lang_data::LANGUAGE_DATA},
 };
 
-fn check(fixture: &str, contents: Option<HoverContents>) -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn check(fixture: &str, contents: Option<HoverContents>) {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let range = fixture
@@ -25,21 +24,21 @@ fn check(fixture: &str, contents: Option<HoverContents>) -> Result<()> {
         .and_then(|map| map.values().next())
         .map(|file_range| file_range.range);
 
-    let actual_hover = client.request::<HoverRequest>(HoverParams {
-        text_document_position_params: fixture.cursor.unwrap().into_params(&client)?,
-        work_done_progress_params: Default::default(),
-    })?;
+    let actual_hover = client
+        .request::<HoverRequest>(HoverParams {
+            text_document_position_params: fixture.cursor.unwrap().into_params(&client),
+            work_done_progress_params: Default::default(),
+        })
+        .unwrap();
 
-    client.shutdown()?;
+    client.shutdown();
 
     let expected_hover = contents.map(|contents| Hover { range, contents });
-
     assert_eq!(actual_hover, expected_hover);
-    Ok(())
 }
 
 #[test]
-fn empty_latex_document() -> Result<()> {
+fn empty_latex_document() {
     check(
         r#"
 %TEX main.tex
@@ -51,7 +50,7 @@ fn empty_latex_document() -> Result<()> {
 }
 
 #[test]
-fn empty_bibtex_document() -> Result<()> {
+fn empty_bibtex_document() {
     check(
         r#"
 %BIB main.bib
@@ -63,7 +62,7 @@ fn empty_bibtex_document() -> Result<()> {
 }
 
 #[test]
-fn citation_inside_cite() -> Result<()> {
+fn citation_inside_cite() {
     check(
         r#"
 %BIB main.bib
@@ -83,7 +82,7 @@ fn citation_inside_cite() -> Result<()> {
 }
 
 #[test]
-fn citation_inside_entry() -> Result<()> {
+fn citation_inside_entry() {
     check(
         r#"
 %BIB main.bib
@@ -103,7 +102,7 @@ fn citation_inside_entry() -> Result<()> {
 }
 
 #[test]
-fn component_known_package() -> Result<()> {
+fn component_known_package() {
     check(
         r#"
 %TEX main.tex
@@ -118,7 +117,7 @@ fn component_known_package() -> Result<()> {
 }
 
 #[test]
-fn component_unknown_class() -> Result<()> {
+fn component_unknown_class() {
     check(
         r#"
 %TEX main.tex
@@ -130,7 +129,7 @@ fn component_unknown_class() -> Result<()> {
 }
 
 #[test]
-fn entry_type_known_type() -> Result<()> {
+fn entry_type_known_type() {
     check(
         r#"
 %BIB main.bib
@@ -149,7 +148,7 @@ fn entry_type_known_type() -> Result<()> {
 }
 
 #[test]
-fn entry_type_unknown_field() -> Result<()> {
+fn entry_type_unknown_field() {
     check(
         r#"
 %BIB main.bib
@@ -161,7 +160,7 @@ fn entry_type_unknown_field() -> Result<()> {
 }
 
 #[test]
-fn entry_type_key() -> Result<()> {
+fn entry_type_key() {
     check(
         r#"
 %BIB main.bib
@@ -173,7 +172,7 @@ fn entry_type_key() -> Result<()> {
 }
 
 #[test]
-fn field_known() -> Result<()> {
+fn field_known() {
     check(
         r#"
 %BIB main.bib
@@ -192,7 +191,7 @@ fn field_known() -> Result<()> {
 }
 
 #[test]
-fn field_unknown() -> Result<()> {
+fn field_unknown() {
     check(
         r#"
 %BIB main.bib
@@ -204,7 +203,7 @@ fn field_unknown() -> Result<()> {
 }
 
 #[test]
-fn section() -> Result<()> {
+fn section() {
     check(
         r#"
 %TEX main.tex
@@ -221,7 +220,7 @@ fn section() -> Result<()> {
 }
 
 #[test]
-fn string_inside_reference() -> Result<()> {
+fn string_inside_reference() {
     check(
         r#"
 %BIB main.bib
@@ -239,7 +238,7 @@ fn string_inside_reference() -> Result<()> {
 }
 
 #[test]
-fn string_inside_field() -> Result<()> {
+fn string_inside_field() {
     check(
         r#"
 %BIB main.bib
@@ -253,7 +252,7 @@ fn string_inside_field() -> Result<()> {
 }
 
 #[test]
-fn label_theorem_child_file() -> Result<()> {
+fn label_theorem_child_file() {
     check(
         r#"
 %TEX main.tex
@@ -277,7 +276,7 @@ fn label_theorem_child_file() -> Result<()> {
 }
 
 #[test]
-fn label_theorem_child_file_mumber() -> Result<()> {
+fn label_theorem_child_file_mumber() {
     check(
         r#"
 %TEX main.tex

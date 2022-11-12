@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use anyhow::Result;
 use lsp_types::{Position, Range, TextDocumentIdentifier, TextDocumentPositionParams};
 use rustc_hash::FxHashMap;
 
@@ -60,12 +59,12 @@ pub struct FileCursor<'a> {
 }
 
 impl<'a> FileCursor<'a> {
-    pub fn into_params(self, server: &Client) -> Result<TextDocumentPositionParams> {
-        let text_document = TextDocumentIdentifier::new(server.uri(self.name)?);
-        Ok(TextDocumentPositionParams {
+    pub fn into_params(self, server: &Client) -> TextDocumentPositionParams {
+        let text_document = TextDocumentIdentifier::new(server.uri(self.name));
+        TextDocumentPositionParams {
             text_document,
             position: self.position,
-        })
+        }
     }
 }
 

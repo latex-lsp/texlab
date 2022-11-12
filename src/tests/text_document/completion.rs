@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::assert_json_snapshot;
 use lsp_types::{
     request::{Completion, ResolveCompletionItem},
@@ -8,8 +7,8 @@ use lsp_types::{
 
 use crate::tests::{client::Client, fixture};
 
-fn complete(fixture: &str) -> Result<Vec<CompletionItem>, anyhow::Error> {
-    let mut client = Client::spawn()?;
+fn complete(fixture: &str) -> Vec<CompletionItem> {
+    let mut client = Client::spawn();
     client.initialize(
         serde_json::from_value(serde_json::json!({
             "textDocument": {
@@ -22,10 +21,11 @@ fn complete(fixture: &str) -> Result<Vec<CompletionItem>, anyhow::Error> {
         }))
         .unwrap(),
         None,
-    )?;
+    );
+
     let fixture = fixture::parse(fixture);
     for file in fixture.files {
-        client.open(file.name, file.lang, file.text)?;
+        client.open(file.name, file.lang, file.text);
     }
 
     let range = fixture
@@ -43,11 +43,12 @@ fn complete(fixture: &str) -> Result<Vec<CompletionItem>, anyhow::Error> {
 
     let actual_list = client
         .request::<Completion>(CompletionParams {
-            text_document_position: fixture.cursor.unwrap().into_params(&client)?,
+            text_document_position: fixture.cursor.unwrap().into_params(&client),
             partial_result_params: Default::default(),
             work_done_progress_params: Default::default(),
             context: None,
-        })?
+        })
+        .unwrap()
         .map_or(CompletionList::default(), |actual| match actual {
             CompletionResponse::List(list) => list,
             CompletionResponse::Array(_) => unreachable!(),
@@ -63,11 +64,11 @@ fn complete(fixture: &str) -> Result<Vec<CompletionItem>, anyhow::Error> {
         .items
         .into_iter()
         .take(5)
-        .map(|item| client.request::<ResolveCompletionItem>(item))
-        .collect::<Result<Vec<_>>>()?;
+        .map(|item| client.request::<ResolveCompletionItem>(item).unwrap())
+        .collect();
 
-    client.shutdown()?;
-    Ok(actual_items)
+    client.shutdown();
+    actual_items
 }
 
 macro_rules! assert_items {
@@ -83,7 +84,7 @@ macro_rules! assert_items {
 }
 
 #[test]
-fn acronym_ref_simple() -> Result<()> {
+fn acronym_ref_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -91,26 +92,22 @@ fn acronym_ref_simple() -> Result<()> {
 %SRC \acrshort{f}
 %CUR           ^
 %1.1           ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn acronym_ref_empty() -> Result<()> {
+fn acronym_ref_empty() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \newacronym[longplural={Frames per Second}]{fpsLabel}{FPS}{Frame per Second}
 %SRC \acrshort{}
 %CUR           ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn acronym_ref_after_group() -> Result<()> {
+fn acronym_ref_after_group() {
     let actual_items = complete(
         r#"
 %TEX main.tex
@@ -118,14 +115,13 @@ fn acronym_ref_after_group() -> Result<()> {
 %SRC \acrshort{}
 %CUR            ^
 %1.1            ^"#,
-    )?;
+    );
 
     assert_eq!(actual_items, Vec::new());
-    Ok(())
 }
 
 #[test]
-fn acronym_ref_open_brace() -> Result<()> {
+fn acronym_ref_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -133,13 +129,11 @@ fn acronym_ref_open_brace() -> Result<()> {
 %SRC \acrshort{f
 %CUR           ^
 %1.1           ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn acronym_package_ref() -> Result<()> {
+fn acronym_package_ref() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -147,13 +141,11 @@ fn acronym_package_ref() -> Result<()> {
 %SRC \ac{f
 %CUR     ^
 %1.1     ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn glossary_ref_simple() -> Result<()> {
+fn glossary_ref_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -161,13 +153,11 @@ fn glossary_ref_simple() -> Result<()> {
 %SRC \gls{f}
 %CUR      ^
 %1.1      ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn glossary_ref_open_brace() -> Result<()> {
+fn glossary_ref_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -175,26 +165,22 @@ fn glossary_ref_open_brace() -> Result<()> {
 %SRC \gls{f
 %CUR      ^
 %1.1      ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn argument_empty() -> Result<()> {
+fn argument_empty() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \usepackage{amsfonts}
 %SRC \mathbb{}
 %CUR         ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn argument_word() -> Result<()> {
+fn argument_word() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -202,13 +188,11 @@ fn argument_word() -> Result<()> {
 %SRC \mathbb{A}
 %CUR         ^
 %1.1         ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn argument_open_brace() -> Result<()> {
+fn argument_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -216,13 +200,11 @@ fn argument_open_brace() -> Result<()> {
 %SRC \mathbb{
 %CUR         ^
 %SRC Test"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn argument_open_brace_unrelated() -> Result<()> {
+fn argument_open_brace_unrelated() {
     let actual_items = complete(
         r#"
 %TEX main.tex
@@ -230,27 +212,24 @@ fn argument_open_brace_unrelated() -> Result<()> {
 %SRC \mathbb{}{
 %CUR           ^
 %SRC Test"#,
-    )?;
+    );
 
     assert_eq!(actual_items, Vec::new());
-    Ok(())
 }
 
 #[test]
-fn begin_environment_without_snippet_support() -> Result<()> {
+fn begin_environment_without_snippet_support() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \beg
 %CUR     ^
 %1.1  ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn citation() -> Result<()> {
+fn citation() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -269,13 +248,11 @@ fn citation() -> Result<()> {
 %SRC }
 %SRC 
 %SRC @article{bar:2005,}"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn citation_open_brace() -> Result<()> {
+fn citation_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -285,13 +262,11 @@ fn citation_open_brace() -> Result<()> {
 
 %BIB main.bib
 %SRC @article{foo,}"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn citation_open_brace_multiple() -> Result<()> {
+fn citation_open_brace_multiple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -302,13 +277,11 @@ fn citation_open_brace_multiple() -> Result<()> {
 
 %BIB main.bib
 %SRC @article{foo,}"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn citation_acronym() -> Result<()> {
+fn citation_acronym() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -318,13 +291,11 @@ fn citation_acronym() -> Result<()> {
 
 %BIB main.bib
 %SRC @article{foo,}"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn citation_after_brace() -> Result<()> {
+fn citation_after_brace() {
     let actual_items = complete(
         r#"
 %TEX main.tex
@@ -337,124 +308,106 @@ fn citation_after_brace() -> Result<()> {
 
 %BIB main.bib
 %SRC @article{foo,}"#,
-    )?;
+    );
 
     assert_eq!(actual_items, Vec::new());
-    Ok(())
 }
 
 #[test]
-fn color_model_definition_simple() -> Result<()> {
+fn color_model_definition_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \definecolor{foo}{}
 %CUR                   ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_model_definition_open_brace() -> Result<()> {
+fn color_model_definition_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \definecolor{foo}{
 %CUR                   ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_model_definition_set_simple() -> Result<()> {
+fn color_model_definition_set_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \definecolorset{}
 %CUR                 ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_model_definition_set_open_brace() -> Result<()> {
+fn color_model_definition_set_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \definecolorset{
 %CUR                 ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_simple() -> Result<()> {
+fn color_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \color{}
 %CUR        ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_word() -> Result<()> {
+fn color_word() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \color{re}
 %CUR         ^
 %1.1        ^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn color_open_brace() -> Result<()> {
+fn color_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \color{
 %CUR        ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_command_simple() -> Result<()> {
+fn component_command_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \
 %CUR  ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_command_simple_before() -> Result<()> {
+fn component_command_simple_before() {
     let actual_items = complete(
         r#"
 %TEX main.tex
 %SRC \
 %CUR ^"#,
-    )?;
+    );
 
     assert_eq!(actual_items, Vec::new());
-    Ok(())
 }
 
 #[test]
-fn component_command_simple_package() -> Result<()> {
+fn component_command_simple_package() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -462,13 +415,11 @@ fn component_command_simple_package() -> Result<()> {
 %SRC \lips
 %CUR    ^
 %1.1  ^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_command_bibtex() -> Result<()> {
+fn component_command_bibtex() {
     assert_items!(complete(
         r#"
 %BIB main.bib
@@ -477,39 +428,33 @@ fn component_command_bibtex() -> Result<()> {
 %CUR            ^
 %1.1           ^^^
 %SRC }"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_environment_simple() -> Result<()> {
+fn component_environment_simple() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \begin{doc
 %CUR           ^
 %1.1        ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_environment_simple_end() -> Result<()> {
+fn component_environment_simple_end() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \begin{document}
 %SRC \end{
 %CUR      ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_environment_class() -> Result<()> {
+fn component_environment_class() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -517,231 +462,195 @@ fn component_environment_class() -> Result<()> {
 %SRC \begin{thein}
 %CUR           ^
 %1.1        ^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn component_environment_command_definition() -> Result<()> {
+fn component_environment_command_definition() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \newcommand{\foo}{\begin{doc}
 %CUR                            ^
 %1.1                          ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_at_empty() -> Result<()> {
+fn entry_type_at_empty() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @
 %CUR  ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_before_preamble() -> Result<()> {
+fn entry_type_before_preamble() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @preamble
 %CUR  ^
 %1.1  ^^^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_before_string() -> Result<()> {
+fn entry_type_before_string() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @string
 %CUR  ^
 %1.1  ^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_before_article() -> Result<()> {
+fn entry_type_before_article() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article
 %CUR  ^
 %1.1  ^^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_after_preamble() -> Result<()> {
+fn entry_type_after_preamble() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @preamble{
 %CUR          ^
 %1.1  ^^^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_after_string() -> Result<()> {
+fn entry_type_after_string() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @string{
 %CUR        ^
 %1.1  ^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn entry_type_complete_entry() -> Result<()> {
+fn entry_type_complete_entry() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo, author = {foo}}
 %CUR    ^
 %1.1  ^^^^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn field_empty_entry_open() -> Result<()> {
+fn field_empty_entry_open() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo,
 %CUR              ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn field_empty_entry_closed() -> Result<()> {
+fn field_empty_entry_closed() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo,}
 %CUR              ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn field_entry_field_name() -> Result<()> {
+fn field_entry_field_name() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo, a
 %CUR                ^
 %1.1               ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn field_entry_two_fields_name_open() -> Result<()> {
+fn field_entry_two_fields_name_open() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo, author = bar, edit
 %CUR                              ^
 %1.1                             ^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn field_entry_two_fields_name_closed() -> Result<()> {
+fn field_entry_two_fields_name_closed() {
     assert_items!(complete(
         r#"
 %BIB main.bib
 %SRC @article{foo, author = bar, edit}
 %CUR                              ^
 %1.1                             ^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn import_package_open_brace() -> Result<()> {
+fn import_package_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \usepackage{lips
 %CUR              ^
 %1.1             ^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn import_package_closed_brace() -> Result<()> {
+fn import_package_closed_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \usepackage{lips}
 %CUR              ^
 %1.1             ^^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn import_class_open_brace() -> Result<()> {
+fn import_class_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \documentclass{art \foo
 %CUR                 ^
 %1.1                ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn import_class_closed_brace() -> Result<()> {
+fn import_class_closed_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \documentclass{art}
 %CUR                 ^
 %1.1                ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn label() -> Result<()> {
+fn label() {
     assert_items!(complete(
         r#"
 %TEX foo.tex
@@ -801,13 +710,11 @@ fn label() -> Result<()> {
 %SRC \newlabel{eq:bar}{{2}{1}}
 %SRC \newlabel{thm:foo}{{1}{1}}
 %SRC \@input{bar.aux}"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn theorem_begin() -> Result<()> {
+fn theorem_begin() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -815,13 +722,11 @@ fn theorem_begin() -> Result<()> {
 %SRC \begin{lem 
 %CUR         ^
 %1.1        ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn theorem_end() -> Result<()> {
+fn theorem_end() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -830,37 +735,31 @@ fn theorem_end() -> Result<()> {
 %SRC \end{lem
 %CUR       ^
 %1.1      ^^^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn tikz_library_open_brace() -> Result<()> {
+fn tikz_library_open_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \usepgflibrary{
 %CUR                ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn tikz_library_closed_brace() -> Result<()> {
+fn tikz_library_closed_brace() {
     assert_items!(complete(
         r#"
 %TEX main.tex
 %SRC \usepgflibrary{}
 %CUR                ^"#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn test_user_command() -> Result<()> {
+fn test_user_command() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -872,13 +771,11 @@ fn test_user_command() -> Result<()> {
 %SRC \end{foo}
 %SRC \begin{fo}
 "#
-    )?);
-
-    Ok(())
+    ));
 }
 
 #[test]
-fn test_user_environment() -> Result<()> {
+fn test_user_environment() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -890,7 +787,5 @@ fn test_user_environment() -> Result<()> {
 %CUR         ^
 %1.1        ^^
 "#
-    )?);
-
-    Ok(())
+    ));
 }

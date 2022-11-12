@@ -1,4 +1,3 @@
-use anyhow::Result;
 use insta::assert_snapshot;
 use lsp_types::{
     notification::{DidChangeConfiguration, Notification, ShowMessage},
@@ -8,9 +7,9 @@ use lsp_types::{
 use crate::tests::client::Client;
 
 #[test]
-fn invalid_configuration() -> Result<()> {
-    let mut client = Client::spawn()?;
-    client.initialize(ClientCapabilities::default(), None)?;
+fn invalid_configuration() {
+    let mut client = Client::spawn();
+    client.initialize(ClientCapabilities::default(), None);
 
     client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams {
         settings: serde_json::json!({
@@ -18,9 +17,9 @@ fn invalid_configuration() -> Result<()> {
                 "allowedPatterns": ["\\"]
             }
         }),
-    })?;
+    });
 
-    let result = client.shutdown()?;
+    let result = client.shutdown();
     let message = result
         .incoming
         .notifications
@@ -35,5 +34,4 @@ fn invalid_configuration() -> Result<()> {
         .message;
 
     assert_snapshot!(message);
-    Ok(())
 }
