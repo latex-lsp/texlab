@@ -1108,15 +1108,15 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
+        }
+
+        if self.lexer.peek() == Some(L_BRACK) {
+            self.brack_group();
         }
 
         for _ in 0..2 {
             if self.lexer.peek() == Some(L_CURLY) {
                 self.curly_group();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 

@@ -299,7 +299,7 @@ enum CommandNameToken {
 
     #[token("\\newacronym")]
     #[token("\\newacro")]
-    #[token("\\newacrodef")]
+    #[token("\\acrodef")]
     #[token("\\acro")]
     #[token("\\newacroindefinite")]
     #[token("\\acrodefindefinite")]

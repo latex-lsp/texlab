@@ -127,6 +127,20 @@ fn acronym_ref_open_brace() -> Result<()> {
 }
 
 #[test]
+fn acronym_package_ref() -> Result<()> {
+    assert_items!(complete(
+        r#"
+%TEX main.tex
+%SRC \acrodef{fpsLabel}[FPS]{Frames per Second}
+%SRC \ac{f
+%CUR     ^
+%1.1     ^"#
+    )?);
+
+    Ok(())
+}
+
+#[test]
 fn glossary_ref_simple() -> Result<()> {
     assert_items!(complete(
         r#"

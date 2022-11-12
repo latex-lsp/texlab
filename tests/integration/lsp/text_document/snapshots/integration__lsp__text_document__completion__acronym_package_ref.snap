@@ -1,0 +1,17 @@
+---
+source: tests/integration/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\acrodef{fpsLabel}[FPS]{Frames per Second}\n%SRC \\ac{f\n%CUR     ^\n%1.1     ^\"#)?"
+---
+[
+  {
+    "data": "[data]",
+    "kind": 1,
+    "label": "fpsLabel",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "fpsLabel"
+    }
+  }
+]
