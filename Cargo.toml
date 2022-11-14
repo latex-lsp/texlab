@@ -37,7 +37,7 @@ doctest = false
 anyhow = "1.0.66"
 byteorder = "1.4.3"
 chrono = { version = "0.4.22", default-features = false, features = ["std"] }
-clap = { version = "4.0.18", features = ["derive"] }
+clap = { version = "4.0.23", features = ["derive"] }
 crossbeam-channel = "0.5.6"
 dashmap = "5.4.0"
 dirs = "4.0.0"
