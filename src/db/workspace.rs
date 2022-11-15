@@ -259,8 +259,9 @@ impl Workspace {
                 items.push(*item);
             }
 
-            items.extend(self.implicit_links(db, source, dir, "aux"));
-            items.extend(self.implicit_links(db, source, dir, "log"));
+            let output_dir = self.output_dir(db, dir);
+            items.extend(self.implicit_links(db, source, output_dir, "aux"));
+            items.extend(self.implicit_links(db, source, output_dir, "log"));
         }
 
         dependency::Graph::new(db, items, document)

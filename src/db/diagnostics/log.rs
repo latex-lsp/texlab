@@ -23,14 +23,7 @@ pub fn collect(
         None => return results,
     };
 
-    let root_document = match workspace
-        .documents(db)
-        .iter()
-        .map(|document| workspace.graph(db, *document))
-        .flat_map(|graph| graph.edges(db))
-        .find(|edge| edge.target(db) == Some(log_document))
-        .map(|edge| edge.source(db))
-    {
+    let root_document = match workspace.parents(db, log_document).iter().next() {
         Some(document) => document,
         None => return results,
     };

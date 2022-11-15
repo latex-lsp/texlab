@@ -231,12 +231,15 @@ impl Server {
 
         for (document, diagnostics) in all_diagnostics {
             let uri = document.location(db).uri(db).clone();
+            let version = None;
+            let params = PublishDiagnosticsParams {
+                uri,
+                diagnostics,
+                version,
+            };
+
             self.client
-                .send_notification::<PublishDiagnostics>(PublishDiagnosticsParams {
-                    uri,
-                    diagnostics,
-                    version: None,
-                })?;
+                .send_notification::<PublishDiagnostics>(params)?;
         }
 
         Ok(())
