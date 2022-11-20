@@ -1,7 +1,6 @@
 ---
 source: src/parser/build_log.rs
 expression: parse_build_log(&text)
-input_file: src/parser/test_data/build_log/007.txt
 ---
 BuildLog {
     errors: [
@@ -10,7 +9,7 @@ BuildLog {
             level: Error,
             message: "Undefined control sequence.",
             hint: Some(
-                "    \\lsdkfjlskdfj",
+                "\\lsdkfjlskdfj",
             ),
             line: Some(
                 3,

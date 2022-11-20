@@ -66,7 +66,9 @@ fn extract_matches(
                 .map(|result| result.as_str().parse::<u32>().unwrap() - 1);
 
             let hint: Option<String> = if line.is_some() {
-                captures.name("hint").map(|r| String::from(r.as_str()))
+                captures
+                    .name("hint")
+                    .map(|r| String::from(r.as_str().trim()))
             } else {
                 None
             };

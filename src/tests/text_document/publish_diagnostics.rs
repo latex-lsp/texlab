@@ -53,7 +53,7 @@ fn find_diagnostics(fixture: &str, settings: serde_json::Value) -> DiagnosticRes
     }
 }
 
-macro_rules! assert_symbols {
+macro_rules! assert_diagnostics {
     ($result:expr) => {
         let result = $result;
         assert_json_snapshot!(result.all_diagnostics, {
@@ -219,7 +219,7 @@ static BUILD_LOG_FIXTURE: &str = r#"
 
 #[test]
 fn build_log_filter_none() {
-    assert_symbols!(find_diagnostics(
+    assert_diagnostics!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
             "diagnosticsDelay": 0,
@@ -229,7 +229,7 @@ fn build_log_filter_none() {
 
 #[test]
 fn build_log_filter_allowed() {
-    assert_symbols!(find_diagnostics(
+    assert_diagnostics!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
             "diagnosticsDelay": 0,
@@ -242,7 +242,7 @@ fn build_log_filter_allowed() {
 
 #[test]
 fn build_log_filter_ignored() {
-    assert_symbols!(find_diagnostics(
+    assert_diagnostics!(find_diagnostics(
         BUILD_LOG_FIXTURE,
         serde_json::json!({
             "diagnosticsDelay": 0,
@@ -255,7 +255,7 @@ fn build_log_filter_ignored() {
 
 #[test]
 fn build_log_spaces_in_path() {
-    assert_symbols!(find_diagnostics(
+    assert_diagnostics!(find_diagnostics(
         r#"
 %TEX foo bar/main.tex
 %SRC \documentclass{article}

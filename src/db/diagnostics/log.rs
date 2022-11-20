@@ -1,10 +1,11 @@
 use lsp_types::{DiagnosticSeverity, Position, Range, Url};
+use rowan::{TextLen, TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
 use crate::{
     db::{document::Document, workspace::Workspace},
-    syntax::BuildErrorLevel,
-    util::line_index::LineCol,
+    syntax::{BuildError, BuildErrorLevel},
+    util::line_index_ext::LineIndexExt,
     Db,
 };
 
@@ -46,44 +47,16 @@ pub fn collect(
             continue;
         };
 
-        let tex_document = if error.line.is_some() && error.hint.is_some() {
-            workspace.lookup_uri(db, &full_path_uri)
-        } else {
-            None
-        };
-
-        let position: Position = (if let Some(doc) = tex_document {
-            // SAFETY: error.line and error.hint are necessarily Some() if we get here
-            let line = error.line.unwrap();
-            let hint: &String = error.hint.as_ref().unwrap();
-            if let Some(hint_line) = doc.contents(db).text(db).lines().nth(line as usize) {
-                hint_line.find(hint).map(|col| {
-                    let lc = doc.contents(db).line_index(db).to_utf16(LineCol {
-                        line,
-                        col: (col + hint.len() - 1) as u32,
-                    });
-                    Position::new(lc.line, lc.col)
-                })
-            } else {
-                log::warn!(
-                    "Invalid line number {} in \"{}\" for \"{}\"",
-                    line,
-                    full_path.display(),
-                    error.message
-                );
-                None
-            }
-        } else {
-            None
-        })
-        .unwrap_or_else(|| Position::new(error.line.unwrap_or(0), 0));
-
         let severity = match error.level {
             BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         };
 
-        let range = Range::new(position, position);
+        let range = find_range_of_hint(db, workspace, &full_path_uri, error).unwrap_or_else(|| {
+            let line = error.line.unwrap_or(0);
+            Range::new(Position::new(line, 0), Position::new(line, 0))
+        });
+
         let diagnostic = Diagnostic {
             severity,
             range,
@@ -91,11 +64,40 @@ pub fn collect(
             message: error.message.clone(),
         };
 
-        results
-            .entry(tex_document.unwrap_or(root_document))
-            .or_default()
-            .push(diagnostic);
+        let tex_document = workspace
+            .lookup_uri(db, &full_path_uri)
+            .unwrap_or(root_document);
+
+        results.entry(tex_document).or_default().push(diagnostic);
     }
 
     results
+}
+
+fn find_range_of_hint(
+    db: &dyn Db,
+    workspace: Workspace,
+    uri: &Url,
+    error: &BuildError,
+) -> Option<Range> {
+    let document = workspace.lookup_uri(db, uri)?;
+    let text = document.contents(db).text(db);
+    let line = error.line? as usize;
+    let hint = error.hint.as_deref()?;
+    let line_index = document.contents(db).line_index(db);
+
+    let line_start = line_index.newlines.get(line).copied()?;
+    let line_end = line_index
+        .newlines
+        .get(line + 1)
+        .copied()
+        .unwrap_or(text.text_len());
+
+    let line_text = &text[line_start.into()..line_end.into()];
+
+    log::info!("Checking if {} contains the pattern {}", line_text, hint);
+
+    let hint_start = line_start + TextSize::try_from(line_text.find(hint)?).unwrap();
+    let hint_end = hint_start + hint.text_len();
+    Some(line_index.line_col_lsp_range(TextRange::new(hint_start, hint_end)))
 }
