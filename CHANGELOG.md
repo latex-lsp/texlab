@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.2] - 20.11.2022
+
+### Fixed
+
+- Do not try to run the TeX engine on package files and fail the build instead ([#801](https://github.com/latex-lsp/texlab/issues/801))
+- Handle URIs with URL-encoded drive letters on Windows ([#802](https://github.com/latex-lsp/texlab/issues/802))
+- Parse BibTeX entries with unbalanced quotes correctly ([#809](https://github.com/latex-lsp/texlab/issues/809))
+- Provide completion for more acronym commands ([#813](https://github.com/latex-lsp/texlab/issues/813))
+- Fix parsing acronym definitions ([#813](https://github.com/latex-lsp/texlab/issues/813))
+
 ## [4.3.1] - 22.10.2022
 
 ### Fixed
