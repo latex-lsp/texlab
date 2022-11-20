@@ -789,3 +789,24 @@ fn test_user_environment() {
 "#
     ));
 }
+
+#[test]
+fn test_project_resolution() {
+    assert_items!(complete(
+        r#"
+%TEX main.tex
+%SRC \documentclass{article}
+%SRC \import{sub}{sub/sub.tex}
+%SRC \lipsu
+%CUR      ^
+%1.1  ^^^^^
+
+%TEX sub/sub.tex
+%SRC \input{child.tex}
+
+%TEX sub/child.tex
+%SRC \usepackage{lipsum}
+
+"#
+    ));
+}

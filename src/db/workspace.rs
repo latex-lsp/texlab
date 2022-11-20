@@ -249,7 +249,7 @@ impl Workspace {
                     if visited.insert(target) {
                         let new_dir = link
                             .working_dir(db)
-                            .and_then(|path| dir.join(db, &path.text(db)))
+                            .and_then(|path| dir.join_dir(db, &path.text(db)))
                             .unwrap_or(dir);
 
                         stack.push((target, new_dir));

@@ -49,6 +49,11 @@ impl Location {
         let uri = self.uri(db).join(path).ok()?;
         Some(Location::new(db, uri))
     }
+
+    pub fn join_dir(self, db: &dyn Db, path: &str) -> Option<Location> {
+        let uri = Url::from_directory_path(self.path(db).as_deref()?.join(path)).ok()?;
+        Some(Location::new(db, uri))
+    }
 }
 
 #[salsa::input]
