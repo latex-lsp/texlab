@@ -23,7 +23,7 @@ pub fn collect(
         None => return results,
     };
 
-    let root_document = match workspace.parents(db, log_document).iter().next() {
+    let root_document = match workspace.parents(db, log_document).iter().next().copied() {
         Some(document) => document,
         None => return results,
     };
@@ -46,13 +46,13 @@ pub fn collect(
             continue;
         };
 
-        let doc = if error.line.is_some() && error.hint.is_some() {
+        let tex_document = if error.line.is_some() && error.hint.is_some() {
             workspace.lookup_uri(db, &full_path_uri)
         } else {
             None
         };
 
-        let position: Position = (if let Some(doc) = doc {
+        let position: Position = (if let Some(doc) = tex_document {
             // SAFETY: error.line and error.hint are necessarily Some() if we get here
             let line = error.line.unwrap();
             let hint: &String = error.hint.as_ref().unwrap();
@@ -82,6 +82,7 @@ pub fn collect(
             BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         };
+
         let range = Range::new(position, position);
         let diagnostic = Diagnostic {
             severity,
@@ -90,19 +91,10 @@ pub fn collect(
             message: error.message.clone(),
         };
 
-        let location = if full_path.starts_with(&base_path) {
-            error
-                .relative_path
-                .to_str()
-                .and_then(|path| root_document.location(db).join(db, path))
-                .unwrap_or(root_document.location(db))
-        } else {
-            root_document.location(db)
-        };
-
-        if let Some(document) = workspace.lookup(db, location) {
-            results.entry(document).or_default().push(diagnostic);
-        }
+        results
+            .entry(tex_document.unwrap_or(root_document))
+            .or_default()
+            .push(diagnostic);
     }
 
     results
