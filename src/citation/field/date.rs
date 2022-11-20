@@ -42,7 +42,7 @@ impl Add for DateFieldData {
             | (Self::Other(_), date)
             | (date, Self::Other(_)) => date,
             (Self::Year(year), Self::Month(month)) | (Self::Month(month), Self::Year(year)) => {
-                let new_date = NaiveDate::from_ymd(year, month.number_from_month(), 1);
+                let new_date = NaiveDate::from_ymd_opt(year, month.number_from_month(), 1).unwrap();
                 Self::Date(new_date)
             }
             (Self::Year(year), Self::Date(date)) | (Self::Date(date), Self::Year(year)) => {
