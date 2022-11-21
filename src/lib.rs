@@ -76,6 +76,7 @@ impl Default for Database {
             Default::default(),
             Default::default(),
             Default::default(),
+            Default::default(),
         );
 
         db

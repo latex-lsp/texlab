@@ -36,6 +36,9 @@ pub struct Workspace {
     pub client_info: Option<ClientInfo>,
 
     #[return_ref]
+    pub root_dirs: Vec<Location>,
+
+    #[return_ref]
     pub file_name_db: Resolver,
 }
 
@@ -154,12 +157,20 @@ impl Workspace {
         loop {
             let mut changed = false;
 
+            let root_dirs = self.root_dirs(db);
             let dirs: FxHashSet<PathBuf> = self
                 .documents(db)
                 .iter()
                 .filter_map(|document| document.location(db).path(db).as_deref())
                 .filter_map(|path| path.parent())
                 .flat_map(|path| path.ancestors())
+                .filter(|path| {
+                    root_dirs.is_empty()
+                        || root_dirs
+                            .iter()
+                            .filter_map(|root| root.path(db).as_deref())
+                            .any(|root| path.starts_with(root))
+                })
                 .map(ToOwned::to_owned)
                 .collect();
 

@@ -7,7 +7,7 @@ use lsp_types::{
     notification::{Exit, Initialized},
     request::{Initialize, Shutdown},
     ClientCapabilities, ClientInfo, DidOpenTextDocumentParams, InitializeParams, InitializeResult,
-    InitializedParams, Url,
+    InitializedParams, Url, WorkspaceFolder,
 };
 use tempfile::{tempdir, TempDir};
 
@@ -98,7 +98,10 @@ impl Client {
                 initialization_options: Some(serde_json::json!({ "skipDistro": true })),
                 capabilities: client_capabilities,
                 trace: None,
-                workspace_folders: None,
+                workspace_folders: Some(vec![WorkspaceFolder {
+                    name: "Test".into(),
+                    uri: Url::from_directory_path(self.directory.path()).unwrap(),
+                }]),
                 client_info,
                 locale: None,
             })

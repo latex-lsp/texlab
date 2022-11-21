@@ -94,9 +94,6 @@ fn find_range_of_hint(
         .unwrap_or(text.text_len());
 
     let line_text = &text[line_start.into()..line_end.into()];
-
-    log::info!("Checking if {} contains the pattern {}", line_text, hint);
-
     let hint_start = line_start + TextSize::try_from(line_text.find(hint)?).unwrap();
     let hint_end = hint_start + hint.text_len();
     Some(line_index.line_col_lsp_range(TextRange::new(hint_start, hint_end)))

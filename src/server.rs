@@ -158,6 +158,18 @@ impl Server {
             .with_durability(salsa::Durability::HIGH)
             .to(params.client_info);
 
+        let root_dirs = params
+            .workspace_folders
+            .unwrap_or_default()
+            .into_iter()
+            .map(|folder| db::document::Location::new(db, folder.uri))
+            .collect();
+
+        workspace
+            .set_root_dirs(db)
+            .with_durability(salsa::Durability::HIGH)
+            .to(root_dirs);
+
         let result = InitializeResult {
             capabilities: self.capabilities(),
             server_info: Some(ServerInfo {
