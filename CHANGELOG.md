@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- _BREAKING_: `texlab.rootDirectory` is now used as the folder path from which the compiler is executed
+  relative to the main document. By default it is equal to `"."`. For more information, please visit the wiki.
+- Improve performance of completion by a huge margin due to a faster filtering method used internally
+
+### Fixed
+
+- Update positions of reported build diagnostics when editing the affected line
+- Do not treat links to files as bidirectional by default. This prevents issues where `texlab` ends up compiling the wrong file
+  in projects with shared files ([#806](https://github.com/latex-lsp/texlab/issues/806), [#757](https://github.com/latex-lsp/texlab/issues/757), [#679](https://github.com/latex-lsp/texlab/issues/679))
+- Fix coverage of directories which need to be watched for changes ([#502](https://github.com/latex-lsp/texlab/issues/502), [#491](https://github.com/latex-lsp/texlab/issues/491))
+- Resolve links of the `import` package correctly
+
 ## [4.3.2] - 2022-11-20
 
 ### Fixed
