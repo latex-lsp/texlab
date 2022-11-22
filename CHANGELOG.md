@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - _BREAKING_: `texlab.rootDirectory` is now used as the folder path from which the compiler is executed
   relative to the main document. By default it is equal to `"."`. For more information, please visit the wiki.
 - Improve performance of completion by a huge margin due to a faster filtering method used internally
+- Do not discover project files beyond the provided workspace folders
 
 ### Fixed
 
