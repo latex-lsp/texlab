@@ -11,6 +11,7 @@ use crossbeam_channel::{Receiver, Sender};
 use log::{error, info};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
+use once_cell::sync::Lazy;
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
@@ -690,7 +691,7 @@ impl Server {
         uri: Url,
         callback: impl FnOnce(BuildStatus) + Send + 'static,
     ) -> Result<()> {
-        static LOCK: Mutex<()> = Mutex::new(());
+        static LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
         let db = self.engine.read();
         let compiler = match build::Command::new(db, uri.clone(), self.client.clone()) {
