@@ -31,7 +31,7 @@ For a list of supported package managers, you can take a look at [Repology](http
 A [TeX distribution](https://www.latex-project.org/get/#tex-distributions) is _not_ strictly required
 to use the server but TexLab cannot compile your documents without one.
 TexLab supports compiling using [Tectonic](https://tectonic-typesetting.github.io/).
-For an example configuration, please see [here](docs/tectonic.md).
+For an example configuration, please see [here](https://github.com/latex-lsp/texlab/wiki/Tectonic).
 
 On Windows, you may need to install [Microsoft Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145).
 
