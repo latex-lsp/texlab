@@ -1,6 +1,7 @@
 ---
 source: src/parser/latex.rs
 expression: root
+input_file: src/parser/test_data/latex/glossary/acronym_package.txt
 ---
 ROOT@0..35
   PREAMBLE@0..35
