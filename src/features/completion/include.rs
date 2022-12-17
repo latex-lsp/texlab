@@ -109,7 +109,7 @@ fn current_dir(
 
     let path = context
         .workspace
-        .working_dir(context.db, parent.location(context.db))
+        .working_dir(context.db, parent.directory(context.db))
         .path(context.db)
         .as_deref()?;
 

@@ -76,7 +76,7 @@ impl Command {
             .collect();
 
         let working_dir = workspace
-            .working_dir(db, document.location(db))
+            .working_dir(db, document.directory(db))
             .path(db)
             .clone()?;
 

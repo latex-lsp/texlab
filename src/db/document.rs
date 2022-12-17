@@ -50,9 +50,12 @@ impl Location {
         Some(Location::new(db, uri))
     }
 
-    pub fn join_dir(self, db: &dyn Db, path: &str) -> Option<Location> {
-        let uri = Url::from_directory_path(self.path(db).as_deref()?.join(path)).ok()?;
-        Some(Location::new(db, uri))
+    pub fn into_dir(self, db: &dyn Db) -> Location {
+        if self.uri(db).path().ends_with("/") {
+            self.join(db, ".").unwrap()
+        } else {
+            self
+        }
     }
 }
 
@@ -130,6 +133,10 @@ impl Document {
         text.replace_range(std::ops::Range::<usize>::from(range), &replace_with);
         self.contents(db).set_text(db).to(text);
         self.set_cursor(db).to(range.start());
+    }
+
+    pub fn directory(self, db: &dyn Db) -> Location {
+        self.location(db).into_dir(db)
     }
 }
 

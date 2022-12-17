@@ -137,7 +137,7 @@ impl Workspace {
         let output_dirs = self
             .documents(db)
             .iter()
-            .map(|document| self.working_dir(db, document.location(db)))
+            .map(|document| self.working_dir(db, document.directory(db)))
             .map(|base_dir| self.output_dir(db, base_dir))
             .filter_map(|location| location.path(db).as_deref());
 
@@ -215,6 +215,15 @@ impl Workspace {
     }
 }
 
+const SPECIAL_ENTRIES: &[&str] = &[
+    ".git",
+    "Tectonic.toml",
+    ".latexmkrc",
+    "latexmkrc",
+    ".chktexrc",
+    "chktexrc",
+];
+
 #[salsa::tracked]
 impl Workspace {
     #[salsa::tracked]
@@ -224,9 +233,26 @@ impl Workspace {
             .root_directory
             .as_deref()
             .and_then(|path| path.to_str())
+            .or_else(|| {
+                for dir in base_dir
+                    .path(db)
+                    .as_deref()?
+                    .ancestors()
+                    .skip(1)
+                    .filter(|path| Some(*path) != HOME_DIR.as_deref())
+                {
+                    for name in SPECIAL_ENTRIES {
+                        if dir.join(name).exists() {
+                            return Some(dir.to_str()?);
+                        }
+                    }
+                }
+
+                None
+            })
             .unwrap_or(".");
 
-        base_dir.join(db, path).unwrap_or(base_dir)
+        base_dir.join(db, &format!("{path}/")).unwrap_or(base_dir)
     }
 
     #[salsa::tracked]
@@ -238,12 +264,12 @@ impl Workspace {
             .and_then(|path| path.to_str())
             .unwrap_or(".");
 
-        base_dir.join(db, path).unwrap_or(base_dir)
+        base_dir.join(db, &format!("{path}/")).unwrap_or(base_dir)
     }
 
     #[salsa::tracked]
     pub fn graph(self, db: &dyn Db, document: Document) -> dependency::Graph {
-        let base_dir = self.working_dir(db, document.location(db));
+        let base_dir = self.working_dir(db, document.directory(db));
         let mut items = Vec::new();
         let mut stack = vec![(document, base_dir)];
         let mut visited = FxHashSet::default();
@@ -260,7 +286,7 @@ impl Workspace {
                     if visited.insert(target) {
                         let new_dir = link
                             .working_dir(db)
-                            .and_then(|path| dir.join_dir(db, &path.text(db)))
+                            .and_then(|path| dir.join(db, &path.text(db)))
                             .unwrap_or(dir);
 
                         stack.push((target, new_dir));

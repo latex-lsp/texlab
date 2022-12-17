@@ -43,14 +43,19 @@ impl TexLink {
 
     fn of_import(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
         let import = latex::Import::cast(node)?;
-        let working_dir = import.directory()?.key()?;
+
+        let mut working_dir = import.directory()?.key()?.to_string();
+        if !working_dir.ends_with("/") {
+            working_dir.push('/');
+        }
+
         let path = import.file()?.key()?;
         results.push(Self::new(
             db,
             TexLinkKind::Tex,
             Word::new(db, path.to_string()),
             latex::small_range(&path),
-            Some(Word::new(db, working_dir.to_string())),
+            Some(Word::new(db, working_dir)),
         ));
 
         Some(())

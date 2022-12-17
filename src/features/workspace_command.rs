@@ -53,7 +53,7 @@ impl CleanCommand {
             .lookup_uri(db, &uri)
             .ok_or_else(|| CleanError::DocumentNotFound(uri.clone()))?;
 
-        let working_dir = workspace.working_dir(db, document.location(db));
+        let working_dir = workspace.working_dir(db, document.directory(db));
 
         let output_dir = workspace
             .output_dir(db, working_dir)

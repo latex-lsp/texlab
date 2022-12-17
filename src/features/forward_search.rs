@@ -48,7 +48,7 @@ impl Command {
             .unwrap_or(child);
 
         let output_dir = workspace
-            .output_dir(db, workspace.working_dir(db, parent.location(db)))
+            .output_dir(db, workspace.working_dir(db, parent.directory(db)))
             .path(db)
             .as_deref()
             .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;

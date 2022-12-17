@@ -20,7 +20,7 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
     let options = Workspace::get(db).options(db);
     let target_dir = tempdir().ok()?;
     let source_dir = Workspace::get(db)
-        .working_dir(db, document.location(db))
+        .working_dir(db, document.directory(db))
         .path(db)
         .as_deref()?;
 

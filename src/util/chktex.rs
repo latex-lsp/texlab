@@ -36,7 +36,7 @@ impl Command {
             .map_or(document, Clone::clone);
 
         let working_dir = workspace
-            .working_dir(db, parent.location(db))
+            .working_dir(db, parent.directory(db))
             .path(db)
             .as_deref()?
             .to_owned();
