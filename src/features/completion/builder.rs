@@ -170,7 +170,6 @@ impl<'db> CompletionBuilder<'db> {
         entry: &bibtex::Entry,
     ) -> Option<()> {
         let key = entry.name_token()?.to_string();
-        let score = self.matcher.fuzzy_match(&key, &self.text_pattern)?;
 
         let category = LANGUAGE_DATA
             .find_entry_type(&entry.type_token()?.text()[1..])
@@ -191,6 +190,8 @@ impl<'db> CompletionBuilder<'db> {
                 )
                 .trim(),
         );
+
+        let score = self.matcher.fuzzy_match(&filter_text, &self.text_pattern)?;
 
         let data = Data::Citation {
             document,
@@ -364,7 +365,7 @@ impl<'db> CompletionBuilder<'db> {
         footer: Option<String>,
         text: String,
     ) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&name, &self.text_pattern)?;
+        let score = self.matcher.fuzzy_match(&text, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Label {
