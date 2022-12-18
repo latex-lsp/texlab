@@ -16,15 +16,15 @@ pub use self::{options::*, server::Server};
 #[salsa::jar(db = Db)]
 pub struct Jar(
     db::Word,
-    db::document::Location,
-    db::document::Location_path,
-    db::document::Contents,
-    db::document::Contents_line_index,
-    db::document::LinterData,
-    db::document::Document,
-    db::document::Document_parse,
-    db::document::Document_can_be_index,
-    db::document::Document_can_be_built,
+    db::Location,
+    db::Location_path,
+    db::Contents,
+    db::Contents_line_index,
+    db::LinterData,
+    db::Document,
+    db::Document_parse,
+    db::Document_can_be_index,
+    db::Document_can_be_built,
     db::parse::TexDocumentData,
     db::parse::TexDocumentData_analyze,
     db::parse::BibDocumentData,
@@ -39,12 +39,12 @@ pub struct Jar(
     db::hidden_dependency,
     db::source_dependency,
     db::dependency_graph,
-    db::workspace::Workspace,
-    db::workspace::Workspace_working_dir,
-    db::workspace::Workspace_output_dir,
-    db::workspace::Workspace_parents,
-    db::workspace::Workspace_related,
-    db::workspace::Workspace_number_of_label,
+    db::Workspace,
+    db::Workspace_working_dir,
+    db::Workspace_output_dir,
+    db::Workspace_parents,
+    db::Workspace_related,
+    db::Workspace_number_of_label,
     db::diagnostics::tex::collect,
     db::diagnostics::bib::collect,
     db::diagnostics::log::collect,
@@ -65,7 +65,7 @@ impl Default for Database {
     fn default() -> Self {
         let storage = salsa::Storage::default();
         let db = Self { storage };
-        db::workspace::Workspace::new(
+        db::Workspace::new(
             &db,
             Default::default(),
             Default::default(),

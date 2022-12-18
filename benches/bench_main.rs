@@ -1,10 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use lsp_types::{Position, Url};
 use texlab::{
-    db::{
-        document::{Language, Owner},
-        workspace::Workspace,
-    },
+    db::{Language, Owner, Workspace},
     parser::parse_latex,
     Database,
 };

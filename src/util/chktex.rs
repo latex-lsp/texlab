@@ -12,8 +12,7 @@ use regex::Regex;
 use crate::{
     db::{
         diagnostics::{Diagnostic, DiagnosticCode},
-        document::Document,
-        workspace::Workspace,
+        Document, Workspace,
     },
     Db,
 };

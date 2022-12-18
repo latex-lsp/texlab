@@ -4,7 +4,7 @@ use lsp_types::{InlayHint, InlayHintLabel, Range, Url};
 use rowan::TextSize;
 
 use crate::{
-    db::workspace::Workspace,
+    db::Workspace,
     util::{line_index::LineIndex, line_index_ext::LineIndexExt},
     Db,
 };

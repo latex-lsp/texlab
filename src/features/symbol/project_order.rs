@@ -2,7 +2,7 @@ use itertools::Itertools;
 use lsp_types::Url;
 
 use crate::{
-    db::{dependency_graph, document::Document, workspace::Workspace},
+    db::{dependency_graph, Document, Workspace},
     Db,
 };
 
@@ -41,7 +41,7 @@ impl ProjectOrdering {
 #[cfg(test)]
 mod tests {
     use crate::{
-        db::document::{Language, Owner},
+        db::{Language, Owner},
         Database,
     };
 

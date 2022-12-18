@@ -6,7 +6,7 @@ use lsp_types::{Location, Position, ReferenceContext, Url};
 use rowan::TextRange;
 
 use crate::{
-    db::document::Document,
+    db::Document,
     util::{cursor::CursorContext, line_index_ext::LineIndexExt},
     Db,
 };

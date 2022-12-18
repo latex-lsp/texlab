@@ -10,7 +10,7 @@ use anyhow::Result;
 use rustc_hash::FxHashMap;
 use smol_str::SmolStr;
 
-use crate::db::document::Language;
+use crate::db::Language;
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Resolver {

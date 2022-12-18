@@ -2,7 +2,7 @@ use lsp_types::{FoldingRange, FoldingRangeKind, Range, Url};
 use rowan::ast::AstNode;
 
 use crate::{
-    db::{parse::DocumentData, workspace::Workspace},
+    db::{parse::DocumentData, Workspace},
     syntax::{bibtex, latex},
     util::line_index_ext::LineIndexExt,
     Db,

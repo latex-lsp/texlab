@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
 use crate::{
-    db::{document::Document, workspace::Workspace},
+    db::{Document, Workspace},
     syntax::{
         bibtex::{self, HasName, HasType},
         latex,

@@ -7,7 +7,7 @@ use std::cmp::Reverse;
 
 use lsp_types::{DocumentSymbolResponse, SymbolInformation, Url, WorkspaceSymbolParams};
 
-use crate::{db::workspace::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
+use crate::{db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
 use self::project_order::ProjectOrdering;
 

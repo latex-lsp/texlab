@@ -1,7 +1,7 @@
 use rowan::TextRange;
 
 use crate::{
-    db::{analysis::label, document::Document},
+    db::{analysis::label, Document},
     util, Db,
 };
 

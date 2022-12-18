@@ -1,5 +1,5 @@
 use crate::{
-    db::{dependency_graph, document::Document, workspace::Workspace},
+    db::{dependency_graph, Document, Workspace},
     Db,
 };
 

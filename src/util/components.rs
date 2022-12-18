@@ -8,7 +8,7 @@ use serde::Deserialize;
 use smol_str::SmolStr;
 
 use crate::{
-    db::{analysis::TexLinkKind, document::Document, workspace::Workspace},
+    db::{analysis::TexLinkKind, Document, Workspace},
     Db,
 };
 

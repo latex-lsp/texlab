@@ -1,7 +1,7 @@
 use rowan::ast::AstNode;
 
 use crate::{
-    db::document::Document,
+    db::Document,
     syntax::bibtex::{self, HasName, HasType},
     util::{
         lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},

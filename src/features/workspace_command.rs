@@ -4,7 +4,7 @@ use anyhow::{bail, Result};
 use lsp_types::{TextDocumentIdentifier, Url};
 use thiserror::Error;
 
-use crate::{db::workspace::Workspace, normalize_uri, Db};
+use crate::{db::Workspace, normalize_uri, Db};
 
 pub fn select(db: &dyn Db, name: &str, args: Vec<serde_json::Value>) -> Result<CleanCommand> {
     Ok(match name {

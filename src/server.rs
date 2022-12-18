@@ -21,11 +21,7 @@ use threadpool::ThreadPool;
 use crate::{
     citation,
     client::LspClient,
-    db::{
-        self, discover_dependencies,
-        document::{Document, Language, Owner},
-        workspace::Workspace,
-    },
+    db::{self, discover_dependencies, Document, Language, Owner, Workspace},
     distro::Distribution,
     features::{
         build::{self, BuildParams, BuildResult, BuildStatus},
@@ -163,7 +159,7 @@ impl Server {
             .workspace_folders
             .unwrap_or_default()
             .into_iter()
-            .map(|folder| db::document::Location::new(db, folder.uri))
+            .map(|folder| db::Location::new(db, folder.uri))
             .collect();
 
         workspace

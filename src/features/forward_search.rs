@@ -8,7 +8,7 @@ use log::error;
 use lsp_types::{Position, Url};
 use thiserror::Error;
 
-use crate::{db::workspace::Workspace, util::line_index_ext::LineIndexExt, Db};
+use crate::{db::Workspace, util::line_index_ext::LineIndexExt, Db};
 
 #[derive(Debug, Error)]
 pub enum Error {

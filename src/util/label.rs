@@ -3,7 +3,7 @@ use std::str::FromStr;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    db::{analysis::label, document::Document, workspace::Workspace, Word},
+    db::{analysis::label, Document, Word, Workspace},
     syntax::latex::{self, HasBrack, HasCurly},
     Db,
 };

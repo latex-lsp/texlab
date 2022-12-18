@@ -4,7 +4,7 @@ mod latexindent;
 use lsp_types::{FormattingOptions, TextEdit, Url};
 
 use crate::{
-    db::{document::Language, workspace::Workspace},
+    db::{Language, Workspace},
     BibtexFormatter, Db, LatexFormatter,
 };
 

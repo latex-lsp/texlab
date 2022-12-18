@@ -2,7 +2,7 @@ use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
 
 use crate::{
-    db::{document::Document, parse::DocumentData, workspace::Workspace},
+    db::{parse::DocumentData, Document, Workspace},
     syntax::{bibtex, latex},
     Db,
 };

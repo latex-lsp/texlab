@@ -4,7 +4,7 @@ use lsp_types::{DocumentLink, Url};
 use rowan::TextRange;
 
 use crate::{
-    db::{document::Document, workspace::Workspace},
+    db::{Document, Workspace},
     util::{line_index::LineIndex, line_index_ext::LineIndexExt},
     Db,
 };

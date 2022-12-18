@@ -12,9 +12,7 @@ use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifi
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{
-    client::LspClient, db::workspace::Workspace, util::capabilities::ClientCapabilitiesExt, Db,
-};
+use crate::{client::LspClient, db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

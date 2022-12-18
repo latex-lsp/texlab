@@ -1,11 +1,11 @@
 pub mod analysis;
 pub mod diagnostics;
 mod discovery;
-pub mod document;
+mod document;
 pub mod parse;
-pub mod workspace;
+mod workspace;
 
-pub use discovery::*;
+pub use {discovery::*, document::*, workspace::*};
 
 #[salsa::interned]
 pub struct Word {

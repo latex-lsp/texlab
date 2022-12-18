@@ -5,7 +5,7 @@ use rowan::ast::AstNode;
 use titlecase::titlecase;
 
 use crate::{
-    db::{document::Document, workspace::Workspace, Word},
+    db::{Document, Word, Workspace},
     syntax::latex::{self, HasBrack, HasCurly},
     util::{
         label::{find_caption_by_parent, LabeledFloatKind},

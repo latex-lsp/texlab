@@ -8,18 +8,16 @@ use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
 use crate::{
-    db::{
-        document::{Document, Language},
-        workspace::Workspace,
-    },
+    db::{Document, Language, Workspace},
     util::line_index_ext::LineIndexExt,
     Db, LatexindentOptions,
 };
 
 pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {
-    let options = Workspace::get(db).options(db);
+    let workspace = Workspace::get(db);
+    let options = workspace.options(db);
     let target_dir = tempdir().ok()?;
-    let source_dir = Workspace::get(db)
+    let source_dir = workspace
         .working_dir(db, document.directory(db))
         .path(db)
         .as_deref()?;

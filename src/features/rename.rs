@@ -7,7 +7,7 @@ use rowan::TextRange;
 use rustc_hash::FxHashMap;
 
 use crate::{
-    db::document::Document,
+    db::Document,
     util::{cursor::CursorContext, line_index_ext::LineIndexExt},
     Db,
 };

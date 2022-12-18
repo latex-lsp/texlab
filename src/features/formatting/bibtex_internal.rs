@@ -2,7 +2,7 @@ use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
-    db::{document::Document, workspace::Workspace},
+    db::{Document, Workspace},
     syntax::bibtex::{self, HasName, HasType, HasValue},
     util::{line_index::LineIndex, line_index_ext::LineIndexExt},
     Db,
