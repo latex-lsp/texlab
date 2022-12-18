@@ -22,7 +22,7 @@ use crate::{
     citation,
     client::LspClient,
     db::{
-        self,
+        self, discover_dependencies,
         document::{Document, Language, Owner},
         workspace::Workspace,
     },
@@ -232,7 +232,7 @@ impl Server {
 
     fn update_workspace(&mut self) {
         let db = self.engine.write();
-        Workspace::get(db).discover(db);
+        discover_dependencies(db);
         self.watcher.watch(db);
         self.publish_diagnostics_with_delay();
     }

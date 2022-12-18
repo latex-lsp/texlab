@@ -14,7 +14,7 @@ pub struct TexLink {
     pub kind: TexLinkKind,
     pub path: Word,
     pub range: TextRange,
-    pub working_dir: Option<Word>,
+    pub base_dir: Option<Word>,
 }
 
 impl TexLink {
@@ -44,9 +44,9 @@ impl TexLink {
     fn of_import(db: &dyn Db, node: latex::SyntaxNode, results: &mut Vec<Self>) -> Option<()> {
         let import = latex::Import::cast(node)?;
 
-        let mut working_dir = import.directory()?.key()?.to_string();
-        if !working_dir.ends_with("/") {
-            working_dir.push('/');
+        let mut base_dir = import.directory()?.key()?.to_string();
+        if !base_dir.ends_with("/") {
+            base_dir.push('/');
         }
 
         let path = import.file()?.key()?;
@@ -55,7 +55,7 @@ impl TexLink {
             TexLinkKind::Tex,
             Word::new(db, path.to_string()),
             latex::small_range(&path),
-            Some(Word::new(db, working_dir)),
+            Some(Word::new(db, base_dir)),
         ));
 
         Some(())

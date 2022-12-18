@@ -1,5 +1,5 @@
 use crate::{
-    db::{document::Document, workspace::Workspace},
+    db::{dependency_graph, document::Document, workspace::Workspace},
     Db,
 };
 
@@ -14,14 +14,11 @@ pub(super) fn find_links(db: &dyn Db, document: Document, builder: &mut LinkBuil
         .copied()
         .unwrap_or(document);
 
-    let graph = workspace.graph(db, parent);
-    for (target, origin) in graph
-        .edges(db)
-        .iter()
-        .filter(|edge| edge.source(db) == document)
-        .filter_map(|edge| edge.target(db).zip(edge.origin(db).into_explicit()))
-    {
-        builder.push(origin.link.range(db), target);
+    let graph = dependency_graph(db, parent);
+    for edge in graph.edges.iter().filter(|edge| edge.source == document) {
+        if let Some(origin) = edge.origin {
+            builder.push(origin.link.range(db), edge.target);
+        }
     }
 
     Some(())

@@ -1,6 +1,6 @@
 use rowan::TextRange;
 
-use crate::util::cursor::CursorContext;
+use crate::{db::dependency_graph, util::cursor::CursorContext};
 
 use super::DefinitionResult;
 
@@ -12,15 +12,14 @@ pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionR
         .iter()
         .copied()
         .chain(std::iter::once(context.document))
-        .map(|parent| context.workspace.graph(db, parent))
-        .flat_map(|graph| graph.edges(db))
-        .filter(|edge| edge.source(db) == context.document)
+        .flat_map(|parent| dependency_graph(db, parent).edges)
+        .filter(|edge| edge.source == context.document)
         .find_map(|edge| {
-            let range = edge.origin(db).into_explicit()?.link.range(db);
+            let range = edge.origin?.link.range(db);
             if range.contains_inclusive(context.offset) {
                 Some(vec![DefinitionResult {
                     origin_selection_range: range,
-                    target: edge.target(db)?,
+                    target: edge.target,
                     target_range: TextRange::default(),
                     target_selection_range: TextRange::default(),
                 }])

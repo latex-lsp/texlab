@@ -138,6 +138,15 @@ impl Document {
     pub fn directory(self, db: &dyn Db) -> Location {
         self.location(db).into_dir(db)
     }
+
+    pub fn ancestor_dirs<'db>(self, db: &'db dyn Db) -> impl Iterator<Item = &'db Path> + 'db {
+        self.location(db)
+            .path(db)
+            .as_deref()
+            .into_iter()
+            .flat_map(|path| path.ancestors())
+            .skip(1)
+    }
 }
 
 #[salsa::tracked]

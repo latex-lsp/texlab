@@ -2,7 +2,7 @@ use itertools::Itertools;
 use lsp_types::Url;
 
 use crate::{
-    db::{document::Document, workspace::Workspace},
+    db::{dependency_graph, document::Document, workspace::Workspace},
     Db,
 };
 
@@ -18,8 +18,12 @@ impl ProjectOrdering {
         let ordering: Vec<_> = workspace
             .index_files(db)
             .chain(workspace.documents(db).iter().copied())
-            .flat_map(|document| workspace.graph(db, document).preorder(db).iter().rev())
-            .copied()
+            .flat_map(|document| {
+                dependency_graph(db, document)
+                    .preorder()
+                    .rev()
+                    .collect_vec()
+            })
             .unique()
             .collect();
 

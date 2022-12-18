@@ -3,20 +3,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use itertools::Itertools;
 use lsp_types::{ClientCapabilities, ClientInfo, Url};
-use once_cell::sync::Lazy;
 use rowan::TextSize;
 use rustc_hash::FxHashSet;
 
 use crate::{
     db::document::{Document, Location},
     distro::Resolver,
+    util::HOME_DIR,
     Db, Options,
 };
 
 use super::{
-    analysis::TexLink,
-    dependency,
+    dependency_graph,
     document::{Contents, Language, LinterData, Owner},
     Word,
 };
@@ -152,67 +152,6 @@ impl Workspace {
                 let _ = watcher.watch(path, notify::RecursiveMode::NonRecursive);
             });
     }
-
-    pub fn discover(self, db: &mut dyn Db) {
-        loop {
-            let mut changed = false;
-
-            let root_dirs = self.root_dirs(db);
-            let dirs: FxHashSet<PathBuf> = self
-                .documents(db)
-                .iter()
-                .filter_map(|document| document.location(db).path(db).as_deref())
-                .filter_map(|path| path.parent())
-                .flat_map(|path| path.ancestors())
-                .filter(|path| {
-                    root_dirs.is_empty()
-                        || root_dirs
-                            .iter()
-                            .filter_map(|root| root.path(db).as_deref())
-                            .any(|root| path.starts_with(root))
-                })
-                .map(ToOwned::to_owned)
-                .collect();
-
-            for dir in dirs {
-                let files = std::fs::read_dir(dir)
-                    .into_iter()
-                    .flatten()
-                    .flatten()
-                    .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
-                    .map(|entry| entry.path())
-                    .filter(|path| Language::from_path(&path) == Some(Language::Tex));
-
-                for file in files {
-                    if self.lookup_path(db, &file).is_none() {
-                        changed |= self.load(db, &file, Language::Tex, Owner::Server).is_some();
-                    }
-                }
-            }
-
-            let paths: FxHashSet<_> = self
-                .documents(db)
-                .iter()
-                .map(|&document| self.graph(db, document))
-                .flat_map(|graph| graph.edges(db).iter())
-                .flat_map(|item| item.origin(db).into_locations(db, self))
-                .filter_map(|location| location.path(db).as_deref())
-                .filter(|path| path.is_file())
-                .map(ToOwned::to_owned)
-                .collect();
-
-            for path in paths {
-                if self.lookup_path(db, &path).is_none() {
-                    let language = Language::from_path(&path).unwrap_or(Language::Tex);
-                    changed |= self.load(db, &path, language, Owner::Server).is_some();
-                }
-            }
-
-            if !changed {
-                break;
-            }
-        }
-    }
 }
 
 const SPECIAL_ENTRIES: &[&str] = &[
@@ -267,115 +206,10 @@ impl Workspace {
         base_dir.join(db, &format!("{path}/")).unwrap_or(base_dir)
     }
 
-    #[salsa::tracked]
-    pub fn graph(self, db: &dyn Db, document: Document) -> dependency::Graph {
-        let base_dir = self.working_dir(db, document.directory(db));
-        let mut items = Vec::new();
-        let mut stack = vec![(document, base_dir)];
-        let mut visited = FxHashSet::default();
-
-        while let Some((source, dir)) = stack.pop() {
-            for item in self
-                .explicit_links(db, source, dir)
-                .as_deref()
-                .unwrap_or_default()
-            {
-                let link = item.origin(db).into_explicit().unwrap().link;
-
-                if let Some(target) = item.target(db) {
-                    if visited.insert(target) {
-                        let new_dir = link
-                            .working_dir(db)
-                            .and_then(|path| dir.join(db, &path.text(db)))
-                            .unwrap_or(dir);
-
-                        stack.push((target, new_dir));
-                    }
-                }
-
-                items.push(*item);
-            }
-
-            let output_dir = self.output_dir(db, dir);
-            items.extend(self.implicit_links(db, source, output_dir, "aux"));
-            items.extend(self.implicit_links(db, source, output_dir, "log"));
-        }
-
-        dependency::Graph::new(db, items, document)
-    }
-
-    #[salsa::tracked(return_ref)]
-    pub fn link_locations(self, db: &dyn Db, link: TexLink, base_dir: Location) -> Vec<Location> {
-        let stem = link.path(db).text(db);
-        let paths = link
-            .kind(db)
-            .extensions()
-            .iter()
-            .map(|ext| format!("{stem}.{ext}"));
-
-        let file_name_db = self.file_name_db(db);
-        let distro_files = std::iter::once(stem.to_string())
-            .chain(paths.clone())
-            .filter_map(|path| file_name_db.get(path.as_str()))
-            .filter(|path| {
-                HOME_DIR
-                    .as_deref()
-                    .map_or(false, |dir| path.starts_with(dir))
-            })
-            .flat_map(|path| Url::from_file_path(path))
-            .map(|uri| Location::new(db, uri));
-
-        std::iter::once(stem.to_string())
-            .chain(paths)
-            .flat_map(|path| base_dir.uri(db).join(&path))
-            .map(|uri| Location::new(db, uri))
-            .chain(distro_files)
-            .collect()
-    }
-
-    #[salsa::tracked(return_ref)]
-    pub fn explicit_links(
-        self,
-        db: &dyn Db,
-        document: Document,
-        base_dir: Location,
-    ) -> Option<Vec<dependency::Resolved>> {
-        let data = document.parse(db).as_tex()?;
-
-        let mut items = Vec::new();
-        for link in data.analyze(db).links(db).iter().copied() {
-            let origin = dependency::Origin::Explicit(dependency::Explicit { link, base_dir });
-            let target = self
-                .link_locations(db, link, base_dir)
-                .iter()
-                .find_map(|location| self.lookup(db, *location));
-
-            items.push(dependency::Resolved::new(db, document, target, origin));
-        }
-
-        Some(items)
-    }
-
-    #[salsa::tracked]
-    pub fn implicit_links(
-        self,
-        db: &dyn Db,
-        document: Document,
-        base_dir: Location,
-        extension: &'static str,
-    ) -> Option<dependency::Resolved> {
-        let stem = document.location(db).stem(db)?;
-        let name = format!("{stem}.{extension}");
-        let location = self.output_dir(db, base_dir).join(db, &name)?;
-        let target = self.lookup(db, location);
-        let origin = dependency::Origin::Implicit(dependency::Implicit::new(db, vec![location]));
-        Some(dependency::Resolved::new(db, document, target, origin))
-    }
-
     #[salsa::tracked(return_ref)]
     pub fn parents(self, db: &dyn Db, child: Document) -> Vec<Document> {
         self.index_files(db)
-            .filter(|&document| self.graph(db, document).preorder(db).contains(&child))
+            .filter(|&parent| dependency_graph(db, parent).preorder().contains(&child))
             .collect()
     }
 
@@ -383,10 +217,9 @@ impl Workspace {
     pub fn related(self, db: &dyn Db, child: Document) -> FxHashSet<Document> {
         self.index_files(db)
             .chain(self.documents(db).iter().copied())
-            .map(|document| self.graph(db, document).preorder(db))
+            .map(|start| dependency_graph(db, start).preorder().collect_vec())
             .filter(|project| project.contains(&child))
             .flatten()
-            .copied()
             .collect()
     }
 
@@ -400,5 +233,3 @@ impl Workspace {
             .map(|number| number.text(db))
     }
 }
-
-static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
