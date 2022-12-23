@@ -122,17 +122,18 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate PDF documentation
-        run: tectonic texlab.tex
+        run: |
+          mkdir texlab
+          tectonic texlab.tex -o texlab
       - name: Generate man page
         run: |
           sudo apt install -y help2man
           cargo build
-          help2man --output=texlab.1 --no-info "target/debug/texlab"
+          help2man --output=texlab/texlab.1 --no-info "target/debug/texlab"
       - name: Export to ZIP archive
         run: |
-          git add texlab.1 texlab.pdf
-          git commit -m "Update CTAN documentation" --author="Patrick Förster <pfoerster@users.noreply.github.com>"
           git archive --prefix=texlab/ -o texlab.zip HEAD
+          zip -ur texlab.zip texlab/texlab.1 texlab/texlab.pdf
       - id: get-version
         run: |
           RELEASE_TAG=${{ github.event.release.tag_name }}
