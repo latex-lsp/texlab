@@ -1,4 +1,7 @@
-use crate::util::{self, cursor::CursorContext};
+use crate::{
+    db::analysis::label,
+    util::{self, cursor::CursorContext},
+};
 
 use super::DefinitionResult;
 
@@ -14,6 +17,7 @@ pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionR
                 .analyze(db)
                 .labels(db)
                 .iter()
+                .filter(|label| matches!(label.origin(db), label::Origin::Definition(_)))
                 .find(|label| label.name(db).text(db) == name_text.as_str())
             {
                 let target_selection_range = label.range(db);
