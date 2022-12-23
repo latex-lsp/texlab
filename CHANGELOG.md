@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   relative to the main document. By default it is equal to `"."`. For more information, please visit the wiki.
 - Improve performance of completion by a huge margin due to a faster filtering method used internally
 - Do not discover project files beyond the provided workspace folders
+- Try to guess the root directory by checking for files such as `.latexmkrc` or `Tectonic.toml` if `texlab.rootDirectory` is not set
 
 ### Fixed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in projects with shared files ([#806](https://github.com/latex-lsp/texlab/issues/806), [#757](https://github.com/latex-lsp/texlab/issues/757), [#679](https://github.com/latex-lsp/texlab/issues/679))
 - Fix coverage of directories which need to be watched for changes ([#502](https://github.com/latex-lsp/texlab/issues/502), [#491](https://github.com/latex-lsp/texlab/issues/491))
 - Resolve links of the `import` package correctly
+- Use `filterText` of completion items when filtering internally ([#829](https://github.com/latex-lsp/texlab/issues/829))
 
 ## [4.3.2] - 2022-11-20
 
