@@ -175,8 +175,7 @@ pub fn dependency_graph(db: &dyn Db, start: Document) -> DependencyGraph {
             }
         }
 
-        let output_dir = workspace.output_dir(db, base_dir);
-        hidden_dependencies(db, source, output_dir, &mut edges);
+        hidden_dependencies(db, source, base_dir, &mut edges);
     }
 
     DependencyGraph { start, edges }

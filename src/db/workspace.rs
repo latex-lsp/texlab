@@ -167,7 +167,7 @@ const SPECIAL_ENTRIES: &[&str] = &[
 impl Workspace {
     #[salsa::tracked]
     pub fn working_dir(self, db: &dyn Db, base_dir: Location) -> Location {
-        let path = self
+        let mut path = self
             .options(db)
             .root_directory
             .as_deref()
@@ -189,21 +189,31 @@ impl Workspace {
 
                 None
             })
-            .unwrap_or(".");
+            .unwrap_or(".")
+            .to_string();
 
-        base_dir.join(db, &format!("{path}/")).unwrap_or(base_dir)
+        if !path.ends_with(".") {
+            path.push('/');
+        }
+
+        base_dir.join(db, &path).unwrap_or(base_dir)
     }
 
     #[salsa::tracked]
     pub fn output_dir(self, db: &dyn Db, base_dir: Location) -> Location {
-        let path = self
+        let mut path = self
             .options(db)
             .aux_directory
             .as_deref()
             .and_then(|path| path.to_str())
-            .unwrap_or(".");
+            .unwrap_or(".")
+            .to_string();
 
-        base_dir.join(db, &format!("{path}/")).unwrap_or(base_dir)
+        if !path.ends_with("/") {
+            path.push('/');
+        }
+
+        base_dir.join(db, &path).unwrap_or(base_dir)
     }
 
     #[salsa::tracked(return_ref)]
