@@ -78,11 +78,6 @@ git = "https://github.com/salsa-rs/salsa"
 rev = "252d21e358979cd684666ebc32d2bc49d6f1d3f0"
 package = "salsa-2022"
 
-[dependencies.derive_more]
-version = "0.99.17"
-default-features = false
-features = ["from", "display"]
-
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.4.0" }

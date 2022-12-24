@@ -22,7 +22,7 @@ use crate::{
     citation,
     client::LspClient,
     db::{self, discover_dependencies, Document, Language, Owner, Workspace},
-    distro::Distribution,
+    distro::Distro,
     features::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
@@ -40,7 +40,7 @@ use crate::{
 
 #[derive(Debug)]
 enum InternalMessage {
-    SetDistro(Distribution),
+    SetDistro(Distro),
     SetOptions(Options),
     FileEvent(notify::Event),
     ForwardSearch(Url),
@@ -185,8 +185,8 @@ impl Server {
         if !skip_distro {
             let sender = self.internal_tx.clone();
             self.pool.execute(move || {
-                let distro = Distribution::detect();
-                info!("Detected distribution: {}", distro.kind);
+                let distro = Distro::detect();
+                info!("Detected distribution: {:?}", distro.kind);
                 sender.send(InternalMessage::SetDistro(distro)).unwrap();
             });
         }
