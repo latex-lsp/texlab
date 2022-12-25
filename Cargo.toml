@@ -36,7 +36,6 @@ doctest = false
 [dependencies]
 argh = "0.1.9"
 anyhow = "1.0.66"
-byteorder = "1.4.3"
 chrono = { version = "0.4.23", default-features = false, features = ["std"] }
 clap = { version = "4.0.29", features = ["derive"] }
 crossbeam-channel = "0.5.6"

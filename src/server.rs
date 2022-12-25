@@ -185,7 +185,11 @@ impl Server {
         if !skip_distro {
             let sender = self.internal_tx.clone();
             self.pool.execute(move || {
-                let distro = Distro::detect();
+                let distro = Distro::detect().unwrap_or_else(|why| {
+                    log::warn!("Unable to load distro files: {}", why);
+                    Distro::default()
+                });
+
                 info!("Detected distribution: {:?}", distro.kind);
                 sender.send(InternalMessage::SetDistro(distro)).unwrap();
             });

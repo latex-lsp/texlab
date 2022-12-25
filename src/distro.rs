@@ -5,7 +5,7 @@ mod texlive;
 
 use std::process::{Command, Stdio};
 
-use log::warn;
+use anyhow::Result;
 
 pub use file_name_db::FileNameDB;
 
@@ -17,14 +17,20 @@ pub enum DistroKind {
     Unknown,
 }
 
-#[derive(Debug)]
+impl Default for DistroKind {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
+#[derive(Debug, Default)]
 pub struct Distro {
     pub kind: DistroKind,
     pub file_name_db: FileNameDB,
 }
 
 impl Distro {
-    pub fn detect() -> Self {
+    pub fn detect() -> Result<Self> {
         let kind = match Command::new("latex").arg("--version").output() {
             Ok(output) => {
                 let stdout = String::from_utf8_lossy(&output.stdout);
@@ -52,18 +58,17 @@ impl Distro {
         };
 
         let file_name_db = match kind {
-            DistroKind::Texlive => kpsewhich::root_directories()
-                .and_then(|root_dirs| FileNameDB::parse(&root_dirs, &mut texlive::read_database)),
-            DistroKind::Miktex => kpsewhich::root_directories()
-                .and_then(|root_dirs| FileNameDB::parse(&root_dirs, &mut miktex::read_database)),
-            DistroKind::Tectonic | DistroKind::Unknown => Ok(FileNameDB::default()),
+            DistroKind::Texlive => {
+                let root_dirs = kpsewhich::root_directories()?;
+                FileNameDB::parse(&root_dirs, &mut texlive::read_database)?
+            }
+            DistroKind::Miktex => {
+                let root_dirs = kpsewhich::root_directories()?;
+                FileNameDB::parse(&root_dirs, &mut miktex::read_database)?
+            }
+            DistroKind::Tectonic | DistroKind::Unknown => FileNameDB::default(),
         };
 
-        let file_name_db = file_name_db.unwrap_or_else(|why| {
-            warn!("Failed to load distro files: {}", why);
-            FileNameDB::default()
-        });
-
-        Self { kind, file_name_db }
+        Ok(Self { kind, file_name_db })
     }
 }
