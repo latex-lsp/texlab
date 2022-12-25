@@ -10,7 +10,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     db::document::{Document, Location},
-    distro::Resolver,
+    distro::FileNameDB,
     util::HOME_DIR,
     Db, Options,
 };
@@ -39,7 +39,7 @@ pub struct Workspace {
     pub root_dirs: Vec<Location>,
 
     #[return_ref]
-    pub file_name_db: Resolver,
+    pub file_name_db: FileNameDB,
 }
 
 impl Workspace {

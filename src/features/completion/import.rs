@@ -28,7 +28,7 @@ pub fn complete<'db>(
         .flat_map(|comp| comp.file_names.iter())
         .filter(|file_name| file_name.ends_with(extension))
     {
-        file_names.insert(file_name);
+        file_names.insert(file_name.as_str());
         let stem = &file_name[0..file_name.len() - 4];
         if kind == latex::PACKAGE_INCLUDE {
             builder.package(range, stem);
@@ -39,8 +39,8 @@ pub fn complete<'db>(
 
     let file_name_db = context.workspace.file_name_db(context.db);
     for file_name in file_name_db
-        .files_by_name
-        .keys()
+        .iter()
+        .map(|(file_name, _)| file_name)
         .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))
     {
         let stem = &file_name[0..file_name.len() - 4];

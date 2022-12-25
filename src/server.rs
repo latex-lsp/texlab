@@ -887,7 +887,7 @@ impl Server {
                             Workspace::get(db)
                                 .set_file_name_db(db)
                                 .with_durability(salsa::Durability::HIGH)
-                                .to(distro.resolver);
+                                .to(distro.file_name_db);
                         }
                         InternalMessage::SetOptions(options) => {
                             self.update_options(options);

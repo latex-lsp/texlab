@@ -1,13 +1,13 @@
+mod file_name_db;
 mod kpsewhich;
 mod miktex;
 mod texlive;
 
 use std::process::{Command, Stdio};
 
-use anyhow::Result;
 use log::warn;
 
-pub use kpsewhich::Resolver;
+pub use file_name_db::FileNameDB;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DistroKind {
@@ -17,14 +17,13 @@ pub enum DistroKind {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Distro {
     pub kind: DistroKind,
-    pub resolver: Resolver,
+    pub file_name_db: FileNameDB,
 }
 
 impl Distro {
-    #[must_use]
     pub fn detect() -> Self {
         let kind = match Command::new("latex").arg("--version").output() {
             Ok(output) => {
@@ -52,19 +51,19 @@ impl Distro {
             }
         };
 
-        let resolver = match kind {
-            DistroKind::Texlive => Self::load_resolver(texlive::load_resolver),
-            DistroKind::Miktex => Self::load_resolver(miktex::load_resolver),
-            DistroKind::Tectonic | DistroKind::Unknown => Resolver::default(),
+        let file_name_db = match kind {
+            DistroKind::Texlive => kpsewhich::root_directories()
+                .and_then(|root_dirs| FileNameDB::parse(&root_dirs, &mut texlive::read_database)),
+            DistroKind::Miktex => kpsewhich::root_directories()
+                .and_then(|root_dirs| FileNameDB::parse(&root_dirs, &mut miktex::read_database)),
+            DistroKind::Tectonic | DistroKind::Unknown => Ok(FileNameDB::default()),
         };
-        Self { kind, resolver }
-    }
 
-    fn load_resolver(loader: impl FnOnce() -> Result<Resolver>) -> Resolver {
-        match loader() {
-            Ok(resolver) => return resolver,
-            Err(why) => warn!("Failed to load resolver: {}", why),
-        };
-        Resolver::default()
+        let file_name_db = file_name_db.unwrap_or_else(|why| {
+            warn!("Failed to load distro files: {}", why);
+            FileNameDB::default()
+        });
+
+        Self { kind, file_name_db }
     }
 }

@@ -8,14 +8,6 @@ use std::{
 use anyhow::{Context, Result};
 use byteorder::{LittleEndian, ReadBytesExt};
 
-use super::kpsewhich::{self, Resolver};
-
-pub fn load_resolver() -> Result<Resolver> {
-    let root_directories = kpsewhich::root_directories()?;
-    let resolver = kpsewhich::parse_database(&root_directories, read_database)?;
-    Ok(resolver)
-}
-
 const DATABASE_PATH: &str = "miktex/data/le";
 const FNDB_SIGNATURE: u32 = 0x42_44_4e_46;
 const FNDB_WORD_SIZE: u32 = 4;
@@ -23,7 +15,7 @@ const FNDB_TABLE_POINTER_OFFSET: u32 = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: u32 = 6 * FNDB_WORD_SIZE;
 const FNDB_ENTRY_SIZE: u32 = 4 * FNDB_WORD_SIZE;
 
-fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
+pub(super) fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
     if !database_directory.exists() {
         return Ok(Vec::new());

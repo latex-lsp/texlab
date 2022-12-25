@@ -6,17 +6,9 @@ use std::{
 
 use anyhow::Result;
 
-use super::kpsewhich::{self, Resolver};
-
-pub fn load_resolver() -> Result<Resolver> {
-    let root_directories = kpsewhich::root_directories()?;
-    let resolver = kpsewhich::parse_database(&root_directories, read_database)?;
-    Ok(resolver)
-}
-
 const DATABASE_PATH: &str = "ls-R";
 
-fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
+pub(super) fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let file = directory.join(DATABASE_PATH);
     if !file.is_file() {
         return Ok(Vec::new());
