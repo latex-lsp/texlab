@@ -1,0 +1,78 @@
+---
+source: src/tests/text_document/document_symbol.rs
+expression: result.response
+---
+[
+  {
+    "name": "Lemma (Foo)",
+    "kind": 13,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 11
+        }
+      }
+    }
+  },
+  {
+    "name": "Lemma",
+    "kind": 13,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 10,
+          "character": 0
+        },
+        "end": {
+          "line": 12,
+          "character": 11
+        }
+      }
+    }
+  },
+  {
+    "name": "Lemma",
+    "kind": 13,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 14,
+          "character": 0
+        },
+        "end": {
+          "line": 16,
+          "character": 11
+        }
+      }
+    }
+  },
+  {
+    "name": "Lemma (Qux)",
+    "kind": 13,
+    "deprecated": false,
+    "location": {
+      "uri": "[tmp]/main.tex",
+      "range": {
+        "start": {
+          "line": 18,
+          "character": 0
+        },
+        "end": {
+          "line": 20,
+          "character": 11
+        }
+      }
+    }
+  }
+]

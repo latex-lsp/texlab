@@ -1,27 +1,23 @@
-use std::sync::Arc;
+use crate::{
+    db::{dependency_graph, Document, Workspace},
+    Db,
+};
 
-use lsp_types::DocumentLinkParams;
+use super::LinkBuilder;
 
-use crate::features::FeatureRequest;
+pub(super) fn find_links(db: &dyn Db, document: Document, builder: &mut LinkBuilder) -> Option<()> {
+    let workspace = Workspace::get(db);
+    let parent = workspace
+        .parents(db, document)
+        .iter()
+        .next()
+        .copied()
+        .unwrap_or(document);
 
-use super::LinkResult;
-
-pub(super) fn find_include_links(
-    request: &FeatureRequest<DocumentLinkParams>,
-    results: &mut Vec<LinkResult>,
-) -> Option<()> {
-    let document = request.main_document();
-    let data = document.data().as_latex()?;
-
-    for include in &data.extras.explicit_links {
-        for target in &include.targets {
-            if request.workspace.get(&target).is_some() {
-                results.push(LinkResult {
-                    range: include.stem_range,
-                    target: Arc::clone(target),
-                });
-                break;
-            }
+    let graph = dependency_graph(db, parent);
+    for edge in graph.edges.iter().filter(|edge| edge.source == document) {
+        if let Some(origin) = edge.origin {
+            builder.push(origin.link.range(db), edge.target);
         }
     }
 

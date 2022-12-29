@@ -1,15 +1,17 @@
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
-use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
+use crate::{
+    syntax::latex,
+    util::{components::COMPONENT_DATABASE, cursor::CursorContext},
+};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_arguments<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let token = context.cursor.as_latex()?;
+    let token = context.cursor.as_tex()?;
 
     let range = if token.kind() == latex::WORD {
         token.text_range()
@@ -37,7 +39,7 @@ pub fn complete_arguments<'a>(
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(&context.request.workspace) {
+    for component in COMPONENT_DATABASE.linked_components(context.db, context.document) {
         for component_command in component
             .commands
             .iter()
@@ -50,14 +52,7 @@ pub fn complete_arguments<'a>(
                 .filter(|(i, _)| *i == index)
             {
                 for arg in &param.0 {
-                    let item = InternalCompletionItem::new(
-                        range,
-                        InternalCompletionItemData::Argument {
-                            name: &arg.name,
-                            image: arg.image.as_deref(),
-                        },
-                    );
-                    items.push(item);
+                    builder.generic_argument(range, &arg.name, arg.image.as_deref());
                 }
             }
         }

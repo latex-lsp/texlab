@@ -1,33 +1,41 @@
 mod include;
 
-use std::sync::Arc;
-
-use lsp_types::{DocumentLink, DocumentLinkParams, Url};
+use lsp_types::{DocumentLink, Url};
 use rowan::TextRange;
 
-use crate::LineIndexExt;
+use crate::{
+    db::{Document, Workspace},
+    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
+    Db,
+};
 
-use self::include::find_include_links;
+pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<DocumentLink>> {
+    let document = Workspace::get(db).lookup_uri(db, uri)?;
+    let mut builder = LinkBuilder {
+        db,
+        line_index: document.contents(db).line_index(db),
+        links: Vec::new(),
+    };
 
-use super::FeatureRequest;
-
-pub fn find_document_links(request: FeatureRequest<DocumentLinkParams>) -> Vec<DocumentLink> {
-    let document = request.main_document();
-    let mut results = Vec::new();
-    find_include_links(&request, &mut results);
-    results
-        .into_iter()
-        .map(|result| DocumentLink {
-            range: document.line_index().line_col_lsp_range(result.range),
-            target: Some(result.target.as_ref().clone()),
-            tooltip: None,
-            data: None,
-        })
-        .collect()
+    include::find_links(db, document, &mut builder);
+    Some(builder.links)
 }
 
-#[derive(Debug, Clone)]
-struct LinkResult {
-    range: TextRange,
-    target: Arc<Url>,
+struct LinkBuilder<'db> {
+    db: &'db dyn Db,
+    line_index: &'db LineIndex,
+    links: Vec<DocumentLink>,
+}
+
+impl<'db> LinkBuilder<'db> {
+    pub fn push(&mut self, range: TextRange, target: Document) {
+        let range = self.line_index.line_col_lsp_range(range);
+        let target = Some(target.location(self.db).uri(self.db).clone());
+        self.links.push(DocumentLink {
+            range,
+            target,
+            tooltip: None,
+            data: None,
+        });
+    }
 }

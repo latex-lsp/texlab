@@ -1,33 +1,32 @@
-use std::sync::Arc;
+use lsp_types::ReferenceContext;
 
-use lsp_types::ReferenceParams;
-
-use crate::features::cursor::CursorContext;
+use crate::util::cursor::CursorContext;
 
 use super::ReferenceResult;
 
-pub(super) fn find_label_references(
-    context: &CursorContext<ReferenceParams>,
+pub(super) fn find_all_references(
+    context: &CursorContext<&ReferenceContext>,
     results: &mut Vec<ReferenceResult>,
 ) -> Option<()> {
+    let db = context.db;
     let (name_text, _) = context
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
-            for name in data
-                .extras
-                .label_names
+    for document in context.related() {
+        if let Some(data) = document.parse(db).as_tex() {
+            for label in data
+                .analyze(db)
+                .labels(db)
                 .iter()
-                .filter(|name| name.text == name_text)
-                .filter(|name| {
-                    !name.is_definition || context.request.params.context.include_declaration
+                .filter(|label| label.name(db).text(db) == &name_text)
+                .filter(|label| {
+                    label.origin(db).as_definition().is_none() || context.params.include_declaration
                 })
             {
                 results.push(ReferenceResult {
-                    uri: Arc::clone(document.uri()),
-                    range: name.range,
+                    document,
+                    range: label.range(db),
                 });
             }
         }

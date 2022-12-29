@@ -1,40 +1,95 @@
-mod capabilities;
-pub mod citation;
+#![allow(clippy::needless_lifetimes)]
+
+pub(crate) mod citation;
 mod client;
-pub mod component_db;
-mod debouncer;
-mod diagnostics;
-mod dispatch;
-pub mod distro;
-mod document;
-mod environment;
+pub mod db;
+pub(crate) mod distro;
 pub mod features;
-mod label;
-mod lang_data;
-mod language;
-mod line_index;
-mod line_index_ext;
 mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
-mod workspace;
+pub(crate) mod util;
 
-pub use self::{
-    capabilities::ClientCapabilitiesExt,
-    document::*,
-    environment::Environment,
-    label::*,
-    lang_data::*,
-    language::DocumentLanguage,
-    line_index::{LineCol, LineColUtf16, LineIndex},
-    line_index_ext::LineIndexExt,
-    options::*,
-    server::Server,
-    workspace::{Workspace, WorkspaceEvent},
-};
+pub use self::{options::*, server::Server};
 
-pub fn normalize_uri(uri: &mut lsp_types::Url) {
+#[salsa::jar(db = Db)]
+pub struct Jar(
+    db::Word,
+    db::Location,
+    db::Location_path,
+    db::Contents,
+    db::Contents_line_index,
+    db::LinterData,
+    db::Document,
+    db::Document_parse,
+    db::Document_can_be_index,
+    db::Document_can_be_built,
+    db::parse::TexDocumentData,
+    db::parse::TexDocumentData_analyze,
+    db::parse::BibDocumentData,
+    db::parse::LogDocumentData,
+    db::analysis::TexLink,
+    db::analysis::label::Number,
+    db::analysis::label::Name,
+    db::analysis::TheoremEnvironment,
+    db::analysis::GraphicsPath,
+    db::analysis::TexAnalysis,
+    db::MissingDependencies,
+    db::hidden_dependency,
+    db::source_dependency,
+    db::dependency_graph,
+    db::Workspace,
+    db::Workspace_working_dir,
+    db::Workspace_output_dir,
+    db::Workspace_parents,
+    db::Workspace_related,
+    db::Workspace_number_of_label,
+    db::diagnostics::tex::collect,
+    db::diagnostics::bib::collect,
+    db::diagnostics::log::collect,
+    db::diagnostics::collect,
+    db::diagnostics::collect_filtered,
+);
+
+pub trait Db: salsa::DbWithJar<Jar> {}
+
+impl<DB> Db for DB where DB: ?Sized + salsa::DbWithJar<Jar> {}
+
+#[salsa::db(crate::Jar)]
+pub struct Database {
+    storage: salsa::Storage<Self>,
+}
+
+impl Default for Database {
+    fn default() -> Self {
+        let storage = salsa::Storage::default();
+        let db = Self { storage };
+        db::Workspace::new(
+            &db,
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+        );
+
+        db
+    }
+}
+
+impl salsa::Database for Database {}
+
+impl salsa::ParallelDatabase for Database {
+    fn snapshot(&self) -> salsa::Snapshot<Self> {
+        salsa::Snapshot::new(Self {
+            storage: self.storage.snapshot(),
+        })
+    }
+}
+
+pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
     fn fix_drive_letter(text: &str) -> Option<String> {
         if !text.is_ascii() {
             return None;
@@ -48,7 +103,7 @@ pub fn normalize_uri(uri: &mut lsp_types::Url) {
     }
 
     if let Some(mut segments) = uri.path_segments() {
-        if let Some(mut path) = segments.next().and_then(|text| fix_drive_letter(text)) {
+        if let Some(mut path) = segments.next().and_then(fix_drive_letter) {
             for segment in segments {
                 path.push('/');
                 path.push_str(segment);
@@ -60,3 +115,6 @@ pub fn normalize_uri(uri: &mut lsp_types::Url) {
 
     uri.set_fragment(None);
 }
+
+#[cfg(test)]
+mod tests;

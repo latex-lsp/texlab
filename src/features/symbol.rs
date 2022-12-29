@@ -3,49 +3,44 @@ mod latex;
 mod project_order;
 mod types;
 
-use std::{cmp::Reverse, sync::Arc};
+use std::cmp::Reverse;
 
-use lsp_types::{
-    DocumentSymbolParams, DocumentSymbolResponse, PartialResultParams, SymbolInformation,
-    TextDocumentIdentifier, WorkDoneProgressParams, WorkspaceSymbolParams,
-};
+use lsp_types::{DocumentSymbolResponse, SymbolInformation, Url, WorkspaceSymbolParams};
 
-use crate::{ClientCapabilitiesExt, Workspace};
+use crate::{db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
-use self::{
-    bibtex::find_bibtex_symbols, latex::find_latex_symbols, project_order::ProjectOrdering,
-    types::InternalSymbol,
-};
+use self::project_order::ProjectOrdering;
 
-use super::FeatureRequest;
+pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolResponse> {
+    let workspace = Workspace::get(db);
+    let document = workspace.lookup_uri(db, uri)?;
 
-#[must_use]
-pub fn find_document_symbols(req: FeatureRequest<DocumentSymbolParams>) -> DocumentSymbolResponse {
     let mut buf = Vec::new();
-    find_latex_symbols(&req, &mut buf);
-    find_bibtex_symbols(&req, &mut buf);
-    if req
-        .workspace
-        .environment
-        .client_capabilities
+    latex::find_symbols(db, document, &mut buf);
+    bibtex::find_symbols(db, document, &mut buf);
+    if workspace
+        .client_capabilities(db)
         .has_hierarchical_document_symbol_support()
     {
-        DocumentSymbolResponse::Nested(
-            buf.into_iter()
-                .map(InternalSymbol::into_document_symbol)
-                .collect(),
-        )
+        let symbols = buf
+            .into_iter()
+            .map(|symbol| symbol.into_document_symbol(db))
+            .collect();
+
+        Some(DocumentSymbolResponse::Nested(symbols))
     } else {
         let mut new_buf = Vec::new();
         for symbol in buf {
             symbol.flatten(&mut new_buf);
         }
+
         let mut new_buf: Vec<_> = new_buf
             .into_iter()
-            .map(|symbol| symbol.into_symbol_info(req.main_document().uri().as_ref().clone()))
+            .map(|symbol| symbol.into_symbol_info(uri.clone()))
             .collect();
-        sort_symbols(&req.workspace, &mut new_buf);
-        DocumentSymbolResponse::Flat(new_buf)
+
+        sort_symbols(db, &mut new_buf);
+        Some(DocumentSymbolResponse::Flat(new_buf))
     }
 }
 
@@ -57,25 +52,16 @@ struct WorkspaceSymbol {
 
 #[must_use]
 pub fn find_workspace_symbols(
-    workspace: &Workspace,
+    db: &dyn Db,
     params: &WorkspaceSymbolParams,
 ) -> Vec<SymbolInformation> {
     let mut symbols = Vec::new();
 
-    for document in workspace.iter() {
-        let request = FeatureRequest {
-            uri: Arc::clone(document.uri()),
-            params: DocumentSymbolParams {
-                text_document: TextDocumentIdentifier::new(document.uri().as_ref().clone()),
-                partial_result_params: PartialResultParams::default(),
-                work_done_progress_params: WorkDoneProgressParams::default(),
-            },
-            workspace: workspace.slice(document.uri()),
-        };
-
+    let workspace = Workspace::get(db);
+    for document in workspace.documents(db).iter().copied() {
         let mut buf = Vec::new();
-        find_latex_symbols(&request, &mut buf);
-        find_bibtex_symbols(&request, &mut buf);
+        latex::find_symbols(db, document, &mut buf);
+        bibtex::find_symbols(db, document, &mut buf);
         let mut new_buf = Vec::new();
 
         for symbol in buf {
@@ -85,7 +71,7 @@ pub fn find_workspace_symbols(
         for symbol in new_buf {
             symbols.push(WorkspaceSymbol {
                 search_text: symbol.search_text(),
-                info: symbol.into_symbol_info(document.uri().as_ref().clone()),
+                info: symbol.into_symbol_info(document.location(db).uri(db).clone()),
             });
         }
     }
@@ -95,6 +81,7 @@ pub fn find_workspace_symbols(
         .split_whitespace()
         .map(str::to_lowercase)
         .collect();
+
     let mut filtered = Vec::new();
     for symbol in symbols {
         let mut included = true;
@@ -109,20 +96,21 @@ pub fn find_workspace_symbols(
             filtered.push(symbol.info);
         }
     }
-    sort_symbols(workspace, &mut filtered);
+
+    sort_symbols(db, &mut filtered);
     filtered
 }
 
-fn sort_symbols(workspace: &Workspace, symbols: &mut [SymbolInformation]) {
-    let ordering = ProjectOrdering::from(workspace);
+fn sort_symbols(db: &dyn Db, symbols: &mut [SymbolInformation]) {
+    let ordering = ProjectOrdering::new(db);
     symbols.sort_by(|left, right| {
         let left_key = (
-            ordering.get(&left.location.uri),
+            ordering.get(db, &left.location.uri),
             left.location.range.start,
             Reverse(left.location.range.end),
         );
         let right_key = (
-            ordering.get(&right.location.uri),
+            ordering.get(db, &right.location.uri),
             right.location.range.start,
             Reverse(right.location.range.end),
         );

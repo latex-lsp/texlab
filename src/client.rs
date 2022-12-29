@@ -3,11 +3,14 @@ use std::sync::{
     Arc,
 };
 
-use anyhow::{bail, Ok, Result};
+use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
 use dashmap::DashMap;
-use lsp_server::{Message, Request, RequestId, Response};
+use lsp_server::{ErrorCode, Message, Request, RequestId, Response};
+use lsp_types::{notification::ShowMessage, MessageType, ShowMessageParams};
 use serde::{de::DeserializeOwned, Serialize};
+
+use crate::Options;
 
 #[derive(Debug)]
 struct RawClient {
@@ -67,6 +70,16 @@ impl LspClient {
         Ok(serde_json::from_value(result)?)
     }
 
+    pub fn send_response(&self, response: lsp_server::Response) -> Result<()> {
+        self.raw.sender.send(response.into())?;
+        Ok(())
+    }
+
+    pub fn send_error(&self, id: RequestId, code: ErrorCode, message: String) -> Result<()> {
+        self.send_response(lsp_server::Response::new_err(id, code as i32, message))?;
+        Ok(())
+    }
+
     pub fn recv_response(&self, response: lsp_server::Response) -> Result<()> {
         let (_, tx) = self
             .raw
@@ -76,5 +89,21 @@ impl LspClient {
 
         tx.send(response)?;
         Ok(())
+    }
+
+    pub fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
+        let options = match serde_json::from_value(value) {
+            Ok(new_options) => new_options,
+            Err(why) => {
+                let message = format!(
+                    "The texlab configuration is invalid; using the default settings instead.\nDetails: {why}"
+                );
+                let typ = MessageType::WARNING;
+                self.send_notification::<ShowMessage>(ShowMessageParams { message, typ })?;
+                None
+            }
+        };
+
+        Ok(options.unwrap_or_default())
     }
 }

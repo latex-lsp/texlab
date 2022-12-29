@@ -1,19 +1,17 @@
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    features::cursor::CursorContext,
     syntax::bibtex::{self, HasName},
-    LANGUAGE_DATA,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_fields<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let token = context.cursor.as_bibtex()?;
+    let token = context.cursor.as_bib()?;
 
     let range = if token.kind() == bibtex::NAME {
         token.text_range()
@@ -31,9 +29,8 @@ pub fn complete_fields<'a>(
     }
 
     for field in &LANGUAGE_DATA.fields {
-        let data = InternalCompletionItemData::Field { field };
-        let item = InternalCompletionItem::new(range, data);
-        items.push(item);
+        builder.field(range, field);
     }
+
     Some(())
 }

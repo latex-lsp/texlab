@@ -1,22 +1,21 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::latex, LANGUAGE_DATA};
+use crate::{
+    syntax::latex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_colors<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word()?;
     latex::ColorReference::cast(group.syntax().parent()?)?;
 
     for name in &LANGUAGE_DATA.colors {
-        items.push(InternalCompletionItem::new(
-            range,
-            InternalCompletionItemData::Color { name },
-        ));
+        builder.color(range, name);
     }
 
     Some(())

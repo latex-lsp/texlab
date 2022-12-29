@@ -1,3 +1,4 @@
+mod file_name_db;
 mod kpsewhich;
 mod miktex;
 mod texlive;
@@ -5,41 +6,40 @@ mod texlive;
 use std::process::{Command, Stdio};
 
 use anyhow::Result;
-use derive_more::Display;
-use log::warn;
 
-pub use kpsewhich::Resolver;
+pub use file_name_db::FileNameDB;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Display)]
-pub enum DistributionKind {
-    #[display(fmt = "TeXLive")]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum DistroKind {
     Texlive,
-    #[display(fmt = "MikTeX")]
     Miktex,
-    #[display(fmt = "Tectonic")]
     Tectonic,
-    #[display(fmt = "Unknown")]
     Unknown,
 }
 
-#[derive(Debug, Clone)]
-pub struct Distribution {
-    pub kind: DistributionKind,
-    pub resolver: Resolver,
+impl Default for DistroKind {
+    fn default() -> Self {
+        Self::Unknown
+    }
 }
 
-impl Distribution {
-    #[must_use]
-    pub fn detect() -> Self {
+#[derive(Debug, Default)]
+pub struct Distro {
+    pub kind: DistroKind,
+    pub file_name_db: FileNameDB,
+}
+
+impl Distro {
+    pub fn detect() -> Result<Self> {
         let kind = match Command::new("latex").arg("--version").output() {
             Ok(output) => {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 if stdout.contains("TeX Live") {
-                    DistributionKind::Texlive
+                    DistroKind::Texlive
                 } else if stdout.contains("MiKTeX") {
-                    DistributionKind::Miktex
+                    DistroKind::Miktex
                 } else {
-                    DistributionKind::Unknown
+                    DistroKind::Unknown
                 }
             }
             Err(_) => {
@@ -50,26 +50,25 @@ impl Distribution {
                     .status()
                     .is_ok()
                 {
-                    DistributionKind::Tectonic
+                    DistroKind::Tectonic
                 } else {
-                    DistributionKind::Unknown
+                    DistroKind::Unknown
                 }
             }
         };
 
-        let resolver = match kind {
-            DistributionKind::Texlive => Self::load_resolver(texlive::load_resolver),
-            DistributionKind::Miktex => Self::load_resolver(miktex::load_resolver),
-            DistributionKind::Tectonic | DistributionKind::Unknown => Resolver::default(),
+        let file_name_db = match kind {
+            DistroKind::Texlive => {
+                let root_dirs = kpsewhich::root_directories()?;
+                FileNameDB::parse(&root_dirs, &mut texlive::read_database)?
+            }
+            DistroKind::Miktex => {
+                let root_dirs = kpsewhich::root_directories()?;
+                FileNameDB::parse(&root_dirs, &mut miktex::read_database)?
+            }
+            DistroKind::Tectonic | DistroKind::Unknown => FileNameDB::default(),
         };
-        Self { kind, resolver }
-    }
 
-    fn load_resolver(loader: impl FnOnce() -> Result<Resolver>) -> Resolver {
-        match loader() {
-            Ok(resolver) => return resolver,
-            Err(why) => warn!("Failed to load resolver: {}", why),
-        };
-        Resolver::default()
+        Ok(Self { kind, file_name_db })
     }
 }

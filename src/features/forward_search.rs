@@ -1,87 +1,114 @@
 use std::{
     io,
-    path::Path,
-    process::{Command, Stdio},
+    path::{Path, PathBuf},
+    process::Stdio,
 };
 
 use log::error;
-use lsp_types::Url;
-use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
-use typed_builder::TypedBuilder;
+use lsp_types::{Position, Url};
+use thiserror::Error;
 
-use crate::Workspace;
+use crate::{db::Workspace, util::line_index_ext::LineIndexExt, Db};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
-#[repr(i32)]
-pub enum ForwardSearchStatus {
-    SUCCESS = 0,
-    ERROR = 1,
-    FAILURE = 2,
-    UNCONFIGURED = 3,
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("TeX document '{0}' not found")]
+    TexNotFound(Url),
+
+    #[error("PDF document '{0}' not found")]
+    PdfNotFound(PathBuf),
+
+    #[error("TeX document '{0}' is not a local file")]
+    NoLocalFile(Url),
+
+    #[error("PDF viewer is not configured")]
+    Unconfigured,
+
+    #[error("Failed to spawn process: {0}")]
+    Spawn(io::Error),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct ForwardSearchResult {
-    pub status: ForwardSearchStatus,
+pub struct Command {
+    executable: String,
+    args: Vec<String>,
 }
 
-#[derive(TypedBuilder)]
-#[must_use]
-pub struct ForwardSearch<'a> {
-    executable: &'a str,
-    args: &'a [String],
-    workspace: &'a Workspace,
-    tex_uri: &'a Url,
-    line: u32,
-}
+impl Command {
+    pub fn configure(db: &dyn Db, uri: &Url, position: Option<Position>) -> Result<Self, Error> {
+        let workspace = Workspace::get(db);
+        let child = workspace
+            .lookup_uri(db, uri)
+            .ok_or_else(|| Error::TexNotFound(uri.clone()))?;
 
-impl<'a> ForwardSearch<'a> {
-    pub fn execute(self) -> Option<ForwardSearchResult> {
-        let root_document = self
-            .workspace
+        let parent = workspace
+            .parents(db, child)
             .iter()
-            .find(|document| {
-                if let Some(data) = document.data().as_latex() {
-                    data.extras.has_document_environment
-                        && !data
-                            .extras
-                            .explicit_links
-                            .iter()
-                            .filter_map(|link| link.as_component_name())
-                            .any(|name| name == "subfiles.cls")
-                } else {
-                    false
-                }
-            })
-            .filter(|document| document.uri().scheme() == "file")?;
+            .copied()
+            .next()
+            .unwrap_or(child);
 
-        let data = root_document.data().as_latex()?;
-        let pdf_path = data
-            .extras
-            .implicit_links
-            .pdf
-            .iter()
-            .filter_map(|uri| uri.to_file_path().ok())
-            .find(|path| path.exists())?;
+        let output_dir = workspace
+            .output_dir(db, workspace.working_dir(db, parent.directory(db)))
+            .path(db)
+            .as_deref()
+            .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;
 
-        let tex_path = self.tex_uri.to_file_path().ok()?;
+        let tex_path = child
+            .location(db)
+            .path(db)
+            .as_deref()
+            .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;
 
-        let args: Vec<String> = self
+        let pdf_name = format!("{}.pdf", parent.location(db).stem(db).unwrap());
+        let pdf_path = output_dir.join(pdf_name);
+        if !pdf_path.exists() {
+            return Err(Error::PdfNotFound(pdf_path));
+        }
+
+        let position = position.unwrap_or_else(|| {
+            child
+                .contents(db)
+                .line_index(db)
+                .line_col_lsp(child.cursor(db))
+        });
+
+        let options = &workspace.options(db).forward_search;
+
+        let executable = options
+            .executable
+            .as_deref()
+            .ok_or(Error::Unconfigured)?
+            .to_string();
+
+        let args: Vec<_> = options
             .args
+            .as_deref()
+            .ok_or(Error::Unconfigured)?
             .iter()
-            .flat_map(|arg| replace_placeholder(&tex_path, &pdf_path, self.line, arg))
+            .flat_map(|arg| replace_placeholder(tex_path, &pdf_path, position.line, arg))
             .collect();
 
-        let status = match run_process(self.executable, args) {
-            Ok(()) => ForwardSearchStatus::SUCCESS,
-            Err(why) => {
-                error!("Unable to execute forward search: {}", why);
-                ForwardSearchStatus::FAILURE
-            }
-        };
+        Ok(Self { executable, args })
+    }
+}
 
-        Some(ForwardSearchResult { status })
+impl Command {
+    pub fn run(self) -> Result<(), Error> {
+        log::debug!(
+            "Executing forward search: {} {:?}",
+            self.executable,
+            self.args
+        );
+
+        std::process::Command::new(self.executable)
+            .args(self.args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map_err(Error::Spawn)?;
+
+        Ok(())
     }
 }
 
@@ -166,15 +193,4 @@ fn replace_placeholder(
         it.collect::<Vec<&str>>().join("")
     };
     Some(result)
-}
-
-fn run_process(executable: &str, args: Vec<String>) -> io::Result<()> {
-    log::debug!("Executing forward search: {} {:?}", executable, args);
-    Command::new(executable)
-        .args(args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()?;
-    Ok(())
 }

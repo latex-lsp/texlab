@@ -1,6 +1,10 @@
 use lsp_types::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, Url};
 
-use crate::{features::lsp_kinds::Structure, BibtexEntryTypeCategory};
+use crate::{
+    db::Word,
+    util::{lang_data::BibtexEntryTypeCategory, lsp_enums::Structure},
+    Db,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum InternalSymbolKind {
@@ -39,7 +43,7 @@ impl InternalSymbolKind {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct InternalSymbol {
     pub name: String,
-    pub label: Option<String>,
+    pub label: Option<Word>,
     pub kind: InternalSymbolKind,
     pub deprecated: bool,
     pub full_range: Range,
@@ -76,16 +80,17 @@ impl InternalSymbol {
         buffer.push(self);
     }
 
-    pub fn into_document_symbol(self) -> DocumentSymbol {
+    pub fn into_document_symbol(self, db: &dyn Db) -> DocumentSymbol {
         let children = self
             .children
             .into_iter()
-            .map(|child| child.into_document_symbol())
+            .map(|child| child.into_document_symbol(db))
             .collect();
+
         #[allow(deprecated)]
         DocumentSymbol {
             name: self.name,
-            detail: self.label,
+            detail: self.label.map(|word| word.text(db).clone()),
             kind: self.kind.into_symbol_kind(),
             deprecated: Some(self.deprecated),
             range: self.full_range,

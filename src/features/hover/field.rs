@@ -1,14 +1,17 @@
-use lsp_types::{HoverParams, MarkupKind};
+use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::bibtex, LANGUAGE_DATA};
+use crate::{
+    syntax::bibtex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
 use super::HoverResult;
 
-pub(super) fn find_field_hover(context: &CursorContext<HoverParams>) -> Option<HoverResult> {
+pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
     let name = context
         .cursor
-        .as_bibtex()
+        .as_bib()
         .filter(|token| token.kind() == bibtex::NAME)?;
 
     bibtex::Field::cast(name.parent()?)?;

@@ -1,29 +1,27 @@
-use lsp_types::CompletionParams;
+use crate::util::cursor::CursorContext;
 
-use crate::features::cursor::CursorContext;
+use super::builder::CompletionBuilder;
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
-
-pub fn complete_user_commands<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let range = context.cursor.command_range(context.offset)?;
-    let token = context.cursor.as_latex()?;
+    let token = context.cursor.as_tex()?;
 
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
+    let db = context.db;
+    for document in context.related() {
+        if let Some(data) = document.parse(db).as_tex() {
+            let text = document.contents(db).text(db);
             for name in data
-                .extras
-                .command_names
+                .analyze(db)
+                .command_name_ranges(db)
                 .iter()
-                .filter(|name| name.as_str() != token.text())
-                .cloned()
+                .copied()
+                .filter(|range| *range != token.text_range())
+                .map(|range| &text[std::ops::Range::<usize>::from(range)])
             {
-                items.push(InternalCompletionItem::new(
-                    range,
-                    InternalCompletionItemData::UserCommand { name },
-                ));
+                builder.user_command(range, name);
             }
         }
     }

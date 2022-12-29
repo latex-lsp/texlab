@@ -1,13 +1,15 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 
-use crate::{features::cursor::CursorContext, syntax::latex, LANGUAGE_DATA};
+use crate::{
+    syntax::latex,
+    util::{cursor::CursorContext, lang_data::LANGUAGE_DATA},
+};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_tikz_libraries<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
@@ -15,17 +17,11 @@ pub fn complete_tikz_libraries<'a>(
 
     if import.command()?.text() == "\\usepgflibrary" {
         for name in &LANGUAGE_DATA.pgf_libraries {
-            items.push(InternalCompletionItem::new(
-                range,
-                InternalCompletionItemData::PgfLibrary { name },
-            ));
+            builder.tikz_library(range, name);
         }
     } else {
         for name in &LANGUAGE_DATA.tikz_libraries {
-            items.push(InternalCompletionItem::new(
-                range,
-                InternalCompletionItemData::TikzLibrary { name },
-            ));
+            builder.tikz_library(range, name);
         }
     }
 

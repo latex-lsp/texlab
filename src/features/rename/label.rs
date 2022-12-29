@@ -1,32 +1,24 @@
-use std::sync::Arc;
-
-use lsp_types::RenameParams;
 use rowan::{ast::AstNode, TextRange};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    features::cursor::{CursorContext, HasPosition},
-    syntax::latex,
-};
+use crate::{syntax::latex, util::cursor::CursorContext};
 
-use super::{Indel, RenameResult};
+use super::{Indel, Params, RenameResult};
 
-pub(super) fn prepare_label_rename<P: HasPosition>(
-    context: &CursorContext<P>,
-) -> Option<TextRange> {
+pub(super) fn prepare_rename<T>(context: &CursorContext<T>) -> Option<TextRange> {
     let (_, range) = context.find_label_name_key()?;
     Some(range)
 }
 
-pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<RenameResult> {
-    prepare_label_rename(context)?;
+pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
+    prepare_rename(context)?;
     let (name_text, _) = context.find_label_name_key()?;
 
     let mut changes = FxHashMap::default();
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
+    for document in context.related() {
+        if let Some(data) = document.parse(context.db).as_tex() {
             let mut edits = Vec::new();
-            for node in latex::SyntaxNode::new_root(data.green.clone()).descendants() {
+            for node in data.root(context.db).descendants() {
                 if let Some(range) = latex::LabelDefinition::cast(node.clone())
                     .and_then(|label| label.name())
                     .and_then(|name| name.key())
@@ -35,7 +27,7 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
                 {
                     edits.push(Indel {
                         delete: range,
-                        insert: context.request.params.new_name.clone(),
+                        insert: context.params.new_name.clone(),
                     });
                 }
 
@@ -47,7 +39,7 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
                     .for_each(|name| {
                         edits.push(Indel {
                             delete: latex::small_range(&name),
-                            insert: context.request.params.new_name.clone(),
+                            insert: context.params.new_name.clone(),
                         });
                     });
 
@@ -59,7 +51,7 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
                     {
                         edits.push(Indel {
                             delete: latex::small_range(&name1),
-                            insert: context.request.params.new_name.clone(),
+                            insert: context.params.new_name.clone(),
                         });
                     }
 
@@ -70,13 +62,13 @@ pub(super) fn rename_label(context: &CursorContext<RenameParams>) -> Option<Rena
                     {
                         edits.push(Indel {
                             delete: latex::small_range(&name2),
-                            insert: context.request.params.new_name.clone(),
+                            insert: context.params.new_name.clone(),
                         });
                     }
                 }
             }
 
-            changes.insert(Arc::clone(document.uri()), edits);
+            changes.insert(document, edits);
         }
     }
 

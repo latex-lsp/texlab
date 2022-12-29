@@ -1,31 +1,24 @@
-use lsp_types::CompletionParams;
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
-use smol_str::SmolStr;
 
-use crate::{component_db::COMPONENT_DATABASE, features::cursor::CursorContext, syntax::latex};
+use crate::{
+    syntax::latex,
+    util::{components::COMPONENT_DATABASE, cursor::CursorContext},
+};
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_imports<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (_, range, group) = context.find_curly_group_word_list()?;
 
-    let (extension, mut factory): (
-        &str,
-        Box<dyn FnMut(SmolStr) -> InternalCompletionItemData<'a>>,
-    ) = match group.syntax().parent()?.kind() {
-        latex::PACKAGE_INCLUDE => (
-            "sty",
-            Box::new(|name| InternalCompletionItemData::Package { name }),
-        ),
-        latex::CLASS_INCLUDE => (
-            "cls",
-            Box::new(|name| InternalCompletionItemData::Class { name }),
-        ),
-        _ => return None,
+    let kind = group.syntax().parent()?.kind();
+    let extension = match kind {
+        latex::PACKAGE_INCLUDE => "sty",
+        latex::CLASS_INCLUDE => "cls",
+        _ => return Some(()),
     };
 
     let mut file_names = FxHashSet::default();
@@ -35,21 +28,27 @@ pub fn complete_imports<'a>(
         .flat_map(|comp| comp.file_names.iter())
         .filter(|file_name| file_name.ends_with(extension))
     {
-        file_names.insert(file_name);
+        file_names.insert(file_name.as_str());
         let stem = &file_name[0..file_name.len() - 4];
-        let data = factory(stem.into());
-        items.push(InternalCompletionItem::new(range, data));
+        if kind == latex::PACKAGE_INCLUDE {
+            builder.package(range, stem);
+        } else {
+            builder.class(range, stem);
+        }
     }
 
-    let resolver = &context.request.workspace.environment.resolver;
-    for file_name in resolver
-        .files_by_name
-        .keys()
+    let file_name_db = context.workspace.file_name_db(context.db);
+    for file_name in file_name_db
+        .iter()
+        .map(|(file_name, _)| file_name)
         .filter(|file_name| file_name.ends_with(extension) && !file_names.contains(file_name))
     {
         let stem = &file_name[0..file_name.len() - 4];
-        let data = factory(stem.into());
-        items.push(InternalCompletionItem::new(range, data));
+        if kind == latex::PACKAGE_INCLUDE {
+            builder.package(range, stem);
+        } else {
+            builder.class(range, stem);
+        }
     }
 
     Some(())

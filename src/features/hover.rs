@@ -5,43 +5,32 @@ mod field;
 mod label;
 mod string_ref;
 
-use lsp_types::{Hover, HoverContents, HoverParams, MarkupContent, MarkupKind};
+use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position, Url};
 use rowan::TextRange;
 
 use crate::{
-    features::{cursor::CursorContext, hover::citation::find_citation_hover},
-    LineIndexExt,
+    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
+    Db,
 };
 
-use self::{
-    component::find_component_hover, entry_type::find_entry_type_hover, field::find_field_hover,
-    label::find_label_hover, string_ref::find_string_reference_hover,
-};
-
-use super::FeatureRequest;
-
-pub fn find_hover(request: FeatureRequest<HoverParams>) -> Option<Hover> {
-    let context = CursorContext::new(request);
+pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
+    let context = CursorContext::new(db, uri, position, ())?;
     log::debug!("[Hover] Cursor: {:?}", context.cursor);
-    let result = find_label_hover(&context)
-        .or_else(|| find_citation_hover(&context))
-        .or_else(|| find_component_hover(&context))
-        .or_else(|| find_string_reference_hover(&context))
-        .or_else(|| find_field_hover(&context))
-        .or_else(|| find_entry_type_hover(&context))?;
 
+    let result = label::find_hover(&context)
+        .or_else(|| citation::find_hover(&context))
+        .or_else(|| component::find_hover(&context))
+        .or_else(|| string_ref::find_hover(&context))
+        .or_else(|| field::find_hover(&context))
+        .or_else(|| entry_type::find_hover(&context))?;
+
+    let line_index = context.document.contents(db).line_index(db);
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: result.value_kind,
             value: result.value,
         }),
-        range: Some(
-            context
-                .request
-                .main_document()
-                .line_index()
-                .line_col_lsp_range(result.range),
-        ),
+        range: Some(line_index.line_col_lsp_range(result.range)),
     })
 }
 

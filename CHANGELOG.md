@@ -5,7 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.3.2] - 20.11.2022
+## [Unreleased]
+
+### Changed
+
+- _BREAKING_: `texlab.rootDirectory` is now used as the folder path from which the compiler is executed
+  relative to the main document. By default it is equal to `"."`. For more information, please visit the wiki.
+- Improve performance of completion by a huge margin due to a faster filtering method used internally
+- Do not discover project files beyond the provided workspace folders
+- Try to guess the root directory by checking for files such as `.latexmkrc` or `Tectonic.toml` if `texlab.rootDirectory` is not set
+
+### Fixed
+
+- Update positions of reported build diagnostics when editing the affected line
+- Do not treat links to files as bidirectional by default. This prevents issues where `texlab` ends up compiling the wrong file
+  in projects with shared files ([#806](https://github.com/latex-lsp/texlab/issues/806), [#757](https://github.com/latex-lsp/texlab/issues/757), [#679](https://github.com/latex-lsp/texlab/issues/679))
+- Fix coverage of directories which need to be watched for changes ([#502](https://github.com/latex-lsp/texlab/issues/502), [#491](https://github.com/latex-lsp/texlab/issues/491))
+- Resolve links of the `import` package correctly
+- Use `filterText` of completion items when filtering internally ([#829](https://github.com/latex-lsp/texlab/issues/829))
+
+## [4.3.2] - 2022-11-20
 
 ### Fixed
 
@@ -15,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provide completion for more acronym commands ([#813](https://github.com/latex-lsp/texlab/issues/813))
 - Fix parsing acronym definitions ([#813](https://github.com/latex-lsp/texlab/issues/813))
 
-## [4.3.1] - 22.10.2022
+## [4.3.1] - 2022-10-22
 
 ### Fixed
 
@@ -25,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use the correct working directory and command line arguments when calling `latexindent` ([#645](https://github.com/latex-lsp/texlab/issues/645))
 - Fix publishing to CTAN
 
-## [4.3.0] - 25.09.2022
+## [4.3.0] - 2022-09-25
 
 ### Added
 
@@ -36,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve accuracy of the error locations reported by the TeX engine ([#738](https://github.com/latex-lsp/texlab/issues/738))
 - Reduce number of false positive errors reported by `texlab` ([#745](https://github.com/latex-lsp/texlab/issues/745))
 
-## [4.2.2] - 28.08.2022
+## [4.2.2] - 2022-08-28
 
 ### Fixed
 
@@ -44,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix detection of root document when sharing files between projects ([#679](https://github.com/latex-lsp/texlab/issues/679))
 - Fix text synchronization problem caused by file watcher ([#724](https://github.com/latex-lsp/texlab/issues/724))
 
-## [4.2.1] - 05.08.2022
+## [4.2.1] - 2022-08-05
 
 ### Fixed
 
@@ -52,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pass `chktexrc` files if they are not in the current directory ([#683](https://github.com/latex-lsp/texlab/issues/683))
 - Revert back to server-side file watching due to lack of client support ([#679](https://github.com/latex-lsp/texlab/issues/679))
 
-## [4.2.0] - 03.07.2022
+## [4.2.0] - 2022-07-03
 
 ### Added
 
@@ -69,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Parse incomplete server options correctly ([#651](https://github.com/latex-lsp/texlab/issues/651))
 
-## [4.1.0] - 12.06.2022
+## [4.1.0] - 2022-06-12
 
 ### Added
 
@@ -85,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow brackets in included file paths ([#639](https://github.com/latex-lsp/texlab/issues/639))
 - Allow commands in included file paths ([#641](https://github.com/latex-lsp/texlab/issues/641))
 
-## [4.0.0] - 25.05.2022
+## [4.0.0] - 2022-05-25
 
 ### Added
 
@@ -110,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow optional arguments in environment definitions ([#570](https://github.com/latex-lsp/texlab/issues/570))
 - Allow `=` in include paths ([#568](https://github.com/latex-lsp/texlab/issues/568))
 
-## [3.3.2] - 26.02.2022
+## [3.3.2] - 2022-02-26
 
 ### Fixed
 
@@ -125,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make directory path in `\import` optional ([#540](https://github.com/latex-lsp/texlab/issues/540))
 - Do not spam workspace/configuration requests ([#533](https://github.com/latex-lsp/texlab/issues/533))
 
-## [3.3.1] - 10.11.2021
+## [3.3.1] - 2021-11-10
 
 ### Fixed
 
@@ -134,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix a bug that sometimes causes the `aux` file to pick up the diagnostics of the `tex` file ([#502](https://github.com/latex-lsp/texlab/issues/502))
 - Fix a bug that sometimes prevents `log` files from being reanalyzed ([#502](https://github.com/latex-lsp/texlab/issues/502))
 
-## [3.3.0] - 10.10.2021
+## [3.3.0] - 2021-10-10
 
 ### Added
 
@@ -150,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent `texlab` from hanging because of unanswered configuration requests sent to Emacs ([#456](https://github.com/latex-lsp/texlab/issues/456))
 - Re-analyze the workspace if the initial configuration has been received late
 
-## [3.2.0] - 12.06.2021
+## [3.2.0] - 2021-06-12
 
 ### Added
 
@@ -169,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix conditional compilation of the `citation` feature.
 
-## [3.1.0] - 03.06.2021
+## [3.1.0] - 2021-06-03
 
 ### Added
 
@@ -187,14 +206,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-## [3.0.1] - 22.05.2021
+## [3.0.1] - 2021-05-22
 
 ### Fixed
 
 - Sometimes the log parser does not pick up errors from the log file ([#426](https://github.com/latex-lsp/texlab/issues/426))
 - Fix a bug involving characters that are not part of the ASCII charset ([#428](https://github.com/latex-lsp/texlab/issues/428))
 
-## [3.0.0] - 16.05.2021
+## [3.0.0] - 2021-05-16
 
 ### Added
 
@@ -227,13 +246,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hopefully fixes the ChkTeX spamming issue ([#186](https://github.com/latex-lsp/texlab/issues/186))
 - Reduce CPU-load when idle ([#400](https://github.com/latex-lsp/texlab/issues/400))
 
-## [2.2.2] - 10.01.2021
+## [2.2.2] - 2021-01-10
 
 ### Fixed
 
 - Fix compilation on `arm64-apple-darwin` (Apple Silicon) ([#343](https://github.com/latex-lsp/texlab/issues/343))
 
-## [2.2.1] - 06.01.2021
+## [2.2.1] - 2021-01-06
 
 ### Added
 
@@ -248,7 +267,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix compilation on `aarch64` and `armv7l` ([#289](https://github.com/latex-lsp/texlab/issues/289))
 
-## [2.2.0] - 27.05.2020
+## [2.2.0] - 2020-05-27
 
 ### Added
 
@@ -263,7 +282,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the ordering of completion items when using `lsp-mode` ([#227](https://github.com/latex-lsp/texlab/issues/227))
 - Fix preview when using custom class files ([#228](https://github.com/latex-lsp/texlab/issues/228))
 
-## [2.1.0] - 10.05.2020
+## [2.1.0] - 2020-05-10
 
 ### Added
 
@@ -276,7 +295,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix a parsing error that caused `texlab` to take 100% CPU usage in some cases ([#212](https://github.com/latex-lsp/texlab/issues/212))
 - Prevent building the same file multiple times at once
 
-## [2.0.0] - 20.04.2020
+## [2.0.0] - 2020-04-20
 
 ### Added
 
@@ -300,7 +319,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve performance of completion (when completing LaTeX commands)
 - Improve workspace detection algorithm
 
-## [1.10.0] - 11.02.2020
+## [1.10.0] - 2020-02-11
 
 ### Added
 
@@ -313,7 +332,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show all digits of chktex warning number ([#160](https://github.com/latex-lsp/texlab/issues/160))
 
-## [1.9.0] - 30.12.2019
+## [1.9.0] - 2019-12-30
 
 ### Added
 
@@ -329,7 +348,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Run LaTeX linter when opening a file if enabled
 - Handle `\hyphen` when rendering citations
 
-## [1.8.0] - 01.12.2019
+## [1.8.0] - 2019-12-01
 
 ### Added
 
@@ -341,7 +360,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change license to GPLv3
 - Do not require Node.js when building the server (#[87](https://github.com/latex-lsp/texlab/issues/87))
 
-## [1.7.0] - 20.11.2019
+## [1.7.0] - 2019-11-20
 
 ### Added
 
@@ -362,7 +381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([#110](https://github.com/latex-lsp/texlab/issues/110))
 - Fix potential crash in "Goto Definition"
 
-## [1.6.0] - 29.09.2019
+## [1.6.0] - 2019-09-29
 
 ### Added
 
@@ -388,7 +407,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix filter text of citations with braces inside a field
 - Handle invalid UTF-8 in log files
 
-## [1.5.0] - 27.08.2019
+## [1.5.0] - 2019-08-27
 
 ### Added
 
@@ -404,7 +423,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not run ChkTeX on BibTeX files
 - Fix build freezes on Windows ([#63](https://github.com/latex-lsp/texlab/issues/63))
 
-## [1.4.1] - 22.08.2019
+## [1.4.1] - 2019-08-22
 
 ### Added
 
@@ -416,7 +435,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix rendering of theorem labels
 - Handle Windows paths correctly
 
-## [1.4.0] - 20.08.2019
+## [1.4.0] - 2019-08-20
 
 ### Added
 
@@ -430,7 +449,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use LocationLink for "peek definition" when possible
 - Node.js is no longer a dependency
 
-## [1.3.0] - 06.08.2019
+## [1.3.0] - 2019-08-06
 
 ### Added
 
@@ -445,7 +464,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Build cancellation has been reimplemented ([#47](https://github.com/latex-lsp/texlab/issues/47), [#63](https://github.com/latex-lsp/texlab/issues/63))
 
-## [1.2.0] - 23.07.2019
+## [1.2.0] - 2019-07-23
 
 ### Added
 
@@ -456,7 +475,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The index mechanism has been removed. Packages are now indexed with a script beforehand.
 
-## [1.1.0] - 13.07.2019
+## [1.1.0] - 2019-07-13
 
 ### Added
 
@@ -474,7 +493,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix preselect for environments with missing braces
 
-## [1.0.0] - 04.07.2019
+## [1.0.0] - 2019-07-04
 
 ### Added
 
@@ -511,14 +530,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not depend on the `workspace/configuration` request (#[22](https://github.com/latex-lsp/texlab/issues/22))
 - Prevent completion from triggering too often
 
-## [0.4.2] - 10.04.2019
+## [0.4.2] - 2019-04-10
 
 ### Fixed
 
 - Fix completion inside `\( \)`. ([#14](https://github.com/latex-lsp/texlab/issues/14))
 - Do not crash on invalid requests.
 
-## [0.4.1] - 30.03.2019
+## [0.4.1] - 2019-03-30
 
 ### Changed
 
@@ -528,7 +547,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improve MiKTeX support ([#8](https://github.com/latex-lsp/texlab-vscode/issues/8))
 
-## [0.4.0] - 09.03.2019
+## [0.4.0] - 2019-03-09
 
 ### Added
 
@@ -540,7 +559,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve completion for includes
 - Improve performance of completion
 
-## [0.3.0] - 05.03.2019
+## [0.3.0] - 2019-03-05
 
 ### Added
 
@@ -557,7 +576,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix crash when hovering over invalid BibTeX entries
 - Fix a bug where the completion does not get triggered correctly
 
-## [0.2.0] - 01.03.2019
+## [0.2.0] - 2019-03-01
 
 ### Added
 
@@ -570,14 +589,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix completion of file includes
 - Prevent server crash when opening a locked file
 
-## [0.1.2] - 16.02.2019
+## [0.1.2] - 2019-02-16
 
 ### Fixed
 
 - Do not display an error when PDF viewers return a non-zero
   exit code while performing forward search
 
-## [0.1.1] - 15.02.2019
+## [0.1.1] - 2019-02-15
 
 ### Changed
 
@@ -587,6 +606,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix rendering of completion symbols
 
-## [0.1.0] - 15.02.2019
+## [0.1.0] - 2019-02-15
 
 - Initial release

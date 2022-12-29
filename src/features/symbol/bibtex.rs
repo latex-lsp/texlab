@@ -1,82 +1,87 @@
-use lsp_types::DocumentSymbolParams;
 use rowan::ast::AstNode;
 
 use crate::{
-    features::FeatureRequest,
+    db::Document,
     syntax::bibtex::{self, HasName, HasType},
-    BibtexEntryTypeCategory, LineIndexExt, LANGUAGE_DATA,
+    util::{
+        lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},
+        line_index::LineIndex,
+        line_index_ext::LineIndexExt,
+    },
+    Db,
 };
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_bibtex_symbols(
-    request: &FeatureRequest<DocumentSymbolParams>,
+pub fn find_symbols(db: &dyn Db, document: Document, buf: &mut Vec<InternalSymbol>) -> Option<()> {
+    let data = document.parse(db).as_bib()?;
+    let line_index = document.contents(db).line_index(db);
+    for node in data.root(db).children() {
+        process_string(node.clone(), line_index, buf)
+            .or_else(|| process_entry(node, line_index, buf));
+    }
+
+    Some(())
+}
+
+fn process_string(
+    node: bibtex::SyntaxNode,
+    line_index: &LineIndex,
     buf: &mut Vec<InternalSymbol>,
 ) -> Option<()> {
-    let main_document = request.main_document();
-    let data = main_document.data().as_bibtex()?;
+    let string = bibtex::StringDef::cast(node)?;
+    let name = string.name_token()?;
+    buf.push(InternalSymbol {
+        name: name.text().into(),
+        label: None,
+        kind: InternalSymbolKind::String,
+        deprecated: false,
+        full_range: line_index.line_col_lsp_range(string.syntax().text_range()),
+        selection_range: line_index.line_col_lsp_range(name.text_range()),
+        children: Vec::new(),
+    });
 
-    for node in bibtex::SyntaxNode::new_root(data.green.clone()).children() {
-        if let Some(string) = bibtex::StringDef::cast(node.clone()) {
-            if let Some(name) = string.name_token() {
-                buf.push(InternalSymbol {
-                    name: name.text().into(),
-                    label: None,
-                    kind: InternalSymbolKind::String,
-                    deprecated: false,
-                    full_range: main_document
-                        .line_index()
-                        .line_col_lsp_range(string.syntax().text_range()),
-                    selection_range: main_document
-                        .line_index()
-                        .line_col_lsp_range(name.text_range()),
-                    children: Vec::new(),
-                })
-            }
-        } else if let Some(entry) = bibtex::Entry::cast(node) {
-            if let Some(ty) = entry.type_token() {
-                if let Some(key) = entry.name_token() {
-                    let mut children = Vec::new();
-                    for field in entry.fields() {
-                        if let Some(name) = field.name_token() {
-                            let symbol = InternalSymbol {
-                                name: name.text().to_string(),
-                                label: None,
-                                kind: InternalSymbolKind::Field,
-                                deprecated: false,
-                                full_range: main_document
-                                    .line_index()
-                                    .line_col_lsp_range(field.syntax().text_range()),
-                                selection_range: main_document
-                                    .line_index()
-                                    .line_col_lsp_range(name.text_range()),
-                                children: Vec::new(),
-                            };
-                            children.push(symbol);
-                        }
-                    }
+    Some(())
+}
 
-                    let category = LANGUAGE_DATA
-                        .find_entry_type(&ty.text()[1..])
-                        .map(|ty| ty.category)
-                        .unwrap_or(BibtexEntryTypeCategory::Misc);
-
-                    buf.push(InternalSymbol {
-                        name: key.to_string(),
-                        label: None,
-                        kind: InternalSymbolKind::Entry(category),
-                        deprecated: false,
-                        full_range: main_document
-                            .line_index()
-                            .line_col_lsp_range(entry.syntax().text_range()),
-                        selection_range: main_document
-                            .line_index()
-                            .line_col_lsp_range(key.text_range()),
-                        children,
-                    });
-                }
-            }
+fn process_entry(
+    node: bibtex::SyntaxNode,
+    line_index: &LineIndex,
+    buf: &mut Vec<InternalSymbol>,
+) -> Option<()> {
+    let entry = bibtex::Entry::cast(node)?;
+    let ty = entry.type_token()?;
+    let key = entry.name_token()?;
+    let mut children = Vec::new();
+    for field in entry.fields() {
+        if let Some(name) = field.name_token() {
+            let symbol = InternalSymbol {
+                name: name.text().to_string(),
+                label: None,
+                kind: InternalSymbolKind::Field,
+                deprecated: false,
+                full_range: line_index.line_col_lsp_range(field.syntax().text_range()),
+                selection_range: line_index.line_col_lsp_range(name.text_range()),
+                children: Vec::new(),
+            };
+            children.push(symbol);
         }
     }
+
+    let category = LANGUAGE_DATA
+        .find_entry_type(&ty.text()[1..])
+        .map(|ty| ty.category)
+        .unwrap_or(BibtexEntryTypeCategory::Misc);
+
+    buf.push(InternalSymbol {
+        name: key.to_string(),
+        label: None,
+        kind: InternalSymbolKind::Entry(category),
+        deprecated: false,
+        full_range: line_index.line_col_lsp_range(entry.syntax().text_range()),
+        selection_range: line_index.line_col_lsp_range(key.text_range()),
+        children,
+    });
+
     Some(())
 }

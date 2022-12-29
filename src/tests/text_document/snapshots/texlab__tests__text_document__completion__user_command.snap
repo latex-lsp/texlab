@@ -1,0 +1,17 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\foobar\n%SRC \\fooba\n%CUR    ^\n%1.1  ^^^^^\n%SRC \\begin{foo}\n%SRC \\end{foo}\n%SRC \\begin{fo}\n\"#)?"
+---
+[
+  {
+    "detail": "user-defined",
+    "kind": 1,
+    "label": "foobar",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "foobar"
+    }
+  }
+]

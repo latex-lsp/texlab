@@ -1,0 +1,56 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\color{re}\n%CUR         ^\n%1.1        ^^\"#)?"
+---
+[
+  {
+    "kind": 1,
+    "label": "red",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "red"
+    }
+  },
+  {
+    "kind": 1,
+    "label": "Red",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "Red"
+    }
+  },
+  {
+    "kind": 1,
+    "label": "RedOrange",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "RedOrange"
+    }
+  },
+  {
+    "kind": 1,
+    "label": "RedViolet",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "RedViolet"
+    }
+  },
+  {
+    "kind": 1,
+    "label": "BrickRed",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "BrickRed"
+    }
+  }
+]

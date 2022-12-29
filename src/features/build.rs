@@ -1,33 +1,29 @@
+mod progress;
+
 use std::{
     io::{BufRead, BufReader, Read},
-    path::Path,
-    process::{Command, Stdio},
-    sync::{Arc, Mutex},
+    path::{Path, PathBuf},
+    process::Stdio,
     thread::{self, JoinHandle},
 };
 
-use anyhow::Result;
-use crossbeam_channel::{Receiver, Sender};
-use dashmap::DashMap;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use lsp_types::{
-    notification::{LogMessage, Progress},
-    LogMessageParams, NumberOrString, Position, ProgressParams, ProgressParamsValue,
-    TextDocumentIdentifier, Url, WorkDoneProgress, WorkDoneProgressBegin,
-    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
-};
+use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifier, Url};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use uuid::Uuid;
 
-use crate::{client::LspClient, ClientCapabilitiesExt};
-
-use super::{FeatureRequest, ForwardSearch};
+use crate::{client::LspClient, db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildParams {
     pub text_document: TextDocumentIdentifier,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildResult {
+    pub status: BuildStatus,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
@@ -39,218 +35,132 @@ pub enum BuildStatus {
     CANCELLED = 3,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BuildResult {
-    pub status: BuildStatus,
-}
-
-struct ProgressReporter<'a> {
-    supports_progress: bool,
+#[derive(Debug)]
+pub struct Command {
+    uri: Url,
+    progress: bool,
+    executable: String,
+    args: Vec<String>,
+    working_dir: PathBuf,
     client: LspClient,
-    token: &'a str,
 }
 
-impl<'a> ProgressReporter<'a> {
-    pub fn start(&self, uri: &Url) -> Result<()> {
-        if self.supports_progress {
-            self.client
-                .send_request::<lsp_types::request::WorkDoneProgressCreate>(
-                    WorkDoneProgressCreateParams {
-                        token: NumberOrString::String(self.token.to_string()),
-                    },
-                )?;
-
-            self.client.send_notification::<Progress>(ProgressParams {
-                token: NumberOrString::String(self.token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(
-                    WorkDoneProgressBegin {
-                        title: "Building".to_string(),
-                        message: Some(uri.as_str().to_string()),
-                        cancellable: Some(false),
-                        percentage: None,
-                    },
-                )),
-            })?;
+impl Command {
+    pub fn new(db: &dyn Db, uri: Url, client: LspClient) -> Option<Self> {
+        let workspace = Workspace::get(db);
+        let document = match workspace.lookup_uri(db, &uri) {
+            Some(child) => workspace
+                .parents(db, child)
+                .iter()
+                .next()
+                .copied()
+                .unwrap_or(child),
+            None => return None,
         };
-        Ok(())
-    }
-}
 
-impl<'a> Drop for ProgressReporter<'a> {
-    fn drop(&mut self) {
-        if self.supports_progress {
-            drop(self.client.send_notification::<Progress>(ProgressParams {
-                token: NumberOrString::String(self.token.to_string()),
-                value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
-                    message: None,
-                })),
-            }));
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct BuildEngine {
-    lock: Mutex<()>,
-    pub positions_by_uri: DashMap<Arc<Url>, Position>,
-}
-
-impl BuildEngine {
-    pub fn build(
-        &self,
-        request: FeatureRequest<BuildParams>,
-        client: LspClient,
-    ) -> Result<BuildResult> {
-        let lock = self.lock.lock().unwrap();
-
-        let document = request
-            .workspace
-            .iter()
-            .find(|document| {
-                document
-                    .data()
-                    .as_latex()
-                    .map_or(false, |data| data.extras.has_document_environment)
-            })
-            .unwrap_or_else(|| request.main_document());
-
-        if !document.can_be_compiled() {
-            log::info!(
-                "Document {} cannot be compiled; skipping...",
-                document.uri()
-            );
-
-            return Ok(BuildResult {
-                status: BuildStatus::SUCCESS,
-            });
+        if document.location(db).path(db).is_none() {
+            log::warn!("Document {uri} cannot be compiled; skipping...");
+            return None;
         }
 
-        if document.uri().scheme() != "file" {
-            return Ok(BuildResult {
-                status: BuildStatus::FAILURE,
-            });
-        }
-
-        let path = document.uri().to_file_path().unwrap();
-
-        let supports_progress = request
-            .workspace
-            .environment
-            .client_capabilities
-            .has_work_done_progress_support();
-
-        let token = format!("texlab-build-{}", Uuid::new_v4());
-        let progress_reporter = ProgressReporter {
-            supports_progress,
-            client: client.clone(),
-            token: &token,
-        };
-        progress_reporter.start(document.uri())?;
-
-        let options = &request.workspace.environment.options;
-
-        let build_dir = options
-            .root_directory
-            .as_ref()
-            .map(AsRef::as_ref)
-            .or_else(|| path.parent())
-            .unwrap();
-
-        let args: Vec<_> = options
-            .build
+        let options = &workspace.options(db).build;
+        let executable = options.executable.0.clone();
+        let path = document.location(db).path(db).as_deref().unwrap();
+        let args = options
             .args
             .0
             .iter()
-            .map(|arg| replace_placeholder(arg.clone(), &path))
+            .map(|arg| replace_placeholder(arg, path))
             .collect();
 
-        let mut process = Command::new(&options.build.executable.0)
-            .args(args)
+        let working_dir = workspace
+            .working_dir(db, document.directory(db))
+            .path(db)
+            .clone()?;
+
+        Some(Self {
+            uri: document.location(db).uri(db).clone(),
+            progress: workspace
+                .client_capabilities(db)
+                .has_work_done_progress_support(),
+            executable,
+            args,
+            working_dir,
+            client,
+        })
+    }
+
+    pub fn run(self) -> BuildStatus {
+        let reporter = if self.progress {
+            let inner = progress::Reporter::new(&self.client);
+            inner.start(&self.uri).expect("report progress");
+            Some(inner)
+        } else {
+            None
+        };
+
+        let mut process = match std::process::Command::new(&self.executable)
+            .args(self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(build_dir)
-            .spawn()?;
-
-        let (exit_sender, exit_receiver) = crossbeam_channel::bounded(1);
-        let log_handle = capture_output(&mut process, client, exit_receiver);
-        let success = process.wait().map(|status| status.success())?;
-        exit_sender.send(())?;
-        drop(exit_sender);
-
-        log_handle.join().unwrap();
-        let status = if success {
-            BuildStatus::SUCCESS
-        } else {
-            BuildStatus::ERROR
-        };
-
-        drop(progress_reporter);
-        drop(lock);
-
-        if let Some((executable, args)) = options
-            .forward_search
-            .executable
-            .as_deref()
-            .zip(options.forward_search.args.as_deref())
-            .filter(|_| options.build.forward_search_after)
+            .current_dir(self.working_dir)
+            .spawn()
         {
-            let position = self
-                .positions_by_uri
-                .get(&request.uri)
-                .map(|entry| *entry.value())
-                .unwrap_or_default();
-
-            ForwardSearch::builder()
-                .executable(executable)
-                .args(args)
-                .line(position.line)
-                .workspace(&request.workspace)
-                .tex_uri(&request.uri)
-                .build()
-                .execute();
-        }
-
-        Ok(BuildResult { status })
-    }
-}
-
-fn capture_output(
-    process: &mut std::process::Child,
-    client: LspClient,
-    exit_receiver: Receiver<()>,
-) -> JoinHandle<()> {
-    let (log_sender, log_receiver) = crossbeam_channel::unbounded();
-    track_output(process.stdout.take().unwrap(), log_sender.clone());
-    track_output(process.stderr.take().unwrap(), log_sender);
-    thread::spawn(move || loop {
-        crossbeam_channel::select! {
-            recv(&log_receiver) -> message => {
-                if let Ok(message) = message {
-                    client.send_notification::<LogMessage>(
-                        LogMessageParams {
-                            message,
-                            typ: lsp_types::MessageType::LOG,
-                        },
-                    )
-                    .unwrap();
-                }
-            },
-            recv(&exit_receiver) -> _ => break,
+            Ok(process) => process,
+            Err(_) => {
+                log::error!("Failed to spawn process: {:?}", self.executable);
+                return BuildStatus::FAILURE;
+            }
         };
-    })
-}
 
-fn replace_placeholder(arg: String, file: &Path) -> String {
-    if arg.starts_with('"') || arg.ends_with('"') {
-        arg
-    } else {
-        arg.replace("%f", &file.to_string_lossy())
+        let (line_sender, line_receiver) = flume::unbounded();
+        let (exit_sender, exit_receiver) = flume::unbounded();
+        track_output(process.stderr.take().unwrap(), line_sender.clone());
+        track_output(process.stdout.take().unwrap(), line_sender);
+        let client = self.client.clone();
+        let handle = std::thread::spawn(move || {
+            let typ = lsp_types::MessageType::LOG;
+
+            loop {
+                let done = flume::Selector::new()
+                    .recv(&line_receiver, |line| match line {
+                        Ok(message) => {
+                            let params = LogMessageParams { message, typ };
+                            client.send_notification::<LogMessage>(params).unwrap();
+                            false
+                        }
+                        Err(_) => true,
+                    })
+                    .recv(&exit_receiver, |_| true)
+                    .wait();
+
+                if done {
+                    break;
+                }
+            }
+        });
+
+        let status = process.wait().map_or(BuildStatus::FAILURE, |result| {
+            if result.success() {
+                BuildStatus::SUCCESS
+            } else {
+                BuildStatus::ERROR
+            }
+        });
+
+        let _ = exit_sender.send(());
+        handle.join().unwrap();
+
+        drop(reporter);
+        status
     }
 }
 
-fn track_output(output: impl Read + Send + 'static, sender: Sender<String>) -> JoinHandle<()> {
+fn track_output(
+    output: impl Read + Send + 'static,
+    sender: flume::Sender<String>,
+) -> JoinHandle<()> {
     let reader = BufReader::new(
         DecodeReaderBytesBuilder::new()
             .encoding(Some(encoding_rs::UTF_8))
@@ -264,4 +174,12 @@ fn track_output(output: impl Read + Send + 'static, sender: Sender<String>) -> J
             sender.send(line.unwrap()).unwrap();
         }
     })
+}
+
+fn replace_placeholder(arg: &str, file: &Path) -> String {
+    if arg.starts_with('"') || arg.ends_with('"') {
+        arg.to_string()
+    } else {
+        arg.replace("%f", &file.to_string_lossy())
+    }
 }

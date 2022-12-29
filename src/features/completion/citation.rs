@@ -1,26 +1,17 @@
-use std::sync::Arc;
-
-use lsp_types::CompletionParams;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    features::{cursor::CursorContext, lsp_kinds::Structure},
-    syntax::{
-        bibtex::{self, HasName, HasType},
-        latex,
-    },
-    BibtexEntryTypeCategory, Document, LANGUAGE_DATA,
+    syntax::{bibtex, latex},
+    util::cursor::CursorContext,
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_citations<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let token = context.cursor.as_latex()?;
+    let token = context.cursor.as_tex()?;
 
     let range = if token.kind() == latex::WORD {
         latex::Key::cast(token.parent()?)
@@ -36,15 +27,14 @@ pub fn complete_citations<'a>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_bibtex() {
-            for entry in bibtex::SyntaxNode::new_root(data.green.clone())
+    for document in context.related() {
+        if let Some(data) = document.parse(context.db).as_bib() {
+            for entry in data
+                .root(context.db)
                 .children()
                 .filter_map(bibtex::Entry::cast)
             {
-                if let Some(item) = make_item(&document, &entry, range) {
-                    items.push(item);
-                }
+                builder.citation(range, document, &entry);
             }
         }
     }
@@ -52,14 +42,14 @@ pub fn complete_citations<'a>(
     Some(())
 }
 
-fn check_citation(context: &CursorContext<CompletionParams>) -> Option<()> {
+fn check_citation(context: &CursorContext) -> Option<()> {
     let (_, _, group) = context.find_curly_group_word_list()?;
     latex::Citation::cast(group.syntax().parent()?)?;
     Some(())
 }
 
-fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
-    let token = context.cursor.as_latex()?;
+fn check_acronym(context: &CursorContext) -> Option<()> {
+    let token = context.cursor.as_tex()?;
 
     let pair = token
         .parent_ancestors()
@@ -71,45 +61,3 @@ fn check_acronym(context: &CursorContext<CompletionParams>) -> Option<()> {
     latex::AcronymDeclaration::cast(pair.syntax().parent()?.parent()?.parent()?)?;
     Some(())
 }
-
-fn make_item(
-    document: &Document,
-    entry: &bibtex::Entry,
-    range: TextRange,
-) -> Option<InternalCompletionItem<'static>> {
-    let key = entry.name_token()?.to_string();
-    let ty = LANGUAGE_DATA
-        .find_entry_type(&entry.type_token()?.text()[1..])
-        .map_or_else(
-            || Structure::Entry(BibtexEntryTypeCategory::Misc),
-            |ty| Structure::Entry(ty.category),
-        );
-
-    let entry_code = entry.syntax().text().to_string();
-    let text = format!(
-        "{} {}",
-        key,
-        WHITESPACE_REGEX
-            .replace_all(
-                &entry_code
-                    .replace('{', " ")
-                    .replace('}', " ")
-                    .replace(',', " ")
-                    .replace('=', " "),
-                " "
-            )
-            .trim(),
-    );
-
-    Some(InternalCompletionItem::new(
-        range,
-        InternalCompletionItemData::Citation {
-            uri: Arc::clone(document.uri()),
-            key,
-            text,
-            ty,
-        },
-    ))
-}
-
-static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());

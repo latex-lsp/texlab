@@ -1,0 +1,63 @@
+---
+source: src/tests/text_document/completion.rs
+expression: "complete(r#\"\n%TEX main.tex\n%SRC \\\n%CUR  ^\"#)?"
+---
+[
+  {
+    "detail": "built-in",
+    "kind": 1,
+    "label": "!",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "!"
+    }
+  },
+  {
+    "detail": "built-in",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "\"",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "\""
+    }
+  },
+  {
+    "detail": "built-in",
+    "kind": 1,
+    "label": "#",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "#"
+    }
+  },
+  {
+    "detail": "$, built-in",
+    "documentation": "[documentation]",
+    "kind": 1,
+    "label": "$",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "$"
+    }
+  },
+  {
+    "detail": "built-in",
+    "kind": 1,
+    "label": "%",
+    "preselect": false,
+    "sortText": "[sortText]",
+    "textEdit": {
+      "range": "[range]",
+      "newText": "%"
+    }
+  }
+]

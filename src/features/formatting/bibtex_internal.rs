@@ -1,63 +1,57 @@
-use lsp_types::{DocumentFormattingParams, TextEdit};
+use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
-    features::FeatureRequest,
+    db::{Document, Workspace},
     syntax::bibtex::{self, HasName, HasType, HasValue},
-    LineIndex, LineIndexExt,
+    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
+    Db,
 };
 
 pub fn format_bibtex_internal(
-    request: &FeatureRequest<DocumentFormattingParams>,
+    db: &dyn Db,
+    document: Document,
+    options: &FormattingOptions,
 ) -> Option<Vec<TextEdit>> {
     let mut indent = String::new();
-    if request.params.options.insert_spaces {
-        for _ in 0..request.params.options.tab_size {
+
+    if options.insert_spaces {
+        for _ in 0..options.tab_size {
             indent.push(' ');
         }
     } else {
         indent.push('\t');
     }
 
-    let line_length = request
-        .workspace
-        .environment
-        .options
+    let line_length = Workspace::get(db)
+        .options(db)
         .formatter_line_length
-        .map(|value| {
+        .map_or(80, |value| {
             if value <= 0 {
                 usize::MAX
             } else {
                 value as usize
             }
-        })
-        .unwrap_or(80);
+        });
 
-    let document = request.main_document();
-    let data = document.data().as_bibtex()?;
+    let line_index = document.contents(db).line_index(db);
+    let data = document.parse(db).as_bib()?;
     let mut edits = Vec::new();
 
-    for node in bibtex::SyntaxNode::new_root(data.green.clone())
-        .children()
-        .filter(|node| {
-            matches!(
-                node.kind(),
-                bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
-            )
-        })
-    {
+    for node in data.root(db).children().filter(|node| {
+        matches!(
+            node.kind(),
+            bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
+        )
+    }) {
         let range = node.text_range();
 
-        let mut formatter = Formatter::new(
-            indent.clone(),
-            request.params.options.tab_size,
-            line_length,
-            document.line_index(),
-        );
+        let mut formatter =
+            Formatter::new(indent.clone(), options.tab_size, line_length, line_index);
 
         formatter.visit_node(node);
         edits.push(TextEdit {
-            range: document.line_index().line_col_lsp_range(range),
+            range: line_index.line_col_lsp_range(range),
             new_text: formatter.output,
         });
     }

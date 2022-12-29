@@ -1,83 +1,61 @@
-use lsp_types::CompletionParams;
 use rowan::{ast::AstNode, TextRange};
 
 use crate::{
-    features::{cursor::CursorContext, lsp_kinds::Structure},
-    render_label,
     syntax::latex,
-    LabelledObject,
+    util::{self, cursor::CursorContext, label::LabeledObject, lsp_enums::Structure},
 };
 
-use super::types::{InternalCompletionItem, InternalCompletionItemData};
+use super::builder::CompletionBuilder;
 
-pub fn complete_labels<'a>(
-    context: &'a CursorContext<CompletionParams>,
-    items: &mut Vec<InternalCompletionItem<'a>>,
+pub fn complete<'db>(
+    context: &'db CursorContext,
+    builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
-    for document in context.request.workspace.iter() {
-        if let Some(data) = document.data().as_latex() {
-            for label in latex::SyntaxNode::new_root(data.green.clone())
-                .descendants()
-                .filter_map(latex::LabelDefinition::cast)
+    let db = context.db;
+    for document in context.related() {
+        if let Some(data) = document.parse(db).as_tex() {
+            for label in data
+                .analyze(db)
+                .labels(db)
+                .iter()
+                .filter(|label| label.origin(db).as_definition().is_some())
             {
-                if let Some(name) = label
-                    .name()
-                    .and_then(|name| name.key())
-                    .map(|name| name.to_string())
-                {
-                    match render_label(&context.request.workspace, &name, Some(label)) {
-                        Some(rendered_label) => {
-                            let kind = match &rendered_label.object {
-                                LabelledObject::Section { .. } => Structure::Section,
-                                LabelledObject::Float { .. } => Structure::Float,
-                                LabelledObject::Theorem { .. } => Structure::Theorem,
-                                LabelledObject::Equation => Structure::Equation,
-                                LabelledObject::EnumItem => Structure::Item,
-                            };
+                match util::label::render(db, document, *label) {
+                    Some(rendered_label) => {
+                        let kind = match &rendered_label.object {
+                            LabeledObject::Section { .. } => Structure::Section,
+                            LabeledObject::Float { .. } => Structure::Float,
+                            LabeledObject::Theorem { .. } => Structure::Theorem,
+                            LabeledObject::Equation => Structure::Equation,
+                            LabeledObject::EnumItem => Structure::Item,
+                        };
 
-                            if is_math && kind != Structure::Equation {
-                                continue;
-                            }
-
-                            let header = rendered_label.detail();
-                            let footer = match &rendered_label.object {
-                                LabelledObject::Float { caption, .. } => Some(caption.clone()),
-                                _ => None,
-                            };
-
-                            let text = format!("{} {}", name, rendered_label.reference());
-
-                            let item = InternalCompletionItem::new(
-                                range,
-                                InternalCompletionItemData::Label {
-                                    name,
-                                    kind,
-                                    header,
-                                    footer,
-                                    text,
-                                },
-                            );
-                            items.push(item);
+                        if is_math && kind != Structure::Equation {
+                            continue;
                         }
-                        None => {
-                            let kind = Structure::Label;
-                            let header = None;
-                            let footer = None;
-                            let text = name.to_string();
-                            let item = InternalCompletionItem::new(
-                                range,
-                                InternalCompletionItemData::Label {
-                                    name,
-                                    kind,
-                                    header,
-                                    footer,
-                                    text,
-                                },
-                            );
-                            items.push(item);
-                        }
+
+                        let header = rendered_label.detail(db);
+                        let footer = match &rendered_label.object {
+                            LabeledObject::Float { caption, .. } => Some(caption.clone()),
+                            _ => None,
+                        };
+
+                        let text = format!(
+                            "{} {}",
+                            label.name(db).text(db),
+                            rendered_label.reference(db)
+                        );
+
+                        builder.label(range, label.name(db).text(db), kind, header, footer, text);
+                    }
+                    None => {
+                        let kind = Structure::Label;
+                        let header = None;
+                        let footer = None;
+                        let text = label.name(db).text(db).clone();
+                        builder.label(range, label.name(db).text(db), kind, header, footer, text);
                     }
                 }
             }
@@ -87,14 +65,14 @@ pub fn complete_labels<'a>(
     Some(())
 }
 
-fn find_reference(context: &CursorContext<CompletionParams>) -> Option<(TextRange, bool)> {
+fn find_reference(context: &CursorContext) -> Option<(TextRange, bool)> {
     let (_, range, group) = context.find_curly_group_word_list()?;
     let reference = latex::LabelReference::cast(group.syntax().parent()?)?;
     let is_math = reference.command()?.text() == "\\eqref";
     Some((range, is_math))
 }
 
-fn find_reference_range(context: &CursorContext<CompletionParams>) -> Option<(TextRange, bool)> {
+fn find_reference_range(context: &CursorContext) -> Option<(TextRange, bool)> {
     let (_, range, group) = context.find_curly_group_word()?;
     latex::LabelReferenceRange::cast(group.syntax().parent()?)?;
     Some((range, false))

@@ -66,7 +66,9 @@ fn extract_matches(
                 .map(|result| result.as_str().parse::<u32>().unwrap() - 1);
 
             let hint: Option<String> = if line.is_some() {
-                captures.name("hint").map(|r| String::from(r.as_str()))
+                captures
+                    .name("hint")
+                    .map(|r| String::from(r.as_str().trim()))
             } else {
                 None
             };
@@ -124,7 +126,7 @@ impl FileRange {
     fn create(log: &str, result: Match) -> Self {
         let mut balance = 1;
         let mut end = result.start() + 1;
-        let chars = (&log[result.start() + 1..]).chars();
+        let chars = log[result.start() + 1..].chars();
         for c in chars {
             if balance <= 0 {
                 break;

@@ -1,7 +1,7 @@
 use isocountry::CountryCode;
 use itertools::Itertools;
+use lsp_types::Url;
 use titlecase::titlecase;
-use url::Url;
 
 use crate::syntax::bibtex;
 

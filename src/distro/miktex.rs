@@ -1,20 +1,11 @@
 use std::{
     ffi::OsStr,
     fs,
-    io::{self, Cursor},
+    io::{self, Cursor, Read},
     path::{Path, PathBuf},
 };
 
 use anyhow::{Context, Result};
-use byteorder::{LittleEndian, ReadBytesExt};
-
-use super::kpsewhich::{self, Resolver};
-
-pub fn load_resolver() -> Result<Resolver> {
-    let root_directories = kpsewhich::root_directories()?;
-    let resolver = kpsewhich::parse_database(&root_directories, read_database)?;
-    Ok(resolver)
-}
 
 const DATABASE_PATH: &str = "miktex/data/le";
 const FNDB_SIGNATURE: u32 = 0x42_44_4e_46;
@@ -23,7 +14,7 @@ const FNDB_TABLE_POINTER_OFFSET: u32 = 4 * FNDB_WORD_SIZE;
 const FNDB_TABLE_SIZE_OFFSET: u32 = 6 * FNDB_WORD_SIZE;
 const FNDB_ENTRY_SIZE: u32 = 4 * FNDB_WORD_SIZE;
 
-fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
+pub(super) fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
     let database_directory = directory.join(DATABASE_PATH);
     if !database_directory.exists() {
         return Ok(Vec::new());
@@ -36,27 +27,28 @@ fn read_database(directory: &Path) -> Result<Vec<PathBuf>> {
             database.extend(parse_database(&bytes).context("parsing kpsewhich database")?);
         }
     }
+
     Ok(database)
 }
 
 fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
     let mut reader = Cursor::new(bytes);
-    if reader.read_u32::<LittleEndian>()? != FNDB_SIGNATURE {
+    if read_u32(&mut reader)? != FNDB_SIGNATURE {
         return Err(io::ErrorKind::InvalidData.into());
     }
 
     reader.set_position(u64::from(FNDB_TABLE_POINTER_OFFSET));
-    let table_address = reader.read_u32::<LittleEndian>()?;
+    let table_address = read_u32(&mut reader)?;
 
     reader.set_position(u64::from(FNDB_TABLE_SIZE_OFFSET));
-    let table_size = reader.read_u32::<LittleEndian>()?;
+    let table_size = read_u32(&mut reader)?;
 
     let mut files = Vec::new();
     for i in 0..table_size {
         let offset = table_address + i * FNDB_ENTRY_SIZE as u32;
         reader.set_position(u64::from(offset));
-        let file_name_offset = reader.read_u32::<LittleEndian>()? as usize;
-        let directory_offset = reader.read_u32::<LittleEndian>()? as usize;
+        let file_name_offset = read_u32(&mut reader)? as usize;
+        let directory_offset = read_u32(&mut reader)? as usize;
         let file_name = read_string(bytes, file_name_offset)?;
         let directory = read_string(bytes, directory_offset)?;
 
@@ -77,4 +69,10 @@ fn read_string(bytes: &[u8], offset: usize) -> io::Result<&str> {
 
     std::str::from_utf8(&bytes[offset..offset + length])
         .map_err(|_| io::ErrorKind::InvalidData.into())
+}
+
+fn read_u32(reader: &mut Cursor<&[u8]>) -> io::Result<u32> {
+    let mut buf = [0u8; std::mem::size_of::<u32>()];
+    reader.read_exact(&mut buf)?;
+    Ok(u32::from_le_bytes(buf))
 }
