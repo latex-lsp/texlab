@@ -74,7 +74,7 @@ unicode-normalization = "0.1.22"
 
 [dependencies.salsa]
 git = "https://github.com/salsa-rs/salsa"
-rev = "252d21e358979cd684666ebc32d2bc49d6f1d3f0"
+rev = "20c7834ff34fd00a41b59bec61f3d5c85ea3abd4"
 package = "salsa-2022"
 
 [dev-dependencies]
