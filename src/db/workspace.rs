@@ -161,6 +161,8 @@ const SPECIAL_ENTRIES: &[&str] = &[
     "latexmkrc",
     ".chktexrc",
     "chktexrc",
+    ".texlabroot",
+    "texlabroot",
 ];
 
 #[salsa::tracked]
