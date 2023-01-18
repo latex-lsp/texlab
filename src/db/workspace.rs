@@ -154,16 +154,7 @@ impl Workspace {
     }
 }
 
-const SPECIAL_ENTRIES: &[&str] = &[
-    ".git",
-    "Tectonic.toml",
-    ".latexmkrc",
-    "latexmkrc",
-    ".chktexrc",
-    "chktexrc",
-    "texlabroot",
-    ".texlabroot",
-];
+const SPECIAL_ENTRIES: &[&str] = &["Tectonic.toml", "texlabroot", ".texlabroot"];
 
 #[salsa::tracked]
 impl Workspace {
