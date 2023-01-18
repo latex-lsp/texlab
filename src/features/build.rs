@@ -127,7 +127,7 @@ impl Command {
                     .recv(&line_receiver, |line| match line {
                         Ok(message) => {
                             let params = LogMessageParams { message, typ };
-                            client.send_notification::<LogMessage>(params).unwrap();
+                            let _ = client.send_notification::<LogMessage>(params);
                             false
                         }
                         Err(_) => true,
@@ -170,9 +170,10 @@ fn track_output(
     );
 
     thread::spawn(move || {
-        for line in reader.lines() {
-            sender.send(line.unwrap()).unwrap();
-        }
+        let _ = reader
+            .lines()
+            .flatten()
+            .try_for_each(|line| sender.send(line));
     })
 }
 

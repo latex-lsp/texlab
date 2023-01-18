@@ -678,9 +678,7 @@ impl Server {
         let client = self.client.clone();
         self.build_internal(uri, move |status| {
             let result = BuildResult { status };
-            client
-                .send_response(lsp_server::Response::new_ok(id, result))
-                .unwrap();
+            let _ = client.send_response(lsp_server::Response::new_ok(id, result));
         })?;
 
         Ok(())
@@ -710,7 +708,7 @@ impl Server {
 
             let status = compiler.run();
             if forward_search_after {
-                sender.send(InternalMessage::ForwardSearch(uri)).unwrap();
+                let _ = sender.send(InternalMessage::ForwardSearch(uri));
             }
 
             drop(guard);
@@ -727,9 +725,7 @@ impl Server {
         let client = self.client.clone();
         self.forward_search_internal(uri, Some(params.position), move |status| {
             let result = ForwardSearchResult { status };
-            client
-                .send_response(lsp_server::Response::new_ok(id, result))
-                .unwrap();
+            let _ = client.send_response(lsp_server::Response::new_ok(id, result));
         })?;
 
         Ok(())
