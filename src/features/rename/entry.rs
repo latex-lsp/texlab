@@ -58,7 +58,7 @@ pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
                     .collect();
                 changes.insert(document, edits);
             }
-            DocumentData::Log(_) => {}
+            DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => {}
         }
     }
 

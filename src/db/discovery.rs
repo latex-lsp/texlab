@@ -226,12 +226,16 @@ fn discover_parents(db: &mut dyn Db, workspace: Workspace) -> bool {
         .flatten()
         .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
         .map(|entry| entry.path())
-        .filter(|path| Language::from_path(&path) == Some(Language::Tex))
     {
-        if workspace.lookup_path(db, &path).is_none() {
-            changed |= workspace
-                .load(db, &path, Language::Tex, Owner::Server)
-                .is_some();
+        if let Some(language) = Language::from_path(&path) {
+            let can_be_parent = matches!(
+                language,
+                Language::Tex | Language::TexlabRoot | Language::Tectonic
+            );
+
+            if can_be_parent && workspace.lookup_path(db, &path).is_none() {
+                changed |= workspace.load(db, &path, language, Owner::Server).is_some();
+            }
         }
     }
 

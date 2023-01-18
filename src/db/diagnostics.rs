@@ -116,6 +116,7 @@ pub fn collect(db: &dyn Db, workspace: Workspace) -> FxHashMap<Document, Vec<Dia
                             .extend(diagnostics.clone());
                     });
             }
+            Language::TexlabRoot | Language::Tectonic => {}
         }
     }
 

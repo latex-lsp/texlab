@@ -26,6 +26,6 @@ pub fn format_source_code(
             BibtexFormatter::Texlab => format_bibtex_internal(db, document, options),
             BibtexFormatter::Latexindent => format_with_latexindent(db, document),
         },
-        Language::Log => None,
+        Language::Log | Language::TexlabRoot | Language::Tectonic => None,
     }
 }

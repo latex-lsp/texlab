@@ -11,7 +11,6 @@ use rustc_hash::FxHashSet;
 use crate::{
     db::document::{Document, Location},
     distro::FileNameDB,
-    util::HOME_DIR,
     Db, Options,
 };
 
@@ -154,42 +153,21 @@ impl Workspace {
     }
 }
 
-const SPECIAL_ENTRIES: &[&str] = &["Tectonic.toml", "texlabroot", ".texlabroot"];
-
 #[salsa::tracked]
 impl Workspace {
     #[salsa::tracked]
     pub fn working_dir(self, db: &dyn Db, base_dir: Location) -> Location {
-        let mut path = self
-            .options(db)
-            .root_directory
-            .as_deref()
-            .and_then(|path| path.to_str())
-            .or_else(|| {
-                for dir in base_dir
-                    .path(db)
-                    .as_deref()?
-                    .ancestors()
-                    .skip(1)
-                    .filter(|path| Some(*path) != HOME_DIR.as_deref())
-                {
-                    for name in SPECIAL_ENTRIES {
-                        if dir.join(name).exists() {
-                            return Some(dir.to_str()?);
-                        }
-                    }
-                }
-
-                None
+        self.documents(db)
+            .iter()
+            .filter(|doc| matches!(doc.language(db), Language::TexlabRoot | Language::Tectonic))
+            .filter_map(|doc| doc.location(db).join(db, "."))
+            .find(|root_dir| {
+                base_dir
+                    .uri(db)
+                    .as_str()
+                    .starts_with(root_dir.uri(db).as_str())
             })
-            .unwrap_or(".")
-            .to_string();
-
-        if !path.ends_with(".") {
-            path.push('/');
-        }
-
-        base_dir.join(db, &path).unwrap_or(base_dir)
+            .unwrap_or(base_dir)
     }
 
     #[salsa::tracked]

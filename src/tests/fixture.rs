@@ -15,7 +15,9 @@ enum Line<'a> {
 }
 
 fn parse_line(line: &str) -> Line {
-    if let Some(name) = line.strip_prefix("%TEX ") {
+    if let Some(name) = line.strip_prefix("%ROOT ") {
+        Line::File(name, "texlabroot")
+    } else if let Some(name) = line.strip_prefix("%TEX ") {
         Line::File(name, "latex")
     } else if let Some(name) = line.strip_prefix("%BIB ") {
         Line::File(name, "bibtex")

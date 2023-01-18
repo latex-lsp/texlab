@@ -1,9 +1,8 @@
 ---
 source: src/tests/issues.rs
-expression: "serde_json::from_value::<Option<Options>>(serde_json::json!({}))?.unwrap_or_default()"
+expression: "serde_json::from_value::<Option<Options>>(serde_json::json!({})).unwrap().unwrap_or_default()"
 ---
 Options {
-    root_directory: None,
     aux_directory: None,
     bibtex_formatter: Texlab,
     latex_formatter: Latexindent,
