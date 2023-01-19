@@ -46,14 +46,6 @@ impl Location {
         let uri = self.uri(db).join(path).ok()?;
         Some(Location::new(db, uri))
     }
-
-    pub fn into_dir(self, db: &dyn Db) -> Location {
-        if self.uri(db).path().ends_with("/") {
-            self.join(db, ".").unwrap()
-        } else {
-            self
-        }
-    }
 }
 
 #[salsa::input]
@@ -140,7 +132,7 @@ impl Document {
     }
 
     pub fn directory(self, db: &dyn Db) -> Location {
-        self.location(db).into_dir(db)
+        self.location(db).join(db, ".").unwrap()
     }
 
     pub fn ancestor_dirs<'db>(self, db: &'db dyn Db) -> impl Iterator<Item = &'db Path> + 'db {

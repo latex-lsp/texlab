@@ -104,12 +104,17 @@ impl Command {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .current_dir(self.working_dir)
+            .current_dir(&self.working_dir)
             .spawn()
         {
             Ok(process) => process,
-            Err(_) => {
-                log::error!("Failed to spawn process: {:?}", self.executable);
+            Err(why) => {
+                log::error!(
+                    "Failed to spawn process {:?} in directory {}: {}",
+                    self.executable,
+                    self.working_dir.display(),
+                    why
+                );
                 return BuildStatus::FAILURE;
             }
         };
