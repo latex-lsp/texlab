@@ -157,6 +157,16 @@ impl Workspace {
 impl Workspace {
     #[salsa::tracked]
     pub fn working_dir(self, db: &dyn Db, base_dir: Location) -> Location {
+        if let Some(dir) = self
+            .options(db)
+            .root_directory
+            .as_deref()
+            .and_then(|path| path.to_str())
+            .and_then(|path| base_dir.join(db, path))
+        {
+            return dir;
+        }
+
         self.documents(db)
             .iter()
             .filter(|doc| matches!(doc.language(db), Language::TexlabRoot | Language::Tectonic))
