@@ -151,7 +151,7 @@ impl<'db, T> CursorContext<'db, T> {
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_bib(left, right)
             }
-            DocumentData::Log(_) => None,
+            DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => None,
         };
 
         Some(Self {

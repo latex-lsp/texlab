@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Allow manually overriding the root directory using a `texlabroot`/`.texlabroot` marker file ([#826](https://github.com/latex-lsp/texlab/issues/826), [#838](https://github.com/latex-lsp/texlab/pull/838))
+
+### Deprecated
+
+- Deprecate `texlab.rootDirectory` setting in favor of `.texlabroot` files
+
+### Fixed
+
+- Do not use `.git`, `.chktexrc`, `.latexmkrc` files/directories to determine the root directory
+- Fix building documents without an explicit root directory ([#837](https://github.com/latex-lsp/texlab/issues/837))
+
 ## [5.0.0] - 2022-12-29
 
 ### Changed

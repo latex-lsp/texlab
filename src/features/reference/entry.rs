@@ -47,7 +47,10 @@ pub(super) fn find_all_references(
                         results.push(ReferenceResult { document, range });
                     });
             }
-            DocumentData::Bib(_) | DocumentData::Log(_) => {}
+            DocumentData::Bib(_)
+            | DocumentData::Log(_)
+            | DocumentData::TexlabRoot(_)
+            | DocumentData::Tectonic(_) => {}
         };
     }
 

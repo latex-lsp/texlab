@@ -791,7 +791,7 @@ fn test_user_environment() {
 }
 
 #[test]
-fn test_project_resolution() {
+fn test_project_resolution_import() {
     assert_items!(complete(
         r#"
 %TEX main.tex
@@ -807,6 +807,28 @@ fn test_project_resolution() {
 %TEX sub/child.tex
 %SRC \usepackage{lipsum}
 
+"#
+    ));
+}
+
+#[test]
+fn test_project_resolution_texlabroot() {
+    assert_items!(complete(
+        r#"
+%TEX src/main.tex
+%SRC \documentclass{article}
+%SRC \include{src/foo}
+%SRC \lipsu
+%CUR      ^
+%1.1  ^^^^^
+
+%TEX src/foo.tex
+%SRC \include{src/bar}
+
+%TEX src/bar.tex
+%SRC \usepackage{lipsum}
+
+%ROOT .texlabroot
 "#
     ));
 }

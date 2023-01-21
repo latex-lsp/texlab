@@ -1,7 +1,4 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use lsp_types::Url;
 use rowan::{TextRange, TextSize};
@@ -9,7 +6,7 @@ use rowan::{TextRange, TextSize};
 use crate::{
     db::{
         diagnostics::Diagnostic,
-        parse::{BibDocumentData, LogDocumentData, TexDocumentData},
+        parse::{BibDocumentData, LogDocumentData, TectonicData, TexDocumentData, TexlabRootData},
     },
     parser::{parse_bibtex, parse_build_log, parse_latex},
     util::line_index::LineIndex,
@@ -49,14 +46,6 @@ impl Location {
         let uri = self.uri(db).join(path).ok()?;
         Some(Location::new(db, uri))
     }
-
-    pub fn into_dir(self, db: &dyn Db) -> Location {
-        if self.uri(db).path().ends_with("/") {
-            self.join(db, ".").unwrap()
-        } else {
-            self
-        }
-    }
 }
 
 #[salsa::input]
@@ -84,17 +73,23 @@ pub enum Language {
     Tex,
     Bib,
     Log,
+    TexlabRoot,
+    Tectonic,
 }
 
 impl Language {
     pub fn from_path(path: &Path) -> Option<Self> {
-        path.extension()
-            .and_then(OsStr::to_str)
-            .and_then(Self::from_extension)
-    }
+        let name = path.file_name()?;
+        if name.eq_ignore_ascii_case(".texlabroot") || name.eq_ignore_ascii_case("texlabroot") {
+            return Some(Self::TexlabRoot);
+        }
 
-    pub fn from_extension(extension: &str) -> Option<Self> {
-        match extension.to_lowercase().as_str() {
+        if name.eq_ignore_ascii_case("Tectonic.toml") {
+            return Some(Self::Tectonic);
+        }
+
+        let extname = path.extension()?.to_str()?;
+        match extname.to_lowercase().as_str() {
             "tex" | "sty" | "cls" | "def" | "lco" | "aux" | "rnw" => Some(Self::Tex),
             "bib" | "bibtex" => Some(Self::Bib),
             "log" => Some(Self::Log),
@@ -106,6 +101,7 @@ impl Language {
         match id {
             "tex" | "latex" => Some(Self::Tex),
             "bib" | "bibtex" => Some(Self::Bib),
+            "texlabroot" => Some(Self::TexlabRoot),
             _ => None,
         }
     }
@@ -136,7 +132,7 @@ impl Document {
     }
 
     pub fn directory(self, db: &dyn Db) -> Location {
-        self.location(db).into_dir(db)
+        self.location(db).join(db, ".").unwrap()
     }
 
     pub fn ancestor_dirs<'db>(self, db: &'db dyn Db) -> impl Iterator<Item = &'db Path> + 'db {
@@ -166,6 +162,14 @@ impl Document {
             Language::Log => {
                 let data = LogDocumentData::new(db, parse_build_log(text));
                 DocumentData::Log(data)
+            }
+            Language::TexlabRoot => {
+                let data = TexlabRootData;
+                DocumentData::TexlabRoot(data)
+            }
+            Language::Tectonic => {
+                let data = TectonicData;
+                DocumentData::Tectonic(data)
             }
         }
     }

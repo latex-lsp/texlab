@@ -41,10 +41,18 @@ pub struct LogDocumentData {
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub struct TexlabRootData;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub struct TectonicData;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum DocumentData {
     Tex(TexDocumentData),
     Bib(BibDocumentData),
     Log(LogDocumentData),
+    TexlabRoot(TexlabRootData),
+    Tectonic(TectonicData),
 }
 
 impl DocumentData {

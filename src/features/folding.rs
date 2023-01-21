@@ -43,7 +43,9 @@ pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
                 .map(|node| create_range(line_index.line_col_lsp_range(node.text_range())))
                 .collect()
         }
-        DocumentData::Log(_) => return None,
+        DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => {
+            return None;
+        }
     };
 
     Some(foldings)
