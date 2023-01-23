@@ -8,14 +8,16 @@ BuildLog {
         BuildError {
             relative_path: "./parent.tex",
             level: Warning,
-            message: "Citation `foo' on page 1 undefined on input line 6.",
+            message: "LaTeX Warning: Citation `foo' on page 1 undefined on input line 6.",
             hint: None,
-            line: None,
+            line: Some(
+                5,
+            ),
         },
         BuildError {
             relative_path: "./parent.tex",
             level: Warning,
-            message: "There were undefined references.",
+            message: "LaTeX Warning: There were undefined references.",
             hint: None,
             line: None,
         },

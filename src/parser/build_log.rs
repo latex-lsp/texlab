@@ -17,8 +17,9 @@ static TEX_ERROR_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new("(?m)^! ((?P<msg1>(.|\r|\n)*?)\r?\nl\\.(?P<line>\\d+)( (\\.\\.\\.)?(?P<hint>[^\r\n]+))?|(?P<msg2>[^\r\n]*))").unwrap()
 });
 
-static WARNING_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new("(LaTeX|Package [a-zA-Z_\\-]+) Warning: (?P<msg>[^\r\n]*)").unwrap());
+static WARNING_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new("(?P<msg>(LaTeX|Package [a-zA-Z_\\-]+) Warning: [^\r\n]*?(on input line (?P<line>\\d+))?\\.)[\r\n]").unwrap()
+});
 
 static BAD_BOX_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new("(?P<msg>(Ov|Und)erfull \\\\[hv]box[^\r\n]*lines? (?P<line>\\d+)[^\r\n]*)").unwrap()
