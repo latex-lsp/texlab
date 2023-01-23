@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Include line numbers in build diagnostics when available ([#840](https://github.com/latex-lsp/texlab/issues/840))
 
+### Fixed
+
+- Concatenate more than two lines of maximum length in build diagnostics ([#???](https://github.com/latex-lsp/texlab/pull/???))
+
 ## [5.1.0] - 2023-01-21
 
 ### Added
