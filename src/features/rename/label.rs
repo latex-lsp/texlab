@@ -44,24 +44,24 @@ pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
                     });
 
                 if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
-                    if let Some(name1) = label
+                    if let Some(name_from) = label
                         .from()
                         .and_then(|name| name.key())
                         .filter(|name| name.to_string() == name_text)
                     {
                         edits.push(Indel {
-                            delete: latex::small_range(&name1),
+                            delete: latex::small_range(&name_from),
                             insert: context.params.new_name.clone(),
                         });
                     }
 
-                    if let Some(name2) = label
-                        .from()
+                    if let Some(name_to) = label
+                        .to()
                         .and_then(|name| name.key())
                         .filter(|name| name.to_string() == name_text)
                     {
                         edits.push(Indel {
-                            delete: latex::small_range(&name2),
+                            delete: latex::small_range(&name_to),
                             insert: context.params.new_name.clone(),
                         });
                     }
