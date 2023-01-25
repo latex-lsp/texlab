@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Include line numbers in build diagnostics when available ([#840](https://github.com/latex-lsp/texlab/issues/840))
 
+### Fixed
+
+- Apply the correct range of references to labels when renaming ([#841](https://github.com/latex-lsp/texlab/issues/841))
+
 ## [5.1.0] - 2023-01-21
 
 ### Added
