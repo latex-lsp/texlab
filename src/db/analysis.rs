@@ -149,6 +149,16 @@ pub struct TexAnalysis {
     pub environment_names: Vec<String>,
 }
 
+#[salsa::tracked]
+impl TexAnalysis {
+    #[salsa::tracked]
+    pub fn has_document_environment(self, db: &dyn Db) -> bool {
+        self.environment_names(db)
+            .iter()
+            .any(|name| name == "document")
+    }
+}
+
 impl TexAnalysis {
     pub(super) fn analyze(db: &dyn Db, root: &latex::SyntaxNode) -> Self {
         let mut links = Vec::new();

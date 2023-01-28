@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Concatenate more than two lines of maximum length in build diagnostics ([#842](https://github.com/latex-lsp/texlab/pull/842))
 - Apply the correct range of references to labels when renaming ([#841](https://github.com/latex-lsp/texlab/issues/841))
+- Use `document` environment to detect root file instead of `\documentclass` ([#845](https://github.com/latex-lsp/texlab/issues/845))
 
 ## [5.1.0] - 2023-01-21
 

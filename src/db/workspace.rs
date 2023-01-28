@@ -67,7 +67,7 @@ impl Workspace {
         self.documents(db)
             .iter()
             .copied()
-            .filter(|&document| document.can_be_index(db))
+            .filter(|&document| document.can_be_root(db))
     }
 
     pub fn open(

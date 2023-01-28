@@ -175,23 +175,22 @@ impl Document {
     }
 
     #[salsa::tracked]
-    pub fn can_be_index(self, db: &dyn Db) -> bool {
+    pub fn can_be_root(self, db: &dyn Db) -> bool {
         self.parse(db).as_tex().map_or(false, |data| {
-            data.analyze(db)
-                .links(db)
-                .iter()
-                .filter(|link| link.kind(db) == TexLinkKind::Cls)
-                .any(|link| link.path(db).text(db) != "subfiles")
+            let analysis = data.analyze(db);
+            analysis.has_document_environment(db)
+                || !analysis
+                    .links(db)
+                    .iter()
+                    .filter(|link| link.kind(db) == TexLinkKind::Cls)
+                    .any(|link| link.path(db).text(db) == "subfiles")
         })
     }
 
     #[salsa::tracked]
     pub fn can_be_built(self, db: &dyn Db) -> bool {
-        self.parse(db).as_tex().map_or(false, |data| {
-            data.analyze(db)
-                .links(db)
-                .iter()
-                .any(|link| link.kind(db) == TexLinkKind::Cls)
-        })
+        self.parse(db)
+            .as_tex()
+            .map_or(false, |data| data.analyze(db).has_document_environment(db))
     }
 }
