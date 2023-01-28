@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Include line numbers in build diagnostics when available ([#840](https://github.com/latex-lsp/texlab/issues/840))
+- Add `none` formatter to `texlab.latexFormatter` and `texlab.bibtexFormatter` options
+  to allow disabling formatting ([#846](https://github.com/latex-lsp/texlab/issues/846))
 
 ### Fixed
 

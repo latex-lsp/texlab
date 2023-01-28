@@ -32,6 +32,7 @@ impl Default for DiagnosticsDelay {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum BibtexFormatter {
+    None,
     Texlab,
     Latexindent,
 }
@@ -45,6 +46,7 @@ impl Default for BibtexFormatter {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum LatexFormatter {
+    None,
     Texlab,
     Latexindent,
 }

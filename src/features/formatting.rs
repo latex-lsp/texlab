@@ -19,10 +19,12 @@ pub fn format_source_code(
     let document = workspace.lookup_uri(db, uri)?;
     match document.language(db) {
         Language::Tex => match workspace.options(db).latex_formatter {
+            LatexFormatter::None => None,
             LatexFormatter::Texlab => None,
             LatexFormatter::Latexindent => format_with_latexindent(db, document),
         },
         Language::Bib => match workspace.options(db).bibtex_formatter {
+            BibtexFormatter::None => None,
             BibtexFormatter::Texlab => format_bibtex_internal(db, document, options),
             BibtexFormatter::Latexindent => format_with_latexindent(db, document),
         },
