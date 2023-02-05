@@ -983,6 +983,7 @@ impl From<forward_search::Error> for ForwardSearchStatus {
     fn from(err: forward_search::Error) -> Self {
         match err {
             forward_search::Error::TexNotFound(_) => ForwardSearchStatus::FAILURE,
+            forward_search::Error::InvalidTexFile(_) => ForwardSearchStatus::ERROR,
             forward_search::Error::PdfNotFound(_) => ForwardSearchStatus::ERROR,
             forward_search::Error::NoLocalFile(_) => ForwardSearchStatus::FAILURE,
             forward_search::Error::Unconfigured => ForwardSearchStatus::UNCONFIGURED,

@@ -15,6 +15,9 @@ pub enum Error {
     #[error("TeX document '{0}' not found")]
     TexNotFound(Url),
 
+    #[error("TeX document '{0}' is invalid")]
+    InvalidTexFile(Url),
+
     #[error("PDF document '{0}' not found")]
     PdfNotFound(PathBuf),
 
@@ -59,8 +62,16 @@ impl Command {
             .as_deref()
             .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;
 
-        let pdf_name = format!("{}.pdf", parent.location(db).stem(db).unwrap());
-        let pdf_path = output_dir.join(pdf_name);
+        let pdf_path = match parent.location(db).stem(db) {
+            Some(stem) => {
+                let pdf_name = format!("{}.pdf", stem);
+                output_dir.join(pdf_name)
+            }
+            None => {
+                return Err(Error::InvalidTexFile(uri.clone()));
+            }
+        };
+
         if !pdf_path.exists() {
             return Err(Error::PdfNotFound(pdf_path));
         }

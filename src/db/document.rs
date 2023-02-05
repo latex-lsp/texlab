@@ -36,10 +36,10 @@ impl Location {
         }
     }
 
-    pub fn stem<'db>(self, db: &'db dyn Db) -> Option<&'db str> {
-        let name = self.uri(db).path_segments()?.last()?;
-        let stem = name.rsplit_once('.').map_or(name, |(stem, _)| stem);
-        Some(stem)
+    pub fn stem(self, db: &dyn Db) -> Option<String> {
+        let path = self.uri(db).to_file_path().ok()?;
+        let stem = path.file_stem()?.to_str()?;
+        Some(String::from(stem))
     }
 
     pub fn join(self, db: &dyn Db, path: &str) -> Option<Location> {
