@@ -7,6 +7,7 @@ pub mod lang_data;
 pub mod line_index;
 pub mod line_index_ext;
 pub mod lsp_enums;
+pub mod regex_filter;
 
 use std::path::PathBuf;
 

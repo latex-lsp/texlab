@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Allow filtering `textDocument/documentSymbols` using regular expressions specified via
+  `texlab.symbols.allowedPatterns` and `texlab.symbols.ignoredPatterns`
+  ([#851](https://github.com/latex-lsp/texlab/issues/851))
+
 ### Fixed
 
 - Do not use percent-encoded path when searching for PDF files during forward search

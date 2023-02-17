@@ -34,6 +34,10 @@ Options {
         on_open_and_save: false,
         on_edit: false,
     },
+    symbols: SymbolOptions {
+        allowed_patterns: [],
+        ignored_patterns: [],
+    },
     latexindent: LatexindentOptions {
         local: None,
         modify_line_breaks: false,

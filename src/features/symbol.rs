@@ -7,7 +7,11 @@ use std::cmp::Reverse;
 
 use lsp_types::{DocumentSymbolResponse, SymbolInformation, Url, WorkspaceSymbolParams};
 
-use crate::{db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
+use crate::{
+    db::Workspace,
+    util::{self, capabilities::ClientCapabilitiesExt},
+    Db,
+};
 
 use self::project_order::ProjectOrdering;
 
@@ -18,6 +22,17 @@ pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolRes
     let mut buf = Vec::new();
     latex::find_symbols(db, document, &mut buf);
     bibtex::find_symbols(db, document, &mut buf);
+
+    let options = &Workspace::get(db).options(db).symbols;
+
+    let buf = buf.into_iter().filter(|symbol| {
+        util::regex_filter::filter(
+            &symbol.name,
+            &options.allowed_patterns,
+            &options.ignored_patterns,
+        )
+    });
+
     if workspace
         .client_capabilities(db)
         .has_hierarchical_document_symbol_support()

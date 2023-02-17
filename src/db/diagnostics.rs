@@ -5,7 +5,7 @@ pub mod tex;
 use lsp_types::{DiagnosticSeverity, NumberOrString, Range};
 use rustc_hash::FxHashMap;
 
-use crate::{db::workspace::Workspace, Db};
+use crate::{db::workspace::Workspace, util, Db};
 
 use super::document::{Document, Language};
 
@@ -139,24 +139,13 @@ pub fn collect_filtered(
         }
 
         if let Some(diagnostics) = all_diagnostics.get(document) {
-            for diagnostic in diagnostics.iter() {
-                if !options.allowed_patterns.is_empty()
-                    && !options
-                        .allowed_patterns
-                        .iter()
-                        .any(|pattern| pattern.0.is_match(&diagnostic.message))
-                {
-                    continue;
-                }
-
-                if options
-                    .ignored_patterns
-                    .iter()
-                    .any(|pattern| pattern.0.is_match(&diagnostic.message))
-                {
-                    continue;
-                }
-
+            for diagnostic in diagnostics.iter().filter(|diag| {
+                util::regex_filter::filter(
+                    &diag.message,
+                    &options.allowed_patterns,
+                    &options.ignored_patterns,
+                )
+            }) {
                 let source = match diagnostic.code {
                     DiagnosticCode::Tex(_) | DiagnosticCode::Bib(_) => "texlab",
                     DiagnosticCode::Log(_) => "latex-build",

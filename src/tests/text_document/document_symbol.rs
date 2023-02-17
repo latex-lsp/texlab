@@ -1,6 +1,7 @@
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
-    request::DocumentSymbolRequest, DocumentSymbolParams, DocumentSymbolResponse,
+    notification::DidChangeConfiguration, request::DocumentSymbolRequest,
+    DidChangeConfigurationParams, DocumentSymbolParams, DocumentSymbolResponse,
     TextDocumentIdentifier, Url,
 };
 
@@ -11,13 +12,19 @@ struct SymbolResult {
     uri_redaction: Redaction,
 }
 
-fn find_symbols(fixture: &str, client_capabilities: serde_json::Value) -> SymbolResult {
+fn find_symbols(
+    fixture: &str,
+    client_capabilities: serde_json::Value,
+    settings: serde_json::Value,
+) -> SymbolResult {
     let mut client = Client::spawn();
     client.initialize(serde_json::from_value(client_capabilities).unwrap(), None);
 
     let fixture = fixture::parse(fixture);
     let file = fixture.files.into_iter().next().unwrap();
     client.open(file.name, file.lang, file.text);
+
+    client.notify::<DidChangeConfiguration>(DidChangeConfigurationParams { settings });
 
     let response = client
         .request::<DocumentSymbolRequest>(DocumentSymbolParams {
@@ -79,6 +86,7 @@ fn enumerate_nested() {
                 },
             },
         }),
+        serde_json::Value::Null,
     ));
 }
 
@@ -106,6 +114,7 @@ fn enumerate_flat() {
 %SRC \newlabel{it:qux}{{2}{1}}
 "#,
         serde_json::json!({}),
+        serde_json::Value::Null,
     ));
 }
 
@@ -143,6 +152,7 @@ fn equation_nested() {
                 },
             },
         }),
+        serde_json::Value::Null,
     ));
 }
 
@@ -174,6 +184,7 @@ fn equation_flat() {
 %SRC \newlabel{eq:foo}{{1}{1}}
 "#,
         serde_json::json!({}),
+        serde_json::Value::Null,
     ));
 }
 
@@ -221,6 +232,7 @@ fn float_nested() {
                 },
             },
         }),
+        serde_json::Value::Null,
     ));
 }
 
@@ -262,6 +274,7 @@ fn float_flat() {
 %SRC \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Baz}}{1}\protected@file@percent }
 "#,
         serde_json::json!({}),
+        serde_json::Value::Null,
     ));
 }
 
@@ -295,6 +308,7 @@ fn section_nested() {
                 },
             },
         }),
+        serde_json::Value::Null,
     ));
 }
 
@@ -322,6 +336,7 @@ fn section_flat() {
 %SRC \newlabel{sec:bar}{{2}{1}}
 "#,
         serde_json::json!({}),
+        serde_json::Value::Null,
     ));
 }
 
@@ -366,6 +381,7 @@ fn theorem_nested() {
                 },
             },
         }),
+        serde_json::Value::Null,
     ));
 }
 
@@ -404,5 +420,35 @@ fn theorem_flat() {
 %SRC \newlabel{thm:bar}{{2}{1}}
 "#,
         serde_json::json!({}),
+        serde_json::Value::Null,
+    ));
+}
+
+#[test]
+fn ignored_patterns() {
+    assert_symbols!(find_symbols(
+        r#"
+%TEX main.tex
+%SRC \documentclass{article}
+%SRC 
+%SRC \begin{document}
+%SRC 
+%SRC \begin{equation}\label{eq:foo}
+%SRC     Foo
+%SRC \end{equation}
+%SRC  
+%SRC \begin{enumerate}
+%SRC     \item Foo
+%SRC     \item Bar
+%SRC \end{enumerate}
+%SRC 
+%SRC \end{document}
+"#,
+        serde_json::json!({}),
+        serde_json::json!({
+            "symbols": {
+                "ignoredPatterns": ["Item", "Enumerate"]
+            }
+        }),
     ));
 }

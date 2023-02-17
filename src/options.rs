@@ -16,6 +16,7 @@ pub struct Options {
     pub diagnostics_delay: DiagnosticsDelay,
     pub build: BuildOptions,
     pub chktex: ChktexOptions,
+    pub symbols: SymbolOptions,
     pub latexindent: LatexindentOptions,
     pub forward_search: ForwardSearchOptions,
 }
@@ -120,12 +121,20 @@ pub struct ForwardSearchOptions {
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
 pub struct DiagnosticsOptions {
-    pub allowed_patterns: Vec<DiagnosticsPattern>,
-    pub ignored_patterns: Vec<DiagnosticsPattern>,
+    pub allowed_patterns: Vec<RegexPattern>,
+    pub ignored_patterns: Vec<RegexPattern>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct SymbolOptions {
+    pub allowed_patterns: Vec<RegexPattern>,
+    pub ignored_patterns: Vec<RegexPattern>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DiagnosticsPattern(#[serde(with = "serde_regex")] pub Regex);
+pub struct RegexPattern(#[serde(with = "serde_regex")] pub Regex);
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
