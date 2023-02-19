@@ -173,7 +173,6 @@ impl Server {
                 name: "TexLab".to_owned(),
                 version: Some(env!("CARGO_PKG_VERSION").to_owned()),
             }),
-            offset_encoding: None,
         };
         self.connection
             .initialize_finish(id, serde_json::to_value(result)?)?;
@@ -835,7 +834,7 @@ impl Server {
                                 .on::<DocumentSymbolRequest, _>(|id, params| {
                                     self.document_symbols(id, params)
                                 })?
-                                .on::<WorkspaceSymbol, _>(|id, params| self.workspace_symbols(id, params))?
+                                .on::<WorkspaceSymbolRequest, _>(|id, params| self.workspace_symbols(id, params))?
                                 .on::<Completion, _>(|id, params| {
                                     self.completion(id, params)?;
                                     Ok(())

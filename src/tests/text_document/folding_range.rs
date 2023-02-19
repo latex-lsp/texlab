@@ -35,6 +35,7 @@ fn check(fixture: &str, expected_ranges: Vec<(u32, u32, u32, u32)>) {
                 end_line,
                 end_character: Some(end_character),
                 kind: Some(FoldingRangeKind::Region),
+                collapsed_text: None,
             },
         )
         .collect();

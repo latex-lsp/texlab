@@ -1,6 +1,7 @@
 use insta::{assert_json_snapshot, internals::Redaction};
 use lsp_types::{
-    request::WorkspaceSymbol, ClientCapabilities, SymbolInformation, Url, WorkspaceSymbolParams,
+    request::WorkspaceSymbolRequest, ClientCapabilities, SymbolInformation, Url,
+    WorkspaceSymbolParams, WorkspaceSymbolResponse,
 };
 
 use crate::tests::{client::Client, fixture};
@@ -19,14 +20,18 @@ fn find_symbols(fixture: &str, query: &str) -> SymbolResult {
         client.open(file.name, file.lang, file.text);
     }
 
-    let actual_symbols = client
-        .request::<WorkspaceSymbol>(WorkspaceSymbolParams {
+    let actual_symbols = match client
+        .request::<WorkspaceSymbolRequest>(WorkspaceSymbolParams {
             query: query.to_string(),
             work_done_progress_params: Default::default(),
             partial_result_params: Default::default(),
         })
         .unwrap()
-        .unwrap_or_default();
+    {
+        Some(WorkspaceSymbolResponse::Flat(symbols)) => symbols,
+        Some(WorkspaceSymbolResponse::Nested(_)) => unreachable!(),
+        None => Vec::new(),
+    };
 
     let result = client.shutdown();
 

@@ -57,6 +57,7 @@ fn create_range(range: Range) -> FoldingRange {
         start_character: Some(range.start.character),
         end_line: range.end.line,
         end_character: Some(range.end.character),
+        collapsed_text: None,
         kind: Some(FoldingRangeKind::Region),
     }
 }
