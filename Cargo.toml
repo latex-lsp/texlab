@@ -89,6 +89,7 @@ incremental = true
 
 [profile.bench]
 lto = "thin"
+incremental = true
 
 [[bench]]
 name = "bench_main"
