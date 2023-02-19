@@ -758,6 +758,18 @@ impl Server {
         Ok(())
     }
 
+    fn code_actions(&mut self, id: RequestId, _params: CodeActionParams) -> Result<()> {
+        self.client
+            .send_response(lsp_server::Response::new_ok(id, Vec::<CodeAction>::new()))?;
+        Ok(())
+    }
+
+    fn code_action_resolve(&mut self, id: RequestId, action: CodeAction) -> Result<()> {
+        self.client
+            .send_response(lsp_server::Response::new_ok(id, action))?;
+        Ok(())
+    }
+
     fn handle_file_event(&mut self, event: notify::Event) {
         let mut changed = false;
 
@@ -854,6 +866,12 @@ impl Server {
                                 })?
                                 .on::<InlayHintResolveRequest,_>(|id, params| {
                                     self.inlay_hint_resolve(id, params)
+                                })?
+                                .on::<CodeActionRequest, _>(|id, params| {
+                                    self.code_actions(id, params)
+                                })?
+                                .on::<CodeActionResolveRequest, _>(|id, params| {
+                                    self.code_action_resolve(id, params)
                                 })?
                                 .default()
                             {

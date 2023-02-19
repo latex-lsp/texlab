@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not use percent-encoded path when searching for PDF files during forward search
   ([#848](https://github.com/latex-lsp/texlab/issues/848))
+- Always return an empty list of code actions instead of returning "method not found" ([#850](https://github.com/latex-lsp/texlab/issues/850))
 
 ## [5.2.0] - 2023-01-29
 
