@@ -1,8 +1,6 @@
-use std::path::PathBuf;
-
 use insta::assert_json_snapshot;
 use lsp_types::{
-    request::DocumentLinkRequest, ClientCapabilities, DocumentLink, DocumentLinkParams, Url,
+    request::DocumentLinkRequest, ClientCapabilities, DocumentLink, DocumentLinkParams,
 };
 
 use crate::fixture::TestBed;
@@ -22,12 +20,8 @@ fn find_links(fixture: &str) -> Vec<DocumentLink> {
         .unwrap()
         .unwrap_or_default();
 
-    let root = PathBuf::from("/");
     for link in &mut links {
-        let path = link.target.take().unwrap().to_file_path().unwrap();
-        let path = path.strip_prefix(test_bed.directory()).unwrap_or(&path);
-        let path = root.join(path);
-        link.target = Some(Url::from_file_path(path).unwrap());
+        link.target = Some(test_bed.redact(link.target.as_ref().unwrap()));
     }
 
     links
