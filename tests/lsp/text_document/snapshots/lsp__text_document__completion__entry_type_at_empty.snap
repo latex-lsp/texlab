@@ -1,0 +1,26 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.bib\n@\n |\"#)"
+---
+[
+  {
+    "label": "article",
+    "preselect": false
+  },
+  {
+    "label": "artwork",
+    "preselect": false
+  },
+  {
+    "label": "audio",
+    "preselect": false
+  },
+  {
+    "label": "bibnote",
+    "preselect": false
+  },
+  {
+    "label": "book",
+    "preselect": false
+  }
+]

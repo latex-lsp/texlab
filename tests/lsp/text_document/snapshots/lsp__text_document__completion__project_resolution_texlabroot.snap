@@ -1,0 +1,31 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! src/main.tex\n\\documentclass{article}\n\\include{src/foo}\n\\lipsu\n     |\n ^^^^^\n\n%! src/foo.tex\n\\include{src/bar}\n\n%! src/bar.tex\n\\usepackage{lipsum}\n\n%! .texlabroot\"#)"
+---
+[
+  {
+    "label": "LipsumPar",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "LipsumProtect",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "LipsumRestoreAll",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "lipsum",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "lipsumexp",
+    "detail": "lipsum.sty",
+    "preselect": false
+  }
+]

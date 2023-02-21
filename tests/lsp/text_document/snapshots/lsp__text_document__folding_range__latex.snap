@@ -1,0 +1,41 @@
+---
+source: tests/lsp/text_document/folding_range.rs
+expression: "find_foldings(r#\"\n%! main.tex\n\\begin{document}\n    \\section{Foo}\n    foo\n    \\subsection{Bar}\n    bar\n    \\section{Baz}\n    baz\n    \\section{Qux}\n\\end{document}\n|\"#)"
+---
+[
+  {
+    "startLine": 0,
+    "startCharacter": 0,
+    "endLine": 8,
+    "endCharacter": 14,
+    "kind": "region"
+  },
+  {
+    "startLine": 1,
+    "startCharacter": 4,
+    "endLine": 4,
+    "endCharacter": 7,
+    "kind": "region"
+  },
+  {
+    "startLine": 3,
+    "startCharacter": 4,
+    "endLine": 4,
+    "endCharacter": 7,
+    "kind": "region"
+  },
+  {
+    "startLine": 5,
+    "startCharacter": 4,
+    "endLine": 6,
+    "endCharacter": 7,
+    "kind": "region"
+  },
+  {
+    "startLine": 7,
+    "startCharacter": 4,
+    "endLine": 7,
+    "endCharacter": 17,
+    "kind": "region"
+  }
+]

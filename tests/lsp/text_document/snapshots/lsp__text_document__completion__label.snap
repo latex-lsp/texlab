@@ -1,0 +1,36 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! foo.tex\n\\documentclass{article}\n\n\\usepackage{amsmath}\n\\usepackage{caption}\n\\usepackage{amsthm}\n\\newtheorem{lemma}{Lemma}\n\n\\begin{document}\n\n\\section{Foo}%\n\\label{sec:foo}\n\n\\begin{equation}%\n\\label{eq:foo}\n    1 + 1 = 2\n\\end{equation}\n\n\\begin{equation}%\n\\label{eq:bar}\n    1 + 1 = 2\n\\end{equation}\n\n\\begin{figure}%\n\\LaTeX{}\n\\caption{Baz}%\n\\label{fig:baz}\n\\end{figure}\n\n\\begin{lemma}%\n\\label{thm:foo}\n    1 + 1 = 2\n\\end{lemma}\n\n\\include{bar}\n\n\\end{document}\n\n%! bar.tex\n\\section{Bar}%\n\\label{sec:bar}\n\nLorem ipsum dolor sit amet.\n\\ref{}\n     |\n\n%! foo.aux\n\\relax\n\\@writefile{lof}{\\contentsline {figure}{\\numberline {1}{\\ignorespaces Baz\\relax }}{1}\\protected@file@percent }\n\\providecommand*\\caption@xref[2]{\\@setref\\relax\\@undefined{#1}}\n\\newlabel{fig:baz}{{1}{1}}\n\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Foo}{1}\\protected@file@percent }\n\\newlabel{sec:foo}{{1}{1}}\n\\newlabel{eq:foo}{{1}{1}}\n\\newlabel{eq:bar}{{2}{1}}\n\\newlabel{thm:foo}{{1}{1}}\n\\@input{bar.aux}\"#)"
+---
+[
+  {
+    "label": "eq:bar",
+    "detail": "Equation (2)",
+    "preselect": false,
+    "filterText": "eq:bar Equation (2)"
+  },
+  {
+    "label": "eq:foo",
+    "detail": "Equation (1)",
+    "preselect": false,
+    "filterText": "eq:foo Equation (1)"
+  },
+  {
+    "label": "fig:baz",
+    "detail": "Figure 1",
+    "preselect": false,
+    "filterText": "fig:baz Figure 1: Baz"
+  },
+  {
+    "label": "sec:bar",
+    "detail": "Section (Bar)",
+    "preselect": false,
+    "filterText": "sec:bar Section (Bar)"
+  },
+  {
+    "label": "sec:foo",
+    "detail": "Section 1 (Foo)",
+    "preselect": false,
+    "filterText": "sec:foo Section 1 (Foo)"
+  }
+]

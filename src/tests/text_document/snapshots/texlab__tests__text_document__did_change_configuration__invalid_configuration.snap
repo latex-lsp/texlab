@@ -1,9 +1,0 @@
----
-source: src/tests/text_document/did_change_configuration.rs
-expression: message
----
-The texlab configuration is invalid; using the default settings instead.
-Details: regex parse error:
-    \
-    ^
-error: incomplete escape sequence, reached end of pattern prematurely

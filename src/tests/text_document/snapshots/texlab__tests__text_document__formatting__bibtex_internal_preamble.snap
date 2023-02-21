@@ -1,6 +1,0 @@
----
-source: src/tests/text_document/formatting.rs
-expression: "format(r#\"\n%BIB main.bib\n%SRC @preamble{\n%SRC     \"foo bar baz\" }\"#)?"
----
-@preamble{"foo bar baz"}
-

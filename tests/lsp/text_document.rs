@@ -1,0 +1,11 @@
+mod completion;
+mod definition;
+mod document_highlight;
+mod document_link;
+mod document_symbol;
+mod folding_range;
+mod formatting;
+mod hover;
+mod inlay_hint;
+mod references;
+mod rename;

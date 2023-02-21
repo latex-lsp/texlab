@@ -1,0 +1,8 @@
+---
+source: tests/lsp/text_document/hover.rs
+expression: "find_hover(r#\"\n%! main.tex\n\\documentclass{article}\n\\newtheorem{lemma}{Lemma}\n\\include{child}\n\\ref{thm:foo}\n        |\n     ^^^^^^^\n\n%! child.tex\n\\begin{lemma}[Foo]\\label{thm:foo}\n    1 + 1 = 2\n\\end{lemma}\n\n%! child.aux\n\\newlabel{thm:foo}{{1}{1}{Foo}{lemma.1}{}}\"#)"
+---
+{
+  "kind": "plaintext",
+  "value": "Lemma 1 (Foo)"
+}

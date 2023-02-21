@@ -1,0 +1,8 @@
+---
+source: tests/lsp/text_document/hover.rs
+expression: "find_hover(r#\"\n%! main.bib\n@string{foo = \"Foo\"}\n@string{bar = \"Bar\"}\n@article{baz, author = bar}\n                        |\n                       ^^^\"#)"
+---
+{
+  "kind": "plaintext",
+  "value": "Bar"
+}

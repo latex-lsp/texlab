@@ -1,0 +1,26 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\definecolor{foo}{\n                  |\"#)"
+---
+[
+  {
+    "label": "HTML",
+    "preselect": false
+  },
+  {
+    "label": "RGB",
+    "preselect": false
+  },
+  {
+    "label": "cmyk",
+    "preselect": false
+  },
+  {
+    "label": "gray",
+    "preselect": false
+  },
+  {
+    "label": "rgb",
+    "preselect": false
+  }
+]

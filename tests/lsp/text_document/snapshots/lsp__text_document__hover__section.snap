@@ -1,0 +1,8 @@
+---
+source: tests/lsp/text_document/hover.rs
+expression: "find_hover(r#\"\n%! main.tex\n\\section{Foo}\n\\label{sec:foo}\n         |\n       ^^^^^^^\"#)"
+---
+{
+  "kind": "plaintext",
+  "value": "Section (Foo)"
+}

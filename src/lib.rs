@@ -9,9 +9,9 @@ mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
-pub(crate) mod util;
+pub mod util;
 
-pub use self::{options::*, server::Server};
+pub use self::{client::LspClient, options::*, server::Server};
 
 #[salsa::jar(db = Db)]
 pub struct Jar(
@@ -116,6 +116,3 @@ pub(crate) fn normalize_uri(uri: &mut lsp_types::Url) {
 
     uri.set_fragment(None);
 }
-
-#[cfg(test)]
-mod tests;

@@ -1,0 +1,26 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.bib\n@article{foo, author = bar, edit}\n                             |\n                            ^^^^\"#)"
+---
+[
+  {
+    "label": "edition",
+    "preselect": false
+  },
+  {
+    "label": "editor",
+    "preselect": false
+  },
+  {
+    "label": "editora",
+    "preselect": false
+  },
+  {
+    "label": "editoratype",
+    "preselect": false
+  },
+  {
+    "label": "editorb",
+    "preselect": false
+  }
+]

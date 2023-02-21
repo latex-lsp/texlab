@@ -1,0 +1,26 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\usepackage{lips}\n             |\n            ^^^^\"#)"
+---
+[
+  {
+    "label": "lips",
+    "preselect": false
+  },
+  {
+    "label": "lipsum",
+    "preselect": false
+  },
+  {
+    "label": "lisp-simple-alloc",
+    "preselect": false
+  },
+  {
+    "label": "lisp-string",
+    "preselect": false
+  },
+  {
+    "label": "lwarp-lips",
+    "preselect": false
+  }
+]

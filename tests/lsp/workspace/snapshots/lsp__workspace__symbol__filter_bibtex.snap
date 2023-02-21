@@ -1,0 +1,42 @@
+---
+source: tests/lsp/workspace/symbol.rs
+expression: "find_symbols(FIXTURE, \"bibtex\")"
+---
+[
+  {
+    "name": "foo",
+    "kind": 24,
+    "deprecated": false,
+    "location": {
+      "uri": "file:///main.bib",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 0
+        },
+        "end": {
+          "line": 0,
+          "character": 14
+        }
+      }
+    }
+  },
+  {
+    "name": "bar",
+    "kind": 15,
+    "deprecated": false,
+    "location": {
+      "uri": "file:///main.bib",
+      "range": {
+        "start": {
+          "line": 2,
+          "character": 0
+        },
+        "end": {
+          "line": 2,
+          "character": 20
+        }
+      }
+    }
+  }
+]

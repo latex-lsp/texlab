@@ -1,0 +1,10 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.bib\n@article{foo, author = {foo}}\n   |\n ^^^^^^^\"#)"
+---
+[
+  {
+    "label": "article",
+    "preselect": false
+  }
+]

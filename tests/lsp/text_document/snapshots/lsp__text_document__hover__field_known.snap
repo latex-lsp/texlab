@@ -1,0 +1,8 @@
+---
+source: tests/lsp/text_document/hover.rs
+expression: "find_hover(r#\"\n%! main.bib\n@article{foo, author = bar}\n               |\n              ^^^^^^\"#)"
+---
+{
+  "kind": "markdown",
+  "value": "The author(s) of the `title`."
+}

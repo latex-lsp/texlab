@@ -1,0 +1,9 @@
+---
+source: tests/lsp/text_document/formatting.rs
+expression: "format(r#\"\n%! main.bib\n@article{foo, bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit.\nLorem ipsum dolor sit amet,\nconsectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.},}\n|\"#)"
+---
+@article{foo,
+    bar = {Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum
+           dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit
+           amet, consectetur adipiscing elit.},
+}

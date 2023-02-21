@@ -1,0 +1,10 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\usepackage{amsfonts}\n\\mathbb{A}\n        |\n        ^\"#)"
+---
+[
+  {
+    "label": "A",
+    "preselect": false
+  }
+]

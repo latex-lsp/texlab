@@ -1,0 +1,31 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\beg\n    |\n ^^^\"#)"
+---
+[
+  {
+    "label": "AtBeginDocument",
+    "detail": "built-in",
+    "preselect": false
+  },
+  {
+    "label": "AtBeginDvi",
+    "detail": "built-in",
+    "preselect": false
+  },
+  {
+    "label": "begin",
+    "detail": "built-in",
+    "preselect": false
+  },
+  {
+    "label": "begingroup",
+    "detail": "built-in",
+    "preselect": false
+  },
+  {
+    "label": "bigwedge",
+    "detail": "⋀, built-in",
+    "preselect": false
+  }
+]

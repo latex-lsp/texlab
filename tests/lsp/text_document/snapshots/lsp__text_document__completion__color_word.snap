@@ -1,0 +1,26 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\color{re}\n        |\n       ^^\"#)"
+---
+[
+  {
+    "label": "BrickRed",
+    "preselect": false
+  },
+  {
+    "label": "Red",
+    "preselect": false
+  },
+  {
+    "label": "RedOrange",
+    "preselect": false
+  },
+  {
+    "label": "RedViolet",
+    "preselect": false
+  },
+  {
+    "label": "red",
+    "preselect": false
+  }
+]

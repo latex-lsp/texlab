@@ -1,0 +1,27 @@
+---
+source: tests/lsp/text_document/folding_range.rs
+expression: "find_foldings(r#\"\n%! main.bib\nsome junk\nhere\n\n@article{foo,\n    author = {bar},\n    title = {baz}\n}\n\n@string{foo = \"bar\"}\n\n@comment{foo,\n    author = {bar},\n    title = {baz}\n}\n\n@preamble{\"foo\"}\n|\"#)"
+---
+[
+  {
+    "startLine": 3,
+    "startCharacter": 0,
+    "endLine": 6,
+    "endCharacter": 1,
+    "kind": "region"
+  },
+  {
+    "startLine": 8,
+    "startCharacter": 0,
+    "endLine": 8,
+    "endCharacter": 20,
+    "kind": "region"
+  },
+  {
+    "startLine": 15,
+    "startCharacter": 0,
+    "endLine": 15,
+    "endCharacter": 16,
+    "kind": "region"
+  }
+]

@@ -1,0 +1,10 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.bib\n@string\n |\n ^^^^^^\"#)"
+---
+[
+  {
+    "label": "string",
+    "preselect": false
+  }
+]

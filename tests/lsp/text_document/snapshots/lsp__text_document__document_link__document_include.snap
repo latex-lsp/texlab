@@ -1,0 +1,19 @@
+---
+source: tests/lsp/text_document/document_link.rs
+expression: "find_links(r#\"\n%! foo.tex\n\\input{bar.tex}\n|\n\n%! bar.tex\"#)"
+---
+[
+  {
+    "range": {
+      "start": {
+        "line": 0,
+        "character": 7
+      },
+      "end": {
+        "line": 0,
+        "character": 14
+      }
+    },
+    "target": "file:///bar.tex"
+  }
+]

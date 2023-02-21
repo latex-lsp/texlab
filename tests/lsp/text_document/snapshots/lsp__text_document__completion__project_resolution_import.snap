@@ -1,0 +1,31 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\documentclass{article}\n\\import{sub}{sub/sub.tex}\n\\lipsu\n     |\n ^^^^^\n\n%! sub/sub.tex\n\\input{child.tex}\n\n%! sub/child.tex\n\\usepackage{lipsum}\"#)"
+---
+[
+  {
+    "label": "LipsumPar",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "LipsumProtect",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "LipsumRestoreAll",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "lipsum",
+    "detail": "lipsum.sty",
+    "preselect": false
+  },
+  {
+    "label": "lipsumexp",
+    "detail": "lipsum.sty",
+    "preselect": false
+  }
+]

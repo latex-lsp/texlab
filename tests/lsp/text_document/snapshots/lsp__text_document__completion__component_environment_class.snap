@@ -1,0 +1,11 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\documentclass{article}\n\\begin{thein}\n          |\n       ^^^^^\"#)"
+---
+[
+  {
+    "label": "theindex",
+    "detail": "article.cls",
+    "preselect": false
+  }
+]

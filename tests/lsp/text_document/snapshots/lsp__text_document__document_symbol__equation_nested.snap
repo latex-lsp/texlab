@@ -1,0 +1,86 @@
+---
+source: tests/lsp/text_document/document_symbol.rs
+expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin{document}\n\n\\begin{equation}\\label{eq:foo}\n    Foo\n\\end{equation}\n\n\\begin{equation}\\label{eq:bar}\n    Bar\n\\end{equation}\n\n\\begin{equation}\n    Baz\n\\end{equation}\n\n\\end{document}\n|\n\n%! main.aux\n\\relax\n\\newlabel{eq:foo}{{1}{1}}\"#,\n    serde_json::json!({\n            \"textDocument\" :\n            {\n                \"documentSymbol\" :\n                { \"hierarchicalDocumentSymbolSupport\" : true, },\n            },\n        }), serde_json::Value::Null)"
+---
+[
+  {
+    "name": "Equation (1)",
+    "detail": "eq:foo",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 4,
+        "character": 0
+      },
+      "end": {
+        "line": 6,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 4,
+        "character": 16
+      },
+      "end": {
+        "line": 4,
+        "character": 30
+      }
+    },
+    "children": []
+  },
+  {
+    "name": "Equation",
+    "detail": "eq:bar",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 8,
+        "character": 0
+      },
+      "end": {
+        "line": 10,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 8,
+        "character": 16
+      },
+      "end": {
+        "line": 8,
+        "character": 30
+      }
+    },
+    "children": []
+  },
+  {
+    "name": "Equation",
+    "kind": 14,
+    "deprecated": false,
+    "range": {
+      "start": {
+        "line": 12,
+        "character": 0
+      },
+      "end": {
+        "line": 14,
+        "character": 14
+      }
+    },
+    "selectionRange": {
+      "start": {
+        "line": 12,
+        "character": 0
+      },
+      "end": {
+        "line": 14,
+        "character": 14
+      }
+    },
+    "children": []
+  }
+]

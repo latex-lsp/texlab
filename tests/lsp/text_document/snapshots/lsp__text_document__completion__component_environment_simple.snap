@@ -1,0 +1,11 @@
+---
+source: tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\begin{doc\n          |\n       ^^^\"#)"
+---
+[
+  {
+    "label": "document",
+    "detail": "built-in",
+    "preselect": false
+  }
+]
