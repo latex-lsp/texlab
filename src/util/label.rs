@@ -209,7 +209,7 @@ fn render_label_enum_item(
             .label()
             .and_then(|label| label.content_text())
             .map(|text| Word::new(db, text))
-            .or_else(|| number),
+            .or(number),
         object: LabeledObject::EnumItem,
     })
 }

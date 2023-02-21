@@ -126,7 +126,7 @@ pub struct Document {
 impl Document {
     pub fn edit(self, db: &mut dyn Db, range: TextRange, replace_with: &str) {
         let mut text = self.contents(db).set_text(db).to(String::new());
-        text.replace_range(std::ops::Range::<usize>::from(range), &replace_with);
+        text.replace_range(std::ops::Range::<usize>::from(range), replace_with);
         self.contents(db).set_text(db).to(text);
         self.set_cursor(db).to(range.start());
     }

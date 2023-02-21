@@ -60,8 +60,7 @@ impl<'db> CompletionBuilder<'db> {
                         .take_while(|word| word.text_range() != token.text_range())
                         .chain(std::iter::once(token.clone()))
                         .filter(|word| word.text_range().start() < context.offset)
-                        .join(" ")
-                        .into(),
+                        .join(" "),
                     None => token.text().into(),
                 }
             }
@@ -180,14 +179,7 @@ impl<'db> CompletionBuilder<'db> {
             "{} {}",
             key,
             WHITESPACE_REGEX
-                .replace_all(
-                    &code
-                        .replace('{', " ")
-                        .replace('}', " ")
-                        .replace(',', " ")
-                        .replace('=', " "),
-                    " "
-                )
+                .replace_all(&code.replace(['{', '}', ',', '='], " "), " ")
                 .trim(),
         );
 

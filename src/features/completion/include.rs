@@ -119,7 +119,7 @@ fn current_dir(
             path.push(graphics_path);
         }
 
-        path.push(&path_text);
+        path.push(path_text);
         if !path_text.ends_with('/') {
             path.pop();
         }

@@ -45,7 +45,7 @@ impl TexLink {
         let import = latex::Import::cast(node)?;
 
         let mut base_dir = import.directory()?.key()?.to_string();
-        if !base_dir.ends_with("/") {
+        if !base_dir.ends_with('/') {
             base_dir.push('/');
         }
 

@@ -13,4 +13,4 @@ use std::path::PathBuf;
 
 use once_cell::sync::Lazy;
 
-pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(|| dirs::home_dir());
+pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);

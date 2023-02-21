@@ -45,7 +45,7 @@ fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
 
     let mut files = Vec::new();
     for i in 0..table_size {
-        let offset = table_address + i * FNDB_ENTRY_SIZE as u32;
+        let offset = table_address + i * FNDB_ENTRY_SIZE;
         reader.set_position(u64::from(offset));
         let file_name_offset = read_u32(&mut reader)? as usize;
         let directory_offset = read_u32(&mut reader)? as usize;

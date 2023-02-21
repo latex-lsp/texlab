@@ -190,7 +190,7 @@ impl Workspace {
             .unwrap_or(".")
             .to_string();
 
-        if !path.ends_with("/") {
+        if !path.ends_with('/') {
             path.push('/');
         }
 

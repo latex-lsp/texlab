@@ -105,11 +105,11 @@ fn prepare_log(log: &str) -> String {
         } else if line.chars().count() == MAX_LINE_LENGTH {
             let mut new_line = String::new();
             new_line.push_str(line);
-            while let Some(old_line) = old_lines.next() {
-              new_line.push_str(old_line);
-              if old_line.chars().count() != MAX_LINE_LENGTH {
-                break;
-              }
+            for old_line in old_lines.by_ref() {
+                new_line.push_str(old_line);
+                if old_line.chars().count() != MAX_LINE_LENGTH {
+                    break;
+                }
             }
             new_lines.push(new_line);
         } else {

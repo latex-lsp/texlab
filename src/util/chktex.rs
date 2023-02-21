@@ -49,7 +49,7 @@ impl Command {
 
     pub fn run(self) -> std::io::Result<Vec<Diagnostic>> {
         let mut child = std::process::Command::new("chktex")
-            .args(&["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
+            .args(["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

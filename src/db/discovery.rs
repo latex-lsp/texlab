@@ -110,12 +110,12 @@ pub fn source_dependency(
                 .as_deref()
                 .map_or(false, |dir| path.starts_with(dir))
         })
-        .flat_map(|path| Url::from_file_path(path))
+        .flat_map(Url::from_file_path)
         .map(|uri| Location::new(db, uri));
 
     for location in file_names
         .iter()
-        .filter_map(|file_name| base_dir.join(db, &file_name))
+        .filter_map(|file_name| base_dir.join(db, file_name))
         .chain(distro_files)
     {
         match workspace.lookup(db, location) {
