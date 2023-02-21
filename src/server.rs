@@ -86,6 +86,27 @@ impl Server {
         });
     }
 
+    fn run_errorable_with_db<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Serialize,
+        Q: FnOnce(&dyn Db) -> Result<R> + Send + 'static,
+    {
+        let client = self.client.clone();
+        self.engine.fork(move |db| {
+            match query(db) {
+                Ok(result) => {
+                    let response = lsp_server::Response::new_ok(id, result);
+                    client.send_response(response).unwrap();
+                }
+                Err(why) => {
+                    client
+                        .send_error(id, ErrorCode::InternalError, why.to_string())
+                        .unwrap();
+                }
+            }
+        });
+    }
+
     fn capabilities(&self) -> ServerCapabilities {
         ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
@@ -619,28 +640,25 @@ impl Server {
     }
 
     fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
-        let db = self.engine.read();
-        match workspace_command::select(db, &params.command, params.arguments) {
-            Ok(command) => {
-                let client = self.client.clone();
-                self.pool.execute(move || {
-                    match command.run() {
-                        Ok(()) => {
-                            client
-                                .send_response(lsp_server::Response::new_ok(id, ()))
-                                .unwrap();
-                        }
-                        Err(why) => {
-                            client
-                                .send_error(id, ErrorCode::InternalError, why.to_string())
-                                .unwrap();
-                        }
-                    };
+        match params.command.as_str() {
+            "texlab.cleanAuxiliary" => {
+                self.run_errorable_with_db(id, move |db| {
+                    let opt = workspace_command::CleanOptions::Auxiliary;
+                    workspace_command::CleanCommand::new(db, opt, params.arguments)?.
+                        run()
                 });
             }
-            Err(why) => {
+            "texlab.cleanArtifacts" => {
+                self.run_errorable_with_db(id, move |db| {
+                    let opt = workspace_command::CleanOptions::Artifacts;
+                    workspace_command::CleanCommand::new(db, opt, params.arguments)?
+                        .run()
+                });
+            }
+            _ => {
                 self.client
-                    .send_error(id, ErrorCode::InvalidParams, why.to_string())
+                    .send_error(id, ErrorCode::InvalidParams,
+                                format!("Unknown workspace command: {}", params.command))
                     .unwrap();
             }
         };

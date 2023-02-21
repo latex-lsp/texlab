@@ -6,14 +6,6 @@ use thiserror::Error;
 
 use crate::{db::Workspace, normalize_uri, Db};
 
-pub fn select(db: &dyn Db, name: &str, args: Vec<serde_json::Value>) -> Result<CleanCommand> {
-    Ok(match name {
-        "texlab.cleanAuxiliary" => CleanCommand::new(db, CleanOptions::Auxiliary, args)?,
-        "texlab.cleanArtifacts" => CleanCommand::new(db, CleanOptions::Artifacts, args)?,
-        _ => bail!("Unknown command: {}", name),
-    })
-}
-
 #[derive(Debug, Error)]
 pub enum CleanError {
     #[error("document '{0}' not found")]
@@ -39,7 +31,7 @@ pub struct CleanCommand {
 }
 
 impl CleanCommand {
-    fn new(db: &dyn Db, options: CleanOptions, args: Vec<serde_json::Value>) -> Result<Self> {
+    pub fn new(db: &dyn Db, options: CleanOptions, args: Vec<serde_json::Value>) -> Result<Self> {
         let params: TextDocumentIdentifier =
             serde_json::from_value(args.into_iter().next().ok_or(CleanError::MissingArg)?)
                 .map_err(CleanError::InvalidArg)?;
@@ -82,7 +74,7 @@ impl CleanCommand {
         Ok(Self { executable, args })
     }
 
-    pub fn run(self) -> Result<(), CleanError> {
+    pub fn run(self) -> Result<()> {
         log::debug!("Cleaning output files: {} {:?}", self.executable, self.args);
         std::process::Command::new(self.executable)
             .args(self.args)
@@ -90,14 +82,14 @@ impl CleanCommand {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .map_err(CleanError::Spawn)?;
+            .map_err(move |msg| anyhow::Error::new(CleanError::Spawn(msg)))?;
 
         Ok(())
     }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
-enum CleanOptions {
+pub enum CleanOptions {
     Auxiliary,
     Artifacts,
 }
