@@ -242,7 +242,6 @@ impl TestBed {
         let path = uri.to_file_path().unwrap();
         let path = path.strip_prefix(self.directory()).unwrap_or(&path);
         let path = root.join(path);
-        println!("{}", path.display());
 
         let uri = Url::from_file_path(path).unwrap();
         Url::parse(&uri.as_str().replace("file:///C:/", "file:///")).unwrap()
