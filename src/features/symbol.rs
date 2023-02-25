@@ -7,13 +7,9 @@ use std::cmp::Reverse;
 
 use lsp_types::{DocumentSymbolResponse, SymbolInformation, Url, WorkspaceSymbolParams};
 
-use crate::{
-    db::Workspace,
-    util::{self, capabilities::ClientCapabilitiesExt},
-    Db,
-};
+use crate::{db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
 
-use self::project_order::ProjectOrdering;
+use self::{project_order::ProjectOrdering, types::InternalSymbol};
 
 pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolResponse> {
     let workspace = Workspace::get(db);
@@ -25,13 +21,7 @@ pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolRes
 
     let options = &Workspace::get(db).options(db).symbols;
 
-    let buf = buf.into_iter().filter(|symbol| {
-        util::regex_filter::filter(
-            &symbol.name,
-            &options.allowed_patterns,
-            &options.ignored_patterns,
-        )
-    });
+    InternalSymbol::filter(&mut buf, &options);
 
     if workspace
         .client_capabilities(db)
