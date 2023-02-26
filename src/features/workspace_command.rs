@@ -1,6 +1,6 @@
 use std::process::Stdio;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use lsp_types::{TextDocumentIdentifier, Url};
 use thiserror::Error;
 
