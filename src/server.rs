@@ -27,7 +27,8 @@ use crate::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
-        reference, rename, symbol, workspace_command,
+        reference, rename, symbol,
+        workspace_command::clean,
     },
     normalize_uri,
     syntax::bibtex,
@@ -643,15 +644,15 @@ impl Server {
         match params.command.as_str() {
             "texlab.cleanAuxiliary" => {
                 self.run_errorable_with_db(id, move |db| {
-                    let opt = workspace_command::CleanOptions::Auxiliary;
-                    workspace_command::CleanCommand::new(db, opt, params.arguments)?.
+                    let opt = clean::CleanOptions::Auxiliary;
+                    clean::CleanCommand::new(db, opt, params.arguments)?.
                         run()
                 });
             }
             "texlab.cleanArtifacts" => {
                 self.run_errorable_with_db(id, move |db| {
-                    let opt = workspace_command::CleanOptions::Artifacts;
-                    workspace_command::CleanCommand::new(db, opt, params.arguments)?
+                    let opt = clean::CleanOptions::Artifacts;
+                    clean::CleanCommand::new(db, opt, params.arguments)?
                         .run()
                 });
             }
