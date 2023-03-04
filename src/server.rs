@@ -28,7 +28,7 @@ use crate::{
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol,
-        workspace_command::clean,
+        workspace_command::{clean, change_environment},
     },
     normalize_uri,
     syntax::bibtex,
@@ -153,6 +153,7 @@ impl Server {
                 commands: vec![
                     "texlab.cleanAuxiliary".into(),
                     "texlab.cleanArtifacts".into(),
+                    "texlab.changeEnvironment".into(),
                 ],
                 ..Default::default()
             }),
@@ -654,6 +655,15 @@ impl Server {
                     let opt = clean::CleanOptions::Artifacts;
                     clean::CleanCommand::new(db, opt, params.arguments)?
                         .run()
+                });
+            }
+            "texlab.changeEnvironment" => {
+                self.run_errorable_with_db(id, move |db| {
+                    let context = change_environment::change_environment_context(db, params.arguments)?;
+                    // FIXME: The workspeace edit should not be send as a response but as a
+                    // request. How does texlab send server requests?
+                    change_environment::change_environment(db, &context)
+                        .ok_or(change_environment::ChangeEnvironmentError::CouldNotCreateWorkspaceEdit.into())
                 });
             }
             _ => {
