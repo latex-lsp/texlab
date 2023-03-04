@@ -108,6 +108,28 @@ impl Server {
         });
     }
 
+    fn run_and_request_errorable_with_db<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Request,
+        Q: FnOnce(&dyn Db) -> Result<R::Params> + Send + 'static,
+    {
+        let client = self.client.clone();
+        self.engine.fork(move |db| {
+            match query(db) {
+                Ok(params) => {
+                    client
+                        .send_request::<R>(params)
+                        .unwrap();
+                }
+                Err(why) => {
+                    client
+                        .send_error(id, ErrorCode::InternalError, why.to_string())
+                        .unwrap();
+                }
+            }
+        });
+    }
+
     fn capabilities(&self) -> ServerCapabilities {
         ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
@@ -658,10 +680,8 @@ impl Server {
                 });
             }
             "texlab.changeEnvironment" => {
-                self.run_errorable_with_db(id, move |db| {
+                self.run_and_request_errorable_with_db::<ApplyWorkspaceEdit,_>(id, move |db| {
                     let context = change_environment::change_environment_context(db, params.arguments)?;
-                    // FIXME: The workspeace edit should not be send as a response but as a
-                    // request. How does texlab send server requests?
                     change_environment::change_environment(db, &context)
                         .ok_or(change_environment::ChangeEnvironmentError::CouldNotCreateWorkspaceEdit.into())
                 });
