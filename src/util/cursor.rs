@@ -1,4 +1,3 @@
-use std::iter;
 use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
 
@@ -252,26 +251,20 @@ impl<'db, T> CursorContext<'db, T> {
         Some((name, range))
     }
 
-    pub fn find_environment(&self) -> Option<(String, TextRange, String, TextRange)> {
-        let token_parent = self.cursor.as_tex()?.parent()?;
-        let token_ancestors = token_parent.ancestors();
+    pub fn find_environment(&self) -> Option<(latex::Key, latex::Key)> {
+        let token = self.cursor.as_tex()?;
 
-        for node in iter::once(token_parent).chain(token_ancestors) {
-            if matches!(node.kind(), latex::ENVIRONMENT) {
-                let beg = node.children()
-                    .filter_map(|child| latex::Begin::cast(child))
-                    .next()?
-                    .name()?
-                    .key()?;
-                let end = node.children()
-                    .filter_map(|child| latex::End::cast(child))
-                    .next()?
-                    .name()?
-                    .key()?;
+        for env in token.parent_ancestors()
+            .filter_map(latex::Environment::cast) {
 
-                return Some((beg.to_string(), beg.syntax().text_range(),
-                             end.to_string(), end.syntax().text_range()));
-            }
+            let beg = env.begin()?
+                .name()?
+                .key()?;
+            let end = env.end()?
+                .name()?
+                .key()?;
+
+            return Some((beg,end));
         }
 
         None

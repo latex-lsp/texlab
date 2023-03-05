@@ -87,38 +87,40 @@ impl Server {
         });
     }
 
-    fn run_errorable_with_db<R, Q>(&self, id: RequestId, query: Q)
+    fn run_and_request_with_db<R, S, Q>(&self, id: RequestId, query: Q)
     where
-        R: Serialize,
-        Q: FnOnce(&dyn Db) -> Result<R> + Send + 'static,
+        R: Request,
+        S: Serialize,
+        Q: FnOnce(&dyn Db) -> Option<(S,R::Params)> + Send + 'static,
     {
         let client = self.client.clone();
         self.engine.fork(move |db| {
             match query(db) {
-                Ok(result) => {
+                Some((result, request_params)) => {
                     let response = lsp_server::Response::new_ok(id, result);
                     client.send_response(response).unwrap();
-                }
-                Err(why) => {
-                    client
-                        .send_error(id, ErrorCode::InternalError, why.to_string())
-                        .unwrap();
-                }
+                    client.send_request::<R>(request_params).unwrap();
+                },
+                None => {
+                    let response = lsp_server::Response::new_ok(id, Option::<S>::None);
+                    client.send_response(response).unwrap();
+                },
             }
         });
     }
 
-    fn run_and_request_errorable_with_db<R, Q>(&self, id: RequestId, query: Q)
+    fn run_errorable<R, Q>(&self, id: RequestId, query: Q)
     where
-        R: Request,
-        Q: FnOnce(&dyn Db) -> Result<R::Params> + Send + 'static,
+        R: Serialize,
+        Q: FnOnce() -> Result<R> + Send + 'static,
     {
         let client = self.client.clone();
-        self.engine.fork(move |db| {
-            match query(db) {
-                Ok(params) => {
+        self.pool.execute(move || {
+            match query() {
+                Ok(result) => {
+                    let response = lsp_server::Response::new_ok(id, result);
                     client
-                        .send_request::<R>(params)
+                        .send_response(response)
                         .unwrap();
                 }
                 Err(why) => {
@@ -666,24 +668,20 @@ impl Server {
     fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
         match params.command.as_str() {
             "texlab.cleanAuxiliary" => {
-                self.run_errorable_with_db(id, move |db| {
-                    let opt = clean::CleanOptions::Auxiliary;
-                    clean::CleanCommand::new(db, opt, params.arguments)?.
-                        run()
-                });
+                let db = self.engine.read();
+                let opt = clean::CleanOptions::Auxiliary;
+                let command = clean::CleanCommand::new(db, opt, params.arguments);
+                self.run_errorable(id, || { command?.run() });
             }
             "texlab.cleanArtifacts" => {
-                self.run_errorable_with_db(id, move |db| {
-                    let opt = clean::CleanOptions::Artifacts;
-                    clean::CleanCommand::new(db, opt, params.arguments)?
-                        .run()
-                });
+                let db = self.engine.read();
+                let opt = clean::CleanOptions::Auxiliary;
+                let command = clean::CleanCommand::new(db, opt, params.arguments);
+                self.run_errorable(id, || { command?.run() });
             }
             "texlab.changeEnvironment" => {
-                self.run_and_request_errorable_with_db::<ApplyWorkspaceEdit,_>(id, move |db| {
-                    let context = change_environment::change_environment_context(db, params.arguments)?;
-                    change_environment::change_environment(db, &context)
-                        .ok_or(change_environment::ChangeEnvironmentError::CouldNotCreateWorkspaceEdit.into())
+                self.run_and_request_with_db::<ApplyWorkspaceEdit,_,_>(id, move |db| {
+                    change_environment::change_environment(db, params.arguments)
                 });
             }
             _ => {
