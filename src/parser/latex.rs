@@ -4,7 +4,10 @@ use rowan::{GreenNode, GreenNodeBuilder};
 
 use crate::syntax::latex::SyntaxKind::{self, *};
 
-use self::lexer::Lexer;
+use self::lexer::{
+    types::{CommandName, Token},
+    Lexer,
+};
 
 #[derive(Debug, Clone, Copy)]
 struct ParserContext {
@@ -40,18 +43,18 @@ impl<'a> Parser<'a> {
         self.builder.token(kind.into(), text);
     }
 
-    fn peek(&self) -> Option<SyntaxKind> {
+    fn peek(&self) -> Option<Token> {
         self.lexer.peek()
     }
 
-    fn expect(&mut self, kind: SyntaxKind) {
+    fn expect(&mut self, kind: Token) {
         if self.peek() == Some(kind) {
             self.eat();
             self.trivia();
         }
     }
 
-    fn expect2(&mut self, kind1: SyntaxKind, kind2: SyntaxKind) {
+    fn expect2(&mut self, kind1: Token, kind2: Token) {
         if self
             .peek()
             .filter(|&kind| kind == kind1 || kind == kind2)
@@ -63,11 +66,12 @@ impl<'a> Parser<'a> {
     }
 
     fn trivia(&mut self) {
-        while self
-            .peek()
-            .filter(|&kind| matches!(kind, LINE_BREAK | WHITESPACE | COMMENT))
-            .is_some()
-        {
+        while self.peek().map_or(false, |kind| {
+            matches!(
+                kind,
+                Token::LineBreak | Token::Whitespace | Token::LineComment
+            )
+        }) {
             self.eat();
         }
     }
@@ -84,66 +88,66 @@ impl<'a> Parser<'a> {
 
     fn content(&mut self, context: ParserContext) {
         match self.peek().unwrap() {
-            LINE_BREAK | WHITESPACE | COMMENT | VERBATIM => self.eat(),
-            L_CURLY if context.allow_environment => self.curly_group(),
-            L_CURLY => self.curly_group_without_environments(),
-            L_BRACK | L_PAREN => self.mixed_group(),
-            R_CURLY | R_BRACK | R_PAREN => {
+            Token::LineBreak | Token::Whitespace | Token::LineComment => self.eat(),
+            Token::LCurly if context.allow_environment => self.curly_group(),
+            Token::LCurly => self.curly_group_without_environments(),
+            Token::LBrack | Token::LParen => self.mixed_group(),
+            Token::RCurly | Token::RBrack | Token::RParen => {
                 self.builder.start_node(ERROR.into());
                 self.eat();
                 self.builder.finish_node();
             }
-            WORD | COMMA => self.text(context),
-            EQUALITY_SIGN => self.eat(),
-            DOLLAR => self.formula(),
-            GENERIC_COMMAND_NAME => self.generic_command(),
-            BEGIN_ENVIRONMENT_NAME if context.allow_environment => self.environment(),
-            BEGIN_ENVIRONMENT_NAME => self.generic_command(),
-            END_ENVIRONMENT_NAME => self.generic_command(),
-            BEGIN_EQUATION_NAME => self.equation(),
-            END_EQUATION_NAME => self.generic_command(),
-            ERROR => self.eat(),
-            PART_NAME => self.part(),
-            CHAPTER_NAME => self.chapter(),
-            SECTION_NAME => self.section(),
-            SUBSECTION_NAME => self.subsection(),
-            SUBSUBSECTION_NAME => self.subsubsection(),
-            PARAGRAPH_NAME => self.paragraph(),
-            SUBPARAGRAPH_NAME => self.subparagraph(),
-            ENUM_ITEM_NAME => self.enum_item(),
-            CAPTION_NAME => self.caption(),
-            CITATION_NAME => self.citation(),
-            PACKAGE_INCLUDE_NAME => self.package_include(),
-            CLASS_INCLUDE_NAME => self.class_include(),
-            LATEX_INCLUDE_NAME => self.latex_include(),
-            BIBLATEX_INCLUDE_NAME => self.biblatex_include(),
-            BIBTEX_INCLUDE_NAME => self.bibtex_include(),
-            GRAPHICS_INCLUDE_NAME => self.graphics_include(),
-            SVG_INCLUDE_NAME => self.svg_include(),
-            INKSCAPE_INCLUDE_NAME => self.inkscape_include(),
-            VERBATIM_INCLUDE_NAME => self.verbatim_include(),
-            IMPORT_NAME => self.import(),
-            LABEL_DEFINITION_NAME => self.label_definition(),
-            LABEL_REFERENCE_NAME => self.label_reference(),
-            LABEL_REFERENCE_RANGE_NAME => self.label_reference_range(),
-            LABEL_NUMBER_NAME => self.label_number(),
-            COMMAND_DEFINITION_NAME => self.command_definition(),
-            MATH_OPERATOR_NAME => self.math_operator(),
-            GLOSSARY_ENTRY_DEFINITION_NAME => self.glossary_entry_definition(),
-            GLOSSARY_ENTRY_REFERENCE_NAME => self.glossary_entry_reference(),
-            ACRONYM_DEFINITION_NAME => self.acronym_definition(),
-            ACRONYM_DECLARATION_NAME => self.acronym_declaration(),
-            ACRONYM_REFERENCE_NAME => self.acronym_reference(),
-            THEOREM_DEFINITION_NAME => self.theorem_definition(),
-            COLOR_REFERENCE_NAME => self.color_reference(),
-            COLOR_DEFINITION_NAME => self.color_definition(),
-            COLOR_SET_DEFINITION_NAME => self.color_set_definition(),
-            TIKZ_LIBRARY_IMPORT_NAME => self.tikz_library_import(),
-            ENVIRONMENT_DEFINITION_NAME => self.environment_definition(),
-            BEGIN_BLOCK_COMMENT_NAME => self.block_comment(),
-            END_BLOCK_COMMENT_NAME => self.generic_command(),
-            GRAPHICS_PATH_NAME => self.graphics_path(),
-            _ => unreachable!(),
+            Token::Word | Token::Comma => self.text(context),
+            Token::Eq => self.eat(),
+            Token::Dollar => self.formula(),
+            Token::CommandName(name) => match name {
+                CommandName::Generic => self.generic_command(),
+                CommandName::BeginEnvironment if context.allow_environment => self.environment(),
+                CommandName::BeginEnvironment => self.generic_command(),
+                CommandName::EndEnvironment => self.generic_command(),
+                CommandName::BeginEquation => self.equation(),
+                CommandName::EndEquation => self.generic_command(),
+                CommandName::Part => self.part(),
+                CommandName::Chapter => self.chapter(),
+                CommandName::Section => self.section(),
+                CommandName::Subsection => self.subsection(),
+                CommandName::Subsubsection => self.subsubsection(),
+                CommandName::Paragraph => self.paragraph(),
+                CommandName::Subparagraph => self.subparagraph(),
+                CommandName::EnumItem => self.enum_item(),
+                CommandName::Caption => self.caption(),
+                CommandName::Citation => self.citation(),
+                CommandName::PackageInclude => self.package_include(),
+                CommandName::ClassInclude => self.class_include(),
+                CommandName::LatexInclude => self.latex_include(),
+                CommandName::BiblatexInclude => self.biblatex_include(),
+                CommandName::BibtexInclude => self.bibtex_include(),
+                CommandName::GraphicsInclude => self.graphics_include(),
+                CommandName::SvgInclude => self.svg_include(),
+                CommandName::InkscapeInclude => self.inkscape_include(),
+                CommandName::VerbatimInclude => self.verbatim_include(),
+                CommandName::Import => self.import(),
+                CommandName::LabelDefinition => self.label_definition(),
+                CommandName::LabelReference => self.label_reference(),
+                CommandName::LabelReferenceRange => self.label_reference_range(),
+                CommandName::LabelNumber => self.label_number(),
+                CommandName::CommandDefinition => self.command_definition(),
+                CommandName::MathOperator => self.math_operator(),
+                CommandName::GlossaryEntryDefinition => self.glossary_entry_definition(),
+                CommandName::GlossaryEntryReference => self.glossary_entry_reference(),
+                CommandName::AcronymDefinition => self.acronym_definition(),
+                CommandName::AcronymDeclaration => self.acronym_declaration(),
+                CommandName::AcronymReference => self.acronym_reference(),
+                CommandName::TheoremDefinition => self.theorem_definition(),
+                CommandName::ColorReference => self.color_reference(),
+                CommandName::ColorDefinition => self.color_definition(),
+                CommandName::ColorSetDefinition => self.color_set_definition(),
+                CommandName::TikzLibraryImport => self.tikz_library_import(),
+                CommandName::EnvironmentDefinition => self.environment_definition(),
+                CommandName::BeginBlockComment => self.block_comment(),
+                CommandName::EndBlockComment => self.generic_command(),
+                CommandName::GraphicsPath => self.graphics_path(),
+            },
         }
     }
 
@@ -153,8 +157,14 @@ impl<'a> Parser<'a> {
         while self
             .peek()
             .filter(|&kind| {
-                matches!(kind, LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA)
-                    && (context.allow_comma || kind != COMMA)
+                matches!(
+                    kind,
+                    Token::LineBreak
+                        | Token::Whitespace
+                        | Token::LineComment
+                        | Token::Word
+                        | Token::Comma
+                ) && (context.allow_comma || kind != Token::Comma)
             })
             .is_some()
         {
@@ -168,12 +178,12 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, R_CURLY))
+            .filter(|&kind| !matches!(kind, Token::RCurly))
             .is_some()
         {
             self.content(ParserContext::default());
         }
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -182,13 +192,13 @@ impl<'a> Parser<'a> {
         self.eat();
         while let Some(kind) = self.peek() {
             match kind {
-                R_CURLY => break,
-                BEGIN_ENVIRONMENT_NAME => self.begin(),
-                END_ENVIRONMENT_NAME => self.end(),
+                Token::RCurly => break,
+                Token::CommandName(CommandName::BeginEnvironment) => self.begin(),
+                Token::CommandName(CommandName::EndEnvironment) => self.end(),
                 _ => self.content(ParserContext::default()),
             };
         }
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -197,7 +207,7 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, R_CURLY))
+            .filter(|&kind| !matches!(kind, Token::RCurly))
             .is_some()
         {
             self.content(ParserContext {
@@ -205,7 +215,7 @@ impl<'a> Parser<'a> {
                 allow_comma: true,
             });
         }
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -214,15 +224,15 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
         match self.peek() {
-            Some(WORD) => {
+            Some(Token::Word) => {
                 self.key();
             }
-            Some(kind) if kind.is_command_name() => {
+            Some(Token::CommandName(_)) => {
                 self.content(ParserContext::default());
             }
             Some(_) | None => {}
         }
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -232,17 +242,26 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| matches!(kind, LINE_BREAK | WHITESPACE | COMMENT | WORD | COMMA))
+            .filter(|&kind| {
+                matches!(
+                    kind,
+                    Token::LineBreak
+                        | Token::Whitespace
+                        | Token::LineComment
+                        | Token::Word
+                        | Token::Comma
+                )
+            })
             .is_some()
         {
-            if self.peek() == Some(WORD) {
+            if self.peek() == Some(Token::Word) {
                 self.key();
             } else {
                 self.eat();
             }
         }
 
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -250,14 +269,12 @@ impl<'a> Parser<'a> {
         self.builder.start_node(CURLY_GROUP_COMMAND.into());
         self.eat();
         self.trivia();
-        match self.peek() {
-            Some(kind) if kind.is_command_name() => {
-                self.eat();
-                self.trivia();
-            }
-            Some(_) | None => {}
+        if matches!(self.peek(), Some(Token::CommandName(_))) {
+            self.eat();
+            self.trivia();
         }
-        self.expect(R_CURLY);
+
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -269,23 +286,23 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    R_CURLY
-                        | R_BRACK
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | PARAGRAPH_NAME
-                        | SUBPARAGRAPH_NAME
-                        | ENUM_ITEM_NAME
-                        | END_ENVIRONMENT_NAME
+                    Token::RCurly
+                        | Token::RBrack
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Paragraph)
+                        | Token::CommandName(CommandName::Subparagraph)
+                        | Token::CommandName(CommandName::EnumItem)
+                        | Token::CommandName(CommandName::EndEnvironment)
                 )
             })
             .is_some()
         {
             self.content(ParserContext::default());
         }
-        self.expect(R_BRACK);
+        self.expect(Token::RBrack);
         self.builder.finish_node();
     }
 
@@ -294,12 +311,12 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
         match self.peek() {
-            Some(WORD) => {
+            Some(Token::Word) => {
                 self.key();
             }
             Some(_) | None => {}
         }
-        self.expect(R_BRACK);
+        self.expect(Token::RBrack);
         self.builder.finish_node();
     }
 
@@ -312,24 +329,24 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    R_CURLY
-                        | R_BRACK
-                        | R_PAREN
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | PARAGRAPH_NAME
-                        | SUBPARAGRAPH_NAME
-                        | ENUM_ITEM_NAME
-                        | END_ENVIRONMENT_NAME
+                    Token::RCurly
+                        | Token::RBrack
+                        | Token::RParen
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Paragraph)
+                        | Token::CommandName(CommandName::Subparagraph)
+                        | Token::CommandName(CommandName::EnumItem)
+                        | Token::CommandName(CommandName::EndEnvironment)
                 )
             })
             .is_some()
         {
             self.content(ParserContext::default());
         }
-        self.expect2(R_BRACK, R_PAREN);
+        self.expect2(Token::RBrack, Token::RParen);
         self.builder.finish_node();
     }
 
@@ -338,7 +355,7 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| matches!(kind, WHITESPACE | COMMENT | WORD))
+            .filter(|&kind| matches!(kind, Token::Whitespace | Token::LineComment | Token::Word))
             .is_some()
         {
             self.eat();
@@ -352,7 +369,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(VALUE.into());
         while let Some(kind) = self.lexer.peek() {
             match kind {
-                COMMA | R_BRACK | R_CURLY => break,
+                Token::Comma | Token::RBrack | Token::RCurly => break,
                 _ => self.content(ParserContext {
                     allow_environment: true,
                     allow_comma: false,
@@ -365,7 +382,7 @@ impl<'a> Parser<'a> {
     fn key_value_pair(&mut self) {
         self.builder.start_node(KEY_VALUE_PAIR.into());
         self.key();
-        if self.peek() == Some(EQUALITY_SIGN) {
+        if self.peek() == Some(Token::Eq) {
             self.eat();
             self.trivia();
             if self
@@ -373,7 +390,11 @@ impl<'a> Parser<'a> {
                 .filter(|&kind| {
                     !matches!(
                         kind,
-                        END_ENVIRONMENT_NAME | R_CURLY | R_BRACK | R_PAREN | COMMA
+                        Token::CommandName(CommandName::EndEnvironment)
+                            | Token::RCurly
+                            | Token::RBrack
+                            | Token::RParen
+                            | Token::Comma
                     )
                 })
                 .is_some()
@@ -389,10 +410,10 @@ impl<'a> Parser<'a> {
         self.builder.start_node(KEY_VALUE_BODY.into());
         while let Some(kind) = self.peek() {
             match kind {
-                LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
-                WORD => {
+                Token::LineBreak | Token::Whitespace | Token::LineComment => self.eat(),
+                Token::Word => {
                     self.key_value_pair();
-                    if self.peek() == Some(COMMA) {
+                    if self.peek() == Some(Token::Comma) {
                         self.eat();
                     } else {
                         break;
@@ -404,7 +425,7 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn group_key_value(&mut self, node_kind: SyntaxKind, right_kind: SyntaxKind) {
+    fn group_key_value(&mut self, node_kind: SyntaxKind, right_kind: Token) {
         self.builder.start_node(node_kind.into());
         self.eat();
         self.trivia();
@@ -414,11 +435,11 @@ impl<'a> Parser<'a> {
     }
 
     fn curly_group_key_value(&mut self) {
-        self.group_key_value(CURLY_GROUP_KEY_VALUE, R_CURLY);
+        self.group_key_value(CURLY_GROUP_KEY_VALUE, Token::RCurly);
     }
 
     fn brack_group_key_value(&mut self) {
-        self.group_key_value(BRACK_GROUP_KEY_VALUE, R_BRACK);
+        self.group_key_value(BRACK_GROUP_KEY_VALUE, Token::RBrack);
     }
 
     fn formula(&mut self) {
@@ -427,12 +448,17 @@ impl<'a> Parser<'a> {
         self.trivia();
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME | DOLLAR))
+            .filter(|&kind| {
+                !matches!(
+                    kind,
+                    Token::RCurly | Token::CommandName(CommandName::EndEnvironment) | Token::Dollar
+                )
+            })
             .is_some()
         {
             self.content(ParserContext::default());
         }
-        self.expect(DOLLAR);
+        self.expect(Token::Dollar);
         self.builder.finish_node();
     }
 
@@ -441,9 +467,9 @@ impl<'a> Parser<'a> {
         self.eat();
         while let Some(kind) = self.peek() {
             match kind {
-                LINE_BREAK | WHITESPACE | COMMENT => self.eat(),
-                L_CURLY => self.curly_group(),
-                L_BRACK | L_PAREN => self.mixed_group(),
+                Token::LineBreak | Token::Whitespace | Token::LineComment => self.eat(),
+                Token::LCurly => self.curly_group(),
+                Token::LBrack | Token::LParen => self.mixed_group(),
                 _ => break,
             }
         }
@@ -455,12 +481,19 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | END_EQUATION_NAME))
+            .filter(|&kind| {
+                !matches!(
+                    kind,
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::EndEquation)
+                )
+            })
             .is_some()
         {
             self.content(ParserContext::default());
         }
-        self.expect(END_EQUATION_NAME);
+        self.expect(Token::CommandName(CommandName::EndEquation));
         self.builder.finish_node();
     }
 
@@ -469,11 +502,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.peek() == Some(L_BRACK) {
+        if self.peek() == Some(Token::LBrack) {
             self.brack_group();
         }
         self.builder.finish_node();
@@ -484,7 +517,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
@@ -497,13 +530,18 @@ impl<'a> Parser<'a> {
 
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, R_CURLY | END_ENVIRONMENT_NAME))
+            .filter(|&kind| {
+                !matches!(
+                    kind,
+                    Token::RCurly | Token::CommandName(CommandName::EndEnvironment)
+                )
+            })
             .is_some()
         {
             self.content(ParserContext::default());
         }
 
-        if self.peek() == Some(END_ENVIRONMENT_NAME) {
+        if self.peek() == Some(Token::CommandName(CommandName::EndEnvironment)) {
             self.end();
         }
 
@@ -514,7 +552,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(PREAMBLE.into());
         while self
             .peek()
-            .filter(|&kind| kind != END_ENVIRONMENT_NAME)
+            .filter(|&kind| kind != Token::CommandName(CommandName::EndEnvironment))
             .is_some()
         {
             self.content(ParserContext::default());
@@ -527,13 +565,20 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
         while self
             .peek()
-            .filter(|&kind| !matches!(kind, END_ENVIRONMENT_NAME | R_CURLY | PART_NAME))
+            .filter(|&kind| {
+                !matches!(
+                    kind,
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                )
+            })
             .is_some()
         {
             self.content(ParserContext::default());
@@ -546,7 +591,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -555,7 +600,10 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME | R_CURLY | PART_NAME | CHAPTER_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
                 )
             })
             .is_some()
@@ -570,7 +618,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -579,7 +627,11 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME | R_CURLY | PART_NAME | CHAPTER_NAME | SECTION_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
                 )
             })
             .is_some()
@@ -594,7 +646,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -603,12 +655,12 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME
-                        | R_CURLY
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
                 )
             })
             .is_some()
@@ -623,7 +675,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -632,13 +684,13 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME
-                        | R_CURLY
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | SUBSUBSECTION_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Subsubsection)
                 )
             })
             .is_some()
@@ -653,7 +705,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -662,14 +714,14 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME
-                        | R_CURLY
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | SUBSUBSECTION_NAME
-                        | PARAGRAPH_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Subsubsection)
+                        | Token::CommandName(CommandName::Paragraph)
                 )
             })
             .is_some()
@@ -684,7 +736,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -693,15 +745,15 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME
-                        | R_CURLY
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | SUBSUBSECTION_NAME
-                        | PARAGRAPH_NAME
-                        | SUBPARAGRAPH_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Subsubsection)
+                        | Token::CommandName(CommandName::Paragraph)
+                        | Token::CommandName(CommandName::Subparagraph)
                 )
             })
             .is_some()
@@ -716,7 +768,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_BRACK) {
+        if self.peek() == Some(Token::LBrack) {
             self.brack_group();
         }
 
@@ -725,16 +777,16 @@ impl<'a> Parser<'a> {
             .filter(|&kind| {
                 !matches!(
                     kind,
-                    END_ENVIRONMENT_NAME
-                        | R_CURLY
-                        | PART_NAME
-                        | CHAPTER_NAME
-                        | SECTION_NAME
-                        | SUBSECTION_NAME
-                        | SUBSUBSECTION_NAME
-                        | PARAGRAPH_NAME
-                        | SUBPARAGRAPH_NAME
-                        | ENUM_ITEM_NAME
+                    Token::CommandName(CommandName::EndEnvironment)
+                        | Token::RCurly
+                        | Token::CommandName(CommandName::Part)
+                        | Token::CommandName(CommandName::Chapter)
+                        | Token::CommandName(CommandName::Section)
+                        | Token::CommandName(CommandName::Subsection)
+                        | Token::CommandName(CommandName::Subsubsection)
+                        | Token::CommandName(CommandName::Paragraph)
+                        | Token::CommandName(CommandName::Subparagraph)
+                        | Token::CommandName(CommandName::EnumItem)
                 )
             })
             .is_some()
@@ -748,12 +800,19 @@ impl<'a> Parser<'a> {
         self.builder.start_node(BLOCK_COMMENT.into());
         self.eat();
 
-        if self.peek() == Some(VERBATIM) {
-            self.eat();
-        }
-
-        if self.peek() == Some(END_BLOCK_COMMENT_NAME) {
-            self.eat();
+        while let Some(kind) = self.peek() {
+            match kind {
+                Token::CommandName(CommandName::BeginBlockComment) => {
+                    self.block_comment();
+                }
+                Token::CommandName(CommandName::EndBlockComment) => {
+                    self.eat();
+                    break;
+                }
+                _ => {
+                    self.eat();
+                }
+            }
         }
 
         self.builder.finish_node();
@@ -764,11 +823,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.peek() == Some(L_BRACK) {
+        if self.peek() == Some(Token::LBrack) {
             self.brack_group();
         }
 
-        if self.peek() == Some(L_CURLY) {
+        if self.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -780,12 +839,12 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
         for _ in 0..2 {
-            if self.lexer.peek() == Some(L_BRACK) {
+            if self.lexer.peek() == Some(Token::LBrack) {
                 self.brack_group();
             }
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word_list();
         }
 
@@ -796,11 +855,11 @@ impl<'a> Parser<'a> {
         self.builder.start_node(kind.into());
         self.eat();
         self.trivia();
-        if options && self.lexer.peek() == Some(L_BRACK) {
+        if options && self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_key_value();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_path_list();
         }
 
@@ -814,15 +873,20 @@ impl<'a> Parser<'a> {
 
         while let Some(kind) = self.lexer.peek() {
             match kind {
-                COMMENT | WORD | EQUALITY_SIGN | COMMA | L_BRACK | R_BRACK
-                | GENERIC_COMMAND_NAME => self.path(),
-                L_CURLY => self.curly_group_path(),
-                WHITESPACE => self.eat(),
+                Token::LineComment
+                | Token::Word
+                | Token::Eq
+                | Token::Comma
+                | Token::LBrack
+                | Token::RBrack
+                | Token::CommandName(CommandName::Generic) => self.path(),
+                Token::LCurly => self.curly_group_path(),
+                Token::Whitespace => self.eat(),
                 _ => break,
             };
         }
 
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -833,16 +897,19 @@ impl<'a> Parser<'a> {
 
         while let Some(kind) = self.peek() {
             match kind {
-                COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME => {
-                    self.path()
-                }
-                WHITESPACE | LINE_BREAK | COMMA => self.eat(),
-                L_CURLY => self.curly_group_path(),
+                Token::LineComment
+                | Token::Word
+                | Token::Eq
+                | Token::LBrack
+                | Token::RBrack
+                | Token::CommandName(CommandName::Generic) => self.path(),
+                Token::Whitespace | Token::LineBreak | Token::Comma => self.eat(),
+                Token::LCurly => self.curly_group_path(),
                 _ => break,
             };
         }
 
-        self.expect(R_CURLY);
+        self.expect(Token::RCurly);
         self.builder.finish_node();
     }
 
@@ -852,9 +919,14 @@ impl<'a> Parser<'a> {
 
         while let Some(kind) = self.peek() {
             match kind {
-                WHITESPACE | COMMENT | WORD | EQUALITY_SIGN | L_BRACK | R_BRACK
-                | GENERIC_COMMAND_NAME => self.eat(),
-                L_CURLY => self.curly_group_path(),
+                Token::Whitespace
+                | Token::LineComment
+                | Token::Word
+                | Token::Eq
+                | Token::LBrack
+                | Token::RBrack
+                | Token::CommandName(CommandName::Generic) => self.eat(),
+                Token::LCurly => self.curly_group_path(),
                 _ => break,
             };
         }
@@ -904,7 +976,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         for _ in 0..2 {
-            if self.lexer.peek() == Some(L_CURLY) {
+            if self.lexer.peek() == Some(Token::LCurly) {
                 self.curly_group_word();
             }
         }
@@ -916,7 +988,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_DEFINITION.into());
         self.eat();
         self.trivia();
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
@@ -927,7 +999,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_REFERENCE.into());
         self.eat();
         self.trivia();
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word_list();
         }
 
@@ -940,7 +1012,7 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         for _ in 0..2 {
-            if self.lexer.peek() == Some(L_CURLY) {
+            if self.lexer.peek() == Some(Token::LCurly) {
                 self.curly_group_word();
             }
         }
@@ -952,11 +1024,11 @@ impl<'a> Parser<'a> {
         self.builder.start_node(LABEL_NUMBER.into());
         self.eat();
         self.trivia();
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -968,19 +1040,19 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_command();
         }
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
 
-            if self.lexer.peek() == Some(L_BRACK) {
+            if self.lexer.peek() == Some(Token::LBrack) {
                 self.brack_group();
             }
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_impl();
         }
 
@@ -992,11 +1064,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_command();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_impl();
         }
 
@@ -1008,11 +1080,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_key_value();
         }
 
@@ -1024,11 +1096,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_key_value();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
@@ -1040,20 +1112,20 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_key_value();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group();
         }
 
         for _ in 0..2 {
-            if self.lexer.peek() == Some(L_CURLY) {
+            if self.lexer.peek() == Some(Token::LCurly) {
                 self.curly_group();
             }
         }
@@ -1066,11 +1138,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_key_value();
         }
 
@@ -1082,11 +1154,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_key_value();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
@@ -1098,19 +1170,19 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
         }
 
@@ -1122,7 +1194,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
@@ -1134,15 +1206,15 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group();
         }
 
@@ -1154,16 +1226,16 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
         }
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word_list();
         }
 
         for _ in 0..3 {
-            if self.lexer.peek() == Some(L_CURLY) {
+            if self.lexer.peek() == Some(Token::LCurly) {
                 self.curly_group_word();
             }
         }
@@ -1176,7 +1248,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word_list();
         }
 
@@ -1188,19 +1260,19 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
 
-        if self.lexer.peek() == Some(L_BRACK) {
+        if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
-            if self.lexer.peek() == Some(L_BRACK) {
+            if self.lexer.peek() == Some(Token::LBrack) {
                 self.brack_group();
             }
         }
 
         for _ in 0..2 {
-            if self.lexer.peek() == Some(L_CURLY) {
+            if self.lexer.peek() == Some(Token::LCurly) {
                 self.curly_group_without_environments();
             }
         }
@@ -1214,25 +1286,31 @@ impl<'a> Parser<'a> {
         self.trivia();
 
         let checkpoint = self.builder.checkpoint();
-        if self.lexer.peek() == Some(L_CURLY) {
+        if self.lexer.peek() == Some(Token::LCurly) {
             self.eat();
             self.trivia();
 
             if matches!(
                 self.lexer.peek(),
-                Some(WORD | EQUALITY_SIGN | L_BRACK | R_BRACK | GENERIC_COMMAND_NAME)
+                Some(
+                    Token::Word
+                        | Token::Eq
+                        | Token::LBrack
+                        | Token::RBrack
+                        | Token::CommandName(CommandName::Generic)
+                )
             ) {
                 self.builder
                     .start_node_at(checkpoint, CURLY_GROUP_WORD.into());
                 self.path();
             } else {
                 self.builder.start_node_at(checkpoint, CURLY_GROUP.into());
-                while matches!(self.lexer.peek(), Some(L_CURLY)) {
+                while matches!(self.lexer.peek(), Some(Token::LCurly)) {
                     self.curly_group_path();
                 }
             }
 
-            self.expect(R_CURLY);
+            self.expect(Token::RCurly);
             self.builder.finish_node();
         }
 

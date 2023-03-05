@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/glossary_entry_definition_simple
 ROOT@0..39
   PREAMBLE@0..39
     GLOSSARY_ENTRY_DEFINITION@0..39
-      GLOSSARY_ENTRY_DEFINITION_NAME@0..17 "\\newglossaryentry"
+      COMMAND_NAME@0..17 "\\newglossaryentry"
       CURLY_GROUP_WORD@17..22
         L_CURLY@17..18 "{"
         KEY@18..21

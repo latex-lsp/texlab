@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/label/label_reference_equation.txt
 ROOT@0..11
   PREAMBLE@0..11
     LABEL_REFERENCE@0..11
-      LABEL_REFERENCE_NAME@0..6 "\\eqref"
+      COMMAND_NAME@0..6 "\\eqref"
       CURLY_GROUP_WORD_LIST@6..11
         L_CURLY@6..7 "{"
         KEY@7..10

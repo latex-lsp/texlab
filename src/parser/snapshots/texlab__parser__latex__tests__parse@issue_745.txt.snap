@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/issue_745.txt
 ROOT@0..271
   PREAMBLE@0..271
     CLASS_INCLUDE@0..24
-      CLASS_INCLUDE_NAME@0..14 "\\documentclass"
+      COMMAND_NAME@0..14 "\\documentclass"
       CURLY_GROUP_WORD_LIST@14..24
         L_CURLY@14..15 "{"
         KEY@15..22
@@ -14,7 +14,7 @@ ROOT@0..271
         R_CURLY@22..23 "}"
         LINE_BREAK@23..24 "\n"
     PACKAGE_INCLUDE@24..50
-      PACKAGE_INCLUDE_NAME@24..35 "\\usepackage"
+      COMMAND_NAME@24..35 "\\usepackage"
       CURLY_GROUP_WORD_LIST@35..50
         L_CURLY@35..36 "{"
         KEY@36..46
@@ -22,10 +22,10 @@ ROOT@0..271
         R_CURLY@46..47 "}"
         WHITESPACE@47..50 " \n\n"
     GENERIC_COMMAND@50..64
-      GENERIC_COMMAND_NAME@50..63 "\\ExplSyntaxOn"
+      COMMAND_NAME@50..63 "\\ExplSyntaxOn"
       LINE_BREAK@63..64 "\n"
     GENERIC_COMMAND@64..223
-      GENERIC_COMMAND_NAME@64..87 "\\NewDocumentEnvironment"
+      COMMAND_NAME@64..87 "\\NewDocumentEnvironment"
       CURLY_GROUP@87..96
         L_CURLY@87..88 "{"
         TEXT@88..95
@@ -46,17 +46,17 @@ ROOT@0..271
         L_CURLY@107..108 "{"
         WHITESPACE@108..113 "\n    "
         GENERIC_COMMAND@113..194
-          GENERIC_COMMAND_NAME@113..119 "\\use:x"
+          COMMAND_NAME@113..119 "\\use:x"
           WHITESPACE@119..124 "\n    "
           CURLY_GROUP@124..194
             L_CURLY@124..125 "{"
             WHITESPACE@125..130 "\n    "
             GENERIC_COMMAND@130..141
-              GENERIC_COMMAND_NAME@130..140 "\\exp_not:N"
+              COMMAND_NAME@130..140 "\\exp_not:N"
               WHITESPACE@140..141 " "
             ENVIRONMENT@141..188
               BEGIN@141..179
-                BEGIN_ENVIRONMENT_NAME@141..147 "\\begin"
+                COMMAND_NAME@141..147 "\\begin"
                 CURLY_GROUP_WORD@147..158
                   L_CURLY@147..148 "{"
                   KEY@148..152
@@ -66,7 +66,7 @@ ROOT@0..271
                 BRACK_GROUP@158..179
                   L_BRACK@158..159 "["
                   GENERIC_COMMAND@159..173
-                    GENERIC_COMMAND_NAME@159..169 "\\exp_not:n"
+                    COMMAND_NAME@159..169 "\\exp_not:n"
                     CURLY_GROUP@169..173
                       L_CURLY@169..170 "{"
                       TEXT@170..172
@@ -88,7 +88,7 @@ ROOT@0..271
         L_CURLY@200..201 "{"
         WHITESPACE@201..206 "\n    "
         GENERIC_COMMAND@206..221
-          END_ENVIRONMENT_NAME@206..210 "\\end"
+          COMMAND_NAME@206..210 "\\end"
           CURLY_GROUP@210..221
             L_CURLY@210..211 "{"
             TEXT@211..215
@@ -98,11 +98,11 @@ ROOT@0..271
         R_CURLY@221..222 "}"
         LINE_BREAK@222..223 "\n"
     GENERIC_COMMAND@223..239
-      GENERIC_COMMAND_NAME@223..237 "\\ExplSyntaxOff"
+      COMMAND_NAME@223..237 "\\ExplSyntaxOff"
       LINE_BREAK@237..239 "\n\n"
     ENVIRONMENT@239..271
       BEGIN@239..257
-        BEGIN_ENVIRONMENT_NAME@239..245 "\\begin"
+        COMMAND_NAME@239..245 "\\begin"
         CURLY_GROUP_WORD@245..257
           L_CURLY@245..246 "{"
           KEY@246..254
@@ -110,7 +110,7 @@ ROOT@0..271
           R_CURLY@254..255 "}"
           LINE_BREAK@255..257 "\n\n"
       END@257..271
-        END_ENVIRONMENT_NAME@257..261 "\\end"
+        COMMAND_NAME@257..261 "\\end"
         CURLY_GROUP_WORD@261..271
           L_CURLY@261..262 "{"
           KEY@262..270

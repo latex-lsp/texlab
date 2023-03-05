@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/color/color_set_definition_error1.txt
 ROOT@0..39
   PREAMBLE@0..39
     COLOR_SET_DEFINITION@0..39
-      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      COMMAND_NAME@0..15 "\\definecolorset"
       BRACK_GROUP_WORD@15..19
         L_BRACK@15..16 "["
         KEY@16..18

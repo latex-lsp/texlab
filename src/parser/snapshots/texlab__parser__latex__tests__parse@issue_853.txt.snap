@@ -1,0 +1,59 @@
+---
+source: src/parser/latex.rs
+expression: root
+input_file: src/parser/test_data/latex/issue_853.txt
+---
+ROOT@0..135
+  PREAMBLE@0..135
+    CLASS_INCLUDE@0..24
+      COMMAND_NAME@0..14 "\\documentclass"
+      CURLY_GROUP_WORD_LIST@14..24
+        L_CURLY@14..15 "{"
+        KEY@15..22
+          WORD@15..22 "minimal"
+        R_CURLY@22..23 "}"
+        LINE_BREAK@23..24 "\n"
+    ENVIRONMENT@24..135
+      BEGIN@24..41
+        COMMAND_NAME@24..30 "\\begin"
+        CURLY_GROUP_WORD@30..41
+          L_CURLY@30..31 "{"
+          KEY@31..39
+            WORD@31..39 "document"
+          R_CURLY@39..40 "}"
+          LINE_BREAK@40..41 "\n"
+      TEXT@41..75
+        WORD@41..45 "This"
+        WHITESPACE@45..46 " "
+        WORD@46..48 "is"
+        WHITESPACE@48..49 " "
+        WORD@49..51 "an"
+        WHITESPACE@51..52 " "
+        WORD@52..56 "asdf"
+        WHITESPACE@56..57 " "
+        WORD@57..66 "undefined"
+        WHITESPACE@66..67 " "
+        WORD@67..74 "command"
+        LINE_BREAK@74..75 "\n"
+      BLOCK_COMMENT@75..120
+        COMMAND_NAME@75..83 "\\iffalse"
+        WHITESPACE@83..86 "\n  "
+        BLOCK_COMMENT@86..97
+          COMMAND_NAME@86..94 "\\iffalse"
+          COMMAND_NAME@94..97 "\\fi"
+        WHITESPACE@97..100 "\n  "
+        COMMAND_NAME@100..104 "\\end"
+        L_CURLY@104..105 "{"
+        WORD@105..114 "enumerate"
+        R_CURLY@114..115 "}"
+        WHITESPACE@115..117 " \n"
+        COMMAND_NAME@117..120 "\\fi"
+      LINE_BREAK@120..121 "\n"
+      END@121..135
+        COMMAND_NAME@121..125 "\\end"
+        CURLY_GROUP_WORD@125..135
+          L_CURLY@125..126 "{"
+          KEY@126..134
+            WORD@126..134 "document"
+          R_CURLY@134..135 "}"
+

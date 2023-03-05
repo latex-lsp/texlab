@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/tikz_library_import_simple.txt
 ROOT@0..20
   PREAMBLE@0..20
     TIKZ_LIBRARY_IMPORT@0..20
-      TIKZ_LIBRARY_IMPORT_NAME@0..15 "\\usetikzlibrary"
+      COMMAND_NAME@0..15 "\\usetikzlibrary"
       CURLY_GROUP_WORD_LIST@15..20
         L_CURLY@15..16 "{"
         KEY@16..19

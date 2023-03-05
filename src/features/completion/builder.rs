@@ -44,7 +44,7 @@ impl<'db> CompletionBuilder<'db> {
         let items = Vec::new();
         let matcher = SkimMatcherV2::default().ignore_case();
         let text_pattern = match &context.cursor {
-            Cursor::Tex(token) if token.kind().is_command_name() => {
+            Cursor::Tex(token) if token.kind() == latex::COMMAND_NAME => {
                 if token.text_range().start() + TextSize::from(1) == context.offset {
                     // Handle cases similar to this one correctly:
                     // $\|$ % (| is the cursor)

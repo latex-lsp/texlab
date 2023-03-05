@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/biblatex_include_options.txt
 ROOT@0..42
   PREAMBLE@0..42
     BIBLATEX_INCLUDE@0..42
-      BIBLATEX_INCLUDE_NAME@0..15 "\\addbibresource"
+      COMMAND_NAME@0..15 "\\addbibresource"
       BRACK_GROUP_KEY_VALUE@15..29
         L_BRACK@15..16 "["
         KEY_VALUE_BODY@16..28

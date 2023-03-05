@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/acronym_definition_simple.txt
 ROOT@0..44
   PREAMBLE@0..44
     ACRONYM_DEFINITION@0..44
-      ACRONYM_DEFINITION_NAME@0..11 "\\newacronym"
+      COMMAND_NAME@0..11 "\\newacronym"
       CURLY_GROUP_WORD@11..21
         L_CURLY@11..12 "{"
         KEY@12..20

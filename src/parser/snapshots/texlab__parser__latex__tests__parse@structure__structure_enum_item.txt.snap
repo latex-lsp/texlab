@@ -7,7 +7,7 @@ ROOT@0..60
   PREAMBLE@0..60
     ENVIRONMENT@0..60
       BEGIN@0..18
-        BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
+        COMMAND_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..18
           L_CURLY@6..7 "{"
           KEY@7..16
@@ -15,13 +15,13 @@ ROOT@0..60
           R_CURLY@16..17 "}"
           WHITESPACE@17..18 " "
       ENUM_ITEM@18..26
-        ENUM_ITEM_NAME@18..23 "\\item"
+        COMMAND_NAME@18..23 "\\item"
         WHITESPACE@23..24 " "
         TEXT@24..26
           WORD@24..25 "1"
           WHITESPACE@25..26 " "
       ENUM_ITEM@26..37
-        ENUM_ITEM_NAME@26..31 "\\item"
+        COMMAND_NAME@26..31 "\\item"
         BRACK_GROUP@31..35
           L_BRACK@31..32 "["
           TEXT@32..33
@@ -32,13 +32,13 @@ ROOT@0..60
           WORD@35..36 "2"
           WHITESPACE@36..37 " "
       ENUM_ITEM@37..45
-        ENUM_ITEM_NAME@37..42 "\\item"
+        COMMAND_NAME@37..42 "\\item"
         WHITESPACE@42..43 " "
         TEXT@43..45
           WORD@43..44 "3"
           WHITESPACE@44..45 " "
       END@45..60
-        END_ENVIRONMENT_NAME@45..49 "\\end"
+        COMMAND_NAME@45..49 "\\end"
         CURLY_GROUP_WORD@49..60
           L_CURLY@49..50 "{"
           KEY@50..59

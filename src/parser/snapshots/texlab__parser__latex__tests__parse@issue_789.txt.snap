@@ -1,12 +1,12 @@
 ---
 source: src/parser/latex.rs
-assertion_line: 1361
 expression: root
+input_file: src/parser/test_data/latex/issue_789.txt
 ---
 ROOT@0..19
   PREAMBLE@0..19
     GRAPHICS_PATH@0..19
-      GRAPHICS_PATH_NAME@0..13 "\\graphicspath"
+      COMMAND_NAME@0..13 "\\graphicspath"
       CURLY_GROUP_WORD@13..19
         L_CURLY@13..14 "{"
         KEY@14..18

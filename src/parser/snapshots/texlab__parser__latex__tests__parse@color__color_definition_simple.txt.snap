@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/color/color_definition_simple.txt
 ROOT@0..33
   PREAMBLE@0..33
     COLOR_DEFINITION@0..33
-      COLOR_DEFINITION_NAME@0..12 "\\definecolor"
+      COMMAND_NAME@0..12 "\\definecolor"
       CURLY_GROUP_WORD@12..17
         L_CURLY@12..13 "{"
         KEY@13..16

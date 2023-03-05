@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/import_incomplete.txt
 ROOT@0..11
   PREAMBLE@0..11
     IMPORT@0..11
-      IMPORT_NAME@0..7 "\\import"
+      COMMAND_NAME@0..7 "\\import"
       CURLY_GROUP_WORD@7..11
         L_CURLY@7..8 "{"
         KEY@8..11

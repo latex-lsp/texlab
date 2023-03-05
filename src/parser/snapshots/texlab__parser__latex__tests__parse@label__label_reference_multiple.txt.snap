@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/label/label_reference_multiple.txt
 ROOT@0..14
   PREAMBLE@0..14
     LABEL_REFERENCE@0..14
-      LABEL_REFERENCE_NAME@0..4 "\\ref"
+      COMMAND_NAME@0..4 "\\ref"
       CURLY_GROUP_WORD_LIST@4..14
         L_CURLY@4..5 "{"
         KEY@5..8

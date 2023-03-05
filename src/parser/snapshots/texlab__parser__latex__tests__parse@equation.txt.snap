@@ -6,12 +6,12 @@ input_file: src/parser/test_data/latex/equation.txt
 ROOT@0..13
   PREAMBLE@0..13
     EQUATION@0..13
-      BEGIN_EQUATION_NAME@0..2 "\\["
+      COMMAND_NAME@0..2 "\\["
       WHITESPACE@2..3 " "
       TEXT@3..11
         WORD@3..6 "foo"
         WHITESPACE@6..7 " "
         WORD@7..10 "bar"
         WHITESPACE@10..11 " "
-      END_EQUATION_NAME@11..13 "\\]"
+      COMMAND_NAME@11..13 "\\]"
 

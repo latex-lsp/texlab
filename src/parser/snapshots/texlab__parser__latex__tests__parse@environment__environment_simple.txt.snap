@@ -7,7 +7,7 @@ ROOT@0..33
   PREAMBLE@0..33
     ENVIRONMENT@0..33
       BEGIN@0..12
-        BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
+        COMMAND_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..12
           L_CURLY@6..7 "{"
           KEY@7..10
@@ -20,7 +20,7 @@ ROOT@0..33
         WORD@18..23 "World"
         WHITESPACE@23..24 " "
       END@24..33
-        END_ENVIRONMENT_NAME@24..28 "\\end"
+        COMMAND_NAME@24..28 "\\end"
         CURLY_GROUP_WORD@28..33
           L_CURLY@28..29 "{"
           KEY@29..32

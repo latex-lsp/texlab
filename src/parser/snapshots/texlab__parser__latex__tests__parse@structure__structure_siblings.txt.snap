@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/structure/structure_siblings.txt
 ROOT@0..35
   PREAMBLE@0..35
     SECTION@0..18
-      SECTION_NAME@0..8 "\\section"
+      COMMAND_NAME@0..8 "\\section"
       CURLY_GROUP@8..14
         L_CURLY@8..9 "{"
         TEXT@9..12
@@ -17,7 +17,7 @@ ROOT@0..35
         WORD@14..17 "Foo"
         WHITESPACE@17..18 " "
     SECTION@18..35
-      SECTION_NAME@18..26 "\\section"
+      COMMAND_NAME@18..26 "\\section"
       CURLY_GROUP@26..32
         L_CURLY@26..27 "{"
         TEXT@27..30

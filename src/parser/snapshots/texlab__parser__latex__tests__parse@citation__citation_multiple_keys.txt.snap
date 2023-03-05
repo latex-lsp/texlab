@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/citation/citation_multiple_keys.txt
 ROOT@0..15
   PREAMBLE@0..15
     CITATION@0..15
-      CITATION_NAME@0..5 "\\cite"
+      COMMAND_NAME@0..5 "\\cite"
       CURLY_GROUP_WORD_LIST@5..15
         L_CURLY@5..6 "{"
         KEY@6..9

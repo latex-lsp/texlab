@@ -6,8 +6,8 @@ input_file: src/parser/test_data/latex/command_definition/command_definition_no_
 ROOT@0..16
   PREAMBLE@0..16
     COMMAND_DEFINITION@0..16
-      COMMAND_DEFINITION_NAME@0..11 "\\newcommand"
+      COMMAND_NAME@0..11 "\\newcommand"
       CURLY_GROUP_COMMAND@11..16
         L_CURLY@11..12 "{"
-        GENERIC_COMMAND_NAME@12..16 "\\foo"
+        COMMAND_NAME@12..16 "\\foo"
 

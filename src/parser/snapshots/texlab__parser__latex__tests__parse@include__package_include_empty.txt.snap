@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/package_include_empty.txt
 ROOT@0..13
   PREAMBLE@0..13
     PACKAGE_INCLUDE@0..13
-      PACKAGE_INCLUDE_NAME@0..11 "\\usepackage"
+      COMMAND_NAME@0..11 "\\usepackage"
       CURLY_GROUP_WORD_LIST@11..13
         L_CURLY@11..12 "{"
         R_CURLY@12..13 "}"

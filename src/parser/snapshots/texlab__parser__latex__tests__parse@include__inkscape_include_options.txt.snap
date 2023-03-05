@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/inkscape_include_options.txt
 ROOT@0..30
   PREAMBLE@0..30
     SVG_INCLUDE@0..30
-      SVG_INCLUDE_NAME@0..11 "\\includesvg"
+      COMMAND_NAME@0..11 "\\includesvg"
       BRACK_GROUP_KEY_VALUE@11..21
         L_BRACK@11..12 "["
         KEY_VALUE_BODY@12..20

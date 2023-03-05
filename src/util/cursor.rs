@@ -24,7 +24,7 @@ impl Cursor {
         let left = left?;
         let right = right?;
 
-        if left.kind().is_command_name() {
+        if left.kind() == latex::COMMAND_NAME {
             return Some(Self::Tex(left));
         }
 
@@ -36,7 +36,7 @@ impl Cursor {
             return Some(Self::Tex(left));
         }
 
-        if right.kind().is_command_name() {
+        if right.kind() == latex::COMMAND_NAME {
             return Some(Self::Tex(right));
         }
 
@@ -105,7 +105,7 @@ impl Cursor {
 
     pub fn command_range(&self, offset: TextSize) -> Option<TextRange> {
         self.as_tex()
-            .filter(|token| token.kind().is_command_name())
+            .filter(|token| token.kind() == latex::COMMAND_NAME)
             .filter(|token| token.text_range().start() != offset)
             .map(|token| token.text_range())
             .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))

@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/graphics_include_options.txt
 ROOT@0..39
   PREAMBLE@0..39
     GRAPHICS_INCLUDE@0..39
-      GRAPHICS_INCLUDE_NAME@0..16 "\\includegraphics"
+      COMMAND_NAME@0..16 "\\includegraphics"
       BRACK_GROUP_KEY_VALUE@16..26
         L_BRACK@16..17 "["
         KEY_VALUE_BODY@17..25

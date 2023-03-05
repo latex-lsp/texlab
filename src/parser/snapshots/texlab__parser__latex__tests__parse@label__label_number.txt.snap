@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/label/label_number.txt
 ROOT@0..21
   PREAMBLE@0..21
     LABEL_NUMBER@0..21
-      LABEL_NUMBER_NAME@0..9 "\\newlabel"
+      COMMAND_NAME@0..9 "\\newlabel"
       CURLY_GROUP_WORD@9..14
         L_CURLY@9..10 "{"
         KEY@10..13

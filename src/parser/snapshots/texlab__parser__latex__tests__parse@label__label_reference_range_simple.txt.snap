@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/label/label_reference_range_simple.txt
 ROOT@0..20
   PREAMBLE@0..20
     LABEL_REFERENCE_RANGE@0..20
-      LABEL_REFERENCE_RANGE_NAME@0..10 "\\crefrange"
+      COMMAND_NAME@0..10 "\\crefrange"
       CURLY_GROUP_WORD@10..15
         L_CURLY@10..11 "{"
         KEY@11..14

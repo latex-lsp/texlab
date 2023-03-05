@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/package_include_multiple.txt
 ROOT@0..28
   PREAMBLE@0..28
     PACKAGE_INCLUDE@0..28
-      PACKAGE_INCLUDE_NAME@0..11 "\\usepackage"
+      COMMAND_NAME@0..11 "\\usepackage"
       CURLY_GROUP_WORD_LIST@11..28
         L_CURLY@11..12 "{"
         KEY@12..19

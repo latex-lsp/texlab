@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/color/color_set_definition_error3.txt
 ROOT@0..25
   PREAMBLE@0..25
     COLOR_SET_DEFINITION@0..25
-      COLOR_SET_DEFINITION_NAME@0..15 "\\definecolorset"
+      COMMAND_NAME@0..15 "\\definecolorset"
       CURLY_GROUP_WORD_LIST@15..25
         L_CURLY@15..16 "{"
         KEY@16..19

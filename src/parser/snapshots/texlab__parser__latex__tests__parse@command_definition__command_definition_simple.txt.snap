@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/command_definition/command_definition_sim
 ROOT@0..23
   PREAMBLE@0..23
     COMMAND_DEFINITION@0..19
-      COMMAND_DEFINITION_NAME@0..11 "\\newcommand"
+      COMMAND_NAME@0..11 "\\newcommand"
       BRACK_GROUP_WORD@11..14
         L_BRACK@11..12 "["
         KEY@12..13
@@ -15,7 +15,7 @@ ROOT@0..23
       CURLY_GROUP@14..19
         L_CURLY@14..15 "{"
         GENERIC_COMMAND@15..18
-          GENERIC_COMMAND_NAME@15..18 "\\id"
+          COMMAND_NAME@15..18 "\\id"
         R_CURLY@18..19 "}"
     CURLY_GROUP@19..23
       L_CURLY@19..20 "{"

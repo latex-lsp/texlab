@@ -1,7 +1,7 @@
 use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
-use crate::util::cursor::CursorContext;
+use crate::{syntax::latex, util::cursor::CursorContext};
 
 use super::{Indel, Params, RenameResult};
 
@@ -19,7 +19,7 @@ pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
             let edits = root
                 .descendants_with_tokens()
                 .filter_map(|element| element.into_token())
-                .filter(|token| token.kind().is_command_name() && token.text() == name)
+                .filter(|token| token.kind() == latex::COMMAND_NAME && token.text() == name)
                 .map(|token| {
                     let range = token.text_range();
                     Indel {

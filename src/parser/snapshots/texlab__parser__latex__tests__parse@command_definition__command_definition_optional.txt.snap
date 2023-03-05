@@ -6,10 +6,10 @@ input_file: src/parser/test_data/latex/command_definition/command_definition_opt
 ROOT@0..29
   PREAMBLE@0..29
     COMMAND_DEFINITION@0..29
-      COMMAND_DEFINITION_NAME@0..11 "\\newcommand"
+      COMMAND_NAME@0..11 "\\newcommand"
       CURLY_GROUP_COMMAND@11..17
         L_CURLY@11..12 "{"
-        GENERIC_COMMAND_NAME@12..16 "\\foo"
+        COMMAND_NAME@12..16 "\\foo"
         R_CURLY@16..17 "}"
       BRACK_GROUP_WORD@17..20
         L_BRACK@17..18 "["

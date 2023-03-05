@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/environment/environment_definition_option
 ROOT@0..44
   PREAMBLE@0..44
     ENVIRONMENT_DEFINITION@0..44
-      ENVIRONMENT_DEFINITION_NAME@0..15 "\\newenvironment"
+      COMMAND_NAME@0..15 "\\newenvironment"
       CURLY_GROUP_WORD@15..20
         L_CURLY@15..16 "{"
         KEY@16..19

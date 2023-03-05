@@ -1,12 +1,12 @@
 ---
 source: src/parser/latex.rs
-assertion_line: 1348
 expression: root
+input_file: src/parser/test_data/latex/graphics_path_options.txt
 ---
 ROOT@0..33
   PREAMBLE@0..33
     GRAPHICS_PATH@0..13
-      GRAPHICS_PATH_NAME@0..13 "\\graphicspath"
+      COMMAND_NAME@0..13 "\\graphicspath"
     MIXED_GROUP@13..18
       L_BRACK@13..14 "["
       TEXT@14..17

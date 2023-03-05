@@ -11,7 +11,7 @@ ROOT@0..21
         WORD@2..3 "x"
         WHITESPACE@3..4 " "
       GENERIC_COMMAND@4..19
-        GENERIC_COMMAND_NAME@4..7 "\\in"
+        COMMAND_NAME@4..7 "\\in"
         WHITESPACE@7..8 " "
         MIXED_GROUP@8..19
           L_BRACK@8..9 "["
@@ -20,7 +20,7 @@ ROOT@0..21
             COMMA@10..11 ","
             WHITESPACE@11..12 " "
           GENERIC_COMMAND@12..18
-            GENERIC_COMMAND_NAME@12..18 "\\infty"
+            COMMAND_NAME@12..18 "\\infty"
           R_PAREN@18..19 ")"
       DOLLAR@19..21 "$$"
 

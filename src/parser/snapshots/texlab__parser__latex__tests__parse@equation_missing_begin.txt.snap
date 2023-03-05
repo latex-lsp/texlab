@@ -7,7 +7,7 @@ ROOT@0..28
   PREAMBLE@0..28
     ENVIRONMENT@0..28
       BEGIN@0..10
-        BEGIN_ENVIRONMENT_NAME@0..6 "\\begin"
+        COMMAND_NAME@0..6 "\\begin"
         CURLY_GROUP_WORD@6..10
           L_CURLY@6..7 "{"
           KEY@7..8
@@ -20,10 +20,10 @@ ROOT@0..28
         WORD@14..17 "bar"
         WHITESPACE@17..18 " "
       GENERIC_COMMAND@18..21
-        END_EQUATION_NAME@18..20 "\\]"
+        COMMAND_NAME@18..20 "\\]"
         WHITESPACE@20..21 " "
       END@21..28
-        END_ENVIRONMENT_NAME@21..25 "\\end"
+        COMMAND_NAME@21..25 "\\end"
         CURLY_GROUP_WORD@25..28
           L_CURLY@25..26 "{"
           KEY@26..27

@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/graphics_include_simple.txt
 ROOT@0..29
   PREAMBLE@0..29
     GRAPHICS_INCLUDE@0..29
-      GRAPHICS_INCLUDE_NAME@0..16 "\\includegraphics"
+      COMMAND_NAME@0..16 "\\includegraphics"
       CURLY_GROUP_WORD_LIST@16..29
         L_CURLY@16..17 "{"
         KEY@17..28

@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/acronym_declaration.txt
 ROOT@0..64
   PREAMBLE@0..64
     ACRONYM_DECLARATION@0..64
-      ACRONYM_DECLARATION_NAME@0..15 "\\DeclareAcronym"
+      COMMAND_NAME@0..15 "\\DeclareAcronym"
       CURLY_GROUP_WORD@15..19
         L_CURLY@15..16 "{"
         KEY@16..18

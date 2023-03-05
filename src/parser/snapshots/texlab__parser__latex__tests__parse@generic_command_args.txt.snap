@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/generic_command_args.txt
 ROOT@0..14
   PREAMBLE@0..14
     GENERIC_COMMAND@0..14
-      GENERIC_COMMAND_NAME@0..4 "\\foo"
+      COMMAND_NAME@0..4 "\\foo"
       CURLY_GROUP@4..9
         L_CURLY@4..5 "{"
         TEXT@5..8

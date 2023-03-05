@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/acronym_reference_options.txt
 ROOT@0..32
   PREAMBLE@0..32
     ACRONYM_REFERENCE@0..32
-      ACRONYM_REFERENCE_NAME@0..9 "\\acrshort"
+      COMMAND_NAME@0..9 "\\acrshort"
       BRACK_GROUP_KEY_VALUE@9..22
         L_BRACK@9..10 "["
         KEY_VALUE_BODY@10..21

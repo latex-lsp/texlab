@@ -222,7 +222,7 @@ impl CurlyGroupCommand {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == GENERIC_COMMAND_NAME)
+            .find(|node| node.kind() == COMMAND_NAME)
     }
 }
 
@@ -312,7 +312,7 @@ impl GenericCommand {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .find(|node| node.kind() == GENERIC_COMMAND_NAME)
+            .find(|node| node.kind() == COMMAND_NAME)
     }
 }
 

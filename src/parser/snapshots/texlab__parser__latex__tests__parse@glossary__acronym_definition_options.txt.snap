@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/acronym_definition_options.txt
 ROOT@0..76
   PREAMBLE@0..76
     ACRONYM_DEFINITION@0..76
-      ACRONYM_DEFINITION_NAME@0..11 "\\newacronym"
+      COMMAND_NAME@0..11 "\\newacronym"
       BRACK_GROUP_KEY_VALUE@11..43
         L_BRACK@11..12 "["
         KEY_VALUE_BODY@12..42

@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/package_include_options.txt
 ROOT@0..41
   PREAMBLE@0..41
     PACKAGE_INCLUDE@0..41
-      PACKAGE_INCLUDE_NAME@0..11 "\\usepackage"
+      COMMAND_NAME@0..11 "\\usepackage"
       BRACK_GROUP_KEY_VALUE@11..32
         L_BRACK@11..12 "["
         KEY_VALUE_BODY@12..31

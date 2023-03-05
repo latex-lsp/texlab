@@ -8,7 +8,7 @@ pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionR
     let name = context
         .cursor
         .as_tex()
-        .filter(|token| token.kind().is_command_name())?;
+        .filter(|token| token.kind() == latex::COMMAND_NAME)?;
 
     let origin_selection_range = name.text_range();
 

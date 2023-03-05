@@ -1101,5 +1101,6 @@
     "vmatrix",
     "vmatrix*"
   ],
-  "enumEnvironments": ["enumerate", "itemize", "description"]
+  "enumEnvironments": ["enumerate", "itemize", "description"],
+  "verbatimEnvironments": ["pycode", "minted", "asy", "lstlisting", "verbatim"]
 }

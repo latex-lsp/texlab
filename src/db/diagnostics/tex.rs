@@ -1,11 +1,16 @@
 use lsp_types::DiagnosticSeverity;
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
-use crate::{db::document::Document, syntax::latex, util::line_index_ext::LineIndexExt, Db};
+use crate::{
+    db::document::Document,
+    syntax::latex,
+    util::{lang_data::LANGUAGE_DATA, line_index_ext::LineIndexExt},
+    Db,
+};
 
 use super::{Diagnostic, DiagnosticCode, TexCode};
 
-#[salsa::tracked(return_ref)]
+#[salsa::tracked]
 pub fn collect(db: &dyn Db, document: Document) -> Vec<Diagnostic> {
     let mut results = Vec::new();
 
@@ -18,10 +23,34 @@ pub fn collect(db: &dyn Db, document: Document) -> Vec<Diagnostic> {
         None => return results,
     };
 
-    for node in data.root(db).descendants() {
-        analyze_environment(db, document, node.clone(), &mut results)
-            .or_else(|| analyze_curly_group(db, document, node.clone(), &mut results))
-            .or_else(|| analyze_curly_braces(document, db, node, &mut results));
+    let mut traversal = data.root(db).preorder();
+    while let Some(event) = traversal.next() {
+        match event {
+            rowan::WalkEvent::Enter(node) => {
+                if let Some(environment) = latex::Environment::cast(node.clone()) {
+                    if environment
+                        .begin()
+                        .and_then(|begin| begin.name())
+                        .and_then(|name| name.key())
+                        .map_or(false, |name| {
+                            LANGUAGE_DATA
+                                .verbatim_environments
+                                .contains(&name.to_string())
+                        })
+                    {
+                        traversal.skip_subtree();
+                        continue;
+                    }
+                }
+
+                analyze_environment(db, document, node.clone(), &mut results)
+                    .or_else(|| analyze_curly_group(db, document, node.clone(), &mut results))
+                    .or_else(|| analyze_curly_braces(document, db, node, &mut results));
+            }
+            rowan::WalkEvent::Leave(_) => {
+                continue;
+            }
+        };
     }
 
     results

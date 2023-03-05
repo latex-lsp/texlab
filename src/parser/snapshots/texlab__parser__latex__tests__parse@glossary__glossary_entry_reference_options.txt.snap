@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/glossary/glossary_entry_reference_options
 ROOT@0..25
   PREAMBLE@0..25
     GLOSSARY_ENTRY_REFERENCE@0..25
-      GLOSSARY_ENTRY_REFERENCE_NAME@0..4 "\\gls"
+      COMMAND_NAME@0..4 "\\gls"
       BRACK_GROUP_KEY_VALUE@4..20
         L_BRACK@4..5 "["
         KEY_VALUE_BODY@5..19

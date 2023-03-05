@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/class_include_options.txt
 ROOT@0..44
   PREAMBLE@0..44
     CLASS_INCLUDE@0..44
-      CLASS_INCLUDE_NAME@0..14 "\\documentclass"
+      COMMAND_NAME@0..14 "\\documentclass"
       BRACK_GROUP_KEY_VALUE@14..35
         L_BRACK@14..15 "["
         KEY_VALUE_BODY@15..34

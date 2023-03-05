@@ -6,5 +6,5 @@ input_file: src/parser/test_data/latex/generic_command_escape.txt
 ROOT@0..2
   PREAMBLE@0..2
     GENERIC_COMMAND@0..2
-      GENERIC_COMMAND_NAME@0..2 "\\#"
+      COMMAND_NAME@0..2 "\\#"
 

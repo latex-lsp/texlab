@@ -6,7 +6,7 @@ input_file: src/parser/test_data/latex/include/latex_input_path_brackets.txt
 ROOT@0..20
   PREAMBLE@0..20
     LATEX_INCLUDE@0..20
-      LATEX_INCLUDE_NAME@0..6 "\\input"
+      COMMAND_NAME@0..6 "\\input"
       CURLY_GROUP_WORD_LIST@6..20
         L_CURLY@6..7 "{"
         KEY@7..19
