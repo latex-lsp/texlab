@@ -5,7 +5,7 @@ use rowan::{GreenNode, GreenNodeBuilder};
 use crate::syntax::latex::SyntaxKind::{self, *};
 
 use self::lexer::{
-    types::{CommandName, Token},
+    types::{CommandName, SectionLevel, Token},
     Lexer,
 };
 
@@ -107,13 +107,7 @@ impl<'a> Parser<'a> {
                 CommandName::EndEnvironment => self.generic_command(),
                 CommandName::BeginEquation => self.equation(),
                 CommandName::EndEquation => self.generic_command(),
-                CommandName::Part => self.part(),
-                CommandName::Chapter => self.chapter(),
-                CommandName::Section => self.section(),
-                CommandName::Subsection => self.subsection(),
-                CommandName::Subsubsection => self.subsubsection(),
-                CommandName::Paragraph => self.paragraph(),
-                CommandName::Subparagraph => self.subparagraph(),
+                CommandName::Section(level) => self.section(level),
                 CommandName::EnumItem => self.enum_item(),
                 CommandName::Caption => self.caption(),
                 CommandName::Citation => self.citation(),
@@ -281,27 +275,19 @@ impl<'a> Parser<'a> {
     fn brack_group(&mut self) {
         self.builder.start_node(BRACK_GROUP.into());
         self.eat();
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::RCurly
-                        | Token::RBrack
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Paragraph)
-                        | Token::CommandName(CommandName::Subparagraph)
-                        | Token::CommandName(CommandName::EnumItem)
-                        | Token::CommandName(CommandName::EndEnvironment)
-                )
-            })
-            .is_some()
-        {
+        while self.peek().map_or(false, |kind| {
+            !matches!(
+                kind,
+                Token::RCurly
+                    | Token::RBrack
+                    | Token::CommandName(CommandName::Section(_))
+                    | Token::CommandName(CommandName::EnumItem)
+                    | Token::CommandName(CommandName::EndEnvironment)
+            )
+        }) {
             self.content(ParserContext::default());
         }
+
         self.expect(Token::RBrack);
         self.builder.finish_node();
     }
@@ -324,28 +310,20 @@ impl<'a> Parser<'a> {
         self.builder.start_node(MIXED_GROUP.into());
         self.eat();
         self.trivia();
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::RCurly
-                        | Token::RBrack
-                        | Token::RParen
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Paragraph)
-                        | Token::CommandName(CommandName::Subparagraph)
-                        | Token::CommandName(CommandName::EnumItem)
-                        | Token::CommandName(CommandName::EndEnvironment)
-                )
-            })
-            .is_some()
-        {
+        while self.peek().map_or(false, |kind| {
+            !matches!(
+                kind,
+                Token::RCurly
+                    | Token::RBrack
+                    | Token::RParen
+                    | Token::CommandName(CommandName::Section(_))
+                    | Token::CommandName(CommandName::EnumItem)
+                    | Token::CommandName(CommandName::EndEnvironment)
+            )
+        }) {
             self.content(ParserContext::default());
         }
+
         self.expect2(Token::RBrack, Token::RParen);
         self.builder.finish_node();
     }
@@ -560,8 +538,18 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn part(&mut self) {
-        self.builder.start_node(PART.into());
+    fn section(&mut self, level: SectionLevel) {
+        let node_kind = match level {
+            SectionLevel::Part => PART,
+            SectionLevel::Chapter => CHAPTER,
+            SectionLevel::Section => SECTION,
+            SectionLevel::Subsection => SUBSECTION,
+            SectionLevel::Subsubsection => SUBSUBSECTION,
+            SectionLevel::Paragraph => PARAGRAPH,
+            SectionLevel::Subparagraph => SUBPARAGRAPH,
+        };
+
+        self.builder.start_node(node_kind.into());
         self.eat();
         self.trivia();
 
@@ -569,197 +557,15 @@ impl<'a> Parser<'a> {
             self.curly_group();
         }
 
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn chapter(&mut self) {
-        self.builder.start_node(CHAPTER.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
+        while let Some(kind) = self.peek() {
+            match kind {
+                Token::RCurly => break,
+                Token::CommandName(CommandName::EndEnvironment) => break,
+                Token::CommandName(CommandName::Section(nested)) if nested <= level => break,
+                _ => self.content(ParserContext::default()),
+            };
         }
 
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn section(&mut self) {
-        self.builder.start_node(SECTION.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
-        }
-
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn subsection(&mut self) {
-        self.builder.start_node(SUBSECTION.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
-        }
-
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn subsubsection(&mut self) {
-        self.builder.start_node(SUBSUBSECTION.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
-        }
-
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Subsubsection)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn paragraph(&mut self) {
-        self.builder.start_node(PARAGRAPH.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
-        }
-
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Subsubsection)
-                        | Token::CommandName(CommandName::Paragraph)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
-        self.builder.finish_node();
-    }
-
-    fn subparagraph(&mut self) {
-        self.builder.start_node(SUBPARAGRAPH.into());
-        self.eat();
-        self.trivia();
-
-        if self.peek() == Some(Token::LCurly) {
-            self.curly_group();
-        }
-
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Subsubsection)
-                        | Token::CommandName(CommandName::Paragraph)
-                        | Token::CommandName(CommandName::Subparagraph)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
-        }
         self.builder.finish_node();
     }
 
@@ -772,27 +578,16 @@ impl<'a> Parser<'a> {
             self.brack_group();
         }
 
-        while self
-            .peek()
-            .filter(|&kind| {
-                !matches!(
-                    kind,
-                    Token::CommandName(CommandName::EndEnvironment)
-                        | Token::RCurly
-                        | Token::CommandName(CommandName::Part)
-                        | Token::CommandName(CommandName::Chapter)
-                        | Token::CommandName(CommandName::Section)
-                        | Token::CommandName(CommandName::Subsection)
-                        | Token::CommandName(CommandName::Subsubsection)
-                        | Token::CommandName(CommandName::Paragraph)
-                        | Token::CommandName(CommandName::Subparagraph)
-                        | Token::CommandName(CommandName::EnumItem)
-                )
-            })
-            .is_some()
-        {
-            self.content(ParserContext::default());
+        while let Some(kind) = self.peek() {
+            match kind {
+                Token::CommandName(CommandName::EndEnvironment)
+                | Token::RCurly
+                | Token::CommandName(CommandName::Section(_))
+                | Token::CommandName(CommandName::EnumItem) => break,
+                _ => self.content(ParserContext::default()),
+            }
         }
+
         self.builder.finish_node();
     }
 

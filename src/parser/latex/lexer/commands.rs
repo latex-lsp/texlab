@@ -1,4 +1,4 @@
-use super::types::CommandName;
+use super::types::{CommandName, SectionLevel};
 
 pub fn classify(name: &str) -> CommandName {
     match name {
@@ -6,13 +6,13 @@ pub fn classify(name: &str) -> CommandName {
         "end" => CommandName::EndEnvironment,
         "[" => CommandName::BeginEquation,
         "]" => CommandName::EndEquation,
-        "part" | "part*" => CommandName::Part,
-        "chapter" | "chapter*" => CommandName::Chapter,
-        "section" | "section*" => CommandName::Section,
-        "subsection" | "subsection*" => CommandName::Subsection,
-        "subsubsection" | "subsubsection*" => CommandName::Subsubsection,
-        "paragraph" | "paragraph*" => CommandName::Paragraph,
-        "subparagraph" | "subparagraph*" => CommandName::Subparagraph,
+        "part" | "part*" => CommandName::Section(SectionLevel::Part),
+        "chapter" | "chapter*" => CommandName::Section(SectionLevel::Chapter),
+        "section" | "section*" => CommandName::Section(SectionLevel::Section),
+        "subsection" | "subsection*" => CommandName::Section(SectionLevel::Subsection),
+        "subsubsection" | "subsubsection*" => CommandName::Section(SectionLevel::Subsubsection),
+        "paragraph" | "paragraph*" => CommandName::Section(SectionLevel::Paragraph),
+        "subparagraph" | "subparagraph*" => CommandName::Section(SectionLevel::Subparagraph),
         "item" => CommandName::EnumItem,
         "caption" => CommandName::Caption,
         "cite" | "cite*" | "Cite" | "nocite" | "citet" | "citet*" | "citep" | "citep*"

@@ -53,13 +53,7 @@ pub enum CommandName {
     EndEnvironment,
     BeginEquation,
     EndEquation,
-    Part,
-    Chapter,
-    Section,
-    Subsection,
-    Subsubsection,
-    Paragraph,
-    Subparagraph,
+    Section(SectionLevel),
     EnumItem,
     Caption,
     Citation,
@@ -93,4 +87,15 @@ pub enum CommandName {
     GraphicsPath,
     BeginBlockComment,
     EndBlockComment,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum SectionLevel {
+    Part,
+    Chapter,
+    Section,
+    Subsection,
+    Subsubsection,
+    Paragraph,
+    Subparagraph,
 }
