@@ -20,6 +20,4 @@ ROOT@0..30
         KEY@26..29
           WORD@26..29 "foo"
         R_CURLY@29..30 "}"
-      MISSING@30..30 ""
-      MISSING@30..30 ""
 

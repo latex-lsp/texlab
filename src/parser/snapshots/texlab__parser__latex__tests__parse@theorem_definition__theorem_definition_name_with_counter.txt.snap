@@ -17,5 +17,4 @@ ROOT@0..21
         KEY@17..20
           WORD@17..20 "bar"
         R_BRACK@20..21 "]"
-      MISSING@21..21 ""
 

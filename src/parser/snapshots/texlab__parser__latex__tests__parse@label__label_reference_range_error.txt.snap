@@ -11,7 +11,6 @@ ROOT@0..19
         L_CURLY@10..11 "{"
         KEY@11..14
           WORD@11..14 "foo"
-        MISSING@14..14 ""
       CURLY_GROUP_WORD@14..19
         L_CURLY@14..15 "{"
         KEY@15..18

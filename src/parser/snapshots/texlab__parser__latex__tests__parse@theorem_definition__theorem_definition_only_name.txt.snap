@@ -12,5 +12,4 @@ ROOT@0..16
         KEY@12..15
           WORD@12..15 "foo"
         R_CURLY@15..16 "}"
-      MISSING@16..16 ""
 

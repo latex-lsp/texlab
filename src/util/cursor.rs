@@ -285,8 +285,7 @@ impl<'db, T> CursorContext<'db, T> {
             let range = if group
                 .syntax()
                 .last_token()
-                .filter(|tok| tok.kind() == latex::MISSING)
-                .is_some()
+                .map_or(false, |tok| tok.kind() != latex::R_CURLY)
             {
                 TextRange::new(latex::small_range(&key).start(), token.text_range().end())
             } else {

@@ -7,7 +7,6 @@ ROOT@0..23
   PREAMBLE@0..23
     COMMAND_DEFINITION@0..19
       COMMAND_DEFINITION_NAME@0..11 "\\newcommand"
-      MISSING@11..11 ""
       BRACK_GROUP_WORD@11..14
         L_BRACK@11..12 "["
         KEY@12..13

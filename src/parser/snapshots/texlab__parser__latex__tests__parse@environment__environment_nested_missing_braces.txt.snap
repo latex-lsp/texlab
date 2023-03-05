@@ -13,7 +13,6 @@ ROOT@0..52
           KEY@7..11
             WORD@7..10 "foo"
             WHITESPACE@10..11 " "
-          MISSING@11..11 ""
       ENVIRONMENT@11..44
         BEGIN@11..34
           BEGIN_ENVIRONMENT_NAME@11..17 "\\begin"
@@ -26,7 +25,6 @@ ROOT@0..52
               WHITESPACE@27..28 " "
               WORD@28..33 "World"
               WHITESPACE@33..34 " "
-            MISSING@34..34 ""
         END@34..44
           END_ENVIRONMENT_NAME@34..38 "\\end"
           CURLY_GROUP_WORD@38..44
@@ -41,5 +39,4 @@ ROOT@0..52
           L_CURLY@48..49 "{"
           KEY@49..52
             WORD@49..52 "bar"
-          MISSING@52..52 ""
 

@@ -11,6 +11,5 @@ ROOT@0..4
         R_BRACK@1..2 "]"
       MIXED_GROUP@2..3
         L_BRACK@2..3 "["
-        MISSING@3..3 ""
       R_CURLY@3..4 "}"
 

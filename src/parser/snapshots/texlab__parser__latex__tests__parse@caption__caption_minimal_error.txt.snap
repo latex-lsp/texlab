@@ -17,5 +17,4 @@ ROOT@0..21
           WHITESPACE@17..18 " "
         TEXT@18..21
           WORD@18..21 "Baz"
-        MISSING@21..21 ""
 

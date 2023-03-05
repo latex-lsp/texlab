@@ -10,6 +10,4 @@ ROOT@0..16
       CURLY_GROUP_COMMAND@11..16
         L_CURLY@11..12 "{"
         GENERIC_COMMAND_NAME@12..16 "\\foo"
-        MISSING@16..16 ""
-      MISSING@16..16 ""
 

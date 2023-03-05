@@ -3,7 +3,6 @@
 #[repr(u16)]
 pub enum SyntaxKind {
     ERROR = 0,
-    MISSING,
 
     LINE_BREAK,
     WHITESPACE,

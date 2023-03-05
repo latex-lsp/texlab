@@ -80,7 +80,6 @@ ROOT@0..271
                   WORD@180..182 "#2"
                 R_CURLY@182..183 "}"
                 WHITESPACE@183..188 "\n    "
-              MISSING@188..188 ""
             R_CURLY@188..189 "}"
             WHITESPACE@189..194 "\n    "
         R_CURLY@194..195 "}"

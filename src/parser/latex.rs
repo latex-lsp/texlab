@@ -48,8 +48,6 @@ impl<'a> Parser<'a> {
         if self.peek() == Some(kind) {
             self.eat();
             self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
     }
 
@@ -61,8 +59,6 @@ impl<'a> Parser<'a> {
         {
             self.eat();
             self.trivia();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
     }
 
@@ -106,7 +102,7 @@ impl<'a> Parser<'a> {
             END_ENVIRONMENT_NAME => self.generic_command(),
             BEGIN_EQUATION_NAME => self.equation(),
             END_EQUATION_NAME => self.generic_command(),
-            MISSING | ERROR => self.eat(),
+            ERROR => self.eat(),
             PART_NAME => self.part(),
             CHAPTER_NAME => self.chapter(),
             SECTION_NAME => self.section(),
@@ -224,9 +220,7 @@ impl<'a> Parser<'a> {
             Some(kind) if kind.is_command_name() => {
                 self.content(ParserContext::default());
             }
-            Some(_) | None => {
-                self.builder.token(MISSING.into(), "");
-            }
+            Some(_) | None => {}
         }
         self.expect(R_CURLY);
         self.builder.finish_node();
@@ -261,9 +255,7 @@ impl<'a> Parser<'a> {
                 self.eat();
                 self.trivia();
             }
-            Some(_) | None => {
-                self.builder.token(MISSING.into(), "");
-            }
+            Some(_) | None => {}
         }
         self.expect(R_CURLY);
         self.builder.finish_node();
@@ -305,9 +297,7 @@ impl<'a> Parser<'a> {
             Some(WORD) => {
                 self.key();
             }
-            Some(_) | None => {
-                self.builder.token(MISSING.into(), "");
-            }
+            Some(_) | None => {}
         }
         self.expect(R_BRACK);
         self.builder.finish_node();
@@ -389,8 +379,6 @@ impl<'a> Parser<'a> {
                 .is_some()
             {
                 self.value();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 
@@ -483,8 +471,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.peek() == Some(L_BRACK) {
@@ -500,8 +486,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -521,9 +505,8 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(END_ENVIRONMENT_NAME) {
             self.end();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
+
         self.builder.finish_node();
     }
 
@@ -546,8 +529,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -567,8 +548,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -593,8 +572,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -619,8 +596,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -650,8 +625,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -682,8 +655,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -715,8 +686,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         while self
@@ -785,8 +754,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(END_BLOCK_COMMENT_NAME) {
             self.eat();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -803,8 +770,6 @@ impl<'a> Parser<'a> {
 
         if self.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -822,8 +787,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word_list();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -839,8 +802,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_path_list();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -945,8 +906,6 @@ impl<'a> Parser<'a> {
         for _ in 0..2 {
             if self.lexer.peek() == Some(L_CURLY) {
                 self.curly_group_word();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 
@@ -959,9 +918,8 @@ impl<'a> Parser<'a> {
         self.trivia();
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
+
         self.builder.finish_node();
     }
 
@@ -971,9 +929,8 @@ impl<'a> Parser<'a> {
         self.trivia();
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word_list();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
+
         self.builder.finish_node();
     }
 
@@ -985,8 +942,6 @@ impl<'a> Parser<'a> {
         for _ in 0..2 {
             if self.lexer.peek() == Some(L_CURLY) {
                 self.curly_group_word();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 
@@ -999,13 +954,10 @@ impl<'a> Parser<'a> {
         self.trivia();
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group();
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1018,8 +970,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_command();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_BRACK) {
@@ -1032,8 +982,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_impl();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1046,14 +994,10 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_command();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_impl();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1066,14 +1010,10 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_key_value();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1090,8 +1030,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1130,14 +1068,10 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_key_value();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1154,8 +1088,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1168,8 +1100,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_BRACK) {
@@ -1178,8 +1108,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_BRACK) {
@@ -1196,8 +1124,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1210,20 +1136,14 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1240,15 +1160,11 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word_list();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         for _ in 0..3 {
             if self.lexer.peek() == Some(L_CURLY) {
                 self.curly_group_word();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 
@@ -1262,8 +1178,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word_list();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         self.builder.finish_node();
@@ -1276,8 +1190,6 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(L_CURLY) {
             self.curly_group_word();
-        } else {
-            self.builder.token(MISSING.into(), "");
         }
 
         if self.lexer.peek() == Some(L_BRACK) {
@@ -1290,8 +1202,6 @@ impl<'a> Parser<'a> {
         for _ in 0..2 {
             if self.lexer.peek() == Some(L_CURLY) {
                 self.curly_group_without_environments();
-            } else {
-                self.builder.token(MISSING.into(), "");
             }
         }
 

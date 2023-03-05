@@ -12,7 +12,6 @@ ROOT@0..19
         KEY@7..13
           WORD@7..12 "hello"
           LINE_BREAK@12..13 "\n"
-        MISSING@13..13 ""
     TEXT@13..18
       WORD@13..18 "world"
     ERROR@18..19

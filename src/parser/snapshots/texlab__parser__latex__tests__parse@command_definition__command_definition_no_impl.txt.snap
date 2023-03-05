@@ -11,5 +11,4 @@ ROOT@0..17
         L_CURLY@11..12 "{"
         GENERIC_COMMAND_NAME@12..16 "\\foo"
         R_CURLY@16..17 "}"
-      MISSING@17..17 ""
 

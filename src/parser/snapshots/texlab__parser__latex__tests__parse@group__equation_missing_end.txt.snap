@@ -22,7 +22,6 @@ ROOT@0..28
           WHITESPACE@16..17 " "
           WORD@17..20 "bar"
           WHITESPACE@20..21 " "
-        MISSING@21..21 ""
       END@21..28
         END_ENVIRONMENT_NAME@21..25 "\\end"
         CURLY_GROUP_WORD@25..28

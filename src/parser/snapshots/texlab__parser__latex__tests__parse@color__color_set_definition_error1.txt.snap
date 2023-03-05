@@ -30,5 +30,4 @@ ROOT@0..39
         KEY@35..38
           WORD@35..38 "bar"
         R_CURLY@38..39 "}"
-      MISSING@39..39 ""
 

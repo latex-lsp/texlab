@@ -11,5 +11,4 @@ ROOT@0..12
         WORD@1..6 "hello"
         WHITESPACE@6..7 " "
         WORD@7..12 "world"
-      MISSING@12..12 ""
 

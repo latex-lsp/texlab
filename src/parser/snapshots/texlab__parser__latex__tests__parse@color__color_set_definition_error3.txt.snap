@@ -15,7 +15,4 @@ ROOT@0..25
         KEY@20..24
           WORD@20..24 "HTML"
         R_CURLY@24..25 "}"
-      MISSING@25..25 ""
-      MISSING@25..25 ""
-      MISSING@25..25 ""
 

@@ -11,5 +11,4 @@ ROOT@0..9
         L_CURLY@5..6 "{"
         KEY@6..9
           WORD@6..9 "foo"
-        MISSING@9..9 ""
 
