@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Do not show caption or section names in label inlay hints ([#858](https://github.com/latex-lsp/texlab/issues/858))
+
 ### Fixed
 
 - Parse nested `\iffalse` blocks correctly ([#853](https://github.com/latex-lsp/texlab/issues/853))
