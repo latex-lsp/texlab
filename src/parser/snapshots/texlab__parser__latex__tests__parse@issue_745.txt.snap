@@ -20,7 +20,8 @@ ROOT@0..271
         KEY@36..46
           WORD@36..46 "tabularray"
         R_CURLY@46..47 "}"
-        WHITESPACE@47..50 " \n\n"
+        WHITESPACE@47..48 " "
+        LINE_BREAK@48..50 "\n\n"
     GENERIC_COMMAND@50..64
       COMMAND_NAME@50..63 "\\ExplSyntaxOn"
       LINE_BREAK@63..64 "\n"
@@ -41,16 +42,20 @@ ROOT@0..271
         TEXT@100..101
           WORD@100..101 "m"
         R_CURLY@101..102 "}"
-        WHITESPACE@102..107 "\n    "
+        LINE_BREAK@102..103 "\n"
+        WHITESPACE@103..107 "    "
       CURLY_GROUP@107..200
         L_CURLY@107..108 "{"
-        WHITESPACE@108..113 "\n    "
+        LINE_BREAK@108..109 "\n"
+        WHITESPACE@109..113 "    "
         GENERIC_COMMAND@113..194
           COMMAND_NAME@113..119 "\\use:x"
-          WHITESPACE@119..124 "\n    "
+          LINE_BREAK@119..120 "\n"
+          WHITESPACE@120..124 "    "
           CURLY_GROUP@124..194
             L_CURLY@124..125 "{"
-            WHITESPACE@125..130 "\n    "
+            LINE_BREAK@125..126 "\n"
+            WHITESPACE@126..130 "    "
             GENERIC_COMMAND@130..141
               COMMAND_NAME@130..140 "\\exp_not:N"
               WHITESPACE@140..141 " "
@@ -62,7 +67,8 @@ ROOT@0..271
                   KEY@148..152
                     WORD@148..152 "tblr"
                   R_CURLY@152..153 "}"
-                  WHITESPACE@153..158 "\n    "
+                  LINE_BREAK@153..154 "\n"
+                  WHITESPACE@154..158 "    "
                 BRACK_GROUP@158..179
                   L_BRACK@158..159 "["
                   GENERIC_COMMAND@159..173
@@ -73,20 +79,25 @@ ROOT@0..271
                         WORD@170..172 "#1"
                       R_CURLY@172..173 "}"
                   R_BRACK@173..174 "]"
-                  WHITESPACE@174..179 "\n    "
+                  LINE_BREAK@174..175 "\n"
+                  WHITESPACE@175..179 "    "
               CURLY_GROUP@179..188
                 L_CURLY@179..180 "{"
                 TEXT@180..182
                   WORD@180..182 "#2"
                 R_CURLY@182..183 "}"
-                WHITESPACE@183..188 "\n    "
+                LINE_BREAK@183..184 "\n"
+                WHITESPACE@184..188 "    "
             R_CURLY@188..189 "}"
-            WHITESPACE@189..194 "\n    "
+            LINE_BREAK@189..190 "\n"
+            WHITESPACE@190..194 "    "
         R_CURLY@194..195 "}"
-        WHITESPACE@195..200 "\n    "
+        LINE_BREAK@195..196 "\n"
+        WHITESPACE@196..200 "    "
       CURLY_GROUP@200..223
         L_CURLY@200..201 "{"
-        WHITESPACE@201..206 "\n    "
+        LINE_BREAK@201..202 "\n"
+        WHITESPACE@202..206 "    "
         GENERIC_COMMAND@206..221
           COMMAND_NAME@206..210 "\\end"
           CURLY_GROUP@210..221
@@ -94,7 +105,8 @@ ROOT@0..271
             TEXT@211..215
               WORD@211..215 "tblr"
             R_CURLY@215..216 "}"
-            WHITESPACE@216..221 "\n    "
+            LINE_BREAK@216..217 "\n"
+            WHITESPACE@217..221 "    "
         R_CURLY@221..222 "}"
         LINE_BREAK@222..223 "\n"
     GENERIC_COMMAND@223..239

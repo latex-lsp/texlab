@@ -37,16 +37,19 @@ ROOT@0..135
         LINE_BREAK@74..75 "\n"
       BLOCK_COMMENT@75..120
         COMMAND_NAME@75..83 "\\iffalse"
-        WHITESPACE@83..86 "\n  "
+        LINE_BREAK@83..84 "\n"
+        WHITESPACE@84..86 "  "
         BLOCK_COMMENT@86..97
           COMMAND_NAME@86..94 "\\iffalse"
           COMMAND_NAME@94..97 "\\fi"
-        WHITESPACE@97..100 "\n  "
+        LINE_BREAK@97..98 "\n"
+        WHITESPACE@98..100 "  "
         COMMAND_NAME@100..104 "\\end"
         L_CURLY@104..105 "{"
         WORD@105..114 "enumerate"
         R_CURLY@114..115 "}"
-        WHITESPACE@115..117 " \n"
+        WHITESPACE@115..116 " "
+        LINE_BREAK@116..117 "\n"
         COMMAND_NAME@117..120 "\\fi"
       LINE_BREAK@120..121 "\n"
       END@121..135

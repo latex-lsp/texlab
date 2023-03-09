@@ -5,7 +5,7 @@ pub enum Token {
     #[regex(r"[\r\n]+", priority = 2)]
     LineBreak,
 
-    #[regex(r"\s+", priority = 1)]
+    #[regex(r"[^\S\r\n]+", priority = 1)]
     Whitespace,
 
     #[regex(r"%[^\r\n]*")]
@@ -42,8 +42,36 @@ pub enum Token {
     #[regex(r"\$\$?")]
     Dollar,
 
-    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?", |_| CommandName::Generic)]
+    #[regex(r"\\", lex_command_name)]
     CommandName(CommandName),
+}
+
+fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
+    let input = &lexer.source()[lexer.span().end..];
+
+    let mut chars = input.chars();
+    let Some(c) = chars.next() else { return CommandName::Generic };
+    lexer.bump(c.len_utf8());
+    if !matches!(c, 'a'..='z'|'A'..='Z' | '@') {
+        return CommandName::Generic;
+    }
+
+    while let Some(c) = chars.next() {
+        match c {
+            '*' => {
+                lexer.bump(c.len_utf8());
+                break;
+            }
+            'a'..='z' | 'A'..='Z' | '@' | ':' | '_' => {
+                lexer.bump(c.len_utf8());
+            }
+            _ => {
+                break;
+            }
+        };
+    }
+
+    CommandName::Generic
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

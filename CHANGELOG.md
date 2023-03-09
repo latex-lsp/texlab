@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Parse nested `\iffalse` blocks correctly ([#853](https://github.com/latex-lsp/texlab/issues/853))
+- Parse commands with multi-byte characters correctly ([#857](https://github.com/latex-lsp/texlab/issues/857))
 
 ## [5.3.0] - 2023-02-25
 
