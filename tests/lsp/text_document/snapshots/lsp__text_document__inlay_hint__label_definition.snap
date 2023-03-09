@@ -8,7 +8,7 @@ expression: "find_hints(r#\"\n%! main.tex\n\\documentclass{article}\n\\usepackag
       "line": 3,
       "character": 27
     },
-    "label": "Section 1 (Foo)",
+    "label": "Section 1",
     "paddingLeft": true
   },
   {
@@ -16,7 +16,7 @@ expression: "find_hints(r#\"\n%! main.tex\n\\documentclass{article}\n\\usepackag
       "line": 4,
       "character": 27
     },
-    "label": "Section 2 (Bar)",
+    "label": "Section 2",
     "paddingLeft": true
   },
   {
@@ -24,7 +24,7 @@ expression: "find_hints(r#\"\n%! main.tex\n\\documentclass{article}\n\\usepackag
       "line": 5,
       "character": 30
     },
-    "label": "Subsection 2.1 (Baz)",
+    "label": "Subsection 2.1",
     "paddingLeft": true
   },
   {
@@ -32,7 +32,7 @@ expression: "find_hints(r#\"\n%! main.tex\n\\documentclass{article}\n\\usepackag
       "line": 8,
       "character": 18
     },
-    "label": "Figure fig:qux: Qux",
+    "label": "Figure fig:qux",
     "paddingLeft": true
   }
 ]
