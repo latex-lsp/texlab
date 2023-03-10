@@ -819,3 +819,21 @@ fn test_project_resolution_texlabroot() {
 %! .texlabroot"#
     ));
 }
+
+#[test]
+fn issue_857() {
+    assert_json_snapshot!(complete(
+        r#"
+%! bug.tex
+\documentclass{article}
+\newcommand{\ö}{foo}
+\newcommand{\öö}{bar}
+\newcommand{\ööabc}{baz}
+\begin{document}
+\ö
+  |
+ ^
+\end{document}
+"#
+    ));
+}

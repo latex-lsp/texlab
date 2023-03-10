@@ -1,6 +1,6 @@
 pub mod label;
 
-use rowan::{ast::AstNode, TextRange};
+use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
 use crate::{
     syntax::latex::{self, HasCurly},
@@ -169,30 +169,42 @@ impl TexAnalysis {
         let mut command_name_ranges = Vec::new();
         let mut environment_names = Vec::new();
 
-        for node in root.descendants() {
-            TexLink::of_include(db, node.clone(), &mut links)
-                .or_else(|| TexLink::of_import(db, node.clone(), &mut links))
-                .or_else(|| label::Name::of_definition(db, node.clone(), &mut labels))
-                .or_else(|| label::Name::of_reference(db, node.clone(), &mut labels))
-                .or_else(|| label::Name::of_reference_range(db, node.clone(), &mut labels))
-                .or_else(|| label::Number::of_number(db, node.clone(), &mut label_numbers))
-                .or_else(|| {
-                    TheoremEnvironment::of_definition(db, node.clone(), &mut theorem_environments)
-                })
-                .or_else(|| GraphicsPath::of_command(db, node.clone(), &mut graphics_paths))
-                .or_else(|| {
-                    let range = latex::GenericCommand::cast(node.clone())?
-                        .name()?
-                        .text_range();
+        for element in root.descendants_with_tokens() {
+            match element {
+                NodeOrToken::Token(token) if token.kind() == latex::COMMAND_NAME => {
+                    command_name_ranges.push(token.text_range());
+                }
+                NodeOrToken::Token(_) => {}
+                NodeOrToken::Node(node) => {
+                    TexLink::of_include(db, node.clone(), &mut links)
+                        .or_else(|| TexLink::of_import(db, node.clone(), &mut links))
+                        .or_else(|| label::Name::of_definition(db, node.clone(), &mut labels))
+                        .or_else(|| label::Name::of_reference(db, node.clone(), &mut labels))
+                        .or_else(|| label::Name::of_reference_range(db, node.clone(), &mut labels))
+                        .or_else(|| label::Number::of_number(db, node.clone(), &mut label_numbers))
+                        .or_else(|| {
+                            TheoremEnvironment::of_definition(
+                                db,
+                                node.clone(),
+                                &mut theorem_environments,
+                            )
+                        })
+                        .or_else(|| GraphicsPath::of_command(db, node.clone(), &mut graphics_paths))
+                        .or_else(|| {
+                            let range = latex::GenericCommand::cast(node.clone())?
+                                .name()?
+                                .text_range();
 
-                    command_name_ranges.push(range);
-                    Some(())
-                })
-                .or_else(|| {
-                    let begin = latex::Begin::cast(node.clone())?;
-                    environment_names.push(begin.name()?.key()?.to_string());
-                    Some(())
-                });
+                            command_name_ranges.push(range);
+                            Some(())
+                        })
+                        .or_else(|| {
+                            let begin = latex::Begin::cast(node.clone())?;
+                            environment_names.push(begin.name()?.key()?.to_string());
+                            Some(())
+                        });
+                }
+            };
         }
 
         Self::new(
