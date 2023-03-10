@@ -1,5 +1,6 @@
 use std::{
     path::{Path, PathBuf},
+    sync::Once,
     thread::JoinHandle,
 };
 
@@ -117,6 +118,8 @@ impl Document {
     }
 }
 
+static LOGGER: Once = Once::new();
+
 #[derive(Debug)]
 pub struct TestBed {
     fixture: Fixture,
@@ -138,6 +141,17 @@ impl Drop for TestBed {
 
 impl TestBed {
     pub fn new(fixture: &str) -> Result<Self> {
+        LOGGER.call_once(|| {
+            fern::Dispatch::new()
+                .filter(|metadata| {
+                    metadata.target().contains("texlab") || metadata.target().contains("lsp_server")
+                })
+                .level(log::LevelFilter::Trace)
+                .chain(std::io::stderr())
+                .apply()
+                .unwrap()
+        });
+
         let fixture = Fixture::parse(fixture);
         let (server_conn, client_conn) = Connection::memory();
 
