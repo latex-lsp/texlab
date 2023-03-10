@@ -3,13 +3,31 @@ source: src/parser/latex.rs
 expression: root
 input_file: src/parser/test_data/latex/issue_857.txt
 ---
-ROOT@0..16
-  PREAMBLE@0..16
+ROOT@0..55
+  PREAMBLE@0..55
     COMMAND_DEFINITION@0..11
       COMMAND_NAME@0..11 "\\newcommand"
-    GENERIC_COMMAND@11..16
+    GENERIC_COMMAND@11..17
       COMMAND_NAME@11..14 "\\ö"
-      CURLY_GROUP@14..16
+      CURLY_GROUP@14..17
         L_CURLY@14..15 "{"
         R_CURLY@15..16 "}"
+        LINE_BREAK@16..17 "\n"
+    COMMAND_DEFINITION@17..38
+      COMMAND_NAME@17..28 "\\newcommand"
+      CURLY_GROUP_COMMAND@28..35
+        L_CURLY@28..29 "{"
+        COMMAND_NAME@29..34 "\\öö"
+        R_CURLY@34..35 "}"
+      CURLY_GROUP@35..38
+        L_CURLY@35..36 "{"
+        R_CURLY@36..37 "}"
+        LINE_BREAK@37..38 "\n"
+    COMMAND_DEFINITION@38..49
+      COMMAND_NAME@38..49 "\\newcommand"
+    GENERIC_COMMAND@49..55
+      COMMAND_NAME@49..53 "\\123"
+      CURLY_GROUP@53..55
+        L_CURLY@53..54 "{"
+        R_CURLY@54..55 "}"
 

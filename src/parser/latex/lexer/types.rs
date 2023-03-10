@@ -52,7 +52,7 @@ fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
     let mut chars = input.chars();
     let Some(c) = chars.next() else { return CommandName::Generic };
     lexer.bump(c.len_utf8());
-    if !matches!(c, 'a'..='z'|'A'..='Z' | '@') {
+    if !c.is_alphanumeric() && c != '@' {
         return CommandName::Generic;
     }
 
@@ -62,7 +62,10 @@ fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
                 lexer.bump(c.len_utf8());
                 break;
             }
-            'a'..='z' | 'A'..='Z' | '@' | ':' | '_' => {
+            c if c.is_alphanumeric() => {
+                lexer.bump(c.len_utf8());
+            }
+            '@' | ':' | '_' => {
                 lexer.bump(c.len_utf8());
             }
             _ => {
