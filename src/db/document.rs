@@ -179,7 +179,7 @@ impl Document {
         self.parse(db).as_tex().map_or(false, |data| {
             let analysis = data.analyze(db);
             analysis.has_document_environment(db)
-                || !analysis
+                && !analysis
                     .links(db)
                     .iter()
                     .filter(|link| link.kind(db) == TexLinkKind::Cls)
