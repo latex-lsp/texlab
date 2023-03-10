@@ -142,14 +142,17 @@ impl Drop for TestBed {
 impl TestBed {
     pub fn new(fixture: &str) -> Result<Self> {
         LOGGER.call_once(|| {
-            fern::Dispatch::new()
-                .filter(|metadata| {
-                    metadata.target().contains("texlab") || metadata.target().contains("lsp_server")
-                })
-                .level(log::LevelFilter::Trace)
-                .chain(std::io::stderr())
-                .apply()
-                .unwrap()
+            if option_env!("TEST_LOG") == Some("1") {
+                fern::Dispatch::new()
+                    .filter(|metadata| {
+                        metadata.target().contains("texlab")
+                            || metadata.target().contains("lsp_server")
+                    })
+                    .level(log::LevelFilter::Trace)
+                    .chain(std::io::stderr())
+                    .apply()
+                    .unwrap()
+            }
         });
 
         let fixture = Fixture::parse(fixture);
