@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Do not show caption or section names in label inlay hints ([#858](https://github.com/latex-lsp/texlab/issues/858))
+- Include more user-defined commands in command completion
 
 ### Fixed
 
