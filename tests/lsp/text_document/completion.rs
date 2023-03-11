@@ -821,7 +821,7 @@ fn test_project_resolution_texlabroot() {
 }
 
 #[test]
-fn issue_857() {
+fn issue_857_1() {
     assert_json_snapshot!(complete(
         r#"
 %! bug.tex
@@ -836,4 +836,19 @@ fn issue_857() {
 \end{document}
 "#
     ));
+}
+
+#[test]
+fn issue_864() {
+    assert_json_snapshot!(complete(
+        r#"
+%! bug.tex
+\documentclass{article}
+\def\あいうえお{}
+\begin{document}
+\あ
+  |
+ ^
+\end{document}"#
+    ))
 }
