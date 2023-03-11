@@ -83,7 +83,7 @@ impl Command {
                 .line_col_lsp(child.cursor(db))
         });
 
-        let Some(config) = &workspace.config(db).synctex else {
+        let Some(config) = &db.config().synctex else {
             return Err(Error::Unconfigured);
         };
 

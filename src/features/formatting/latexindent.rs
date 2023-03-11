@@ -15,7 +15,7 @@ use crate::{
 
 pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {
     let workspace = Workspace::get(db);
-    let config = workspace.config(db);
+    let config = db.config();
     let target_dir = tempdir().ok()?;
     let source_dir = workspace
         .working_dir(db, document.directory(db))

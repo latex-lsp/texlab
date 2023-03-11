@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 
 use crate::{
-    db::{Document, Workspace},
+    db::{Document, ServerContext, Workspace},
     syntax::{
         bibtex::{self, HasName, HasType},
         latex,
@@ -426,18 +426,9 @@ impl<'db> CompletionBuilder<'db> {
             .map(|(i, item)| self.convert_item(item, i))
             .collect();
 
-        list.is_incomplete = if self
-            .context
-            .workspace
-            .client_info(self.context.db)
-            .as_ref()
-            .map_or(false, |client| client.name.as_str() == "Visual Studio Code")
-        {
-            true
-        } else {
-            list.items.len() >= COMPLETION_LIMIT
-        };
-
+        let db = self.context.db;
+        let always_incomplete = ServerContext::get(db).always_incomplete_completion_list(db);
+        list.is_incomplete = always_incomplete || list.items.len() >= COMPLETION_LIMIT;
         list
     }
 

@@ -2,7 +2,7 @@ use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 
 use crate::{
-    db::{Document, Workspace},
+    db::Document,
     syntax::bibtex::{self, HasName, HasType, HasValue},
     util::{line_index::LineIndex, line_index_ext::LineIndexExt},
     Db,
@@ -23,7 +23,7 @@ pub fn format_bibtex_internal(
         indent.push('\t');
     }
 
-    let line_length = Workspace::get(db).config(db).formatting.line_length;
+    let line_length = db.config().formatting.line_length;
 
     let line_index = document.contents(db).line_index(db);
     let data = document.parse(db).as_bib()?;

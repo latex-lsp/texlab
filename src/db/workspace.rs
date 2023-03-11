@@ -4,14 +4,14 @@ use std::{
 };
 
 use itertools::Itertools;
-use lsp_types::{ClientCapabilities, ClientInfo, Url};
+use lsp_types::{ClientCapabilities, Url};
 use rowan::TextSize;
 use rustc_hash::FxHashSet;
 
 use crate::{
     db::document::{Document, Location},
     distro::FileNameDB,
-    Config, Db,
+    Db,
 };
 
 use super::{
@@ -26,13 +26,7 @@ pub struct Workspace {
     pub documents: FxHashSet<Document>,
 
     #[return_ref]
-    pub config: Config,
-
-    #[return_ref]
     pub client_capabilities: ClientCapabilities,
-
-    #[return_ref]
-    pub client_info: Option<ClientInfo>,
 
     #[return_ref]
     pub root_dirs: Vec<Location>,
@@ -157,8 +151,8 @@ impl Workspace {
 impl Workspace {
     #[salsa::tracked]
     pub fn working_dir(self, db: &dyn Db, base_dir: Location) -> Location {
-        if let Some(dir) = self
-            .config(db)
+        if let Some(dir) = db
+            .config()
             .root_dir
             .as_ref()
             .and_then(|path| base_dir.join(db, path))
@@ -181,7 +175,7 @@ impl Workspace {
 
     #[salsa::tracked]
     pub fn output_dir(self, db: &dyn Db, base_dir: Location) -> Location {
-        let mut path = self.config(db).build.output_dir.clone();
+        let mut path = db.config().build.output_dir.clone();
         if !path.ends_with('/') {
             path.push('/');
         }

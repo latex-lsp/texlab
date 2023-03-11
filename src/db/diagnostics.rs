@@ -131,7 +131,7 @@ pub fn collect_filtered(
     let all_diagnostics = collect(db, workspace);
     let mut all_filtered: FxHashMap<Document, Vec<lsp_types::Diagnostic>> = FxHashMap::default();
 
-    let config = &workspace.config(db).diagnostics;
+    let config = &db.config().diagnostics;
     for document in workspace.documents(db) {
         let mut filtered = Vec::new();
         if !matches!(document.language(db), Language::Tex | Language::Bib) {

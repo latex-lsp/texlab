@@ -19,7 +19,7 @@ pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolRes
     latex::find_symbols(db, document, &mut buf);
     bibtex::find_symbols(db, document, &mut buf);
 
-    let config = &Workspace::get(db).config(db).symbols;
+    let config = &db.config().symbols;
 
     InternalSymbol::filter(&mut buf, &config);
 

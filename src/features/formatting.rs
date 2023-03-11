@@ -17,14 +17,13 @@ pub fn format_source_code(
 ) -> Option<Vec<TextEdit>> {
     let workspace = Workspace::get(db);
     let document = workspace.lookup_uri(db, uri)?;
-    let config = workspace.config(db);
     match document.language(db) {
-        Language::Tex => match config.formatting.tex_formatter {
+        Language::Tex => match db.config().formatting.tex_formatter {
             Formatter::Null => None,
             Formatter::Server => None,
             Formatter::LatexIndent => format_with_latexindent(db, document),
         },
-        Language::Bib => match config.formatting.bib_formatter {
+        Language::Bib => match db.config().formatting.bib_formatter {
             Formatter::Null => None,
             Formatter::Server => format_bibtex_internal(db, document, options),
             Formatter::LatexIndent => format_with_latexindent(db, document),

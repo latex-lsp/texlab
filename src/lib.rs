@@ -16,6 +16,7 @@ pub use self::{client::LspClient, config::*, server::Server};
 #[salsa::jar(db = Db)]
 pub struct Jar(
     db::Word,
+    db::ServerContext,
     db::Location,
     db::Location_path,
     db::Contents,
@@ -53,23 +54,30 @@ pub struct Jar(
     db::diagnostics::collect_filtered,
 );
 
-pub trait Db: salsa::DbWithJar<Jar> {}
-
-impl<DB> Db for DB where DB: ?Sized + salsa::DbWithJar<Jar> {}
+pub trait Db: salsa::DbWithJar<Jar> {
+    fn config(&self) -> &Config;
+}
 
 #[salsa::db(crate::Jar)]
 pub struct Database {
     storage: salsa::Storage<Self>,
 }
 
+impl Db for Database {
+    fn config(&self) -> &Config {
+        db::ServerContext::get(self).config(self)
+    }
+}
+
 impl Default for Database {
     fn default() -> Self {
         let storage = salsa::Storage::default();
         let db = Self { storage };
+
+        db::ServerContext::new(&db, Default::default(), Default::default());
+
         db::Workspace::new(
             &db,
-            Default::default(),
-            Default::default(),
             Default::default(),
             Default::default(),
             Default::default(),

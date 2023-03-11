@@ -63,7 +63,7 @@ impl Command {
             return None;
         }
 
-        let config = &workspace.config(db).build;
+        let config = &db.config().build;
         let program = config.program.clone();
         let path = document.location(db).path(db).as_deref().unwrap();
         let args = config
