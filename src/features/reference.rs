@@ -30,7 +30,6 @@ pub fn find_all(
             uri: result.document.location(db).uri(db).clone(),
             range: result
                 .document
-                .contents(db)
                 .line_index(db)
                 .line_col_lsp_range(result.range),
         })

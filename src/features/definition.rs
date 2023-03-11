@@ -31,12 +31,11 @@ pub fn goto_definition(
             let origin_selection_range = Some(
                 context
                     .document
-                    .contents(db)
                     .line_index(db)
                     .line_col_lsp_range(result.origin_selection_range),
             );
 
-            let target_line_index = result.target.contents(db).line_index(db);
+            let target_line_index = result.target.line_index(db);
             let target_uri = result.target.location(context.db).uri(context.db).clone();
             let target_range = target_line_index.line_col_lsp_range(result.target_range);
 

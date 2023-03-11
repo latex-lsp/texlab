@@ -10,7 +10,7 @@ use crate::{
 
 pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
     let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
     let foldings = match document.parse(db) {
         DocumentData::Tex(data) => {
             let mut results = Vec::new();

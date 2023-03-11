@@ -29,7 +29,7 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
         } else {
             "file.tex"
         });
-    std::fs::write(&target_file, document.contents(db).text(db)).ok()?;
+    std::fs::write(&target_file, document.text(db)).ok()?;
 
     let args = build_arguments(&config.formatting.latex_indent, &target_file);
 
@@ -48,12 +48,12 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
         .output()
         .ok()?;
 
-    let old_text = document.contents(db).text(db);
+    let old_text = document.text(db);
     let new_text = String::from_utf8_lossy(&output.stdout).into_owned();
     if new_text.is_empty() {
         None
     } else {
-        let line_index = document.contents(db).line_index(db);
+        let line_index = document.line_index(db);
         Some(vec![TextEdit {
             range: line_index.line_col_lsp_range(TextRange::new(0.into(), old_text.text_len())),
             new_text,

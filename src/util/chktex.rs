@@ -42,7 +42,7 @@ impl Command {
 
         log::debug!("Calling ChkTeX from directory: {}", working_dir.display());
 
-        let text = document.contents(db).text(db).clone();
+        let text = document.text(db).clone();
 
         Some(Self { text, working_dir })
     }

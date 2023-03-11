@@ -48,20 +48,6 @@ impl Location {
     }
 }
 
-#[salsa::input]
-pub struct Contents {
-    #[return_ref]
-    pub text: String,
-}
-
-#[salsa::tracked]
-impl Contents {
-    #[salsa::tracked(return_ref)]
-    pub fn line_index(self, db: &dyn Db) -> LineIndex {
-        LineIndex::new(self.text(db))
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Owner {
     Client,
@@ -115,19 +101,31 @@ pub struct LinterData {
 
 #[salsa::input]
 pub struct Document {
+    /// An object containing the URI of the document.
     pub location: Location,
-    pub contents: Contents,
+
+    /// The source code.
+    #[return_ref]
+    pub text: String,
+
+    /// The programming language.
     pub language: Language,
+
+    /// The program (either server or client) which opened the document.
     pub owner: Owner,
+
+    /// An estimate of the current cursor position.
     pub cursor: TextSize,
+
+    /// The diagnostics reported from external linters such as ChkTeX.
     pub linter: LinterData,
 }
 
 impl Document {
     pub fn edit(self, db: &mut dyn Db, range: TextRange, replace_with: &str) {
-        let mut text = self.contents(db).set_text(db).to(String::new());
+        let mut text = self.set_text(db).to(String::new());
         text.replace_range(std::ops::Range::<usize>::from(range), replace_with);
-        self.contents(db).set_text(db).to(text);
+        self.set_text(db).to(text);
         self.set_cursor(db).to(range.start());
     }
 
@@ -149,7 +147,7 @@ impl Document {
 impl Document {
     #[salsa::tracked]
     pub fn parse(self, db: &dyn Db) -> DocumentData {
-        let text = self.contents(db).text(db);
+        let text = self.text(db);
         match self.language(db) {
             Language::Tex => {
                 let data = TexDocumentData::new(db, parse_latex(text));
@@ -192,5 +190,10 @@ impl Document {
         self.parse(db)
             .as_tex()
             .map_or(false, |data| data.analyze(db).has_document_environment(db))
+    }
+
+    #[salsa::tracked(return_ref)]
+    pub fn line_index(self, db: &dyn Db) -> LineIndex {
+        LineIndex::new(self.text(db))
     }
 }

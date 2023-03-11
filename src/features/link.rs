@@ -13,7 +13,7 @@ pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<DocumentLink>> {
     let document = Workspace::get(db).lookup_uri(db, uri)?;
     let mut builder = LinkBuilder {
         db,
-        line_index: document.contents(db).line_index(db),
+        line_index: document.line_index(db),
         links: Vec::new(),
     };
 

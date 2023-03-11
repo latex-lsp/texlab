@@ -86,7 +86,6 @@ fn visit_section(
 ) -> Option<InternalSymbol> {
     let section = latex::Section::cast(node)?;
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&section));
 
@@ -152,7 +151,6 @@ fn visit_enum_item(
     }
 
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&enum_item));
 
@@ -198,7 +196,6 @@ fn visit_equation(
     let equation = latex::Equation::cast(node)?;
 
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&equation));
 
@@ -213,7 +210,6 @@ fn visit_equation_environment(
     let environment = latex::Environment::cast(node)?;
 
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -268,7 +264,6 @@ fn visit_enumeration(
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -315,7 +310,6 @@ fn visit_float(
 ) -> Option<InternalSymbol> {
     let environment = latex::Environment::cast(node)?;
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&environment));
 
@@ -382,7 +376,6 @@ fn visit_theorem(
         .and_then(|option| option.content_text());
 
     let full_range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&node));
 
@@ -454,7 +447,6 @@ fn find_label_by_parent(
     let node = parent.children().find_map(latex::LabelDefinition::cast)?;
     let name = Word::new(db, node.name()?.key()?.to_string());
     let range = document
-        .contents(db)
         .line_index(db)
         .line_col_lsp_range(latex::small_range(&node));
 

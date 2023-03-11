@@ -15,7 +15,7 @@ use super::types::{InternalSymbol, InternalSymbolKind};
 
 pub fn find_symbols(db: &dyn Db, document: Document, buf: &mut Vec<InternalSymbol>) -> Option<()> {
     let data = document.parse(db).as_bib()?;
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
     for node in data.root(db).children() {
         process_string(node.clone(), line_index, buf)
             .or_else(|| process_entry(node, line_index, buf));

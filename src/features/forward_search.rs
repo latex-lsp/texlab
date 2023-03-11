@@ -76,12 +76,8 @@ impl Command {
             return Err(Error::PdfNotFound(pdf_path));
         }
 
-        let position = position.unwrap_or_else(|| {
-            child
-                .contents(db)
-                .line_index(db)
-                .line_col_lsp(child.cursor(db))
-        });
+        let position =
+            position.unwrap_or_else(|| child.line_index(db).line_col_lsp(child.cursor(db)));
 
         let Some(config) = &db.config().synctex else {
             return Err(Error::Unconfigured);

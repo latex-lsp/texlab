@@ -16,7 +16,7 @@ use crate::{
 
 use super::{
     dependency_graph,
-    document::{Contents, Language, LinterData, Owner},
+    document::{Language, LinterData, Owner},
     Word,
 };
 
@@ -73,11 +73,10 @@ impl Workspace {
         owner: Owner,
     ) -> Document {
         let location = Location::new(db, uri);
-        let contents = Contents::new(db, text);
         let cursor = TextSize::from(0);
         match self.lookup(db, location) {
             Some(document) => {
-                document.set_contents(db).to(contents);
+                document.set_text(db).to(text);
                 document.set_language(db).to(language);
                 document.set_owner(db).to(owner);
                 document.set_cursor(db).to(cursor);
@@ -87,7 +86,7 @@ impl Workspace {
                 let document = Document::new(
                     db,
                     location,
-                    contents,
+                    text,
                     language,
                     owner,
                     cursor,

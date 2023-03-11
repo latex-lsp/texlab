@@ -426,12 +426,11 @@ impl Server {
         for change in params.content_changes {
             match change.range {
                 Some(range) => {
-                    let range = document.contents(db).line_index(db).offset_lsp_range(range);
+                    let range = document.line_index(db).offset_lsp_range(range);
                     document.edit(db, range, &change.text);
                 }
                 None => {
                     document
-                        .contents(db)
                         .set_text(db)
                         .with_durability(salsa::Durability::LOW)
                         .to(change.text);
@@ -597,7 +596,6 @@ impl Server {
         let workspace = Workspace::get(db);
         if let Some(document) = workspace.lookup_uri(db, &uri) {
             let position = document
-                .contents(db)
                 .line_index(db)
                 .offset_lsp(params.text_document_position_params.position);
 

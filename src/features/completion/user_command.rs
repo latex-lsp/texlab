@@ -12,7 +12,7 @@ pub fn complete<'db>(
     let db = context.db;
     for document in context.related() {
         if let Some(data) = document.parse(db).as_tex() {
-            let text = document.contents(db).text(db);
+            let text = document.text(db);
             for name in data
                 .analyze(db)
                 .command_name_ranges(db)

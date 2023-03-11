@@ -135,7 +135,7 @@ impl<'db, T> CursorContext<'db, T> {
     pub fn new(db: &'db dyn Db, uri: &Url, position: Position, params: T) -> Option<Self> {
         let workspace = Workspace::get(db);
         let document = workspace.lookup_uri(db, uri)?;
-        let line_index = document.contents(db).line_index(db);
+        let line_index = document.line_index(db);
         let offset = line_index.offset_lsp(position);
 
         let cursor = match document.parse(db) {

@@ -11,7 +11,7 @@ pub fn find_highlights(context: &CursorContext) -> Option<Vec<DocumentHighlight>
     let data = context.document.parse(db).as_tex()?;
 
     let mut highlights = Vec::new();
-    let line_index = context.document.contents(db).line_index(db);
+    let line_index = context.document.line_index(db);
     for label in data
         .analyze(db)
         .labels(db)

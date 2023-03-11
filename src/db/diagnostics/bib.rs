@@ -32,7 +32,7 @@ fn analyze_entry(
     node: bibtex::SyntaxNode,
     results: &mut Vec<Diagnostic>,
 ) -> Option<()> {
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
 
     let entry = bibtex::Entry::cast(node)?;
     if entry.left_delim_token().is_none() {
@@ -81,7 +81,7 @@ fn analyze_field(
     node: bibtex::SyntaxNode,
     results: &mut Vec<Diagnostic>,
 ) -> Option<()> {
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
 
     let field = bibtex::Field::cast(node)?;
     if field.eq_token().is_none() {

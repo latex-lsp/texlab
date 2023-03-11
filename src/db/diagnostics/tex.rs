@@ -70,7 +70,6 @@ fn analyze_environment(
         results.push(Diagnostic {
             severity: DiagnosticSeverity::ERROR,
             range: document
-                .contents(db)
                 .line_index(db)
                 .line_col_lsp_range(latex::small_range(&name1)),
             code: DiagnosticCode::Tex(code),
@@ -118,7 +117,6 @@ fn analyze_curly_group(
         results.push(Diagnostic {
             severity: DiagnosticSeverity::ERROR,
             range: document
-                .contents(db)
                 .line_index(db)
                 .line_col_lsp_range(TextRange::empty(node.text_range().end())),
             code: DiagnosticCode::Tex(code),
@@ -140,7 +138,6 @@ fn analyze_curly_braces(
         results.push(Diagnostic {
             severity: DiagnosticSeverity::ERROR,
             range: document
-                .contents(db)
                 .line_index(db)
                 .line_col_lsp_range(node.text_range()),
             code: DiagnosticCode::Tex(code),

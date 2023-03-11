@@ -18,7 +18,7 @@ pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<
         .or_else(|| label::prepare_rename(&context))
         .or_else(|| command::prepare_rename(&context))?;
 
-    let line_index = context.document.contents(db).line_index(db);
+    let line_index = context.document.line_index(db);
     Some(line_index.line_col_lsp_range(range))
 }
 
@@ -37,7 +37,7 @@ pub fn rename_all(
         .changes
         .into_iter()
         .map(|(document, old_edits)| {
-            let line_index = document.contents(db).line_index(db);
+            let line_index = document.line_index(db);
             let new_edits = old_edits
                 .into_iter()
                 .map(|Indel { delete, insert }| {

@@ -25,7 +25,7 @@ pub fn format_bibtex_internal(
 
     let line_length = db.config().formatting.line_length;
 
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
     let data = document.parse(db).as_bib()?;
     let mut edits = Vec::new();
 

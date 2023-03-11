@@ -24,7 +24,7 @@ pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
         .or_else(|| field::find_hover(&context))
         .or_else(|| entry_type::find_hover(&context))?;
 
-    let line_index = context.document.contents(db).line_index(db);
+    let line_index = context.document.line_index(db);
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: result.value_kind,

@@ -11,7 +11,7 @@ use crate::{
 
 pub fn find_all(db: &dyn Db, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
     let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
 
     let mut builder = InlayHintBuilder {
         line_index,

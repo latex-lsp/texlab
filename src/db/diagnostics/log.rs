@@ -81,10 +81,10 @@ fn find_range_of_hint(
     error: &BuildError,
 ) -> Option<Range> {
     let document = workspace.lookup_uri(db, uri)?;
-    let text = document.contents(db).text(db);
+    let text = document.text(db);
     let line = error.line? as usize;
     let hint = error.hint.as_deref()?;
-    let line_index = document.contents(db).line_index(db);
+    let line_index = document.line_index(db);
 
     let line_start = line_index.newlines.get(line).copied()?;
     let line_end = line_index
