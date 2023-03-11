@@ -10,7 +10,7 @@ use lsp_server::{ErrorCode, Message, Request, RequestId, Response};
 use lsp_types::{notification::ShowMessage, MessageType, ShowMessageParams};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::Options;
+use crate::server::options::Options;
 
 #[derive(Debug)]
 struct RawClient {

@@ -3,7 +3,7 @@ use lsp_types::{DocumentSymbol, Location, Range, SymbolInformation, SymbolKind, 
 use crate::{
     db::Word,
     util::{self, lang_data::BibtexEntryTypeCategory, lsp_enums::Structure},
-    Db, SymbolOptions,
+    Db, SymbolConfig,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -80,17 +80,17 @@ impl InternalSymbol {
         buffer.push(self);
     }
 
-    pub fn filter(container: &mut Vec<InternalSymbol>, options: &SymbolOptions) {
+    pub fn filter(container: &mut Vec<InternalSymbol>, config: &SymbolConfig) {
         let mut i = 0;
         while i < container.len() {
             let symbol = &mut container[i];
 
             if util::regex_filter::filter(
                 &symbol.name,
-                &options.allowed_patterns,
-                &options.ignored_patterns,
+                &config.allowed_patterns,
+                &config.ignored_patterns,
             ) {
-                Self::filter(&mut symbol.children, options);
+                Self::filter(&mut symbol.children, config);
                 i += 1;
             } else {
                 drop(symbol);

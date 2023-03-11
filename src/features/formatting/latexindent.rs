@@ -10,12 +10,12 @@ use tempfile::tempdir;
 use crate::{
     db::{Document, Language, Workspace},
     util::line_index_ext::LineIndexExt,
-    Db, LatexindentOptions,
+    Db, LatexIndentConfig,
 };
 
 pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {
     let workspace = Workspace::get(db);
-    let options = workspace.options(db);
+    let config = workspace.config(db);
     let target_dir = tempdir().ok()?;
     let source_dir = workspace
         .working_dir(db, document.directory(db))
@@ -31,7 +31,7 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
         });
     std::fs::write(&target_file, document.contents(db).text(db)).ok()?;
 
-    let args = build_arguments(&options.latexindent, &target_file);
+    let args = build_arguments(&config.formatting.latex_indent, &target_file);
 
     log::debug!(
         "Running latexindent in folder \"{}\" with args: {:?}",
@@ -61,15 +61,15 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
     }
 }
 
-fn build_arguments(options: &LatexindentOptions, target_file: &Path) -> Vec<String> {
+fn build_arguments(config: &LatexIndentConfig, target_file: &Path) -> Vec<String> {
     let mut args = Vec::new();
 
-    args.push(match &options.local {
+    args.push(match &config.local {
         Some(yaml_file) => format!("--local={yaml_file}"),
         None => "--local".to_string(),
     });
 
-    if options.modify_line_breaks {
+    if config.modify_line_breaks {
         args.push("--modifylinebreaks".to_string());
     }
 

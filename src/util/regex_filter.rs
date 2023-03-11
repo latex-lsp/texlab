@@ -1,21 +1,17 @@
-use crate::RegexPattern;
+use regex::Regex;
 
-pub fn filter(
-    text: &str,
-    allowed_patterns: &[RegexPattern],
-    ignored_patterns: &[RegexPattern],
-) -> bool {
+pub fn filter(text: &str, allowed_patterns: &[Regex], ignored_patterns: &[Regex]) -> bool {
     if !allowed_patterns.is_empty()
         && !allowed_patterns
             .iter()
-            .any(|pattern| pattern.0.is_match(text))
+            .any(|pattern| pattern.is_match(text))
     {
         return false;
     }
 
     if ignored_patterns
         .iter()
-        .any(|pattern| pattern.0.is_match(text))
+        .any(|pattern| pattern.is_match(text))
     {
         return false;
     }

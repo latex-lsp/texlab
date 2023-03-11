@@ -23,16 +23,7 @@ pub fn format_bibtex_internal(
         indent.push('\t');
     }
 
-    let line_length = Workspace::get(db)
-        .options(db)
-        .formatter_line_length
-        .map_or(80, |value| {
-            if value <= 0 {
-                usize::MAX
-            } else {
-                value as usize
-            }
-        });
+    let line_length = Workspace::get(db).config(db).formatting.line_length;
 
     let line_index = document.contents(db).line_index(db);
     let data = document.parse(db).as_bib()?;

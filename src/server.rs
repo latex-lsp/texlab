@@ -1,4 +1,5 @@
 mod dispatch;
+pub mod options;
 mod query;
 
 use std::{
@@ -36,8 +37,10 @@ use crate::{
         self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
         line_index_ext::LineIndexExt,
     },
-    Db, Options, StartupOptions,
+    Config, Db,
 };
+
+use self::options::{Options, StartupOptions};
 
 #[derive(Debug)]
 enum InternalMessage {
@@ -307,7 +310,7 @@ impl Server {
     fn publish_diagnostics_with_delay(&mut self) {
         let db = self.engine.read();
         let sender = self.internal_tx.clone();
-        let delay = Workspace::get(db).options(db).diagnostics_delay.0;
+        let delay = Workspace::get(db).config(db).diagnostics.delay;
         self.pool.execute(move || {
             std::thread::sleep(delay);
             sender.send(InternalMessage::Diagnostics).unwrap();
@@ -353,9 +356,9 @@ impl Server {
         let db = self.engine.write();
         let workspace = Workspace::get(db);
         workspace
-            .set_options(db)
+            .set_config(db)
             .with_durability(salsa::Durability::MEDIUM)
-            .to(options);
+            .to(Config::from(options));
 
         self.watcher.watch(db);
     }
@@ -402,9 +405,10 @@ impl Server {
         self.update_workspace();
 
         if workspace
-            .options(self.engine.read())
+            .config(self.engine.read())
+            .diagnostics
             .chktex
-            .on_open_and_save
+            .on_open
         {
             self.run_chktex(document);
         }
@@ -446,7 +450,12 @@ impl Server {
 
         self.update_workspace();
 
-        if workspace.options(self.engine.read()).chktex.on_edit {
+        if workspace
+            .config(self.engine.read())
+            .diagnostics
+            .chktex
+            .on_edit
+        {
             self.run_chktex(document);
         }
 
@@ -459,7 +468,7 @@ impl Server {
 
         let db = self.engine.read();
         let workspace = Workspace::get(db);
-        if workspace.options(db).build.on_save {
+        if workspace.config(db).build.on_save {
             self.build_internal(uri.clone(), |_| ())?;
         }
 
@@ -467,7 +476,7 @@ impl Server {
 
         let db = self.engine.read();
         if let Some(document) = workspace.lookup_uri(db, &uri) {
-            if workspace.options(db).chktex.on_open_and_save {
+            if workspace.config(db).diagnostics.chktex.on_save {
                 self.run_chktex(document);
             }
         }
@@ -746,7 +755,7 @@ impl Server {
             }
         };
 
-        let forward_search_after = Workspace::get(db).options(db).build.forward_search_after;
+        let forward_search_after = Workspace::get(db).config(db).build.forward_search_after;
 
         let sender = self.internal_tx.clone();
         self.pool.execute(move || {

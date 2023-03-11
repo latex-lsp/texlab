@@ -32,7 +32,7 @@ pub enum Error {
 }
 
 pub struct Command {
-    executable: String,
+    program: String,
     args: Vec<String>,
 }
 
@@ -83,35 +83,27 @@ impl Command {
                 .line_col_lsp(child.cursor(db))
         });
 
-        let options = &workspace.options(db).forward_search;
+        let Some(config) = &workspace.config(db).synctex else {
+            return Err(Error::Unconfigured);
+        };
 
-        let executable = options
-            .executable
-            .as_deref()
-            .ok_or(Error::Unconfigured)?
-            .to_string();
+        let program = config.program.clone();
 
-        let args: Vec<_> = options
+        let args: Vec<_> = config
             .args
-            .as_deref()
-            .ok_or(Error::Unconfigured)?
             .iter()
             .flat_map(|arg| replace_placeholder(tex_path, &pdf_path, position.line, arg))
             .collect();
 
-        Ok(Self { executable, args })
+        Ok(Self { program, args })
     }
 }
 
 impl Command {
     pub fn run(self) -> Result<(), Error> {
-        log::debug!(
-            "Executing forward search: {} {:?}",
-            self.executable,
-            self.args
-        );
+        log::debug!("Executing forward search: {} {:?}", self.program, self.args);
 
-        std::process::Command::new(self.executable)
+        std::process::Command::new(self.program)
             .args(self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::null())

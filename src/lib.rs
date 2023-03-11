@@ -2,16 +2,16 @@
 
 pub(crate) mod citation;
 mod client;
+mod config;
 pub mod db;
 pub(crate) mod distro;
 pub mod features;
-mod options;
 pub mod parser;
 mod server;
 pub mod syntax;
 pub mod util;
 
-pub use self::{client::LspClient, options::*, server::Server};
+pub use self::{client::LspClient, config::*, server::Server};
 
 #[salsa::jar(db = Db)]
 pub struct Jar(

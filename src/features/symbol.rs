@@ -19,9 +19,9 @@ pub fn find_document_symbols(db: &dyn Db, uri: &Url) -> Option<DocumentSymbolRes
     latex::find_symbols(db, document, &mut buf);
     bibtex::find_symbols(db, document, &mut buf);
 
-    let options = &Workspace::get(db).options(db).symbols;
+    let config = &Workspace::get(db).config(db).symbols;
 
-    InternalSymbol::filter(&mut buf, &options);
+    InternalSymbol::filter(&mut buf, &config);
 
     if workspace
         .client_capabilities(db)

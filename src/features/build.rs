@@ -39,7 +39,7 @@ pub enum BuildStatus {
 pub struct Command {
     uri: Url,
     progress: bool,
-    executable: String,
+    program: String,
     args: Vec<String>,
     working_dir: PathBuf,
     client: LspClient,
@@ -63,12 +63,11 @@ impl Command {
             return None;
         }
 
-        let options = &workspace.options(db).build;
-        let executable = options.executable.0.clone();
+        let config = &workspace.config(db).build;
+        let program = config.program.clone();
         let path = document.location(db).path(db).as_deref().unwrap();
-        let args = options
+        let args = config
             .args
-            .0
             .iter()
             .map(|arg| replace_placeholder(arg, path))
             .collect();
@@ -83,7 +82,7 @@ impl Command {
             progress: workspace
                 .client_capabilities(db)
                 .has_work_done_progress_support(),
-            executable,
+            program,
             args,
             working_dir,
             client,
@@ -99,7 +98,7 @@ impl Command {
             None
         };
 
-        let mut process = match std::process::Command::new(&self.executable)
+        let mut process = match std::process::Command::new(&self.program)
             .args(self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -111,7 +110,7 @@ impl Command {
             Err(why) => {
                 log::error!(
                     "Failed to spawn process {:?} in directory {}: {}",
-                    self.executable,
+                    self.program,
                     self.working_dir.display(),
                     why
                 );
