@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add experimental settings to allow extending the list of special environments:
+  - `texlab.experimental.mathEnvironments`
+  - `texlab.experimental.enumEnvironments`
+  - `texlab.experimental.verbatimEnvironments`
+
 ### Changed
 
 - Do not show caption or section names in label inlay hints ([#858](https://github.com/latex-lsp/texlab/issues/858))

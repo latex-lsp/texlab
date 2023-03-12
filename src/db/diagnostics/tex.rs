@@ -1,12 +1,7 @@
 use lsp_types::DiagnosticSeverity;
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
 
-use crate::{
-    db::document::Document,
-    syntax::latex,
-    util::{lang_data::LANGUAGE_DATA, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::{db::document::Document, syntax::latex, util::line_index_ext::LineIndexExt, Db};
 
 use super::{Diagnostic, DiagnosticCode, TexCode};
 
@@ -33,7 +28,8 @@ pub fn collect(db: &dyn Db, document: Document) -> Vec<Diagnostic> {
                         .and_then(|begin| begin.name())
                         .and_then(|name| name.key())
                         .map_or(false, |name| {
-                            LANGUAGE_DATA
+                            db.config()
+                                .syntax
                                 .verbatim_environments
                                 .contains(&name.to_string())
                         })

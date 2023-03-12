@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
@@ -38,9 +36,6 @@ pub struct LanguageData {
     pub fields: Vec<BibtexFieldDoc>,
     pub pgf_libraries: Vec<String>,
     pub tikz_libraries: Vec<String>,
-    pub math_environments: Vec<String>,
-    pub enum_environments: Vec<String>,
-    pub verbatim_environments: BTreeSet<String>,
 }
 
 impl LanguageData {

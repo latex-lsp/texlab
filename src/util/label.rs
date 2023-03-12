@@ -10,8 +10,6 @@ use crate::{
 
 use self::LabeledObject::*;
 
-use super::lang_data::LANGUAGE_DATA;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LabeledFloatKind {
     Figure,
@@ -135,7 +133,7 @@ pub fn render(db: &dyn Db, document: Document, label_def: label::Name) -> Option
             render_label_float(parent.clone(), label_num)
                 .or_else(|| render_label_section(parent.clone(), label_num))
                 .or_else(|| render_label_enum_item(db, parent.clone(), label_num))
-                .or_else(|| render_label_equation(parent.clone(), label_num))
+                .or_else(|| render_label_equation(db, parent.clone(), label_num))
                 .or_else(|| render_label_theorem(db, document, parent, label_num))
         })
 }
@@ -214,20 +212,20 @@ fn render_label_enum_item(
     })
 }
 
-fn render_label_equation(parent: latex::SyntaxNode, number: Option<Word>) -> Option<RenderedLabel> {
-    let environment = latex::Environment::cast(parent)?;
-    let environment_name = environment.begin()?.name()?.key()?.to_string();
+fn render_label_equation(
+    db: &dyn Db,
+    parent: latex::SyntaxNode,
+    number: Option<Word>,
+) -> Option<RenderedLabel> {
+    let env = latex::Environment::cast(parent)?;
+    let env_name = env.begin()?.name()?.key()?.to_string();
 
-    if !LANGUAGE_DATA
-        .math_environments
-        .iter()
-        .any(|name| name == &environment_name)
-    {
+    if !db.config().syntax.math_environments.contains(&env_name) {
         return None;
     }
 
     Some(RenderedLabel {
-        range: latex::small_range(&environment),
+        range: latex::small_range(&env),
         number,
         object: LabeledObject::Equation,
     })

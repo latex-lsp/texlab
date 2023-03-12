@@ -9,7 +9,6 @@ use crate::{
     syntax::latex::{self, HasBrack, HasCurly},
     util::{
         label::{find_caption_by_parent, LabeledFloatKind},
-        lang_data::LANGUAGE_DATA,
         line_index_ext::LineIndexExt,
     },
     Db,
@@ -41,17 +40,9 @@ fn visit(db: &dyn Db, document: Document, node: latex::SyntaxNode) -> Vec<Intern
             .and_then(|name| name.key())
             .map(|name| name.to_string())
             .and_then(|name| {
-                if LANGUAGE_DATA
-                    .math_environments
-                    .iter()
-                    .any(|env| env == &name)
-                {
+                if db.config().syntax.math_environments.contains(&name) {
                     visit_equation_environment(db, document, node.clone())
-                } else if LANGUAGE_DATA
-                    .enum_environments
-                    .iter()
-                    .any(|env| env == &name)
-                {
+                } else if db.config().syntax.enum_environments.contains(&name) {
                     visit_enumeration(db, document, node.clone(), &name)
                 } else if let Ok(float_kind) = LabeledFloatKind::from_str(&name) {
                     visit_float(db, document, node.clone(), float_kind)
@@ -132,6 +123,7 @@ fn visit_enum_item(
     document: Document,
     node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
+    let enum_envs = &db.config().syntax.enum_environments;
     let enum_item = latex::EnumItem::cast(node.clone())?;
     if !enum_item
         .syntax()
@@ -140,12 +132,7 @@ fn visit_enum_item(
         .filter_map(|environment| environment.begin())
         .filter_map(|begin| begin.name())
         .filter_map(|name| name.key())
-        .any(|name| {
-            LANGUAGE_DATA
-                .enum_environments
-                .iter()
-                .any(|e| e == &name.to_string())
-        })
+        .any(|name| enum_envs.contains(&name.to_string()))
     {
         return None;
     }

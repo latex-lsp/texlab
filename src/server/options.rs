@@ -15,21 +15,13 @@ pub struct Options {
     pub latex_formatter: LatexFormatter,
     pub formatter_line_length: Option<i32>,
     pub diagnostics: DiagnosticsOptions,
-    pub diagnostics_delay: DiagnosticsDelay,
+    pub diagnostics_delay: Option<u64>,
     pub build: BuildOptions,
     pub chktex: ChktexOptions,
     pub symbols: SymbolOptions,
     pub latexindent: LatexindentOptions,
     pub forward_search: ForwardSearchOptions,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub struct DiagnosticsDelay(#[serde(with = "serde_millis")] pub Duration);
-
-impl Default for DiagnosticsDelay {
-    fn default() -> Self {
-        Self(Duration::from_millis(300))
-    }
+    pub experimental: ExperimentalOptions,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
@@ -72,35 +64,10 @@ pub struct LatexindentOptions {
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
 pub struct BuildOptions {
-    pub executable: BuildExecutable,
-    pub args: BuildArgs,
+    pub executable: Option<String>,
+    pub args: Option<Vec<String>>,
     pub on_save: bool,
     pub forward_search_after: bool,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct BuildExecutable(pub String);
-
-impl Default for BuildExecutable {
-    fn default() -> Self {
-        Self("latexmk".to_string())
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct BuildArgs(pub Vec<String>);
-
-impl Default for BuildArgs {
-    fn default() -> Self {
-        Self(vec![
-            "-pdf".to_string(),
-            "-interaction=nonstopmode".to_string(),
-            "-synctex=1".to_string(),
-            "%f".to_string(),
-        ])
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -138,6 +105,15 @@ pub struct SymbolOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegexPattern(#[serde(with = "serde_regex")] pub Regex);
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct ExperimentalOptions {
+    pub math_environments: Vec<String>,
+    pub enum_environments: Vec<String>,
+    pub verbatim_environments: Vec<String>,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
@@ -150,8 +126,8 @@ impl From<Options> for Config {
         let mut config = Config::default();
         config.root_dir = value.root_directory;
 
-        config.build.program = value.build.executable.0;
-        config.build.args = value.build.args.0;
+        config.build.program = value.build.executable.unwrap_or(config.build.program);
+        config.build.args = value.build.args.unwrap_or(config.build.args);
         config.build.on_save = value.build.on_save;
         config.build.forward_search_after = value.build.forward_search_after;
         config.build.output_dir = value.aux_directory.unwrap_or_else(|| String::from("."));
@@ -170,7 +146,10 @@ impl From<Options> for Config {
             .map(|pattern| pattern.0)
             .collect();
 
-        config.diagnostics.delay = value.diagnostics_delay.0;
+        config.diagnostics.delay = value
+            .diagnostics_delay
+            .map_or(config.diagnostics.delay, Duration::from_millis);
+
         config.diagnostics.chktex.on_open = value.chktex.on_open_and_save;
         config.diagnostics.chktex.on_save = value.chktex.on_open_and_save;
         config.diagnostics.chktex.on_edit = value.chktex.on_edit;
@@ -214,6 +193,21 @@ impl From<Options> for Config {
             .into_iter()
             .map(|pattern| pattern.0)
             .collect();
+
+        config
+            .syntax
+            .math_environments
+            .extend(value.experimental.math_environments);
+
+        config
+            .syntax
+            .enum_environments
+            .extend(value.experimental.enum_environments);
+
+        config
+            .syntax
+            .verbatim_environments
+            .extend(value.experimental.verbatim_environments);
 
         config
     }
