@@ -29,7 +29,7 @@ use crate::{
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol,
-        workspace_command::{clean, change_environment},
+        workspace_command::{change_environment, clean},
     },
     normalize_uri,
     syntax::bibtex,
@@ -94,20 +94,18 @@ impl Server {
     where
         R: Request,
         S: Serialize,
-        Q: FnOnce(&dyn Db) -> Option<(S,R::Params)> + Send + 'static,
+        Q: FnOnce(&dyn Db) -> Option<(S, R::Params)> + Send + 'static,
     {
         let client = self.client.clone();
-        self.engine.fork(move |db| {
-            match query(db) {
-                Some((result, request_params)) => {
-                    let response = lsp_server::Response::new_ok(id, result);
-                    client.send_response(response).unwrap();
-                    client.send_request::<R>(request_params).unwrap();
-                },
-                None => {
-                    let response = lsp_server::Response::new_ok(id, Option::<S>::None);
-                    client.send_response(response).unwrap();
-                },
+        self.engine.fork(move |db| match query(db) {
+            Some((result, request_params)) => {
+                let response = lsp_server::Response::new_ok(id, result);
+                client.send_response(response).unwrap();
+                client.send_request::<R>(request_params).unwrap();
+            }
+            None => {
+                let response = lsp_server::Response::new_ok(id, Option::<S>::None);
+                client.send_response(response).unwrap();
             }
         });
     }
@@ -118,19 +116,15 @@ impl Server {
         Q: FnOnce() -> Result<R> + Send + 'static,
     {
         let client = self.client.clone();
-        self.pool.execute(move || {
-            match query() {
-                Ok(result) => {
-                    let response = lsp_server::Response::new_ok(id, result);
-                    client
-                        .send_response(response)
-                        .unwrap();
-                }
-                Err(why) => {
-                    client
-                        .send_error(id, ErrorCode::InternalError, why.to_string())
-                        .unwrap();
-                }
+        self.pool.execute(move || match query() {
+            Ok(result) => {
+                let response = lsp_server::Response::new_ok(id, result);
+                client.send_response(response).unwrap();
+            }
+            Err(why) => {
+                client
+                    .send_error(id, ErrorCode::InternalError, why.to_string())
+                    .unwrap();
             }
         });
     }
@@ -668,23 +662,26 @@ impl Server {
                 let db = self.engine.read();
                 let opt = clean::CleanOptions::Auxiliary;
                 let command = clean::CleanCommand::new(db, opt, params.arguments);
-                self.run_errorable(id, || { command?.run() });
+                self.run_errorable(id, || command?.run());
             }
             "texlab.cleanArtifacts" => {
                 let db = self.engine.read();
                 let opt = clean::CleanOptions::Auxiliary;
                 let command = clean::CleanCommand::new(db, opt, params.arguments);
-                self.run_errorable(id, || { command?.run() });
+                self.run_errorable(id, || command?.run());
             }
             "texlab.changeEnvironment" => {
-                self.run_and_request_with_db::<ApplyWorkspaceEdit,_,_>(id, move |db| {
+                self.run_and_request_with_db::<ApplyWorkspaceEdit, _, _>(id, move |db| {
                     change_environment::change_environment(db, params.arguments)
                 });
             }
             _ => {
                 self.client
-                    .send_error(id, ErrorCode::InvalidParams,
-                                format!("Unknown workspace command: {}", params.command))
+                    .send_error(
+                        id,
+                        ErrorCode::InvalidParams,
+                        format!("Unknown workspace command: {}", params.command),
+                    )
                     .unwrap();
             }
         };

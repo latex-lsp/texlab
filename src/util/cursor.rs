@@ -254,17 +254,14 @@ impl<'db, T> CursorContext<'db, T> {
     pub fn find_environment(&self) -> Option<(latex::Key, latex::Key)> {
         let token = self.cursor.as_tex()?;
 
-        for env in token.parent_ancestors()
-            .filter_map(latex::Environment::cast) {
+        for env in token
+            .parent_ancestors()
+            .filter_map(latex::Environment::cast)
+        {
+            let beg = env.begin()?.name()?.key()?;
+            let end = env.end()?.name()?.key()?;
 
-            let beg = env.begin()?
-                .name()?
-                .key()?;
-            let end = env.end()?
-                .name()?
-                .key()?;
-
-            return Some((beg,end));
+            return Some((beg, end));
         }
 
         None
