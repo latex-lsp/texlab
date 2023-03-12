@@ -12,7 +12,7 @@ pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionR
         .iter()
         .copied()
         .chain(std::iter::once(context.document))
-        .flat_map(|parent| dependency_graph(db, parent).edges)
+        .flat_map(|parent| dependency_graph(db, parent).edges.iter())
         .filter(|edge| edge.source == context.document)
         .find_map(|edge| {
             let range = edge.origin?.link.range(db);

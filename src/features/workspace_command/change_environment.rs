@@ -35,7 +35,7 @@ fn change_environment_context(
             new_name: params.new_name,
         },
     )
-    .ok_or(ChangeEnvironmentError::FailedCreatiingContext.into())
+    .ok_or(ChangeEnvironmentError::FailedCreatingContext.into())
 }
 
 pub fn change_environment(
@@ -87,7 +87,7 @@ pub enum ChangeEnvironmentError {
     InvalidArg(serde_json::Error),
 
     #[error("failed creating context")]
-    FailedCreatiingContext,
+    FailedCreatingContext,
 
     #[error("could not create workspaces edit")]
     CouldNotCreateWorkspaceEdit,

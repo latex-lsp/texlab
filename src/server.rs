@@ -29,7 +29,7 @@ use crate::{
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol,
-        workspace_command::{change_environment, clean},
+        workspace_command::{change_environment, clean, dep_graph},
     },
     normalize_uri,
     syntax::bibtex,
@@ -674,6 +674,9 @@ impl Server {
                 self.run_and_request_with_db::<ApplyWorkspaceEdit, _, _>(id, move |db| {
                     change_environment::change_environment(db, params.arguments)
                 });
+            }
+            "texlab.showDependencyGraph" => {
+                self.run_with_db(id, move |db| dep_graph::show_dependency_graph(db).unwrap());
             }
             _ => {
                 self.client

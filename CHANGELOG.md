@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `texlab.experimental.mathEnvironments`
   - `texlab.experimental.enumEnvironments`
   - `texlab.experimental.verbatimEnvironments`
+- Add `texlab.changeEnvironment` workspace command ([#849](https://github.com/latex-lsp/texlab/issues/849))
+- Add `texlab.showDependencyGraph` workspace command
 
 ### Changed
 

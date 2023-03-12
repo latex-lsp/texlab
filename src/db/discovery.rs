@@ -40,8 +40,11 @@ pub fn hidden_dependencies(
     base_dir: Location,
     dependencies: &mut Vec<Dependency>,
 ) {
-    dependencies.extend(hidden_dependency(db, document, base_dir, "log"));
-    dependencies.extend(hidden_dependency(db, document, base_dir, "aux"));
+    let uri = document.location(db).uri(db).as_str();
+    if document.language(db) == Language::Tex && !uri.ends_with(".aux") {
+        dependencies.extend(hidden_dependency(db, document, base_dir, "log"));
+        dependencies.extend(hidden_dependency(db, document, base_dir, "aux"));
+    }
 }
 
 #[salsa::tracked]
@@ -158,7 +161,7 @@ impl DependencyGraph {
     }
 }
 
-#[salsa::tracked]
+#[salsa::tracked(return_ref)]
 pub fn dependency_graph(db: &dyn Db, start: Document) -> DependencyGraph {
     let workspace = Workspace::get(db);
 
