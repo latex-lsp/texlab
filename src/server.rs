@@ -27,7 +27,8 @@ use crate::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
-        reference, rename, symbol, workspace_command,
+        reference, rename, symbol,
+        workspace_command::{clean, change_environment},
     },
     normalize_uri,
     syntax::bibtex,
@@ -86,6 +87,51 @@ impl Server {
         });
     }
 
+    fn run_and_request_with_db<R, S, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Request,
+        S: Serialize,
+        Q: FnOnce(&dyn Db) -> Option<(S,R::Params)> + Send + 'static,
+    {
+        let client = self.client.clone();
+        self.engine.fork(move |db| {
+            match query(db) {
+                Some((result, request_params)) => {
+                    let response = lsp_server::Response::new_ok(id, result);
+                    client.send_response(response).unwrap();
+                    client.send_request::<R>(request_params).unwrap();
+                },
+                None => {
+                    let response = lsp_server::Response::new_ok(id, Option::<S>::None);
+                    client.send_response(response).unwrap();
+                },
+            }
+        });
+    }
+
+    fn run_errorable<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Serialize,
+        Q: FnOnce() -> Result<R> + Send + 'static,
+    {
+        let client = self.client.clone();
+        self.pool.execute(move || {
+            match query() {
+                Ok(result) => {
+                    let response = lsp_server::Response::new_ok(id, result);
+                    client
+                        .send_response(response)
+                        .unwrap();
+                }
+                Err(why) => {
+                    client
+                        .send_error(id, ErrorCode::InternalError, why.to_string())
+                        .unwrap();
+                }
+            }
+        });
+    }
+
     fn capabilities(&self) -> ServerCapabilities {
         ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
@@ -131,6 +177,7 @@ impl Server {
                 commands: vec![
                     "texlab.cleanAuxiliary".into(),
                     "texlab.cleanArtifacts".into(),
+                    "texlab.changeEnvironment".into(),
                 ],
                 ..Default::default()
             }),
@@ -618,28 +665,28 @@ impl Server {
     }
 
     fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
-        let db = self.engine.read();
-        match workspace_command::select(db, &params.command, params.arguments) {
-            Ok(command) => {
-                let client = self.client.clone();
-                self.pool.execute(move || {
-                    match command.run() {
-                        Ok(()) => {
-                            client
-                                .send_response(lsp_server::Response::new_ok(id, ()))
-                                .unwrap();
-                        }
-                        Err(why) => {
-                            client
-                                .send_error(id, ErrorCode::InternalError, why.to_string())
-                                .unwrap();
-                        }
-                    };
+        match params.command.as_str() {
+            "texlab.cleanAuxiliary" => {
+                let db = self.engine.read();
+                let opt = clean::CleanOptions::Auxiliary;
+                let command = clean::CleanCommand::new(db, opt, params.arguments);
+                self.run_errorable(id, || { command?.run() });
+            }
+            "texlab.cleanArtifacts" => {
+                let db = self.engine.read();
+                let opt = clean::CleanOptions::Auxiliary;
+                let command = clean::CleanCommand::new(db, opt, params.arguments);
+                self.run_errorable(id, || { command?.run() });
+            }
+            "texlab.changeEnvironment" => {
+                self.run_and_request_with_db::<ApplyWorkspaceEdit,_,_>(id, move |db| {
+                    change_environment::change_environment(db, params.arguments)
                 });
             }
-            Err(why) => {
+            _ => {
                 self.client
-                    .send_error(id, ErrorCode::InvalidParams, why.to_string())
+                    .send_error(id, ErrorCode::InvalidParams,
+                                format!("Unknown workspace command: {}", params.command))
                     .unwrap();
             }
         };

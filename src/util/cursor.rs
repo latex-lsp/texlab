@@ -251,6 +251,25 @@ impl<'db, T> CursorContext<'db, T> {
         Some((name, range))
     }
 
+    pub fn find_environment(&self) -> Option<(latex::Key, latex::Key)> {
+        let token = self.cursor.as_tex()?;
+
+        for env in token.parent_ancestors()
+            .filter_map(latex::Environment::cast) {
+
+            let beg = env.begin()?
+                .name()?
+                .key()?;
+            let end = env.end()?
+                .name()?
+                .key()?;
+
+            return Some((beg,end));
+        }
+
+        None
+    }
+
     pub fn find_curly_group_word(&self) -> Option<(String, TextRange, latex::CurlyGroupWord)> {
         let token = self.cursor.as_tex()?;
         let key = latex::Key::cast(token.parent()?);
