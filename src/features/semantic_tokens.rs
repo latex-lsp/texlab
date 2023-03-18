@@ -1,4 +1,5 @@
 mod label;
+mod math_delimiter;
 
 use bitflags::bitflags;
 use lsp_types::{
@@ -17,6 +18,7 @@ use crate::{
 #[repr(u32)]
 pub enum TokenKind {
     Label = 0,
+    MathDelimiter = 1,
 }
 
 bitflags! {
@@ -25,15 +27,20 @@ bitflags! {
         const NONE = 0;
         const UNDEFINED = 1;
         const UNUSED = 2;
+        const DEPRECATED = 4;
     }
 }
 
 pub fn legend() -> SemanticTokensLegend {
     SemanticTokensLegend {
-        token_types: vec![SemanticTokenType::new("label")],
+        token_types: vec![
+            SemanticTokenType::new("label"),
+            SemanticTokenType::new("mathDelimiter"),
+        ],
         token_modifiers: vec![
             SemanticTokenModifier::new("undefined"),
             SemanticTokenModifier::new("unused"),
+            SemanticTokenModifier::new("deprecated"),
         ],
     }
 }
@@ -105,5 +112,6 @@ pub fn find_all(db: &dyn Db, uri: &Url, viewport: Range) -> Option<SemanticToken
     let viewport = document.line_index(db).offset_lsp_range(viewport);
     let mut builder = TokenBuilder::default();
     label::find(db, document, viewport, &mut builder);
+    math_delimiter::find(db, document, viewport, &mut builder);
     Some(builder.finish(document.line_index(db)))
 }
