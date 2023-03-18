@@ -79,7 +79,7 @@ impl TokenBuilder {
                 });
             } else {
                 let delta_line = 0;
-                let delta_start = last_pos.character - range.start.character;
+                let delta_start = range.start.character - last_pos.character;
                 data.push(SemanticToken {
                     delta_line,
                     delta_start,
@@ -89,7 +89,7 @@ impl TokenBuilder {
                 });
             }
 
-            last_pos = range.end;
+            last_pos = range.start;
         }
 
         SemanticTokens {
