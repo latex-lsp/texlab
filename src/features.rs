@@ -10,5 +10,6 @@ pub mod inlay_hint;
 pub mod link;
 pub mod reference;
 pub mod rename;
+pub mod semantic_tokens;
 pub mod symbol;
 pub mod workspace_command;

@@ -28,7 +28,7 @@ use crate::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
-        reference, rename, symbol,
+        reference, rename, semantic_tokens, symbol,
         workspace_command::{change_environment, clean, dep_graph},
     },
     normalize_uri,
@@ -179,6 +179,14 @@ impl Server {
                 ..Default::default()
             }),
             inlay_hint_provider: Some(OneOf::Left(true)),
+            semantic_tokens_provider: Some(
+                SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
+                    work_done_progress_options: Default::default(),
+                    legend: semantic_tokens::legend(),
+                    range: Some(true),
+                    full: Some(SemanticTokensFullOptions::Bool(false)),
+                }),
+            ),
             ..ServerCapabilities::default()
         }
     }
@@ -707,14 +715,6 @@ impl Server {
         Ok(())
     }
 
-    fn semantic_tokens_range(
-        &self,
-        _id: RequestId,
-        _params: SemanticTokensRangeParams,
-    ) -> Result<()> {
-        Ok(())
-    }
-
     fn build(&mut self, id: RequestId, params: BuildParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
@@ -811,6 +811,18 @@ impl Server {
     fn code_action_resolve(&mut self, id: RequestId, action: CodeAction) -> Result<()> {
         self.client
             .send_response(lsp_server::Response::new_ok(id, action))?;
+        Ok(())
+    }
+
+    fn semantic_tokens_range(
+        &mut self,
+        id: RequestId,
+        params: SemanticTokensRangeParams,
+    ) -> Result<()> {
+        self.run_with_db(id, move |db| {
+            semantic_tokens::find_all(db, &params.text_document.uri, params.range)
+        });
+
         Ok(())
     }
 
