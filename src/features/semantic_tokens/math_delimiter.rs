@@ -11,7 +11,7 @@ pub(super) fn find(context: Context, builder: &mut TokenBuilder) -> Option<()> {
         .as_node()?
         .descendants_with_tokens()
         .filter_map(|elem| elem.into_token())
-        .filter(|token| token.kind() == latex::DOLLAR)
+        .filter(|token| token.kind() == latex::DOLLAR && token.text() == "$$")
     {
         builder.push(Token {
             range: token.text_range(),
