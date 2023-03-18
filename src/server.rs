@@ -13,7 +13,7 @@ use log::{error, info};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use once_cell::sync::Lazy;
-use rowan::{ast::AstNode, TextLen, TextRange, TextSize};
+use rowan::{ast::AstNode, TextSize};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -816,9 +816,7 @@ impl Server {
 
     fn semantic_tokens_full(&mut self, id: RequestId, params: SemanticTokensParams) -> Result<()> {
         self.run_with_db(id, move |db| {
-            let Some(document) = Workspace::get(db).lookup_uri(db, &params.text_document.uri) else { return None };
-            let range = document.line_index(db).line_col_lsp_range(TextRange::new(0.into(), document.text(db).text_len()));
-            semantic_tokens::find_all(db, &params.text_document.uri, range)
+            semantic_tokens::find_all(db, &params.text_document.uri, None)
         });
 
         Ok(())
@@ -830,7 +828,7 @@ impl Server {
         params: SemanticTokensRangeParams,
     ) -> Result<()> {
         self.run_with_db(id, move |db| {
-            semantic_tokens::find_all(db, &params.text_document.uri, params.range)
+            semantic_tokens::find_all(db, &params.text_document.uri, Some(params.range))
         });
 
         Ok(())

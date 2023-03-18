@@ -1,19 +1,13 @@
-use rowan::TextRange;
+use crate::syntax::latex;
 
-use crate::{db::Document, syntax::latex, Db};
+use super::{Context, Token, TokenBuilder, TokenKind, TokenModifiers};
 
-use super::{Token, TokenBuilder, TokenKind, TokenModifiers};
-
-pub fn find(
-    db: &dyn Db,
-    document: Document,
-    viewport: TextRange,
-    builder: &mut TokenBuilder,
-) -> Option<()> {
-    let root = document.parse(db).as_tex()?.root(db);
+pub(super) fn find(context: Context, builder: &mut TokenBuilder) -> Option<()> {
+    let db = context.db;
+    let root = context.document.parse(db).as_tex()?.root(db);
 
     for token in root
-        .covering_element(viewport)
+        .covering_element(context.viewport)
         .as_node()?
         .descendants_with_tokens()
         .filter_map(|elem| elem.into_token())

@@ -1,34 +1,28 @@
-use rowan::TextRange;
-
 use crate::{
     db::{analysis::label, Document, Workspace},
     Db,
 };
 
-use super::{Token, TokenBuilder, TokenKind, TokenModifiers};
+use super::{Context, Token, TokenBuilder, TokenKind, TokenModifiers};
 
-pub fn find(
-    db: &dyn Db,
-    document: Document,
-    viewport: TextRange,
-    builder: &mut TokenBuilder,
-) -> Option<()> {
-    let labels = document.parse(db).as_tex()?.analyze(db).labels(db);
+pub(super) fn find(context: Context, builder: &mut TokenBuilder) -> Option<()> {
+    let db = context.db;
+    let labels = context.document.parse(db).as_tex()?.analyze(db).labels(db);
     for label in labels
         .iter()
-        .filter(|label| viewport.intersect(label.range(db)).is_some())
+        .filter(|label| context.viewport.intersect(label.range(db)).is_some())
     {
         let name = label.name(db).text(db);
         let modifiers = match label.origin(db) {
             label::Origin::Definition(_) => {
-                if !is_label_referenced(db, document, name) {
+                if !is_label_referenced(db, context.document, name) {
                     TokenModifiers::UNUSED
                 } else {
                     TokenModifiers::NONE
                 }
             }
             label::Origin::Reference(_) | label::Origin::ReferenceRange(_) => {
-                if !is_label_defined(db, document, name) {
+                if !is_label_defined(db, context.document, name) {
                     TokenModifiers::UNDEFINED
                 } else {
                     TokenModifiers::NONE

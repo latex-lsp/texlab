@@ -6,24 +6,24 @@ use lsp_types::{
     Position, Range, SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens,
     SemanticTokensLegend, Url,
 };
-use rowan::TextRange;
+use rowan::{TextLen, TextRange};
 
 use crate::{
-    db::Workspace,
+    db::{Document, Workspace},
     util::{line_index::LineIndex, line_index_ext::LineIndexExt},
     Db,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 #[repr(u32)]
-pub enum TokenKind {
+enum TokenKind {
     Label = 0,
     MathDelimiter = 1,
 }
 
 bitflags! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
-    pub struct TokenModifiers: u32 {
+    struct TokenModifiers: u32 {
         const NONE = 0;
         const UNDEFINED = 1;
         const UNUSED = 2;
@@ -31,29 +31,15 @@ bitflags! {
     }
 }
 
-pub fn legend() -> SemanticTokensLegend {
-    SemanticTokensLegend {
-        token_types: vec![
-            SemanticTokenType::new("label"),
-            SemanticTokenType::new("mathDelimiter"),
-        ],
-        token_modifiers: vec![
-            SemanticTokenModifier::new("undefined"),
-            SemanticTokenModifier::new("unused"),
-            SemanticTokenModifier::new("deprecated"),
-        ],
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct Token {
-    pub range: TextRange,
-    pub kind: TokenKind,
-    pub modifiers: TokenModifiers,
+struct Token {
+    range: TextRange,
+    kind: TokenKind,
+    modifiers: TokenModifiers,
 }
 
 #[derive(Debug, Default)]
-pub struct TokenBuilder {
+struct TokenBuilder {
     tokens: Vec<Token>,
 }
 
@@ -106,12 +92,45 @@ impl TokenBuilder {
     }
 }
 
-pub fn find_all(db: &dyn Db, uri: &Url, viewport: Range) -> Option<SemanticTokens> {
+#[derive(Clone, Copy)]
+struct Context<'db> {
+    db: &'db dyn Db,
+    document: Document,
+    viewport: TextRange,
+}
+
+pub fn legend() -> SemanticTokensLegend {
+    SemanticTokensLegend {
+        token_types: vec![
+            SemanticTokenType::new("label"),
+            SemanticTokenType::new("mathDelimiter"),
+        ],
+        token_modifiers: vec![
+            SemanticTokenModifier::new("undefined"),
+            SemanticTokenModifier::new("unused"),
+            SemanticTokenModifier::new("deprecated"),
+        ],
+    }
+}
+
+pub fn find_all(db: &dyn Db, uri: &Url, viewport: Option<Range>) -> Option<SemanticTokens> {
     let workspace = Workspace::get(db);
     let document = workspace.lookup_uri(db, uri)?;
-    let viewport = document.line_index(db).offset_lsp_range(viewport);
+    let viewport = viewport.map_or_else(
+        || TextRange::new(0.into(), document.text(db).text_len()),
+        |range| document.line_index(db).offset_lsp_range(range),
+    );
+
+    let context = Context {
+        db,
+        document,
+        viewport,
+    };
+
     let mut builder = TokenBuilder::default();
-    label::find(db, document, viewport, &mut builder);
-    math_delimiter::find(db, document, viewport, &mut builder);
+
+    label::find(context, &mut builder);
+    math_delimiter::find(context, &mut builder);
+
     Some(builder.finish(document.line_index(db)))
 }
