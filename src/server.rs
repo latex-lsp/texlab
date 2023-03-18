@@ -13,7 +13,7 @@ use log::{error, info};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use once_cell::sync::Lazy;
-use rowan::{ast::AstNode, TextSize};
+use rowan::{ast::AstNode, TextLen, TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -184,7 +184,7 @@ impl Server {
                     work_done_progress_options: Default::default(),
                     legend: semantic_tokens::legend(),
                     range: Some(true),
-                    full: Some(SemanticTokensFullOptions::Bool(false)),
+                    full: Some(SemanticTokensFullOptions::Bool(true)),
                 }),
             ),
             ..ServerCapabilities::default()
@@ -814,6 +814,16 @@ impl Server {
         Ok(())
     }
 
+    fn semantic_tokens_full(&mut self, id: RequestId, params: SemanticTokensParams) -> Result<()> {
+        self.run_with_db(id, move |db| {
+            let Some(document) = Workspace::get(db).lookup_uri(db, &params.text_document.uri) else { return None };
+            let range = document.line_index(db).line_col_lsp_range(TextRange::new(0.into(), document.text(db).text_len()));
+            semantic_tokens::find_all(db, &params.text_document.uri, range)
+        });
+
+        Ok(())
+    }
+
     fn semantic_tokens_range(
         &mut self,
         id: RequestId,
@@ -916,6 +926,9 @@ impl Server {
                                 .on::<ExecuteCommand,_>(|id, params| self.execute_command(id, params))?
                                 .on::<SemanticTokensRangeRequest, _>(|id, params| {
                                     self.semantic_tokens_range(id, params)
+                                })?
+                                .on::<SemanticTokensFullRequest, _>(|id, params| {
+                                    self.semantic_tokens_full(id, params)
                                 })?
                                 .on::<InlayHintRequest, _>(|id,params| {
                                     self.inlay_hints(id, params)
