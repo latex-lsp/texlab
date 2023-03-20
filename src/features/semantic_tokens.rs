@@ -1,3 +1,4 @@
+mod citations;
 mod label;
 mod math_delimiter;
 
@@ -18,7 +19,8 @@ use crate::{
 #[repr(u32)]
 enum TokenKind {
     Label = 0,
-    MathDelimiter = 1,
+    Citation = 2,
+    MathDelimiter = 3,
 }
 
 bitflags! {
@@ -103,6 +105,7 @@ pub fn legend() -> SemanticTokensLegend {
     SemanticTokensLegend {
         token_types: vec![
             SemanticTokenType::new("label"),
+            SemanticTokenType::new("citation"),
             SemanticTokenType::new("mathDelimiter"),
         ],
         token_modifiers: vec![
@@ -130,6 +133,7 @@ pub fn find_all(db: &dyn Db, uri: &Url, viewport: Option<Range>) -> Option<Seman
     let mut builder = TokenBuilder::default();
 
     label::find(context, &mut builder);
+    citations::find(context, &mut builder);
     math_delimiter::find(context, &mut builder);
 
     Some(builder.finish(document.line_index(db)))

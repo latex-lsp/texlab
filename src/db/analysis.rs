@@ -104,6 +104,12 @@ impl TheoremEnvironment {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct TexCitation {
+    pub key: String,
+    pub range: TextRange,
+}
+
 #[salsa::tracked]
 pub struct GraphicsPath {
     #[return_ref]
@@ -129,6 +135,9 @@ impl GraphicsPath {
 pub struct TexAnalysis {
     #[return_ref]
     pub links: Vec<TexLink>,
+
+    #[return_ref]
+    pub citations: Vec<TexCitation>,
 
     #[return_ref]
     pub labels: Vec<label::Name>,
@@ -162,6 +171,7 @@ impl TexAnalysis {
 impl TexAnalysis {
     pub(super) fn analyze(db: &dyn Db, root: &latex::SyntaxNode) -> Self {
         let mut links = Vec::new();
+        let mut citations = Vec::new();
         let mut labels = Vec::new();
         let mut label_numbers = Vec::new();
         let mut theorem_environments = Vec::new();
@@ -178,6 +188,17 @@ impl TexAnalysis {
                 NodeOrToken::Node(node) => {
                     TexLink::of_include(db, node.clone(), &mut links)
                         .or_else(|| TexLink::of_import(db, node.clone(), &mut links))
+                        .or_else(|| {
+                            let citation = latex::Citation::cast(node.clone())?;
+                            for key in citation.key_list()?.keys() {
+                                citations.push(TexCitation {
+                                    key: key.to_string(),
+                                    range: latex::small_range(&key),
+                                });
+                            }
+
+                            Some(())
+                        })
                         .or_else(|| label::Name::of_definition(db, node.clone(), &mut labels))
                         .or_else(|| label::Name::of_reference(db, node.clone(), &mut labels))
                         .or_else(|| label::Name::of_reference_range(db, node.clone(), &mut labels))
@@ -210,6 +231,7 @@ impl TexAnalysis {
         Self::new(
             db,
             links,
+            citations,
             labels,
             label_numbers,
             theorem_environments,
