@@ -85,11 +85,13 @@ impl InternalSymbol {
         while i < container.len() {
             let symbol = &mut container[i];
 
-            if util::regex_filter::filter(
-                &symbol.name,
-                &config.allowed_patterns,
-                &config.ignored_patterns,
-            ) {
+            if !symbol.name.is_empty()
+                && util::regex_filter::filter(
+                    &symbol.name,
+                    &config.allowed_patterns,
+                    &config.ignored_patterns,
+                )
+            {
                 Self::filter(&mut symbol.children, config);
                 i += 1;
             } else {
