@@ -18,9 +18,14 @@ use crate::{
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 #[repr(u32)]
 enum TokenKind {
-    Label = 0,
-    Citation = 2,
-    MathDelimiter = 3,
+    GenericLabel = 0,
+    SectionLabel,
+    FloatLabel,
+    TheoremLabel,
+    EquationLabel,
+    EnumItemLabel,
+    Citation,
+    MathDelimiter,
 }
 
 bitflags! {
@@ -104,7 +109,12 @@ struct Context<'db> {
 pub fn legend() -> SemanticTokensLegend {
     SemanticTokensLegend {
         token_types: vec![
-            SemanticTokenType::new("label"),
+            SemanticTokenType::new("genericLabel"),
+            SemanticTokenType::new("sectionLabel"),
+            SemanticTokenType::new("floatLabel"),
+            SemanticTokenType::new("theoremLabel"),
+            SemanticTokenType::new("equationLabel"),
+            SemanticTokenType::new("enumItemLabel"),
             SemanticTokenType::new("citation"),
             SemanticTokenType::new("mathDelimiter"),
         ],
