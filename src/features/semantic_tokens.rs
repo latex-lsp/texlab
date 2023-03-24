@@ -24,7 +24,14 @@ enum TokenKind {
     TheoremLabel,
     EquationLabel,
     EnumItemLabel,
-    Citation,
+
+    GenericCitation,
+    ArticleCitation,
+    BookCitation,
+    CollectionCitation,
+    PartCitation,
+    ThesisCitation,
+
     MathDelimiter,
 }
 
@@ -35,6 +42,31 @@ bitflags! {
         const UNDEFINED = 1;
         const UNUSED = 2;
         const DEPRECATED = 4;
+    }
+}
+
+pub fn legend() -> SemanticTokensLegend {
+    SemanticTokensLegend {
+        token_types: vec![
+            SemanticTokenType::new("genericLabel"),
+            SemanticTokenType::new("sectionLabel"),
+            SemanticTokenType::new("floatLabel"),
+            SemanticTokenType::new("theoremLabel"),
+            SemanticTokenType::new("equationLabel"),
+            SemanticTokenType::new("enumItemLabel"),
+            SemanticTokenType::new("genericCitation"),
+            SemanticTokenType::new("articleCitation"),
+            SemanticTokenType::new("bookCitation"),
+            SemanticTokenType::new("collectionCitation"),
+            SemanticTokenType::new("partCitation"),
+            SemanticTokenType::new("thesisCitation"),
+            SemanticTokenType::new("mathDelimiter"),
+        ],
+        token_modifiers: vec![
+            SemanticTokenModifier::new("undefined"),
+            SemanticTokenModifier::new("unused"),
+            SemanticTokenModifier::new("deprecated"),
+        ],
     }
 }
 
@@ -52,6 +84,7 @@ struct TokenBuilder {
 
 impl TokenBuilder {
     pub fn push(&mut self, token: Token) {
+        log::info!("Adding sem token {token:#?}");
         self.tokens.push(token);
     }
 
@@ -104,26 +137,6 @@ struct Context<'db> {
     db: &'db dyn Db,
     document: Document,
     viewport: TextRange,
-}
-
-pub fn legend() -> SemanticTokensLegend {
-    SemanticTokensLegend {
-        token_types: vec![
-            SemanticTokenType::new("genericLabel"),
-            SemanticTokenType::new("sectionLabel"),
-            SemanticTokenType::new("floatLabel"),
-            SemanticTokenType::new("theoremLabel"),
-            SemanticTokenType::new("equationLabel"),
-            SemanticTokenType::new("enumItemLabel"),
-            SemanticTokenType::new("citation"),
-            SemanticTokenType::new("mathDelimiter"),
-        ],
-        token_modifiers: vec![
-            SemanticTokenModifier::new("undefined"),
-            SemanticTokenModifier::new("unused"),
-            SemanticTokenModifier::new("deprecated"),
-        ],
-    }
 }
 
 pub fn find_all(db: &dyn Db, uri: &Url, viewport: Option<Range>) -> Option<SemanticTokens> {
