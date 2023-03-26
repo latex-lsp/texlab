@@ -36,7 +36,7 @@ doctest = false
 [dependencies]
 anyhow = "1.0.69"
 chrono = { version = "0.4.23", default-features = false, features = ["std"] }
-clap = { version = "4.1.6", features = ["derive"] }
+clap = { version = "4.1.8", features = ["derive"] }
 crossbeam-channel = "0.5.6"
 dashmap = "5.4.0"
 dirs = "4.0.0"
@@ -69,6 +69,7 @@ thiserror = "1.0.38"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
 unicode-normalization = "0.1.22"
+bitflags = "2.0.1"
 
 [dependencies.salsa]
 git = "https://github.com/salsa-rs/salsa"
