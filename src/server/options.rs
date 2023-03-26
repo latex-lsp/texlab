@@ -160,7 +160,7 @@ impl From<Options> for Config {
             LatexFormatter::Latexindent => Formatter::LatexIndent,
         };
 
-        config.formatting.tex_formatter = match value.bibtex_formatter {
+        config.formatting.bib_formatter = match value.bibtex_formatter {
             BibtexFormatter::None => Formatter::Null,
             BibtexFormatter::Texlab => Formatter::Server,
             BibtexFormatter::Latexindent => Formatter::LatexIndent,
