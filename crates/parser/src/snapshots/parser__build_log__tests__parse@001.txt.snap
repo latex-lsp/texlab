@@ -1,0 +1,27 @@
+---
+source: crates/parser/src/build_log.rs
+expression: parse_build_log(&text)
+input_file: crates/parser/src/test_data/build_log/001.txt
+---
+BuildLog {
+    errors: [
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "Overfull \\hbox (200.00162pt too wide) in paragraph at lines 8--9",
+            hint: None,
+            line: Some(
+                7,
+            ),
+        },
+        BuildError {
+            relative_path: "./parent.tex",
+            level: Warning,
+            message: "Overfull \\vbox (3.19998pt too high) detected at line 23",
+            hint: None,
+            line: Some(
+                22,
+            ),
+        },
+    ],
+}

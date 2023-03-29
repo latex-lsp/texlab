@@ -1,0 +1,26 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/include/graphics_include_options.txt
+---
+ROOT@0..39
+  PREAMBLE@0..39
+    GRAPHICS_INCLUDE@0..39
+      COMMAND_NAME@0..16 "\\includegraphics"
+      BRACK_GROUP_KEY_VALUE@16..26
+        L_BRACK@16..17 "["
+        KEY_VALUE_BODY@17..25
+          KEY_VALUE_PAIR@17..25
+            KEY@17..22
+              WORD@17..22 "scale"
+            EQUALITY_SIGN@22..23 "="
+            VALUE@23..25
+              TEXT@23..25
+                WORD@23..25 ".5"
+        R_BRACK@25..26 "]"
+      CURLY_GROUP_WORD_LIST@26..39
+        L_CURLY@26..27 "{"
+        KEY@27..38
+          WORD@27..38 "foo/bar.pdf"
+        R_CURLY@38..39 "}"
+

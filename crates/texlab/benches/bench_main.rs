@@ -1,8 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use lsp_types::{Position, Url};
+use parser::parse_latex;
 use texlab::{
     db::{Language, Owner, Workspace},
-    parser::parse_latex,
     Database,
 };
 

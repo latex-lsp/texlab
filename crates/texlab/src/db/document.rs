@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use lsp_types::Url;
+use parser::{parse_bibtex, parse_build_log, parse_latex};
 use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
@@ -9,7 +10,6 @@ use crate::{
         diagnostics::Diagnostic,
         parse::{BibDocumentData, LogDocumentData, TectonicData, TexDocumentData, TexlabRootData},
     },
-    parser::{parse_bibtex, parse_build_log, parse_latex},
     util::line_index::LineIndex,
     Db,
 };

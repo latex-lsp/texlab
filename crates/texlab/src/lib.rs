@@ -6,7 +6,6 @@ mod config;
 pub mod db;
 pub(crate) mod distro;
 pub mod features;
-pub mod parser;
 mod server;
 pub mod util;
 

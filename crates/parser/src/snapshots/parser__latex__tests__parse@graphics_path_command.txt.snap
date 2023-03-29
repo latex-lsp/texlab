@@ -1,0 +1,23 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/graphics_path_command.txt
+---
+ROOT@0..32
+  PREAMBLE@0..32
+    GRAPHICS_PATH@0..32
+      COMMAND_NAME@0..13 "\\graphicspath"
+      CURLY_GROUP@13..32
+        L_CURLY@13..14 "{"
+        CURLY_GROUP_WORD@14..31
+          L_CURLY@14..15 "{"
+          KEY@15..30
+            COMMAND_NAME@15..22 "\\subfix"
+            CURLY_GROUP_WORD@22..30
+              L_CURLY@22..23 "{"
+              KEY@23..29
+                WORD@23..29 "./img/"
+              R_CURLY@29..30 "}"
+          R_CURLY@30..31 "}"
+        R_CURLY@31..32 "}"
+

@@ -47,11 +47,11 @@ human_name = { version = "2.0.1", default-features = false }
 isocountry = "0.3.2"
 itertools = "0.10.5"
 log = "0.4.17"
-logos = "0.12.1"
 lsp-server = "0.7.0"
 lsp-types = "0.94.0"
 notify = "5.1.0"
 once_cell = "1.17.1"
+parser = { path = "../parser" }
 regex = "1.7.1"
 rowan = "0.15.10"
 rustc-hash = "1.1.0"

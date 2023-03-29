@@ -1,0 +1,20 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/caption/caption_minimal_error.txt
+---
+ROOT@0..21
+  PREAMBLE@0..21
+    CAPTION@0..21
+      COMMAND_NAME@0..8 "\\caption"
+      CURLY_GROUP@8..21
+        L_CURLY@8..9 "{"
+        TEXT@9..13
+          WORD@9..12 "Foo"
+          WHITESPACE@12..13 " "
+        GENERIC_COMMAND@13..18
+          COMMAND_NAME@13..17 "\\Bar"
+          WHITESPACE@17..18 " "
+        TEXT@18..21
+          WORD@18..21 "Baz"
+

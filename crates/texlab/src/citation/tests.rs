@@ -1,8 +1,7 @@
 use insta::assert_snapshot;
+use parser::parse_bibtex;
 use rowan::ast::AstNode;
 use syntax::bibtex;
-
-use crate::parser::parse_bibtex;
 
 fn render_entry(input: &str) -> String {
     let green = parse_bibtex(input);

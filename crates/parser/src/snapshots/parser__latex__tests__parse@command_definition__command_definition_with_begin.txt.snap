@@ -1,0 +1,39 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/command_definition/command_definition_with_begin.txt
+---
+ROOT@0..80
+  PREAMBLE@0..80
+    COMMAND_DEFINITION@0..80
+      COMMAND_NAME@0..11 "\\newcommand"
+      CURLY_GROUP_COMMAND@11..35
+        L_CURLY@11..12 "{"
+        COMMAND_NAME@12..34 "\\CVSubHeadingListStart"
+        R_CURLY@34..35 "}"
+      CURLY_GROUP@35..80
+        L_CURLY@35..36 "{"
+        BEGIN@36..79
+          COMMAND_NAME@36..42 "\\begin"
+          CURLY_GROUP_WORD@42..51
+            L_CURLY@42..43 "{"
+            KEY@43..50
+              WORD@43..50 "itemize"
+            R_CURLY@50..51 "}"
+          BRACK_GROUP@51..79
+            L_BRACK@51..52 "["
+            TEXT@52..62
+              WORD@52..62 "leftmargin"
+            EQUALITY_SIGN@62..63 "="
+            TEXT@63..75
+              WORD@63..68 "0.5cm"
+              COMMA@68..69 ","
+              WHITESPACE@69..70 " "
+              WORD@70..75 "label"
+            EQUALITY_SIGN@75..76 "="
+            CURLY_GROUP@76..78
+              L_CURLY@76..77 "{"
+              R_CURLY@77..78 "}"
+            R_BRACK@78..79 "]"
+        R_CURLY@79..80 "}"
+

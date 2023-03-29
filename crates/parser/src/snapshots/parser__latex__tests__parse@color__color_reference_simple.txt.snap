@@ -1,0 +1,15 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/color/color_reference_simple.txt
+---
+ROOT@0..13
+  PREAMBLE@0..13
+    COLOR_REFERENCE@0..13
+      COMMAND_NAME@0..6 "\\color"
+      CURLY_GROUP_WORD@6..13
+        L_CURLY@6..7 "{"
+        KEY@7..12
+          WORD@7..12 "black"
+        R_CURLY@12..13 "}"
+
