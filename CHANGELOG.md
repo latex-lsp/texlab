@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix memory leak when editing documents over a long time ([#856](https://github.com/latex-lsp/texlab/issues/856))
+- Fix parsing parentheses in file paths ([#874](https://github.com/latex-lsp/texlab/issues/874))
 
 ## [5.4.1] - 2023-03-26
 
