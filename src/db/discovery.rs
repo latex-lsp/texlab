@@ -256,3 +256,26 @@ fn is_part_of_workspace(db: &dyn Db, workspace: Workspace, path: &Path) -> bool 
         .filter_map(|dir| dir.path(db).as_deref())
         .any(|dir| path.starts_with(dir))
 }
+
+pub fn clean_unreachable(db: &mut dyn Db, workspace: Workspace) {
+    let reachable = workspace
+        .documents(db)
+        .into_iter()
+        .filter(|document| document.owner(db) == Owner::Client)
+        .flat_map(|&document| workspace.related(db, document))
+        .copied()
+        .collect::<FxHashSet<_>>();
+
+    let mut documents = workspace.set_documents(db).to(FxHashSet::default());
+    documents.retain(|document| {
+        if reachable.contains(document) {
+            true
+        } else {
+            let uri = document.location(db).uri(db);
+            log::debug!("Cleaning up unreachable document: {uri}");
+            false
+        }
+    });
+
+    workspace.set_documents(db).to(documents);
+}

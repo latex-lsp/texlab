@@ -22,7 +22,7 @@ use threadpool::ThreadPool;
 use crate::{
     citation,
     client::LspClient,
-    db::{self, discover_dependencies, Document, Language, Owner, Workspace},
+    db::{self, clean_unreachable, discover_dependencies, Document, Language, Owner, Workspace},
     distro::Distro,
     features::{
         build::{self, BuildParams, BuildResult, BuildStatus},
@@ -473,11 +473,14 @@ impl Server {
         normalize_uri(&mut uri);
 
         let db = self.engine.write();
-        if let Some(document) = Workspace::get(db).lookup_uri(db, &uri) {
+        let workspace = Workspace::get(db);
+        if let Some(document) = workspace.lookup_uri(db, &uri) {
             document
                 .set_owner(db)
                 .with_durability(salsa::Durability::LOW)
                 .to(Owner::Server);
+
+            clean_unreachable(db, workspace);
         }
 
         self.publish_diagnostics_with_delay();
