@@ -217,6 +217,7 @@ fn discover_parents(db: &mut dyn Db, workspace: Workspace) -> bool {
     let dirs: FxHashSet<_> = workspace
         .documents(db)
         .iter()
+        .filter(|&&child| workspace.parents(db, child).is_empty())
         .flat_map(|document| document.ancestor_dirs(db))
         .filter(|path| is_part_of_workspace(db, workspace, path))
         .map(Path::to_path_buf)
