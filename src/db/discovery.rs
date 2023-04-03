@@ -272,6 +272,7 @@ pub fn clean_unreachable(db: &mut dyn Db, workspace: Workspace) {
         if reachable.contains(document) {
             true
         } else {
+            document.set_text(db).to(String::new());
             let uri = document.location(db).uri(db);
             log::debug!("Cleaning up unreachable document: {uri}");
             false
