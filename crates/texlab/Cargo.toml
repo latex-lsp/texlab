@@ -32,6 +32,7 @@ doctest = false
 
 [dependencies]
 anyhow = "1.0.69"
+base-db = { path = "../base-db" }
 chrono = { version = "0.4.23", default-features = false, features = ["std"] }
 clap = { version = "4.1.6", features = ["derive"] }
 crossbeam-channel = "0.5.6"

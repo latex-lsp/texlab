@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 use lsp_types::Url;
 use parser::{parse_bibtex, parse_build_log, parse_latex};
 use rowan::{TextRange, TextSize};
-use rustc_hash::FxHashMap;
 
 use crate::{
     db::{
@@ -197,15 +196,4 @@ impl Document {
     pub fn line_index(self, db: &dyn Db) -> LineIndex {
         LineIndex::new(self.text(db))
     }
-}
-
-pub struct HiddenDocument {
-    pub location: Location,
-    pub data: HiddenDocumentData,
-}
-
-pub enum HiddenDocumentData {}
-
-pub struct AuxData {
-    pub label_numbers: FxHashMap<String, String>,
 }

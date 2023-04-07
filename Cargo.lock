@@ -82,6 +82,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
+name = "base-db"
+version = "0.0.0"
+dependencies = [
+ "log",
+ "notify",
+ "parser",
+ "regex",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "text-size",
+ "url",
+]
+
+[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1608,6 +1623,7 @@ version = "5.4.1"
 dependencies = [
  "anyhow",
  "assert_unordered",
+ "base-db",
  "chrono",
  "clap 4.1.8",
  "criterion",
