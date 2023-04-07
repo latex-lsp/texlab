@@ -13,6 +13,8 @@ pub struct Semantics {
     pub environments: FxHashSet<String>,
     pub theorem_definitions: Vec<TheoremDefinition>,
     pub graphics_paths: FxHashSet<String>,
+    pub can_be_root: bool,
+    pub can_be_compiled: bool,
 }
 
 impl Semantics {
@@ -29,6 +31,14 @@ impl Semantics {
                 }
             };
         }
+
+        self.can_be_compiled = self.environments.contains("document");
+        self.can_be_root = self.can_be_compiled
+            && self
+                .links
+                .iter()
+                .filter(|link| link.kind == LinkKind::Cls)
+                .any(|link| link.path.text == "subfiles");
     }
 
     fn process_node(&mut self, node: &latex::SyntaxNode) {

@@ -7,9 +7,12 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+dirs = "5.0.0"
 distro = { path = "../distro" }
+itertools = "0.10.5"
 log = "0.4.17"
 notify = "5.1.0"
+once_cell = "1.17.1"
 parser = { path = "../parser" }
 regex = "1.7.3"
 rowan = "0.15.11"

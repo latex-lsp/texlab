@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use distro::Language;
 use rowan::TextSize;
-use syntax::latex;
+use syntax::{latex, BuildError};
 use url::Url;
 
 use crate::{line_index::LineIndex, semantics};
@@ -23,6 +23,7 @@ pub struct Document {
     pub owner: Owner,
     pub cursor: TextSize,
     pub chktex: Vec<()>,
+    pub language: Language,
     pub data: DocumentData,
 }
 
@@ -51,7 +52,10 @@ impl Document {
                 let green = parser::parse_bibtex(&text);
                 DocumentData::Bib(BibDocumentData { green })
             }
-            Language::Log => DocumentData::Log,
+            Language::Log => {
+                let errors = parser::parse_build_log(&text).errors;
+                DocumentData::Log(LogDocumentData { errors })
+            }
             Language::Root => DocumentData::Root,
             Language::Tectonic => DocumentData::Tectonic,
         };
@@ -65,8 +69,35 @@ impl Document {
             owner,
             cursor,
             chktex,
+            language,
             data,
         }
+    }
+}
+
+impl std::borrow::Borrow<Url> for Document {
+    fn borrow(&self) -> &Url {
+        &self.uri
+    }
+}
+
+impl std::borrow::Borrow<str> for Document {
+    fn borrow(&self) -> &str {
+        self.uri.as_str()
+    }
+}
+
+impl PartialEq for Document {
+    fn eq(&self, other: &Self) -> bool {
+        self.uri == other.uri
+    }
+}
+
+impl Eq for Document {}
+
+impl std::hash::Hash for Document {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.uri.hash(state)
     }
 }
 
@@ -75,7 +106,7 @@ pub enum DocumentData {
     Tex(TexDocumentData),
     Bib(BibDocumentData),
     Aux(AuxDocumentData),
-    Log,
+    Log(LogDocumentData),
     Root,
     Tectonic,
 }
@@ -89,6 +120,11 @@ pub struct TexDocumentData {
 #[derive(Debug)]
 pub struct BibDocumentData {
     pub green: rowan::GreenNode,
+}
+
+#[derive(Debug)]
+pub struct LogDocumentData {
+    pub errors: Vec<BuildError>,
 }
 
 #[derive(Debug)]
