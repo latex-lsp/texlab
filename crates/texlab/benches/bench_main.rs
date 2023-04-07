@@ -1,8 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use distro::Language;
 use lsp_types::{Position, Url};
 use parser::parse_latex;
 use texlab::{
-    db::{Language, Owner, Workspace},
+    db::{Owner, Workspace},
     Database,
 };
 

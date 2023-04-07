@@ -40,10 +40,9 @@ impl ProjectOrdering {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        db::{Language, Owner},
-        Database,
-    };
+    use distro::Language;
+
+    use crate::{db::Owner, Database};
 
     use super::*;
 

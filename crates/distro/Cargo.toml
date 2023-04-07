@@ -1,0 +1,14 @@
+[package]
+name = "distro"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow = "1.0.70"
+rustc-hash = "1.1.0"
+
+[lib]
+doctest = false

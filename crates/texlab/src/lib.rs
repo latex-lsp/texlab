@@ -4,7 +4,6 @@ pub(crate) mod citation;
 mod client;
 mod config;
 pub mod db;
-pub(crate) mod distro;
 pub mod features;
 mod server;
 pub mod util;

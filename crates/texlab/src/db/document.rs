@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use distro::Language;
 use lsp_types::Url;
 use parser::{parse_bibtex, parse_build_log, parse_latex};
 use rowan::{TextRange, TextSize};
@@ -52,45 +53,6 @@ impl Location {
 pub enum Owner {
     Client,
     Server,
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
-pub enum Language {
-    Tex,
-    Bib,
-    Log,
-    TexlabRoot,
-    Tectonic,
-}
-
-impl Language {
-    pub fn from_path(path: &Path) -> Option<Self> {
-        let name = path.file_name()?;
-        if name.eq_ignore_ascii_case(".texlabroot") || name.eq_ignore_ascii_case("texlabroot") {
-            return Some(Self::TexlabRoot);
-        }
-
-        if name.eq_ignore_ascii_case("Tectonic.toml") {
-            return Some(Self::Tectonic);
-        }
-
-        let extname = path.extension()?.to_str()?;
-        match extname.to_lowercase().as_str() {
-            "tex" | "sty" | "cls" | "def" | "lco" | "aux" | "rnw" => Some(Self::Tex),
-            "bib" | "bibtex" => Some(Self::Bib),
-            "log" => Some(Self::Log),
-            _ => None,
-        }
-    }
-
-    pub fn from_id(id: &str) -> Option<Self> {
-        match id {
-            "tex" | "latex" => Some(Self::Tex),
-            "bib" | "bibtex" => Some(Self::Bib),
-            "texlabroot" => Some(Self::TexlabRoot),
-            _ => None,
-        }
-    }
 }
 
 #[salsa::input]
@@ -161,7 +123,7 @@ impl Document {
                 let data = LogDocumentData::new(db, parse_build_log(text));
                 DocumentData::Log(data)
             }
-            Language::TexlabRoot => {
+            Language::Root => {
                 let data = TexlabRootData;
                 DocumentData::TexlabRoot(data)
             }

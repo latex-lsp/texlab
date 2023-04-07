@@ -3,12 +3,13 @@ use std::{
     process::{Command, Stdio},
 };
 
+use distro::Language;
 use lsp_types::TextEdit;
 use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
 use crate::{
-    db::{Document, Language, Workspace},
+    db::{Document, Workspace},
     util::line_index_ext::LineIndexExt,
     Db, LatexIndentConfig,
 };

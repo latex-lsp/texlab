@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
+use distro::{Distro, Language};
 use log::{error, info};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
@@ -23,8 +24,7 @@ use threadpool::ThreadPool;
 use crate::{
     citation,
     client::LspClient,
-    db::{self, discover_dependencies, Document, Language, Owner, Workspace},
-    distro::Distro,
+    db::{self, discover_dependencies, Document, Owner, Workspace},
     features::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},

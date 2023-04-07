@@ -1,5 +1,6 @@
 mod file_name_db;
 mod kpsewhich;
+mod language;
 mod miktex;
 mod texlive;
 
@@ -7,7 +8,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
-pub use file_name_db::FileNameDB;
+pub use self::{file_name_db::FileNameDB, language::Language};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DistroKind {

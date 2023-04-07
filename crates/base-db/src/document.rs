@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 
+use distro::Language;
 use rowan::TextSize;
 use syntax::latex;
 use url::Url;
 
-use crate::{line_index::LineIndex, semantics, Language};
+use crate::{line_index::LineIndex, semantics};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Owner {

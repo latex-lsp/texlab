@@ -1,9 +1,10 @@
 use std::{borrow::Cow, path::Path};
 
+use distro::Language;
 use rustc_hash::FxHashMap;
 use url::Url;
 
-use crate::{Config, Document, DocumentData, Language, Owner};
+use crate::{Config, Document, DocumentData, Owner};
 
 #[derive(Debug)]
 pub struct Workspace {

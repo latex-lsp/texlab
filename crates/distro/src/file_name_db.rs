@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use rustc_hash::FxHashSet;
 
-use crate::db::Language;
+use crate::Language;
 
 #[derive(Debug)]
 pub struct DistroFile(PathBuf);

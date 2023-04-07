@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::Result;
+use distro::Language;
 use lsp_server::Connection;
 use lsp_types::{
     notification::{DidOpenTextDocument, Exit, Initialized},
@@ -13,7 +14,7 @@ use lsp_types::{
     Position, Range, TextDocumentIdentifier, TextDocumentItem, TextDocumentPositionParams, Url,
 };
 use tempfile::{tempdir, TempDir};
-use texlab::{db::Language, LspClient, Server};
+use texlab::{LspClient, Server};
 
 #[derive(Debug)]
 pub struct Fixture {
@@ -50,7 +51,7 @@ impl Fixture {
             let language_id = String::from(match language {
                 Language::Tex => "latex",
                 Language::Bib => "bibtex",
-                Language::Log | Language::TexlabRoot | Language::Tectonic => continue,
+                Language::Log | Language::Root | Language::Tectonic => continue,
             });
 
             client.send_notification::<DidOpenTextDocument>(DidOpenTextDocumentParams {

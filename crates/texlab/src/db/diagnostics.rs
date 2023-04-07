@@ -2,12 +2,13 @@ pub mod bib;
 pub mod log;
 pub mod tex;
 
+use distro::Language;
 use lsp_types::{DiagnosticSeverity, NumberOrString, Range};
 use rustc_hash::FxHashMap;
 
 use crate::{db::workspace::Workspace, util, Db};
 
-use super::document::{Document, Language};
+use super::document::Document;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Diagnostic {
@@ -116,7 +117,7 @@ pub fn collect(db: &dyn Db, workspace: Workspace) -> FxHashMap<Document, Vec<Dia
                             .extend(diagnostics.clone());
                     });
             }
-            Language::TexlabRoot | Language::Tectonic => {}
+            Language::Root | Language::Tectonic => {}
         }
     }
 

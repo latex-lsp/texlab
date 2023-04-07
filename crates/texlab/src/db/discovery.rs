@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use distro::Language;
 use itertools::Itertools;
 use lsp_types::Url;
 use rustc_hash::FxHashSet;
@@ -8,7 +9,7 @@ use crate::{util::HOME_DIR, Db};
 
 use super::{
     analysis::TexLink,
-    document::{Document, Language, Location, Owner},
+    document::{Document, Location, Owner},
     workspace::Workspace,
 };
 
@@ -233,7 +234,7 @@ fn discover_parents(db: &mut dyn Db, workspace: Workspace) -> bool {
         if let Some(language) = Language::from_path(&path) {
             let can_be_parent = matches!(
                 language,
-                Language::Tex | Language::TexlabRoot | Language::Tectonic
+                Language::Tex | Language::Root | Language::Tectonic
             );
 
             if can_be_parent && workspace.lookup_path(db, &path).is_none() {

@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use distro::{FileNameDB, Language};
 use itertools::Itertools;
 use lsp_types::{ClientCapabilities, Url};
 use rowan::TextSize;
@@ -10,13 +11,12 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     db::document::{Document, Location},
-    distro::FileNameDB,
     Db,
 };
 
 use super::{
     dependency_graph,
-    document::{Language, LinterData, Owner},
+    document::{LinterData, Owner},
     Word,
 };
 
@@ -161,7 +161,7 @@ impl Workspace {
 
         self.documents(db)
             .iter()
-            .filter(|doc| matches!(doc.language(db), Language::TexlabRoot | Language::Tectonic))
+            .filter(|doc| matches!(doc.language(db), Language::Root | Language::Tectonic))
             .filter_map(|doc| doc.location(db).join(db, "."))
             .find(|root_dir| {
                 base_dir
