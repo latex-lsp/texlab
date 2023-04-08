@@ -2,7 +2,7 @@ use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
 use syntax::bibtex;
 
-use crate::{citation, util::cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::HoverResult;
 
@@ -17,7 +17,7 @@ pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
         let root = data.root(context.db);
         let root = bibtex::Root::cast(root)?;
         let entry = root.find_entry(&key)?;
-        citation::render(&entry)
+        citeproc::render(&entry)
     })?;
 
     Some(HoverResult {

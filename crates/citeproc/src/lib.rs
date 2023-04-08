@@ -1,6 +1,6 @@
 mod driver;
 mod entry;
-pub(crate) mod field;
+pub mod field;
 mod output;
 
 use syntax::bibtex;

@@ -33,7 +33,7 @@ doctest = false
 [dependencies]
 anyhow = "1.0.69"
 base-db = { path = "../base-db" }
-chrono = { version = "0.4.23", default-features = false, features = ["std"] }
+citeproc = { path = "../citeproc" }
 clap = { version = "4.1.6", features = ["derive"] }
 crossbeam-channel = "0.5.6"
 dashmap = "5.4.0"
@@ -46,7 +46,6 @@ flate2 = "1.0.25"
 flume = "0.10.14"
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 human_name = { version = "2.0.1", default-features = false }
-isocountry = "0.3.2"
 itertools = "0.10.5"
 log = "0.4.17"
 lsp-server = "0.7.0"
@@ -62,13 +61,11 @@ serde_json = "1.0.93"
 serde_regex = "1.1.0"
 serde_repr = "0.1.10"
 smol_str = { version = "0.1.24", features = ["serde"] }
-strum = { version = "0.24.1", features = ["derive"] }
 syntax = { path = "../syntax" }
 tempfile = "3.3.0"
 thiserror = "1.0.38"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
-unicode-normalization = "0.1.22"
 
 [dependencies.salsa]
 git = "https://github.com/salsa-rs/salsa"

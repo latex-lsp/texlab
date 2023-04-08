@@ -1,6 +1,5 @@
 ---
-source: src/citation/tests.rs
-assertion_line: 138
+source: crates/citeproc/src/tests.rs
 expression: "render_entry(r#\"\n@article{DBLP:journals/corr/abs-2107-11903,\n    author    = {Michelle L. Blom and\n                    Jurlind Budurushi and\n                    Ronald L. Rivest and\n                    Philip B. Stark and\n                    Peter J. Stuckey and\n                    Vanessa Teague and\n                    Damjan Vukcevic},\n    title     = {Assertion-based Approaches to Auditing Complex Elections, with application\n                    to party-list proportional elections},\n    journal   = {CoRR},\n    volume    = {abs/2107.11903},\n    year      = {2021},\n    url       = {https://arxiv.org/abs/2107.11903},\n    eprinttype = {arXiv},\n    eprint    = {2107.11903},\n    timestamp = {Thu, 29 Jul 2021 16:14:15 +0200},\n    biburl    = {https://dblp.org/rec/journals/corr/abs-2107-11903.bib},\n    bibsource = {dblp computer science bibliography, https://dblp.org}\n}\"#)"
 ---
 M. Blom, J. Budurushi, R. Rivest, P. Stark, P. Stuckey, V. Teague, D. Vukcevic: "Assertion-based Approaches to Auditing Complex Elections, with application to party-list proportional elections". *CoRR* abs/2107.11903 (2021): arXiv: [2107.11903](https://arxiv.org/abs/2107.11903). URL: [https://arxiv.org/abs/2107.11903](https://arxiv.org/abs/2107.11903).

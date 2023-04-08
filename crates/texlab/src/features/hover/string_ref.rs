@@ -1,8 +1,9 @@
+use citeproc::field::text::TextFieldData;
 use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName, HasValue};
 
-use crate::{citation::field::text::TextFieldData, util::cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::HoverResult;
 

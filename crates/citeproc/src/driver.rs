@@ -1,8 +1,8 @@
 use isocountry::CountryCode;
 use itertools::Itertools;
-use lsp_types::Url;
 use syntax::bibtex;
 use titlecase::titlecase;
+use url::Url;
 
 use super::{
     entry::{EntryData, EntryKind},

@@ -157,9 +157,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.23"
+version = "0.4.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16b0a3d9ed01224b22057780a37bb8c5dbfe1be8ba48678e7bf57ec4b385411f"
+checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -190,6 +190,25 @@ checksum = "213030a2b5a4e0c0892b6652260cf6ccac84827b83a85a534e178e3906c4cf1b"
 dependencies = [
  "ciborium-io",
  "half",
+]
+
+[[package]]
+name = "citeproc"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "human_name",
+ "insta",
+ "isocountry",
+ "itertools",
+ "parser",
+ "rowan",
+ "rustc-hash",
+ "strum",
+ "syntax",
+ "titlecase",
+ "unicode-normalization",
+ "url",
 ]
 
 [[package]]
@@ -1656,7 +1675,7 @@ dependencies = [
  "anyhow",
  "assert_unordered",
  "base-db",
- "chrono",
+ "citeproc",
  "clap 4.1.8",
  "criterion",
  "crossbeam-channel",
@@ -1671,7 +1690,6 @@ dependencies = [
  "fuzzy-matcher",
  "human_name",
  "insta",
- "isocountry",
  "itertools",
  "log",
  "lsp-server",
@@ -1688,13 +1706,11 @@ dependencies = [
  "serde_regex",
  "serde_repr",
  "smol_str",
- "strum",
  "syntax",
  "tempfile",
  "thiserror",
  "threadpool",
  "titlecase",
- "unicode-normalization",
 ]
 
 [[package]]

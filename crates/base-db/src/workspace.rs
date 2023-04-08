@@ -10,7 +10,7 @@ use url::Url;
 
 use crate::{graph, Config, Document, DocumentData, Owner};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Workspace {
     documents: FxHashSet<Document>,
     config: Config,
@@ -63,7 +63,11 @@ impl Workspace {
         Ok(self.open(uri, text, language, owner))
     }
 
-    pub fn watch(&mut self, watcher: &mut dyn notify::Watcher) {
+    pub fn watch(
+        &mut self,
+        watcher: &mut dyn notify::Watcher,
+        watched_dirs: &mut FxHashSet<PathBuf>,
+    ) {
         self.iter()
             .filter(|document| document.uri.scheme() == "file")
             .flat_map(|document| {
@@ -73,7 +77,10 @@ impl Workspace {
             })
             .flatten()
             .for_each(|path| {
-                let _ = watcher.watch(&path, notify::RecursiveMode::NonRecursive);
+                if !watched_dirs.contains(&path) {
+                    let _ = watcher.watch(&path, notify::RecursiveMode::NonRecursive);
+                    watched_dirs.insert(path);
+                }
             });
     }
 
@@ -147,6 +154,10 @@ impl Workspace {
     pub fn set_distro(&mut self, distro: Distro) {
         self.distro = distro;
         self.reload();
+    }
+
+    pub fn set_folders(&mut self, folders: Vec<PathBuf>) {
+        self.folders = folders;
     }
 
     pub fn reload(&mut self) {

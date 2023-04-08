@@ -1,6 +1,5 @@
 #![allow(clippy::needless_lifetimes)]
 
-pub(crate) mod citation;
 mod client;
 mod config;
 pub mod db;

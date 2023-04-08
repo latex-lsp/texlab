@@ -22,7 +22,6 @@ use syntax::bibtex;
 use threadpool::ThreadPool;
 
 use crate::{
-    citation,
     client::LspClient,
     db::{self, discover_dependencies, Document, Owner, Workspace},
     features::{
@@ -544,7 +543,7 @@ impl Server {
                     {
                         item.documentation = bibtex::Root::cast(root)
                             .and_then(|root| root.find_entry(&key))
-                            .and_then(|entry| citation::render(&entry))
+                            .and_then(|entry| citeproc::render(&entry))
                             .map(|value| {
                                 Documentation::MarkupContent(MarkupContent {
                                     kind: MarkupKind::Markdown,
