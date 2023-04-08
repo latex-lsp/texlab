@@ -1,4 +1,5 @@
 mod config;
+pub mod diagnostics;
 mod document;
 pub mod graph;
 mod line_index;

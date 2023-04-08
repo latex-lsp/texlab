@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use distro::{FileNameDB, Language};
+use distro::{Distro, Language};
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 use url::Url;
@@ -14,7 +14,7 @@ use crate::{graph, Config, Document, DocumentData, Owner};
 pub struct Workspace {
     documents: FxHashSet<Document>,
     config: Config,
-    distro: FileNameDB,
+    distro: Distro,
     folders: Vec<PathBuf>,
 }
 
@@ -40,7 +40,7 @@ impl Workspace {
         &self.config
     }
 
-    pub fn distro(&self) -> &FileNameDB {
+    pub fn distro(&self) -> &Distro {
         &self.distro
     }
 
@@ -48,7 +48,7 @@ impl Workspace {
         log::debug!("Opening document {uri}...");
         self.documents.remove(&uri);
         self.documents
-            .insert(Document::parse(uri, text, language, owner));
+            .insert(Document::parse(uri, text, language, owner, &self.config));
     }
 
     pub fn load(&mut self, path: &Path, language: Language, owner: Owner) -> std::io::Result<()> {
@@ -137,6 +137,34 @@ impl Workspace {
                 nodes.contains(&child)
             })
             .collect()
+    }
+
+    pub fn set_config(&mut self, config: Config) {
+        self.config = config;
+        self.reload();
+    }
+
+    pub fn set_distro(&mut self, distro: Distro) {
+        self.distro = distro;
+        self.reload();
+    }
+
+    pub fn reload(&mut self) {
+        let uris = self
+            .documents
+            .iter()
+            .map(|document| document.uri.clone())
+            .collect::<Vec<Url>>();
+
+        for uri in uris {
+            let document = self.lookup(&uri).unwrap();
+            self.open(
+                uri,
+                document.text.clone(),
+                document.language,
+                document.owner,
+            );
+        }
     }
 
     pub fn discover(&mut self) {

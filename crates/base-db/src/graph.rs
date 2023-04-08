@@ -90,7 +90,7 @@ impl<'a> Graph<'a> {
             .map(|ext| format!("{stem}.{ext}"))
             .for_each(|name| file_names.push(name));
 
-        let file_name_db = self.workspace.distro();
+        let file_name_db = &self.workspace.distro().file_name_db;
         let distro_files = file_names
             .iter()
             .filter_map(|name| file_name_db.get(name))

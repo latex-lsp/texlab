@@ -5,7 +5,11 @@ use rowan::TextSize;
 use syntax::{latex, BuildError};
 use url::Url;
 
-use crate::{line_index::LineIndex, semantics};
+use crate::{
+    diagnostics::{self, Diagnostic},
+    line_index::LineIndex,
+    semantics, Config,
+};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Owner {
@@ -22,13 +26,19 @@ pub struct Document {
     pub line_index: LineIndex,
     pub owner: Owner,
     pub cursor: TextSize,
-    pub chktex: Vec<()>,
     pub language: Language,
     pub data: DocumentData,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
 impl Document {
-    pub fn parse(uri: Url, text: String, language: Language, owner: Owner) -> Self {
+    pub fn parse(
+        uri: Url,
+        text: String,
+        language: Language,
+        owner: Owner,
+        config: &Config,
+    ) -> Self {
         let dir = uri.join(".").unwrap();
 
         let path = if uri.scheme() == "file" {
@@ -40,7 +50,7 @@ impl Document {
         let line_index = LineIndex::new(&text);
 
         let cursor = TextSize::from(0);
-        let chktex = Vec::new();
+        let diagnostics = Vec::new();
         let data = match language {
             Language::Tex => {
                 let green = parser::parse_latex(&text);
@@ -60,7 +70,7 @@ impl Document {
             Language::Tectonic => DocumentData::Tectonic,
         };
 
-        Self {
+        let mut document = Self {
             uri,
             dir,
             path,
@@ -68,10 +78,18 @@ impl Document {
             line_index,
             owner,
             cursor,
-            chktex,
             language,
             data,
-        }
+            diagnostics,
+        };
+
+        match language {
+            Language::Tex => diagnostics::tex::analyze(&mut document, config),
+            Language::Bib => diagnostics::bib::analyze(&mut document),
+            Language::Log | Language::Root | Language::Tectonic => (),
+        };
+
+        document
     }
 }
 

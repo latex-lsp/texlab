@@ -129,8 +129,15 @@ impl Semantics {
                     .and_then(|group| group.key())
                     .map(|key| key.to_string()) else { continue };
 
+                let caption = environment
+                    .syntax()
+                    .children()
+                    .filter_map(latex::Caption::cast)
+                    .find_map(|node| node.long())
+                    .and_then(|node| node.content_text());
+
                 let range = latex::small_range(&environment);
-                let kind = LabelObject::Environment { name };
+                let kind = LabelObject::Environment { name, caption };
                 objects.push(LabelTarget {
                     object: kind,
                     range,
@@ -253,9 +260,15 @@ pub struct LabelTarget {
 
 #[derive(Debug)]
 pub enum LabelObject {
-    Section { prefix: String, text: String },
+    Section {
+        prefix: String,
+        text: String,
+    },
     EnumItem,
-    Environment { name: String },
+    Environment {
+        name: String,
+        caption: Option<String>,
+    },
 }
 
 #[derive(Debug)]
