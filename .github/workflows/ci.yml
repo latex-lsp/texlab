@@ -26,17 +26,19 @@ jobs:
         run: cargo test --all-features --no-run --locked
       - name: Test
         run: cargo test --all-features -- --nocapture --quiet
-  msrv:
-    name: MSRV
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Verify minimum supported Rust version
-        run: |
-          cargo install cargo-msrv
-          cargo msrv verify
+  # TODO: Enable once cargo-msrv supports workspace inheritance
+  # https://github.com/foresterre/cargo-msrv/issues/590
+  # msrv:
+  #   name: MSRV
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - uses: Swatinem/rust-cache@v2
+  #     - name: Verify minimum supported Rust version
+  #       run: |
+  #         cargo install cargo-msrv
+  #         cargo msrv verify
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
