@@ -64,7 +64,7 @@ impl Document {
             }
             Language::Aux => {
                 let green = parser::parse_latex(&text);
-                let mut semantics = semantics::aux::Semantics::default();
+                let mut semantics = semantics::auxiliary::Semantics::default();
                 semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
                 DocumentData::Aux(AuxDocumentData { green, semantics })
             }
@@ -192,5 +192,5 @@ pub struct LogDocumentData {
 #[derive(Debug, Clone)]
 pub struct AuxDocumentData {
     pub green: rowan::GreenNode,
-    pub semantics: semantics::aux::Semantics,
+    pub semantics: semantics::auxiliary::Semantics,
 }

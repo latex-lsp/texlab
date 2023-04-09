@@ -1,4 +1,4 @@
-pub mod aux;
+pub mod auxiliary;
 pub mod tex;
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
