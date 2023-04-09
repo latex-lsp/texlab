@@ -10,14 +10,14 @@ use crate::{semantics, Document, DocumentData, Workspace};
 
 pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Edge<'a> {
     pub source: &'a Document,
     pub target: &'a Document,
     pub weight: Option<EdgeWeight<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct EdgeWeight<'a> {
     pub link: &'a semantics::tex::Link,
     pub old_base_dir: Url,

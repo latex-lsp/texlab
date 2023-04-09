@@ -1,36 +1,33 @@
 mod include;
 
+use base_db::{Document, Workspace};
 use lsp_types::{DocumentLink, Url};
 use rowan::TextRange;
 
-use crate::{
-    db::{Document, Workspace},
-    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<DocumentLink>> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
+pub fn find_all(workspace: &Workspace, uri: &Url) -> Option<Vec<DocumentLink>> {
+    let document = workspace.lookup(uri)?;
     let mut builder = LinkBuilder {
-        db,
-        line_index: document.line_index(db),
+        workspace,
+        document,
         links: Vec::new(),
     };
 
-    include::find_links(db, document, &mut builder);
+    include::find_links(&mut builder);
     Some(builder.links)
 }
 
-struct LinkBuilder<'db> {
-    db: &'db dyn Db,
-    line_index: &'db LineIndex,
+struct LinkBuilder<'a> {
+    workspace: &'a Workspace,
+    document: &'a Document,
     links: Vec<DocumentLink>,
 }
 
-impl<'db> LinkBuilder<'db> {
-    pub fn push(&mut self, range: TextRange, target: Document) {
-        let range = self.line_index.line_col_lsp_range(range);
-        let target = Some(target.location(self.db).uri(self.db).clone());
+impl<'a> LinkBuilder<'a> {
+    pub fn push(&mut self, range: TextRange, target: &Document) {
+        let range = self.document.line_index.line_col_lsp_range(range);
+        let target = Some(target.uri.clone());
         self.links.push(DocumentLink {
             range,
             target,

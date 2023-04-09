@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName};
 
@@ -5,9 +6,11 @@ use crate::util::cursor::CursorContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
-    let db = context.db;
-    let data = context.document.parse(db).as_bib()?;
+pub(super) fn goto_definition<'a>(
+    context: &CursorContext<'a>,
+) -> Option<Vec<DefinitionResult<'a>>> {
+    let DocumentData::Bib(data) = &context.document.data else { return None };
+
     let key = context
         .cursor
         .as_bib()
@@ -17,7 +20,7 @@ pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionR
 
     let origin_selection_range = key.text_range();
 
-    data.root(db)
+    data.root_node()
         .children()
         .filter_map(bibtex::StringDef::cast)
         .find_map(|string| {

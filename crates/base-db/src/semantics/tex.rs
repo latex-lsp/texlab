@@ -1,15 +1,15 @@
-use rowan::ast::AstNode;
+use rowan::{ast::AstNode, TextLen};
 use rustc_hash::FxHashSet;
-use syntax::latex::{self, HasCurly};
+use syntax::latex::{self, HasBrack, HasCurly};
 use text_size::TextRange;
 
 use super::Span;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Semantics {
     pub links: Vec<Link>,
     pub labels: Vec<Label>,
-    pub commands: FxHashSet<String>,
+    pub commands: Vec<(TextRange, String)>,
     pub environments: FxHashSet<String>,
     pub theorem_definitions: Vec<TheoremDefinition>,
     pub graphics_paths: FxHashSet<String>,
@@ -26,19 +26,22 @@ impl Semantics {
                 }
                 latex::SyntaxElement::Token(token) => {
                     if token.kind() == latex::COMMAND_NAME {
-                        self.commands.insert(String::from(token.text()));
+                        let range = token.text_range();
+                        let range = TextRange::new(range.start() + "\\".text_len(), range.end());
+                        let text = String::from(&token.text()[1..]);
+                        self.commands.push((range, text));
                     }
                 }
             };
         }
 
-        self.can_be_compiled = self.environments.contains("document");
-        self.can_be_root = self.can_be_compiled
-            && self
-                .links
-                .iter()
-                .filter(|link| link.kind == LinkKind::Cls)
-                .any(|link| link.path.text == "subfiles");
+        self.can_be_root = self
+            .links
+            .iter()
+            .filter(|link| link.kind == LinkKind::Cls)
+            .any(|link| link.path.text != "subfiles");
+
+        self.can_be_compiled = self.can_be_root || self.environments.contains("document");
     }
 
     fn process_node(&mut self, node: &latex::SyntaxNode) {
@@ -136,8 +139,18 @@ impl Semantics {
                     .find_map(|node| node.long())
                     .and_then(|node| node.content_text());
 
+                let options = environment
+                    .begin()
+                    .and_then(|begin| begin.options())
+                    .and_then(|options| options.content_text());
+
                 let range = latex::small_range(&environment);
-                let kind = LabelObject::Environment { name, caption };
+                let kind = LabelObject::Environment {
+                    name,
+                    options,
+                    caption,
+                };
+
                 objects.push(LabelTarget {
                     object: kind,
                     range,
@@ -231,7 +244,7 @@ impl LinkKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Link {
     pub kind: LinkKind,
     pub path: Span,
@@ -245,20 +258,20 @@ pub enum LabelKind {
     ReferenceRange,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Label {
     pub kind: LabelKind,
     pub name: Span,
     pub targets: Vec<LabelTarget>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LabelTarget {
     pub object: LabelObject,
     pub range: TextRange,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LabelObject {
     Section {
         prefix: String,
@@ -267,11 +280,12 @@ pub enum LabelObject {
     EnumItem,
     Environment {
         name: String,
+        options: Option<String>,
         caption: Option<String>,
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TheoremDefinition {
     pub name: Span,
     pub description: String,

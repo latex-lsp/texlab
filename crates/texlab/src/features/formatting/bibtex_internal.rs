@@ -1,16 +1,13 @@
+use base_db::{Document, LineIndex, Workspace};
 use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
 
-use crate::{
-    db::Document,
-    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
 pub fn format_bibtex_internal(
-    db: &dyn Db,
-    document: Document,
+    workspace: &Workspace,
+    document: &Document,
     options: &FormattingOptions,
 ) -> Option<Vec<TextEdit>> {
     let mut indent = String::new();
@@ -23,13 +20,14 @@ pub fn format_bibtex_internal(
         indent.push('\t');
     }
 
-    let line_length = db.config().formatting.line_length;
+    let line_length = workspace.config().formatting.line_length;
 
-    let line_index = document.line_index(db);
-    let data = document.parse(db).as_bib()?;
+    let line_index = &document.line_index;
+
+    let data = document.data.as_bib()?;
     let mut edits = Vec::new();
 
-    for node in data.root(db).children().filter(|node| {
+    for node in data.root_node().children().filter(|node| {
         matches!(
             node.kind(),
             bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY

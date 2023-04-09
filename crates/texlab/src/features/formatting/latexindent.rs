@@ -3,34 +3,30 @@ use std::{
     process::{Command, Stdio},
 };
 
+use base_db::{Document, LatexIndentConfig, Workspace};
 use distro::Language;
 use lsp_types::TextEdit;
 use rowan::{TextLen, TextRange};
 use tempfile::tempdir;
 
-use crate::{
-    db::{Document, Workspace},
-    util::line_index_ext::LineIndexExt,
-    Db, LatexIndentConfig,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<TextEdit>> {
-    let workspace = Workspace::get(db);
-    let config = db.config();
+pub fn format_with_latexindent(
+    workspace: &Workspace,
+    document: &Document,
+) -> Option<Vec<TextEdit>> {
+    let config = workspace.config();
     let target_dir = tempdir().ok()?;
-    let source_dir = workspace
-        .working_dir(db, document.directory(db))
-        .path(db)
-        .as_deref()?;
+    let source_dir = workspace.current_dir(&document.dir).to_file_path().ok()?;
 
     let target_file = target_dir
         .path()
-        .join(if document.language(db) == Language::Bib {
+        .join(if document.language == Language::Bib {
             "file.bib"
         } else {
             "file.tex"
         });
-    std::fs::write(&target_file, document.text(db)).ok()?;
+    std::fs::write(&target_file, &document.text).ok()?;
 
     let args = build_arguments(&config.formatting.latex_indent, &target_file);
 
@@ -49,12 +45,12 @@ pub fn format_with_latexindent(db: &dyn Db, document: Document) -> Option<Vec<Te
         .output()
         .ok()?;
 
-    let old_text = document.text(db);
+    let old_text = &document.text;
     let new_text = String::from_utf8_lossy(&output.stdout).into_owned();
     if new_text.is_empty() {
         None
     } else {
-        let line_index = document.line_index(db);
+        let line_index = &document.line_index;
         Some(vec![TextEdit {
             range: line_index.line_col_lsp_range(TextRange::new(0.into(), old_text.text_len())),
             new_text,

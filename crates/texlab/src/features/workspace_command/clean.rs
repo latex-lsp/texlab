@@ -1,10 +1,11 @@
 use std::process::Stdio;
 
 use anyhow::Result;
+use base_db::Workspace;
 use lsp_types::{TextDocumentIdentifier, Url};
 use thiserror::Error;
 
-use crate::{db::Workspace, normalize_uri, Db};
+use crate::normalize_uri;
 
 #[derive(Debug, Error)]
 pub enum CleanError {
@@ -31,7 +32,11 @@ pub struct CleanCommand {
 }
 
 impl CleanCommand {
-    pub fn new(db: &dyn Db, options: CleanOptions, args: Vec<serde_json::Value>) -> Result<Self> {
+    pub fn new(
+        workspace: &Workspace,
+        options: CleanOptions,
+        args: Vec<serde_json::Value>,
+    ) -> Result<Self> {
         let params: TextDocumentIdentifier =
             serde_json::from_value(args.into_iter().next().ok_or(CleanError::MissingArg)?)
                 .map_err(CleanError::InvalidArg)?;
@@ -39,25 +44,18 @@ impl CleanCommand {
         let mut uri = params.uri;
         normalize_uri(&mut uri);
 
-        let workspace = Workspace::get(db);
-
         let document = workspace
-            .lookup_uri(db, &uri)
+            .lookup(&uri)
             .ok_or_else(|| CleanError::DocumentNotFound(uri.clone()))?;
 
-        let working_dir = workspace.working_dir(db, document.directory(db));
-
-        let output_dir = workspace
-            .output_dir(db, working_dir)
-            .path(db)
-            .as_deref()
-            .ok_or_else(|| CleanError::NoLocalFile(uri.clone()))?;
-
         let path = document
-            .location(db)
-            .path(db)
+            .path
             .as_deref()
             .ok_or_else(|| CleanError::NoLocalFile(uri.clone()))?;
+
+        let current_dir = workspace.current_dir(&document.dir);
+
+        let output_dir = workspace.output_dir(&current_dir).to_file_path().unwrap();
 
         let flag = match options {
             CleanOptions::Auxiliary => "-c",

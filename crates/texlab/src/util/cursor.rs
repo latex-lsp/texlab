@@ -1,13 +1,10 @@
+use base_db::{Document, DocumentData, Workspace};
 use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
+use rustc_hash::FxHashSet;
 use syntax::{bibtex, latex};
 
-use crate::{
-    db::{parse::DocumentData, Document, Workspace},
-    Db,
-};
-
-use super::{line_index::LineIndex, line_index_ext::LineIndexExt};
+use super::line_index_ext::LineIndexExt;
 
 #[derive(Debug)]
 pub enum Cursor {
@@ -121,55 +118,47 @@ impl Cursor {
     }
 }
 
-pub struct CursorContext<'db, T = ()> {
-    pub db: &'db dyn Db,
-    pub document: Document,
-    pub line_index: &'db LineIndex,
-    pub workspace: Workspace,
+pub struct CursorContext<'a, T = ()> {
+    pub workspace: &'a Workspace,
+    pub document: &'a Document,
+    pub related: FxHashSet<&'a Document>,
     pub cursor: Cursor,
     pub offset: TextSize,
     pub params: T,
 }
 
-impl<'db, T> CursorContext<'db, T> {
-    pub fn new(db: &'db dyn Db, uri: &Url, position: Position, params: T) -> Option<Self> {
-        let workspace = Workspace::get(db);
-        let document = workspace.lookup_uri(db, uri)?;
-        let line_index = document.line_index(db);
-        let offset = line_index.offset_lsp(position);
+impl<'a, T> CursorContext<'a, T> {
+    pub fn new(workspace: &'a Workspace, uri: &Url, position: Position, params: T) -> Option<Self> {
+        let document = workspace.lookup(uri)?;
+        let offset = document.line_index.offset_lsp(position);
 
-        let cursor = match document.parse(db) {
+        let cursor = match &document.data {
             DocumentData::Tex(data) => {
-                let root = data.root(db);
+                let root = data.root_node();
                 let left = root.token_at_offset(offset).left_biased();
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_tex(left, right)
             }
             DocumentData::Bib(data) => {
-                let root = data.root(db);
+                let root = data.root_node();
                 let left = root.token_at_offset(offset).left_biased();
                 let right = root.token_at_offset(offset).right_biased();
                 Cursor::new_bib(left, right)
             }
-            DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => None,
+            DocumentData::Aux(_)
+            | DocumentData::Log(_)
+            | DocumentData::Root
+            | DocumentData::Tectonic => None,
         };
 
         Some(Self {
-            db,
-            document,
-            line_index,
             workspace,
+            document,
+            related: workspace.related(document),
             cursor: cursor.unwrap_or(Cursor::Nothing),
             offset,
             params,
         })
-    }
-
-    pub fn related(&self) -> impl Iterator<Item = Document> + '_ {
-        self.workspace
-            .related(self.db, self.document)
-            .iter()
-            .copied()
     }
 
     pub fn is_inside_latex_curly(&self, group: &impl latex::HasCurly) -> bool {

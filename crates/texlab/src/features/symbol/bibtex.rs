@@ -1,27 +1,22 @@
+use base_db::{Document, DocumentData, LineIndex};
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName, HasType};
 
-use crate::{
-    db::Document,
-    util::{
-        lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},
-        line_index::LineIndex,
-        line_index_ext::LineIndexExt,
-    },
-    Db,
+use crate::util::{
+    lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},
+    line_index_ext::LineIndexExt,
 };
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
-pub fn find_symbols(db: &dyn Db, document: Document, buf: &mut Vec<InternalSymbol>) -> Option<()> {
-    let data = document.parse(db).as_bib()?;
-    let line_index = document.line_index(db);
-    for node in data.root(db).children() {
+pub fn find_symbols(document: &Document, buf: &mut Vec<InternalSymbol>) {
+    let DocumentData::Bib(data) = &document.data else { return };
+
+    let line_index = &document.line_index;
+    for node in data.root_node().children() {
         process_string(node.clone(), line_index, buf)
             .or_else(|| process_entry(node, line_index, buf));
     }
-
-    Some(())
 }
 
 fn process_string(

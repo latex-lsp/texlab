@@ -2,33 +2,29 @@ mod command;
 mod entry;
 mod label;
 
+use base_db::{Document, Workspace};
 use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
 use rowan::TextRange;
 use rustc_hash::FxHashMap;
 
-use crate::{
-    db::Document,
-    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::util::{cursor::CursorContext, line_index_ext::LineIndexExt};
 
-pub fn prepare_rename_all(db: &dyn Db, uri: &Url, position: Position) -> Option<Range> {
-    let context = CursorContext::new(db, uri, position, ())?;
+pub fn prepare_rename_all(workspace: &Workspace, uri: &Url, position: Position) -> Option<Range> {
+    let context = CursorContext::new(workspace, uri, position, ())?;
     let range = entry::prepare_rename(&context)
         .or_else(|| label::prepare_rename(&context))
         .or_else(|| command::prepare_rename(&context))?;
 
-    let line_index = context.document.line_index(db);
-    Some(line_index.line_col_lsp_range(range))
+    Some(context.document.line_index.line_col_lsp_range(range))
 }
 
 pub fn rename_all(
-    db: &dyn Db,
+    workspace: &Workspace,
     uri: &Url,
     position: Position,
     new_name: String,
 ) -> Option<WorkspaceEdit> {
-    let context = CursorContext::new(db, uri, position, Params { new_name })?;
+    let context = CursorContext::new(workspace, uri, position, Params { new_name })?;
     let result = entry::rename(&context)
         .or_else(|| label::rename(&context))
         .or_else(|| command::rename(&context))?;
@@ -37,15 +33,14 @@ pub fn rename_all(
         .changes
         .into_iter()
         .map(|(document, old_edits)| {
-            let line_index = document.line_index(db);
             let new_edits = old_edits
                 .into_iter()
                 .map(|Indel { delete, insert }| {
-                    TextEdit::new(line_index.line_col_lsp_range(delete), insert)
+                    TextEdit::new(document.line_index.line_col_lsp_range(delete), insert)
                 })
                 .collect();
 
-            (document.location(db).uri(db).clone(), new_edits)
+            (document.uri.clone(), new_edits)
         })
         .collect();
 
@@ -63,7 +58,7 @@ struct Indel {
     insert: String,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct RenameResult {
-    changes: FxHashMap<Document, Vec<Indel>>,
+#[derive(Debug)]
+struct RenameResult<'a> {
+    changes: FxHashMap<&'a Document, Vec<Indel>>,
 }

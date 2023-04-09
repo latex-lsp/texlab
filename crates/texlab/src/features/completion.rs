@@ -18,15 +18,22 @@ mod tikz_library;
 mod user_command;
 mod user_environment;
 
-use lsp_types::{CompletionList, Position, Url};
+use base_db::Workspace;
+use lsp_types::{ClientCapabilities, ClientInfo, CompletionList, Position, Url};
 
-use crate::{features::completion::builder::CompletionBuilder, util::cursor::CursorContext, Db};
+use crate::{features::completion::builder::CompletionBuilder, util::cursor::CursorContext};
 
 pub const COMPLETION_LIMIT: usize = 50;
 
-pub fn complete(db: &dyn Db, uri: &Url, position: Position) -> Option<CompletionList> {
-    let context = CursorContext::new(db, uri, position, ())?;
-    let mut builder = CompletionBuilder::new(&context);
+pub fn complete(
+    workspace: &Workspace,
+    uri: &Url,
+    position: Position,
+    client_capabilities: &ClientCapabilities,
+    client_info: Option<&ClientInfo>,
+) -> Option<CompletionList> {
+    let context = CursorContext::new(workspace, uri, position, ())?;
+    let mut builder = CompletionBuilder::new(&context, client_capabilities, client_info);
     log::debug!("[Completion] Cursor: {:?}", context.cursor);
     entry_type::complete(&context, &mut builder);
     field::complete(&context, &mut builder);

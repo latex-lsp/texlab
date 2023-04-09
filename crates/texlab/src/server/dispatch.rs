@@ -1,5 +1,4 @@
 use anyhow::Result;
-use log::warn;
 use lsp_server::{ErrorCode, Notification, Request, RequestId, Response};
 use serde::de::DeserializeOwned;
 
@@ -37,7 +36,7 @@ impl NotificationDispatcher {
 
     pub fn default(self) {
         if let Some(not) = &self.not {
-            warn!("Unknown notification: {}", not.method);
+            log::warn!("Unknown notification: {}", not.method);
         }
     }
 }
@@ -76,7 +75,7 @@ impl RequestDispatcher {
 
     pub fn default(self) -> Option<Response> {
         self.req.map(|req| {
-            warn!("Unknown request: {}", req.method);
+            log::warn!("Unknown request: {}", req.method);
             Response::new_err(
                 req.id,
                 ErrorCode::MethodNotFound as i32,

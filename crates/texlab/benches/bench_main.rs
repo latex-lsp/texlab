@@ -1,11 +1,9 @@
+use base_db::{Owner, Workspace};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use distro::Language;
-use lsp_types::{Position, Url};
+use lsp_types::{ClientCapabilities, Position, Url};
 use parser::parse_latex;
-use texlab::{
-    db::{Owner, Workspace},
-    Database,
-};
+use rowan::TextSize;
 
 const CODE: &str = include_str!("../../../texlab.tex");
 
@@ -17,9 +15,26 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("LaTeX/Completion/Command", |b| {
         let uri = Url::parse("http://example.com/texlab.tex").unwrap();
         let text = CODE.to_string();
-        let mut db = Database::default();
-        Workspace::get(&db).open(&mut db, uri.clone(), text, Language::Tex, Owner::Client);
-        b.iter(|| texlab::features::completion::complete(&db, &uri, Position::new(0, 1)));
+        let mut workspace = Workspace::default();
+        workspace.open(
+            uri.clone(),
+            text,
+            Language::Tex,
+            Owner::Client,
+            TextSize::default(),
+        );
+
+        let client_capabilities = ClientCapabilities::default();
+
+        b.iter(|| {
+            texlab::features::completion::complete(
+                &workspace,
+                &uri,
+                Position::new(0, 1),
+                &client_capabilities,
+                None,
+            )
+        });
     });
 }
 

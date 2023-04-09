@@ -1,3 +1,5 @@
+use base_db::DocumentData;
+
 use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
@@ -8,12 +10,10 @@ pub fn complete<'db>(
 ) -> Option<()> {
     let (_, range) = context.find_environment_name()?;
 
-    let db = context.db;
-    for document in context.related() {
-        if let Some(data) = document.parse(db).as_tex() {
-            for environment in data.analyze(db).theorem_environments(db) {
-                builder.user_environment(range, environment.name(db).text(db));
-            }
+    for document in &context.related {
+        let DocumentData::Tex(data) = &document.data else { continue };
+        for theorem in &data.semantics.theorem_definitions {
+            builder.user_environment(range, &theorem.name.text);
         }
     }
 

@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use lsp_types::ReferenceContext;
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName};
@@ -6,11 +7,10 @@ use crate::util::cursor::CursorContext;
 
 use super::ReferenceResult;
 
-pub(super) fn find_all_references(
-    context: &CursorContext<&ReferenceContext>,
-    results: &mut Vec<ReferenceResult>,
+pub(super) fn find_all_references<'a>(
+    context: &CursorContext<'a, &ReferenceContext>,
+    results: &mut Vec<ReferenceResult<'a>>,
 ) -> Option<()> {
-    let db = context.db;
     let name_text = context
         .cursor
         .as_bib()
@@ -21,8 +21,9 @@ pub(super) fn find_all_references(
         })?
         .text();
 
-    let data = context.document.parse(db).as_bib()?;
-    for node in data.root(db).descendants() {
+    let DocumentData::Bib(data) = &context.document.data else { return None };
+
+    for node in data.root_node().descendants() {
         if let Some(name) = bibtex::StringDef::cast(node.clone())
             .and_then(|string| string.name_token())
             .filter(|name| context.params.include_declaration && name.text() == name_text)

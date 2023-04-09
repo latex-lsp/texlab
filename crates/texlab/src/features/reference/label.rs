@@ -1,34 +1,34 @@
+use base_db::{semantics::tex::LabelKind, DocumentData};
 use lsp_types::ReferenceContext;
 
 use crate::util::cursor::CursorContext;
 
 use super::ReferenceResult;
 
-pub(super) fn find_all_references(
-    context: &CursorContext<&ReferenceContext>,
-    results: &mut Vec<ReferenceResult>,
+pub(super) fn find_all_references<'a>(
+    context: &CursorContext<'a, &ReferenceContext>,
+    results: &mut Vec<ReferenceResult<'a>>,
 ) -> Option<()> {
-    let db = context.db;
     let (name_text, _) = context
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in context.related() {
-        if let Some(data) = document.parse(db).as_tex() {
-            for label in data
-                .analyze(db)
-                .labels(db)
-                .iter()
-                .filter(|label| label.name(db).text(db) == &name_text)
-                .filter(|label| {
-                    label.origin(db).as_definition().is_none() || context.params.include_declaration
-                })
-            {
-                results.push(ReferenceResult {
-                    document,
-                    range: label.range(db),
-                });
-            }
+    for document in &context.related {
+        let DocumentData::Tex(data) = &document.data else { continue };
+
+        for label in data
+            .semantics
+            .labels
+            .iter()
+            .filter(|label| label.name.text == name_text)
+            .filter(|label| {
+                label.kind != LabelKind::Definition || context.params.include_declaration
+            })
+        {
+            results.push(ReferenceResult {
+                document,
+                range: label.name.range,
+            });
         }
     }
 

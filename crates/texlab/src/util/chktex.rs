@@ -4,18 +4,13 @@ use std::{
     process::Stdio,
 };
 
+use base_db::{Document, Workspace};
+use distro::Language;
 use encoding_rs_io::DecodeReaderBytesBuilder;
+use lsp_types::{Diagnostic, NumberOrString};
 use lsp_types::{DiagnosticSeverity, Position, Range};
 use once_cell::sync::Lazy;
 use regex::Regex;
-
-use crate::{
-    db::{
-        diagnostics::{Diagnostic, DiagnosticCode},
-        Document, Workspace,
-    },
-    Db,
-};
 
 #[derive(Debug)]
 pub struct Command {
@@ -24,25 +19,26 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new(db: &dyn Db, document: Document) -> Option<Self> {
-        document.parse(db).as_tex()?;
+    pub fn new(workspace: &Workspace, document: &Document) -> Option<Self> {
+        if document.language != Language::Tex {
+            return None;
+        }
 
-        let workspace = Workspace::get(db);
         let parent = workspace
-            .parents(db, document)
-            .iter()
+            .parents(document)
+            .into_iter()
             .next()
-            .map_or(document, Clone::clone);
+            .unwrap_or(document);
 
-        let working_dir = workspace
-            .working_dir(db, parent.directory(db))
-            .path(db)
-            .as_deref()?
-            .to_owned();
+        if parent.uri.scheme() != "file" {
+            log::warn!("Calling ChkTeX on non-local files is not supported yet.");
+            return None;
+        }
 
+        let working_dir = workspace.current_dir(&parent.dir).to_file_path().ok()?;
         log::debug!("Calling ChkTeX from directory: {}", working_dir.display());
 
-        let text = document.text(db).clone();
+        let text = document.text.clone();
 
         Some(Self { text, working_dir })
     }
@@ -88,9 +84,14 @@ impl Command {
 
                 diagnostics.push(Diagnostic {
                     range,
-                    severity,
-                    code: DiagnosticCode::Chktex(code.into()),
+                    severity: Some(severity),
+                    code: Some(NumberOrString::String(code.into())),
                     message,
+                    code_description: None,
+                    source: Some(String::from("ChkTeX")),
+                    related_information: None,
+                    tags: None,
+                    data: None,
                 });
             }
 

@@ -4,6 +4,7 @@ use std::path::Path;
 pub enum Language {
     Tex,
     Bib,
+    Aux,
     Log,
     Root,
     Tectonic,
@@ -22,8 +23,9 @@ impl Language {
 
         let extname = path.extension()?.to_str()?;
         match extname.to_lowercase().as_str() {
-            "tex" | "sty" | "cls" | "def" | "lco" | "aux" | "rnw" => Some(Self::Tex),
+            "tex" | "sty" | "cls" | "def" | "lco" | "rnw" => Some(Self::Tex),
             "bib" | "bibtex" => Some(Self::Bib),
+            "aux" => Some(Self::Aux),
             "log" => Some(Self::Log),
             _ => None,
         }

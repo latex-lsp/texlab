@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use rowan::ast::AstNode;
 use syntax::latex;
 
@@ -12,17 +13,17 @@ pub fn complete<'db>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::AcronymReference::cast(group.syntax().parent()?)?;
 
-    for document in context.related() {
-        if let Some(data) = document.parse(context.db).as_tex() {
-            for name in data
-                .root(context.db)
-                .descendants()
-                .filter_map(latex::AcronymDefinition::cast)
-                .filter_map(|node| node.name())
-                .filter_map(|name| name.key())
-            {
-                builder.glossary_entry(range, name.to_string());
-            }
+    for document in &context.related {
+        let DocumentData::Tex(data) = &document.data else { continue };
+
+        for name in data
+            .root_node()
+            .descendants()
+            .filter_map(latex::AcronymDefinition::cast)
+            .filter_map(|node| node.name())
+            .filter_map(|name| name.key())
+        {
+            builder.glossary_entry(range, name.to_string());
         }
     }
 

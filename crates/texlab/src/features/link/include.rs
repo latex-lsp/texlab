@@ -1,23 +1,20 @@
-use crate::{
-    db::{dependency_graph, Document, Workspace},
-    Db,
-};
-
 use super::LinkBuilder;
 
-pub(super) fn find_links(db: &dyn Db, document: Document, builder: &mut LinkBuilder) -> Option<()> {
-    let workspace = Workspace::get(db);
-    let parent = workspace
-        .parents(db, document)
+pub(super) fn find_links(builder: &mut LinkBuilder) -> Option<()> {
+    let parent = *builder
+        .workspace
+        .parents(builder.document)
         .iter()
         .next()
-        .copied()
-        .unwrap_or(document);
+        .unwrap_or(&builder.document);
 
-    let graph = dependency_graph(db, parent);
-    for edge in graph.edges.iter().filter(|edge| edge.source == document) {
-        if let Some(origin) = edge.origin {
-            builder.push(origin.link.range(db), edge.target);
+    let graph = base_db::graph::Graph::new(builder.workspace, parent);
+
+    for edge in &graph.edges {
+        if edge.source == builder.document {
+            if let Some(weight) = &edge.weight {
+                builder.push(weight.link.path.range, edge.target);
+            }
         }
     }
 

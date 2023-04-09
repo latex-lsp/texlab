@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use base_db::DocumentData;
 use rowan::{ast::AstNode, TextRange, TextSize};
 use syntax::latex;
 
@@ -15,12 +16,7 @@ pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    if context
-        .document
-        .location(context.db)
-        .path(context.db)
-        .is_none()
-    {
+    if context.document.path.is_none() {
         return None;
     }
 
@@ -56,16 +52,10 @@ pub fn complete<'db>(
 
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in context.related() {
-            if let Some(data) = document.parse(context.db).as_tex() {
-                for path in data
-                    .analyze(context.db)
-                    .graphics_paths(context.db)
-                    .iter()
-                    .map(|node| node.path(context.db))
-                {
-                    dirs.push(current_dir(context, &path_text, Some(path)));
-                }
+        for document in &context.related {
+            let DocumentData::Tex(data) = &document.data else { continue };
+            for graphics_path in &data.semantics.graphics_paths {
+                dirs.push(current_dir(context, &path_text, Some(graphics_path)));
             }
         }
     }
@@ -103,16 +93,16 @@ fn current_dir(
 ) -> Option<PathBuf> {
     let parent = context
         .workspace
-        .parents(context.db, context.document)
+        .parents(context.document)
         .iter()
         .next()
         .map_or(context.document, Clone::clone);
 
     let path = context
         .workspace
-        .working_dir(context.db, parent.directory(context.db))
-        .path(context.db)
-        .as_deref()?;
+        .current_dir(&parent.dir)
+        .to_file_path()
+        .ok()?;
 
     let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
     if !path_text.is_empty() {

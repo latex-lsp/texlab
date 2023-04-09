@@ -5,16 +5,14 @@ mod field;
 mod label;
 mod string_ref;
 
+use base_db::Workspace;
 use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position, Url};
 use rowan::TextRange;
 
-use crate::{
-    util::{cursor::CursorContext, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::util::{cursor::CursorContext, line_index_ext::LineIndexExt};
 
-pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
-    let context = CursorContext::new(db, uri, position, ())?;
+pub fn find(workspace: &Workspace, uri: &Url, position: Position) -> Option<Hover> {
+    let context = CursorContext::new(workspace, uri, position, ())?;
     log::debug!("[Hover] Cursor: {:?}", context.cursor);
 
     let result = label::find_hover(&context)
@@ -24,13 +22,12 @@ pub fn find(db: &dyn Db, uri: &Url, position: Position) -> Option<Hover> {
         .or_else(|| field::find_hover(&context))
         .or_else(|| entry_type::find_hover(&context))?;
 
-    let line_index = context.document.line_index(db);
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: result.value_kind,
             value: result.value,
         }),
-        range: Some(line_index.line_col_lsp_range(result.range)),
+        range: Some(context.document.line_index.line_col_lsp_range(result.range)),
     })
 }
 

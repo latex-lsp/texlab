@@ -1,5 +1,5 @@
 ---
-source: tests/lsp/text_document/completion.rs
+source: crates/texlab/tests/lsp/text_document/completion.rs
 expression: "complete(r#\"\n%! bug.tex\n\\documentclass{article}\n\\def\\あいうえお{}\n\\begin{document}\n\\あ\n  |\n ^\n\\end{document}\"#)"
 ---
 [

@@ -1,21 +1,17 @@
+use base_db::{DocumentData, Workspace};
 use lsp_types::{FoldingRange, FoldingRangeKind, Range, Url};
 use rowan::ast::AstNode;
 use syntax::{bibtex, latex};
 
-use crate::{
-    db::{parse::DocumentData, Workspace},
-    util::line_index_ext::LineIndexExt,
-    Db,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let line_index = document.line_index(db);
-    let foldings = match document.parse(db) {
+pub fn find_all(workspace: &Workspace, uri: &Url) -> Option<Vec<FoldingRange>> {
+    let document = workspace.lookup(uri)?;
+    let line_index = &document.line_index;
+    let foldings = match &document.data {
         DocumentData::Tex(data) => {
             let mut results = Vec::new();
-            let root = data.root(db);
-            for node in root.descendants() {
+            for node in data.root_node().descendants() {
                 if let Some(folding) = latex::Environment::cast(node.clone())
                     .map(|node| latex::small_range(&node))
                     .or_else(|| {
@@ -32,7 +28,7 @@ pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
             results
         }
         DocumentData::Bib(data) => {
-            let root = data.root(db);
+            let root = data.root_node();
             root.descendants()
                 .filter(|node| {
                     matches!(
@@ -43,7 +39,10 @@ pub fn find_all(db: &dyn Db, uri: &Url) -> Option<Vec<FoldingRange>> {
                 .map(|node| create_range(line_index.line_col_lsp_range(node.text_range())))
                 .collect()
         }
-        DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => {
+        DocumentData::Aux(_)
+        | DocumentData::Log(_)
+        | DocumentData::Root
+        | DocumentData::Tectonic => {
             return None;
         }
     };

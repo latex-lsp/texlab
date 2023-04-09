@@ -1,9 +1,7 @@
+use base_db::semantics::tex::LabelKind;
 use lsp_types::MarkupKind;
 
-use crate::{
-    db::Word,
-    util::{self, cursor::CursorContext},
-};
+use crate::util::{self, cursor::CursorContext};
 
 use super::HoverResult;
 
@@ -12,12 +10,16 @@ pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    let db = context.db;
-    util::label::find_label_definition(db, context.document, Word::new(db, name_text))
-        .and_then(|(document, label)| util::label::render(db, document, label))
+    context
+        .related
+        .iter()
+        .filter_map(|document| document.data.as_tex())
+        .flat_map(|data| data.semantics.labels.iter())
+        .find(|label| label.kind == LabelKind::Definition && label.name.text == name_text)
+        .and_then(|label| util::label::render(context.workspace, &context.related, label))
         .map(|label| HoverResult {
             range,
-            value: label.reference(db),
+            value: label.reference(),
             value_kind: MarkupKind::PlainText,
         })
 }

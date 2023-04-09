@@ -1,21 +1,22 @@
 use rowan::TextRange;
 
-use crate::{db::dependency_graph, util::cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
-    let db = context.db;
+pub(super) fn goto_definition<'a>(
+    context: &CursorContext<'a>,
+) -> Option<Vec<DefinitionResult<'a>>> {
     context
         .workspace
-        .parents(db, context.document)
+        .parents(context.document)
         .iter()
         .copied()
         .chain(std::iter::once(context.document))
-        .flat_map(|parent| dependency_graph(db, parent).edges.iter())
+        .flat_map(|parent| base_db::graph::Graph::new(context.workspace, parent).edges)
         .filter(|edge| edge.source == context.document)
         .find_map(|edge| {
-            let range = edge.origin?.link.range(db);
+            let range = edge.weight?.link.path.range;
             if range.contains_inclusive(context.offset) {
                 Some(vec![DefinitionResult {
                     origin_selection_range: range,

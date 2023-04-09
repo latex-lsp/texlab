@@ -1,8 +1,9 @@
+use base_db::Document;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use lsp_types::{
-    CompletionItem, CompletionItemKind, CompletionList, CompletionTextEdit, Documentation,
-    InsertTextFormat, MarkupContent, MarkupKind, TextEdit, Url,
+    ClientCapabilities, ClientInfo, CompletionItem, CompletionItemKind, CompletionList,
+    CompletionTextEdit, Documentation, InsertTextFormat, MarkupContent, MarkupKind, TextEdit, Url,
 };
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -14,33 +15,35 @@ use syntax::{
     latex,
 };
 
-use crate::{
-    db::{Document, ServerContext, Workspace},
-    util::{
-        capabilities::ClientCapabilitiesExt,
-        cursor::{Cursor, CursorContext},
-        lang_data::{BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, LANGUAGE_DATA},
-        line_index_ext::LineIndexExt,
-        lsp_enums::Structure,
-    },
+use crate::util::{
+    capabilities::ClientCapabilitiesExt,
+    cursor::{Cursor, CursorContext},
+    lang_data::{BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, LANGUAGE_DATA},
+    line_index_ext::LineIndexExt,
+    lsp_enums::Structure,
 };
 
 use super::COMPLETION_LIMIT;
 
-pub struct CompletionBuilder<'db> {
-    context: &'db CursorContext<'db>,
-    items: Vec<Item<'db>>,
+pub struct CompletionBuilder<'a> {
+    context: &'a CursorContext<'a>,
+    items: Vec<Item<'a>>,
     matcher: SkimMatcherV2,
     text_pattern: String,
     file_pattern: String,
     preselect: Option<String>,
     snippets: bool,
     markdown: bool,
-    item_kinds: &'db [CompletionItemKind],
+    item_kinds: &'a [CompletionItemKind],
+    always_incomplete: bool,
 }
 
-impl<'db> CompletionBuilder<'db> {
-    pub fn new(context: &'db CursorContext) -> Self {
+impl<'a> CompletionBuilder<'a> {
+    pub fn new(
+        context: &'a CursorContext,
+        client_capabilities: &'a ClientCapabilities,
+        client_info: Option<&'a ClientInfo>,
+    ) -> Self {
         let items = Vec::new();
         let matcher = SkimMatcherV2::default().ignore_case();
         let text_pattern = match &context.cursor {
@@ -94,7 +97,6 @@ impl<'db> CompletionBuilder<'db> {
             .and_then(|name| name.key())
             .map(|name| name.to_string());
 
-        let client_capabilities = context.workspace.client_capabilities(context.db);
         let snippets = client_capabilities.has_snippet_support();
         let markdown = client_capabilities.has_completion_markdown_support();
         let item_kinds = client_capabilities
@@ -104,6 +106,8 @@ impl<'db> CompletionBuilder<'db> {
             .and_then(|cap| cap.completion_item_kind.as_ref())
             .and_then(|cap| cap.value_set.as_deref())
             .unwrap_or_default();
+
+        let always_incomplete = client_info.map_or(false, |info| info.name == "Visual Studio Code");
 
         Self {
             context,
@@ -115,6 +119,7 @@ impl<'db> CompletionBuilder<'db> {
             snippets,
             markdown,
             item_kinds,
+            always_incomplete,
         }
     }
 
@@ -133,8 +138,8 @@ impl<'db> CompletionBuilder<'db> {
     pub fn generic_argument(
         &mut self,
         range: TextRange,
-        name: &'db str,
-        image: Option<&'db str>,
+        name: &'a str,
+        image: Option<&'a str>,
     ) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
@@ -148,8 +153,7 @@ impl<'db> CompletionBuilder<'db> {
     }
 
     pub fn begin_snippet(&mut self, range: TextRange) -> Option<()> {
-        let capabilities = Workspace::get(self.context.db).client_capabilities(self.context.db);
-        if capabilities.has_snippet_support() {
+        if self.snippets {
             let score = self.matcher.fuzzy_match("begin", &self.text_pattern[1..])?;
             self.items.push(Item {
                 range,
@@ -165,7 +169,7 @@ impl<'db> CompletionBuilder<'db> {
     pub fn citation(
         &mut self,
         range: TextRange,
-        document: Document,
+        document: &'a Document,
         entry: &bibtex::Entry,
     ) -> Option<()> {
         let key = entry.name_token()?.to_string();
@@ -202,7 +206,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn color_model(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn color_model(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -214,7 +218,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn color(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn color(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -229,10 +233,10 @@ impl<'db> CompletionBuilder<'db> {
     pub fn component_command(
         &mut self,
         range: TextRange,
-        name: &'db str,
-        image: Option<&'db str>,
-        glyph: Option<&'db str>,
-        file_names: &'db [SmolStr],
+        name: &'a str,
+        image: Option<&'a str>,
+        glyph: Option<&'a str>,
+        file_names: &'a [SmolStr],
     ) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern[1..])?;
         let data = Data::ComponentCommand {
@@ -255,8 +259,8 @@ impl<'db> CompletionBuilder<'db> {
     pub fn component_environment(
         &mut self,
         range: TextRange,
-        name: &'db str,
-        file_names: &'db [SmolStr],
+        name: &'a str,
+        file_names: &'a [SmolStr],
     ) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
@@ -272,7 +276,7 @@ impl<'db> CompletionBuilder<'db> {
     pub fn entry_type(
         &mut self,
         range: TextRange,
-        entry_type: &'db BibtexEntryTypeDoc,
+        entry_type: &'a BibtexEntryTypeDoc,
     ) -> Option<()> {
         let score = self
             .matcher
@@ -288,7 +292,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn field(&mut self, range: TextRange, field: &'db BibtexFieldDoc) -> Option<()> {
+    pub fn field(&mut self, range: TextRange, field: &'a BibtexFieldDoc) -> Option<()> {
         let score = self.matcher.fuzzy_match(&field.name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -300,7 +304,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn class(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn class(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -312,7 +316,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn package(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn package(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -351,10 +355,10 @@ impl<'db> CompletionBuilder<'db> {
     pub fn label(
         &mut self,
         range: TextRange,
-        name: &'db str,
+        name: &'a str,
         kind: Structure,
         header: Option<String>,
-        footer: Option<String>,
+        footer: Option<&'a str>,
         text: String,
     ) -> Option<()> {
         let score = self.matcher.fuzzy_match(&text, &self.text_pattern)?;
@@ -374,7 +378,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn tikz_library(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn tikz_library(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -386,7 +390,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn user_command(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn user_command(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern[1..])?;
         self.items.push(Item {
             range,
@@ -398,7 +402,7 @@ impl<'db> CompletionBuilder<'db> {
         Some(())
     }
 
-    pub fn user_environment(&mut self, range: TextRange, name: &'db str) -> Option<()> {
+    pub fn user_environment(&mut self, range: TextRange, name: &'a str) -> Option<()> {
         let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -426,14 +430,17 @@ impl<'db> CompletionBuilder<'db> {
             .map(|(i, item)| self.convert_item(item, i))
             .collect();
 
-        let db = self.context.db;
-        let always_incomplete = ServerContext::get(db).always_incomplete_completion_list(db);
-        list.is_incomplete = always_incomplete || list.items.len() >= COMPLETION_LIMIT;
+        list.is_incomplete = self.always_incomplete || list.items.len() >= COMPLETION_LIMIT;
         list
     }
 
     fn convert_item(&self, item: Item, index: usize) -> CompletionItem {
-        let range = self.context.line_index.line_col_lsp_range(item.range);
+        let range = self
+            .context
+            .document
+            .line_index
+            .line_col_lsp_range(item.range);
+
         let preselect = item.preselect;
         let mut item = match item.data {
             Data::EntryType { entry_type } => CompletionItem {
@@ -496,10 +503,7 @@ impl<'db> CompletionBuilder<'db> {
                 sort_text: Some(filter_text),
                 data: Some(
                     serde_json::to_value(CompletionItemData::Citation {
-                        uri: document
-                            .location(self.context.db)
-                            .uri(self.context.db)
-                            .clone(),
+                        uri: document.uri.clone(),
                         key: key.clone(),
                     })
                     .unwrap(),
@@ -582,7 +586,7 @@ impl<'db> CompletionBuilder<'db> {
                 label: name.into(),
                 kind: Some(kind.completion_kind()),
                 detail: header,
-                documentation: footer.map(Documentation::String),
+                documentation: footer.map(|footer| Documentation::String(footer.into())),
                 sort_text: Some(text.clone()),
                 filter_text: Some(text),
                 text_edit: Some(TextEdit::new(range, name.into()).into()),
@@ -590,7 +594,6 @@ impl<'db> CompletionBuilder<'db> {
             },
             Data::UserCommand { name } => {
                 let detail = "user-defined".into();
-                let name = &name[1..];
                 CompletionItem {
                     kind: Some(Structure::Command.completion_kind()),
                     text_edit: Some(TextEdit::new(range, name.into()).into()),
@@ -656,53 +659,53 @@ impl<'db> CompletionBuilder<'db> {
 }
 
 #[derive(Debug, Clone)]
-struct Item<'db> {
+struct Item<'a> {
     range: TextRange,
-    data: Data<'db>,
+    data: Data<'a>,
     preselect: bool,
     score: i32,
 }
 
 #[derive(Debug, Clone)]
-enum Data<'db> {
+enum Data<'a> {
     EntryType {
-        entry_type: &'db BibtexEntryTypeDoc,
+        entry_type: &'a BibtexEntryTypeDoc,
     },
     Field {
-        field: &'db BibtexFieldDoc,
+        field: &'a BibtexFieldDoc,
     },
     Argument {
-        name: &'db str,
-        image: Option<&'db str>,
+        name: &'a str,
+        image: Option<&'a str>,
     },
     BeginSnippet,
     Citation {
-        document: Document,
+        document: &'a Document,
         key: String,
         filter_text: String,
         category: BibtexEntryTypeCategory,
     },
     ComponentCommand {
-        name: &'db str,
-        image: Option<&'db str>,
-        glyph: Option<&'db str>,
-        file_names: &'db [SmolStr],
+        name: &'a str,
+        image: Option<&'a str>,
+        glyph: Option<&'a str>,
+        file_names: &'a [SmolStr],
     },
     ComponentEnvironment {
-        name: &'db str,
-        file_names: &'db [SmolStr],
+        name: &'a str,
+        file_names: &'a [SmolStr],
     },
     Class {
-        name: &'db str,
+        name: &'a str,
     },
     Package {
-        name: &'db str,
+        name: &'a str,
     },
     Color {
-        name: &'db str,
+        name: &'a str,
     },
     ColorModel {
-        name: &'db str,
+        name: &'a str,
     },
     GlossaryEntry {
         name: String,
@@ -714,20 +717,20 @@ enum Data<'db> {
         name: String,
     },
     Label {
-        name: &'db str,
+        name: &'a str,
         kind: Structure,
         header: Option<String>,
-        footer: Option<String>,
+        footer: Option<&'a str>,
         text: String,
     },
     UserCommand {
-        name: &'db str,
+        name: &'a str,
     },
     UserEnvironment {
-        name: &'db str,
+        name: &'a str,
     },
     TikzLibrary {
-        name: &'db str,
+        name: &'a str,
     },
 }
 

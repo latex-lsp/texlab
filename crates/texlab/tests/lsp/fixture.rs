@@ -51,7 +51,7 @@ impl Fixture {
             let language_id = String::from(match language {
                 Language::Tex => "latex",
                 Language::Bib => "bibtex",
-                Language::Log | Language::Root | Language::Tectonic => continue,
+                Language::Aux | Language::Log | Language::Root | Language::Tectonic => continue,
             });
 
             client.send_notification::<DidOpenTextDocument>(DidOpenTextDocumentParams {

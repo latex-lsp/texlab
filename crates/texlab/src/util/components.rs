@@ -1,16 +1,13 @@
 use std::io::Read;
 
+use base_db::{semantics::tex::LinkKind, Document};
 use flate2::read::GzDecoder;
 use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 use smol_str::SmolStr;
-
-use crate::{
-    db::{analysis::TexLinkKind, Document, Workspace},
-    Db,
-};
 
 #[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,15 +26,14 @@ impl ComponentDatabase {
         })
     }
 
-    pub fn linked_components(&self, db: &dyn Db, child: Document) -> Vec<&Component> {
-        Workspace::get(db)
-            .related(db, child)
+    pub fn linked_components(&self, related: &FxHashSet<&Document>) -> Vec<&Component> {
+        related
             .iter()
-            .filter_map(|document| document.parse(db).as_tex())
-            .flat_map(|data| data.analyze(db).links(db))
-            .filter_map(|link| match link.kind(db) {
-                TexLinkKind::Sty => Some(format!("{}.sty", link.path(db).text(db))),
-                TexLinkKind::Cls => Some(format!("{}.cls", link.path(db).text(db))),
+            .filter_map(|document| document.data.as_tex())
+            .flat_map(|data| data.semantics.links.iter())
+            .filter_map(|link| match link.kind {
+                LinkKind::Sty => Some(format!("{}.sty", link.path.text)),
+                LinkKind::Cls => Some(format!("{}.cls", link.path.text)),
                 _ => None,
             })
             .filter_map(|name| self.find(&name))

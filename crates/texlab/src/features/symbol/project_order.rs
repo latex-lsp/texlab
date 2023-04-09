@@ -1,25 +1,25 @@
+use base_db::{graph, Document, Workspace};
 use itertools::Itertools;
 use lsp_types::Url;
 
-use crate::{
-    db::{dependency_graph, Document, Workspace},
-    Db,
-};
-
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ProjectOrdering {
-    ordering: Vec<Document>,
+pub struct ProjectOrdering<'a> {
+    ordering: Vec<&'a Document>,
 }
 
-impl ProjectOrdering {
-    pub fn new(db: &dyn Db) -> Self {
-        let workspace = Workspace::get(db);
-
+impl<'a> ProjectOrdering<'a> {
+    pub fn new(workspace: &'a Workspace) -> Self {
         let ordering: Vec<_> = workspace
-            .index_files(db)
-            .chain(workspace.documents(db).iter().copied())
+            .iter()
+            .filter(|document| {
+                document
+                    .data
+                    .as_tex()
+                    .map_or(false, |data| data.semantics.can_be_root)
+            })
+            .chain(workspace.iter())
             .flat_map(|document| {
-                dependency_graph(db, document)
+                graph::Graph::new(workspace, document)
                     .preorder()
                     .rev()
                     .collect_vec()
@@ -30,172 +30,174 @@ impl ProjectOrdering {
         Self { ordering }
     }
 
-    pub fn get(&self, db: &dyn Db, uri: &Url) -> usize {
+    pub fn get(&self, uri: &Url) -> usize {
         self.ordering
             .iter()
-            .position(|doc| doc.location(db).uri(db) == uri)
+            .position(|doc| doc.uri == *uri)
             .unwrap_or(std::usize::MAX)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use base_db::Owner;
     use distro::Language;
-
-    use crate::{db::Owner, Database};
+    use rowan::TextSize;
 
     use super::*;
 
     #[test]
     fn test_no_cycles() {
-        let mut db = Database::default();
-        let workspace = Workspace::get(&db);
+        let mut workspace = Workspace::default();
 
-        let a = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/a.tex").unwrap(),
+        let a = Url::parse("http://example.com/a.tex").unwrap();
+        let b = Url::parse("http://example.com/b.tex").unwrap();
+        let c = Url::parse("http://example.com/c.tex").unwrap();
+
+        workspace.open(
+            a.clone(),
             String::new(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let b = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/b.tex").unwrap(),
+        workspace.open(
+            b.clone(),
             String::new(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let c = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/c.tex").unwrap(),
+        workspace.open(
+            c.clone(),
             r#"\documentclass{article}\include{b}\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&db);
-
-        assert_eq!(ordering.get(&db, a.location(&db).uri(&db)), 0);
-        assert_eq!(ordering.get(&db, b.location(&db).uri(&db)), 1);
-        assert_eq!(ordering.get(&db, c.location(&db).uri(&db)), 2);
+        let ordering = ProjectOrdering::new(&workspace);
+        assert_eq!(ordering.get(&a), 0);
+        assert_eq!(ordering.get(&b), 1);
+        assert_eq!(ordering.get(&c), 2);
     }
 
     #[test]
     fn test_two_layers() {
-        let mut db = Database::default();
-        let workspace = Workspace::get(&db);
+        let mut workspace = Workspace::default();
 
-        let a = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/a.tex").unwrap(),
+        let a = Url::parse("http://example.com/a.tex").unwrap();
+        let b = Url::parse("http://example.com/b.tex").unwrap();
+        let c = Url::parse("http://example.com/c.tex").unwrap();
+
+        workspace.open(
+            a.clone(),
             String::new(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
-
-        let b = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/b.tex").unwrap(),
+        workspace.open(
+            b.clone(),
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
-
-        let c = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/c.tex").unwrap(),
+        workspace.open(
+            c.clone(),
             r#"\documentclass{article}\include{b}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&db);
-
-        assert_eq!(ordering.get(&db, a.location(&db).uri(&db)), 0);
-        assert_eq!(ordering.get(&db, b.location(&db).uri(&db)), 1);
-        assert_eq!(ordering.get(&db, c.location(&db).uri(&db)), 2);
+        let ordering = ProjectOrdering::new(&workspace);
+        assert_eq!(ordering.get(&a), 0);
+        assert_eq!(ordering.get(&b), 1);
+        assert_eq!(ordering.get(&c), 2);
     }
 
     #[test]
     fn test_cycles() {
-        let mut db = Database::default();
-        let workspace = Workspace::get(&db);
+        let mut workspace = Workspace::default();
 
-        let a = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/a.tex").unwrap(),
+        let a = Url::parse("http://example.com/a.tex").unwrap();
+        let b = Url::parse("http://example.com/b.tex").unwrap();
+        let c = Url::parse("http://example.com/c.tex").unwrap();
+        workspace.open(
+            a.clone(),
             r#"\documentclass{article}\include{b}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
         workspace.open(
-            &mut db,
-            Url::parse("http://example.com/b.tex").unwrap(),
+            b.clone(),
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
         workspace.open(
-            &mut db,
-            Url::parse("http://example.com/c.tex").unwrap(),
+            c.clone(),
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&db);
-        assert_ne!(ordering.get(&db, a.location(&db).uri(&db)), 0);
+        let ordering = ProjectOrdering::new(&workspace);
+        assert_ne!(ordering.get(&a), 0);
     }
 
     #[test]
     fn test_multiple_roots() {
-        let mut db = Database::default();
-        let workspace = Workspace::get(&db);
+        let mut workspace = Workspace::default();
 
-        let a = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/a.tex").unwrap(),
+        let a = Url::parse("http://example.com/a.tex").unwrap();
+        let b = Url::parse("http://example.com/b.tex").unwrap();
+        let c = Url::parse("http://example.com/c.tex").unwrap();
+        let d = Url::parse("http://example.com/d.tex").unwrap();
+
+        workspace.open(
+            a.clone(),
             r#"\documentclass{article}\include{b}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let b = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/b.tex").unwrap(),
+        workspace.open(
+            b.clone(),
             String::new(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let c = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/c.tex").unwrap(),
+        workspace.open(
+            c.clone(),
             String::new(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let d = workspace.open(
-            &mut db,
-            Url::parse("http://example.com/d.tex").unwrap(),
+        workspace.open(
+            d.clone(),
             r#"\documentclass{article}\include{c}"#.to_string(),
             Language::Tex,
             Owner::Client,
+            TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&db);
-        assert!(
-            ordering.get(&db, b.location(&db).uri(&db))
-                < ordering.get(&db, a.location(&db).uri(&db))
-        );
-        assert!(
-            ordering.get(&db, c.location(&db).uri(&db))
-                < ordering.get(&db, d.location(&db).uri(&db))
-        );
+        let ordering = ProjectOrdering::new(&workspace);
+        assert!(ordering.get(&b) < ordering.get(&a));
+        assert!(ordering.get(&c) < ordering.get(&d));
     }
 }

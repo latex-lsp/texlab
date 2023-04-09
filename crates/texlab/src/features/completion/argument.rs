@@ -5,10 +5,7 @@ use crate::util::{components::COMPONENT_DATABASE, cursor::CursorContext};
 
 use super::builder::CompletionBuilder;
 
-pub fn complete<'db>(
-    context: &'db CursorContext,
-    builder: &mut CompletionBuilder<'db>,
-) -> Option<()> {
+pub fn complete<'a>(context: &'a CursorContext, builder: &mut CompletionBuilder<'a>) -> Option<()> {
     let token = context.cursor.as_tex()?;
 
     let range = if token.kind() == latex::WORD {
@@ -37,7 +34,7 @@ pub fn complete<'db>(
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(context.db, context.document) {
+    for component in COMPONENT_DATABASE.linked_components(&context.related) {
         for component_command in component
             .commands
             .iter()

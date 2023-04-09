@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use citeproc::field::text::TextFieldData;
 use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
@@ -8,7 +9,7 @@ use crate::util::cursor::CursorContext;
 use super::HoverResult;
 
 pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
-    let data = context.document.parse(context.db).as_bib()?;
+    let DocumentData::Bib(data) = &context.document.data else { return None };
 
     let name = context
         .cursor
@@ -20,7 +21,7 @@ pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
         })?;
 
     for string in data
-        .root(context.db)
+        .root_node()
         .children()
         .filter_map(bibtex::StringDef::cast)
     {

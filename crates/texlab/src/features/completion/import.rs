@@ -35,7 +35,7 @@ pub fn complete<'db>(
         }
     }
 
-    let file_name_db = context.workspace.file_name_db(context.db);
+    let file_name_db = &context.workspace.distro().file_name_db;
     for file_name in file_name_db
         .iter()
         .map(|(file_name, _)| file_name)

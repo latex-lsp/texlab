@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use lsp_types::ReferenceContext;
 use rowan::ast::AstNode;
 use syntax::{
@@ -5,24 +6,23 @@ use syntax::{
     latex,
 };
 
-use crate::{db::parse::DocumentData, util::cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::ReferenceResult;
 
-pub(super) fn find_all_references(
-    context: &CursorContext<&ReferenceContext>,
-    results: &mut Vec<ReferenceResult>,
+pub(super) fn find_all_references<'a>(
+    context: &CursorContext<'a, &ReferenceContext>,
+    results: &mut Vec<ReferenceResult<'a>>,
 ) -> Option<()> {
-    let db = context.db;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
 
-    for document in context.related() {
-        match document.parse(db) {
+    for document in &context.related {
+        match &document.data {
             DocumentData::Tex(data) => {
-                data.root(db)
+                data.root_node()
                     .descendants()
                     .filter_map(latex::Citation::cast)
                     .filter_map(|citation| citation.key_list())
@@ -34,7 +34,7 @@ pub(super) fn find_all_references(
                     });
             }
             DocumentData::Bib(data) if context.params.include_declaration => {
-                data.root(db)
+                data.root_node()
                     .children()
                     .filter_map(bibtex::Entry::cast)
                     .filter_map(|entry| entry.name_token())
@@ -45,9 +45,10 @@ pub(super) fn find_all_references(
                     });
             }
             DocumentData::Bib(_)
+            | DocumentData::Aux(_)
             | DocumentData::Log(_)
-            | DocumentData::TexlabRoot(_)
-            | DocumentData::Tectonic(_) => {}
+            | DocumentData::Root
+            | DocumentData::Tectonic => {}
         };
     }
 

@@ -7,12 +7,15 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+use base_db::Workspace;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use lsp_types::{notification::LogMessage, LogMessageParams, TextDocumentIdentifier, Url};
+use lsp_types::{
+    notification::LogMessage, ClientCapabilities, LogMessageParams, TextDocumentIdentifier, Url,
+};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::{client::LspClient, db::Workspace, util::capabilities::ClientCapabilitiesExt, Db};
+use crate::{client::LspClient, util::capabilities::ClientCapabilitiesExt};
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -46,42 +49,34 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn new(db: &dyn Db, uri: Url, client: LspClient) -> Option<Self> {
-        let workspace = Workspace::get(db);
-        let document = match workspace.lookup_uri(db, &uri) {
-            Some(child) => workspace
-                .parents(db, child)
-                .iter()
-                .next()
-                .copied()
-                .unwrap_or(child),
-            None => return None,
-        };
+    pub fn new(
+        workspace: &Workspace,
+        uri: Url,
+        client: LspClient,
+        client_capabilities: &ClientCapabilities,
+    ) -> Option<Self> {
+        let Some(document) = workspace
+            .lookup(&uri)
+            .map(|child| workspace.parents(child).into_iter().next().unwrap_or(child)) else { return None };
 
-        if document.location(db).path(db).is_none() {
+        let Some(path) = document.path.as_deref() else {
             log::warn!("Document {uri} cannot be compiled; skipping...");
             return None;
-        }
+        };
 
-        let config = &db.config().build;
+        let config = &workspace.config().build;
         let program = config.program.clone();
-        let path = document.location(db).path(db).as_deref().unwrap();
         let args = config
             .args
             .iter()
             .map(|arg| replace_placeholder(arg, path))
             .collect();
 
-        let working_dir = workspace
-            .working_dir(db, document.directory(db))
-            .path(db)
-            .clone()?;
+        let working_dir = workspace.current_dir(&document.dir).to_file_path().ok()?;
 
         Some(Self {
-            uri: document.location(db).uri(db).clone(),
-            progress: workspace
-                .client_capabilities(db)
-                .has_work_done_progress_support(),
+            uri: document.uri.clone(),
+            progress: client_capabilities.has_work_done_progress_support(),
             program,
             args,
             working_dir,

@@ -1,33 +1,34 @@
 use anyhow::Result;
+use base_db::{graph, Document, Workspace};
 use itertools::Itertools;
 use std::io::Write;
 
 use rustc_hash::FxHashMap;
 
-use crate::{
-    db::{dependency_graph, Document, Workspace},
-    Db,
-};
-
-pub fn show_dependency_graph(db: &dyn Db) -> Result<String> {
-    let workspace = Workspace::get(db);
-
+pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
     let documents = workspace
-        .documents(db)
         .iter()
         .enumerate()
-        .map(|(i, doc)| (*doc, format!("v{i:0>5}")))
-        .collect::<FxHashMap<Document, String>>();
+        .map(|(i, doc)| (doc, format!("v{i:0>5}")))
+        .collect::<FxHashMap<&Document, String>>();
 
     let mut writer = Vec::new();
     writeln!(&mut writer, "digraph G {{")?;
     writeln!(&mut writer, "rankdir = LR;")?;
 
     for (document, node) in &documents {
-        let label = document.location(db).uri(db).as_str();
-        let shape = if document.can_be_root(db) {
+        let label = document.uri.as_str();
+        let shape = if document
+            .data
+            .as_tex()
+            .map_or(false, |data| data.semantics.can_be_root)
+        {
             "tripleoctagon"
-        } else if document.can_be_built(db) {
+        } else if document
+            .data
+            .as_tex()
+            .map_or(false, |data| data.semantics.can_be_compiled)
+        {
             "doubleoctagon"
         } else {
             "octagon"
@@ -37,17 +38,16 @@ pub fn show_dependency_graph(db: &dyn Db) -> Result<String> {
     }
 
     for edge in workspace
-        .documents(db)
         .iter()
-        .flat_map(|start| dependency_graph(db, *start).edges.iter())
+        .flat_map(|start| graph::Graph::new(workspace, start).edges)
         .unique()
     {
-        let source = &documents[&edge.source];
-        let target = &documents[&edge.target];
+        let source = &documents[edge.source];
+        let target = &documents[edge.target];
         let label = edge
-            .origin
+            .weight
             .as_ref()
-            .map_or("<artifact>", |origin| &origin.link.path(db).text(db));
+            .map_or("<artifact>", |weight| &weight.link.path.text);
 
         writeln!(&mut writer, "\t{source} -> {target} [label=\"{label}\"];")?;
     }

@@ -1,37 +1,36 @@
-use crate::{
-    db::analysis::label,
-    util::{self, cursor::CursorContext},
-};
+use base_db::{semantics::tex::LabelKind, DocumentData};
+
+use crate::util::{self, cursor::CursorContext};
 
 use super::DefinitionResult;
 
-pub(super) fn goto_definition(context: &CursorContext) -> Option<Vec<DefinitionResult>> {
-    let db = context.db;
+pub(super) fn goto_definition<'a>(
+    context: &CursorContext<'a>,
+) -> Option<Vec<DefinitionResult<'a>>> {
     let (name_text, origin_selection_range) = context
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in context.related() {
-        if let Some(data) = document.parse(db).as_tex() {
-            if let Some(label) = data
-                .analyze(db)
-                .labels(db)
-                .iter()
-                .filter(|label| matches!(label.origin(db), label::Origin::Definition(_)))
-                .find(|label| label.name(db).text(db) == name_text.as_str())
-            {
-                let target_selection_range = label.range(db);
-                let target_range = util::label::render(db, document, *label)
-                    .map_or(target_selection_range, |label| label.range);
+    for document in &context.related {
+        let DocumentData::Tex(data) = &document.data else { continue };
 
-                return Some(vec![DefinitionResult {
-                    origin_selection_range,
-                    target: document,
-                    target_range,
-                    target_selection_range,
-                }]);
-            }
-        }
+        let Some(label) = data
+            .semantics
+            .labels
+            .iter()
+            .filter(|label| label.kind == LabelKind::Definition)
+            .find(|label| label.name.text == name_text) else { continue };
+
+        let target_selection_range = label.name.range;
+        let target_range = util::label::render(context.workspace, &context.related, label)
+            .map_or(target_selection_range, |label| label.range);
+
+        return Some(vec![DefinitionResult {
+            origin_selection_range,
+            target: document,
+            target_range,
+            target_selection_range,
+        }]);
     }
 
     None

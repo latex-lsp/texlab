@@ -1,36 +1,40 @@
 mod label;
 
+use base_db::{Document, Workspace};
 use lsp_types::{InlayHint, InlayHintLabel, Range, Url};
-use rowan::TextSize;
+use rowan::{TextRange, TextSize};
+use rustc_hash::FxHashSet;
 
-use crate::{
-    db::Workspace,
-    util::{line_index::LineIndex, line_index_ext::LineIndexExt},
-    Db,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_all(db: &dyn Db, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
-    let document = Workspace::get(db).lookup_uri(db, uri)?;
-    let line_index = document.line_index(db);
+pub fn find_all(workspace: &Workspace, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
+    let document = workspace.lookup(uri)?;
+    let range = document.line_index.offset_lsp_range(range);
+    let related = workspace.related(document);
 
     let mut builder = InlayHintBuilder {
-        line_index,
+        workspace,
+        document,
+        related,
+        range,
         hints: Vec::new(),
     };
 
-    let range = line_index.offset_lsp_range(range);
-    label::find_hints(db, document, range, &mut builder);
+    label::find_hints(&mut builder);
     Some(builder.hints)
 }
 
-struct InlayHintBuilder<'db> {
-    line_index: &'db LineIndex,
+struct InlayHintBuilder<'a> {
+    workspace: &'a Workspace,
+    document: &'a Document,
+    related: FxHashSet<&'a Document>,
+    range: TextRange,
     hints: Vec<InlayHint>,
 }
 
 impl<'db> InlayHintBuilder<'db> {
     pub fn push(&mut self, offset: TextSize, text: String) {
-        let position = self.line_index.line_col_lsp(offset);
+        let position = self.document.line_index.line_col_lsp(offset);
         self.hints.push(InlayHint {
             position,
             label: InlayHintLabel::String(text),

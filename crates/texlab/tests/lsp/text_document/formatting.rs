@@ -1,8 +1,9 @@
+use base_db::LineIndex;
 use insta::assert_snapshot;
 use lsp_types::{
     request::Formatting, ClientCapabilities, DocumentFormattingParams, FormattingOptions,
 };
-use texlab::util::{line_index::LineIndex, line_index_ext::LineIndexExt};
+use texlab::util::line_index_ext::LineIndexExt;
 
 use crate::fixture::TestBed;
 

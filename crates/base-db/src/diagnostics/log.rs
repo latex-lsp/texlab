@@ -7,7 +7,10 @@ use crate::{Document, DocumentData, Workspace};
 
 use super::{Diagnostic, ErrorCode};
 
-pub fn analyze(workspace: &Workspace, log_document: &Document) -> FxHashMap<Url, Vec<Diagnostic>> {
+pub fn analyze<'a>(
+    workspace: &'a Workspace,
+    log_document: &'a Document,
+) -> FxHashMap<&'a Document, Vec<Diagnostic>> {
     let mut results = FxHashMap::default();
 
     let DocumentData::Log(data) = &log_document.data else { return results };
@@ -40,10 +43,7 @@ pub fn analyze(workspace: &Workspace, log_document: &Document) -> FxHashMap<Url,
             code: ErrorCode::Build(error.clone()),
         };
 
-        results
-            .entry(tex_document.uri.clone())
-            .or_default()
-            .push(diagnostic);
+        results.entry(tex_document).or_default().push(diagnostic);
     }
 
     results

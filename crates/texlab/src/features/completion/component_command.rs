@@ -8,7 +8,7 @@ pub fn complete<'db>(
 ) -> Option<()> {
     let range = context.cursor.command_range(context.offset)?;
 
-    for component in COMPONENT_DATABASE.linked_components(context.db, context.document) {
+    for component in COMPONENT_DATABASE.linked_components(&context.related) {
         for command in &component.commands {
             builder.component_command(
                 range,

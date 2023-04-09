@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use distro::Language;
 use rowan::TextSize;
-use syntax::{latex, BuildError};
+use syntax::{bibtex, latex, BuildError};
 use url::Url;
 
 use crate::{
@@ -17,7 +17,7 @@ pub enum Owner {
     Server,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Document {
     pub uri: Url,
     pub dir: Url,
@@ -37,6 +37,7 @@ impl Document {
         text: String,
         language: Language,
         owner: Owner,
+        cursor: TextSize,
         config: &Config,
     ) -> Self {
         let dir = uri.join(".").unwrap();
@@ -49,7 +50,6 @@ impl Document {
 
         let line_index = LineIndex::new(&text);
 
-        let cursor = TextSize::from(0);
         let diagnostics = Vec::new();
         let data = match language {
             Language::Tex => {
@@ -61,6 +61,12 @@ impl Document {
             Language::Bib => {
                 let green = parser::parse_bibtex(&text);
                 DocumentData::Bib(BibDocumentData { green })
+            }
+            Language::Aux => {
+                let green = parser::parse_latex(&text);
+                let mut semantics = semantics::aux::Semantics::default();
+                semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
+                DocumentData::Aux(AuxDocumentData { green, semantics })
             }
             Language::Log => {
                 let errors = parser::parse_build_log(&text).errors;
@@ -86,7 +92,7 @@ impl Document {
         match language {
             Language::Tex => diagnostics::tex::analyze(&mut document, config),
             Language::Bib => diagnostics::bib::analyze(&mut document),
-            Language::Log | Language::Root | Language::Tectonic => (),
+            Language::Aux | Language::Log | Language::Root | Language::Tectonic => (),
         };
 
         document
@@ -119,7 +125,7 @@ impl std::hash::Hash for Document {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DocumentData {
     Tex(TexDocumentData),
     Bib(BibDocumentData),
@@ -129,23 +135,61 @@ pub enum DocumentData {
     Tectonic,
 }
 
-#[derive(Debug)]
+impl DocumentData {
+    pub fn as_tex(&self) -> Option<&TexDocumentData> {
+        if let DocumentData::Tex(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_bib(&self) -> Option<&BibDocumentData> {
+        if let DocumentData::Bib(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_aux(&self) -> Option<&AuxDocumentData> {
+        if let DocumentData::Aux(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct TexDocumentData {
     pub green: rowan::GreenNode,
     pub semantics: semantics::tex::Semantics,
 }
 
-#[derive(Debug)]
+impl TexDocumentData {
+    pub fn root_node(&self) -> latex::SyntaxNode {
+        latex::SyntaxNode::new_root(self.green.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct BibDocumentData {
     pub green: rowan::GreenNode,
 }
 
-#[derive(Debug)]
+impl BibDocumentData {
+    pub fn root_node(&self) -> bibtex::SyntaxNode {
+        bibtex::SyntaxNode::new_root(self.green.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct LogDocumentData {
     pub errors: Vec<BuildError>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AuxDocumentData {
     pub green: rowan::GreenNode,
     pub semantics: semantics::aux::Semantics,

@@ -1,6 +1,7 @@
 use std::collections::hash_map::HashMap;
 
 use anyhow::Result;
+use base_db::Workspace;
 use lsp_types::{ApplyWorkspaceEditParams, TextDocumentPositionParams, TextEdit, WorkspaceEdit};
 use rowan::ast::AstNode;
 use serde::{Deserialize, Serialize};
@@ -9,11 +10,10 @@ use thiserror::Error;
 use crate::{
     normalize_uri,
     util::{cursor::CursorContext, line_index_ext::LineIndexExt},
-    Db,
 };
 
 fn change_environment_context(
-    db: &dyn Db,
+    workspace: &Workspace,
     args: Vec<serde_json::Value>,
 ) -> Result<CursorContext<Params>> {
     let params: ChangeEnvironmentParams = serde_json::from_value(
@@ -28,7 +28,7 @@ fn change_environment_context(
     let position = params.text_document_position.position;
 
     CursorContext::new(
-        db,
+        workspace,
         &uri,
         position,
         Params {
@@ -39,10 +39,10 @@ fn change_environment_context(
 }
 
 pub fn change_environment(
-    db: &dyn Db,
+    workspace: &Workspace,
     args: Vec<serde_json::Value>,
 ) -> Option<((), ApplyWorkspaceEditParams)> {
-    let context = change_environment_context(db, args).ok()?;
+    let context = change_environment_context(workspace, args).ok()?;
     let (beg, end) = context.find_environment()?;
 
     let beg_name = beg.to_string();
@@ -53,10 +53,10 @@ pub fn change_environment(
     }
     let new_name = &context.params.new_name;
 
-    let line_index = context.document.line_index(db);
+    let line_index = &context.document.line_index;
     let mut changes = HashMap::default();
     changes.insert(
-        context.document.location(db).uri(db).clone(),
+        context.document.uri.clone(),
         vec![
             TextEdit::new(
                 line_index.line_col_lsp_range(beg.syntax().text_range()),

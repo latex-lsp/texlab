@@ -5,6 +5,7 @@ use std::{
 
 use distro::{Distro, Language};
 use itertools::Itertools;
+use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
 use url::Url;
 
@@ -44,11 +45,24 @@ impl Workspace {
         &self.distro
     }
 
-    pub fn open(&mut self, uri: Url, text: String, language: Language, owner: Owner) {
+    pub fn open(
+        &mut self,
+        uri: Url,
+        text: String,
+        language: Language,
+        owner: Owner,
+        cursor: TextSize,
+    ) {
         log::debug!("Opening document {uri}...");
         self.documents.remove(&uri);
-        self.documents
-            .insert(Document::parse(uri, text, language, owner, &self.config));
+        self.documents.insert(Document::parse(
+            uri,
+            text,
+            language,
+            owner,
+            cursor,
+            &self.config,
+        ));
     }
 
     pub fn load(&mut self, path: &Path, language: Language, owner: Owner) -> std::io::Result<()> {
@@ -60,7 +74,22 @@ impl Workspace {
             Cow::Owned(text) => text,
         };
 
-        Ok(self.open(uri, text, language, owner))
+        Ok(self.open(uri, text, language, owner, TextSize::default()))
+    }
+
+    pub fn edit(&mut self, uri: &Url, delete: TextRange, insert: &str) -> Option<()> {
+        let document = self.lookup(uri)?;
+        let mut text = document.text.clone();
+        text.replace_range(std::ops::Range::<usize>::from(delete), insert);
+        self.open(
+            document.uri.clone(),
+            text,
+            document.language,
+            Owner::Client,
+            delete.start(),
+        );
+
+        Some(())
     }
 
     pub fn watch(
@@ -119,12 +148,7 @@ impl Workspace {
         for graph in self
             .iter()
             .map(|start| graph::Graph::new(self, start))
-            .filter(|graph| {
-                graph
-                    .edges
-                    .iter()
-                    .any(|edge| edge.source == child || edge.target == child)
-            })
+            .filter(|graph| graph.preorder().contains(&child))
         {
             results.extend(graph.preorder());
         }
@@ -160,6 +184,13 @@ impl Workspace {
         self.folders = folders;
     }
 
+    pub fn set_cursor(&mut self, uri: &Url, cursor: TextSize) -> Option<()> {
+        let mut document = self.lookup(uri)?.clone();
+        document.cursor = cursor;
+        self.documents.insert(document);
+        Some(())
+    }
+
     pub fn reload(&mut self) {
         let uris = self
             .documents
@@ -174,8 +205,20 @@ impl Workspace {
                 document.text.clone(),
                 document.language,
                 document.owner,
+                document.cursor,
             );
         }
+    }
+
+    pub fn remove(&mut self, uri: &Url) {
+        self.documents.remove(uri);
+    }
+
+    pub fn close(&mut self, uri: &Url) -> Option<()> {
+        let mut document = self.lookup(uri)?.clone();
+        document.owner = Owner::Server;
+        self.documents.insert(document);
+        Some(())
     }
 
     pub fn discover(&mut self) {

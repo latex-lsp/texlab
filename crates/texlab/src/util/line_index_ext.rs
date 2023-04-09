@@ -1,7 +1,6 @@
+use base_db::{LineCol, LineColUtf16, LineIndex};
 use lsp_types::{Position, Range};
 use rowan::{TextRange, TextSize};
-
-use super::line_index::{LineColUtf16, LineIndex};
 
 pub trait LineIndexExt {
     fn offset_lsp(&self, line_col: Position) -> TextSize;
@@ -36,7 +35,17 @@ impl LineIndexExt for LineIndex {
 
     fn line_col_lsp_range(&self, offset: TextRange) -> Range {
         let start = self.line_col_lsp(offset.start());
-        let end = self.line_col_lsp(offset.end());
+        let mut end = self.line_col_lsp(offset.end());
+        if end.line != start.line && end.character == 0 {
+            // Prefer keeping multi-line ranges on the same line
+            let line_end = self.offset(LineCol {
+                line: end.line,
+                col: 0,
+            });
+
+            end = self.line_col_lsp(line_end - TextSize::from(1));
+        }
+
         Range::new(start, end)
     }
 }

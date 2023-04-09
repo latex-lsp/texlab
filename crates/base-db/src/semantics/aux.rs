@@ -2,7 +2,7 @@ use rowan::ast::AstNode;
 use rustc_hash::FxHashMap;
 use syntax::latex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct Semantics {
     pub label_numbers: FxHashMap<String, String>,
 }

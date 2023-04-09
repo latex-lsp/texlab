@@ -1,10 +1,12 @@
-use crate::{db::parse::DocumentData, util::cursor::CursorContext};
+use base_db::DocumentData;
 use rowan::{ast::AstNode, TextRange};
 use rustc_hash::FxHashMap;
 use syntax::{
     bibtex::{self, HasName},
     latex,
 };
+
+use crate::util::cursor::CursorContext;
 
 use super::{Indel, Params, RenameResult};
 
@@ -16,17 +18,18 @@ pub(super) fn prepare_rename<T>(context: &CursorContext<T>) -> Option<TextRange>
     Some(range)
 }
 
-pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
+pub(super) fn rename<'a>(context: &CursorContext<'a, Params>) -> Option<RenameResult<'a>> {
     prepare_rename(context)?;
     let (key_text, _) = context
         .find_citation_key_word()
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = FxHashMap::default();
-    for document in context.related() {
-        match document.parse(context.db) {
+    for document in &context.related {
+        match &document.data {
             DocumentData::Tex(data) => {
-                let root = data.root(context.db);
+                let root = data.root_node();
+
                 let edits: Vec<_> = root
                     .descendants()
                     .filter_map(latex::Citation::cast)
@@ -38,10 +41,11 @@ pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
                         insert: context.params.new_name.clone(),
                     })
                     .collect();
-                changes.insert(document, edits);
+
+                changes.insert(*document, edits);
             }
             DocumentData::Bib(data) => {
-                let root = data.root(context.db);
+                let root = data.root_node();
                 let edits: Vec<_> = root
                     .descendants()
                     .filter_map(bibtex::Entry::cast)
@@ -52,10 +56,14 @@ pub(super) fn rename(context: &CursorContext<Params>) -> Option<RenameResult> {
                         insert: context.params.new_name.clone(),
                     })
                     .collect();
-                changes.insert(document, edits);
+
+                changes.insert(*document, edits);
             }
-            DocumentData::Log(_) | DocumentData::TexlabRoot(_) | DocumentData::Tectonic(_) => {}
-        }
+            DocumentData::Aux(_)
+            | DocumentData::Log(_)
+            | DocumentData::Root
+            | DocumentData::Tectonic => {}
+        };
     }
 
     Some(RenameResult { changes })

@@ -4,11 +4,12 @@ use std::{
     process::Stdio,
 };
 
+use base_db::Workspace;
 use log::error;
 use lsp_types::{Position, Url};
 use thiserror::Error;
 
-use crate::{db::Workspace, util::line_index_ext::LineIndexExt, Db};
+use crate::util::line_index_ext::LineIndexExt;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -37,49 +38,48 @@ pub struct Command {
 }
 
 impl Command {
-    pub fn configure(db: &dyn Db, uri: &Url, position: Option<Position>) -> Result<Self, Error> {
-        let workspace = Workspace::get(db);
+    pub fn configure(
+        workspace: &Workspace,
+        uri: &Url,
+        position: Option<Position>,
+    ) -> Result<Self, Error> {
         let child = workspace
-            .lookup_uri(db, uri)
+            .lookup(uri)
             .ok_or_else(|| Error::TexNotFound(uri.clone()))?;
 
-        let parent = workspace
-            .parents(db, child)
-            .iter()
-            .copied()
-            .next()
-            .unwrap_or(child);
+        let parent = *workspace.parents(child).iter().next().unwrap_or(&child);
+        if parent.uri.scheme() != "file" {
+            return Err(Error::NoLocalFile(parent.uri.clone()));
+        }
 
         let output_dir = workspace
-            .output_dir(db, workspace.working_dir(db, parent.directory(db)))
-            .path(db)
-            .as_deref()
-            .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;
+            .output_dir(&workspace.current_dir(&parent.dir))
+            .to_file_path()
+            .unwrap();
 
         let tex_path = child
-            .location(db)
-            .path(db)
+            .path
             .as_deref()
             .ok_or_else(|| Error::NoLocalFile(uri.clone()))?;
 
-        let pdf_path = match parent.location(db).stem(db) {
-            Some(stem) => {
-                let pdf_name = format!("{}.pdf", stem);
-                output_dir.join(pdf_name)
-            }
-            None => {
-                return Err(Error::InvalidTexFile(uri.clone()));
-            }
+        let pdf_path = match parent
+            .path
+            .as_deref()
+            .unwrap()
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+        {
+            Some(stem) => output_dir.join(format!("{}.pdf", stem)),
+            None => return Err(Error::InvalidTexFile(uri.clone())),
         };
 
         if !pdf_path.exists() {
             return Err(Error::PdfNotFound(pdf_path));
         }
 
-        let position =
-            position.unwrap_or_else(|| child.line_index(db).line_col_lsp(child.cursor(db)));
+        let position = position.unwrap_or_else(|| child.line_index.line_col_lsp(child.cursor));
 
-        let Some(config) = &db.config().synctex else {
+        let Some(config) = &workspace.config().synctex else {
             return Err(Error::Unconfigured);
         };
 

@@ -1,9 +1,8 @@
 use std::time::Duration;
 
+use base_db::{Config, Formatter, SynctexConfig};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
-use crate::{Config, Formatter, SynctexConfig};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -1,3 +1,4 @@
+use base_db::DocumentData;
 use rowan::{ast::AstNode, TextRange};
 use syntax::{bibtex, latex};
 
@@ -25,15 +26,11 @@ pub fn complete<'db>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in context.related() {
-        if let Some(data) = document.parse(context.db).as_bib() {
-            for entry in data
-                .root(context.db)
-                .children()
-                .filter_map(bibtex::Entry::cast)
-            {
-                builder.citation(range, document, &entry);
-            }
+    for document in &context.related {
+        let DocumentData::Bib(data) = &document.data else { continue };
+
+        for entry in data.root_node().children().filter_map(bibtex::Entry::cast) {
+            builder.citation(range, document, &entry);
         }
     }
 
