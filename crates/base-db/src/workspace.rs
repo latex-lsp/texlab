@@ -195,6 +195,7 @@ impl Workspace {
         let uris = self
             .documents
             .iter()
+            .filter(|document| document.language == Language::Tex)
             .map(|document| document.uri.clone())
             .collect::<Vec<Url>>();
 
