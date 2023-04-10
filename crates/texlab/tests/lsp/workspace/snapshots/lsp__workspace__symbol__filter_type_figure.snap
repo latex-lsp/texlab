@@ -1,5 +1,5 @@
 ---
-source: tests/lsp/workspace/symbol.rs
+source: crates/texlab/tests/lsp/workspace/symbol.rs
 expression: "find_symbols(FIXTURE, \"figure\")"
 ---
 [
@@ -8,7 +8,7 @@ expression: "find_symbols(FIXTURE, \"figure\")"
     "kind": 6,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.tex",
+      "uri": "redacted://main.tex",
       "range": {
         "start": {
           "line": 15,

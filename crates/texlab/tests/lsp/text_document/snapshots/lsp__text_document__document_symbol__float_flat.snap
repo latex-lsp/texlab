@@ -1,5 +1,5 @@
 ---
-source: tests/lsp/text_document/document_symbol.rs
+source: crates/texlab/tests/lsp/text_document/document_symbol.rs
 expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin{document}\n\n\\begin{figure}\n    Foo\n    \\caption{Foo}\\label{fig:foo}\n\\end{figure}\n\n\\begin{figure}\n    Bar\n    \\caption{Bar}\\label{fig:bar}\n\\end{figure}\n\n\\begin{figure}\n    Baz\n    \\caption{Baz}\n\\end{figure}\n\n\\begin{figure}\n    Qux\n\\end{figure}\n\n\\end{document}\n|\n\n%! main.aux\n\\relax\n\\@writefile{lof}{\\contentsline {figure}{\\numberline {1}{\\ignorespaces Foo}}{1}\\protected@file@percent }\n\\newlabel{fig:foo}{{1}{1}}\n\\@writefile{lof}{\\contentsline {figure}{\\numberline {2}{\\ignorespaces Bar}}{1}\\protected@file@percent }\n\\@writefile{lof}{\\contentsline {figure}{\\numberline {3}{\\ignorespaces Baz}}{1}\\protected@file@percent }\"#,\n    serde_json::json!({}), serde_json::Value::Null)"
 ---
 [
@@ -8,7 +8,7 @@ expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin
     "kind": 6,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.tex",
+      "uri": "redacted://main.tex",
       "range": {
         "start": {
           "line": 4,
@@ -26,7 +26,7 @@ expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin
     "kind": 6,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.tex",
+      "uri": "redacted://main.tex",
       "range": {
         "start": {
           "line": 9,
@@ -44,7 +44,7 @@ expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin
     "kind": 6,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.tex",
+      "uri": "redacted://main.tex",
       "range": {
         "start": {
           "line": 14,

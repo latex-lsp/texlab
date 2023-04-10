@@ -1,5 +1,5 @@
 ---
-source: tests/lsp/text_document/document_link.rs
+source: crates/texlab/tests/lsp/text_document/document_link.rs
 expression: "find_links(r#\"\n%! foo.tex\n\\input{bar.tex}\n|\n\n%! bar.tex\"#)"
 ---
 [
@@ -14,6 +14,6 @@ expression: "find_links(r#\"\n%! foo.tex\n\\input{bar.tex}\n|\n\n%! bar.tex\"#)"
         "character": 14
       }
     },
-    "target": "file:///bar.tex"
+    "target": "redacted://bar.tex"
   }
 ]

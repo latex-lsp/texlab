@@ -1,5 +1,5 @@
 ---
-source: tests/lsp/workspace/symbol.rs
+source: crates/texlab/tests/lsp/workspace/symbol.rs
 expression: "find_symbols(FIXTURE, \"bibtex\")"
 ---
 [
@@ -8,7 +8,7 @@ expression: "find_symbols(FIXTURE, \"bibtex\")"
     "kind": 24,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.bib",
+      "uri": "redacted://main.bib",
       "range": {
         "start": {
           "line": 0,
@@ -26,7 +26,7 @@ expression: "find_symbols(FIXTURE, \"bibtex\")"
     "kind": 15,
     "deprecated": false,
     "location": {
-      "uri": "file:///main.bib",
+      "uri": "redacted://main.bib",
       "range": {
         "start": {
           "line": 2,

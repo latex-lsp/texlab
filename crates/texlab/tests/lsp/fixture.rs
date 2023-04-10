@@ -251,17 +251,15 @@ impl TestBed {
     }
 
     pub fn redact(&self, uri: &Url) -> Url {
-        let root = if cfg!(windows) {
-            PathBuf::from("C:/")
-        } else {
-            PathBuf::from("/")
-        };
+        if uri.scheme() != "file" {
+            return uri.clone();
+        }
 
         let path = uri.to_file_path().unwrap();
-        let path = path.strip_prefix(self.directory()).unwrap_or(&path);
-        let path = root.join(path);
+        let path = path.strip_prefix(self.directory()).unwrap();
+        let path = path.to_str().unwrap();
 
-        let uri = Url::from_file_path(path).unwrap();
-        Url::parse(&uri.as_str().replace("file:///C:/", "file:///")).unwrap()
+        let text = format!("redacted://{}", path.replace('\\', "/"));
+        Url::parse(&text).unwrap()
     }
 }
