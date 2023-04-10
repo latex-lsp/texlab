@@ -26,7 +26,7 @@ pub fn complete<'db>(
     };
 
     check_citation(context).or_else(|| check_acronym(context))?;
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Bib(data) = &document.data else { continue };
 
         for entry in data.root_node().children().filter_map(bibtex::Entry::cast) {

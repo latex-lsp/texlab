@@ -16,7 +16,7 @@ pub(super) fn goto_definition<'a>(
 
     let origin_selection_range = name.text_range();
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
 
         let root = data.root_node();

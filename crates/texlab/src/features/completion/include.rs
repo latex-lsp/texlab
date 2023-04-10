@@ -52,7 +52,7 @@ pub fn complete<'db>(
 
     let mut dirs = vec![current_dir(context, &path_text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in &context.related {
+        for document in &context.project.documents {
             let DocumentData::Tex(data) = &document.data else { continue };
             for graphics_path in &data.semantics.graphics_paths {
                 dirs.push(current_dir(context, &path_text, Some(graphics_path)));

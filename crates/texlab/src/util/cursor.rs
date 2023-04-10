@@ -1,7 +1,6 @@
-use base_db::{Document, DocumentData, Workspace};
+use base_db::{Document, DocumentData, Project, Workspace};
 use lsp_types::{Position, Url};
 use rowan::{ast::AstNode, TextRange, TextSize};
-use rustc_hash::FxHashSet;
 use syntax::{bibtex, latex};
 
 use super::line_index_ext::LineIndexExt;
@@ -121,7 +120,7 @@ impl Cursor {
 pub struct CursorContext<'a, T = ()> {
     pub workspace: &'a Workspace,
     pub document: &'a Document,
-    pub related: FxHashSet<&'a Document>,
+    pub project: Project<'a>,
     pub cursor: Cursor,
     pub offset: TextSize,
     pub params: T,
@@ -154,7 +153,7 @@ impl<'a, T> CursorContext<'a, T> {
         Some(Self {
             workspace,
             document,
-            related: workspace.related(document),
+            project: workspace.project(document),
             cursor: cursor.unwrap_or(Cursor::Nothing),
             offset,
             params,

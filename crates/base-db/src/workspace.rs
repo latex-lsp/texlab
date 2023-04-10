@@ -143,17 +143,17 @@ impl Workspace {
         self.folders.iter().any(|dir| path.starts_with(dir))
     }
 
-    pub fn related(&self, child: &Document) -> FxHashSet<&Document> {
-        let mut results = FxHashSet::default();
+    pub fn project(&self, child: &Document) -> Project {
+        let mut documents = FxHashSet::default();
         for graph in self
             .iter()
             .map(|start| graph::Graph::new(self, start))
             .filter(|graph| graph.preorder().contains(&child))
         {
-            results.extend(graph.preorder());
+            documents.extend(graph.preorder());
         }
 
-        results
+        Project { documents }
     }
 
     pub fn parents(&self, child: &Document) -> FxHashSet<&Document> {
@@ -294,4 +294,9 @@ impl Workspace {
 
         changed
     }
+}
+
+#[derive(Debug)]
+pub struct Project<'a> {
+    pub documents: FxHashSet<&'a Document>,
 }

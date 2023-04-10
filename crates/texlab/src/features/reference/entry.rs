@@ -19,7 +19,7 @@ pub(super) fn find_all_references<'a>(
         .or_else(|| context.find_citation_key_command())
         .or_else(|| context.find_entry_key())?;
 
-    for document in &context.related {
+    for document in &context.project.documents {
         match &document.data {
             DocumentData::Tex(data) => {
                 data.root_node()

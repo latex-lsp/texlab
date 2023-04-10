@@ -1,11 +1,10 @@
 use std::io::Read;
 
-use base_db::{semantics::tex::LinkKind, Document};
+use base_db::{semantics::tex::LinkKind, Project};
 use flate2::read::GzDecoder;
 use itertools::Itertools;
 use lsp_types::{MarkupContent, MarkupKind};
 use once_cell::sync::Lazy;
-use rustc_hash::FxHashSet;
 use serde::Deserialize;
 use smol_str::SmolStr;
 
@@ -26,8 +25,9 @@ impl ComponentDatabase {
         })
     }
 
-    pub fn linked_components(&self, related: &FxHashSet<&Document>) -> Vec<&Component> {
-        related
+    pub fn linked_components(&self, project: &Project) -> Vec<&Component> {
+        project
+            .documents
             .iter()
             .filter_map(|document| document.data.as_tex())
             .flat_map(|data| data.semantics.links.iter())

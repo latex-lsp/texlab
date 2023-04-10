@@ -2,10 +2,9 @@ use std::str::FromStr;
 
 use base_db::{
     semantics::tex::{Label, LabelObject},
-    Document, Workspace,
+    Project, Workspace,
 };
 use rowan::{ast::AstNode, TextRange};
-use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasCurly};
 
 use self::LabeledObject::*;
@@ -120,10 +119,11 @@ impl<'a> RenderedLabel<'a> {
 
 pub fn render<'a>(
     workspace: &'a Workspace,
-    related: &FxHashSet<&'a Document>,
+    project: &Project<'a>,
     label: &'a Label,
 ) -> Option<RenderedLabel<'a>> {
-    let number = related
+    let number = project
+        .documents
         .iter()
         .filter_map(|document| document.data.as_aux())
         .find_map(|data| data.semantics.label_numbers.get(&label.name.text))
@@ -170,7 +170,8 @@ pub fn render<'a>(
                     });
                 }
 
-                if let Some(theorem) = related
+                if let Some(theorem) = project
+                    .documents
                     .iter()
                     .filter_map(|document| document.data.as_tex())
                     .flat_map(|data| data.semantics.theorem_definitions.iter())

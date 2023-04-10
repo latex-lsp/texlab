@@ -11,7 +11,7 @@ pub(super) fn goto_definition<'a>(
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
 
         let Some(label) = data
@@ -22,7 +22,7 @@ pub(super) fn goto_definition<'a>(
             .find(|label| label.name.text == name_text) else { continue };
 
         let target_selection_range = label.name.range;
-        let target_range = util::label::render(context.workspace, &context.related, label)
+        let target_range = util::label::render(context.workspace, &context.project, label)
             .map_or(target_selection_range, |label| label.range);
 
         return Some(vec![DefinitionResult {

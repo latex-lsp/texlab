@@ -13,7 +13,7 @@ pub fn complete<'db>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::GlossaryEntryReference::cast(group.syntax().parent()?)?;
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
 
         for node in data.root_node().descendants() {

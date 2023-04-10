@@ -20,10 +20,10 @@ pub fn find_document_symbols(
     client_capabilties: &ClientCapabilities,
 ) -> Option<DocumentSymbolResponse> {
     let document = workspace.lookup(uri)?;
-    let related = workspace.related(document);
+    let project = workspace.project(document);
 
     let mut buf = Vec::new();
-    latex::find_symbols(workspace, &related, document, &mut buf);
+    latex::find_symbols(workspace, &project, document, &mut buf);
     bibtex::find_symbols(document, &mut buf);
 
     let config = &workspace.config().symbols;
@@ -67,10 +67,10 @@ pub fn find_workspace_symbols(
     let mut symbols = Vec::new();
 
     for document in workspace.iter() {
-        let related = workspace.related(document);
+        let project = workspace.project(document);
 
         let mut buf = Vec::new();
-        latex::find_symbols(workspace, &related, document, &mut buf);
+        latex::find_symbols(workspace, &project, document, &mut buf);
         bibtex::find_symbols(document, &mut buf);
         let mut new_buf = Vec::new();
 

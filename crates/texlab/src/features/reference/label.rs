@@ -13,7 +13,7 @@ pub(super) fn find_all_references<'a>(
         .find_label_name_key()
         .or_else(|| context.find_label_name_command())?;
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
 
         for label in data

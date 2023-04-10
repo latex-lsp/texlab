@@ -1,21 +1,20 @@
 mod label;
 
-use base_db::{Document, Workspace};
+use base_db::{Document, Project, Workspace};
 use lsp_types::{InlayHint, InlayHintLabel, Range, Url};
 use rowan::{TextRange, TextSize};
-use rustc_hash::FxHashSet;
 
 use crate::util::line_index_ext::LineIndexExt;
 
 pub fn find_all(workspace: &Workspace, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
     let document = workspace.lookup(uri)?;
     let range = document.line_index.offset_lsp_range(range);
-    let related = workspace.related(document);
+    let project = workspace.project(document);
 
     let mut builder = InlayHintBuilder {
         workspace,
         document,
-        related,
+        project,
         range,
         hints: Vec::new(),
     };
@@ -27,7 +26,7 @@ pub fn find_all(workspace: &Workspace, uri: &Url, range: Range) -> Option<Vec<In
 struct InlayHintBuilder<'a> {
     workspace: &'a Workspace,
     document: &'a Document,
-    related: FxHashSet<&'a Document>,
+    project: Project<'a>,
     range: TextRange,
     hints: Vec<InlayHint>,
 }

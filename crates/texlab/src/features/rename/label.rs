@@ -16,7 +16,7 @@ pub(super) fn rename<'a>(context: &CursorContext<'a, Params>) -> Option<RenameRe
     let (name_text, _) = context.find_label_name_key()?;
 
     let mut changes = FxHashMap::default();
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
 
         let edits = data

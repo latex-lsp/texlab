@@ -23,7 +23,7 @@ pub(super) fn goto_definition<'a>(
 
     let origin_selection_range = latex::small_range(&key);
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Bib(data) = &document.data else { continue };
 
         for entry in data.root_node().children().filter_map(bibtex::Entry::cast) {

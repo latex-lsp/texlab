@@ -15,7 +15,7 @@ pub(super) fn find_hints(builder: &mut InlayHintBuilder) -> Option<()> {
         .filter(|label| label.kind == LabelKind::Definition)
         .filter(|label| label.name.range.intersect(range).is_some())
     {
-        let Some(rendered) = util::label::render(builder.workspace, &builder.related, label) else { continue };
+        let Some(rendered) = util::label::render(builder.workspace, &builder.project, label) else { continue };
         let Some(number) = &rendered.number else { continue };
 
         let text = match &rendered.object {

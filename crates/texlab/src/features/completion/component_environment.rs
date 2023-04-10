@@ -8,7 +8,7 @@ pub fn complete<'db>(
 ) -> Option<()> {
     let (_, range) = context.find_environment_name()?;
 
-    for component in COMPONENT_DATABASE.linked_components(&context.related) {
+    for component in COMPONENT_DATABASE.linked_components(&context.project) {
         for name in &component.environments {
             builder.component_environment(range, name, &component.file_names);
         }

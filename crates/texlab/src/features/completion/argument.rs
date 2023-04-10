@@ -34,7 +34,7 @@ pub fn complete<'a>(context: &'a CursorContext, builder: &mut CompletionBuilder<
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(&context.related) {
+    for component in COMPONENT_DATABASE.linked_components(&context.project) {
         for component_command in component
             .commands
             .iter()

@@ -25,7 +25,7 @@ pub(super) fn rename<'a>(context: &CursorContext<'a, Params>) -> Option<RenameRe
         .or_else(|| context.find_entry_key())?;
 
     let mut changes = FxHashMap::default();
-    for document in &context.related {
+    for document in &context.project.documents {
         match &document.data {
             DocumentData::Tex(data) => {
                 let root = data.root_node();

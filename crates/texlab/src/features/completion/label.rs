@@ -12,7 +12,7 @@ pub fn complete<'db>(
 ) -> Option<()> {
     let (range, is_math) = find_reference(context).or_else(|| find_reference_range(context))?;
 
-    for document in &context.related {
+    for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
         for label in data
             .semantics
@@ -20,7 +20,7 @@ pub fn complete<'db>(
             .iter()
             .filter(|label| label.kind == LabelKind::Definition)
         {
-            match util::label::render(context.workspace, &context.related, label) {
+            match util::label::render(context.workspace, &context.project, label) {
                 Some(rendered_label) => {
                     let kind = match &rendered_label.object {
                         LabeledObject::Section { .. } => Structure::Section,

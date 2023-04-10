@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
-use base_db::{semantics::Span, Document, DocumentData, Workspace};
+use base_db::{semantics::Span, Document, DocumentData, Project, Workspace};
 use lsp_types::Range;
 use rowan::{ast::AstNode, TextRange};
-use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
 use titlecase::titlecase;
 
@@ -16,19 +15,19 @@ use super::types::{InternalSymbol, InternalSymbolKind};
 
 pub fn find_symbols(
     workspace: &Workspace,
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     buf: &mut Vec<InternalSymbol>,
 ) {
     let DocumentData::Tex(data) = &document.data else { return };
 
-    let mut symbols = visit(workspace, related, document, data.root_node());
+    let mut symbols = visit(workspace, project, document, data.root_node());
     buf.append(&mut symbols);
 }
 
 fn visit(
     workspace: &Workspace,
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
 ) -> Vec<InternalSymbol> {
@@ -39,9 +38,9 @@ fn visit(
         | latex::SUBSECTION
         | latex::SUBSUBSECTION
         | latex::PARAGRAPH
-        | latex::SUBPARAGRAPH => visit_section(related, document, node.clone()),
-        latex::ENUM_ITEM => visit_enum_item(workspace, related, document, node.clone()),
-        latex::EQUATION => visit_equation(related, document, node.clone()),
+        | latex::SUBPARAGRAPH => visit_section(project, document, node.clone()),
+        latex::ENUM_ITEM => visit_enum_item(workspace, project, document, node.clone()),
+        latex::EQUATION => visit_equation(project, document, node.clone()),
         latex::ENVIRONMENT => latex::Environment::cast(node.clone())
             .and_then(|env| env.begin())
             .and_then(|begin| begin.name())
@@ -51,13 +50,13 @@ fn visit(
                 let config = &workspace.config().syntax;
 
                 if config.math_environments.contains(&name) {
-                    visit_equation_environment(related, document, node.clone())
+                    visit_equation_environment(project, document, node.clone())
                 } else if config.enum_environments.contains(&name) {
-                    visit_enumeration(related, document, node.clone(), &name)
+                    visit_enumeration(project, document, node.clone(), &name)
                 } else if let Ok(float_kind) = LabeledFloatKind::from_str(&name) {
-                    visit_float(related, document, node.clone(), float_kind)
+                    visit_float(project, document, node.clone(), float_kind)
                 } else {
-                    visit_theorem(related, document, node.clone(), &name)
+                    visit_theorem(project, document, node.clone(), &name)
                 }
             }),
         _ => None,
@@ -68,7 +67,7 @@ fn visit(
             for child in node.children() {
                 parent
                     .children
-                    .append(&mut visit(workspace, related, document, child));
+                    .append(&mut visit(workspace, project, document, child));
             }
 
             vec![parent]
@@ -76,7 +75,7 @@ fn visit(
         None => {
             let mut symbols = Vec::new();
             for child in node.children() {
-                symbols.append(&mut visit(workspace, related, document, child));
+                symbols.append(&mut visit(workspace, project, document, child));
             }
 
             symbols
@@ -85,7 +84,7 @@ fn visit(
 }
 
 fn visit_section(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
@@ -97,7 +96,7 @@ fn visit_section(
     let group = section.name()?;
     let group_text = group.content_text()?;
 
-    let label = NumberedLabel::find(related, section.syntax());
+    let label = NumberedLabel::find(project, section.syntax());
 
     let symbol = match label {
         Some(label) => {
@@ -132,7 +131,7 @@ fn visit_section(
 
 fn visit_enum_item(
     workspace: &Workspace,
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
@@ -159,7 +158,7 @@ fn visit_enum_item(
         .and_then(|label| label.content_text())
         .unwrap_or_else(|| "Item".to_string());
 
-    let symbol = match NumberedLabel::find(related, &node) {
+    let symbol = match NumberedLabel::find(project, &node) {
         Some(label) => InternalSymbol {
             name: label.number.map_or_else(|| name.clone(), String::from),
             label: Some(label.name.text),
@@ -184,7 +183,7 @@ fn visit_enum_item(
 }
 
 fn visit_equation(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
@@ -194,11 +193,11 @@ fn visit_equation(
         .line_index
         .line_col_lsp_range(latex::small_range(&equation));
 
-    make_equation_symbol(related, document, equation.syntax(), full_range)
+    make_equation_symbol(project, document, equation.syntax(), full_range)
 }
 
 fn visit_equation_environment(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
 ) -> Option<InternalSymbol> {
@@ -208,16 +207,16 @@ fn visit_equation_environment(
         .line_index
         .line_col_lsp_range(latex::small_range(&environment));
 
-    make_equation_symbol(related, document, environment.syntax(), full_range)
+    make_equation_symbol(project, document, environment.syntax(), full_range)
 }
 
 fn make_equation_symbol(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: &latex::SyntaxNode,
     full_range: Range,
 ) -> Option<InternalSymbol> {
-    let symbol = match NumberedLabel::find(related, node) {
+    let symbol = match NumberedLabel::find(project, node) {
         Some(label) => {
             let name = match label.number {
                 Some(number) => format!("Equation ({})", number),
@@ -249,7 +248,7 @@ fn make_equation_symbol(
 }
 
 fn visit_enumeration(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
     env_name: &str,
@@ -260,7 +259,7 @@ fn visit_enumeration(
         .line_col_lsp_range(latex::small_range(&environment));
 
     let name = titlecase(env_name);
-    let symbol = match NumberedLabel::find(related, environment.syntax()) {
+    let symbol = match NumberedLabel::find(project, environment.syntax()) {
         Some(label) => {
             let name = match label.number {
                 Some(number) => format!("{} {}", name, number),
@@ -291,7 +290,7 @@ fn visit_enumeration(
 }
 
 fn visit_float(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
     float_kind: LabeledFloatKind,
@@ -309,7 +308,7 @@ fn visit_float(
     };
 
     let caption = find_caption_by_parent(environment.syntax())?;
-    let symbol = match NumberedLabel::find(related, environment.syntax()) {
+    let symbol = match NumberedLabel::find(project, environment.syntax()) {
         Some(label) => {
             let name = match label.number {
                 Some(number) => format!("{} {}: {}", float_kind, number, caption),
@@ -341,12 +340,13 @@ fn visit_float(
 }
 
 fn visit_theorem(
-    related: &FxHashSet<&Document>,
+    project: &Project,
     document: &Document,
     node: latex::SyntaxNode,
     environment_name: &str,
 ) -> Option<InternalSymbol> {
-    let definition = related
+    let definition = project
+        .documents
         .iter()
         .filter_map(|document| document.data.as_tex())
         .flat_map(|data| data.semantics.theorem_definitions.iter())
@@ -362,7 +362,7 @@ fn visit_theorem(
         .line_index
         .line_col_lsp_range(latex::small_range(&node));
 
-    let symbol = match NumberedLabel::find(related, node.syntax()) {
+    let symbol = match NumberedLabel::find(project, node.syntax()) {
         Some(label) => {
             let name = match (label.number, theorem_description) {
                 (Some(number), Some(desc)) => {
@@ -412,10 +412,11 @@ struct NumberedLabel<'a> {
 }
 
 impl<'a> NumberedLabel<'a> {
-    fn find(related: &FxHashSet<&'a Document>, parent: &latex::SyntaxNode) -> Option<Self> {
+    fn find(project: &Project<'a>, parent: &latex::SyntaxNode) -> Option<Self> {
         let label = parent.children().find_map(latex::LabelDefinition::cast)?;
         let name = Span::from(&label.name()?.key()?);
-        let number = related
+        let number = project
+            .documents
             .iter()
             .filter_map(|document| document.data.as_aux())
             .find_map(|data| data.semantics.label_numbers.get(&name.text))
