@@ -1,0 +1,15 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/include/latex_include_simple.txt
+---
+ROOT@0..17
+  PREAMBLE@0..17
+    LATEX_INCLUDE@0..17
+      COMMAND_NAME@0..8 "\\include"
+      CURLY_GROUP_WORD_LIST@8..17
+        L_CURLY@8..9 "{"
+        KEY@9..16
+          WORD@9..16 "foo/bar"
+        R_CURLY@16..17 "}"
+

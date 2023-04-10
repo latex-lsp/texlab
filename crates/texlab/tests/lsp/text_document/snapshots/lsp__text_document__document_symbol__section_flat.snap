@@ -1,0 +1,60 @@
+---
+source: crates/texlab/tests/lsp/text_document/document_symbol.rs
+expression: "find_symbols(r#\"\n%! main.tex\n\\documentclass{article}\n\n\\begin{document}\n\n\\section{Foo}\n\n\\section{Bar}\\label{sec:bar}\n\n\\subsection{Baz}\\label{sec:baz}\n\n\\end{document}\n|\n\n%! main.aux\n\\relax\n\\@writefile{toc}{\\contentsline {section}{\\numberline {1}Foo}{1}\\protected@file@percent }\n\\@writefile{toc}{\\contentsline {section}{\\numberline {2}Bar}{1}\\protected@file@percent }\n\\newlabel{sec:bar}{{2}{1}}\"#,\n    serde_json::json!({}), serde_json::Value::Null)"
+---
+[
+  {
+    "name": "Foo",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "redacted://main.tex",
+      "range": {
+        "start": {
+          "line": 4,
+          "character": 0
+        },
+        "end": {
+          "line": 4,
+          "character": 13
+        }
+      }
+    }
+  },
+  {
+    "name": "2 Bar",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "redacted://main.tex",
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 31
+        }
+      }
+    }
+  },
+  {
+    "name": "Baz",
+    "kind": 2,
+    "deprecated": false,
+    "location": {
+      "uri": "redacted://main.tex",
+      "range": {
+        "start": {
+          "line": 8,
+          "character": 0
+        },
+        "end": {
+          "line": 8,
+          "character": 31
+        }
+      }
+    }
+  }
+]

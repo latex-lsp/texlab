@@ -1,0 +1,25 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/citation/citation_prenote_postnote.txt
+---
+ROOT@0..20
+  PREAMBLE@0..20
+    CITATION@0..20
+      COMMAND_NAME@0..5 "\\cite"
+      BRACK_GROUP@5..10
+        L_BRACK@5..6 "["
+        TEXT@6..9
+          WORD@6..9 "foo"
+        R_BRACK@9..10 "]"
+      BRACK_GROUP@10..15
+        L_BRACK@10..11 "["
+        TEXT@11..14
+          WORD@11..14 "bar"
+        R_BRACK@14..15 "]"
+      CURLY_GROUP_WORD_LIST@15..20
+        L_CURLY@15..16 "{"
+        KEY@16..19
+          WORD@16..19 "baz"
+        R_CURLY@19..20 "}"
+

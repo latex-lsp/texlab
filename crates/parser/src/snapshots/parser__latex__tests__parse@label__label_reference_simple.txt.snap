@@ -1,0 +1,15 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/label/label_reference_simple.txt
+---
+ROOT@0..9
+  PREAMBLE@0..9
+    LABEL_REFERENCE@0..9
+      COMMAND_NAME@0..4 "\\ref"
+      CURLY_GROUP_WORD_LIST@4..9
+        L_CURLY@4..5 "{"
+        KEY@5..8
+          WORD@5..8 "foo"
+        R_CURLY@8..9 "}"
+

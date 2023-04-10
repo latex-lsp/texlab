@@ -1,0 +1,27 @@
+[package]
+name = "citeproc"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+chrono = { version = "0.4.24", default-features = false, features = ["std"] }
+human_name = "2.0.1"
+isocountry = "0.3.2"
+itertools = "0.10.5"
+rowan = "0.15.11"
+rustc-hash = "1.1.0"
+strum = { version = "0.24.1", features = ["derive"] }
+syntax = { path = "../syntax" }
+titlecase = "2.2.1"
+unicode-normalization = "0.1.22"
+url = "2.3.1"
+
+[lib]
+doctest = false
+
+[dev-dependencies]
+insta = "1.29.0"
+parser = { path = "../parser" }

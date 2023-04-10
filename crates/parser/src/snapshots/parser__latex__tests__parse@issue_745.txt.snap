@@ -1,0 +1,131 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/issue_745.txt
+---
+ROOT@0..271
+  PREAMBLE@0..271
+    CLASS_INCLUDE@0..24
+      COMMAND_NAME@0..14 "\\documentclass"
+      CURLY_GROUP_WORD_LIST@14..24
+        L_CURLY@14..15 "{"
+        KEY@15..22
+          WORD@15..22 "article"
+        R_CURLY@22..23 "}"
+        LINE_BREAK@23..24 "\n"
+    PACKAGE_INCLUDE@24..50
+      COMMAND_NAME@24..35 "\\usepackage"
+      CURLY_GROUP_WORD_LIST@35..50
+        L_CURLY@35..36 "{"
+        KEY@36..46
+          WORD@36..46 "tabularray"
+        R_CURLY@46..47 "}"
+        WHITESPACE@47..48 " "
+        LINE_BREAK@48..50 "\n\n"
+    GENERIC_COMMAND@50..64
+      COMMAND_NAME@50..63 "\\ExplSyntaxOn"
+      LINE_BREAK@63..64 "\n"
+    GENERIC_COMMAND@64..223
+      COMMAND_NAME@64..87 "\\NewDocumentEnvironment"
+      CURLY_GROUP@87..96
+        L_CURLY@87..88 "{"
+        TEXT@88..95
+          WORD@88..95 "exptblr"
+        R_CURLY@95..96 "}"
+      CURLY_GROUP@96..107
+        L_CURLY@96..97 "{"
+        TEXT@97..98
+          WORD@97..98 "O"
+        CURLY_GROUP@98..100
+          L_CURLY@98..99 "{"
+          R_CURLY@99..100 "}"
+        TEXT@100..101
+          WORD@100..101 "m"
+        R_CURLY@101..102 "}"
+        LINE_BREAK@102..103 "\n"
+        WHITESPACE@103..107 "    "
+      CURLY_GROUP@107..200
+        L_CURLY@107..108 "{"
+        LINE_BREAK@108..109 "\n"
+        WHITESPACE@109..113 "    "
+        GENERIC_COMMAND@113..194
+          COMMAND_NAME@113..119 "\\use:x"
+          LINE_BREAK@119..120 "\n"
+          WHITESPACE@120..124 "    "
+          CURLY_GROUP@124..194
+            L_CURLY@124..125 "{"
+            LINE_BREAK@125..126 "\n"
+            WHITESPACE@126..130 "    "
+            GENERIC_COMMAND@130..141
+              COMMAND_NAME@130..140 "\\exp_not:N"
+              WHITESPACE@140..141 " "
+            ENVIRONMENT@141..188
+              BEGIN@141..179
+                COMMAND_NAME@141..147 "\\begin"
+                CURLY_GROUP_WORD@147..158
+                  L_CURLY@147..148 "{"
+                  KEY@148..152
+                    WORD@148..152 "tblr"
+                  R_CURLY@152..153 "}"
+                  LINE_BREAK@153..154 "\n"
+                  WHITESPACE@154..158 "    "
+                BRACK_GROUP@158..179
+                  L_BRACK@158..159 "["
+                  GENERIC_COMMAND@159..173
+                    COMMAND_NAME@159..169 "\\exp_not:n"
+                    CURLY_GROUP@169..173
+                      L_CURLY@169..170 "{"
+                      TEXT@170..172
+                        WORD@170..172 "#1"
+                      R_CURLY@172..173 "}"
+                  R_BRACK@173..174 "]"
+                  LINE_BREAK@174..175 "\n"
+                  WHITESPACE@175..179 "    "
+              CURLY_GROUP@179..188
+                L_CURLY@179..180 "{"
+                TEXT@180..182
+                  WORD@180..182 "#2"
+                R_CURLY@182..183 "}"
+                LINE_BREAK@183..184 "\n"
+                WHITESPACE@184..188 "    "
+            R_CURLY@188..189 "}"
+            LINE_BREAK@189..190 "\n"
+            WHITESPACE@190..194 "    "
+        R_CURLY@194..195 "}"
+        LINE_BREAK@195..196 "\n"
+        WHITESPACE@196..200 "    "
+      CURLY_GROUP@200..223
+        L_CURLY@200..201 "{"
+        LINE_BREAK@201..202 "\n"
+        WHITESPACE@202..206 "    "
+        GENERIC_COMMAND@206..221
+          COMMAND_NAME@206..210 "\\end"
+          CURLY_GROUP@210..221
+            L_CURLY@210..211 "{"
+            TEXT@211..215
+              WORD@211..215 "tblr"
+            R_CURLY@215..216 "}"
+            LINE_BREAK@216..217 "\n"
+            WHITESPACE@217..221 "    "
+        R_CURLY@221..222 "}"
+        LINE_BREAK@222..223 "\n"
+    GENERIC_COMMAND@223..239
+      COMMAND_NAME@223..237 "\\ExplSyntaxOff"
+      LINE_BREAK@237..239 "\n\n"
+    ENVIRONMENT@239..271
+      BEGIN@239..257
+        COMMAND_NAME@239..245 "\\begin"
+        CURLY_GROUP_WORD@245..257
+          L_CURLY@245..246 "{"
+          KEY@246..254
+            WORD@246..254 "document"
+          R_CURLY@254..255 "}"
+          LINE_BREAK@255..257 "\n\n"
+      END@257..271
+        COMMAND_NAME@257..261 "\\end"
+        CURLY_GROUP_WORD@261..271
+          L_CURLY@261..262 "{"
+          KEY@262..270
+            WORD@262..270 "document"
+          R_CURLY@270..271 "}"
+

@@ -1,0 +1,25 @@
+[package]
+name = "base-db"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dirs = "5.0.0"
+distro = { path = "../distro" }
+itertools = "0.10.5"
+log = "0.4.17"
+notify = "5.1.0"
+once_cell = "1.17.1"
+parser = { path = "../parser" }
+regex = "1.7.3"
+rowan = "0.15.11"
+rustc-hash = "1.1.0"
+syntax = { path = "../syntax" }
+text-size = "1.1.0"
+url = "2.3.1"
+
+[lib]
+doctest = false

@@ -1,0 +1,26 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/inline_double_dollar.txt
+---
+ROOT@0..21
+  PREAMBLE@0..21
+    FORMULA@0..21
+      DOLLAR@0..2 "$$"
+      TEXT@2..4
+        WORD@2..3 "x"
+        WHITESPACE@3..4 " "
+      GENERIC_COMMAND@4..19
+        COMMAND_NAME@4..7 "\\in"
+        WHITESPACE@7..8 " "
+        MIXED_GROUP@8..19
+          L_BRACK@8..9 "["
+          TEXT@9..12
+            WORD@9..10 "0"
+            COMMA@10..11 ","
+            WHITESPACE@11..12 " "
+          GENERIC_COMMAND@12..18
+            COMMAND_NAME@12..18 "\\infty"
+          R_PAREN@18..19 ")"
+      DOLLAR@19..21 "$$"
+

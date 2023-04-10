@@ -1,0 +1,15 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/include/class_include_simple.txt
+---
+ROOT@0..23
+  PREAMBLE@0..23
+    CLASS_INCLUDE@0..23
+      COMMAND_NAME@0..14 "\\documentclass"
+      CURLY_GROUP_WORD_LIST@14..23
+        L_CURLY@14..15 "{"
+        KEY@15..22
+          WORD@15..22 "article"
+        R_CURLY@22..23 "}"
+

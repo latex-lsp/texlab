@@ -1,0 +1,11 @@
+---
+source: crates/texlab/tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\foobar\n\\fooba\n   |\n ^^^^^\n\\begin{foo}\n\\end{foo}\n\\begin{fo}\"#)"
+---
+[
+  {
+    "label": "foobar",
+    "detail": "user-defined",
+    "preselect": false
+  }
+]

@@ -1,0 +1,15 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/issue_789.txt
+---
+ROOT@0..19
+  PREAMBLE@0..19
+    GRAPHICS_PATH@0..19
+      COMMAND_NAME@0..13 "\\graphicspath"
+      CURLY_GROUP_WORD@13..19
+        L_CURLY@13..14 "{"
+        KEY@14..18
+          WORD@14..18 "test"
+        R_CURLY@18..19 "}"
+

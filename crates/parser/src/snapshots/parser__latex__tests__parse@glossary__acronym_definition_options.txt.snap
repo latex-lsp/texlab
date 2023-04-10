@@ -1,0 +1,47 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/glossary/acronym_definition_options.txt
+---
+ROOT@0..76
+  PREAMBLE@0..76
+    ACRONYM_DEFINITION@0..76
+      COMMAND_NAME@0..11 "\\newacronym"
+      BRACK_GROUP_KEY_VALUE@11..43
+        L_BRACK@11..12 "["
+        KEY_VALUE_BODY@12..42
+          KEY_VALUE_PAIR@12..42
+            KEY@12..22
+              WORD@12..22 "longplural"
+            EQUALITY_SIGN@22..23 "="
+            VALUE@23..42
+              CURLY_GROUP@23..42
+                L_CURLY@23..24 "{"
+                TEXT@24..41
+                  WORD@24..30 "Frames"
+                  WHITESPACE@30..31 " "
+                  WORD@31..34 "per"
+                  WHITESPACE@34..35 " "
+                  WORD@35..41 "Second"
+                R_CURLY@41..42 "}"
+        R_BRACK@42..43 "]"
+      CURLY_GROUP_WORD@43..53
+        L_CURLY@43..44 "{"
+        KEY@44..52
+          WORD@44..52 "fpsLabel"
+        R_CURLY@52..53 "}"
+      CURLY_GROUP@53..58
+        L_CURLY@53..54 "{"
+        TEXT@54..57
+          WORD@54..57 "FPS"
+        R_CURLY@57..58 "}"
+      CURLY_GROUP@58..76
+        L_CURLY@58..59 "{"
+        TEXT@59..75
+          WORD@59..64 "Frame"
+          WHITESPACE@64..65 " "
+          WORD@65..68 "per"
+          WHITESPACE@68..69 " "
+          WORD@69..75 "Second"
+        R_CURLY@75..76 "}"
+
