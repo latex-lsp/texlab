@@ -125,7 +125,8 @@ static LOGGER: Once = Once::new();
 pub struct TestBed {
     fixture: Fixture,
     locations: Vec<Location>,
-    directory: TempDir,
+    _temp_dir: TempDir,
+    temp_dir_path: PathBuf,
     client: LspClient,
     client_thread: Option<JoinHandle<()>>,
     server_thread: Option<JoinHandle<()>>,
@@ -185,12 +186,14 @@ impl TestBed {
             })
         };
 
-        let directory = tempdir()?;
+        let temp_dir = tempdir()?;
+        let temp_dir_path = temp_dir.path().canonicalize()?;
+
         let locations = fixture
             .documents
             .iter()
             .flat_map(|document| {
-                let uri = Url::from_file_path(directory.path().join(&document.path)).unwrap();
+                let uri = Url::from_file_path(temp_dir_path.join(&document.path)).unwrap();
                 document
                     .ranges
                     .iter()
@@ -201,7 +204,8 @@ impl TestBed {
         Ok(TestBed {
             fixture,
             locations,
-            directory,
+            _temp_dir: temp_dir,
+            temp_dir_path,
             client,
             client_thread: Some(client_thread),
             server_thread: Some(server_thread),
@@ -218,7 +222,7 @@ impl TestBed {
         self.client
             .send_notification::<Initialized>(InitializedParams {})?;
 
-        self.fixture.setup(&self.client, &self.directory.path())?;
+        self.fixture.setup(&self.client, self.directory())?;
         Ok(())
     }
 
@@ -233,7 +237,7 @@ impl TestBed {
             .iter()
             .find_map(|document| document.cursor.map(|cursor| (document, cursor)))?;
 
-        let uri = Url::from_file_path(self.directory.path().join(&document.path)).unwrap();
+        let uri = Url::from_file_path(self.temp_dir_path.join(&document.path)).unwrap();
         let id = TextDocumentIdentifier::new(uri);
         Some(TextDocumentPositionParams::new(id, cursor))
     }
@@ -243,7 +247,7 @@ impl TestBed {
     }
 
     pub fn directory(&self) -> &Path {
-        self.directory.path()
+        &self.temp_dir_path
     }
 
     pub fn documents(&self) -> &[Document] {
@@ -255,7 +259,7 @@ impl TestBed {
             return uri.clone();
         }
 
-        let path = uri.to_file_path().unwrap();
+        let path = uri.to_file_path().unwrap().canonicalize().unwrap();
         let path = path.strip_prefix(self.directory()).unwrap();
         let path = path.to_str().unwrap();
 
