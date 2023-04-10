@@ -35,13 +35,13 @@ impl Semantics {
             };
         }
 
-        self.can_be_root = self
-            .links
-            .iter()
-            .filter(|link| link.kind == LinkKind::Cls)
-            .any(|link| link.path.text != "subfiles");
+        self.can_be_compiled = self.environments.contains("document");
 
-        self.can_be_compiled = self.can_be_root || self.environments.contains("document");
+        self.can_be_root = self.can_be_compiled
+            && !self
+                .links
+                .iter()
+                .any(|link| link.kind == LinkKind::Cls && link.path.text == "subfiles");
     }
 
     fn process_node(&mut self, node: &latex::SyntaxNode) {

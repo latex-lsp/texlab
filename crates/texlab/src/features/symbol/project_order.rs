@@ -108,7 +108,7 @@ mod tests {
         );
         workspace.open(
             c.clone(),
-            r#"\documentclass{article}\include{b}"#.to_string(),
+            r#"\begin{documnent}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
             TextSize::default(),
@@ -129,7 +129,7 @@ mod tests {
         let c = Url::parse("http://example.com/c.tex").unwrap();
         workspace.open(
             a.clone(),
-            r#"\documentclass{article}\include{b}"#.to_string(),
+            r#"\begin{document}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
             TextSize::default(),
@@ -166,7 +166,7 @@ mod tests {
 
         workspace.open(
             a.clone(),
-            r#"\documentclass{article}\include{b}"#.to_string(),
+            r#"\begin{document}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
             TextSize::default(),
@@ -190,7 +190,7 @@ mod tests {
 
         workspace.open(
             d.clone(),
-            r#"\documentclass{article}\include{c}"#.to_string(),
+            r#"\begin{document}\include{c}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
             TextSize::default(),
