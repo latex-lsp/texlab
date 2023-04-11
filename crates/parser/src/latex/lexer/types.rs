@@ -36,7 +36,6 @@ pub enum Token {
     Eq,
 
     #[regex(r"[^\s\\%\{\},\$\[\]\(\)=]+")]
-    #[error]
     Word,
 
     #[regex(r"\$\$?")]

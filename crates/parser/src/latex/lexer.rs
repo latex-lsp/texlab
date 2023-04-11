@@ -48,7 +48,7 @@ impl<'a> Lexer<'a> {
 fn tokenize(input: &str) -> Vec<(Token, &str)> {
     let mut lexer = Token::lexer(input);
     std::iter::from_fn(move || {
-        let kind = lexer.next()?;
+        let kind = lexer.next()?.unwrap();
         let text = lexer.slice();
         Some((kind, text))
     })

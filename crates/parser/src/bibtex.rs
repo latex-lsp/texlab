@@ -250,7 +250,7 @@ where
 
     fn peek(&mut self) -> Option<(T, &'a str)> {
         if self.token.is_none() {
-            let kind = self.lexer.next()?;
+            let kind = self.lexer.next()?.unwrap();
             let text = self.lexer.slice();
             self.token = Some((kind, text));
         }
@@ -274,7 +274,6 @@ enum RootToken {
     Entry,
 
     #[regex(r"[^@]+")]
-    #[error]
     Junk,
 }
 
@@ -300,7 +299,7 @@ enum BodyToken {
     #[regex(r"[^\s\(\)\{\}@,=]+")]
     Name,
 
-    #[error]
+    #[token("@")]
     Error,
 }
 
@@ -327,8 +326,7 @@ enum ValueToken {
     #[regex(r"\d+", priority = 2)]
     Integer,
 
-    #[regex(r#"[^\s"\{\},]+"#)]
-    #[error]
+    #[regex(r#"[^\s"\{\},#]+"#)]
     Name,
 }
 
@@ -377,7 +375,6 @@ enum ContentToken {
     CommandName,
 
     #[regex(r#"[^\s"\{\}\\~,]+"#)]
-    #[error]
     Word,
 }
 
