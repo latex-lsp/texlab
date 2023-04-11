@@ -1,14 +1,12 @@
-use std::{borrow::Cow, fmt, str::FromStr};
+use std::{borrow::Cow, fmt};
 
 use human_name::Name;
 use itertools::Itertools;
-use strum::EnumString;
 use syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum AuthorField {
     Afterword,
     Annotator,
@@ -25,7 +23,20 @@ pub enum AuthorField {
 
 impl AuthorField {
     pub fn parse(input: &str) -> Option<Self> {
-        Self::from_str(input).ok()
+        Some(match input.to_ascii_lowercase().as_str() {
+            "afterword" => Self::Afterword,
+            "annotator" => Self::Annotator,
+            "author" => Self::Author,
+            "commentator" => Self::Commentator,
+            "editor" => Self::Editor,
+            "editora" => Self::EditorA,
+            "editorb" => Self::EditorB,
+            "editorc" => Self::EditorC,
+            "foreword" => Self::Foreword,
+            "introduction" => Self::Introduction,
+            "translator" => Self::Translator,
+            _ => return None,
+        })
     }
 }
 

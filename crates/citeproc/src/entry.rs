@@ -1,7 +1,4 @@
-use std::str::FromStr;
-
 use rustc_hash::FxHashMap;
-use strum::EnumString;
 use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};
 
 use super::field::{
@@ -11,8 +8,7 @@ use super::field::{
     text::{TextField, TextFieldData},
 };
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum EntryKind {
     Article,
     Book,
@@ -51,6 +47,48 @@ pub enum EntryKind {
     Unknown,
 }
 
+impl EntryKind {
+    pub fn parse(input: &str) -> Self {
+        match input.to_ascii_lowercase().as_str() {
+            "article" => Self::Article,
+            "book" => Self::Book,
+            "mvbook" => Self::MVBook,
+            "inbook" => Self::InBook,
+            "bookinbook" => Self::BookInBook,
+            "suppbook" => Self::SuppBook,
+            "booklet" => Self::Booklet,
+            "collection" => Self::Collection,
+            "mvcollection" => Self::MVCollection,
+            "incollection" => Self::InCollection,
+            "suppcollection" => Self::SuppCollection,
+            "dataset" => Self::DataSet,
+            "manual" => Self::Manual,
+            "misc" => Self::Misc,
+            "online" => Self::Online,
+            "electronic" => Self::Electronic,
+            "www" => Self::Www,
+            "patent" => Self::Patent,
+            "periodical" => Self::Periodical,
+            "suppperiodical" => Self::SuppPeriodical,
+            "proceedings" => Self::Proceedings,
+            "mvproceedings" => Self::MVProceedings,
+            "inproceedings" => Self::InProceedings,
+            "conference" => Self::Conference,
+            "reference" => Self::Reference,
+            "mvreference" => Self::MVReference,
+            "inreference" => Self::InReference,
+            "report" => Self::Report,
+            "set" => Self::Set,
+            "software" => Self::Software,
+            "thesis" => Self::Thesis,
+            "masterthesis" => Self::MasterThesis,
+            "phdthesis" => Self::PhdThesis,
+            "techreport" => Self::TechReport,
+            _ => Self::Unknown,
+        }
+    }
+}
+
 impl Default for EntryKind {
     fn default() -> Self {
         Self::Unknown
@@ -69,10 +107,9 @@ pub struct EntryData {
 impl From<&Entry> for EntryData {
     fn from(entry: &Entry) -> Self {
         let mut data = EntryData {
-            kind: entry
-                .type_token()
-                .and_then(|token| EntryKind::from_str(&token.text()[1..]).ok())
-                .unwrap_or(EntryKind::Unknown),
+            kind: entry.type_token().map_or(EntryKind::Unknown, |token| {
+                EntryKind::parse(&token.text()[1..])
+            }),
             ..EntryData::default()
         };
 

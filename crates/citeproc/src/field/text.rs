@@ -1,16 +1,12 @@
-use std::str::FromStr;
-
 use rowan::{ast::AstNode, NodeOrToken};
 use rustc_hash::FxHashSet;
-use strum::EnumString;
 
 use syntax::bibtex::{
     Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasValue, HasWord, Join,
     Literal, QuoteGroup, Root, SyntaxKind::*, SyntaxToken, Value,
 };
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum TextField {
     Abstract,
     Addendum,
@@ -63,7 +59,56 @@ pub enum TextField {
 
 impl TextField {
     pub fn parse(input: &str) -> Option<Self> {
-        Self::from_str(input).ok()
+        Some(match input.to_ascii_lowercase().as_str() {
+            "abstract" => Self::Abstract,
+            "addendum" => Self::Addendum,
+            "booksubtitle" => Self::BookSubtitle,
+            "booktitle" => Self::BookTitle,
+            "booktitleaddon" => Self::BookTitleAddon,
+            "chapter" => Self::Chapter,
+            "doi" => Self::Doi,
+            "editortype" => Self::EditorType,
+            "editortypea" => Self::EditorTypeA,
+            "editortypeb" => Self::EditorTypeB,
+            "editortypec" => Self::EditorTypeC,
+            "eid" => Self::Eid,
+            "eprint" => Self::Eprint,
+            "eprintclass" => Self::EprintClass,
+            "eprinttype" => Self::EprintType,
+            "eventtitle" => Self::EventTitle,
+            "eventtitleaddon" => Self::EventTitleAddon,
+            "holder" => Self::Holder,
+            "howpublished" => Self::HowPublished,
+            "isbn" => Self::Isbn,
+            "issn" => Self::Issn,
+            "issue" => Self::Issue,
+            "issuesubtitle" => Self::IssueSubtitle,
+            "issuetitle" => Self::IssueTitle,
+            "issuetitleaddon" => Self::IssueTitleAddon,
+            "journal" => Self::Journal,
+            "journalsubtitle" => Self::JournalSubtitle,
+            "journaltitle" => Self::JournalTitle,
+            "journaltitleaddon" => Self::JournalTitleAddon,
+            "language" => Self::Language,
+            "location" => Self::Location,
+            "maintitle" => Self::MainTitle,
+            "mainsubtitle" => Self::MainSubtitle,
+            "maintitleaddon" => Self::MainTitleAddon,
+            "note" => Self::Note,
+            "origlanguage" => Self::OrigLanguage,
+            "publisher" => Self::Publisher,
+            "pubstate" => Self::Pubstate,
+            "series" => Self::Series,
+            "subtitle" => Self::Subtitle,
+            "title" => Self::Title,
+            "titleaddon" => Self::TitleAddon,
+            "type" => Self::Type,
+            "unknown" => Self::Unknown,
+            "url" => Self::Url,
+            "venue" => Self::Venue,
+            "version" => Self::Version,
+            _ => return None,
+        })
     }
 }
 

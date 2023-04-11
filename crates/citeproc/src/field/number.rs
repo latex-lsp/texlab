@@ -1,12 +1,10 @@
-use std::{fmt, str::FromStr};
+use std::fmt;
 
-use strum::EnumString;
 use syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum NumberField {
     Edition,
     Number,
@@ -19,7 +17,16 @@ pub enum NumberField {
 
 impl NumberField {
     pub fn parse(input: &str) -> Option<Self> {
-        Self::from_str(input).ok()
+        Some(match input.to_ascii_lowercase().as_str() {
+            "edition" => Self::Edition,
+            "number" => Self::Number,
+            "pages" => Self::Pages,
+            "pagetotal" => Self::PageTotal,
+            "part" => Self::Part,
+            "volume" => Self::Volume,
+            "volumes" => Self::Volumes,
+            _ => return None,
+        })
     }
 }
 

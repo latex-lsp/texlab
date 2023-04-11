@@ -1,13 +1,11 @@
 use std::{fmt, ops::Add, str::FromStr};
 
 use chrono::{Datelike, Month, NaiveDate};
-use strum::EnumString;
 use syntax::bibtex::Value;
 
 use super::text::TextFieldData;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, EnumString)]
-#[strum(ascii_case_insensitive)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum DateField {
     Date,
     EventDate,
@@ -18,7 +16,14 @@ pub enum DateField {
 
 impl DateField {
     pub fn parse(input: &str) -> Option<Self> {
-        Self::from_str(input).ok()
+        Some(match input.to_ascii_lowercase().as_str() {
+            "date" => Self::Date,
+            "eventdate" => Self::EventDate,
+            "month" => Self::Month,
+            "urldate" => Self::UrlDate,
+            "year" => Self::Year,
+            _ => return None,
+        })
     }
 }
 
