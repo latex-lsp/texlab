@@ -113,30 +113,16 @@ impl Command {
             }
         };
 
-        let (line_sender, line_receiver) = flume::unbounded();
-        let (exit_sender, exit_receiver) = flume::unbounded();
-        track_output(process.stderr.take().unwrap(), line_sender.clone());
-        track_output(process.stdout.take().unwrap(), line_sender);
+        let (sender, receiver) = crossbeam_channel::unbounded();
+        track_output(process.stderr.take().unwrap(), sender.clone());
+        track_output(process.stdout.take().unwrap(), sender.clone());
         let client = self.client.clone();
         let handle = std::thread::spawn(move || {
             let typ = lsp_types::MessageType::LOG;
 
-            loop {
-                let done = flume::Selector::new()
-                    .recv(&line_receiver, |line| match line {
-                        Ok(message) => {
-                            let params = LogMessageParams { message, typ };
-                            let _ = client.send_notification::<LogMessage>(params);
-                            false
-                        }
-                        Err(_) => true,
-                    })
-                    .recv(&exit_receiver, |_| true)
-                    .wait();
-
-                if done {
-                    break;
-                }
+            while let Ok(Some(message)) = receiver.recv() {
+                let params = LogMessageParams { message, typ };
+                let _ = client.send_notification::<LogMessage>(params);
             }
         });
 
@@ -148,7 +134,7 @@ impl Command {
             }
         });
 
-        let _ = exit_sender.send(());
+        let _ = sender.send(None);
         handle.join().unwrap();
 
         drop(reporter);
@@ -158,7 +144,7 @@ impl Command {
 
 fn track_output(
     output: impl Read + Send + 'static,
-    sender: flume::Sender<String>,
+    sender: crossbeam_channel::Sender<Option<String>>,
 ) -> JoinHandle<()> {
     let reader = BufReader::new(
         DecodeReaderBytesBuilder::new()
@@ -172,7 +158,7 @@ fn track_output(
         let _ = reader
             .lines()
             .flatten()
-            .try_for_each(|line| sender.send(line));
+            .try_for_each(|line| sender.send(Some(line)));
     })
 }
 

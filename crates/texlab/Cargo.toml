@@ -43,7 +43,6 @@ encoding_rs = "0.8.32"
 encoding_rs_io = "0.1.7"
 fern = "0.6.2"
 flate2 = "1.0.25"
-flume = "0.10.14"
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 human_name = { version = "2.0.1", default-features = false }
 itertools = "0.10.5"
