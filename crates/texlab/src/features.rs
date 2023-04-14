@@ -11,4 +11,3 @@ pub mod link;
 pub mod reference;
 pub mod rename;
 pub mod symbol;
-pub mod workspace_command;

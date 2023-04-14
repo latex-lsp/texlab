@@ -2,12 +2,15 @@ mod dispatch;
 pub mod options;
 
 use std::{
+    collections::HashMap,
     path::PathBuf,
     sync::{Arc, Mutex},
 };
 
 use anyhow::Result;
 use base_db::{Config, Owner, Workspace};
+use base_feature::normalize_uri;
+use commands::{CleanCommand, CleanTarget};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
@@ -16,7 +19,7 @@ use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use syntax::bibtex;
 use threadpool::ThreadPool;
@@ -28,9 +31,7 @@ use crate::{
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
         reference, rename, symbol,
-        workspace_command::{change_environment, clean, dep_graph},
     },
-    normalize_uri,
     util::{
         self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
         line_index_ext::LineIndexExt,
@@ -91,27 +92,6 @@ impl Server {
         self.pool.execute(move || {
             let response = lsp_server::Response::new_ok(id, query(&workspace.read()));
             client.send_response(response).unwrap();
-        });
-    }
-
-    fn run_query_and_request<R, S, Q>(&self, id: RequestId, query: Q)
-    where
-        R: Request,
-        S: Serialize,
-        Q: FnOnce(&Workspace) -> Option<(S, R::Params)> + Send + 'static,
-    {
-        let client = self.client.clone();
-        let workspace = Arc::clone(&self.workspace);
-        self.pool.execute(move || match query(&workspace.read()) {
-            Some((result, request_params)) => {
-                let response = lsp_server::Response::new_ok(id, result);
-                client.send_response(response).unwrap();
-                client.send_request::<R>(request_params).unwrap();
-            }
-            None => {
-                let response = lsp_server::Response::new_ok(id, Option::<S>::None);
-                client.send_response(response).unwrap();
-            }
         });
     }
 
@@ -636,26 +616,25 @@ impl Server {
     fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
         match params.command.as_str() {
             "texlab.cleanAuxiliary" => {
-                let workspace = self.workspace.read();
-                let opt = clean::CleanOptions::Auxiliary;
-                let command = clean::CleanCommand::new(&workspace, opt, params.arguments);
+                let command = self.clean_artifacts(params, CleanTarget::Auxiliary);
                 self.run_fallible(id, || command?.run());
             }
             "texlab.cleanArtifacts" => {
-                let workspace = self.workspace.read();
-                let opt = clean::CleanOptions::Auxiliary;
-                let command = clean::CleanCommand::new(&workspace, opt, params.arguments);
+                let command = self.clean_artifacts(params, CleanTarget::Artifacts);
                 self.run_fallible(id, || command?.run());
             }
             "texlab.changeEnvironment" => {
-                self.run_query_and_request::<ApplyWorkspaceEdit, _, _>(id, move |workspace| {
-                    change_environment::change_environment(workspace, params.arguments)
+                let client = self.client.clone();
+                let params = self.change_environment(params);
+                self.run_fallible(id, move || {
+                    client.send_request::<ApplyWorkspaceEdit>(params?)
                 });
             }
             "texlab.showDependencyGraph" => {
-                self.run_query(id, move |workspace| {
-                    dep_graph::show_dependency_graph(workspace).unwrap()
-                });
+                let workspace = self.workspace.read();
+                let dot = commands::show_dependency_graph(&workspace).unwrap();
+                self.client
+                    .send_response(lsp_server::Response::new_ok(id, dot))?;
             }
             _ => {
                 self.client
@@ -828,6 +807,78 @@ impl Server {
         if changed {
             self.publish_diagnostics_with_delay();
         }
+    }
+
+    fn clean_artifacts(
+        &self,
+        params: ExecuteCommandParams,
+        target: CleanTarget,
+    ) -> Result<CleanCommand> {
+        let workspace = self.workspace.read();
+        let mut params = self.parse_command_params::<TextDocumentIdentifier>(params.arguments)?;
+        normalize_uri(&mut params.uri);
+        let Some(document) = workspace.lookup(&params.uri) else {
+            anyhow::bail!("Document {} is not opened!", params.uri)
+        };
+
+        let command = CleanCommand::new(&workspace, document, target)?;
+        Ok(command)
+    }
+
+    fn change_environment(&self, params: ExecuteCommandParams) -> Result<ApplyWorkspaceEditParams> {
+        let workspace = self.workspace.read();
+        let params = self.parse_command_params::<RenameParams>(params.arguments)?;
+        let mut uri = params.text_document_position.text_document.uri;
+        normalize_uri(&mut uri);
+
+        let Some(document) = workspace.lookup(&uri) else {
+            anyhow::bail!("Document {} is not opened!", uri)
+        };
+
+        let line_index = &document.line_index;
+        let position = line_index.offset_lsp(params.text_document_position.position);
+
+        let Some(result) = commands::change_environment(document, position, &params.new_name) else {
+            anyhow::bail!("No environment found at the current position");
+        };
+
+        let range1 = line_index.line_col_lsp_range(result.begin);
+        let range2 = line_index.line_col_lsp_range(result.end);
+
+        let mut changes = HashMap::new();
+        changes.insert(
+            document.uri.clone(),
+            vec![
+                TextEdit::new(range1, params.new_name.clone()),
+                TextEdit::new(range2, params.new_name.clone()),
+            ],
+        );
+
+        let label = Some(format!(
+            "change environment: {} -> {}",
+            result.old_name, result.new_name
+        ));
+
+        let edit = WorkspaceEdit {
+            changes: Some(changes),
+            document_changes: None,
+            change_annotations: None,
+        };
+
+        Ok(ApplyWorkspaceEditParams { label, edit })
+    }
+
+    fn parse_command_params<T: DeserializeOwned>(
+        &self,
+        params: Vec<serde_json::Value>,
+    ) -> Result<T> {
+        if params.is_empty() {
+            anyhow::bail!("No argument provided!");
+        }
+
+        let value = params.into_iter().next().unwrap();
+        let value = serde_json::from_value(value)?;
+        Ok(value)
     }
 
     fn process_messages(&mut self) -> Result<()> {

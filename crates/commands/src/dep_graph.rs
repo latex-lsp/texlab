@@ -1,8 +1,8 @@
+use std::io::Write;
+
 use anyhow::Result;
 use base_db::{graph, Document, Workspace};
 use itertools::Itertools;
-use std::io::Write;
-
 use rustc_hash::FxHashMap;
 
 pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {

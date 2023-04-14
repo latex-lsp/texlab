@@ -124,6 +124,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-feature"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "rowan",
+ "syntax",
+ "url",
+]
+
+[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -295,6 +305,21 @@ name = "clap_lex"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a2dd5a6fe8c6e3502f568a6353e5273bbb15193ad9a89e457b9970798efbea1"
+
+[[package]]
+name = "commands"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base-db",
+ "base-feature",
+ "itertools",
+ "log",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "url",
+]
 
 [[package]]
 name = "concolor-override"
@@ -1519,8 +1544,10 @@ dependencies = [
  "anyhow",
  "assert_unordered",
  "base-db",
+ "base-feature",
  "citeproc",
  "clap 4.2.1",
+ "commands",
  "criterion",
  "crossbeam-channel",
  "dashmap",
