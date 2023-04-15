@@ -15,6 +15,7 @@ log = "0.4.17"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
+thiserror = "1.0.40"
 url = "2.3.1"
 
 [lib]

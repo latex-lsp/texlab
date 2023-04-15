@@ -8,9 +8,9 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::{Config, Owner, Workspace};
+use base_db::{Config, LineColUtf16, Owner, Workspace};
 use base_feature::normalize_uri;
-use commands::{CleanCommand, CleanTarget};
+use commands::{CleanCommand, CleanTarget, ForwardSearch, ForwardSearchError};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
@@ -29,8 +29,8 @@ use crate::{
     features::{
         build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
-        definition, folding, formatting, forward_search, highlight, hover, inlay_hint, link,
-        reference, rename, symbol,
+        definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
+        symbol,
     },
     util::{
         self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
@@ -45,7 +45,6 @@ enum InternalMessage {
     SetDistro(Distro),
     SetOptions(Options),
     FileEvent(notify::Event),
-    ForwardSearch(Url),
     Diagnostics,
     ChktexResult(Url, Vec<lsp_types::Diagnostic>),
 }
@@ -616,11 +615,11 @@ impl Server {
     fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
         match params.command.as_str() {
             "texlab.cleanAuxiliary" => {
-                let command = self.clean_artifacts(params, CleanTarget::Auxiliary);
+                let command = self.prepare_clean_command(params, CleanTarget::Auxiliary);
                 self.run_fallible(id, || command?.run());
             }
             "texlab.cleanArtifacts" => {
-                let command = self.clean_artifacts(params, CleanTarget::Artifacts);
+                let command = self.prepare_clean_command(params, CleanTarget::Artifacts);
                 self.run_fallible(id, || command?.run());
             }
             "texlab.changeEnvironment" => {
@@ -661,7 +660,7 @@ impl Server {
 
     fn inlay_hint_resolve(&self, id: RequestId, hint: InlayHint) -> Result<()> {
         let response = lsp_server::Response::new_ok(id, hint);
-        self.connection.sender.send(response.into()).unwrap();
+        self.client.send_response(response)?;
         Ok(())
     }
 
@@ -701,14 +700,19 @@ impl Server {
         };
 
         let forward_search_after = workspace.config().build.forward_search_after;
+        let forward_search = if forward_search_after {
+            self.prepare_forward_search(&uri, None).ok()
+        } else {
+            None
+        };
 
-        let sender = self.internal_tx.clone();
         self.pool.execute(move || {
             let guard = LOCK.lock().unwrap();
 
             let status = compiler.run();
-            if forward_search_after {
-                let _ = sender.send(InternalMessage::ForwardSearch(uri));
+
+            if let Some(forward_search) = forward_search {
+                std::thread::spawn(move || forward_search.run().unwrap());
             }
 
             drop(guard);
@@ -723,37 +727,20 @@ impl Server {
         normalize_uri(&mut uri);
 
         let client = self.client.clone();
-        self.forward_search_internal(uri, Some(params.position), move |status| {
-            let result = ForwardSearchResult { status };
-            let _ = client.send_response(lsp_server::Response::new_ok(id, result));
-        })?;
-
-        Ok(())
-    }
-
-    fn forward_search_internal(
-        &mut self,
-        uri: Url,
-        position: Option<Position>,
-        callback: impl FnOnce(ForwardSearchStatus) + Send + 'static,
-    ) -> Result<()> {
-        let workspace = self.workspace.read();
-
-        let command = match forward_search::Command::configure(&workspace, &uri, position) {
-            Ok(command) => command,
-            Err(why) => {
-                log::error!("Forward search failed: {}", why);
-                callback(why.into());
-                return Ok(());
-            }
-        };
-
+        let command = self.prepare_forward_search(&uri, Some(params.position));
         self.pool.execute(move || {
-            let status = command
-                .run()
-                .map_or_else(ForwardSearchStatus::from, |()| ForwardSearchStatus::SUCCESS);
+            let status = match command.and_then(ForwardSearch::run) {
+                Ok(()) => ForwardSearchStatus::SUCCESS,
+                Err(why) => {
+                    log::error!("Failed to execute forward search: {why}");
+                    ForwardSearchStatus::from(why)
+                }
+            };
 
-            callback(status);
+            let result = ForwardSearchResult { status };
+            client
+                .send_response(lsp_server::Response::new_ok(id, result))
+                .unwrap();
         });
 
         Ok(())
@@ -809,7 +796,29 @@ impl Server {
         }
     }
 
-    fn clean_artifacts(
+    fn prepare_forward_search(
+        &self,
+        uri: &Url,
+        position: Option<Position>,
+    ) -> Result<ForwardSearch, ForwardSearchError> {
+        let workspace = self.workspace.read();
+        let Some(document) = workspace.lookup(uri) else {
+            return Err(ForwardSearchError::TexNotFound(uri.clone()));
+        };
+
+        let position = match position {
+            Some(position) => {
+                let line = position.line;
+                let col = position.character;
+                document.line_index.to_utf8(LineColUtf16 { line, col })
+            }
+            None => document.line_index.line_col(document.cursor),
+        };
+
+        ForwardSearch::new(&workspace, document, position)
+    }
+
+    fn prepare_clean_command(
         &self,
         params: ExecuteCommandParams,
         target: CleanTarget,
@@ -821,8 +830,7 @@ impl Server {
             anyhow::bail!("Document {} is not opened!", params.uri)
         };
 
-        let command = CleanCommand::new(&workspace, document, target)?;
-        Ok(command)
+        CleanCommand::new(&workspace, document, target)
     }
 
     fn change_environment(&self, params: ExecuteCommandParams) -> Result<ApplyWorkspaceEditParams> {
@@ -939,7 +947,7 @@ impl Server {
                                 })?
                                 .default()
                             {
-                                self.connection.sender.send(response.into())?;
+                                self.client.send_response(response)?;
                             }
                         }
                         Message::Notification(notification) => {
@@ -972,9 +980,6 @@ impl Server {
                         }
                         InternalMessage::FileEvent(event) => {
                             self.handle_file_event(event);
-                        }
-                        InternalMessage::ForwardSearch(uri) => {
-                            self.forward_search_internal(uri, None, |_| ())?;
                         }
                         InternalMessage::Diagnostics => {
                             self.publish_diagnostics()?;
@@ -1050,15 +1055,15 @@ pub enum ForwardSearchStatus {
     UNCONFIGURED = 3,
 }
 
-impl From<forward_search::Error> for ForwardSearchStatus {
-    fn from(err: forward_search::Error) -> Self {
-        match err {
-            forward_search::Error::TexNotFound(_) => ForwardSearchStatus::FAILURE,
-            forward_search::Error::InvalidTexFile(_) => ForwardSearchStatus::ERROR,
-            forward_search::Error::PdfNotFound(_) => ForwardSearchStatus::ERROR,
-            forward_search::Error::NoLocalFile(_) => ForwardSearchStatus::FAILURE,
-            forward_search::Error::Unconfigured => ForwardSearchStatus::UNCONFIGURED,
-            forward_search::Error::Spawn(_) => ForwardSearchStatus::ERROR,
+impl From<ForwardSearchError> for ForwardSearchStatus {
+    fn from(why: ForwardSearchError) -> Self {
+        match why {
+            ForwardSearchError::Unconfigured => ForwardSearchStatus::UNCONFIGURED,
+            ForwardSearchError::NonLocalFile(_) => ForwardSearchStatus::FAILURE,
+            ForwardSearchError::InvalidPath(_) => ForwardSearchStatus::ERROR,
+            ForwardSearchError::TexNotFound(_) => ForwardSearchStatus::FAILURE,
+            ForwardSearchError::PdfNotFound(_) => ForwardSearchStatus::ERROR,
+            ForwardSearchError::LaunchViewer(_) => ForwardSearchStatus::ERROR,
         }
     }
 }

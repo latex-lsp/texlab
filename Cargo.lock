@@ -129,6 +129,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "rowan",
+ "rustc-hash",
  "syntax",
  "url",
 ]
@@ -318,6 +319,7 @@ dependencies = [
  "rowan",
  "rustc-hash",
  "syntax",
+ "thiserror",
  "url",
 ]
 
