@@ -5,9 +5,10 @@ use std::sync::{
 
 use anyhow::{bail, Result};
 use crossbeam_channel::Sender;
-use dashmap::DashMap;
 use lsp_server::{ErrorCode, Message, Request, RequestId, Response};
 use lsp_types::{notification::ShowMessage, MessageType, ShowMessageParams};
+use parking_lot::Mutex;
+use rustc_hash::FxHashMap;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::options::Options;
@@ -16,7 +17,7 @@ use crate::server::options::Options;
 struct RawClient {
     sender: Sender<Message>,
     next_id: AtomicI32,
-    pending: DashMap<RequestId, Sender<Response>>,
+    pending: Mutex<FxHashMap<RequestId, Sender<Response>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -29,7 +30,7 @@ impl LspClient {
         let raw = Arc::new(RawClient {
             sender,
             next_id: AtomicI32::new(1),
-            pending: DashMap::default(),
+            pending: Default::default(),
         });
 
         Self { raw }
@@ -55,7 +56,7 @@ impl LspClient {
         let id = RequestId::from(self.raw.next_id.fetch_add(1, Ordering::SeqCst));
 
         let (tx, rx) = crossbeam_channel::bounded(1);
-        self.raw.pending.insert(id.clone(), tx);
+        self.raw.pending.lock().insert(id.clone(), tx);
 
         self.raw
             .sender
@@ -81,9 +82,10 @@ impl LspClient {
     }
 
     pub fn recv_response(&self, response: lsp_server::Response) -> Result<()> {
-        let (_, tx) = self
+        let tx = self
             .raw
             .pending
+            .lock()
             .remove(&response.id)
             .expect("response with known request id received");
 
