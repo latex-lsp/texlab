@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Repair `texlab.cleanArtifacts` command
+- Fix regression introduced in `v5.4.2` involving `texlab.cleanArtifacts` command.
 
 ## [5.4.2] - 2023-04-11
 
