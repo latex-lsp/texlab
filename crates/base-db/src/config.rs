@@ -12,6 +12,7 @@ pub struct Config {
     pub synctex: Option<SynctexConfig>,
     pub symbols: SymbolConfig,
     pub syntax: SyntaxConfig,
+    pub completion: CompletionConfig,
 }
 
 #[derive(Debug)]
@@ -71,6 +72,19 @@ pub struct SymbolConfig {
     pub ignored_patterns: Vec<Regex>,
 }
 
+#[derive(Debug)]
+pub struct CompletionConfig {
+    pub matcher: MatchingAlgo,
+}
+
+#[derive(Debug)]
+pub enum MatchingAlgo {
+    Skim,
+    SkimIgnoreCase,
+    Prefix,
+    PrefixIgnoreCase,
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -81,6 +95,7 @@ impl Default for Config {
             synctex: None,
             symbols: SymbolConfig::default(),
             syntax: SyntaxConfig::default(),
+            completion: CompletionConfig::default(),
         }
     }
 }
@@ -146,6 +161,14 @@ impl Default for SymbolConfig {
         Self {
             allowed_patterns: Vec::new(),
             ignored_patterns: Vec::new(),
+        }
+    }
+}
+
+impl Default for CompletionConfig {
+    fn default() -> Self {
+        Self {
+            matcher: MatchingAlgo::SkimIgnoreCase,
         }
     }
 }

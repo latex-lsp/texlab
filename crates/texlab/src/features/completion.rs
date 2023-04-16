@@ -13,6 +13,7 @@ mod glossary_ref;
 mod import;
 mod include;
 mod label;
+mod matcher;
 mod theorem;
 mod tikz_library;
 mod user_command;

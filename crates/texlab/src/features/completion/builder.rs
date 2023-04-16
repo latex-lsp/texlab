@@ -1,5 +1,5 @@
-use base_db::Document;
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use base_db::{Document, MatchingAlgo};
+use fuzzy_matcher::skim::SkimMatcherV2;
 use itertools::Itertools;
 use lsp_types::{
     ClientCapabilities, ClientInfo, CompletionItem, CompletionItemKind, CompletionList,
@@ -23,12 +23,15 @@ use crate::util::{
     lsp_enums::Structure,
 };
 
-use super::COMPLETION_LIMIT;
+use super::{
+    matcher::{self, Matcher},
+    COMPLETION_LIMIT,
+};
 
 pub struct CompletionBuilder<'a> {
     context: &'a CursorContext<'a>,
     items: Vec<Item<'a>>,
-    matcher: SkimMatcherV2,
+    matcher: Box<dyn Matcher>,
     text_pattern: String,
     file_pattern: String,
     preselect: Option<String>,
@@ -45,7 +48,13 @@ impl<'a> CompletionBuilder<'a> {
         client_info: Option<&'a ClientInfo>,
     ) -> Self {
         let items = Vec::new();
-        let matcher = SkimMatcherV2::default().ignore_case();
+        let matcher: Box<dyn Matcher> = match context.workspace.config().completion.matcher {
+            MatchingAlgo::Skim => Box::new(SkimMatcherV2::default()),
+            MatchingAlgo::SkimIgnoreCase => Box::new(SkimMatcherV2::default().ignore_case()),
+            MatchingAlgo::Prefix => Box::new(matcher::Prefix),
+            MatchingAlgo::PrefixIgnoreCase => Box::new(matcher::PrefixIgnoreCase),
+        };
+
         let text_pattern = match &context.cursor {
             Cursor::Tex(token) if token.kind() == latex::COMMAND_NAME => {
                 if token.text_range().start() + TextSize::from(1) == context.offset {
@@ -124,7 +133,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn glossary_entry(&mut self, range: TextRange, name: String) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&name, &self.text_pattern)?;
+        let score = self.matcher.score(&name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::GlossaryEntry { name },
@@ -141,7 +150,7 @@ impl<'a> CompletionBuilder<'a> {
         name: &'a str,
         image: Option<&'a str>,
     ) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Argument { name, image },
@@ -154,7 +163,7 @@ impl<'a> CompletionBuilder<'a> {
 
     pub fn begin_snippet(&mut self, range: TextRange) -> Option<()> {
         if self.snippets {
-            let score = self.matcher.fuzzy_match("begin", &self.text_pattern[1..])?;
+            let score = self.matcher.score("begin", &self.text_pattern[1..])?;
             self.items.push(Item {
                 range,
                 data: Data::BeginSnippet,
@@ -187,7 +196,7 @@ impl<'a> CompletionBuilder<'a> {
                 .trim(),
         );
 
-        let score = self.matcher.fuzzy_match(&filter_text, &self.text_pattern)?;
+        let score = self.matcher.score(&filter_text, &self.text_pattern)?;
 
         let data = Data::Citation {
             document,
@@ -207,7 +216,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn color_model(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::ColorModel { name },
@@ -219,7 +228,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn color(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Color { name },
@@ -238,7 +247,7 @@ impl<'a> CompletionBuilder<'a> {
         glyph: Option<&'a str>,
         file_names: &'a [SmolStr],
     ) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern[1..])?;
+        let score = self.matcher.score(name, &self.text_pattern[1..])?;
         let data = Data::ComponentCommand {
             name,
             image,
@@ -262,7 +271,7 @@ impl<'a> CompletionBuilder<'a> {
         name: &'a str,
         file_names: &'a [SmolStr],
     ) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::ComponentEnvironment { name, file_names },
@@ -280,7 +289,7 @@ impl<'a> CompletionBuilder<'a> {
     ) -> Option<()> {
         let score = self
             .matcher
-            .fuzzy_match(&entry_type.name, &self.text_pattern[1..])?;
+            .score(&entry_type.name, &self.text_pattern[1..])?;
 
         self.items.push(Item {
             range,
@@ -293,7 +302,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn field(&mut self, range: TextRange, field: &'a BibtexFieldDoc) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&field.name, &self.text_pattern)?;
+        let score = self.matcher.score(&field.name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Field { field },
@@ -305,7 +314,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn class(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Class { name },
@@ -317,7 +326,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn package(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Package { name },
@@ -329,7 +338,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn file(&mut self, range: TextRange, name: String) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&name, &self.file_pattern)?;
+        let score = self.matcher.score(&name, &self.file_pattern)?;
         self.items.push(Item {
             range,
             data: Data::File { name },
@@ -341,7 +350,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn directory(&mut self, range: TextRange, name: String) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&name, &self.file_pattern)?;
+        let score = self.matcher.score(&name, &self.file_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Directory { name },
@@ -361,7 +370,7 @@ impl<'a> CompletionBuilder<'a> {
         footer: Option<&'a str>,
         text: String,
     ) -> Option<()> {
-        let score = self.matcher.fuzzy_match(&text, &self.text_pattern)?;
+        let score = self.matcher.score(&text, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Label {
@@ -379,7 +388,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn tikz_library(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::TikzLibrary { name },
@@ -391,7 +400,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn user_command(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern[1..])?;
+        let score = self.matcher.score(name, &self.text_pattern[1..])?;
         self.items.push(Item {
             range,
             data: Data::UserCommand { name },
@@ -403,7 +412,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn user_environment(&mut self, range: TextRange, name: &'a str) -> Option<()> {
-        let score = self.matcher.fuzzy_match(name, &self.text_pattern)?;
+        let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::UserEnvironment { name },

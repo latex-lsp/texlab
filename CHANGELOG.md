@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add experimental `texlab.experimental.citationCommands` setting to allow extending the list of citation commands
   ([#832](https://github.com/latex-lsp/texlab/issues/832))
 - Add support for escaping placeholders in build arguments similar to forward search
+- Allow configuring completion matching algorithm ([#872](https://github.com/latex-lsp/texlab/issues/872))
 
 ### Fixed
 

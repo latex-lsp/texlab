@@ -20,6 +20,7 @@ pub struct Options {
     pub symbols: SymbolOptions,
     pub latexindent: LatexindentOptions,
     pub forward_search: ForwardSearchOptions,
+    pub completion: CompletionOptions,
     pub experimental: ExperimentalOptions,
 }
 
@@ -121,6 +122,28 @@ pub struct StartupOptions {
     pub skip_distro: bool,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct CompletionOptions {
+    pub matcher: CompletionMatcher,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CompletionMatcher {
+    Fuzzy,
+    FuzzyIgnoreCase,
+    Prefix,
+    PrefixIgnoreCase,
+}
+
+impl Default for CompletionMatcher {
+    fn default() -> Self {
+        Self::FuzzyIgnoreCase
+    }
+}
+
 impl From<Options> for Config {
     fn from(value: Options) -> Self {
         let mut config = Config::default();
@@ -193,6 +216,13 @@ impl From<Options> for Config {
             .into_iter()
             .map(|pattern| pattern.0)
             .collect();
+
+        config.completion.matcher = match value.completion.matcher {
+            CompletionMatcher::Fuzzy => base_db::MatchingAlgo::Skim,
+            CompletionMatcher::FuzzyIgnoreCase => base_db::MatchingAlgo::SkimIgnoreCase,
+            CompletionMatcher::Prefix => base_db::MatchingAlgo::Prefix,
+            CompletionMatcher::PrefixIgnoreCase => base_db::MatchingAlgo::PrefixIgnoreCase,
+        };
 
         config
             .syntax
