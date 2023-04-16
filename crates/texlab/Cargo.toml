@@ -46,7 +46,6 @@ encoding_rs_io = "0.1.7"
 fern = "0.6.2"
 flate2 = "1.0.25"
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
-human_name = { version = "2.0.1", default-features = false }
 itertools = "0.10.5"
 log = "0.4.17"
 lsp-server = "0.7.0"
@@ -65,7 +64,6 @@ serde_repr = "0.1.12"
 smol_str = { version = "0.1.24", features = ["serde"] }
 syntax = { path = "../syntax" }
 tempfile = "3.5.0"
-thiserror = "1.0.40"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
 

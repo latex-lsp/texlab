@@ -10,6 +10,8 @@ rust-version.workspace = true
 anyhow = "1.0.70"
 base-db = { path = "../base-db" }
 base-feature = { path = "../base-feature" }
+bstr = "1.4.0"
+crossbeam-channel = "0.5.8"
 itertools = "0.10.5"
 log = "0.4.17"
 rowan = "0.15.11"

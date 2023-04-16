@@ -127,10 +127,7 @@ dependencies = [
 name = "base-feature"
 version = "0.0.0"
 dependencies = [
- "base-db",
- "rowan",
  "rustc-hash",
- "syntax",
  "url",
 ]
 
@@ -162,6 +159,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d4260bcc2e8fc9df1eac4919a720effeb63a3f0952f5bf4944adfa18897f09"
 dependencies = [
  "memchr",
+ "once_cell",
+ "regex-automata",
  "serde",
 ]
 
@@ -314,6 +313,8 @@ dependencies = [
  "anyhow",
  "base-db",
  "base-feature",
+ "bstr",
+ "crossbeam-channel",
  "itertools",
  "log",
  "rowan",
@@ -1332,6 +1333,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex-automata"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c230d73fb8d8c1b9c0b3135c5142a8acee3a0558fb8db5cf1cb65f8d7862132"
+
+[[package]]
 name = "regex-syntax"
 version = "0.6.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1560,7 +1567,6 @@ dependencies = [
  "fern",
  "flate2",
  "fuzzy-matcher",
- "human_name",
  "insta",
  "itertools",
  "log",
@@ -1580,7 +1586,6 @@ dependencies = [
  "smol_str",
  "syntax",
  "tempfile",
- "thiserror",
  "threadpool",
  "titlecase",
 ]

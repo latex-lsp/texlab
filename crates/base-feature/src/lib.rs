@@ -1,4 +1,4 @@
-mod normalize;
+mod normalize_uri;
 mod placeholders;
 
-pub use self::{normalize::normalize_uri, placeholders::*};
+pub use self::{normalize_uri::normalize_uri, placeholders::*};

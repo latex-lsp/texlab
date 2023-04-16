@@ -1,14 +1,12 @@
 use std::{
-    borrow::Cow,
     ffi::OsStr,
     path::{Path, PathBuf},
     process::Stdio,
 };
 
 use anyhow::Result;
-use base_db::{Document, LineCol, Workspace};
+use base_db::Workspace;
 use base_feature::replace_placeholders;
-use rustc_hash::FxHashMap;
 use thiserror::Error;
 use url::Url;
 
@@ -18,7 +16,7 @@ pub enum ForwardSearchError {
     Unconfigured,
 
     #[error("Document \"{0}\" does not exist on the local file system")]
-    NonLocalFile(Url),
+    NotLocal(Url),
 
     #[error("Document \"{0}\" has an invalid file path")]
     InvalidPath(Url),
@@ -41,17 +39,21 @@ pub struct ForwardSearch {
 impl ForwardSearch {
     pub fn new(
         workspace: &Workspace,
-        child: &Document,
-        position: LineCol,
+        uri: &Url,
+        line: Option<u32>,
     ) -> Result<Self, ForwardSearchError> {
         let Some(config) = &workspace.config().synctex else {
             return Err(ForwardSearchError::Unconfigured);
         };
 
+        let Some(child) = workspace.lookup(uri) else {
+            return Err(ForwardSearchError::TexNotFound(uri.clone()));
+        };
+
         let parents = workspace.parents(child);
         let parent = parents.into_iter().next().unwrap_or(child);
         if parent.uri.scheme() != "file" {
-            return Err(ForwardSearchError::NonLocalFile(parent.uri.clone()));
+            return Err(ForwardSearchError::NotLocal(parent.uri.clone()));
         }
 
         let dir = workspace.current_dir(&parent.dir);
@@ -76,20 +78,14 @@ impl ForwardSearch {
 
         let tex_path = tex_path.to_string_lossy().into_owned();
         let pdf_path = pdf_path.to_string_lossy().into_owned();
-        let line = (position.line + 1).to_string();
-
-        let mut placeholders = FxHashMap::default();
-        placeholders.insert('f', tex_path.as_str());
-        placeholders.insert('p', pdf_path.as_str());
-        placeholders.insert('l', line.as_str());
+        let line = line.unwrap_or_else(|| child.line_index.line_col(child.cursor).line);
+        let line = (line + 1).to_string();
 
         let program = config.program.clone();
-        let args = config
-            .args
-            .iter()
-            .map(|arg| replace_placeholders(arg, &placeholders))
-            .map(Cow::into_owned)
-            .collect::<Vec<String>>();
+        let args = replace_placeholders(
+            &config.args,
+            &[('f', &tex_path), ('p', &pdf_path), ('l', &line)],
+        );
 
         Ok(Self { program, args })
     }

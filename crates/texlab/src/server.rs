@@ -1,33 +1,32 @@
 mod dispatch;
+mod extensions;
 pub mod options;
+mod progress;
 
 use std::{
     collections::HashMap,
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicI32, Arc},
 };
 
 use anyhow::Result;
-use base_db::{Config, LineColUtf16, Owner, Workspace};
+use base_db::{Config, Owner, Workspace};
 use base_feature::normalize_uri;
-use commands::{CleanCommand, CleanTarget, ForwardSearch, ForwardSearchError};
+use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
-use once_cell::sync::Lazy;
-use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLock};
 use rowan::{ast::AstNode, TextSize};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
+use serde::{de::DeserializeOwned, Serialize};
 use syntax::bibtex;
 use threadpool::ThreadPool;
 
 use crate::{
     client::LspClient,
     features::{
-        build::{self, BuildParams, BuildResult, BuildStatus},
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
         symbol,
@@ -38,7 +37,14 @@ use crate::{
     },
 };
 
-use self::options::{Options, StartupOptions};
+use self::{
+    extensions::{
+        BuildParams, BuildRequest, BuildResult, BuildStatus, ForwardSearchRequest,
+        ForwardSearchResult, ForwardSearchStatus,
+    },
+    options::{Options, StartupOptions},
+    progress::ProgressReporter,
+};
 
 #[derive(Debug)]
 enum InternalMessage {
@@ -47,6 +53,7 @@ enum InternalMessage {
     FileEvent(notify::Event),
     Diagnostics,
     ChktexResult(Url, Vec<lsp_types::Diagnostic>),
+    ForwardSearch(Url, Option<Position>),
 }
 
 pub struct Server {
@@ -67,6 +74,7 @@ impl Server {
         let client = LspClient::new(connection.sender.clone());
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
         let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
+
         Self {
             connection: Arc::new(connection),
             internal_tx,
@@ -407,7 +415,9 @@ impl Server {
         normalize_uri(&mut uri);
 
         if self.workspace.read().config().build.on_save {
-            self.build_internal(uri.clone(), |_| ())?;
+            let text_document = TextDocumentIdentifier::new(uri.clone());
+            let params = BuildParams { text_document };
+            self.build(None, params)?;
         }
 
         self.publish_diagnostics_with_delay();
@@ -466,7 +476,7 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&mut self, id: RequestId, params: CompletionParams) -> Result<()> {
+    fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
         let mut uri = params.text_document_position.text_document.uri;
         normalize_uri(&mut uri);
         let position = params.text_document_position.position;
@@ -612,7 +622,7 @@ impl Server {
         Ok(())
     }
 
-    fn execute_command(&mut self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
+    fn execute_command(&self, id: RequestId, params: ExecuteCommandParams) -> Result<()> {
         match params.command.as_str() {
             "texlab.cleanAuxiliary" => {
                 let command = self.prepare_clean_command(params, CleanTarget::Auxiliary);
@@ -672,62 +682,87 @@ impl Server {
         Ok(())
     }
 
-    fn build(&mut self, id: RequestId, params: BuildParams) -> Result<()> {
+    fn build(&self, id: Option<RequestId>, params: BuildParams) -> Result<()> {
+        static LOCK: Mutex<()> = Mutex::new(());
+        static NEXT_TOKEN: AtomicI32 = AtomicI32::new(1);
+
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let client = self.client.clone();
-        self.build_internal(uri, move |status| {
-            let result = BuildResult { status };
-            let _ = client.send_response(lsp_server::Response::new_ok(id, result));
-        })?;
-
-        Ok(())
-    }
-
-    fn build_internal(
-        &mut self,
-        uri: Url,
-        callback: impl FnOnce(BuildStatus) + Send + 'static,
-    ) -> Result<()> {
-        static LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
-
         let workspace = self.workspace.read();
+
         let client = self.client.clone();
-        let Some(compiler) = build::Command::new(&workspace, uri.clone(), client, &self.client_capabilities) else {
-            callback(BuildStatus::FAILURE);
-            return Ok(());
-        };
 
-        let forward_search_after = workspace.config().build.forward_search_after;
-        let forward_search = if forward_search_after {
-            self.prepare_forward_search(&uri, None).ok()
-        } else {
-            None
-        };
+        let fwd_search_after = workspace.config().build.forward_search_after;
 
+        let (sender, receiver) = crossbeam_channel::unbounded();
+        self.redirect_build_log(receiver);
+
+        let command = BuildCommand::new(&workspace, &uri);
+        let internal = self.internal_tx.clone();
+        let progress = self.client_capabilities.has_work_done_progress_support();
         self.pool.execute(move || {
-            let guard = LOCK.lock().unwrap();
+            let guard = LOCK.lock();
 
-            let status = compiler.run();
+            let progress_reporter = if progress {
+                let token = NEXT_TOKEN.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                Some(ProgressReporter::new(client.clone(), token, &uri))
+            } else {
+                None
+            };
 
-            if let Some(forward_search) = forward_search {
-                std::thread::spawn(move || forward_search.run().unwrap());
+            let status = match command.and_then(|command| command.run(sender)) {
+                Ok(status) if status.success() => BuildStatus::SUCCESS,
+                Ok(_) => BuildStatus::ERROR,
+                Err(why) => {
+                    log::error!("Failed to compile document \"{uri}\": {why}");
+                    BuildStatus::FAILURE
+                }
+            };
+
+            drop(progress_reporter);
+            drop(guard);
+
+            if let Some(id) = id {
+                let result = BuildResult { status };
+                let _ = client.send_response(lsp_server::Response::new_ok(id, result));
             }
 
-            drop(guard);
-            callback(status);
+            if fwd_search_after {
+                let _ = internal.send(InternalMessage::ForwardSearch(uri, None));
+            }
         });
 
         Ok(())
     }
 
-    fn forward_search(&mut self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
+    fn redirect_build_log(&self, receiver: Receiver<String>) {
+        let client = self.client.clone();
+        self.pool.execute(move || {
+            let typ = MessageType::LOG;
+            for message in receiver {
+                client
+                    .send_notification::<LogMessage>(LogMessageParams { message, typ })
+                    .unwrap();
+            }
+        });
+    }
+
+    fn forward_search(
+        &self,
+        id: Option<RequestId>,
+        mut uri: Url,
+        position: Option<Position>,
+    ) -> Result<()> {
         normalize_uri(&mut uri);
 
         let client = self.client.clone();
-        let command = self.prepare_forward_search(&uri, Some(params.position));
+        let command = ForwardSearch::new(
+            &self.workspace.read(),
+            &uri,
+            position.map(|position| position.line),
+        );
+
         self.pool.execute(move || {
             let status = match command.and_then(ForwardSearch::run) {
                 Ok(()) => ForwardSearchStatus::SUCCESS,
@@ -737,22 +772,24 @@ impl Server {
                 }
             };
 
-            let result = ForwardSearchResult { status };
-            client
-                .send_response(lsp_server::Response::new_ok(id, result))
-                .unwrap();
+            if let Some(id) = id {
+                let result = ForwardSearchResult { status };
+                client
+                    .send_response(lsp_server::Response::new_ok(id, result))
+                    .unwrap();
+            }
         });
 
         Ok(())
     }
 
-    fn code_actions(&mut self, id: RequestId, _params: CodeActionParams) -> Result<()> {
+    fn code_actions(&self, id: RequestId, _params: CodeActionParams) -> Result<()> {
         self.client
             .send_response(lsp_server::Response::new_ok(id, Vec::<CodeAction>::new()))?;
         Ok(())
     }
 
-    fn code_action_resolve(&mut self, id: RequestId, action: CodeAction) -> Result<()> {
+    fn code_action_resolve(&self, id: RequestId, action: CodeAction) -> Result<()> {
         self.client
             .send_response(lsp_server::Response::new_ok(id, action))?;
         Ok(())
@@ -794,28 +831,6 @@ impl Server {
         if changed {
             self.publish_diagnostics_with_delay();
         }
-    }
-
-    fn prepare_forward_search(
-        &self,
-        uri: &Url,
-        position: Option<Position>,
-    ) -> Result<ForwardSearch, ForwardSearchError> {
-        let workspace = self.workspace.read();
-        let Some(document) = workspace.lookup(uri) else {
-            return Err(ForwardSearchError::TexNotFound(uri.clone()));
-        };
-
-        let position = match position {
-            Some(position) => {
-                let line = position.line;
-                let col = position.character;
-                document.line_index.to_utf8(LineColUtf16 { line, col })
-            }
-            None => document.line_index.line_col(document.cursor),
-        };
-
-        ForwardSearch::new(&workspace, document, position)
     }
 
     fn prepare_clean_command(
@@ -925,9 +940,9 @@ impl Server {
                                     self.document_highlight(id, params)
                                 })?
                                 .on::<Formatting, _>(|id, params| self.formatting(id, params))?
-                                .on::<BuildRequest, _>(|id, params| self.build(id, params))?
+                                .on::<BuildRequest, _>(|id, params| self.build(Some(id), params))?
                                 .on::<ForwardSearchRequest, _>(|id, params| {
-                                    self.forward_search(id, params)
+                                    self.forward_search(Some(id), params.text_document.uri, Some(params.position))
                                 })?
                                 .on::<ExecuteCommand,_>(|id, params| self.execute_command(id, params))?
                                 .on::<SemanticTokensRangeRequest, _>(|id, params| {
@@ -988,6 +1003,9 @@ impl Server {
                             self.chktex_diagnostics.insert(uri, diagnostics);
                             self.publish_diagnostics()?;
                         }
+                        InternalMessage::ForwardSearch(uri, position) => {
+                            self.forward_search(None, uri, position)?;
+                        }
                     };
                 }
             };
@@ -1024,51 +1042,4 @@ impl FileWatcher {
     pub fn watch(&mut self, workspace: &mut Workspace) {
         workspace.watch(&mut self.watcher, &mut self.watched_dirs);
     }
-}
-
-struct BuildRequest;
-
-impl lsp_types::request::Request for BuildRequest {
-    type Params = BuildParams;
-
-    type Result = BuildResult;
-
-    const METHOD: &'static str = "textDocument/build";
-}
-
-struct ForwardSearchRequest;
-
-impl lsp_types::request::Request for ForwardSearchRequest {
-    type Params = TextDocumentPositionParams;
-
-    type Result = ForwardSearchResult;
-
-    const METHOD: &'static str = "textDocument/forwardSearch";
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
-#[repr(i32)]
-pub enum ForwardSearchStatus {
-    SUCCESS = 0,
-    ERROR = 1,
-    FAILURE = 2,
-    UNCONFIGURED = 3,
-}
-
-impl From<ForwardSearchError> for ForwardSearchStatus {
-    fn from(why: ForwardSearchError) -> Self {
-        match why {
-            ForwardSearchError::Unconfigured => ForwardSearchStatus::UNCONFIGURED,
-            ForwardSearchError::NonLocalFile(_) => ForwardSearchStatus::FAILURE,
-            ForwardSearchError::InvalidPath(_) => ForwardSearchStatus::ERROR,
-            ForwardSearchError::TexNotFound(_) => ForwardSearchStatus::FAILURE,
-            ForwardSearchError::PdfNotFound(_) => ForwardSearchStatus::ERROR,
-            ForwardSearchError::LaunchViewer(_) => ForwardSearchStatus::ERROR,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct ForwardSearchResult {
-    pub status: ForwardSearchStatus,
 }
