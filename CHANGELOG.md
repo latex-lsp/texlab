@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Allow optionally passing cursor position to `textDocument/build` request for use in forward search after building.
+  Previously, the server had to guess the cursor position ([#475](https://github.com/latex-lsp/texlab/issues/475))
+
 ### Changed
 
 - Add support for escaping placeholders in build arguments similar to forward search

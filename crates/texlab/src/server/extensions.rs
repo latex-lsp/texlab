@@ -1,5 +1,5 @@
 use commands::ForwardSearchError;
-use lsp_types::{TextDocumentIdentifier, TextDocumentPositionParams};
+use lsp_types::{Position, TextDocumentIdentifier, TextDocumentPositionParams};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -17,6 +17,9 @@ impl lsp_types::request::Request for BuildRequest {
 #[serde(rename_all = "camelCase")]
 pub struct BuildParams {
     pub text_document: TextDocumentIdentifier,
+
+    #[serde(default)]
+    pub position: Option<Position>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]

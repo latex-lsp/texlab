@@ -416,7 +416,11 @@ impl Server {
 
         if self.workspace.read().config().build.on_save {
             let text_document = TextDocumentIdentifier::new(uri.clone());
-            let params = BuildParams { text_document };
+            let params = BuildParams {
+                text_document,
+                position: None,
+            };
+
             self.build(None, params)?;
         }
 
@@ -729,7 +733,7 @@ impl Server {
             }
 
             if fwd_search_after {
-                let _ = internal.send(InternalMessage::ForwardSearch(uri, None));
+                let _ = internal.send(InternalMessage::ForwardSearch(uri, params.position));
             }
         });
 
