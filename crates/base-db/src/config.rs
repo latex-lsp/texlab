@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use parser::SyntaxConfig;
 use regex::Regex;
-use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct Config {
@@ -69,13 +69,6 @@ pub struct LatexIndentConfig {
 pub struct SymbolConfig {
     pub allowed_patterns: Vec<Regex>,
     pub ignored_patterns: Vec<Regex>,
-}
-
-#[derive(Debug)]
-pub struct SyntaxConfig {
-    pub math_environments: FxHashSet<String>,
-    pub enum_environments: FxHashSet<String>,
-    pub verbatim_environments: FxHashSet<String>,
 }
 
 impl Default for Config {
@@ -156,78 +149,3 @@ impl Default for SymbolConfig {
         }
     }
 }
-
-impl Default for SyntaxConfig {
-    fn default() -> Self {
-        let math_environments = DEFAULT_MATH_ENVIRONMENTS
-            .iter()
-            .copied()
-            .map(String::from)
-            .collect();
-
-        let enum_environments = ["enumerate", "itemize", "description"]
-            .into_iter()
-            .map(String::from)
-            .collect();
-
-        let verbatim_environments = ["pycode", "minted", "asy", "lstlisting", "verbatim"]
-            .into_iter()
-            .map(String::from)
-            .collect();
-
-        Self {
-            math_environments,
-            enum_environments,
-            verbatim_environments,
-        }
-    }
-}
-
-static DEFAULT_MATH_ENVIRONMENTS: &[&str] = &[
-    "align",
-    "align*",
-    "alignat",
-    "alignat*",
-    "aligned",
-    "aligned*",
-    "alignedat",
-    "alignedat*",
-    "array",
-    "array*",
-    "Bmatrix",
-    "Bmatrix*",
-    "bmatrix",
-    "bmatrix*",
-    "cases",
-    "cases*",
-    "CD",
-    "CD*",
-    "eqnarray",
-    "eqnarray*",
-    "equation",
-    "equation*",
-    "IEEEeqnarray",
-    "IEEEeqnarray*",
-    "subequations",
-    "subequations*",
-    "gather",
-    "gather*",
-    "gathered",
-    "gathered*",
-    "matrix",
-    "matrix*",
-    "multline",
-    "multline*",
-    "pmatrix",
-    "pmatrix*",
-    "smallmatrix",
-    "smallmatrix*",
-    "split",
-    "split*",
-    "subarray",
-    "subarray*",
-    "Vmatrix",
-    "Vmatrix*",
-    "vmatrix",
-    "vmatrix*",
-];

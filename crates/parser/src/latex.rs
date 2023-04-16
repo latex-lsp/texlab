@@ -3,6 +3,8 @@ mod lexer;
 use rowan::{GreenNode, GreenNodeBuilder};
 use syntax::latex::SyntaxKind::{self, *};
 
+use crate::SyntaxConfig;
+
 use self::lexer::{
     types::{CommandName, SectionLevel, Token},
     Lexer,
@@ -30,9 +32,9 @@ struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(text: &'a str) -> Self {
+    pub fn new(text: &'a str, config: &SyntaxConfig) -> Self {
         Self {
-            lexer: Lexer::new(text),
+            lexer: Lexer::new(text, config),
             builder: GreenNodeBuilder::new(),
         }
     }
@@ -1116,13 +1118,15 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn parse_latex(text: &str) -> GreenNode {
-    Parser::new(text).parse()
+pub fn parse_latex(text: &str, config: &SyntaxConfig) -> GreenNode {
+    Parser::new(text, config).parse()
 }
 
 #[cfg(test)]
 mod tests {
     use syntax::latex;
+
+    use crate::SyntaxConfig;
 
     use super::parse_latex;
 
@@ -1130,7 +1134,7 @@ mod tests {
     fn test_parse() {
         insta::glob!("test_data/latex/{,**/}*.txt", |path| {
             let text = std::fs::read_to_string(path).unwrap().replace("\r\n", "\n");
-            let root = latex::SyntaxNode::new_root(parse_latex(&text));
+            let root = latex::SyntaxNode::new_root(parse_latex(&text, &SyntaxConfig::default()));
             insta::assert_debug_snapshot!(root);
         });
     }

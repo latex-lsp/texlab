@@ -2,14 +2,15 @@ use base_db::{Owner, Workspace};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use distro::Language;
 use lsp_types::{ClientCapabilities, Position, Url};
-use parser::parse_latex;
+use parser::{parse_latex, SyntaxConfig};
 use rowan::TextSize;
 
 const CODE: &str = include_str!("../../../texlab.tex");
 
 fn criterion_benchmark(c: &mut Criterion) {
+    let config = SyntaxConfig::default();
     c.bench_function("LaTeX/Parser", |b| {
-        b.iter(|| parse_latex(black_box(CODE)));
+        b.iter(|| parse_latex(black_box(CODE), &config));
     });
 
     c.bench_function("LaTeX/Completion/Command", |b| {

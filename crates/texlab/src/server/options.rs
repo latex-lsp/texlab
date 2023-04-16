@@ -111,6 +111,7 @@ pub struct ExperimentalOptions {
     pub math_environments: Vec<String>,
     pub enum_environments: Vec<String>,
     pub verbatim_environments: Vec<String>,
+    pub citation_commands: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -207,6 +208,11 @@ impl From<Options> for Config {
             .syntax
             .verbatim_environments
             .extend(value.experimental.verbatim_environments);
+
+        config
+            .syntax
+            .citation_commands
+            .extend(value.experimental.citation_commands);
 
         config
     }

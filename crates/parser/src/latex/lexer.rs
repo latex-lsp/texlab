@@ -4,6 +4,8 @@ pub(super) mod types;
 use logos::Logos;
 use syntax::latex::SyntaxKind;
 
+use crate::SyntaxConfig;
+
 use self::types::{CommandName, Token};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -12,8 +14,8 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        let mut tokens = tokenize(input);
+    pub fn new(input: &'a str, config: &SyntaxConfig) -> Self {
+        let mut tokens = tokenize(input, config);
         tokens.reverse();
         Self { tokens }
     }
@@ -45,7 +47,7 @@ impl<'a> Lexer<'a> {
     }
 }
 
-fn tokenize(input: &str) -> Vec<(Token, &str)> {
+fn tokenize<'a>(input: &'a str, config: &SyntaxConfig) -> Vec<(Token, &'a str)> {
     let mut lexer = Token::lexer(input);
     std::iter::from_fn(move || {
         let kind = lexer.next()?.unwrap();
@@ -54,7 +56,7 @@ fn tokenize(input: &str) -> Vec<(Token, &str)> {
     })
     .map(|(kind, text)| {
         if kind == Token::CommandName(CommandName::Generic) {
-            let name = commands::classify(&text[1..]);
+            let name = commands::classify(&text[1..], config);
             (Token::CommandName(name), text)
         } else {
             (kind, text)

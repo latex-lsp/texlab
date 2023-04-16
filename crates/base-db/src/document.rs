@@ -53,7 +53,7 @@ impl Document {
         let diagnostics = Vec::new();
         let data = match language {
             Language::Tex => {
-                let green = parser::parse_latex(&text);
+                let green = parser::parse_latex(&text, &config.syntax);
                 let mut semantics = semantics::tex::Semantics::default();
                 semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
                 DocumentData::Tex(TexDocumentData { green, semantics })
@@ -63,7 +63,7 @@ impl Document {
                 DocumentData::Bib(BibDocumentData { green })
             }
             Language::Aux => {
-                let green = parser::parse_latex(&text);
+                let green = parser::parse_latex(&text, &config.syntax);
                 let mut semantics = semantics::auxiliary::Semantics::default();
                 semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
                 DocumentData::Aux(AuxDocumentData { green, semantics })

@@ -1,6 +1,8 @@
+use crate::SyntaxConfig;
+
 use super::types::{CommandName, SectionLevel};
 
-pub fn classify(name: &str) -> CommandName {
+pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
     match name {
         "begin" => CommandName::BeginEnvironment,
         "end" => CommandName::EndEnvironment,
@@ -15,16 +17,6 @@ pub fn classify(name: &str) -> CommandName {
         "subparagraph" | "subparagraph*" => CommandName::Section(SectionLevel::Subparagraph),
         "item" => CommandName::EnumItem,
         "caption" => CommandName::Caption,
-        "cite" | "cite*" | "Cite" | "nocite" | "citet" | "citet*" | "citep" | "citep*"
-        | "citeauthor" | "citeauthor*" | "Citeauthor" | "Citeauthor*" | "citetitle"
-        | "citetitle*" | "citeyear" | "citeyear*" | "citedate" | "citedate*" | "citeurl"
-        | "fullcite" | "citeyearpar" | "citealt" | "citealp" | "citetext" | "parencite"
-        | "parencite*" | "Parencite" | "footcite" | "footfullcite" | "footcitetext"
-        | "textcite" | "Textcite" | "smartcite" | "supercite" | "autocite" | "autocite*"
-        | "Autocite" | "Autocite*" | "volcite" | "Volcite" | "pvolcite" | "Pvolcite"
-        | "fvolcite" | "ftvolcite" | "svolcite" | "Svolcite" | "tvolcite" | "Tvolcite"
-        | "avolcite" | "Avolcite" | "notecite" | "pnotecite" | "Pnotecite" | "fnotecite"
-        | "citeA" | "citeA*" => CommandName::Citation,
         "usepackage" | "RequirePackage" => CommandName::PackageInclude,
         "documentclass" => CommandName::ClassInclude,
         "include" | "subfileinclude" | "input" | "subfile" => CommandName::LatexInclude,
@@ -88,6 +80,7 @@ pub fn classify(name: &str) -> CommandName {
         "graphicspath" => CommandName::GraphicsPath,
         "iffalse" => CommandName::BeginBlockComment,
         "fi" => CommandName::EndBlockComment,
+        _ if config.citation_commands.contains(name) => CommandName::Citation,
         _ => CommandName::Generic,
     }
 }

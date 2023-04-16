@@ -1118,6 +1118,7 @@ dependencies = [
  "once_cell",
  "regex",
  "rowan",
+ "rustc-hash",
  "syntax",
 ]
 
