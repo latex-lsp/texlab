@@ -33,7 +33,6 @@ doctest = false
 [dependencies]
 anyhow = "1.0.70"
 base-db = { path = "../base-db" }
-base-feature = { path = "../base-feature" }
 citeproc = { path = "../citeproc" }
 clap = { version = "4.2.2", features = ["derive"] }
 commands = { path = "../commands" }

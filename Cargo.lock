@@ -133,14 +133,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "base-feature"
-version = "0.0.0"
-dependencies = [
- "rustc-hash",
- "url",
-]
-
-[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -327,7 +319,6 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "base-db",
- "base-feature",
  "bstr",
  "crossbeam-channel",
  "itertools",
@@ -1492,6 +1483,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
+name = "symbols"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "syntax",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1541,7 +1540,6 @@ dependencies = [
  "anyhow",
  "assert_unordered",
  "base-db",
- "base-feature",
  "citeproc",
  "clap 4.2.2",
  "commands",

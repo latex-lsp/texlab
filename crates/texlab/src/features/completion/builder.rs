@@ -1,4 +1,7 @@
-use base_db::{Document, MatchingAlgo};
+use base_db::{
+    data::{BibtexEntryType, BibtexEntryTypeCategory, BibtexFieldType},
+    Document, MatchingAlgo,
+};
 use fuzzy_matcher::skim::SkimMatcherV2;
 use itertools::Itertools;
 use lsp_types::{
@@ -18,7 +21,6 @@ use syntax::{
 use crate::util::{
     capabilities::ClientCapabilitiesExt,
     cursor::{Cursor, CursorContext},
-    lang_data::{BibtexEntryTypeCategory, BibtexEntryTypeDoc, BibtexFieldDoc, LANGUAGE_DATA},
     line_index_ext::LineIndexExt,
     lsp_enums::Structure,
 };
@@ -183,8 +185,7 @@ impl<'a> CompletionBuilder<'a> {
     ) -> Option<()> {
         let key = entry.name_token()?.to_string();
 
-        let category = LANGUAGE_DATA
-            .find_entry_type(&entry.type_token()?.text()[1..])
+        let category = BibtexEntryType::find(&entry.type_token()?.text()[1..])
             .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
 
         let code = entry.syntax().text().to_string();
@@ -285,7 +286,7 @@ impl<'a> CompletionBuilder<'a> {
     pub fn entry_type(
         &mut self,
         range: TextRange,
-        entry_type: &'a BibtexEntryTypeDoc,
+        entry_type: &'a BibtexEntryType<'a>,
     ) -> Option<()> {
         let score = self
             .matcher
@@ -301,7 +302,7 @@ impl<'a> CompletionBuilder<'a> {
         Some(())
     }
 
-    pub fn field(&mut self, range: TextRange, field: &'a BibtexFieldDoc) -> Option<()> {
+    pub fn field(&mut self, range: TextRange, field: &'a BibtexFieldType<'a>) -> Option<()> {
         let score = self.matcher.score(&field.name, &self.text_pattern)?;
         self.items.push(Item {
             range,
@@ -453,23 +454,26 @@ impl<'a> CompletionBuilder<'a> {
         let preselect = item.preselect;
         let mut item = match item.data {
             Data::EntryType { entry_type } => CompletionItem {
-                label: entry_type.name.clone(),
+                label: entry_type.name.into(),
                 kind: Some(Structure::Entry(entry_type.category).completion_kind()),
-                documentation: entry_type.documentation.clone().map(|value| {
+                documentation: entry_type.documentation.map(|value| {
                     let kind = MarkupKind::Markdown;
-                    Documentation::MarkupContent(MarkupContent { kind, value })
+                    Documentation::MarkupContent(MarkupContent {
+                        kind,
+                        value: value.into(),
+                    })
                 }),
-                text_edit: Some(TextEdit::new(range, entry_type.name.clone()).into()),
+                text_edit: Some(TextEdit::new(range, entry_type.name.into()).into()),
                 ..CompletionItem::default()
             },
             Data::Field { field } => CompletionItem {
-                label: field.name.clone(),
+                label: field.name.into(),
                 kind: Some(Structure::Field.completion_kind()),
                 documentation: Some(Documentation::MarkupContent(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: field.documentation.clone(),
+                    value: field.documentation.into(),
                 })),
-                text_edit: Some(TextEdit::new(range, field.name.clone()).into()),
+                text_edit: Some(TextEdit::new(range, field.name.into()).into()),
                 ..CompletionItem::default()
             },
             Data::Argument { name, image } => {
@@ -678,10 +682,10 @@ struct Item<'a> {
 #[derive(Debug, Clone)]
 enum Data<'a> {
     EntryType {
-        entry_type: &'a BibtexEntryTypeDoc,
+        entry_type: &'a BibtexEntryType<'a>,
     },
     Field {
-        field: &'a BibtexFieldDoc,
+        field: &'a BibtexFieldType<'a>,
     },
     Argument {
         name: &'a str,

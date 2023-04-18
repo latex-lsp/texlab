@@ -1,8 +1,9 @@
+use base_db::data::BibtexFieldType;
 use lsp_types::MarkupKind;
 use rowan::ast::AstNode;
 use syntax::bibtex;
 
-use crate::util::{cursor::CursorContext, lang_data::LANGUAGE_DATA};
+use crate::util::cursor::CursorContext;
 
 use super::HoverResult;
 
@@ -14,10 +15,10 @@ pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
 
     bibtex::Field::cast(name.parent()?)?;
 
-    let docs = LANGUAGE_DATA.field_documentation(name.text())?;
+    let docs = BibtexFieldType::find(name.text())?.documentation;
     Some(HoverResult {
         range: name.text_range(),
-        value: docs.to_string(),
+        value: docs.into(),
         value_kind: MarkupKind::Markdown,
     })
 }

@@ -3,6 +3,7 @@ mod change_env;
 mod clean;
 mod dep_graph;
 mod fwd_search;
+mod placeholders;
 
 pub use self::{
     build::{BuildCommand, BuildError},

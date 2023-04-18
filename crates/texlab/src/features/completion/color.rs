@@ -1,7 +1,7 @@
 use rowan::ast::AstNode;
 use syntax::latex;
 
-use crate::util::{cursor::CursorContext, lang_data::LANGUAGE_DATA};
+use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
@@ -12,9 +12,99 @@ pub fn complete<'db>(
     let (_, range, group) = context.find_curly_group_word()?;
     latex::ColorReference::cast(group.syntax().parent()?)?;
 
-    for name in &LANGUAGE_DATA.colors {
+    for name in COLORS {
         builder.color(range, name);
     }
 
     Some(())
 }
+
+static COLORS: &[&str] = &[
+    "black",
+    "blue",
+    "brown",
+    "cyan",
+    "darkgray",
+    "gray",
+    "green",
+    "lightgray",
+    "lime",
+    "magenta",
+    "olive",
+    "orange",
+    "pink",
+    "purple",
+    "red",
+    "teal",
+    "violet",
+    "white",
+    "yellow",
+    "Apricot",
+    "Bittersweet",
+    "Blue",
+    "BlueViolet",
+    "Brown",
+    "CadetBlue",
+    "Cerulean",
+    "Cyan",
+    "DarkOrchid",
+    "ForestGreen",
+    "Goldenrod",
+    "Green",
+    "JungleGreen",
+    "LimeGreen",
+    "Mahogany",
+    "Melon",
+    "Mulberry",
+    "OliveGreen",
+    "OrangeRed",
+    "Peach",
+    "PineGreen",
+    "ProcessBlue",
+    "RawSienna",
+    "RedOrange",
+    "Rhodamine",
+    "RoyalPurple",
+    "Salmon",
+    "Sepia",
+    "SpringGreen",
+    "TealBlue",
+    "Turquoise",
+    "VioletRed",
+    "WildStrawberry",
+    "YellowGreen",
+    "Aquamarine",
+    "Black",
+    "BlueGreen",
+    "BrickRed",
+    "BurntOrange",
+    "CarnationPink",
+    "CornflowerBlue",
+    "Dandelion",
+    "Emerald",
+    "Fuchsia",
+    "Gray",
+    "GreenYellow",
+    "Lavender",
+    "Magenta",
+    "Maroon",
+    "MidnightBlue",
+    "NavyBlue",
+    "Orange",
+    "Orchid",
+    "Periwinkle",
+    "Plum",
+    "Purple",
+    "Red",
+    "RedViolet",
+    "RoyalBlue",
+    "RubineRed",
+    "SeaGreen",
+    "SkyBlue",
+    "Tan",
+    "Thistle",
+    "Violet",
+    "White",
+    "Yellow",
+    "YellowOrange",
+];

@@ -1,4 +1,5 @@
 mod config;
+pub mod data;
 pub mod diagnostics;
 mod document;
 pub mod graph;

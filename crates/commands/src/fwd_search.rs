@@ -6,9 +6,10 @@ use std::{
 
 use anyhow::Result;
 use base_db::Workspace;
-use base_feature::replace_placeholders;
 use thiserror::Error;
 use url::Url;
+
+use crate::placeholders::replace_placeholders;
 
 #[derive(Debug, Error)]
 pub enum ForwardSearchError {

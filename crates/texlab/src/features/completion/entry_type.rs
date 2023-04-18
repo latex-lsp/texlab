@@ -1,7 +1,7 @@
 use rowan::{TextRange, TextSize};
 use syntax::bibtex;
 
-use crate::util::{cursor::CursorContext, lang_data::LANGUAGE_DATA};
+use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
@@ -17,7 +17,7 @@ pub fn complete<'db>(
         .filter(|range| range.start() != context.offset)
         .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))?;
 
-    for entry_type in &LANGUAGE_DATA.entry_types {
+    for entry_type in base_db::data::BIBTEX_ENTRY_TYPES {
         builder.entry_type(range, entry_type);
     }
 

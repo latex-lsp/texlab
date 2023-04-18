@@ -11,7 +11,6 @@ use std::{
 
 use anyhow::Result;
 use base_db::{Config, Owner, Workspace};
-use base_feature::normalize_uri;
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
@@ -33,7 +32,7 @@ use crate::{
     },
     util::{
         self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
-        line_index_ext::LineIndexExt,
+        line_index_ext::LineIndexExt, normalize_uri,
     },
 };
 

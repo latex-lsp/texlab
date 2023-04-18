@@ -1,11 +1,11 @@
-use base_db::{Document, DocumentData, LineIndex};
+use base_db::{
+    data::{BibtexEntryType, BibtexEntryTypeCategory},
+    Document, DocumentData, LineIndex,
+};
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName, HasType};
 
-use crate::util::{
-    lang_data::{BibtexEntryTypeCategory, LANGUAGE_DATA},
-    line_index_ext::LineIndexExt,
-};
+use crate::util::line_index_ext::LineIndexExt;
 
 use super::types::{InternalSymbol, InternalSymbolKind};
 
@@ -63,10 +63,8 @@ fn process_entry(
         }
     }
 
-    let category = LANGUAGE_DATA
-        .find_entry_type(&ty.text()[1..])
-        .map(|ty| ty.category)
-        .unwrap_or(BibtexEntryTypeCategory::Misc);
+    let category = BibtexEntryType::find(&ty.text()[1..])
+        .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
 
     buf.push(InternalSymbol {
         name: key.to_string(),

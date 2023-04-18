@@ -1,7 +1,7 @@
 use rowan::{ast::AstNode, TextRange};
 use syntax::bibtex::{self, HasName};
 
-use crate::util::{cursor::CursorContext, lang_data::LANGUAGE_DATA};
+use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
@@ -26,7 +26,7 @@ pub fn complete<'db>(
         bibtex::Field::cast(parent)?;
     }
 
-    for field in &LANGUAGE_DATA.fields {
+    for field in base_db::data::BIBTEX_FIELD_TYPES {
         builder.field(range, field);
     }
 
