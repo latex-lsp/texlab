@@ -539,7 +539,7 @@ impl TheoremDefinition {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn description(&self) -> Option<CurlyGroup> {
+    pub fn heading(&self) -> Option<CurlyGroup> {
         self.syntax().children().find_map(CurlyGroup::cast)
     }
 }

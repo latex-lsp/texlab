@@ -8,4 +8,4 @@ pub mod inlay_hint;
 pub mod link;
 pub mod reference;
 pub mod rename;
-pub mod symbol;
+pub mod symbols;

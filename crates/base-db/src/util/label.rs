@@ -1,23 +1,23 @@
 use std::str::FromStr;
 
-use base_db::{
+use rowan::TextRange;
+
+use self::RenderedObject::*;
+
+use crate::{
     semantics::tex::{Label, LabelObject},
     Project, Workspace,
 };
-use rowan::{ast::AstNode, TextRange};
-use syntax::latex::{self, HasCurly};
-
-use self::LabeledObject::*;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum LabeledFloatKind {
+pub enum FloatKind {
     Figure,
     Table,
     Listing,
     Algorithm,
 }
 
-impl LabeledFloatKind {
+impl FloatKind {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Figure => "Figure",
@@ -28,7 +28,7 @@ impl LabeledFloatKind {
     }
 }
 
-impl FromStr for LabeledFloatKind {
+impl FromStr for FloatKind {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -43,13 +43,13 @@ impl FromStr for LabeledFloatKind {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum LabeledObject<'a> {
+pub enum RenderedObject<'a> {
     Section {
         prefix: &'a str,
         text: &'a str,
     },
     Float {
-        kind: LabeledFloatKind,
+        kind: FloatKind,
         caption: &'a str,
     },
     Theorem {
@@ -64,7 +64,7 @@ pub enum LabeledObject<'a> {
 pub struct RenderedLabel<'a> {
     pub range: TextRange,
     pub number: Option<&'a str>,
-    pub object: LabeledObject<'a>,
+    pub object: RenderedObject<'a>,
 }
 
 impl<'a> RenderedLabel<'a> {
@@ -117,7 +117,7 @@ impl<'a> RenderedLabel<'a> {
     }
 }
 
-pub fn render<'a>(
+pub fn render_label<'a>(
     workspace: &'a Workspace,
     project: &Project<'a>,
     label: &'a Label,
@@ -135,14 +135,14 @@ pub fn render<'a>(
                 return Some(RenderedLabel {
                     range: target.range,
                     number,
-                    object: LabeledObject::Section { prefix, text },
+                    object: RenderedObject::Section { prefix, text },
                 });
             }
             LabelObject::EnumItem => {
                 return Some(RenderedLabel {
                     range: target.range,
                     number,
-                    object: LabeledObject::EnumItem,
+                    object: RenderedObject::EnumItem,
                 });
             }
             LabelObject::Environment {
@@ -155,15 +155,15 @@ pub fn render<'a>(
                     return Some(RenderedLabel {
                         range: target.range,
                         number,
-                        object: LabeledObject::Equation,
+                        object: RenderedObject::Equation,
                     });
                 }
 
-                if let Ok(kind) = LabeledFloatKind::from_str(name) {
+                if let Ok(kind) = FloatKind::from_str(name) {
                     return Some(RenderedLabel {
                         range: target.range,
                         number,
-                        object: LabeledObject::Float {
+                        object: RenderedObject::Float {
                             kind,
                             caption: caption.as_deref()?,
                         },
@@ -180,8 +180,8 @@ pub fn render<'a>(
                     return Some(RenderedLabel {
                         range: target.range,
                         number,
-                        object: LabeledObject::Theorem {
-                            kind: &theorem.description,
+                        object: RenderedObject::Theorem {
+                            kind: &theorem.heading,
                             description: options.as_deref(),
                         },
                     });
@@ -191,12 +191,4 @@ pub fn render<'a>(
     }
 
     None
-}
-
-pub(crate) fn find_caption_by_parent(parent: &latex::SyntaxNode) -> Option<String> {
-    parent
-        .children()
-        .filter_map(latex::Caption::cast)
-        .find_map(|node| node.long())
-        .and_then(|node| node.content_text())
 }

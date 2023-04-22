@@ -64,6 +64,7 @@ syntax = { path = "../syntax" }
 tempfile = "3.5.0"
 threadpool = "1.8.1"
 titlecase = "2.2.1"
+symbols = { path = "../symbols" }
 
 [dev-dependencies]
 assert_unordered = "0.3.5"

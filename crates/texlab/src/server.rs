@@ -28,7 +28,7 @@ use crate::{
     features::{
         completion::{self, builder::CompletionItemData},
         definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
-        symbol,
+        symbols,
     },
     util::{
         self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
@@ -467,15 +467,24 @@ impl Server {
     fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        let client_capabilities = Arc::clone(&self.client_capabilities);
+
+        let capabilities = Arc::clone(&self.client_capabilities);
         self.run_query(id, move |workspace| {
-            symbol::find_document_symbols(workspace, &uri, &client_capabilities)
+            let Some(document) = workspace.lookup(&uri) else {
+                return DocumentSymbolResponse::Flat(vec![]);
+            };
+
+            symbols::document_symbols(workspace, document, &capabilities)
         });
+
         Ok(())
     }
 
     fn workspace_symbols(&self, id: RequestId, params: WorkspaceSymbolParams) -> Result<()> {
-        self.run_query(id, move |db| symbol::find_workspace_symbols(db, &params));
+        self.run_query(id, move |workspace| {
+            symbols::workspace_symbols(workspace, &params.query)
+        });
+
         Ok(())
     }
 

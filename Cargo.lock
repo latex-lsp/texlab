@@ -1487,7 +1487,12 @@ name = "symbols"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "distro",
+ "itertools",
+ "rowan",
  "syntax",
+ "titlecase",
+ "url",
 ]
 
 [[package]]
@@ -1569,6 +1574,7 @@ dependencies = [
  "serde_regex",
  "serde_repr",
  "smol_str",
+ "symbols",
  "syntax",
  "tempfile",
  "threadpool",

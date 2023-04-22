@@ -1,10 +1,8 @@
-use base_db::{diagnostics::ErrorCode, Document, Workspace};
+use base_db::{diagnostics::ErrorCode, util::filter_regex_patterns, Document, Workspace};
 use distro::Language;
 use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
-
-use crate::util;
 
 use super::line_index_ext::LineIndexExt;
 
@@ -110,7 +108,7 @@ pub fn filter(
     let config = &workspace.config().diagnostics;
     for diagnostics in all_diagnostics.values_mut() {
         diagnostics.retain(|diagnostic| {
-            util::regex_filter::filter(
+            filter_regex_patterns(
                 &diagnostic.message,
                 &config.allowed_patterns,
                 &config.ignored_patterns,

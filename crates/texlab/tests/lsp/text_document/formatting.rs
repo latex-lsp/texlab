@@ -1,4 +1,4 @@
-use base_db::LineIndex;
+use base_db::util::LineIndex;
 use insta::assert_snapshot;
 use lsp_types::{
     request::Formatting, ClientCapabilities, DocumentFormattingParams, FormattingOptions,

@@ -1,0 +1,19 @@
+[package]
+name = "symbols"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base-db = { path = "../base-db" }
+distro = { path = "../distro" }
+itertools = "0.10.5"
+rowan = "0.15.11"
+syntax = { path = "../syntax" }
+url = "2.3.1"
+titlecase = "2.2.1"
+
+[lib]
+doctest = false

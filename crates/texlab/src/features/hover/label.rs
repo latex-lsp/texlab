@@ -1,7 +1,7 @@
-use base_db::semantics::tex::LabelKind;
+use base_db::{semantics::tex::LabelKind, util::render_label};
 use lsp_types::MarkupKind;
 
-use crate::util::{self, cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::HoverResult;
 
@@ -17,7 +17,7 @@ pub(super) fn find_hover(context: &CursorContext) -> Option<HoverResult> {
         .filter_map(|document| document.data.as_tex())
         .flat_map(|data| data.semantics.labels.iter())
         .find(|label| label.kind == LabelKind::Definition && label.name.text == name_text)
-        .and_then(|label| util::label::render(context.workspace, &context.project, label))
+        .and_then(|label| render_label(context.workspace, &context.project, label))
         .map(|label| HoverResult {
             range,
             value: label.reference(),

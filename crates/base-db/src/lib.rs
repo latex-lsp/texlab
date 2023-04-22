@@ -3,8 +3,8 @@ pub mod data;
 pub mod diagnostics;
 mod document;
 pub mod graph;
-mod line_index;
 pub mod semantics;
+pub mod util;
 mod workspace;
 
-pub use self::{config::*, document::*, line_index::*, workspace::*};
+pub use self::{config::*, document::*, workspace::*};

@@ -1,4 +1,4 @@
-use base_db::{LineCol, LineColUtf16, LineIndex};
+use base_db::util::{LineCol, LineColUtf16, LineIndex};
 use lsp_types::{Position, Range};
 use rowan::{TextRange, TextSize};
 

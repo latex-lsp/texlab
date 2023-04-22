@@ -1,8 +1,12 @@
-use base_db::{semantics::tex::LabelKind, DocumentData};
+use base_db::{
+    semantics::tex::LabelKind,
+    util::{render_label, RenderedObject},
+    DocumentData,
+};
 use rowan::{ast::AstNode, TextRange};
 use syntax::latex;
 
-use crate::util::{self, cursor::CursorContext, label::LabeledObject, lsp_enums::Structure};
+use crate::util::{cursor::CursorContext, lsp_enums::Structure};
 
 use super::builder::CompletionBuilder;
 
@@ -20,14 +24,14 @@ pub fn complete<'db>(
             .iter()
             .filter(|label| label.kind == LabelKind::Definition)
         {
-            match util::label::render(context.workspace, &context.project, label) {
+            match render_label(context.workspace, &context.project, label) {
                 Some(rendered_label) => {
                     let kind = match &rendered_label.object {
-                        LabeledObject::Section { .. } => Structure::Section,
-                        LabeledObject::Float { .. } => Structure::Float,
-                        LabeledObject::Theorem { .. } => Structure::Theorem,
-                        LabeledObject::Equation => Structure::Equation,
-                        LabeledObject::EnumItem => Structure::Item,
+                        RenderedObject::Section { .. } => Structure::Section,
+                        RenderedObject::Float { .. } => Structure::Float,
+                        RenderedObject::Theorem { .. } => Structure::Theorem,
+                        RenderedObject::Equation => Structure::Equation,
+                        RenderedObject::EnumItem => Structure::Item,
                     };
 
                     if is_math && kind != Structure::Equation {
@@ -36,7 +40,7 @@ pub fn complete<'db>(
 
                     let header = rendered_label.detail();
                     let footer = match &rendered_label.object {
-                        LabeledObject::Float { caption, .. } => Some(caption.clone()),
+                        RenderedObject::Float { caption, .. } => Some(caption.clone()),
                         _ => None,
                     };
 

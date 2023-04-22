@@ -1,6 +1,8 @@
-use base_db::{semantics::tex::LabelKind, DocumentData};
-
-use crate::util::{self, label::LabeledObject};
+use base_db::{
+    semantics::tex::LabelKind,
+    util::{render_label, RenderedObject},
+    DocumentData,
+};
 
 use super::InlayHintBuilder;
 
@@ -15,21 +17,21 @@ pub(super) fn find_hints(builder: &mut InlayHintBuilder) -> Option<()> {
         .filter(|label| label.kind == LabelKind::Definition)
         .filter(|label| label.name.range.intersect(range).is_some())
     {
-        let Some(rendered) = util::label::render(builder.workspace, &builder.project, label) else { continue };
+        let Some(rendered) = render_label(builder.workspace, &builder.project, label) else { continue };
         let Some(number) = &rendered.number else { continue };
 
         let text = match &rendered.object {
-            LabeledObject::Section { prefix, .. } => {
+            RenderedObject::Section { prefix, .. } => {
                 format!("{} {}", prefix, number)
             }
-            LabeledObject::Float { kind, .. } => {
+            RenderedObject::Float { kind, .. } => {
                 format!("{} {}", kind.as_str(), number)
             }
-            LabeledObject::Theorem { kind, .. } => {
+            RenderedObject::Theorem { kind, .. } => {
                 format!("{} {}", kind, number)
             }
-            LabeledObject::Equation => format!("Equation ({})", number),
-            LabeledObject::EnumItem => format!("Item {}", number),
+            RenderedObject::Equation => format!("Equation ({})", number),
+            RenderedObject::EnumItem => format!("Item {}", number),
         };
 
         builder.push(label.name.range.end(), text);

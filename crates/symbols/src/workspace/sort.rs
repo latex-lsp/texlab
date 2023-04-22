@@ -1,40 +1,38 @@
 use base_db::{graph, Document, Workspace};
 use itertools::Itertools;
-use lsp_types::Url;
+use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ProjectOrdering<'a> {
-    ordering: Vec<&'a Document>,
+    inner: Vec<&'a Document>,
 }
 
 impl<'a> ProjectOrdering<'a> {
-    pub fn new(workspace: &'a Workspace) -> Self {
-        let ordering: Vec<_> = workspace
-            .iter()
-            .filter(|document| {
-                document
-                    .data
-                    .as_tex()
-                    .map_or(false, |data| data.semantics.can_be_root)
-            })
-            .chain(workspace.iter())
-            .flat_map(|document| {
-                graph::Graph::new(workspace, document)
-                    .preorder()
-                    .rev()
-                    .collect_vec()
-            })
-            .unique()
-            .collect();
-
-        Self { ordering }
-    }
-
     pub fn get(&self, uri: &Url) -> usize {
-        self.ordering
+        self.inner
             .iter()
             .position(|doc| doc.uri == *uri)
             .unwrap_or(std::usize::MAX)
+    }
+}
+
+impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
+    fn from(workspace: &'a Workspace) -> Self {
+        let inner = workspace
+            .iter()
+            .filter(|document| {
+                let data = document.data.as_tex();
+                data.map_or(false, |data| data.semantics.can_be_root)
+            })
+            .chain(workspace.iter())
+            .flat_map(|document| {
+                let graph = graph::Graph::new(workspace, document);
+                graph.preorder().rev().collect_vec()
+            })
+            .unique()
+            .collect_vec();
+
+        Self { inner }
     }
 }
 
@@ -44,7 +42,7 @@ mod tests {
     use distro::Language;
     use rowan::TextSize;
 
-    use super::*;
+    use super::{ProjectOrdering, Url, Workspace};
 
     #[test]
     fn test_no_cycles() {
@@ -78,7 +76,7 @@ mod tests {
             TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&workspace);
+        let ordering = ProjectOrdering::from(&workspace);
         assert_eq!(ordering.get(&a), 0);
         assert_eq!(ordering.get(&b), 1);
         assert_eq!(ordering.get(&c), 2);
@@ -99,6 +97,7 @@ mod tests {
             Owner::Client,
             TextSize::default(),
         );
+
         workspace.open(
             b.clone(),
             r#"\include{a}"#.to_string(),
@@ -106,6 +105,7 @@ mod tests {
             Owner::Client,
             TextSize::default(),
         );
+
         workspace.open(
             c.clone(),
             r#"\begin{documnent}\include{b}\end{document}"#.to_string(),
@@ -114,7 +114,7 @@ mod tests {
             TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&workspace);
+        let ordering = ProjectOrdering::from(&workspace);
         assert_eq!(ordering.get(&a), 0);
         assert_eq!(ordering.get(&b), 1);
         assert_eq!(ordering.get(&c), 2);
@@ -151,7 +151,7 @@ mod tests {
             TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&workspace);
+        let ordering = ProjectOrdering::from(&workspace);
         assert_ne!(ordering.get(&a), 0);
     }
 
@@ -196,7 +196,7 @@ mod tests {
             TextSize::default(),
         );
 
-        let ordering = ProjectOrdering::new(&workspace);
+        let ordering = ProjectOrdering::from(&workspace);
         assert!(ordering.get(&b) < ordering.get(&a));
         assert!(ordering.get(&c) < ordering.get(&d));
     }

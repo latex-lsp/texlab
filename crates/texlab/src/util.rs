@@ -3,10 +3,8 @@ pub mod chktex;
 pub mod components;
 pub mod cursor;
 pub mod diagnostics;
-pub mod label;
 pub mod line_index_ext;
 pub mod lsp_enums;
-pub mod regex_filter;
 
 use std::path::PathBuf;
 

@@ -7,8 +7,9 @@ use url::Url;
 
 use crate::{
     diagnostics::{self, Diagnostic},
-    line_index::LineIndex,
-    semantics, Config,
+    semantics,
+    util::LineIndex,
+    Config,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

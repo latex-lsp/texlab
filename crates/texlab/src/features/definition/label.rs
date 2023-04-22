@@ -1,6 +1,6 @@
-use base_db::{semantics::tex::LabelKind, DocumentData};
+use base_db::{semantics::tex::LabelKind, util::render_label, DocumentData};
 
-use crate::util::{self, cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::DefinitionResult;
 
@@ -22,7 +22,7 @@ pub(super) fn goto_definition<'a>(
             .find(|label| label.name.text == name_text) else { continue };
 
         let target_selection_range = label.name.range;
-        let target_range = util::label::render(context.workspace, &context.project, label)
+        let target_range = render_label(context.workspace, &context.project, label)
             .map_or(target_selection_range, |label| label.range);
 
         return Some(vec![DefinitionResult {

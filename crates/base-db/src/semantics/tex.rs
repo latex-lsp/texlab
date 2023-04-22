@@ -215,12 +215,12 @@ impl Semantics {
         let Some(name) = theorem_def.name().and_then(|name| name.key()) else { return };
 
         let Some(description) = theorem_def
-            .description()
+            .heading()
             .and_then(|group| group.content_text()) else { return };
 
         self.theorem_definitions.push(TheoremDefinition {
             name: Span::from(&name),
-            description,
+            heading: description,
         });
     }
 }
@@ -288,5 +288,5 @@ pub enum LabelObject {
 #[derive(Debug, Clone)]
 pub struct TheoremDefinition {
     pub name: Span,
-    pub description: String,
+    pub heading: String,
 }

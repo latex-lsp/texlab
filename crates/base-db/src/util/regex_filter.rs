@@ -1,6 +1,10 @@
 use regex::Regex;
 
-pub fn filter(text: &str, allowed_patterns: &[Regex], ignored_patterns: &[Regex]) -> bool {
+pub fn filter_regex_patterns(
+    text: &str,
+    allowed_patterns: &[Regex],
+    ignored_patterns: &[Regex],
+) -> bool {
     if !allowed_patterns.is_empty()
         && !allowed_patterns
             .iter()

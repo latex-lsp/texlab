@@ -1,4 +1,4 @@
-use base_db::{Document, LineIndex, Workspace};
+use base_db::{util::LineIndex, Document, Workspace};
 use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
