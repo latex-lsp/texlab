@@ -852,3 +852,15 @@ fn issue_864() {
 \end{document}"#
     ))
 }
+
+#[test]
+fn issue_883() {
+    assert_json_snapshot!(complete(
+        r#"
+%! bug.tex
+\begin{doc
+          |
+       ^^^
+% Comment"#
+    ))
+}

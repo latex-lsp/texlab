@@ -6,7 +6,7 @@ pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let (_, range) = context.find_environment_name()?;
+    let range = context.find_environment_name()?;
 
     for component in COMPONENT_DATABASE.linked_components(&context.project) {
         for name in &component.environments {

@@ -8,7 +8,7 @@ pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let (name, range) = context.find_environment_name()?;
+    let range = context.find_environment_name()?;
 
     for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };
@@ -16,9 +16,9 @@ pub fn complete<'db>(
             .semantics
             .environments
             .iter()
-            .filter(|n| n.as_str() != name)
+            .filter(|name| name.range != range)
         {
-            builder.user_environment(range, name);
+            builder.user_environment(range, &name.text);
         }
     }
 

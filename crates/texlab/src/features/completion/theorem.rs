@@ -8,7 +8,7 @@ pub fn complete<'db>(
     context: &'db CursorContext,
     builder: &mut CompletionBuilder<'db>,
 ) -> Option<()> {
-    let (_, range) = context.find_environment_name()?;
+    let range = context.find_environment_name()?;
 
     for document in &context.project.documents {
         let DocumentData::Tex(data) = &document.data else { continue };

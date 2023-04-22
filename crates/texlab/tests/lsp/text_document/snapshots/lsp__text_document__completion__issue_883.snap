@@ -1,0 +1,11 @@
+---
+source: crates/texlab/tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! bug.tex\n\\begin{doc\n          |\n       ^^^\n% Comment\"#)"
+---
+[
+  {
+    "label": "document",
+    "detail": "built-in",
+    "preselect": false
+  }
+]

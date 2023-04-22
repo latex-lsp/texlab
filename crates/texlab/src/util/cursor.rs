@@ -229,14 +229,14 @@ impl<'a, T> CursorContext<'a, T> {
         }
     }
 
-    pub fn find_environment_name(&self) -> Option<(String, TextRange)> {
-        let (name, range, group) = self.find_curly_group_word()?;
+    pub fn find_environment_name(&self) -> Option<TextRange> {
+        let (_, range, group) = self.find_curly_group_word()?;
 
         if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
             return None;
         }
 
-        Some((name, range))
+        Some(range)
     }
 
     pub fn find_environment(&self) -> Option<(latex::Key, latex::Key)> {

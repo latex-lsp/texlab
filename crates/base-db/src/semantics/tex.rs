@@ -9,8 +9,8 @@ use super::Span;
 pub struct Semantics {
     pub links: Vec<Link>,
     pub labels: Vec<Label>,
-    pub commands: Vec<(TextRange, String)>,
-    pub environments: FxHashSet<String>,
+    pub commands: Vec<Span>,
+    pub environments: Vec<Span>,
     pub theorem_definitions: Vec<TheoremDefinition>,
     pub graphics_paths: FxHashSet<String>,
     pub can_be_root: bool,
@@ -29,13 +29,11 @@ impl Semantics {
                         let range = token.text_range();
                         let range = TextRange::new(range.start() + "\\".text_len(), range.end());
                         let text = String::from(&token.text()[1..]);
-                        self.commands.push((range, text));
+                        self.commands.push(Span { range, text });
                     }
                 }
             };
         }
-
-        self.can_be_compiled = self.environments.contains("document");
 
         self.can_be_root = self.can_be_compiled
             && !self
@@ -208,7 +206,9 @@ impl Semantics {
             .and_then(|begin| begin.name())
             .and_then(|group| group.key()) else { return };
 
-        self.environments.insert(String::from(name.syntax().text()));
+        let name = Span::from(&name);
+        self.can_be_compiled = self.can_be_compiled || name.text == "document";
+        self.environments.push(name);
     }
 
     fn process_theorem_definition(&mut self, theorem_def: latex::TheoremDefinition) {
