@@ -18,7 +18,7 @@ pub enum Owner {
     Server,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Document {
     pub uri: Url,
     pub dir: Url,
@@ -97,6 +97,12 @@ impl Document {
         };
 
         document
+    }
+}
+
+impl std::fmt::Debug for Document {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Document").field(&self.uri.as_str()).finish()
     }
 }
 

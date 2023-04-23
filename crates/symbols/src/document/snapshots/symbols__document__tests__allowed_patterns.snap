@@ -1,0 +1,31 @@
+---
+source: crates/symbols/src/document/tests.rs
+expression: "document_symbols(&fixture.workspace, document)"
+---
+[
+    Symbol {
+        name: "Enumerate",
+        kind: Enumeration,
+        label: None,
+        full_range: 98..159,
+        selection_range: 98..159,
+        children: [
+            Symbol {
+                name: "Item",
+                kind: EnumerationItem,
+                label: None,
+                full_range: 120..129,
+                selection_range: 120..129,
+                children: [],
+            },
+            Symbol {
+                name: "Item",
+                kind: EnumerationItem,
+                label: None,
+                full_range: 134..143,
+                selection_range: 134..143,
+                children: [],
+            },
+        ],
+    },
+]

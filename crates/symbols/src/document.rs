@@ -46,3 +46,6 @@ fn filter_symbols(container: &mut Vec<Symbol>, config: &SymbolConfig) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

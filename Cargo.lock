@@ -1488,9 +1488,12 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "distro",
+ "insta",
  "itertools",
+ "regex",
  "rowan",
  "syntax",
+ "test-utils",
  "titlecase",
  "url",
 ]
@@ -1536,6 +1539,17 @@ dependencies = [
  "redox_syscall 0.3.5",
  "rustix",
  "windows-sys 0.45.0",
+]
+
+[[package]]
+name = "test-utils"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "distro",
+ "rowan",
+ "syntax",
+ "url",
 ]
 
 [[package]]

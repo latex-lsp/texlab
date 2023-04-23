@@ -1,0 +1,53 @@
+---
+source: crates/symbols/src/document/tests.rs
+expression: "document_symbols(&fixture.workspace, document)"
+---
+[
+    Symbol {
+        name: "Lemma 1 (Foo)",
+        kind: Theorem,
+        label: Some(
+            Span(
+                "thm:foo",
+                107..122,
+            ),
+        ),
+        full_range: 89..142,
+        selection_range: 107..122,
+        children: [],
+    },
+    Symbol {
+        name: "Lemma 2",
+        kind: Theorem,
+        label: Some(
+            Span(
+                "thm:bar",
+                157..172,
+            ),
+        ),
+        full_range: 144..192,
+        selection_range: 157..172,
+        children: [],
+    },
+    Symbol {
+        name: "Lemma",
+        kind: Theorem,
+        label: Some(
+            Span(
+                "thm:baz",
+                207..222,
+            ),
+        ),
+        full_range: 194..242,
+        selection_range: 207..222,
+        children: [],
+    },
+    Symbol {
+        name: "Lemma (Qux)",
+        kind: Theorem,
+        label: None,
+        full_range: 244..282,
+        selection_range: 244..282,
+        children: [],
+    },
+]

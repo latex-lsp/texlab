@@ -1,0 +1,40 @@
+---
+source: crates/symbols/src/document/tests.rs
+expression: "document_symbols(&fixture.workspace, document)"
+---
+[
+    Symbol {
+        name: "Figure 1: Foo",
+        kind: Figure,
+        label: Some(
+            Span(
+                "fig:foo",
+                83..98,
+            ),
+        ),
+        full_range: 43..111,
+        selection_range: 83..98,
+        children: [],
+    },
+    Symbol {
+        name: "Figure: Bar",
+        kind: Figure,
+        label: Some(
+            Span(
+                "fig:bar",
+                153..168,
+            ),
+        ),
+        full_range: 113..181,
+        selection_range: 153..168,
+        children: [],
+    },
+    Symbol {
+        name: "Figure: Baz",
+        kind: Figure,
+        label: None,
+        full_range: 183..236,
+        selection_range: 183..236,
+        children: [],
+    },
+]

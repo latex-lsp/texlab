@@ -1,10 +1,18 @@
 pub mod auxiliary;
 pub mod tex;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub struct Span {
     pub text: String,
     pub range: rowan::TextRange,
+}
+impl std::fmt::Debug for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Span")
+            .field(&self.text)
+            .field(&self.range)
+            .finish()
+    }
 }
 
 impl From<&syntax::latex::Key> for Span {

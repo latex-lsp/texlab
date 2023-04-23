@@ -1,0 +1,103 @@
+---
+source: crates/texlab/tests/lsp/text_document/document_symbol.rs
+expression: symbols
+---
+[
+    DocumentSymbol {
+        name: "Foo",
+        detail: None,
+        kind: Module,
+        tags: None,
+        deprecated: Some(
+            false,
+        ),
+        range: Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 30,
+            },
+        },
+        selection_range: Range {
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 30,
+            },
+        },
+        children: Some(
+            [
+                DocumentSymbol {
+                    name: "Bar",
+                    detail: None,
+                    kind: Module,
+                    tags: None,
+                    deprecated: Some(
+                        false,
+                    ),
+                    range: Range {
+                        start: Position {
+                            line: 0,
+                            character: 14,
+                        },
+                        end: Position {
+                            line: 0,
+                            character: 30,
+                        },
+                    },
+                    selection_range: Range {
+                        start: Position {
+                            line: 0,
+                            character: 14,
+                        },
+                        end: Position {
+                            line: 0,
+                            character: 30,
+                        },
+                    },
+                    children: Some(
+                        [],
+                    ),
+                },
+            ],
+        ),
+    },
+    DocumentSymbol {
+        name: "Baz",
+        detail: None,
+        kind: Module,
+        tags: None,
+        deprecated: Some(
+            false,
+        ),
+        range: Range {
+            start: Position {
+                line: 0,
+                character: 31,
+            },
+            end: Position {
+                line: 0,
+                character: 44,
+            },
+        },
+        selection_range: Range {
+            start: Position {
+                line: 0,
+                character: 31,
+            },
+            end: Position {
+                line: 0,
+                character: 44,
+            },
+        },
+        children: Some(
+            [],
+        ),
+    },
+]

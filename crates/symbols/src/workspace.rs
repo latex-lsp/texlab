@@ -24,9 +24,9 @@ pub fn workspace_symbols<'a>(workspace: &'a Workspace, query: &str) -> Vec<Symbo
             .filter(|symbol| symbol.kind != SymbolKind::Field)
         {
             let keywords = symbol.keywords();
-
-            if itertools::iproduct!(keywords.iter(), query.iter())
-                .any(|(keyword, query)| keyword.eq_ignore_ascii_case(query))
+            if query.is_empty()
+                || itertools::iproduct!(keywords.iter(), query.iter())
+                    .any(|(keyword, query)| keyword.eq_ignore_ascii_case(query))
             {
                 results.push(SymbolLocation { document, symbol });
             }
@@ -42,3 +42,6 @@ pub fn workspace_symbols<'a>(workspace: &'a Workspace, query: &str) -> Vec<Symbo
 
     results
 }
+
+#[cfg(test)]
+mod tests;

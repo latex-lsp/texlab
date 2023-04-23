@@ -1,0 +1,78 @@
+---
+source: crates/texlab/tests/lsp/workspace/symbol.rs
+expression: symbols
+---
+[
+    SymbolInformation {
+        name: "Foo",
+        kind: Module,
+        tags: None,
+        deprecated: Some(
+            false,
+        ),
+        location: Location {
+            uri: Url {
+                scheme: "redacted",
+                cannot_be_a_base: false,
+                username: "",
+                password: None,
+                host: Some(
+                    Domain(
+                        "main.tex",
+                    ),
+                ),
+                port: None,
+                path: "",
+                query: None,
+                fragment: None,
+            },
+            range: Range {
+                start: Position {
+                    line: 7,
+                    character: 0,
+                },
+                end: Position {
+                    line: 8,
+                    character: 3,
+                },
+            },
+        },
+        container_name: None,
+    },
+    SymbolInformation {
+        name: "Bar",
+        kind: Module,
+        tags: None,
+        deprecated: Some(
+            false,
+        ),
+        location: Location {
+            uri: Url {
+                scheme: "redacted",
+                cannot_be_a_base: false,
+                username: "",
+                password: None,
+                host: Some(
+                    Domain(
+                        "main.tex",
+                    ),
+                ),
+                port: None,
+                path: "",
+                query: None,
+                fragment: None,
+            },
+            range: Range {
+                start: Position {
+                    line: 10,
+                    character: 0,
+                },
+                end: Position {
+                    line: 11,
+                    character: 3,
+                },
+            },
+        },
+        container_name: None,
+    },
+]

@@ -1,0 +1,36 @@
+---
+source: crates/symbols/src/workspace/tests.rs
+expression: "workspace_symbols(&fixture.workspace, \"bibtex\")"
+---
+[
+    SymbolLocation {
+        document: Document(
+            "file:///texlab/main.bib",
+        ),
+        symbol: Symbol {
+            name: "foo",
+            kind: Entry(
+                Article,
+            ),
+            label: None,
+            full_range: 0..14,
+            selection_range: 9..12,
+            children: [],
+        },
+    },
+    SymbolLocation {
+        document: Document(
+            "file:///texlab/main.bib",
+        ),
+        symbol: Symbol {
+            name: "bar",
+            kind: Entry(
+                String,
+            ),
+            label: None,
+            full_range: 16..36,
+            selection_range: 24..27,
+            children: [],
+        },
+    },
+]

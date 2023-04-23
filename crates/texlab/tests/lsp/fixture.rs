@@ -26,14 +26,16 @@ impl Fixture {
         let mut documents = Vec::new();
 
         let mut start = 0;
-        for end in input
-            .match_indices("%!")
-            .skip(1)
-            .map(|(i, _)| i)
-            .chain(std::iter::once(input.len()))
-        {
-            documents.push(Document::parse(&input[start..end]));
-            start = end;
+        if !input.is_empty() {
+            for end in input
+                .match_indices("%!")
+                .skip(1)
+                .map(|(i, _)| i)
+                .chain(std::iter::once(input.len()))
+            {
+                documents.push(Document::parse(&input[start..end]));
+                start = end;
+            }
         }
 
         Self { documents }
