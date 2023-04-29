@@ -124,6 +124,7 @@ dependencies = [
  "notify",
  "once_cell",
  "parser",
+ "percent-encoding",
  "regex",
  "rowan",
  "rustc-hash",

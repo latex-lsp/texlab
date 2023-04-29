@@ -3,6 +3,7 @@ use std::{ffi::OsStr, path::PathBuf};
 use distro::Language;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
+use percent_encoding::percent_decode_str;
 use rustc_hash::FxHashSet;
 use url::Url;
 
@@ -138,12 +139,16 @@ impl<'a> Graph<'a> {
     }
 
     fn implicit_edge(&mut self, source: &'a Document, base_dir: &Url, extension: &str) {
-        let Some(target_uri) = source.uri.to_file_path().ok().and_then(|mut path| {
-            path.set_extension(extension);
-            path.file_name()
-                .and_then(OsStr::to_str)
-                .and_then(|name| self.workspace.output_dir(base_dir).join(&name).ok())
-        }) else { return };
+        let mut path = PathBuf::from(
+            percent_decode_str(source.uri.path())
+                .decode_utf8_lossy()
+                .as_ref(),
+        );
+
+        path.set_extension(extension);
+        let Some(target_uri) = path.file_name()
+            .and_then(OsStr::to_str)
+            .and_then(|name| self.workspace.output_dir(base_dir).join(&name).ok()) else { return };
 
         match self.workspace.lookup(&target_uri) {
             Some(target) => {
