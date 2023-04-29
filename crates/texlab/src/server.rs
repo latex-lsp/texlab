@@ -14,6 +14,7 @@ use base_db::{Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
+use itertools::{FoldWhile, Itertools};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use parking_lot::{Mutex, RwLock};
@@ -387,13 +388,27 @@ impl Server {
                 }
                 None => {
                     let language = document.language;
+                    let line_col = document.line_index.line_col(document.cursor);
+
+                    let (_, new_cursor) = change
+                        .text
+                        .lines()
+                        .fold_while((0, 0), |(number, index), line| {
+                            if number == line_col.line {
+                                FoldWhile::Done((number, index))
+                            } else {
+                                itertools::FoldWhile::Continue((number + 1, index + line.len()))
+                            }
+                        })
+                        .into_inner();
+
                     drop(document);
                     workspace.open(
                         uri.clone(),
                         change.text,
                         language,
                         Owner::Client,
-                        TextSize::default(),
+                        TextSize::from(new_cursor as u32),
                     );
                 }
             };
