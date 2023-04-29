@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use base_db::{Owner, Workspace};
 use rowan::{TextRange, TextSize};
 use url::Url;
@@ -25,12 +27,8 @@ impl Fixture {
 
         let mut workspace = Workspace::default();
         for document in &documents {
-            let language = document
-                .uri
-                .to_file_path()
-                .ok()
-                .and_then(|path| distro::Language::from_path(&path))
-                .unwrap_or(distro::Language::Tex);
+            let path = PathBuf::from(document.uri.path());
+            let language = distro::Language::from_path(&path).unwrap_or(distro::Language::Tex);
 
             workspace.open(
                 document.uri.clone(),
