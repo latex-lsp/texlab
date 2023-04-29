@@ -44,6 +44,11 @@ impl<'a> Parser<'a> {
         self.builder.token(kind.into(), text);
     }
 
+    fn eat_remap(&mut self, kind: SyntaxKind) {
+        let (_, text) = self.lexer.eat().unwrap();
+        self.builder.token(kind.into(), text);
+    }
+
     fn peek(&self) -> Option<Token> {
         self.lexer.peek()
     }
@@ -98,7 +103,7 @@ impl<'a> Parser<'a> {
                 self.eat();
                 self.builder.finish_node();
             }
-            Token::Word | Token::Comma => self.text(context),
+            Token::Pipe | Token::Word | Token::Comma => self.text(context),
             Token::Eq => self.eat(),
             Token::Dollar => self.formula(),
             Token::CommandName(name) => match name {
@@ -141,6 +146,7 @@ impl<'a> Parser<'a> {
                 CommandName::EnvironmentDefinition => self.environment_definition(),
                 CommandName::BeginBlockComment => self.block_comment(),
                 CommandName::EndBlockComment => self.generic_command(),
+                CommandName::VerbatimBlock => self.verbatim_block(),
                 CommandName::GraphicsPath => self.graphics_path(),
             },
         }
@@ -158,6 +164,7 @@ impl<'a> Parser<'a> {
                         | Token::Whitespace
                         | Token::LineComment
                         | Token::Word
+                        | Token::Pipe
                         | Token::Comma
                 ) && (context.allow_comma || kind != Token::Comma)
             })
@@ -219,7 +226,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
         match self.peek() {
-            Some(Token::Word) => {
+            Some(Token::Word | Token::Pipe) => {
                 self.key();
             }
             Some(Token::CommandName(_)) => {
@@ -244,6 +251,7 @@ impl<'a> Parser<'a> {
                         | Token::Whitespace
                         | Token::LineComment
                         | Token::Word
+                        | Token::Pipe
                         | Token::Comma
                 )
             })
@@ -298,7 +306,7 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
         match self.peek() {
-            Some(Token::Word) => {
+            Some(Token::Word | Token::Pipe) => {
                 self.key();
             }
             Some(_) | None => {}
@@ -334,7 +342,12 @@ impl<'a> Parser<'a> {
         self.eat();
         while self
             .peek()
-            .filter(|&kind| matches!(kind, Token::Whitespace | Token::LineComment | Token::Word))
+            .filter(|&kind| {
+                matches!(
+                    kind,
+                    Token::Whitespace | Token::LineComment | Token::Word | Token::Pipe
+                )
+            })
             .is_some()
         {
             self.eat();
@@ -390,7 +403,7 @@ impl<'a> Parser<'a> {
         while let Some(kind) = self.peek() {
             match kind {
                 Token::LineBreak | Token::Whitespace | Token::LineComment => self.eat(),
-                Token::Word => {
+                Token::Word | Token::Pipe => {
                     self.key_value_pair();
                     if self.peek() == Some(Token::Comma) {
                         self.eat();
@@ -1115,6 +1128,23 @@ impl<'a> Parser<'a> {
         }
 
         self.builder.finish_node();
+    }
+
+    fn verbatim_block(&mut self) {
+        self.builder.start_node(GENERIC_COMMAND.into());
+        self.eat();
+        self.builder.finish_node();
+        self.trivia();
+
+        if self.peek() == Some(Token::Pipe) {
+            self.eat_remap(SyntaxKind::VERBATIM);
+            while let Some(kind) = self.peek() {
+                self.eat_remap(SyntaxKind::VERBATIM);
+                if kind == Token::Pipe {
+                    break;
+                }
+            }
+        }
     }
 }
 

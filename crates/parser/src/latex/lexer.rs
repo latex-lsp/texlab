@@ -38,6 +38,7 @@ impl<'a> Lexer<'a> {
             Token::RParen => SyntaxKind::R_PAREN,
             Token::Comma => SyntaxKind::COMMA,
             Token::Eq => SyntaxKind::EQUALITY_SIGN,
+            Token::Pipe => SyntaxKind::WORD,
             Token::Word => SyntaxKind::WORD,
             Token::Dollar => SyntaxKind::DOLLAR,
             Token::CommandName(_) => SyntaxKind::COMMAND_NAME,

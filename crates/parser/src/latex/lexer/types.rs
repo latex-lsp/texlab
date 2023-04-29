@@ -35,7 +35,10 @@ pub enum Token {
     #[token("=")]
     Eq,
 
-    #[regex(r"[^\s\\%\{\},\$\[\]\(\)=]+")]
+    #[token("|")]
+    Pipe,
+
+    #[regex(r"[^\s\\%\{\},\$\[\]\(\)=\|]+")]
     Word,
 
     #[regex(r"\$\$?")]
@@ -117,6 +120,7 @@ pub enum CommandName {
     GraphicsPath,
     BeginBlockComment,
     EndBlockComment,
+    VerbatimBlock,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

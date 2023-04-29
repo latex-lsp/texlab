@@ -80,6 +80,7 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "graphicspath" => CommandName::GraphicsPath,
         "iffalse" => CommandName::BeginBlockComment,
         "fi" => CommandName::EndBlockComment,
+        "verb" => CommandName::VerbatimBlock,
         _ if config.citation_commands.contains(name) => CommandName::Citation,
         _ => CommandName::Generic,
     }
