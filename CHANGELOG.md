@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix spurious completion results when completing environments ([#883](https://github.com/latex-lsp/texlab/issues/883))
 - Fix regression when guessing cursor position after formatting ([#880](https://github.com/latex-lsp/texlab/issues/880))
 - Fix parsing `\verb` command ([#828](https://github.com/latex-lsp/texlab/issues/828))
+- Add `flalign` and `flalign*` to default list of math environments ([#884](https://github.com/latex-lsp/texlab/issues/884))
 
 ## [5.5.0] - 2023-04-16
 
