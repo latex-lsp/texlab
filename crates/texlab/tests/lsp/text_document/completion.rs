@@ -786,7 +786,7 @@ fn test_project_resolution_import() {
         r#"
 %! main.tex
 \documentclass{article}
-\import{sub}{sub/sub.tex}
+\import{sub}{sub.tex}
 \lipsu
      |
  ^^^^^
@@ -863,4 +863,52 @@ fn issue_883() {
        ^^^
 % Comment"#
     ))
+}
+
+#[test]
+fn issue_885() {
+    assert_json_snapshot!(complete(
+        r#"
+%! main.tex
+\documentclass{book}
+\usepackage{import}
+\begin{document}
+\subincludefrom{part 1}{main}
+\include{part 2/main}
+
+\ref{sec}
+      |
+     ^^^
+\end{document}
+
+%! part 1/main.tex
+\part{1}
+\label{part 1}
+\subimport{chapter 1}{main}
+
+%! part 1/chapter 1/main.tex
+\chapter{1}
+\label{chapter 1}
+\subimport{./}{section 1}
+%\subimport{}{section 1}
+
+%! part 1/chapter 1/section 1.tex
+\section{1}
+\label{section 1}
+
+%! part 2/main.tex
+\part{2}
+\label{part 2}
+\input{part 2/chapter 2/main}
+
+%! part 2/chapter 2/main.tex
+\chapter{2}
+\label{chapter 2}
+\input{part 2/chapter 2/section 2}
+
+%! part 2/chapter 2/section 2.tex
+\section{2}
+\label{section 2}
+"#
+    ));
 }

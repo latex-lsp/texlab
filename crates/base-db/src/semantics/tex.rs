@@ -92,10 +92,12 @@ impl Semantics {
         }
 
         let Some(path) = import.file().and_then(|path| path.key()) else { return };
+        let text = format!("{base_dir}{}", path.to_string());
+        let range = latex::small_range(&path);
 
         self.links.push(Link {
             kind: LinkKind::Tex,
-            path: Span::from(&path),
+            path: Span { text, range },
             base_dir: Some(base_dir),
         });
     }

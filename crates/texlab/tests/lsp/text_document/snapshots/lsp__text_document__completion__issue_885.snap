@@ -1,0 +1,18 @@
+---
+source: crates/texlab/tests/lsp/text_document/completion.rs
+expression: "complete(r#\"\n%! main.tex\n\\documentclass{book}\n\\usepackage{import}\n\\begin{document}\n\\subincludefrom{part 1}{main}\n\\include{part 2/main}\n\n\\ref{sec}\n      |\n     ^^^\n\\end{document}\n\n%! part 1/main.tex\n\\part{1}\n\\label{part 1}\n\\subimport{chapter 1}{main}\n\n%! part 1/chapter 1/main.tex\n\\chapter{1}\n\\label{chapter 1}\n\\subimport{./}{section 1}\n%\\subimport{}{section 1}\n\n%! part 1/chapter 1/section 1.tex\n\\section{1}\n\\label{section 1}\n\n%! part 2/main.tex\n\\part{2}\n\\label{part 2}\n\\input{part 2/chapter 2/main}\n\n%! part 2/chapter 2/main.tex\n\\chapter{2}\n\\label{chapter 2}\n\\input{part 2/chapter 2/section 2}\n\n%! part 2/chapter 2/section 2.tex\n\\section{2}\n\\label{section 2}\n\"#)"
+---
+[
+  {
+    "label": "section 1",
+    "detail": "Section (1)",
+    "preselect": false,
+    "filterText": "section 1 Section (1)"
+  },
+  {
+    "label": "section 2",
+    "detail": "Section (2)",
+    "preselect": false,
+    "filterText": "section 2 Section (2)"
+  }
+]
