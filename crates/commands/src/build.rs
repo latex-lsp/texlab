@@ -1,7 +1,7 @@
 use std::{
     io::{BufReader, Read},
     path::{Path, PathBuf},
-    process::{ExitStatus, Stdio},
+    process::{Child, Stdio},
     thread::{self, JoinHandle},
 };
 
@@ -64,7 +64,7 @@ impl BuildCommand {
         })
     }
 
-    pub fn run(self, sender: Sender<String>) -> Result<ExitStatus, BuildError> {
+    pub fn spawn(self, sender: Sender<String>) -> Result<Child, BuildError> {
         log::debug!(
             "Spawning compiler {} {:#?} in directory {}",
             self.program,
@@ -72,19 +72,56 @@ impl BuildCommand {
             self.working_dir.display()
         );
 
-        let mut process = std::process::Command::new(&self.program)
-            .args(self.args)
+        let mut process = self.spawn_internal()?;
+        track_output(process.stderr.take().unwrap(), sender.clone());
+        track_output(process.stdout.take().unwrap(), sender);
+        Ok(process)
+    }
+
+    #[cfg(windows)]
+    fn spawn_internal(&self) -> Result<Child, BuildError> {
+        std::process::Command::new(&self.program)
+            .args(self.args.clone())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .current_dir(&self.working_dir)
-            .spawn()?;
+            .spawn()
+            .map_err(Into::into)
+    }
 
-        track_output(process.stderr.take().unwrap(), sender.clone());
-        track_output(process.stdout.take().unwrap(), sender);
+    #[cfg(unix)]
+    fn spawn_internal(&self) -> Result<Child, BuildError> {
+        use std::os::unix::process::CommandExt;
+        std::process::Command::new(&self.program)
+            .args(self.args.clone())
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .current_dir(&self.working_dir)
+            .process_group(0)
+            .spawn()
+            .map_err(Into::into)
+    }
 
-        let status = process.wait();
-        Ok(status?)
+    #[cfg(windows)]
+    pub fn cancel(pid: u32) -> std::io::Result<bool> {
+        Ok(std::process::Command::new("taskkill")
+            .arg("/PID")
+            .arg(pid.to_string())
+            .arg("/F")
+            .arg("/T")
+            .status()?
+            .success())
+    }
+
+    #[cfg(not(windows))]
+    pub fn cancel(pid: u32) -> Result<bool> {
+        unsafe {
+            libc::killpg(pid as libc::pid_t, libc::SIGTERM);
+        }
+
+        Ok(true)
     }
 }
 

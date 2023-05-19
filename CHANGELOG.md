@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `texlab.cancelBuild` command to cancel the currently active build ([#887](https://github.com/latex-lsp/texlab/issues/887))
+
 ### Fixed
 
 - Fix resolving include commands from the `import` package ([#885](https://github.com/latex-lsp/texlab/issues/885))

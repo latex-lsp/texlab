@@ -67,6 +67,7 @@ pub struct Server {
     chktex_diagnostics: FxHashMap<Url, Vec<Diagnostic>>,
     watcher: FileWatcher,
     pool: ThreadPool,
+    pending_builds: Arc<Mutex<FxHashSet<u32>>>,
 }
 
 impl Server {
@@ -86,6 +87,7 @@ impl Server {
             chktex_diagnostics: Default::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
+            pending_builds: Default::default(),
         }
     }
 
@@ -672,6 +674,16 @@ impl Server {
                 self.client
                     .send_response(lsp_server::Response::new_ok(id, dot))?;
             }
+            "texlab.cancelBuild" => {
+                let pending_builds = Arc::clone(&self.pending_builds);
+                self.run_fallible(id, move || {
+                    for pid in pending_builds.lock().drain() {
+                        let _ = BuildCommand::cancel(pid);
+                    }
+
+                    Ok(())
+                });
+            }
             _ => {
                 self.client
                     .send_error(
@@ -728,6 +740,8 @@ impl Server {
         let command = BuildCommand::new(&workspace, &uri);
         let internal = self.internal_tx.clone();
         let progress = self.client_capabilities.has_work_done_progress_support();
+        let pending_builds = Arc::clone(&self.pending_builds);
+
         self.pool.execute(move || {
             let guard = LOCK.lock();
 
@@ -738,14 +752,29 @@ impl Server {
                 None
             };
 
-            let status = match command.and_then(|command| command.run(sender)) {
-                Ok(status) if status.success() => BuildStatus::SUCCESS,
-                Ok(_) => BuildStatus::ERROR,
-                Err(why) => {
+            let status = command
+                .and_then(|command| {
+                    let mut process = command.spawn(sender)?;
+                    let pid = process.id();
+                    pending_builds.lock().insert(pid);
+                    let result = process.wait();
+
+                    let status = if pending_builds.lock().remove(&pid) {
+                        if result?.success() {
+                            BuildStatus::SUCCESS
+                        } else {
+                            BuildStatus::ERROR
+                        }
+                    } else {
+                        BuildStatus::CANCELLED
+                    };
+
+                    Ok(status)
+                })
+                .unwrap_or_else(|why| {
                     log::error!("Failed to compile document \"{uri}\": {why}");
                     BuildStatus::FAILURE
-                }
-            };
+                });
 
             drop(progress_reporter);
             drop(guard);
@@ -755,7 +784,7 @@ impl Server {
                 let _ = client.send_response(lsp_server::Response::new_ok(id, result));
             }
 
-            if fwd_search_after {
+            if fwd_search_after && status != BuildStatus::CANCELLED {
                 let _ = internal.send(InternalMessage::ForwardSearch(uri, params.position));
             }
         });
