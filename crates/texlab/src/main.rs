@@ -50,9 +50,6 @@ fn setup_logger(opts: Opts) {
     let logger = fern::Dispatch::new()
         .format(|out, message, record| out.finish(format_args!("{} - {}", record.level(), message)))
         .level(verbosity_level)
-        .filter(|metadata| {
-            metadata.target().contains("texlab") || metadata.target().contains("lsp_server")
-        })
         .chain(io::stderr());
 
     let logger = match opts.log_file {
