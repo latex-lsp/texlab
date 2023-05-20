@@ -12,6 +12,7 @@ base-db = { path = "../base-db" }
 bstr = "1.4.0"
 crossbeam-channel = "0.5.8"
 itertools = "0.10.5"
+libc = "0.2.144"
 log = "0.4.17"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
