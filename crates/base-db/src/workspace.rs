@@ -5,11 +5,12 @@ use std::{
 
 use distro::{Distro, Language};
 use itertools::Itertools;
-use rowan::{TextRange, TextSize};
+use rowan::TextRange;
 use rustc_hash::FxHashSet;
+use text_size::TextLen;
 use url::Url;
 
-use crate::{graph, Config, Document, DocumentData, Owner};
+use crate::{graph, util::LineCol, Config, Document, DocumentData, Owner};
 
 #[derive(Debug, Default)]
 pub struct Workspace {
@@ -51,7 +52,7 @@ impl Workspace {
         text: String,
         language: Language,
         owner: Owner,
-        cursor: TextSize,
+        cursor: LineCol,
     ) {
         log::debug!("Opening document {uri}...");
         self.documents.remove(&uri);
@@ -74,19 +75,26 @@ impl Workspace {
             Cow::Owned(text) => text,
         };
 
-        Ok(self.open(uri, text, language, owner, TextSize::default()))
+        Ok(self.open(uri, text, language, owner, LineCol { line: 0, col: 0 }))
     }
 
     pub fn edit(&mut self, uri: &Url, delete: TextRange, insert: &str) -> Option<()> {
         let document = self.lookup(uri)?;
         let mut text = document.text.clone();
+        let cursor = if delete.len() == text.text_len() {
+            let line = document.cursor.line.min(text.lines().count() as u32);
+            LineCol { line, col: 0 }
+        } else {
+            document.line_index.line_col(delete.start())
+        };
+
         text.replace_range(std::ops::Range::<usize>::from(delete), insert);
         self.open(
             document.uri.clone(),
             text,
             document.language,
             Owner::Client,
-            delete.start(),
+            cursor,
         );
 
         Some(())
@@ -184,9 +192,10 @@ impl Workspace {
         self.folders = folders;
     }
 
-    pub fn set_cursor(&mut self, uri: &Url, cursor: TextSize) -> Option<()> {
+    pub fn set_cursor(&mut self, uri: &Url, cursor: LineCol) -> Option<()> {
         let mut document = self.lookup(uri)?.clone();
         document.cursor = cursor;
+        self.documents.remove(&document);
         self.documents.insert(document);
         Some(())
     }

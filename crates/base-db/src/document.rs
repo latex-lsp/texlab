@@ -1,14 +1,13 @@
 use std::path::PathBuf;
 
 use distro::Language;
-use rowan::TextSize;
 use syntax::{bibtex, latex, BuildError};
 use url::Url;
 
 use crate::{
     diagnostics::{self, Diagnostic},
     semantics,
-    util::LineIndex,
+    util::{LineCol, LineIndex},
     Config,
 };
 
@@ -26,7 +25,7 @@ pub struct Document {
     pub text: String,
     pub line_index: LineIndex,
     pub owner: Owner,
-    pub cursor: TextSize,
+    pub cursor: LineCol,
     pub language: Language,
     pub data: DocumentData,
     pub diagnostics: Vec<Diagnostic>,
@@ -38,7 +37,7 @@ impl Document {
         text: String,
         language: Language,
         owner: Owner,
-        cursor: TextSize,
+        cursor: LineCol,
         config: &Config,
     ) -> Self {
         let dir = uri.join(".").unwrap();

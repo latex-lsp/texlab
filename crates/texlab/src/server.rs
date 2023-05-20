@@ -10,15 +10,14 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::{Config, Owner, Workspace};
+use base_db::{util::LineCol, Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
-use itertools::{FoldWhile, Itertools};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use parking_lot::{Mutex, RwLock};
-use rowan::{ast::AstNode, TextSize};
+use rowan::ast::AstNode;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{de::DeserializeOwned, Serialize};
 use syntax::bibtex;
@@ -362,7 +361,7 @@ impl Server {
             params.text_document.text,
             language,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         self.update_workspace();
@@ -389,28 +388,18 @@ impl Server {
                     workspace.edit(&uri, range, &change.text);
                 }
                 None => {
+                    let new_line = document.cursor.line.min(change.text.lines().count() as u32);
                     let language = document.language;
-                    let line_col = document.line_index.line_col(document.cursor);
-
-                    let (_, new_cursor) = change
-                        .text
-                        .lines()
-                        .fold_while((0, 0), |(number, index), line| {
-                            if number == line_col.line {
-                                FoldWhile::Done((number, index))
-                            } else {
-                                itertools::FoldWhile::Continue((number + 1, index + line.len()))
-                            }
-                        })
-                        .into_inner();
-
                     drop(document);
                     workspace.open(
                         uri.clone(),
                         change.text,
                         language,
                         Owner::Client,
-                        TextSize::from(new_cursor as u32),
+                        LineCol {
+                            line: new_line as u32,
+                            col: 0,
+                        },
                     );
                 }
             };
@@ -511,6 +500,9 @@ impl Server {
         let position = params.text_document_position.position;
         let client_capabilities = Arc::clone(&self.client_capabilities);
         let client_info = self.client_info.clone();
+
+        self.update_cursor(&uri, position);
+
         self.run_query(id, move |db| {
             completion::complete(
                 db,
@@ -521,6 +513,16 @@ impl Server {
             )
         });
         Ok(())
+    }
+
+    fn update_cursor(&self, uri: &Url, position: Position) {
+        self.workspace.write().set_cursor(
+            uri,
+            LineCol {
+                line: position.line,
+                col: 0,
+            },
+        );
     }
 
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
@@ -584,17 +586,9 @@ impl Server {
         let mut uri = params.text_document_position_params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let workspace = self.workspace.read();
-        if let Some(document) = workspace.lookup(&uri) {
-            let position = document
-                .line_index
-                .offset_lsp(params.text_document_position_params.position);
-
-            drop(workspace);
-            self.workspace.write().set_cursor(&uri, position);
-        }
-
         let position = params.text_document_position_params.position;
+        self.update_cursor(&uri, position);
+
         self.run_query(id, move |db| hover::find(db, &uri, position));
         Ok(())
     }

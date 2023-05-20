@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix resolving include commands from the `import` package ([#885](https://github.com/latex-lsp/texlab/issues/885))
+- Fix regression when tracking active cursor position ([#880](https://github.com/latex-lsp/texlab/issues/880))
 
 ## [5.5.1] - 2023-05-06
 

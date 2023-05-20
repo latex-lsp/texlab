@@ -38,9 +38,8 @@ impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
 
 #[cfg(test)]
 mod tests {
-    use base_db::Owner;
+    use base_db::{util::LineCol, Owner};
     use distro::Language;
-    use rowan::TextSize;
 
     use super::{ProjectOrdering, Url, Workspace};
 
@@ -57,7 +56,7 @@ mod tests {
             String::new(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -65,7 +64,7 @@ mod tests {
             String::new(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -73,7 +72,7 @@ mod tests {
             r#"\documentclass{article}\include{b}\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         let ordering = ProjectOrdering::from(&workspace);
@@ -95,7 +94,7 @@ mod tests {
             String::new(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -103,7 +102,7 @@ mod tests {
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -111,7 +110,7 @@ mod tests {
             r#"\begin{documnent}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         let ordering = ProjectOrdering::from(&workspace);
@@ -132,7 +131,7 @@ mod tests {
             r#"\begin{document}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -140,7 +139,7 @@ mod tests {
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -148,7 +147,7 @@ mod tests {
             r#"\include{a}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         let ordering = ProjectOrdering::from(&workspace);
@@ -169,7 +168,7 @@ mod tests {
             r#"\begin{document}\include{b}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -177,7 +176,7 @@ mod tests {
             String::new(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -185,7 +184,7 @@ mod tests {
             String::new(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         workspace.open(
@@ -193,7 +192,7 @@ mod tests {
             r#"\begin{document}\include{c}\end{document}"#.to_string(),
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         let ordering = ProjectOrdering::from(&workspace);
