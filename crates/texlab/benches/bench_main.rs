@@ -1,9 +1,8 @@
-use base_db::{Owner, Workspace};
+use base_db::{util::LineCol, Owner, Workspace};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use distro::Language;
 use lsp_types::{ClientCapabilities, Position, Url};
 use parser::{parse_latex, SyntaxConfig};
-use rowan::TextSize;
 
 const CODE: &str = include_str!("../../../texlab.tex");
 
@@ -22,7 +21,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             text,
             Language::Tex,
             Owner::Client,
-            TextSize::default(),
+            LineCol { line: 0, col: 0 },
         );
 
         let client_capabilities = ClientCapabilities::default();

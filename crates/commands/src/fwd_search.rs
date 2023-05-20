@@ -32,6 +32,7 @@ pub enum ForwardSearchError {
     LaunchViewer(#[from] std::io::Error),
 }
 
+#[derive(Debug)]
 pub struct ForwardSearch {
     program: String,
     args: Vec<String>,
@@ -79,7 +80,7 @@ impl ForwardSearch {
 
         let tex_path = tex_path.to_string_lossy().into_owned();
         let pdf_path = pdf_path.to_string_lossy().into_owned();
-        let line = line.unwrap_or_else(|| child.line_index.line_col(child.cursor).line);
+        let line = line.unwrap_or_else(|| child.cursor.line);
         let line = (line + 1).to_string();
 
         let program = config.program.clone();

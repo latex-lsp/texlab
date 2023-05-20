@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use base_db::{Owner, Workspace};
+use base_db::{util::LineCol, Owner, Workspace};
 use rowan::{TextRange, TextSize};
 use url::Url;
 
@@ -35,7 +35,7 @@ impl Fixture {
                 document.text.clone(),
                 language,
                 Owner::Client,
-                TextSize::from(0),
+                LineCol { line: 0, col: 0 },
             );
         }
 
