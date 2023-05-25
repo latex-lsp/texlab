@@ -34,7 +34,7 @@ pub(super) fn find_hints(builder: &mut InlayHintBuilder) -> Option<()> {
             RenderedObject::EnumItem => format!("Item {}", number),
         };
 
-        builder.push(label.name.range.end(), text);
+        builder.push(label.full_range.end(), text);
     }
 
     Some(())

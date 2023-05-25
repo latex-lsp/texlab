@@ -105,6 +105,7 @@ impl Semantics {
     fn process_label_definition(&mut self, label: latex::LabelDefinition) {
         let Some(name) = label.name().and_then(|group| group.key()) else { return };
 
+        let full_range = latex::small_range(&label);
         let mut objects = Vec::new();
         for node in label.syntax().ancestors() {
             if let Some(section) = latex::Section::cast(node.clone()) {
@@ -169,27 +170,32 @@ impl Semantics {
             kind: LabelKind::Definition,
             name: Span::from(&name),
             targets: objects,
+            full_range,
         });
     }
 
     fn process_label_reference(&mut self, label: latex::LabelReference) {
         let Some(name_list) = label.name_list() else { return };
 
+        let full_range = latex::small_range(&label);
         for name in name_list.keys() {
             self.labels.push(Label {
                 kind: LabelKind::Reference,
                 name: Span::from(&name),
                 targets: Vec::new(),
+                full_range,
             });
         }
     }
 
     fn process_label_reference_range(&mut self, label: latex::LabelReferenceRange) {
+        let full_range = latex::small_range(&label);
         if let Some(from) = label.from().and_then(|group| group.key()) {
             self.labels.push(Label {
                 kind: LabelKind::ReferenceRange,
                 name: Span::from(&from),
                 targets: Vec::new(),
+                full_range,
             });
         }
 
@@ -198,6 +204,7 @@ impl Semantics {
                 kind: LabelKind::ReferenceRange,
                 name: Span::from(&to),
                 targets: Vec::new(),
+                full_range,
             });
         }
     }
@@ -265,6 +272,7 @@ pub struct Label {
     pub kind: LabelKind,
     pub name: Span,
     pub targets: Vec<LabelTarget>,
+    pub full_range: TextRange,
 }
 
 #[derive(Debug, Clone)]

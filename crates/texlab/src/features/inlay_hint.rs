@@ -36,7 +36,7 @@ impl<'db> InlayHintBuilder<'db> {
         let position = self.document.line_index.line_col_lsp(offset);
         self.hints.push(InlayHint {
             position,
-            label: InlayHintLabel::String(text),
+            label: InlayHintLabel::String(format!(" {text} ")),
             kind: None,
             text_edits: None,
             tooltip: None,
