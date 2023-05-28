@@ -51,7 +51,7 @@ impl<'a> CompletionBuilder<'a> {
     ) -> Self {
         let items = Vec::new();
         let matcher: Box<dyn Matcher> = match context.workspace.config().completion.matcher {
-            MatchingAlgo::Skim => Box::new(SkimMatcherV2::default()),
+            MatchingAlgo::Skim => Box::<SkimMatcherV2>::default(),
             MatchingAlgo::SkimIgnoreCase => Box::new(SkimMatcherV2::default().ignore_case()),
             MatchingAlgo::Prefix => Box::new(matcher::Prefix),
             MatchingAlgo::PrefixIgnoreCase => Box::new(matcher::PrefixIgnoreCase),
@@ -290,7 +290,7 @@ impl<'a> CompletionBuilder<'a> {
     ) -> Option<()> {
         let score = self
             .matcher
-            .score(&entry_type.name, &self.text_pattern[1..])?;
+            .score(entry_type.name, &self.text_pattern[1..])?;
 
         self.items.push(Item {
             range,
@@ -303,7 +303,7 @@ impl<'a> CompletionBuilder<'a> {
     }
 
     pub fn field(&mut self, range: TextRange, field: &'a BibtexFieldType<'a>) -> Option<()> {
-        let score = self.matcher.score(&field.name, &self.text_pattern)?;
+        let score = self.matcher.score(field.name, &self.text_pattern)?;
         self.items.push(Item {
             range,
             data: Data::Field { field },
@@ -750,8 +750,8 @@ enum Data<'a> {
 impl<'db> Data<'db> {
     pub fn label<'this: 'db>(&'this self) -> &'db str {
         match self {
-            Self::EntryType { entry_type } => &entry_type.name,
-            Self::Field { field } => &field.name,
+            Self::EntryType { entry_type } => entry_type.name,
+            Self::Field { field } => field.name,
             Self::Argument { name, .. } => name,
             Self::BeginSnippet => "begin",
             Self::Citation { key, .. } => key,

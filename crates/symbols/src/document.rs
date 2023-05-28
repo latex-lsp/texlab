@@ -37,7 +37,6 @@ fn filter_symbols(container: &mut Vec<Symbol>, config: &SymbolConfig) {
     while i < container.len() {
         let symbol = &mut container[i];
         if symbol.name.is_empty() || !util::filter_regex_patterns(&symbol.name, allowed, ignored) {
-            drop(symbol);
             let mut symbol = container.remove(i);
             container.append(&mut symbol.children);
         } else {

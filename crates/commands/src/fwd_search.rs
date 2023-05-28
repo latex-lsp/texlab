@@ -75,12 +75,12 @@ impl ForwardSearch {
         };
 
         if !pdf_path.exists() {
-            return Err(ForwardSearchError::PdfNotFound(pdf_path.clone()));
+            return Err(ForwardSearchError::PdfNotFound(pdf_path));
         }
 
         let tex_path = tex_path.to_string_lossy().into_owned();
         let pdf_path = pdf_path.to_string_lossy().into_owned();
-        let line = line.unwrap_or_else(|| child.cursor.line);
+        let line = line.unwrap_or(child.cursor.line);
         let line = (line + 1).to_string();
 
         let program = config.program.clone();

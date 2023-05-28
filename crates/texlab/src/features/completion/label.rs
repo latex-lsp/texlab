@@ -40,7 +40,7 @@ pub fn complete<'db>(
 
                     let header = rendered_label.detail();
                     let footer = match &rendered_label.object {
-                        RenderedObject::Float { caption, .. } => Some(caption.clone()),
+                        RenderedObject::Float { caption, .. } => Some(*caption),
                         _ => None,
                     };
 

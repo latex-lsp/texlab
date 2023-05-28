@@ -108,7 +108,7 @@ impl<'a> Graph<'a> {
                     let new_base_dir = link
                         .base_dir
                         .as_deref()
-                        .and_then(|path| base_dir.join(&path).ok())
+                        .and_then(|path| base_dir.join(path).ok())
                         .unwrap_or_else(|| base_dir.clone());
 
                     let weight = Some(EdgeWeight {
@@ -148,7 +148,7 @@ impl<'a> Graph<'a> {
         path.set_extension(extension);
         let Some(target_uri) = path.file_name()
             .and_then(OsStr::to_str)
-            .and_then(|name| self.workspace.output_dir(base_dir).join(&name).ok()) else { return };
+            .and_then(|name| self.workspace.output_dir(base_dir).join(name).ok()) else { return };
 
         match self.workspace.lookup(&target_uri) {
             Some(target) => {

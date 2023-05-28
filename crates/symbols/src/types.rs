@@ -54,7 +54,7 @@ impl Symbol {
         }
     }
 
-    pub fn keywords<'a>(&'a self) -> Vec<&'a str> {
+    pub fn keywords(&self) -> Vec<&str> {
         match self.kind {
             SymbolKind::Section => vec![&self.name, "latex", "section"],
             SymbolKind::Figure => vec![&self.name, "latex", "float", "figure"],

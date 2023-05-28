@@ -384,20 +384,18 @@ impl Server {
             match change.range {
                 Some(range) => {
                     let range = document.line_index.offset_lsp_range(range);
-                    drop(document);
                     workspace.edit(&uri, range, &change.text);
                 }
                 None => {
                     let new_line = document.cursor.line.min(change.text.lines().count() as u32);
                     let language = document.language;
-                    drop(document);
                     workspace.open(
                         uri.clone(),
                         change.text,
                         language,
                         Owner::Client,
                         LineCol {
-                            line: new_line as u32,
+                            line: new_line,
                             col: 0,
                         },
                     );
@@ -867,7 +865,6 @@ impl Server {
                     if let Some(document) = workspace.lookup_path(&path) {
                         if document.owner == Owner::Server {
                             let uri = document.uri.clone();
-                            drop(document);
                             workspace.remove(&uri);
                             changed = true;
                         }

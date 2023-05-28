@@ -37,6 +37,6 @@ impl Matcher for PrefixIgnoreCase {
             }
         }
 
-        return Some(-(choice.len() as i32));
+        Some(-(choice.len() as i32))
     }
 }

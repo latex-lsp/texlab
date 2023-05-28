@@ -58,7 +58,7 @@ fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
         return CommandName::Generic;
     }
 
-    while let Some(c) = chars.next() {
+    for c in chars {
         match c {
             '*' => {
                 lexer.bump(c.len_utf8());

@@ -17,7 +17,7 @@ pub fn replace_placeholders(args: &[String], pairs: &[(char, &str)]) -> Vec<Stri
                         if ch == '%' {
                             match chars.next() {
                                 Some(key) => match map.get(&key) {
-                                    Some(value) => output.push_str(&value),
+                                    Some(value) => output.push_str(value),
                                     None => output.push(key),
                                 },
                                 None => output.push('%'),

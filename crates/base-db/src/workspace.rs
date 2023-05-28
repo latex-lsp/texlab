@@ -75,7 +75,8 @@ impl Workspace {
             Cow::Owned(text) => text,
         };
 
-        Ok(self.open(uri, text, language, owner, LineCol { line: 0, col: 0 }))
+        self.open(uri, text, language, owner, LineCol { line: 0, col: 0 });
+        Ok(())
     }
 
     pub fn edit(&mut self, uri: &Url, delete: TextRange, insert: &str) -> Option<()> {

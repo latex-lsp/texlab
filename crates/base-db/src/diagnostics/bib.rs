@@ -41,8 +41,6 @@ fn analyze_entry(document: &mut Document, entry: bibtex::Entry) {
             range: TextRange::empty(entry.syntax().text_range().end()),
             code: ErrorCode::ExpectingRCurly,
         });
-
-        return;
     }
 }
 
@@ -63,7 +61,5 @@ fn analyze_field(document: &mut Document, field: bibtex::Field) {
             range: field.name_token().unwrap().text_range(),
             code,
         });
-
-        return;
     }
 }
