@@ -5,8 +5,8 @@ use std::{
 
 use base_db::{Document, LatexIndentConfig, Workspace};
 use distro::Language;
-use lsp_types::TextEdit;
-use rowan::{TextLen, TextRange};
+use lsp_types::{Position, TextEdit};
+use rowan::TextLen;
 use tempfile::tempdir;
 
 use crate::util::line_index_ext::LineIndexExt;
@@ -51,8 +51,10 @@ pub fn format_with_latexindent(
         None
     } else {
         let line_index = &document.line_index;
+        let start = Position::new(0, 0);
+        let end = line_index.line_col_lsp(old_text.text_len());
         Some(vec![TextEdit {
-            range: line_index.line_col_lsp_range(TextRange::new(0.into(), old_text.text_len())),
+            range: lsp_types::Range::new(start, end),
             new_text,
         }])
     }

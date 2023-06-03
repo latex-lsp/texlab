@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Show inlay hints for labels after the command instead of inside the argument ([#890](https://github.com/latex-lsp/texlab/issues/890))
 
+### Fixed
+
+- Prevent adding trailing newline after formatting with `latexmk` ([#895](https://github.com/latex-lsp/texlab/issues/895))
+
 ## [5.6.0] - 2023-05-20
 
 ### Added
