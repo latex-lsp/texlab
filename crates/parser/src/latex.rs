@@ -138,7 +138,8 @@ impl<'a> Parser<'a> {
                 CommandName::AcronymDefinition => self.acronym_definition(),
                 CommandName::AcronymDeclaration => self.acronym_declaration(),
                 CommandName::AcronymReference => self.acronym_reference(),
-                CommandName::TheoremDefinition => self.theorem_definition(),
+                CommandName::TheoremDefinitionAmsThm => self.theorem_definition_amsthm(),
+                CommandName::TheoremDefinitionThmTools => self.theorem_definition_thmtools(),
                 CommandName::ColorReference => self.color_reference(),
                 CommandName::ColorDefinition => self.color_definition(),
                 CommandName::ColorSetDefinition => self.color_set_definition(),
@@ -978,8 +979,8 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn theorem_definition(&mut self) {
-        self.builder.start_node(THEOREM_DEFINITION.into());
+    fn theorem_definition_amsthm(&mut self) {
+        self.builder.start_node(THEOREM_DEFINITION_AMSTHM.into());
         self.eat();
         self.trivia();
 
@@ -997,6 +998,22 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(Token::LBrack) {
             self.brack_group_word();
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn theorem_definition_thmtools(&mut self) {
+        self.builder.start_node(THEOREM_DEFINITION_THMTOOLS.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(Token::LBrack) {
+            self.brack_group_key_value();
+        }
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group_word();
         }
 
         self.builder.finish_node();

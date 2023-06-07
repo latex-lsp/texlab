@@ -67,9 +67,8 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         | "Glsentrylong" | "glsentrylongpl" | "Glsentrylongpl" | "glsentryshort"
         | "Glsentryshort" | "glsentryshortpl" | "Glsentryshortpl" | "glsentryfullpl"
         | "Glsentryfullpl" => CommandName::AcronymReference,
-        "newtheorem" | "newtheorem*" | "declaretheorem" | "declaretheorem*" => {
-            CommandName::TheoremDefinition
-        }
+        "newtheorem" | "newtheorem*" => CommandName::TheoremDefinitionAmsThm,
+        "declaretheorem" | "declaretheorem*" => CommandName::TheoremDefinitionThmTools,
         "color" | "colorbox" | "textcolor" | "pagecolor" => CommandName::ColorReference,
         "definecolor" => CommandName::ColorDefinition,
         "definecolorset" => CommandName::ColorSetDefinition,

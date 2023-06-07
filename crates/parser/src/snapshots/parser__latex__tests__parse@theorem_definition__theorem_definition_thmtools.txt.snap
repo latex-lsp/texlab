@@ -1,0 +1,35 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/theorem_definition/theorem_definition_thmtools.txt
+---
+ROOT@0..41
+  PREAMBLE@0..41
+    THEOREM_DEFINITION_THMTOOLS@0..41
+      COMMAND_NAME@0..15 "\\declaretheorem"
+      BRACK_GROUP_KEY_VALUE@15..36
+        L_BRACK@15..16 "["
+        KEY_VALUE_BODY@16..35
+          KEY_VALUE_PAIR@16..25
+            KEY@16..21
+              WORD@16..21 "style"
+            EQUALITY_SIGN@21..22 "="
+            VALUE@22..25
+              TEXT@22..25
+                WORD@22..25 "foo"
+          COMMA@25..26 ","
+          WHITESPACE@26..27 " "
+          KEY_VALUE_PAIR@27..35
+            KEY@27..31
+              WORD@27..31 "name"
+            EQUALITY_SIGN@31..32 "="
+            VALUE@32..35
+              TEXT@32..35
+                WORD@32..35 "bar"
+        R_BRACK@35..36 "]"
+      CURLY_GROUP_WORD@36..41
+        L_CURLY@36..37 "{"
+        KEY@37..40
+          WORD@37..40 "baz"
+        R_CURLY@40..41 "}"
+

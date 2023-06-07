@@ -265,6 +265,15 @@ impl ToString for Key {
 
 cst_node!(Value, VALUE);
 
+impl Value {
+    pub fn text(&self) -> Option<String> {
+        match CurlyGroup::cast(self.syntax().clone()) {
+            Some(group) => group.content_text(),
+            None => Some(self.syntax().text().to_string()),
+        }
+    }
+}
+
 cst_node!(KeyValuePair, KEY_VALUE_PAIR);
 
 impl KeyValuePair {
@@ -528,7 +537,11 @@ impl LabelNumber {
     }
 }
 
-cst_node!(TheoremDefinition, THEOREM_DEFINITION);
+cst_node!(
+    TheoremDefinition,
+    THEOREM_DEFINITION_AMSTHM,
+    THEOREM_DEFINITION_THMTOOLS
+);
 
 impl TheoremDefinition {
     pub fn command(&self) -> Option<SyntaxToken> {
@@ -539,8 +552,25 @@ impl TheoremDefinition {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 
-    pub fn heading(&self) -> Option<CurlyGroup> {
-        self.syntax().children().find_map(CurlyGroup::cast)
+    pub fn heading(&self) -> Option<String> {
+        if self.0.kind() == THEOREM_DEFINITION_THMTOOLS {
+            let options = self
+                .syntax()
+                .children()
+                .find_map(BrackGroupKeyValue::cast)
+                .and_then(|group| group.body())?;
+
+            options
+                .pairs()
+                .find(|pair| pair.key().map_or(false, |key| key.to_string() == "name"))
+                .and_then(|pair| pair.value())
+                .and_then(|name| name.text())
+        } else {
+            self.syntax()
+                .children()
+                .find_map(CurlyGroup::cast)
+                .and_then(|group| group.content_text())
+        }
     }
 }
 

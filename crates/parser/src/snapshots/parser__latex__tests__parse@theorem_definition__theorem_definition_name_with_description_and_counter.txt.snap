@@ -5,7 +5,7 @@ input_file: crates/parser/src/test_data/latex/theorem_definition/theorem_definit
 ---
 ROOT@0..26
   PREAMBLE@0..26
-    THEOREM_DEFINITION@0..26
+    THEOREM_DEFINITION_AMSTHM@0..26
       COMMAND_NAME@0..11 "\\newtheorem"
       CURLY_GROUP_WORD@11..16
         L_CURLY@11..12 "{"
