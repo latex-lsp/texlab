@@ -1,0 +1,1 @@
+\declaretheorem[style=foo, name=bar]{baz}

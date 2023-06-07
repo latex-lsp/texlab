@@ -138,13 +138,53 @@ fn test_section() {
 }
 
 #[test]
-fn test_theorem() {
+fn test_theorem_amsthm() {
     let fixture = Fixture::parse(
         r#"
 %! main.tex
 \documentclass{article}
 \usepackage{amsthm}
 \newtheorem{lemma}{Lemma}
+
+\begin{document}
+
+\begin{lemma}[Foo]\label{thm:foo}
+    Foo
+\end{lemma}
+
+\begin{lemma}\label{thm:bar}
+    Bar
+\end{lemma}
+
+\begin{lemma}\label{thm:baz}
+    Baz
+\end{lemma}
+
+\begin{lemma}[Qux]
+    Qux
+\end{lemma}
+
+\end{document}
+|
+
+%! main.aux
+\relax
+\newlabel{thm:foo}{{1}{1}}
+\newlabel{thm:bar}{{2}{1}}"#,
+    );
+
+    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
+    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+}
+
+#[test]
+fn test_theorem_thmtools() {
+    let fixture = Fixture::parse(
+        r#"
+%! main.tex
+\documentclass{article}
+\declaretheoremstyle{lemmastyle}
+\declaretheorem[style=lemmastyle, name=Lemma]{lemma}
 
 \begin{document}
 

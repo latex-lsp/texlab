@@ -223,13 +223,11 @@ impl Semantics {
     fn process_theorem_definition(&mut self, theorem_def: latex::TheoremDefinition) {
         let Some(name) = theorem_def.name().and_then(|name| name.key()) else { return };
 
-        let Some(description) = theorem_def
-            .heading()
-            .and_then(|group| group.content_text()) else { return };
+        let Some(heading) = theorem_def.heading() else { return };
 
         self.theorem_definitions.push(TheoremDefinition {
             name: Span::from(&name),
-            heading: description,
+            heading,
         });
     }
 }
