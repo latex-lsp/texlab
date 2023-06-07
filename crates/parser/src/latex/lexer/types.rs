@@ -87,6 +87,7 @@ pub enum CommandName {
     BeginEquation,
     EndEquation,
     Section(SectionLevel),
+    Paragraph(ParagraphLevel),
     EnumItem,
     Caption,
     Citation,
@@ -131,6 +132,10 @@ pub enum SectionLevel {
     Section,
     Subsection,
     Subsubsection,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum ParagraphLevel {
     Paragraph,
     Subparagraph,
 }

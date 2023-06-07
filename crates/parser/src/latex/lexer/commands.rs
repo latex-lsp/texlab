@@ -1,6 +1,6 @@
 use crate::SyntaxConfig;
 
-use super::types::{CommandName, SectionLevel};
+use super::types::{CommandName, ParagraphLevel, SectionLevel};
 
 pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
     match name {
@@ -13,8 +13,8 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "section" | "section*" => CommandName::Section(SectionLevel::Section),
         "subsection" | "subsection*" => CommandName::Section(SectionLevel::Subsection),
         "subsubsection" | "subsubsection*" => CommandName::Section(SectionLevel::Subsubsection),
-        "paragraph" | "paragraph*" => CommandName::Section(SectionLevel::Paragraph),
-        "subparagraph" | "subparagraph*" => CommandName::Section(SectionLevel::Subparagraph),
+        "paragraph" | "paragraph*" => CommandName::Paragraph(ParagraphLevel::Paragraph),
+        "subparagraph" | "subparagraph*" => CommandName::Paragraph(ParagraphLevel::Subparagraph),
         "item" => CommandName::EnumItem,
         "caption" => CommandName::Caption,
         "usepackage" | "RequirePackage" => CommandName::PackageInclude,
