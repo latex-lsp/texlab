@@ -6,7 +6,7 @@ use syntax::latex::SyntaxKind::{self, *};
 use crate::SyntaxConfig;
 
 use self::lexer::{
-    types::{CommandName, SectionLevel, Token},
+    types::{CommandName, ParagraphLevel, SectionLevel, Token},
     Lexer,
 };
 
@@ -114,6 +114,7 @@ impl<'a> Parser<'a> {
                 CommandName::BeginEquation => self.equation(),
                 CommandName::EndEquation => self.generic_command(),
                 CommandName::Section(level) => self.section(level),
+                CommandName::Paragraph(level) => self.paragraph(level),
                 CommandName::EnumItem => self.enum_item(),
                 CommandName::Caption => self.caption(),
                 CommandName::Citation => self.citation(),
@@ -560,8 +561,6 @@ impl<'a> Parser<'a> {
             SectionLevel::Section => SECTION,
             SectionLevel::Subsection => SUBSECTION,
             SectionLevel::Subsubsection => SUBSUBSECTION,
-            SectionLevel::Paragraph => PARAGRAPH,
-            SectionLevel::Subparagraph => SUBPARAGRAPH,
         };
 
         self.builder.start_node(node_kind.into());
@@ -579,6 +578,33 @@ impl<'a> Parser<'a> {
                 Token::CommandName(CommandName::Section(nested)) if nested <= level => break,
                 _ => self.content(ParserContext::default()),
             };
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn paragraph(&mut self, level: ParagraphLevel) {
+        let node_kind = match level {
+            ParagraphLevel::Paragraph => PARAGRAPH,
+            ParagraphLevel::Subparagraph => SUBPARAGRAPH,
+        };
+
+        self.builder.start_node(node_kind.into());
+        self.eat();
+        self.trivia();
+
+        if self.peek() == Some(Token::LCurly) {
+            self.curly_group();
+        }
+
+        while let Some(kind) = self.peek() {
+            match kind {
+                Token::RCurly => break,
+                Token::CommandName(CommandName::EndEnvironment) => break,
+                Token::CommandName(CommandName::Section(_)) => break,
+                Token::CommandName(CommandName::Paragraph(nested)) if nested <= level => break,
+                _ => self.content(ParserContext::default()),
+            }
         }
 
         self.builder.finish_node();

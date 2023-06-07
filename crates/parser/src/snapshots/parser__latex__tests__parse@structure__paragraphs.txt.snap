@@ -1,0 +1,67 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/structure/paragraphs.txt
+---
+ROOT@0..134
+  PREAMBLE@0..134
+    SECTION@0..105
+      COMMAND_NAME@0..8 "\\section"
+      CURLY_GROUP@8..20
+        L_CURLY@8..9 "{"
+        TEXT@9..18
+          WORD@9..16 "Section"
+          WHITESPACE@16..17 " "
+          WORD@17..18 "1"
+        R_CURLY@18..19 "}"
+        LINE_BREAK@19..20 "\n"
+      TEXT@20..31
+        WORD@20..27 "Section"
+        WHITESPACE@27..28 " "
+        WORD@28..29 "1"
+        LINE_BREAK@29..31 "\n\n"
+      PARAGRAPH@31..68
+        COMMAND_NAME@31..41 "\\paragraph"
+        CURLY_GROUP@41..55
+          L_CURLY@41..42 "{"
+          TEXT@42..53
+            WORD@42..51 "Paragraph"
+            WHITESPACE@51..52 " "
+            WORD@52..53 "1"
+          R_CURLY@53..54 "}"
+          LINE_BREAK@54..55 "\n"
+        TEXT@55..68
+          WORD@55..64 "Paragraph"
+          WHITESPACE@64..65 " "
+          WORD@65..66 "1"
+          LINE_BREAK@66..68 "\n\n"
+      PARAGRAPH@68..105
+        COMMAND_NAME@68..78 "\\paragraph"
+        CURLY_GROUP@78..92
+          L_CURLY@78..79 "{"
+          TEXT@79..90
+            WORD@79..88 "Paragraph"
+            WHITESPACE@88..89 " "
+            WORD@89..90 "2"
+          R_CURLY@90..91 "}"
+          LINE_BREAK@91..92 "\n"
+        TEXT@92..105
+          WORD@92..101 "Paragraph"
+          WHITESPACE@101..102 " "
+          WORD@102..103 "2"
+          LINE_BREAK@103..105 "\n\n"
+    SECTION@105..134
+      COMMAND_NAME@105..113 "\\section"
+      CURLY_GROUP@113..125
+        L_CURLY@113..114 "{"
+        TEXT@114..123
+          WORD@114..121 "Section"
+          WHITESPACE@121..122 " "
+          WORD@122..123 "2"
+        R_CURLY@123..124 "}"
+        LINE_BREAK@124..125 "\n"
+      TEXT@125..134
+        WORD@125..132 "Section"
+        WHITESPACE@132..133 " "
+        WORD@133..134 "2"
+
