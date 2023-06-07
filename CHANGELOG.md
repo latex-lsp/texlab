@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add symbol support for `thmtools` package ([#894](https://github.com/latex-lsp/texlab/issues/894))
+- Add `texlab.findEnvironments` command to return the list of environments containing a position ([#892](https://github.com/latex-lsp/texlab/issues/892))
 
 ### Changed
 

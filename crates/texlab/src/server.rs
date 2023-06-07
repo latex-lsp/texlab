@@ -38,8 +38,8 @@ use crate::{
 
 use self::{
     extensions::{
-        BuildParams, BuildRequest, BuildResult, BuildStatus, ForwardSearchRequest,
-        ForwardSearchResult, ForwardSearchStatus,
+        BuildParams, BuildRequest, BuildResult, BuildStatus, EnvironmentLocation,
+        ForwardSearchRequest, ForwardSearchResult, ForwardSearchStatus, TextWithRange,
     },
     options::{Options, StartupOptions},
     progress::ProgressReporter,
@@ -168,6 +168,9 @@ impl Server {
                     "texlab.cleanAuxiliary".into(),
                     "texlab.cleanArtifacts".into(),
                     "texlab.changeEnvironment".into(),
+                    "texlab.findEnvironments".into(),
+                    "texlab.showDependencyGraph".into(),
+                    "texlab.cancelBuild".into(),
                 ],
                 ..Default::default()
             }),
@@ -660,6 +663,10 @@ impl Server {
                     client.send_request::<ApplyWorkspaceEdit>(params?)
                 });
             }
+            "texlab.findEnvironments" => {
+                let result = self.find_environments(params);
+                self.run_fallible(id, move || result);
+            }
             "texlab.showDependencyGraph" => {
                 let workspace = self.workspace.read();
                 let dot = commands::show_dependency_graph(&workspace).unwrap();
@@ -936,6 +943,32 @@ impl Server {
         };
 
         Ok(ApplyWorkspaceEditParams { label, edit })
+    }
+
+    fn find_environments(&self, params: ExecuteCommandParams) -> Result<Vec<EnvironmentLocation>> {
+        let workspace = self.workspace.read();
+        let params = self.parse_command_params::<TextDocumentPositionParams>(params.arguments)?;
+        let mut uri = params.text_document.uri;
+        normalize_uri(&mut uri);
+
+        let Some(document) = workspace.lookup(&uri) else {
+            anyhow::bail!("Document {} is not opened!", uri)
+        };
+
+        let line_index = &document.line_index;
+        let offset = line_index.offset_lsp(params.position);
+        let results = commands::find_environments(document, offset)
+            .into_iter()
+            .map(|result| EnvironmentLocation {
+                name: TextWithRange {
+                    range: line_index.line_col_lsp_range(result.name.range),
+                    text: result.name.text,
+                },
+                full_range: line_index.line_col_lsp_range(result.full_range),
+            })
+            .collect();
+
+        Ok(results)
     }
 
     fn parse_command_params<T: DeserializeOwned>(

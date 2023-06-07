@@ -1,5 +1,5 @@
 use commands::ForwardSearchError;
-use lsp_types::{Position, TextDocumentIdentifier, TextDocumentPositionParams};
+use lsp_types::{Position, Range, TextDocumentIdentifier, TextDocumentPositionParams};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -70,6 +70,21 @@ impl From<ForwardSearchError> for ForwardSearchStatus {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ForwardSearchResult {
     pub status: ForwardSearchStatus,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnvironmentLocation {
+    pub name: TextWithRange,
+    pub full_range: Range,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TextWithRange {
+    pub text: String,
+    pub range: Range,
 }
