@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use syntax::BuildError;
 use url::Url;
 
-use crate::{Diagnostic, DiagnosticSource, ErrorCode};
+use crate::{Diagnostic, DiagnosticData, DiagnosticSource};
 
 #[derive(Debug, Default)]
 struct BuildLog {
@@ -17,7 +17,7 @@ pub struct BuildErrors {
 }
 
 impl DiagnosticSource for BuildErrors {
-    fn on_change(&mut self, workspace: &Workspace, log_document: &Document) {
+    fn update(&mut self, workspace: &Workspace, log_document: &Document) {
         let mut errors: FxHashMap<Url, Vec<Diagnostic>> = FxHashMap::default();
 
         let Some(data) = log_document.data.as_log() else { return };
@@ -48,7 +48,7 @@ impl DiagnosticSource for BuildErrors {
 
             let diagnostic = Diagnostic {
                 range,
-                code: ErrorCode::Build(error.clone()),
+                data: DiagnosticData::Build(error.clone()),
             };
 
             errors
@@ -61,15 +61,13 @@ impl DiagnosticSource for BuildErrors {
             .insert(log_document.uri.clone(), BuildLog { errors });
     }
 
-    fn cleanup(&mut self, workspace: &Workspace) {
-        self.logs.retain(|uri, _| workspace.lookup(uri).is_some());
-    }
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     ) {
+        self.logs.retain(|uri, _| workspace.lookup(uri).is_some());
+
         for document in workspace.iter() {
             let Some(log) = self.logs.get(&document.uri) else { continue };
             for (uri, errors) in &log.errors {

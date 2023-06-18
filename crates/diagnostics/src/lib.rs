@@ -1,8 +1,12 @@
-pub mod build_log;
-pub mod grammar;
-pub mod labels;
+mod build_log;
+mod grammar;
+mod labels;
+pub(crate) mod util;
 
 use base_db::{Document, Workspace};
+use build_log::BuildErrors;
+use grammar::{BibSyntaxErrors, TexSyntaxErrors};
+use labels::LabelErrors;
 use rowan::TextRange;
 use rustc_hash::FxHashMap;
 use syntax::BuildError;
@@ -11,11 +15,18 @@ use url::Url;
 #[derive(Debug, Clone)]
 pub struct Diagnostic {
     pub range: TextRange,
-    pub code: ErrorCode,
+    pub data: DiagnosticData,
 }
 
 #[derive(Debug, Clone)]
-pub enum ErrorCode {
+pub enum DiagnosticData {
+    Syntax(SyntaxError),
+    Build(BuildError),
+    Label(LabelError),
+}
+
+#[derive(Debug, Clone)]
+pub enum SyntaxError {
     UnexpectedRCurly,
     RCurlyInserted,
     MismatchedEnvironment,
@@ -24,57 +35,50 @@ pub enum ErrorCode {
     ExpectingRCurly,
     ExpectingEq,
     ExpectingFieldValue,
-    Build(BuildError),
-    Label(LabelErrorCode),
 }
 
 #[derive(Debug, Clone)]
-pub enum LabelErrorCode {
+pub enum LabelError {
     Unused,
     Undefined,
 }
 
 pub trait DiagnosticSource {
-    fn on_change(&mut self, workspace: &Workspace, document: &Document);
+    fn update(&mut self, _workspace: &Workspace, _document: &Document) {}
 
-    fn cleanup(&mut self, workspace: &Workspace);
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     );
 }
 
-#[derive(Default)]
 pub struct DiagnosticManager {
     sources: Vec<Box<dyn DiagnosticSource>>,
 }
 
-impl DiagnosticManager {
-    pub fn with(mut self, source: Box<dyn DiagnosticSource>) -> Self {
-        self.sources.push(source);
-        self
+impl Default for DiagnosticManager {
+    fn default() -> Self {
+        let mut sources: Vec<Box<dyn DiagnosticSource>> = Vec::new();
+        sources.push(Box::new(TexSyntaxErrors::default()));
+        sources.push(Box::new(BibSyntaxErrors::default()));
+        sources.push(Box::new(BuildErrors::default()));
+        sources.push(Box::new(LabelErrors::default()));
+        Self { sources }
     }
 }
 
 impl DiagnosticSource for DiagnosticManager {
-    fn on_change(&mut self, workspace: &Workspace, document: &Document) {
+    fn update(&mut self, workspace: &Workspace, document: &Document) {
         for source in &mut self.sources {
-            source.on_change(workspace, document);
+            source.update(workspace, document);
         }
     }
 
-    fn cleanup(&mut self, workspace: &Workspace) {
-        for source in &mut self.sources {
-            source.cleanup(workspace);
-        }
-    }
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     ) {
         for source in &mut self.sources {
             source.publish(workspace, results);

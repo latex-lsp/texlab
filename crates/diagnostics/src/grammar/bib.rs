@@ -4,42 +4,32 @@ use rustc_hash::FxHashMap;
 use syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue};
 use url::Url;
 
-use crate::{Diagnostic, DiagnosticSource, ErrorCode};
+use crate::{
+    util::SimpleDiagnosticSource, Diagnostic, DiagnosticData, DiagnosticSource, SyntaxError,
+};
 
-#[derive(Debug, Default)]
-pub struct BibSyntaxErrors {
-    errors: FxHashMap<Url, Vec<Diagnostic>>,
-}
+#[derive(Default)]
+pub struct BibSyntaxErrors(SimpleDiagnosticSource);
 
 impl DiagnosticSource for BibSyntaxErrors {
-    fn on_change(&mut self, _workspace: &Workspace, document: &Document) {
+    fn update(&mut self, _workspace: &Workspace, document: &Document) {
         let mut analyzer = Analyzer {
             document,
             diagnostics: Vec::new(),
         };
 
         analyzer.analyze_root();
-        self.errors
+        self.0
+            .errors
             .insert(document.uri.clone(), analyzer.diagnostics);
     }
 
-    fn cleanup(&mut self, workspace: &Workspace) {
-        self.errors.retain(|uri, _| workspace.lookup(uri).is_some());
-    }
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     ) {
-        for document in workspace.iter() {
-            let Some(diagnostics) = self.errors.get(&document.uri) else { continue };
-
-            results
-                .entry(&document.uri)
-                .or_default()
-                .extend(diagnostics.iter());
-        }
+        self.0.publish(workspace, results);
     }
 }
 
@@ -65,7 +55,7 @@ impl<'a> Analyzer<'a> {
         if entry.left_delim_token().is_none() {
             self.diagnostics.push(Diagnostic {
                 range: entry.type_token().unwrap().text_range(),
-                code: ErrorCode::ExpectingLCurly,
+                data: DiagnosticData::Syntax(SyntaxError::ExpectingLCurly),
             });
 
             return;
@@ -74,7 +64,7 @@ impl<'a> Analyzer<'a> {
         if entry.name_token().is_none() {
             self.diagnostics.push(Diagnostic {
                 range: entry.left_delim_token().unwrap().text_range(),
-                code: ErrorCode::ExpectingKey,
+                data: DiagnosticData::Syntax(SyntaxError::ExpectingKey),
             });
 
             return;
@@ -83,27 +73,25 @@ impl<'a> Analyzer<'a> {
         if entry.right_delim_token().is_none() {
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(entry.syntax().text_range().end()),
-                code: ErrorCode::ExpectingRCurly,
+                data: DiagnosticData::Syntax(SyntaxError::ExpectingRCurly),
             });
         }
     }
 
     fn analyze_field(&mut self, field: bibtex::Field) {
         if field.eq_token().is_none() {
-            let code = ErrorCode::ExpectingEq;
             self.diagnostics.push(Diagnostic {
                 range: field.name_token().unwrap().text_range(),
-                code,
+                data: DiagnosticData::Syntax(SyntaxError::ExpectingEq),
             });
 
             return;
         }
 
         if field.value().is_none() {
-            let code = ErrorCode::ExpectingFieldValue;
             self.diagnostics.push(Diagnostic {
                 range: field.name_token().unwrap().text_range(),
-                code,
+                data: DiagnosticData::Syntax(SyntaxError::ExpectingFieldValue),
             });
         }
     }

@@ -4,15 +4,15 @@ use rustc_hash::FxHashMap;
 use syntax::latex;
 use url::Url;
 
-use crate::{Diagnostic, DiagnosticSource, ErrorCode};
+use crate::{
+    util::SimpleDiagnosticSource, Diagnostic, DiagnosticData, DiagnosticSource, SyntaxError,
+};
 
-#[derive(Debug, Default)]
-pub struct TexSyntaxErrors {
-    errors: FxHashMap<Url, Vec<Diagnostic>>,
-}
+#[derive(Default)]
+pub struct TexSyntaxErrors(SimpleDiagnosticSource);
 
 impl DiagnosticSource for TexSyntaxErrors {
-    fn on_change(&mut self, workspace: &Workspace, document: &Document) {
+    fn update(&mut self, workspace: &Workspace, document: &Document) {
         let mut analyzer = Analyzer {
             document,
             config: workspace.config(),
@@ -20,27 +20,17 @@ impl DiagnosticSource for TexSyntaxErrors {
         };
 
         analyzer.analyze_root();
-        self.errors
+        self.0
+            .errors
             .insert(document.uri.clone(), analyzer.diagnostics);
     }
 
-    fn cleanup(&mut self, workspace: &Workspace) {
-        self.errors.retain(|uri, _| workspace.lookup(uri).is_some());
-    }
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     ) {
-        for document in workspace.iter() {
-            let Some(diagnostics) = self.errors.get(&document.uri) else { continue };
-
-            results
-                .entry(&document.uri)
-                .or_default()
-                .extend(diagnostics.iter());
-        }
+        self.0.publish(workspace, results);
     }
 }
 
@@ -94,7 +84,7 @@ impl<'a> Analyzer<'a> {
         if begin != end {
             self.diagnostics.push(Diagnostic {
                 range: latex::small_range(&begin),
-                code: ErrorCode::MismatchedEnvironment,
+                data: DiagnosticData::Syntax(SyntaxError::MismatchedEnvironment),
             });
         }
 
@@ -120,7 +110,7 @@ impl<'a> Analyzer<'a> {
         {
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(node.text_range().end()),
-                code: ErrorCode::RCurlyInserted,
+                data: DiagnosticData::Syntax(SyntaxError::RCurlyInserted),
             });
         }
 
@@ -131,7 +121,7 @@ impl<'a> Analyzer<'a> {
         if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
             self.diagnostics.push(Diagnostic {
                 range: node.text_range(),
-                code: ErrorCode::UnexpectedRCurly,
+                data: DiagnosticData::Syntax(SyntaxError::UnexpectedRCurly),
             });
 
             Some(())

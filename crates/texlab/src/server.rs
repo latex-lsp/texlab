@@ -13,12 +13,7 @@ use anyhow::Result;
 use base_db::{util::LineCol, Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
-use diagnostics::{
-    build_log::BuildErrors,
-    grammar::{BibSyntaxErrors, TexSyntaxErrors},
-    labels::LabelErrors,
-    DiagnosticManager, DiagnosticSource,
-};
+use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
@@ -82,12 +77,6 @@ impl Server {
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
         let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
 
-        let diagnostic_manager = DiagnosticManager::default()
-            .with(Box::new(BuildErrors::default()))
-            .with(Box::new(TexSyntaxErrors::default()))
-            .with(Box::new(BibSyntaxErrors::default()))
-            .with(Box::new(LabelErrors::default()));
-
         Self {
             connection: Arc::new(connection),
             internal_tx,
@@ -97,7 +86,7 @@ impl Server {
             client_capabilities: Default::default(),
             client_info: Default::default(),
             chktex_diagnostics: Default::default(),
-            diagnostic_manager,
+            diagnostic_manager: DiagnosticManager::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
@@ -273,12 +262,11 @@ impl Server {
         workspace.discover(&mut checked_paths);
         self.watcher.watch(&mut workspace);
 
-        self.diagnostic_manager.cleanup(&workspace);
         for document in checked_paths
             .iter()
             .filter_map(|path| workspace.lookup_path(path))
         {
-            self.diagnostic_manager.on_change(&workspace, document);
+            self.diagnostic_manager.update(&workspace, document);
         }
 
         drop(workspace);
@@ -397,7 +385,7 @@ impl Server {
 
         let workspace = self.workspace.read();
         self.diagnostic_manager
-            .on_change(&workspace, workspace.lookup(&uri).unwrap());
+            .update(&workspace, workspace.lookup(&uri).unwrap());
 
         if workspace.config().diagnostics.chktex.on_open {
             drop(workspace);
@@ -438,7 +426,7 @@ impl Server {
         }
 
         self.diagnostic_manager
-            .on_change(&workspace, workspace.lookup(&uri).unwrap());
+            .update(&workspace, workspace.lookup(&uri).unwrap());
 
         drop(workspace);
         self.update_workspace();
@@ -899,7 +887,7 @@ impl Server {
                             changed |= workspace.load(&path, language, Owner::Server).is_ok();
 
                             if let Some(document) = workspace.lookup_path(&path) {
-                                self.diagnostic_manager.on_change(&workspace, document);
+                                self.diagnostic_manager.update(&workspace, document);
                             }
                         }
                     }
@@ -911,7 +899,6 @@ impl Server {
                         if document.owner == Owner::Server {
                             let uri = document.uri.clone();
                             workspace.remove(&uri);
-                            self.diagnostic_manager.cleanup(&workspace);
                             changed = true;
                         }
                     }

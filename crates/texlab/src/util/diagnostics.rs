@@ -1,5 +1,5 @@
 use base_db::{util::filter_regex_patterns, Document, Workspace};
-use diagnostics::{DiagnosticSource, ErrorCode, LabelErrorCode};
+use diagnostics::{DiagnosticData, DiagnosticSource, LabelError, SyntaxError};
 use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
@@ -32,62 +32,50 @@ fn create_diagnostic(
 ) -> lsp_types::Diagnostic {
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
-    let severity = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly
-        | ErrorCode::RCurlyInserted
-        | ErrorCode::MismatchedEnvironment
-        | ErrorCode::ExpectingLCurly
-        | ErrorCode::ExpectingKey
-        | ErrorCode::ExpectingRCurly
-        | ErrorCode::ExpectingEq
-        | ErrorCode::ExpectingFieldValue => DiagnosticSeverity::ERROR,
-        ErrorCode::Build(error) => match error.level {
+    let severity = match &diagnostic.data {
+        DiagnosticData::Syntax(_) => DiagnosticSeverity::ERROR,
+        DiagnosticData::Build(error) => match error.level {
             BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         },
-        ErrorCode::Label(LabelErrorCode::Undefined) => DiagnosticSeverity::HINT,
-        ErrorCode::Label(LabelErrorCode::Unused) => DiagnosticSeverity::HINT,
+        DiagnosticData::Label(_) => DiagnosticSeverity::HINT,
     };
 
-    let code = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly => Some(1),
-        ErrorCode::RCurlyInserted => Some(2),
-        ErrorCode::MismatchedEnvironment => Some(3),
-        ErrorCode::ExpectingLCurly => Some(4),
-        ErrorCode::ExpectingKey => Some(5),
-        ErrorCode::ExpectingRCurly => Some(6),
-        ErrorCode::ExpectingEq => Some(7),
-        ErrorCode::ExpectingFieldValue => Some(8),
-        ErrorCode::Label(LabelErrorCode::Undefined) => Some(9),
-        ErrorCode::Label(LabelErrorCode::Unused) => Some(10),
-        ErrorCode::Build(_) => None,
+    let code = match &diagnostic.data {
+        DiagnosticData::Syntax(error) => match error {
+            SyntaxError::UnexpectedRCurly => Some(1),
+            SyntaxError::RCurlyInserted => Some(2),
+            SyntaxError::MismatchedEnvironment => Some(3),
+            SyntaxError::ExpectingLCurly => Some(4),
+            SyntaxError::ExpectingKey => Some(5),
+            SyntaxError::ExpectingRCurly => Some(6),
+            SyntaxError::ExpectingEq => Some(7),
+            SyntaxError::ExpectingFieldValue => Some(8),
+        },
+        DiagnosticData::Label(LabelError::Undefined) => Some(9),
+        DiagnosticData::Label(LabelError::Unused) => Some(10),
+        DiagnosticData::Build(_) => None,
     };
 
-    let source = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly
-        | ErrorCode::RCurlyInserted
-        | ErrorCode::MismatchedEnvironment
-        | ErrorCode::ExpectingLCurly
-        | ErrorCode::ExpectingKey
-        | ErrorCode::ExpectingRCurly
-        | ErrorCode::ExpectingEq
-        | ErrorCode::ExpectingFieldValue
-        | ErrorCode::Label(_) => "texlab",
-        ErrorCode::Build(_) => "latex",
+    let source = match &diagnostic.data {
+        DiagnosticData::Syntax(_) | DiagnosticData::Label(_) => "texlab",
+        DiagnosticData::Build(_) => "latex",
     };
 
-    let message = String::from(match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly => "Unexpected \"}\"",
-        ErrorCode::RCurlyInserted => "Missing \"}\" inserted",
-        ErrorCode::MismatchedEnvironment => "Mismatched environment",
-        ErrorCode::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
-        ErrorCode::ExpectingKey => "Expecting a key",
-        ErrorCode::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
-        ErrorCode::ExpectingEq => "Expecting an equality sign: \"=\"",
-        ErrorCode::ExpectingFieldValue => "Expecting a field value",
-        ErrorCode::Label(LabelErrorCode::Undefined) => "Potentially undefined label",
-        ErrorCode::Label(LabelErrorCode::Unused) => "Potentially unused label",
-        ErrorCode::Build(error) => &error.message,
+    let message = String::from(match &diagnostic.data {
+        DiagnosticData::Syntax(error) => match error {
+            SyntaxError::UnexpectedRCurly => "Unexpected \"}\"",
+            SyntaxError::RCurlyInserted => "Missing \"}\" inserted",
+            SyntaxError::MismatchedEnvironment => "Mismatched environment",
+            SyntaxError::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
+            SyntaxError::ExpectingKey => "Expecting a key",
+            SyntaxError::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
+            SyntaxError::ExpectingEq => "Expecting an equality sign: \"=\"",
+            SyntaxError::ExpectingFieldValue => "Expecting a field value",
+        },
+        DiagnosticData::Label(LabelError::Undefined) => "Potentially undefined label",
+        DiagnosticData::Label(LabelError::Unused) => "Potentially unused label",
+        DiagnosticData::Build(error) => &error.message,
     });
 
     lsp_types::Diagnostic {

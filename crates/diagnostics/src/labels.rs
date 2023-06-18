@@ -1,9 +1,9 @@
-use base_db::{semantics::tex::LabelKind, Document, DocumentData, Workspace};
+use base_db::{semantics::tex::LabelKind, DocumentData, Workspace};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
-use crate::{Diagnostic, DiagnosticSource, ErrorCode, LabelErrorCode};
+use crate::{Diagnostic, DiagnosticData, DiagnosticSource, LabelError};
 
 #[derive(Debug, Default)]
 pub struct LabelErrors {
@@ -11,14 +11,10 @@ pub struct LabelErrors {
 }
 
 impl DiagnosticSource for LabelErrors {
-    fn on_change(&mut self, _workspace: &Workspace, _document: &Document) {}
-
-    fn cleanup(&mut self, _workspace: &Workspace) {}
-
-    fn publish<'this, 'db>(
-        &'this mut self,
-        workspace: &'db Workspace,
-        results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
+    fn publish<'a>(
+        &'a mut self,
+        workspace: &'a Workspace,
+        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
     ) {
         let graphs: Vec<_> = workspace
             .iter()
@@ -52,14 +48,14 @@ impl DiagnosticSource for LabelErrors {
                 if label.kind != LabelKind::Definition && !label_defs.contains(&label.name.text) {
                     errors.push(Diagnostic {
                         range: label.name.range,
-                        code: ErrorCode::Label(LabelErrorCode::Undefined),
+                        data: DiagnosticData::Label(LabelError::Undefined),
                     });
                 }
 
                 if label.kind == LabelKind::Definition && !label_refs.contains(&label.name.text) {
                     errors.push(Diagnostic {
                         range: label.name.range,
-                        code: ErrorCode::Label(LabelErrorCode::Unused),
+                        data: DiagnosticData::Label(LabelError::Unused),
                     });
                 }
             }
