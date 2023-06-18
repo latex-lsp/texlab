@@ -438,6 +438,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "diagnostics"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "url",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1522,6 +1533,7 @@ dependencies = [
  "commands",
  "criterion",
  "crossbeam-channel",
+ "diagnostics",
  "dirs",
  "distro",
  "encoding_rs",

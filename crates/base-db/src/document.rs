@@ -5,7 +5,6 @@ use syntax::{bibtex, latex, BuildError};
 use url::Url;
 
 use crate::{
-    diagnostics::{self, Diagnostic},
     semantics,
     util::{LineCol, LineIndex},
     Config,
@@ -15,6 +14,16 @@ use crate::{
 pub enum Owner {
     Client,
     Server,
+}
+
+#[derive(Debug)]
+pub struct DocumentParams<'a> {
+    pub uri: Url,
+    pub text: String,
+    pub language: Language,
+    pub owner: Owner,
+    pub cursor: LineCol,
+    pub config: &'a Config,
 }
 
 #[derive(Clone)]
@@ -28,18 +37,12 @@ pub struct Document {
     pub cursor: LineCol,
     pub language: Language,
     pub data: DocumentData,
-    pub diagnostics: Vec<Diagnostic>,
 }
 
 impl Document {
-    pub fn parse(
-        uri: Url,
-        text: String,
-        language: Language,
-        owner: Owner,
-        cursor: LineCol,
-        config: &Config,
-    ) -> Self {
+    pub fn parse(params: DocumentParams) -> Self {
+        let DocumentParams { uri, text, .. } = params;
+
         let dir = uri.join(".").unwrap();
 
         let path = if uri.scheme() == "file" {
@@ -50,10 +53,9 @@ impl Document {
 
         let line_index = LineIndex::new(&text);
 
-        let diagnostics = Vec::new();
-        let data = match language {
+        let data = match params.language {
             Language::Tex => {
-                let green = parser::parse_latex(&text, &config.syntax);
+                let green = parser::parse_latex(&text, &params.config.syntax);
                 let mut semantics = semantics::tex::Semantics::default();
                 semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
                 DocumentData::Tex(TexDocumentData { green, semantics })
@@ -63,7 +65,7 @@ impl Document {
                 DocumentData::Bib(BibDocumentData { green })
             }
             Language::Aux => {
-                let green = parser::parse_latex(&text, &config.syntax);
+                let green = parser::parse_latex(&text, &params.config.syntax);
                 let mut semantics = semantics::auxiliary::Semantics::default();
                 semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
                 DocumentData::Aux(AuxDocumentData { green, semantics })
@@ -76,23 +78,16 @@ impl Document {
             Language::Tectonic => DocumentData::Tectonic,
         };
 
-        let mut document = Self {
+        let document = Self {
             uri,
             dir,
             path,
             text,
             line_index,
-            owner,
-            cursor,
-            language,
+            owner: params.owner,
+            cursor: params.cursor,
+            language: params.language,
             data,
-            diagnostics,
-        };
-
-        match language {
-            Language::Tex => diagnostics::tex::analyze(&mut document, config),
-            Language::Bib => diagnostics::bib::analyze(&mut document),
-            Language::Aux | Language::Log | Language::Root | Language::Tectonic => (),
         };
 
         document
@@ -160,6 +155,14 @@ impl DocumentData {
 
     pub fn as_aux(&self) -> Option<&AuxDocumentData> {
         if let DocumentData::Aux(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_log(&self) -> Option<&LogDocumentData> {
+        if let DocumentData::Log(data) = self {
             Some(data)
         } else {
             None

@@ -1,44 +1,34 @@
-use base_db::{diagnostics::ErrorCode, util::filter_regex_patterns, Document, Workspace};
-use distro::Language;
+use base_db::{util::filter_regex_patterns, Document, Workspace};
+use diagnostics::{DiagnosticSource, ErrorCode};
 use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
 use super::line_index_ext::LineIndexExt;
 
-pub fn collect(workspace: &Workspace) -> FxHashMap<&Document, Vec<lsp_types::Diagnostic>> {
+pub fn collect<'db>(
+    workspace: &'db Workspace,
+    source: &dyn DiagnosticSource,
+) -> FxHashMap<&'db Document, Vec<lsp_types::Diagnostic>> {
     let mut results = FxHashMap::default();
-
-    for document in workspace.iter() {
-        let lsp_diagnostics = document
-            .diagnostics
-            .iter()
-            .map(|diagnostic| create_diagnostic(document, diagnostic))
-            .collect::<Vec<_>>();
-
-        results.insert(document, lsp_diagnostics);
-    }
-
-    for document in workspace
-        .iter()
-        .filter(|document| document.language == Language::Log)
-    {
-        for (document, diagnostics) in base_db::diagnostics::log::analyze(workspace, document) {
-            let lsp_diagnostics = diagnostics
-                .iter()
-                .map(|diagnostic| create_diagnostic(document, diagnostic))
+    source.publish(workspace, &mut results);
+    results
+        .into_iter()
+        .filter_map(|(uri, diags)| workspace.lookup(uri).map(|document| (document, diags)))
+        .map(|(document, diags)| {
+            let diags = diags
+                .into_iter()
+                .map(|diag| create_diagnostic(document, diag))
                 .collect::<Vec<_>>();
 
-            results.get_mut(document).unwrap().extend(lsp_diagnostics);
-        }
-    }
-
-    results
+            (document, diags)
+        })
+        .collect()
 }
 
 fn create_diagnostic(
     document: &Document,
-    diagnostic: &base_db::diagnostics::Diagnostic,
+    diagnostic: &diagnostics::Diagnostic,
 ) -> lsp_types::Diagnostic {
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
