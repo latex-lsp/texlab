@@ -29,7 +29,7 @@ impl DiagnosticSource for TexSyntaxErrors {
     }
 
     fn publish<'this, 'db>(
-        &'this self,
+        &'this mut self,
         workspace: &'db Workspace,
         results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
     ) {

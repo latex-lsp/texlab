@@ -1,5 +1,6 @@
 pub mod build_log;
 pub mod grammar;
+pub mod labels;
 
 use base_db::{Document, Workspace};
 use rowan::TextRange;
@@ -24,6 +25,13 @@ pub enum ErrorCode {
     ExpectingEq,
     ExpectingFieldValue,
     Build(BuildError),
+    Label(LabelErrorCode),
+}
+
+#[derive(Debug, Clone)]
+pub enum LabelErrorCode {
+    Unused,
+    Undefined,
 }
 
 pub trait DiagnosticSource {
@@ -32,7 +40,7 @@ pub trait DiagnosticSource {
     fn cleanup(&mut self, workspace: &Workspace);
 
     fn publish<'this, 'db>(
-        &'this self,
+        &'this mut self,
         workspace: &'db Workspace,
         results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
     );
@@ -64,11 +72,11 @@ impl DiagnosticSource for DiagnosticManager {
     }
 
     fn publish<'this, 'db>(
-        &'this self,
+        &'this mut self,
         workspace: &'db Workspace,
         results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
     ) {
-        for source in &self.sources {
+        for source in &mut self.sources {
             source.publish(workspace, results);
         }
     }

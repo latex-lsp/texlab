@@ -66,7 +66,7 @@ impl DiagnosticSource for BuildErrors {
     }
 
     fn publish<'this, 'db>(
-        &'this self,
+        &'this mut self,
         workspace: &'db Workspace,
         results: &mut FxHashMap<&'db Url, Vec<&'this Diagnostic>>,
     ) {

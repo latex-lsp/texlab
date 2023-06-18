@@ -442,6 +442,7 @@ name = "diagnostics"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "itertools",
  "rowan",
  "rustc-hash",
  "syntax",

@@ -16,6 +16,7 @@ use crossbeam_channel::{Receiver, Sender};
 use diagnostics::{
     build_log::BuildErrors,
     grammar::{BibSyntaxErrors, TexSyntaxErrors},
+    labels::LabelErrors,
     DiagnosticManager, DiagnosticSource,
 };
 use distro::{Distro, Language};
@@ -84,7 +85,8 @@ impl Server {
         let diagnostic_manager = DiagnosticManager::default()
             .with(Box::new(BuildErrors::default()))
             .with(Box::new(TexSyntaxErrors::default()))
-            .with(Box::new(BibSyntaxErrors::default()));
+            .with(Box::new(BibSyntaxErrors::default()))
+            .with(Box::new(LabelErrors::default()));
 
         Self {
             connection: Arc::new(connection),
@@ -286,7 +288,8 @@ impl Server {
     fn publish_diagnostics(&mut self) -> Result<()> {
         let workspace = self.workspace.read();
 
-        let mut all_diagnostics = util::diagnostics::collect(&workspace, &self.diagnostic_manager);
+        let mut all_diagnostics =
+            util::diagnostics::collect(&workspace, &mut self.diagnostic_manager);
 
         for (uri, diagnostics) in &self.chktex_diagnostics {
             let Some(document) = workspace.lookup(uri) else { continue };

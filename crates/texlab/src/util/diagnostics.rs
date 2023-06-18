@@ -1,5 +1,5 @@
 use base_db::{util::filter_regex_patterns, Document, Workspace};
-use diagnostics::{DiagnosticSource, ErrorCode};
+use diagnostics::{DiagnosticSource, ErrorCode, LabelErrorCode};
 use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
@@ -8,7 +8,7 @@ use super::line_index_ext::LineIndexExt;
 
 pub fn collect<'db>(
     workspace: &'db Workspace,
-    source: &dyn DiagnosticSource,
+    source: &mut dyn DiagnosticSource,
 ) -> FxHashMap<&'db Document, Vec<lsp_types::Diagnostic>> {
     let mut results = FxHashMap::default();
     source.publish(workspace, &mut results);
@@ -45,6 +45,8 @@ fn create_diagnostic(
             BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         },
+        ErrorCode::Label(LabelErrorCode::Undefined) => DiagnosticSeverity::HINT,
+        ErrorCode::Label(LabelErrorCode::Unused) => DiagnosticSeverity::HINT,
     };
 
     let code = match &diagnostic.code {
@@ -56,6 +58,8 @@ fn create_diagnostic(
         ErrorCode::ExpectingRCurly => Some(6),
         ErrorCode::ExpectingEq => Some(7),
         ErrorCode::ExpectingFieldValue => Some(8),
+        ErrorCode::Label(LabelErrorCode::Undefined) => Some(9),
+        ErrorCode::Label(LabelErrorCode::Unused) => Some(10),
         ErrorCode::Build(_) => None,
     };
 
@@ -67,7 +71,8 @@ fn create_diagnostic(
         | ErrorCode::ExpectingKey
         | ErrorCode::ExpectingRCurly
         | ErrorCode::ExpectingEq
-        | ErrorCode::ExpectingFieldValue => "texlab",
+        | ErrorCode::ExpectingFieldValue
+        | ErrorCode::Label(_) => "texlab",
         ErrorCode::Build(_) => "latex",
     };
 
@@ -80,6 +85,8 @@ fn create_diagnostic(
         ErrorCode::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
         ErrorCode::ExpectingEq => "Expecting an equality sign: \"=\"",
         ErrorCode::ExpectingFieldValue => "Expecting a field value",
+        ErrorCode::Label(LabelErrorCode::Undefined) => "Potentially undefined label",
+        ErrorCode::Label(LabelErrorCode::Unused) => "Potentially unused label",
         ErrorCode::Build(error) => &error.message,
     });
 
