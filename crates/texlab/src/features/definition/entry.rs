@@ -1,9 +1,6 @@
 use base_db::DocumentData;
 use rowan::ast::AstNode;
-use syntax::{
-    bibtex::{self, HasName},
-    latex,
-};
+use syntax::latex;
 
 use crate::util::cursor::CursorContext;
 
@@ -26,15 +23,18 @@ pub(super) fn goto_definition<'a>(
     for document in &context.project.documents {
         let DocumentData::Bib(data) = &document.data else { continue };
 
-        for entry in data.root_node().children().filter_map(bibtex::Entry::cast) {
-            if let Some(key) = entry.name_token().filter(|k| k.text() == word.text()) {
-                return Some(vec![DefinitionResult {
-                    origin_selection_range,
-                    target: document,
-                    target_selection_range: key.text_range(),
-                    target_range: entry.syntax().text_range(),
-                }]);
-            }
+        for entry in data
+            .semantics
+            .entries
+            .iter()
+            .filter(|entry| entry.name.text == word.text())
+        {
+            return Some(vec![DefinitionResult {
+                origin_selection_range,
+                target: document,
+                target_selection_range: entry.name.range,
+                target_range: entry.full_range,
+            }]);
         }
     }
 
