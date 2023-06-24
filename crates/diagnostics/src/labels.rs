@@ -54,7 +54,7 @@ impl DiagnosticSource for LabelErrors {
 
                 if label.kind == LabelKind::Definition && !label_refs.contains(&label.name.text) {
                     errors.push(Diagnostic {
-                        range: label.name.range,
+                        range: label.full_range,
                         data: DiagnosticData::Label(LabelError::Unused),
                     });
                 }

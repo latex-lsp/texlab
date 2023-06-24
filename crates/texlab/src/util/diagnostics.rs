@@ -1,6 +1,5 @@
 use base_db::{util::filter_regex_patterns, Document, Workspace};
 use diagnostics::{CitationError, DiagnosticData, DiagnosticSource, LabelError, SyntaxError};
-use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
@@ -33,13 +32,13 @@ fn create_diagnostic(
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
     let severity = match &diagnostic.data {
-        DiagnosticData::Syntax(_) => DiagnosticSeverity::ERROR,
+        DiagnosticData::Syntax(_) => lsp_types::DiagnosticSeverity::ERROR,
         DiagnosticData::Build(error) => match error.level {
-            BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
-            BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
+            BuildErrorLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
+            BuildErrorLevel::Warning => lsp_types::DiagnosticSeverity::WARNING,
         },
-        DiagnosticData::Label(_) => DiagnosticSeverity::HINT,
-        DiagnosticData::Citation(_) => DiagnosticSeverity::HINT,
+        DiagnosticData::Label(_) => lsp_types::DiagnosticSeverity::HINT,
+        DiagnosticData::Citation(_) => lsp_types::DiagnosticSeverity::HINT,
     };
 
     let code = match &diagnostic.data {
@@ -85,10 +84,24 @@ fn create_diagnostic(
         DiagnosticData::Build(error) => &error.message,
     });
 
+    let tags = match &diagnostic.data {
+        DiagnosticData::Syntax(_)
+        | DiagnosticData::Build(_)
+        | DiagnosticData::Label(LabelError::Undefined)
+        | DiagnosticData::Citation(CitationError::Undefined) => None,
+        DiagnosticData::Label(LabelError::Unused) => {
+            Some(vec![lsp_types::DiagnosticTag::UNNECESSARY])
+        }
+        DiagnosticData::Citation(CitationError::Unused) => {
+            Some(vec![lsp_types::DiagnosticTag::UNNECESSARY])
+        }
+    };
+
     lsp_types::Diagnostic {
         severity: Some(severity),
-        code: code.map(NumberOrString::Number),
+        code: code.map(lsp_types::NumberOrString::Number),
         source: Some(String::from(source)),
+        tags,
         ..lsp_types::Diagnostic::new_simple(range, message)
     }
 }
