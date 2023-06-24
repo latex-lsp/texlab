@@ -37,8 +37,10 @@ fn create_diagnostic(
             BuildErrorLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => lsp_types::DiagnosticSeverity::WARNING,
         },
-        DiagnosticData::Label(_) => lsp_types::DiagnosticSeverity::HINT,
-        DiagnosticData::Citation(_) => lsp_types::DiagnosticSeverity::HINT,
+        DiagnosticData::Label(LabelError::Undefined) => lsp_types::DiagnosticSeverity::ERROR,
+        DiagnosticData::Label(LabelError::Unused) => lsp_types::DiagnosticSeverity::HINT,
+        DiagnosticData::Citation(CitationError::Undefined) => lsp_types::DiagnosticSeverity::ERROR,
+        DiagnosticData::Citation(CitationError::Unused) => lsp_types::DiagnosticSeverity::HINT,
     };
 
     let code = match &diagnostic.data {
