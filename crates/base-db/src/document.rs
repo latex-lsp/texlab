@@ -62,7 +62,9 @@ impl Document {
             }
             Language::Bib => {
                 let green = parser::parse_bibtex(&text);
-                DocumentData::Bib(BibDocumentData { green })
+                let mut semantics = semantics::bib::Semantics::default();
+                semantics.process_root(&bibtex::SyntaxNode::new_root(green.clone()));
+                DocumentData::Bib(BibDocumentData { green, semantics })
             }
             Language::Aux => {
                 let green = parser::parse_latex(&text, &params.config.syntax);
@@ -185,6 +187,7 @@ impl TexDocumentData {
 #[derive(Debug, Clone)]
 pub struct BibDocumentData {
     pub green: rowan::GreenNode,
+    pub semantics: semantics::bib::Semantics,
 }
 
 impl BibDocumentData {

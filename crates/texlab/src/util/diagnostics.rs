@@ -1,5 +1,5 @@
 use base_db::{util::filter_regex_patterns, Document, Workspace};
-use diagnostics::{DiagnosticData, DiagnosticSource, LabelError, SyntaxError};
+use diagnostics::{CitationError, DiagnosticData, DiagnosticSource, LabelError, SyntaxError};
 use lsp_types::{DiagnosticSeverity, NumberOrString};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
@@ -39,6 +39,7 @@ fn create_diagnostic(
             BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
         },
         DiagnosticData::Label(_) => DiagnosticSeverity::HINT,
+        DiagnosticData::Citation(_) => DiagnosticSeverity::HINT,
     };
 
     let code = match &diagnostic.data {
@@ -54,11 +55,15 @@ fn create_diagnostic(
         },
         DiagnosticData::Label(LabelError::Undefined) => Some(9),
         DiagnosticData::Label(LabelError::Unused) => Some(10),
+        DiagnosticData::Citation(CitationError::Undefined) => Some(11),
+        DiagnosticData::Citation(CitationError::Unused) => Some(12),
         DiagnosticData::Build(_) => None,
     };
 
     let source = match &diagnostic.data {
-        DiagnosticData::Syntax(_) | DiagnosticData::Label(_) => "texlab",
+        DiagnosticData::Syntax(_) | DiagnosticData::Label(_) | DiagnosticData::Citation(_) => {
+            "texlab"
+        }
         DiagnosticData::Build(_) => "latex",
     };
 
@@ -73,8 +78,10 @@ fn create_diagnostic(
             SyntaxError::ExpectingEq => "Expecting an equality sign: \"=\"",
             SyntaxError::ExpectingFieldValue => "Expecting a field value",
         },
-        DiagnosticData::Label(LabelError::Undefined) => "Potentially undefined label",
-        DiagnosticData::Label(LabelError::Unused) => "Potentially unused label",
+        DiagnosticData::Label(LabelError::Undefined) => "Undefined reference",
+        DiagnosticData::Label(LabelError::Unused) => "Unused label",
+        DiagnosticData::Citation(CitationError::Undefined) => "Undefined reference",
+        DiagnosticData::Citation(CitationError::Unused) => "Unused entry",
         DiagnosticData::Build(error) => &error.message,
     });
 

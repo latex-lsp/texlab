@@ -1,10 +1,12 @@
 mod build_log;
+mod citations;
 mod grammar;
 mod labels;
 pub(crate) mod util;
 
 use base_db::{Document, Workspace};
 use build_log::BuildErrors;
+use citations::CitationErrors;
 use grammar::{BibSyntaxErrors, TexSyntaxErrors};
 use labels::LabelErrors;
 use rowan::TextRange;
@@ -23,6 +25,7 @@ pub enum DiagnosticData {
     Syntax(SyntaxError),
     Build(BuildError),
     Label(LabelError),
+    Citation(CitationError),
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +42,12 @@ pub enum SyntaxError {
 
 #[derive(Debug, Clone)]
 pub enum LabelError {
+    Unused,
+    Undefined,
+}
+
+#[derive(Debug, Clone)]
+pub enum CitationError {
     Unused,
     Undefined,
 }
@@ -64,6 +73,7 @@ impl Default for DiagnosticManager {
         sources.push(Box::new(BibSyntaxErrors::default()));
         sources.push(Box::new(BuildErrors::default()));
         sources.push(Box::new(LabelErrors::default()));
+        sources.push(Box::new(CitationErrors::default()));
         Self { sources }
     }
 }
