@@ -1,27 +1,28 @@
 use base_db::{graph::Graph, BibDocumentData, Document, DocumentData, TexDocumentData, Workspace};
 use itertools::Itertools;
-use rustc_hash::{FxHashMap, FxHashSet};
-use url::Url;
+use rustc_hash::FxHashSet;
 
-use crate::{CitationError, Diagnostic, DiagnosticData, DiagnosticSource};
+use crate::{
+    types::{CitationError, Diagnostic, DiagnosticData},
+    util::SimpleDiagnosticSource,
+    DiagnosticBuilder, DiagnosticSource,
+};
 
-#[derive(Debug, Default)]
-pub struct CitationErrors {
-    errors: FxHashMap<Url, Vec<Diagnostic>>,
-}
+#[derive(Default)]
+pub struct CitationErrors(SimpleDiagnosticSource);
 
 impl DiagnosticSource for CitationErrors {
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         let graphs: Vec<_> = workspace
             .iter()
             .map(|start| Graph::new(workspace, start))
             .collect();
 
-        self.errors = Default::default();
+        self.0 = Default::default();
         for document in workspace.iter() {
             let project = graphs
                 .iter()
@@ -35,14 +36,7 @@ impl DiagnosticSource for CitationErrors {
             }
         }
 
-        for document in workspace.iter() {
-            let Some(diagnostics) = self.errors.get(&document.uri) else { continue };
-
-            results
-                .entry(&document.uri)
-                .or_default()
-                .extend(diagnostics.iter());
-        }
+        self.0.publish(workspace, builder);
     }
 }
 
@@ -69,7 +63,7 @@ impl CitationErrors {
             }
         }
 
-        self.errors.insert(document.uri.clone(), errors);
+        self.0.errors.insert(document.uri.clone(), errors);
     }
 
     fn process_bib<'a>(
@@ -94,6 +88,6 @@ impl CitationErrors {
             }
         }
 
-        self.errors.insert(document.uri.clone(), errors);
+        self.0.errors.insert(document.uri.clone(), errors);
     }
 }

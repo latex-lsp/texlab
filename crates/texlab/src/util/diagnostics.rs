@@ -1,5 +1,8 @@
 use base_db::{util::filter_regex_patterns, Document, Workspace};
-use diagnostics::{CitationError, DiagnosticData, DiagnosticSource, LabelError, SyntaxError};
+use diagnostics::{
+    types::{CitationError, Diagnostic, DiagnosticData, LabelError, SyntaxError},
+    DiagnosticBuilder, DiagnosticSource,
+};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
@@ -9,15 +12,16 @@ pub fn collect<'db>(
     workspace: &'db Workspace,
     source: &mut dyn DiagnosticSource,
 ) -> FxHashMap<&'db Document, Vec<lsp_types::Diagnostic>> {
-    let mut results = FxHashMap::default();
-    source.publish(workspace, &mut results);
-    results
+    let mut builder = DiagnosticBuilder::default();
+    source.publish(workspace, &mut builder);
+    builder
+        .iter()
         .into_iter()
         .filter_map(|(uri, diags)| workspace.lookup(uri).map(|document| (document, diags)))
         .map(|(document, diags)| {
             let diags = diags
                 .into_iter()
-                .map(|diag| create_diagnostic(document, diag))
+                .map(|diag| create_diagnostic(document, &diag))
                 .collect::<Vec<_>>();
 
             (document, diags)
@@ -25,10 +29,7 @@ pub fn collect<'db>(
         .collect()
 }
 
-fn create_diagnostic(
-    document: &Document,
-    diagnostic: &diagnostics::Diagnostic,
-) -> lsp_types::Diagnostic {
+fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types::Diagnostic {
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
     let severity = match &diagnostic.data {

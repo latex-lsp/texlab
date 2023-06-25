@@ -68,26 +68,28 @@ impl DocumentSpec {
         let mut cursor = None;
 
         let mut text = String::new();
+        let mut line_start = 0;
         for line in input.lines().map(|line| line.trim_end()) {
             if line.chars().all(|c| matches!(c, ' ' | '^' | '|' | '!')) && !line.is_empty() {
                 cursor = cursor.or_else(|| {
                     let offset = line.find('|')?;
-                    Some(TextSize::from((text.len() + offset) as u32))
+                    Some(TextSize::from((line_start + offset) as u32))
                 });
 
                 if let Some(start) = line.find('!') {
-                    let position = TextSize::from((text.len() + start) as u32);
+                    let position = TextSize::from((line_start + start) as u32);
                     ranges.push(TextRange::new(position, position));
                 }
 
                 if let Some(start) = line.find('^') {
                     let end = line.rfind('^').unwrap() + 1;
                     ranges.push(TextRange::new(
-                        TextSize::from((text.len() + start) as u32),
-                        TextSize::from((text.len() + end) as u32),
+                        TextSize::from((line_start + start) as u32),
+                        TextSize::from((line_start + end) as u32),
                     ));
                 }
             } else {
+                line_start = text.len();
                 text.push_str(line);
                 text.push('\n');
             }

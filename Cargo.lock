@@ -446,6 +446,7 @@ dependencies = [
  "rowan",
  "rustc-hash",
  "syntax",
+ "test-utils",
  "url",
 ]
 

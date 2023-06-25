@@ -1,11 +1,11 @@
 use base_db::{Document, DocumentData, Workspace};
 use rowan::{ast::AstNode, TextRange};
-use rustc_hash::FxHashMap;
 use syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue};
-use url::Url;
 
 use crate::{
-    util::SimpleDiagnosticSource, Diagnostic, DiagnosticData, DiagnosticSource, SyntaxError,
+    types::{DiagnosticData, SyntaxError},
+    util::SimpleDiagnosticSource,
+    Diagnostic, DiagnosticBuilder, DiagnosticSource,
 };
 
 #[derive(Default)]
@@ -24,12 +24,12 @@ impl DiagnosticSource for BibSyntaxErrors {
             .insert(document.uri.clone(), analyzer.diagnostics);
     }
 
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
-        self.0.publish(workspace, results);
+        self.0.publish(workspace, builder);
     }
 }
 
@@ -53,8 +53,9 @@ impl<'a> Analyzer<'a> {
 
     fn analyze_entry(&mut self, entry: bibtex::Entry) {
         if entry.left_delim_token().is_none() {
+            let offset = entry.type_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
-                range: entry.type_token().unwrap().text_range(),
+                range: TextRange::empty(offset),
                 data: DiagnosticData::Syntax(SyntaxError::ExpectingLCurly),
             });
 
@@ -62,8 +63,9 @@ impl<'a> Analyzer<'a> {
         }
 
         if entry.name_token().is_none() {
+            let offset = entry.left_delim_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
-                range: entry.left_delim_token().unwrap().text_range(),
+                range: TextRange::empty(offset),
                 data: DiagnosticData::Syntax(SyntaxError::ExpectingKey),
             });
 
@@ -71,8 +73,9 @@ impl<'a> Analyzer<'a> {
         }
 
         if entry.right_delim_token().is_none() {
+            let offset = entry.syntax().text_range().end();
             self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(entry.syntax().text_range().end()),
+                range: TextRange::empty(offset),
                 data: DiagnosticData::Syntax(SyntaxError::ExpectingRCurly),
             });
         }
@@ -80,8 +83,9 @@ impl<'a> Analyzer<'a> {
 
     fn analyze_field(&mut self, field: bibtex::Field) {
         if field.eq_token().is_none() {
+            let offset = field.name_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
-                range: field.name_token().unwrap().text_range(),
+                range: TextRange::empty(offset),
                 data: DiagnosticData::Syntax(SyntaxError::ExpectingEq),
             });
 
@@ -89,8 +93,9 @@ impl<'a> Analyzer<'a> {
         }
 
         if field.value().is_none() {
+            let offset = field.eq_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
-                range: field.name_token().unwrap().text_range(),
+                range: TextRange::empty(offset),
                 data: DiagnosticData::Syntax(SyntaxError::ExpectingFieldValue),
             });
         }

@@ -1,11 +1,11 @@
 use base_db::{Config, Document, DocumentData, Workspace};
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
-use rustc_hash::FxHashMap;
 use syntax::latex;
-use url::Url;
 
 use crate::{
-    util::SimpleDiagnosticSource, Diagnostic, DiagnosticData, DiagnosticSource, SyntaxError,
+    types::{DiagnosticData, SyntaxError},
+    util::SimpleDiagnosticSource,
+    Diagnostic, DiagnosticBuilder, DiagnosticSource,
 };
 
 #[derive(Default)]
@@ -25,12 +25,12 @@ impl DiagnosticSource for TexSyntaxErrors {
             .insert(document.uri.clone(), analyzer.diagnostics);
     }
 
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
-        self.0.publish(workspace, results);
+        self.0.publish(workspace, builder);
     }
 }
 

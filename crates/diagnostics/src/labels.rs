@@ -1,27 +1,28 @@
 use base_db::{semantics::tex::LabelKind, DocumentData, Workspace};
 use itertools::Itertools;
-use rustc_hash::{FxHashMap, FxHashSet};
-use url::Url;
+use rustc_hash::FxHashSet;
 
-use crate::{Diagnostic, DiagnosticData, DiagnosticSource, LabelError};
+use crate::{
+    types::{DiagnosticData, LabelError},
+    util::SimpleDiagnosticSource,
+    Diagnostic, DiagnosticBuilder, DiagnosticSource,
+};
 
-#[derive(Debug, Default)]
-pub struct LabelErrors {
-    errors: FxHashMap<Url, Vec<Diagnostic>>,
-}
+#[derive(Default)]
+pub struct LabelErrors(SimpleDiagnosticSource);
 
 impl DiagnosticSource for LabelErrors {
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         let graphs: Vec<_> = workspace
             .iter()
             .map(|start| base_db::graph::Graph::new(workspace, start))
             .collect();
 
-        self.errors = Default::default();
+        self.0 = Default::default();
         for document in workspace.iter() {
             let DocumentData::Tex(data) = &document.data else { continue };
 
@@ -60,16 +61,9 @@ impl DiagnosticSource for LabelErrors {
                 }
             }
 
-            self.errors.insert(document.uri.clone(), errors);
+            self.0.errors.insert(document.uri.clone(), errors);
         }
 
-        for document in workspace.iter() {
-            let Some(diagnostics) = self.errors.get(&document.uri) else { continue };
-
-            results
-                .entry(&document.uri)
-                .or_default()
-                .extend(diagnostics.iter());
-        }
+        self.0.publish(workspace, builder);
     }
 }

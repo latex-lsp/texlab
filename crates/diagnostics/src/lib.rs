@@ -2,64 +2,50 @@ mod build_log;
 mod citations;
 mod grammar;
 mod labels;
+pub mod types;
 pub(crate) mod util;
+
+use std::borrow::Cow;
 
 use base_db::{Document, Workspace};
 use build_log::BuildErrors;
 use citations::CitationErrors;
 use grammar::{BibSyntaxErrors, TexSyntaxErrors};
 use labels::LabelErrors;
-use rowan::TextRange;
 use rustc_hash::FxHashMap;
-use syntax::BuildError;
+use types::Diagnostic;
 use url::Url;
 
-#[derive(Debug, Clone)]
-pub struct Diagnostic {
-    pub range: TextRange,
-    pub data: DiagnosticData,
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct DiagnosticBuilder<'db> {
+    inner: FxHashMap<&'db Url, Vec<Cow<'db, Diagnostic>>>,
 }
 
-#[derive(Debug, Clone)]
-pub enum DiagnosticData {
-    Syntax(SyntaxError),
-    Build(BuildError),
-    Label(LabelError),
-    Citation(CitationError),
-}
+impl<'db> DiagnosticBuilder<'db> {
+    pub fn push(&mut self, uri: &'db Url, diagnostic: Cow<'db, Diagnostic>) {
+        self.inner.entry(&uri).or_default().push(diagnostic);
+    }
 
-#[derive(Debug, Clone)]
-pub enum SyntaxError {
-    UnexpectedRCurly,
-    RCurlyInserted,
-    MismatchedEnvironment,
-    ExpectingLCurly,
-    ExpectingKey,
-    ExpectingRCurly,
-    ExpectingEq,
-    ExpectingFieldValue,
-}
+    pub fn push_many(
+        &mut self,
+        uri: &'db Url,
+        diagnostics: impl Iterator<Item = Cow<'db, Diagnostic>>,
+    ) {
+        self.inner.entry(&uri).or_default().extend(diagnostics);
+    }
 
-#[derive(Debug, Clone)]
-pub enum LabelError {
-    Unused,
-    Undefined,
-}
-
-#[derive(Debug, Clone)]
-pub enum CitationError {
-    Unused,
-    Undefined,
+    pub fn iter(&self) -> impl Iterator<Item = (&'db Url, impl Iterator<Item = &Diagnostic>)> {
+        self.inner
+            .iter()
+            .map(|(uri, diagnostics)| (*uri, diagnostics.iter().map(|diag| diag.as_ref())))
+    }
 }
 
 pub trait DiagnosticSource {
-    fn update(&mut self, _workspace: &Workspace, _document: &Document) {}
+    #[allow(unused_variables)]
+    fn update(&mut self, workspace: &Workspace, document: &Document) {}
 
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
-    );
+    fn publish<'db>(&'db mut self, workspace: &'db Workspace, builder: &mut DiagnosticBuilder<'db>);
 }
 
 pub struct DiagnosticManager {
@@ -85,13 +71,16 @@ impl DiagnosticSource for DiagnosticManager {
         }
     }
 
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         for source in &mut self.sources {
-            source.publish(workspace, results);
+            source.publish(workspace, builder);
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

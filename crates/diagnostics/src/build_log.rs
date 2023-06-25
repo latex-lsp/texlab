@@ -1,10 +1,15 @@
+use std::borrow::Cow;
+
 use base_db::{Document, Workspace};
 use rowan::{TextLen, TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use syntax::BuildError;
 use url::Url;
 
-use crate::{Diagnostic, DiagnosticData, DiagnosticSource};
+use crate::{
+    types::{Diagnostic, DiagnosticData},
+    DiagnosticBuilder, DiagnosticSource,
+};
 
 #[derive(Debug, Default)]
 struct BuildLog {
@@ -61,18 +66,17 @@ impl DiagnosticSource for BuildErrors {
             .insert(log_document.uri.clone(), BuildLog { errors });
     }
 
-    fn publish<'a>(
-        &'a mut self,
-        workspace: &'a Workspace,
-        results: &mut FxHashMap<&'a Url, Vec<&'a Diagnostic>>,
+    fn publish<'db>(
+        &'db mut self,
+        workspace: &'db Workspace,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         self.logs.retain(|uri, _| workspace.lookup(uri).is_some());
 
         for document in workspace.iter() {
             let Some(log) = self.logs.get(&document.uri) else { continue };
             for (uri, errors) in &log.errors {
-                let Some(uri) = workspace.lookup(uri).map(|doc| &doc.uri) else { continue };
-                results.entry(uri).or_default().extend(errors.iter());
+                builder.push_many(&uri, errors.iter().map(Cow::Borrowed));
             }
         }
     }

@@ -181,7 +181,7 @@ pub trait HasEq: AstNode<Language = Lang> {
         self.syntax()
             .children_with_tokens()
             .filter_map(NodeOrToken::into_token)
-            .find(|token| token.kind() == NAME)
+            .find(|token| token.kind() == EQ)
     }
 }
 
