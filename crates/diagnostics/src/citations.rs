@@ -1,15 +1,16 @@
+use std::borrow::Cow;
+
 use base_db::{graph::Graph, BibDocumentData, Document, DocumentData, TexDocumentData, Workspace};
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    types::{CitationError, Diagnostic, DiagnosticData},
-    util::SimpleDiagnosticSource,
+    types::{BibError, Diagnostic, DiagnosticData, TexError},
     DiagnosticBuilder, DiagnosticSource,
 };
 
 #[derive(Default)]
-pub struct CitationErrors(SimpleDiagnosticSource);
+pub struct CitationErrors;
 
 impl DiagnosticSource for CitationErrors {
     fn publish<'db>(
@@ -22,7 +23,6 @@ impl DiagnosticSource for CitationErrors {
             .map(|start| Graph::new(workspace, start))
             .collect();
 
-        self.0 = Default::default();
         for document in workspace.iter() {
             let project = graphs
                 .iter()
@@ -30,22 +30,21 @@ impl DiagnosticSource for CitationErrors {
                 .flat_map(|graph| graph.preorder());
 
             if let DocumentData::Tex(data) = &document.data {
-                self.process_tex(project, document, data);
+                self.process_tex(project, document, data, builder);
             } else if let DocumentData::Bib(data) = &document.data {
-                self.process_bib(project, document, data);
+                self.process_bib(project, document, data, builder);
             }
         }
-
-        self.0.publish(workspace, builder);
     }
 }
 
 impl CitationErrors {
-    fn process_tex<'a>(
+    fn process_tex<'db>(
         &mut self,
-        project: impl Iterator<Item = &'a Document>,
-        document: &Document,
+        project: impl Iterator<Item = &'db Document>,
+        document: &'db Document,
         data: &TexDocumentData,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         let entries: FxHashSet<&str> = project
             .filter_map(|child| child.data.as_bib())
@@ -53,24 +52,24 @@ impl CitationErrors {
             .map(|entry| entry.name.text.as_str())
             .collect();
 
-        let mut errors = Vec::new();
         for citation in &data.semantics.citations {
             if !entries.contains(citation.name.text.as_str()) {
-                errors.push(Diagnostic {
+                let diagnostic = Diagnostic {
                     range: citation.name.range,
-                    data: DiagnosticData::Citation(CitationError::Undefined),
-                });
+                    data: DiagnosticData::Tex(TexError::UndefinedCitation),
+                };
+
+                builder.push(&document.uri, Cow::Owned(diagnostic));
             }
         }
-
-        self.0.errors.insert(document.uri.clone(), errors);
     }
 
-    fn process_bib<'a>(
+    fn process_bib<'db>(
         &mut self,
-        project: impl Iterator<Item = &'a Document>,
-        document: &Document,
+        project: impl Iterator<Item = &'db Document>,
+        document: &'db Document,
         data: &BibDocumentData,
+        builder: &mut DiagnosticBuilder<'db>,
     ) {
         let citations: FxHashSet<&str> = project
             .filter_map(|child| child.data.as_tex())
@@ -78,16 +77,15 @@ impl CitationErrors {
             .map(|entry| entry.name.text.as_str())
             .collect();
 
-        let mut errors = Vec::new();
         for entry in &data.semantics.entries {
             if !citations.contains(entry.name.text.as_str()) {
-                errors.push(Diagnostic {
+                let diagnostic = Diagnostic {
                     range: entry.name.range,
-                    data: DiagnosticData::Citation(CitationError::Unused),
-                });
+                    data: DiagnosticData::Bib(BibError::UnusedEntry),
+                };
+
+                builder.push(&document.uri, Cow::Owned(diagnostic));
             }
         }
-
-        self.0.errors.insert(document.uri.clone(), errors);
     }
 }

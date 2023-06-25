@@ -9,32 +9,27 @@ pub struct Diagnostic {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DiagnosticData {
-    Syntax(SyntaxError),
+    Tex(TexError),
+    Bib(BibError),
     Build(BuildError),
-    Label(LabelError),
-    Citation(CitationError),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum SyntaxError {
+pub enum TexError {
     UnexpectedRCurly,
-    RCurlyInserted,
+    ExpectingRCurly,
     MismatchedEnvironment,
+    UnusedLabel,
+    UndefinedLabel,
+    UndefinedCitation,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum BibError {
     ExpectingLCurly,
     ExpectingKey,
     ExpectingRCurly,
     ExpectingEq,
     ExpectingFieldValue,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum LabelError {
-    Unused,
-    Undefined,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum CitationError {
-    Unused,
-    Undefined,
+    UnusedEntry,
 }

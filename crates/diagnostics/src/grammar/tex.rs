@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, NodeOrToken, TextRange};
 use syntax::latex;
 
 use crate::{
-    types::{DiagnosticData, SyntaxError},
+    types::{DiagnosticData, TexError},
     util::SimpleDiagnosticSource,
     Diagnostic, DiagnosticBuilder, DiagnosticSource,
 };
@@ -84,7 +84,7 @@ impl<'a> Analyzer<'a> {
         if begin != end {
             self.diagnostics.push(Diagnostic {
                 range: latex::small_range(&begin),
-                data: DiagnosticData::Syntax(SyntaxError::MismatchedEnvironment),
+                data: DiagnosticData::Tex(TexError::MismatchedEnvironment),
             });
         }
 
@@ -110,7 +110,7 @@ impl<'a> Analyzer<'a> {
         {
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(node.text_range().end()),
-                data: DiagnosticData::Syntax(SyntaxError::RCurlyInserted),
+                data: DiagnosticData::Tex(TexError::ExpectingRCurly),
             });
         }
 
@@ -121,7 +121,7 @@ impl<'a> Analyzer<'a> {
         if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
             self.diagnostics.push(Diagnostic {
                 range: node.text_range(),
-                data: DiagnosticData::Syntax(SyntaxError::UnexpectedRCurly),
+                data: DiagnosticData::Tex(TexError::UnexpectedRCurly),
             });
 
             Some(())

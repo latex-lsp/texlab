@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use test_utils::fixture::Fixture;
 
 use crate::{
-    types::{CitationError, Diagnostic, DiagnosticData, LabelError, SyntaxError},
+    types::{BibError, Diagnostic, DiagnosticData, TexError},
     DiagnosticBuilder, DiagnosticManager, DiagnosticSource,
 };
 
@@ -44,7 +44,7 @@ fn test_bib_entry_missing_l_delim() {
 @article
         !
 "#,
-        &[DiagnosticData::Syntax(SyntaxError::ExpectingLCurly)],
+        &[DiagnosticData::Bib(BibError::ExpectingLCurly)],
     )
 }
 
@@ -60,7 +60,7 @@ fn test_bib_entry_missing_r_delim() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Syntax(SyntaxError::ExpectingRCurly)],
+        &[DiagnosticData::Bib(BibError::ExpectingRCurly)],
     )
 }
 
@@ -71,7 +71,7 @@ fn test_bib_entry_missing_name() {
 %! main.bib
 @article{
          !"#,
-        &[DiagnosticData::Syntax(SyntaxError::ExpectingKey)],
+        &[DiagnosticData::Bib(BibError::ExpectingKey)],
     )
 }
 
@@ -89,7 +89,7 @@ fn test_bib_field_missing_eq() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Syntax(SyntaxError::ExpectingEq)],
+        &[DiagnosticData::Bib(BibError::ExpectingEq)],
     )
 }
 
@@ -107,7 +107,7 @@ fn test_bib_field_missing_value() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Syntax(SyntaxError::ExpectingFieldValue)],
+        &[DiagnosticData::Bib(BibError::ExpectingFieldValue)],
     )
 }
 
@@ -122,8 +122,8 @@ fn test_tex_unmatched_braces() {
   !
 "#,
         &[
-            DiagnosticData::Syntax(SyntaxError::UnexpectedRCurly),
-            DiagnosticData::Syntax(SyntaxError::RCurlyInserted),
+            DiagnosticData::Tex(TexError::UnexpectedRCurly),
+            DiagnosticData::Tex(TexError::ExpectingRCurly),
         ],
     )
 }
@@ -137,7 +137,7 @@ fn test_tex_environment_mismatched() {
        ^^^
 \end{bar}
 "#,
-        &[DiagnosticData::Syntax(SyntaxError::MismatchedEnvironment)],
+        &[DiagnosticData::Tex(TexError::MismatchedEnvironment)],
     )
 }
 
@@ -150,7 +150,7 @@ fn test_label_unused() {
        ^^^
 \label{bar}\ref{bar}
 "#,
-        &[DiagnosticData::Label(LabelError::Unused)],
+        &[DiagnosticData::Tex(TexError::UnusedLabel)],
     )
 }
 
@@ -162,7 +162,7 @@ fn test_label_undefined() {
 \ref{foo}
      ^^^
 "#,
-        &[DiagnosticData::Label(LabelError::Undefined)],
+        &[DiagnosticData::Tex(TexError::UndefinedLabel)],
     )
 }
 
@@ -174,7 +174,7 @@ fn test_citation_undefined() {
 \cite{foo}
       ^^^
 "#,
-        &[DiagnosticData::Citation(CitationError::Undefined)],
+        &[DiagnosticData::Tex(TexError::UndefinedCitation)],
     )
 }
 
@@ -186,6 +186,6 @@ fn test_citation_unused() {
 @article{foo,}
          ^^^
 "#,
-        &[DiagnosticData::Citation(CitationError::Unused)],
+        &[DiagnosticData::Bib(BibError::UnusedEntry)],
     )
 }

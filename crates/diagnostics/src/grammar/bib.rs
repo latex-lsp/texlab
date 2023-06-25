@@ -3,7 +3,7 @@ use rowan::{ast::AstNode, TextRange};
 use syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue};
 
 use crate::{
-    types::{DiagnosticData, SyntaxError},
+    types::{BibError, DiagnosticData},
     util::SimpleDiagnosticSource,
     Diagnostic, DiagnosticBuilder, DiagnosticSource,
 };
@@ -56,7 +56,7 @@ impl<'a> Analyzer<'a> {
             let offset = entry.type_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(offset),
-                data: DiagnosticData::Syntax(SyntaxError::ExpectingLCurly),
+                data: DiagnosticData::Bib(BibError::ExpectingLCurly),
             });
 
             return;
@@ -66,7 +66,7 @@ impl<'a> Analyzer<'a> {
             let offset = entry.left_delim_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(offset),
-                data: DiagnosticData::Syntax(SyntaxError::ExpectingKey),
+                data: DiagnosticData::Bib(BibError::ExpectingKey),
             });
 
             return;
@@ -76,7 +76,7 @@ impl<'a> Analyzer<'a> {
             let offset = entry.syntax().text_range().end();
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(offset),
-                data: DiagnosticData::Syntax(SyntaxError::ExpectingRCurly),
+                data: DiagnosticData::Bib(BibError::ExpectingRCurly),
             });
         }
     }
@@ -86,7 +86,7 @@ impl<'a> Analyzer<'a> {
             let offset = field.name_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(offset),
-                data: DiagnosticData::Syntax(SyntaxError::ExpectingEq),
+                data: DiagnosticData::Bib(BibError::ExpectingEq),
             });
 
             return;
@@ -96,7 +96,7 @@ impl<'a> Analyzer<'a> {
             let offset = field.eq_token().unwrap().text_range().end();
             self.diagnostics.push(Diagnostic {
                 range: TextRange::empty(offset),
-                data: DiagnosticData::Syntax(SyntaxError::ExpectingFieldValue),
+                data: DiagnosticData::Bib(BibError::ExpectingFieldValue),
             });
         }
     }

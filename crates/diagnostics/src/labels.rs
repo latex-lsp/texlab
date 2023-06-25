@@ -1,15 +1,16 @@
+use std::borrow::Cow;
+
 use base_db::{semantics::tex::LabelKind, DocumentData, Workspace};
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    types::{DiagnosticData, LabelError},
-    util::SimpleDiagnosticSource,
+    types::{DiagnosticData, TexError},
     Diagnostic, DiagnosticBuilder, DiagnosticSource,
 };
 
 #[derive(Default)]
-pub struct LabelErrors(SimpleDiagnosticSource);
+pub struct LabelErrors;
 
 impl DiagnosticSource for LabelErrors {
     fn publish<'db>(
@@ -22,7 +23,6 @@ impl DiagnosticSource for LabelErrors {
             .map(|start| base_db::graph::Graph::new(workspace, start))
             .collect();
 
-        self.0 = Default::default();
         for document in workspace.iter() {
             let DocumentData::Tex(data) = &document.data else { continue };
 
@@ -44,26 +44,23 @@ impl DiagnosticSource for LabelErrors {
                 }
             }
 
-            let mut errors = Vec::new();
             for label in &data.semantics.labels {
                 if label.kind != LabelKind::Definition && !label_defs.contains(&label.name.text) {
-                    errors.push(Diagnostic {
+                    let diagnostic = Diagnostic {
                         range: label.name.range,
-                        data: DiagnosticData::Label(LabelError::Undefined),
-                    });
+                        data: DiagnosticData::Tex(TexError::UndefinedLabel),
+                    };
+                    builder.push(&document.uri, Cow::Owned(diagnostic));
                 }
 
                 if label.kind == LabelKind::Definition && !label_refs.contains(&label.name.text) {
-                    errors.push(Diagnostic {
+                    let diagnostic = Diagnostic {
                         range: label.name.range,
-                        data: DiagnosticData::Label(LabelError::Unused),
-                    });
+                        data: DiagnosticData::Tex(TexError::UnusedLabel),
+                    };
+                    builder.push(&document.uri, Cow::Owned(diagnostic));
                 }
             }
-
-            self.0.errors.insert(document.uri.clone(), errors);
         }
-
-        self.0.publish(workspace, builder);
     }
 }
