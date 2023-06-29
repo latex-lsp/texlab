@@ -1,102 +1,130 @@
-use base_db::{diagnostics::ErrorCode, util::filter_regex_patterns, Document, Workspace};
-use distro::Language;
-use lsp_types::{DiagnosticSeverity, NumberOrString};
+use base_db::{util::filter_regex_patterns, Document, Workspace};
+use diagnostics::{
+    types::{BibError, Diagnostic, DiagnosticData, TexError},
+    DiagnosticBuilder, DiagnosticSource,
+};
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
 use super::line_index_ext::LineIndexExt;
 
-pub fn collect(workspace: &Workspace) -> FxHashMap<&Document, Vec<lsp_types::Diagnostic>> {
-    let mut results = FxHashMap::default();
-
-    for document in workspace.iter() {
-        let lsp_diagnostics = document
-            .diagnostics
-            .iter()
-            .map(|diagnostic| create_diagnostic(document, diagnostic))
-            .collect::<Vec<_>>();
-
-        results.insert(document, lsp_diagnostics);
-    }
-
-    for document in workspace
+pub fn collect<'db>(
+    workspace: &'db Workspace,
+    source: &mut dyn DiagnosticSource,
+) -> FxHashMap<&'db Document, Vec<lsp_types::Diagnostic>> {
+    let mut builder = DiagnosticBuilder::default();
+    source.publish(workspace, &mut builder);
+    builder
         .iter()
-        .filter(|document| document.language == Language::Log)
-    {
-        for (document, diagnostics) in base_db::diagnostics::log::analyze(workspace, document) {
-            let lsp_diagnostics = diagnostics
-                .iter()
-                .map(|diagnostic| create_diagnostic(document, diagnostic))
+        .into_iter()
+        .filter_map(|(uri, diags)| workspace.lookup(uri).map(|document| (document, diags)))
+        .map(|(document, diags)| {
+            let diags = diags
+                .into_iter()
+                .map(|diag| create_diagnostic(document, &diag))
                 .collect::<Vec<_>>();
 
-            results.get_mut(document).unwrap().extend(lsp_diagnostics);
-        }
-    }
-
-    results
+            (document, diags)
+        })
+        .collect()
 }
 
-fn create_diagnostic(
-    document: &Document,
-    diagnostic: &base_db::diagnostics::Diagnostic,
-) -> lsp_types::Diagnostic {
+fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types::Diagnostic {
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
-    let severity = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly
-        | ErrorCode::RCurlyInserted
-        | ErrorCode::MismatchedEnvironment
-        | ErrorCode::ExpectingLCurly
-        | ErrorCode::ExpectingKey
-        | ErrorCode::ExpectingRCurly
-        | ErrorCode::ExpectingEq
-        | ErrorCode::ExpectingFieldValue => DiagnosticSeverity::ERROR,
-        ErrorCode::Build(error) => match error.level {
-            BuildErrorLevel::Error => DiagnosticSeverity::ERROR,
-            BuildErrorLevel::Warning => DiagnosticSeverity::WARNING,
+    let severity = match &diagnostic.data {
+        DiagnosticData::Tex(error) => match error {
+            TexError::UnexpectedRCurly => lsp_types::DiagnosticSeverity::ERROR,
+            TexError::ExpectingRCurly => lsp_types::DiagnosticSeverity::ERROR,
+            TexError::MismatchedEnvironment => lsp_types::DiagnosticSeverity::ERROR,
+            TexError::UnusedLabel => lsp_types::DiagnosticSeverity::HINT,
+            TexError::UndefinedLabel => lsp_types::DiagnosticSeverity::ERROR,
+            TexError::UndefinedCitation => lsp_types::DiagnosticSeverity::ERROR,
+        },
+        DiagnosticData::Bib(error) => match error {
+            BibError::ExpectingLCurly => lsp_types::DiagnosticSeverity::ERROR,
+            BibError::ExpectingKey => lsp_types::DiagnosticSeverity::ERROR,
+            BibError::ExpectingRCurly => lsp_types::DiagnosticSeverity::ERROR,
+            BibError::ExpectingEq => lsp_types::DiagnosticSeverity::ERROR,
+            BibError::ExpectingFieldValue => lsp_types::DiagnosticSeverity::ERROR,
+            BibError::UnusedEntry => lsp_types::DiagnosticSeverity::HINT,
+        },
+        DiagnosticData::Build(error) => match error.level {
+            BuildErrorLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
+            BuildErrorLevel::Warning => lsp_types::DiagnosticSeverity::WARNING,
         },
     };
 
-    let code = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly => Some(1),
-        ErrorCode::RCurlyInserted => Some(2),
-        ErrorCode::MismatchedEnvironment => Some(3),
-        ErrorCode::ExpectingLCurly => Some(4),
-        ErrorCode::ExpectingKey => Some(5),
-        ErrorCode::ExpectingRCurly => Some(6),
-        ErrorCode::ExpectingEq => Some(7),
-        ErrorCode::ExpectingFieldValue => Some(8),
-        ErrorCode::Build(_) => None,
+    let code = match &diagnostic.data {
+        DiagnosticData::Tex(error) => match error {
+            TexError::UnexpectedRCurly => Some(1),
+            TexError::ExpectingRCurly => Some(2),
+            TexError::MismatchedEnvironment => Some(3),
+            TexError::UnusedLabel => Some(9),
+            TexError::UndefinedLabel => Some(10),
+            TexError::UndefinedCitation => Some(11),
+        },
+        DiagnosticData::Bib(error) => match error {
+            BibError::ExpectingLCurly => Some(4),
+            BibError::ExpectingKey => Some(5),
+            BibError::ExpectingRCurly => Some(6),
+            BibError::ExpectingEq => Some(7),
+            BibError::ExpectingFieldValue => Some(8),
+            BibError::UnusedEntry => Some(12),
+        },
+        DiagnosticData::Build(_) => None,
     };
 
-    let source = match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly
-        | ErrorCode::RCurlyInserted
-        | ErrorCode::MismatchedEnvironment
-        | ErrorCode::ExpectingLCurly
-        | ErrorCode::ExpectingKey
-        | ErrorCode::ExpectingRCurly
-        | ErrorCode::ExpectingEq
-        | ErrorCode::ExpectingFieldValue => "texlab",
-        ErrorCode::Build(_) => "latex",
+    let source = match &diagnostic.data {
+        DiagnosticData::Tex(_) | DiagnosticData::Bib(_) => "texlab",
+        DiagnosticData::Build(_) => "latex",
     };
 
-    let message = String::from(match &diagnostic.code {
-        ErrorCode::UnexpectedRCurly => "Unexpected \"}\"",
-        ErrorCode::RCurlyInserted => "Missing \"}\" inserted",
-        ErrorCode::MismatchedEnvironment => "Mismatched environment",
-        ErrorCode::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
-        ErrorCode::ExpectingKey => "Expecting a key",
-        ErrorCode::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
-        ErrorCode::ExpectingEq => "Expecting an equality sign: \"=\"",
-        ErrorCode::ExpectingFieldValue => "Expecting a field value",
-        ErrorCode::Build(error) => &error.message,
+    let message = String::from(match &diagnostic.data {
+        DiagnosticData::Tex(error) => match error {
+            TexError::UnexpectedRCurly => "Unexpected \"}\"",
+            TexError::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
+            TexError::MismatchedEnvironment => "Mismatched environment",
+            TexError::UnusedLabel => "Unused label",
+            TexError::UndefinedLabel => "Undefined reference",
+            TexError::UndefinedCitation => "Undefined reference",
+        },
+        DiagnosticData::Bib(error) => match error {
+            BibError::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
+            BibError::ExpectingKey => "Expecting a key",
+            BibError::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
+            BibError::ExpectingEq => "Expecting an equality sign: \"=\"",
+            BibError::ExpectingFieldValue => "Expecting a field value",
+            BibError::UnusedEntry => "Unused entry",
+        },
+        DiagnosticData::Build(error) => &error.message,
     });
+
+    let tags = match &diagnostic.data {
+        DiagnosticData::Tex(error) => match error {
+            TexError::UnexpectedRCurly => None,
+            TexError::ExpectingRCurly => None,
+            TexError::MismatchedEnvironment => None,
+            TexError::UnusedLabel => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
+            TexError::UndefinedLabel => None,
+            TexError::UndefinedCitation => None,
+        },
+        DiagnosticData::Bib(error) => match error {
+            BibError::ExpectingLCurly => None,
+            BibError::ExpectingKey => None,
+            BibError::ExpectingRCurly => None,
+            BibError::ExpectingEq => None,
+            BibError::ExpectingFieldValue => None,
+            BibError::UnusedEntry => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
+        },
+        DiagnosticData::Build(_) => None,
+    };
 
     lsp_types::Diagnostic {
         severity: Some(severity),
-        code: code.map(NumberOrString::Number),
+        code: code.map(lsp_types::NumberOrString::Number),
         source: Some(String::from(source)),
+        tags,
         ..lsp_types::Diagnostic::new_simple(range, message)
     }
 }

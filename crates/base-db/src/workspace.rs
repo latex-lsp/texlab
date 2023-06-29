@@ -10,7 +10,7 @@ use rustc_hash::FxHashSet;
 use text_size::TextLen;
 use url::Url;
 
-use crate::{graph, util::LineCol, Config, Document, DocumentData, Owner};
+use crate::{graph, util::LineCol, Config, Document, DocumentData, DocumentParams, Owner};
 
 #[derive(Debug, Default)]
 pub struct Workspace {
@@ -56,14 +56,14 @@ impl Workspace {
     ) {
         log::debug!("Opening document {uri}...");
         self.documents.remove(&uri);
-        self.documents.insert(Document::parse(
+        self.documents.insert(Document::parse(DocumentParams {
             uri,
             text,
             language,
             owner,
             cursor,
-            &self.config,
-        ));
+            config: &self.config,
+        }));
     }
 
     pub fn load(&mut self, path: &Path, language: Language, owner: Owner) -> std::io::Result<()> {
@@ -232,18 +232,18 @@ impl Workspace {
         Some(())
     }
 
-    pub fn discover(&mut self) {
+    pub fn discover(&mut self, checked_paths: &mut FxHashSet<PathBuf>) {
         loop {
             let mut changed = false;
-            changed |= self.discover_parents();
-            changed |= self.discover_children();
+            changed |= self.discover_parents(checked_paths);
+            changed |= self.discover_children(checked_paths);
             if !changed {
                 break;
             }
         }
     }
 
-    fn discover_parents(&mut self) -> bool {
+    fn discover_parents(&mut self, checked_paths: &mut FxHashSet<PathBuf>) -> bool {
         let dirs = self
             .iter()
             .filter_map(|document| document.path.as_deref())
@@ -278,6 +278,7 @@ impl Workspace {
 
                 if self.lookup_path(&file).is_none() {
                     changed |= self.load(&file, lang, Owner::Server).is_ok();
+                    checked_paths.insert(file);
                 }
             }
         }
@@ -285,8 +286,8 @@ impl Workspace {
         changed
     }
 
-    fn discover_children(&mut self) -> bool {
-        let paths = self
+    fn discover_children(&mut self, checked_paths: &mut FxHashSet<PathBuf>) -> bool {
+        let files = self
             .iter()
             .map(|start| graph::Graph::new(self, start))
             .flat_map(|graph| graph.missing)
@@ -295,10 +296,11 @@ impl Workspace {
             .collect::<FxHashSet<_>>();
 
         let mut changed = false;
-        for path in paths {
-            let language = Language::from_path(&path).unwrap_or(Language::Tex);
-            if self.lookup_path(&path).is_none() {
-                changed |= self.load(&path, language, Owner::Server).is_ok();
+        for file in files {
+            let language = Language::from_path(&file).unwrap_or(Language::Tex);
+            if self.lookup_path(&file).is_none() {
+                changed |= self.load(&file, language, Owner::Server).is_ok();
+                checked_paths.insert(file);
             }
         }
 

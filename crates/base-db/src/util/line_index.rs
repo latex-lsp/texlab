@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LineIndex {
     /// Offset the the beginning of each line, zero-based
-    pub(crate) newlines: Vec<TextSize>,
+    pub newlines: Vec<TextSize>,
     /// List of non-ASCII characters on each line
     pub(crate) utf16_lines: FxHashMap<u32, Vec<Utf16Char>>,
 }

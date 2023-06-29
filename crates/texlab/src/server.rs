@@ -13,6 +13,7 @@ use anyhow::Result;
 use base_db::{util::LineCol, Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
+use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
@@ -63,6 +64,7 @@ pub struct Server {
     client: LspClient,
     client_capabilities: Arc<ClientCapabilities>,
     client_info: Option<Arc<ClientInfo>>,
+    diagnostic_manager: DiagnosticManager,
     chktex_diagnostics: FxHashMap<Url, Vec<Diagnostic>>,
     watcher: FileWatcher,
     pool: ThreadPool,
@@ -84,6 +86,7 @@ impl Server {
             client_capabilities: Default::default(),
             client_info: Default::default(),
             chktex_diagnostics: Default::default(),
+            diagnostic_manager: DiagnosticManager::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
@@ -254,16 +257,27 @@ impl Server {
     }
 
     fn update_workspace(&mut self) {
+        let mut checked_paths = FxHashSet::default();
         let mut workspace = self.workspace.write();
-        workspace.discover();
+        workspace.discover(&mut checked_paths);
         self.watcher.watch(&mut workspace);
+
+        for document in checked_paths
+            .iter()
+            .filter_map(|path| workspace.lookup_path(path))
+        {
+            self.diagnostic_manager.update(&workspace, document);
+        }
+
         drop(workspace);
         self.publish_diagnostics_with_delay();
     }
 
     fn publish_diagnostics(&mut self) -> Result<()> {
         let workspace = self.workspace.read();
-        let mut all_diagnostics = util::diagnostics::collect(&workspace);
+
+        let mut all_diagnostics =
+            util::diagnostics::collect(&workspace, &mut self.diagnostic_manager);
 
         for (uri, diagnostics) in &self.chktex_diagnostics {
             let Some(document) = workspace.lookup(uri) else { continue };
@@ -369,7 +383,12 @@ impl Server {
 
         self.update_workspace();
 
-        if self.workspace.read().config().diagnostics.chktex.on_open {
+        let workspace = self.workspace.read();
+        self.diagnostic_manager
+            .update(&workspace, workspace.lookup(&uri).unwrap());
+
+        if workspace.config().diagnostics.chktex.on_open {
+            drop(workspace);
             self.run_chktex(&uri);
         }
 
@@ -405,6 +424,9 @@ impl Server {
                 }
             };
         }
+
+        self.diagnostic_manager
+            .update(&workspace, workspace.lookup(&uri).unwrap());
 
         drop(workspace);
         self.update_workspace();
@@ -863,6 +885,10 @@ impl Server {
                     {
                         if let Some(language) = Language::from_path(&path) {
                             changed |= workspace.load(&path, language, Owner::Server).is_ok();
+
+                            if let Some(document) = workspace.lookup_path(&path) {
+                                self.diagnostic_manager.update(&workspace, document);
+                            }
                         }
                     }
                 }

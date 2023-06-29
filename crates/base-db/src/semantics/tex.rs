@@ -9,6 +9,7 @@ use super::Span;
 pub struct Semantics {
     pub links: Vec<Link>,
     pub labels: Vec<Label>,
+    pub citations: Vec<Citation>,
     pub commands: Vec<Span>,
     pub environments: Vec<Span>,
     pub theorem_definitions: Vec<TheoremDefinition>,
@@ -53,6 +54,8 @@ impl Semantics {
             self.process_label_reference(label);
         } else if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
             self.process_label_reference_range(label);
+        } else if let Some(citation) = latex::Citation::cast(node.clone()) {
+            self.process_citation(citation);
         } else if let Some(environment) = latex::Environment::cast(node.clone()) {
             self.process_environment(environment);
         } else if let Some(theorem_def) = latex::TheoremDefinition::cast(node.clone()) {
@@ -209,6 +212,18 @@ impl Semantics {
         }
     }
 
+    fn process_citation(&mut self, citation: latex::Citation) {
+        let full_range = latex::small_range(&citation);
+        if let Some(list) = citation.key_list() {
+            for key in list.keys() {
+                self.citations.push(Citation {
+                    name: Span::from(&key),
+                    full_range,
+                });
+            }
+        }
+    }
+
     fn process_environment(&mut self, environment: latex::Environment) {
         let Some(name) = environment
             .begin()
@@ -297,4 +312,10 @@ pub enum LabelObject {
 pub struct TheoremDefinition {
     pub name: Span,
     pub heading: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct Citation {
+    pub name: Span,
+    pub full_range: TextRange,
 }
