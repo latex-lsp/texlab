@@ -144,6 +144,11 @@ impl Workspace {
         base_dir.join(&path).unwrap_or_else(|_| base_dir.clone())
     }
 
+    pub fn output_filename(&self) -> Option<PathBuf> {
+        let filename = self.config.build.output_filename.clone().map(PathBuf::from);
+        return filename;
+    }
+
     pub fn contains(&self, path: &Path) -> bool {
         if self.folders.is_empty() {
             return true;

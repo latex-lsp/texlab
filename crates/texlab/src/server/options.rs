@@ -68,6 +68,7 @@ pub struct BuildOptions {
     pub args: Option<Vec<String>>,
     pub on_save: bool,
     pub forward_search_after: bool,
+    pub filename: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -154,6 +155,7 @@ impl From<Options> for Config {
         config.build.on_save = value.build.on_save;
         config.build.forward_search_after = value.build.forward_search_after;
         config.build.output_dir = value.aux_directory.unwrap_or_else(|| String::from("."));
+        config.build.output_filename = value.build.filename;
 
         config.diagnostics.allowed_patterns = value
             .diagnostics

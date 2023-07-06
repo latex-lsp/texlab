@@ -65,7 +65,9 @@ impl ForwardSearch {
             return Err(ForwardSearchError::InvalidPath(child.uri.clone()));
         };
 
-        let Some(pdf_path) = parent.path
+        let override_path = workspace.output_filename();
+
+        let Some(pdf_path) = override_path.or(parent.path.clone())
             .as_deref()
             .and_then(Path::file_stem)
             .and_then(OsStr::to_str)
