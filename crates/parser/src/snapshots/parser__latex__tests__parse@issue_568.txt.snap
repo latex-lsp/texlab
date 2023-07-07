@@ -1,0 +1,28 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/issue_568.txt
+---
+ROOT@0..51
+  PREAMBLE@0..51
+    LATEX_INCLUDE@0..36
+      COMMAND_NAME@0..6 "\\input"
+      CURLY_GROUP_WORD_LIST@6..36
+        L_CURLY@6..7 "{"
+        WORD@7..8 "|"
+        KEY@8..34
+          WORD@8..15 "ipython"
+          WHITESPACE@15..16 " "
+          WORD@16..34 "scripts/test.ipynb"
+        R_CURLY@34..35 "}"
+        LINE_BREAK@35..36 "\n"
+    LABEL_DEFINITION@36..51
+      COMMAND_NAME@36..42 "\\label"
+      CURLY_GROUP_WORD@42..51
+        L_CURLY@42..43 "{"
+        KEY@43..50
+          WORD@43..48 "fig:x"
+          EQUALITY_SIGN@48..49 "="
+          WORD@49..50 "2"
+        R_CURLY@50..51 "}"
+
