@@ -717,7 +717,7 @@ impl<'a> Parser<'a> {
                 | Token::RBrack
                 | Token::CommandName(CommandName::Generic) => self.path(),
                 Token::LCurly => self.curly_group_path(),
-                Token::Whitespace => self.eat(),
+                Token::Whitespace | Token::Pipe => self.eat(),
                 _ => break,
             };
         }
@@ -741,7 +741,7 @@ impl<'a> Parser<'a> {
                 | Token::LParen
                 | Token::RParen
                 | Token::CommandName(CommandName::Generic) => self.path(),
-                Token::Whitespace | Token::LineBreak | Token::Comma => self.eat(),
+                Token::Whitespace | Token::LineBreak | Token::Comma | Token::Pipe => self.eat(),
                 Token::LCurly => self.curly_group_path(),
                 _ => break,
             };

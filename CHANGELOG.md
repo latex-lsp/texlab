@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Report diagnostics for unused and undefined labels or BibTeX keys
 
+### Fixed
+
+- Fix parsing paths with `|` ([#568](https://github.com/latex-lsp/texlab/issues/568))
+
 ## [5.7.0] - 2023-06-07
 
 ### Added
