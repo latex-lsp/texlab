@@ -340,19 +340,18 @@ impl<'a> Parser<'a> {
     }
 
     fn key(&mut self) {
+        self.key_with_eq(true);
+    }
+
+    fn key_with_eq(&mut self, allow_eq: bool) {
         self.builder.start_node(KEY.into());
         self.eat();
-        while self
-            .peek()
-            .filter(|&kind| {
-                matches!(
-                    kind,
-                    Token::Whitespace | Token::LineComment | Token::Word | Token::Pipe
-                )
-            })
-            .is_some()
-        {
-            self.eat();
+        while let Some(kind) = self.peek() {
+            match kind {
+                Token::Whitespace | Token::LineComment | Token::Word | Token::Pipe => self.eat(),
+                Token::Eq if allow_eq => self.eat(),
+                _ => break,
+            }
         }
 
         self.trivia();
@@ -375,7 +374,7 @@ impl<'a> Parser<'a> {
 
     fn key_value_pair(&mut self) {
         self.builder.start_node(KEY_VALUE_PAIR.into());
-        self.key();
+        self.key_with_eq(false);
         if self.peek() == Some(Token::Eq) {
             self.eat();
             self.trivia();

@@ -253,12 +253,19 @@ impl Eq for Key {}
 impl ToString for Key {
     fn to_string(&self) -> String {
         let mut buf = String::new();
-        for word in self.words() {
-            buf.push_str(word.text());
-            buf.push(' ');
+        for token in self
+            .syntax()
+            .children_with_tokens()
+            .filter_map(|node| node.into_token())
+        {
+            if matches!(token.kind(), WHITESPACE | LINE_BREAK | COMMENT) {
+                buf.push(' ');
+            } else {
+                buf.push_str(token.text());
+            }
         }
 
-        buf.pop().unwrap();
+        buf = String::from(buf.trim());
         buf
     }
 }
