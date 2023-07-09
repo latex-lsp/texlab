@@ -87,5 +87,31 @@ impl CitationErrors {
                 builder.push(&document.uri, Cow::Owned(diagnostic));
             }
         }
+
+        self.process_bib_duplicates(document, data, builder);
+    }
+
+    fn process_bib_duplicates<'db>(
+        &mut self,
+        document: &'db Document,
+        data: &BibDocumentData,
+        builder: &mut DiagnosticBuilder<'db>,
+    ) {
+        let entries = data
+            .semantics
+            .entries
+            .iter()
+            .map(|entry| (&entry.name.text, entry.name.range))
+            .into_group_map();
+
+        for mut ranges in entries.into_values().filter(|ranges| ranges.len() > 1) {
+            let others = ranges.split_off(1);
+
+            let diagnostic = Diagnostic {
+                range: ranges.pop().unwrap(),
+                data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
+            };
+            builder.push(&document.uri, Cow::Owned(diagnostic));
+        }
     }
 }
