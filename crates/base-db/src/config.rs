@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use parser::SyntaxConfig;
@@ -22,6 +23,7 @@ pub struct BuildConfig {
     pub on_save: bool,
     pub forward_search_after: bool,
     pub output_dir: String,
+    pub output_filename: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -111,6 +113,7 @@ impl Default for BuildConfig {
             on_save: false,
             forward_search_after: false,
             output_dir: String::from("."),
+            output_filename: None,
         }
     }
 }
