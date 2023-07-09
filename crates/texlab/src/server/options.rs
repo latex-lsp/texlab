@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::time::Duration;
 
 use base_db::{Config, Formatter, SynctexConfig};
@@ -155,7 +156,7 @@ impl From<Options> for Config {
         config.build.on_save = value.build.on_save;
         config.build.forward_search_after = value.build.forward_search_after;
         config.build.output_dir = value.aux_directory.unwrap_or_else(|| String::from("."));
-        config.build.output_filename = value.build.filename;
+        config.build.output_filename = value.build.filename.map(PathBuf::from);
 
         config.diagnostics.allowed_patterns = value
             .diagnostics
