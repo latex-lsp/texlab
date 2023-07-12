@@ -313,6 +313,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "completion-data"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "flate2",
+ "itertools",
+ "once_cell",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "console"
 version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1533,6 +1546,7 @@ dependencies = [
  "citeproc",
  "clap",
  "commands",
+ "completion-data",
  "criterion",
  "crossbeam-channel",
  "diagnostics",

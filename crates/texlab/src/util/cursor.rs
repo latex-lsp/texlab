@@ -295,4 +295,22 @@ impl<'a, T> CursorContext<'a, T> {
         })
         .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
     }
+
+    pub fn included_packages(&self) -> impl Iterator<Item = &completion_data::Package<'_>> + '_ {
+        let db = &completion_data::DATABASE;
+        self.project
+            .documents
+            .iter()
+            .filter_map(|document| document.data.as_tex())
+            .flat_map(|data| data.semantics.links.iter())
+            .filter_map(|link| link.package_name())
+            .filter_map(|name| db.find(&name))
+            .chain(std::iter::once(db.kernel()))
+            .flat_map(|pkg| {
+                pkg.references
+                    .iter()
+                    .filter_map(|name| db.find(name))
+                    .chain(std::iter::once(pkg))
+            })
+    }
 }

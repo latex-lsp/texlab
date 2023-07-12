@@ -12,7 +12,6 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rowan::{ast::AstNode, TextRange, TextSize};
 use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 use syntax::{
     bibtex::{self, HasName, HasType},
     latex,
@@ -246,7 +245,7 @@ impl<'a> CompletionBuilder<'a> {
         name: &'a str,
         image: Option<&'a str>,
         glyph: Option<&'a str>,
-        file_names: &'a [SmolStr],
+        file_names: &'a [&'a str],
     ) -> Option<()> {
         let score = self.matcher.score(name, &self.text_pattern[1..])?;
         let data = Data::ComponentCommand {
@@ -270,7 +269,7 @@ impl<'a> CompletionBuilder<'a> {
         &mut self,
         range: TextRange,
         name: &'a str,
-        file_names: &'a [SmolStr],
+        file_names: &'a [&'a str],
     ) -> Option<()> {
         let score = self.matcher.score(name, &self.text_pattern)?;
         self.items.push(Item {
@@ -662,7 +661,7 @@ impl<'a> CompletionBuilder<'a> {
         }
     }
 
-    fn component_detail(&self, file_names: &[SmolStr]) -> String {
+    fn component_detail(&self, file_names: &[&str]) -> String {
         if file_names.is_empty() {
             "built-in".into()
         } else {
@@ -702,11 +701,11 @@ enum Data<'a> {
         name: &'a str,
         image: Option<&'a str>,
         glyph: Option<&'a str>,
-        file_names: &'a [SmolStr],
+        file_names: &'a [&'a str],
     },
     ComponentEnvironment {
         name: &'a str,
-        file_names: &'a [SmolStr],
+        file_names: &'a [&'a str],
     },
     Class {
         name: &'a str,

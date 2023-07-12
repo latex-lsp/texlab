@@ -32,8 +32,7 @@ use crate::{
         symbols,
     },
     util::{
-        self, capabilities::ClientCapabilitiesExt, components::COMPONENT_DATABASE,
-        line_index_ext::LineIndexExt, normalize_uri,
+        self, capabilities::ClientCapabilitiesExt, line_index_ext::LineIndexExt, normalize_uri,
     },
 };
 
@@ -280,8 +279,12 @@ impl Server {
             util::diagnostics::collect(&workspace, &mut self.diagnostic_manager);
 
         for (uri, diagnostics) in &self.chktex_diagnostics {
-            let Some(document) = workspace.lookup(uri) else { continue };
-            let Some(existing) = all_diagnostics.get_mut(document) else { continue };
+            let Some(document) = workspace.lookup(uri) else {
+                continue;
+            };
+            let Some(existing) = all_diagnostics.get_mut(document) else {
+                continue;
+            };
             existing.extend(diagnostics.iter().cloned());
         }
 
@@ -402,7 +405,9 @@ impl Server {
         let mut workspace = self.workspace.write();
 
         for change in params.content_changes {
-            let Some(document) = workspace.lookup(&uri) else { return Ok(()) };
+            let Some(document) = workspace.lookup(&uri) else {
+                return Ok(());
+            };
             match change.range {
                 Some(range) => {
                     let range = document.line_index.offset_lsp_range(range);
@@ -471,8 +476,12 @@ impl Server {
 
     fn run_chktex(&mut self, uri: &Url) {
         let workspace = self.workspace.read();
-        let Some(document) = workspace.lookup(uri) else { return };
-        let Some(command) = util::chktex::Command::new(&workspace, document) else { return };
+        let Some(document) = workspace.lookup(uri) else {
+            return;
+        };
+        let Some(command) = util::chktex::Command::new(&workspace, document) else {
+            return;
+        };
 
         let sender = self.internal_tx.clone();
         let uri = document.uri.clone();
@@ -556,9 +565,15 @@ impl Server {
                 .map(|data| serde_json::from_value(data).unwrap())
             {
                 Some(CompletionItemData::Package | CompletionItemData::Class) => {
-                    item.documentation = COMPONENT_DATABASE
-                        .documentation(&item.label)
-                        .map(Documentation::MarkupContent);
+                    item.documentation = completion_data::DATABASE
+                        .meta(&item.label)
+                        .and_then(|meta| meta.description.as_deref())
+                        .map(|value| {
+                            Documentation::MarkupContent(MarkupContent {
+                                kind: MarkupKind::PlainText,
+                                value: value.into(),
+                            })
+                        });
                 }
                 Some(CompletionItemData::Citation { uri, key }) => {
                     if let Some(data) = workspace
@@ -941,7 +956,8 @@ impl Server {
         let line_index = &document.line_index;
         let position = line_index.offset_lsp(params.text_document_position.position);
 
-        let Some(result) = commands::change_environment(document, position, &params.new_name) else {
+        let Some(result) = commands::change_environment(document, position, &params.new_name)
+        else {
             anyhow::bail!("No environment found at the current position");
         };
 

@@ -1,0 +1,19 @@
+[package]
+name = "completion-data"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base-db = { path = "../base-db" }
+flate2 = "1.0.26"
+itertools = "0.10.5"
+once_cell = "1.17.1"
+rustc-hash = "1.1.0"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+
+[lib]
+doctest = false

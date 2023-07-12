@@ -64,7 +64,9 @@ impl Semantics {
     }
 
     fn process_include(&mut self, include: latex::Include) {
-        let Some(list) = include.path_list() else { return };
+        let Some(list) = include.path_list() else {
+            return;
+        };
 
         for path in list.keys() {
             let kind = match include.syntax().kind() {
@@ -88,13 +90,18 @@ impl Semantics {
         let Some(mut base_dir) = import
             .directory()
             .and_then(|dir| dir.key())
-            .map(|key| key.to_string()) else { return };
+            .map(|key| key.to_string())
+        else {
+            return;
+        };
 
         if !base_dir.ends_with('/') {
             base_dir.push('/');
         }
 
-        let Some(path) = import.file().and_then(|path| path.key()) else { return };
+        let Some(path) = import.file().and_then(|path| path.key()) else {
+            return;
+        };
         let text = format!("{base_dir}{}", path.to_string());
         let range = latex::small_range(&path);
 
@@ -106,13 +113,17 @@ impl Semantics {
     }
 
     fn process_label_definition(&mut self, label: latex::LabelDefinition) {
-        let Some(name) = label.name().and_then(|group| group.key()) else { return };
+        let Some(name) = label.name().and_then(|group| group.key()) else {
+            return;
+        };
 
         let full_range = latex::small_range(&label);
         let mut objects = Vec::new();
         for node in label.syntax().ancestors() {
             if let Some(section) = latex::Section::cast(node.clone()) {
-                let Some(text) = section.name().and_then(|group| group.content_text()) else { continue };
+                let Some(text) = section.name().and_then(|group| group.content_text()) else {
+                    continue;
+                };
                 let range = latex::small_range(&section);
                 let prefix = String::from(match section.syntax().kind() {
                     latex::PART => "Part",
@@ -131,10 +142,14 @@ impl Semantics {
                     range,
                 });
             } else if let Some(environment) = latex::Environment::cast(node.clone()) {
-                let Some(name) = environment.begin()
+                let Some(name) = environment
+                    .begin()
                     .and_then(|begin| begin.name())
                     .and_then(|group| group.key())
-                    .map(|key| key.to_string()) else { continue };
+                    .map(|key| key.to_string())
+                else {
+                    continue;
+                };
 
                 let caption = environment
                     .syntax()
@@ -178,7 +193,9 @@ impl Semantics {
     }
 
     fn process_label_reference(&mut self, label: latex::LabelReference) {
-        let Some(name_list) = label.name_list() else { return };
+        let Some(name_list) = label.name_list() else {
+            return;
+        };
 
         let full_range = latex::small_range(&label);
         for name in name_list.keys() {
@@ -228,7 +245,10 @@ impl Semantics {
         let Some(name) = environment
             .begin()
             .and_then(|begin| begin.name())
-            .and_then(|group| group.key()) else { return };
+            .and_then(|group| group.key())
+        else {
+            return;
+        };
 
         let name = Span::from(&name);
         self.can_be_compiled = self.can_be_compiled || name.text == "document";
@@ -236,9 +256,13 @@ impl Semantics {
     }
 
     fn process_theorem_definition(&mut self, theorem_def: latex::TheoremDefinition) {
-        let Some(name) = theorem_def.name().and_then(|name| name.key()) else { return };
+        let Some(name) = theorem_def.name().and_then(|name| name.key()) else {
+            return;
+        };
 
-        let Some(heading) = theorem_def.heading() else { return };
+        let Some(heading) = theorem_def.heading() else {
+            return;
+        };
 
         self.theorem_definitions.push(TheoremDefinition {
             name: Span::from(&name),
@@ -271,6 +295,16 @@ pub struct Link {
     pub kind: LinkKind,
     pub path: Span,
     pub base_dir: Option<String>,
+}
+
+impl Link {
+    pub fn package_name(&self) -> Option<String> {
+        match self.kind {
+            LinkKind::Sty => Some(format!("{}.sty", self.path.text)),
+            LinkKind::Cls => Some(format!("{}.cls", self.path.text)),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

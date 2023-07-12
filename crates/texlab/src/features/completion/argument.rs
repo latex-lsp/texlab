@@ -1,7 +1,7 @@
 use rowan::{ast::AstNode, TextRange};
 use syntax::latex;
 
-use crate::util::{components::COMPONENT_DATABASE, cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
@@ -34,13 +34,13 @@ pub fn complete<'a>(context: &'a CursorContext, builder: &mut CompletionBuilder<
     let command_name = command.name()?;
     let command_name = &command_name.text()[1..];
 
-    for component in COMPONENT_DATABASE.linked_components(&context.project) {
-        for component_command in component
+    for package in context.included_packages() {
+        for package_command in package
             .commands
             .iter()
             .filter(|command| command.name == command_name)
         {
-            for (_, param) in component_command
+            for (_, param) in package_command
                 .parameters
                 .iter()
                 .enumerate()

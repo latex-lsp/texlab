@@ -2,7 +2,7 @@ use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use syntax::latex;
 
-use crate::util::{components::COMPONENT_DATABASE, cursor::CursorContext};
+use crate::util::cursor::CursorContext;
 
 use super::builder::CompletionBuilder;
 
@@ -20,13 +20,12 @@ pub fn complete<'db>(
     };
 
     let mut file_names = FxHashSet::default();
-    for file_name in COMPONENT_DATABASE
-        .components
+    for file_name in completion_data::DATABASE
         .iter()
-        .flat_map(|comp| comp.file_names.iter())
+        .flat_map(|package| package.file_names.iter())
         .filter(|file_name| file_name.ends_with(extension))
     {
-        file_names.insert(file_name.as_str());
+        file_names.insert(file_name);
         let stem = &file_name[0..file_name.len() - 4];
         if kind == latex::PACKAGE_INCLUDE {
             builder.package(range, stem);
