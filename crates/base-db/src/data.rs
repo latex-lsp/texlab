@@ -23,14 +23,14 @@ pub struct BibtexFieldType<'a> {
 }
 
 impl<'a> BibtexEntryType<'a> {
-    pub fn find(name: &str) -> Option<&Self> {
-        BIBTEX_ENTRY_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name))
+    pub fn find(name: &str) -> Option<Self> {
+        BIBTEX_ENTRY_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name)).copied()
     }    
 }
 
 impl<'a> BibtexFieldType<'a> {
-    pub fn find(name: &str) -> Option<&Self> {
-        BIBTEX_FIELD_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name))
+    pub fn find(name: &str) -> Option<Self> {
+        BIBTEX_FIELD_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name)).copied()
     }    
 }
 

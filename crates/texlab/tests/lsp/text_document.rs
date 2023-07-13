@@ -5,7 +5,6 @@ mod document_link;
 mod document_symbol;
 mod folding_range;
 mod formatting;
-mod hover;
 mod inlay_hint;
 mod references;
 mod rename;

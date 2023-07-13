@@ -1,39 +1,47 @@
-mod citation;
-mod component;
-mod entry_type;
-mod field;
-mod label;
-mod string_ref;
-
 use base_db::Workspace;
-use lsp_types::{Hover, HoverContents, MarkupContent, MarkupKind, Position, Url};
-use rowan::TextRange;
+use hover::{HoverData, HoverParams};
 
-use crate::util::{cursor::CursorContext, line_index_ext::LineIndexExt};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find(workspace: &Workspace, uri: &Url, position: Position) -> Option<Hover> {
-    let context = CursorContext::new(workspace, uri, position, ())?;
-    log::debug!("[Hover] Cursor: {:?}", context.cursor);
+pub fn find(
+    workspace: &Workspace,
+    uri: &lsp_types::Url,
+    position: lsp_types::Position,
+) -> Option<lsp_types::Hover> {
+    let document = workspace.lookup(uri)?;
+    let offset = document.line_index.offset_lsp(position);
+    let params = HoverParams::new(workspace, document, offset);
+    let hover = ::hover::find(&params)?;
 
-    let result = label::find_hover(&context)
-        .or_else(|| citation::find_hover(&context))
-        .or_else(|| component::find_hover(&context))
-        .or_else(|| string_ref::find_hover(&context))
-        .or_else(|| field::find_hover(&context))
-        .or_else(|| entry_type::find_hover(&context))?;
+    let contents = match hover.data {
+        HoverData::Citation(text) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::Markdown,
+            value: text,
+        },
+        HoverData::Package(description) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::PlainText,
+            value: description.into(),
+        },
+        HoverData::EntryType(type_) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::Markdown,
+            value: type_.documentation?.into(),
+        },
+        HoverData::FieldType(type_) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::Markdown,
+            value: type_.documentation.into(),
+        },
+        HoverData::Label(label) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::PlainText,
+            value: label.reference(),
+        },
+        HoverData::StringRef(text) => lsp_types::MarkupContent {
+            kind: lsp_types::MarkupKind::PlainText,
+            value: text,
+        },
+    };
 
-    Some(Hover {
-        contents: HoverContents::Markup(MarkupContent {
-            kind: result.value_kind,
-            value: result.value,
-        }),
-        range: Some(context.document.line_index.line_col_lsp_range(result.range)),
+    Some(lsp_types::Hover {
+        contents: lsp_types::HoverContents::Markup(contents),
+        range: Some(document.line_index.line_col_lsp_range(hover.range)),
     })
-}
-
-#[derive(Debug, Clone)]
-struct HoverResult {
-    range: TextRange,
-    value: String,
-    value_kind: MarkupKind,
 }

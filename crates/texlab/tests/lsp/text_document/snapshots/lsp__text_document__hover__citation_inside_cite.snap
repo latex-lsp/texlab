@@ -1,8 +1,0 @@
----
-source: tests/lsp/text_document/hover.rs
-expression: "find_hover(r#\"\n%! main.bib\n@article{foo, author = {Foo Bar}, title = {Baz Qux}, year = 1337}\n\n%! main.tex\n\\addbibresource{main.bib}\n\\cite{foo}\n       |\n      ^^^\"#)"
----
-{
-  "kind": "markdown",
-  "value": "F. Bar: \"Baz Qux\". (1337)."
-}

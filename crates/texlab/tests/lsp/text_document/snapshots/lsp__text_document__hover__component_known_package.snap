@@ -1,8 +1,0 @@
----
-source: tests/lsp/text_document/hover.rs
-expression: "find_hover(r#\"\n%! main.tex\n\\usepackage{amsmath}\n             |\n            ^^^^^^^\"#)"
----
-{
-  "kind": "plaintext",
-  "value": "The package provides the principal packages in the AMS-LaTeX distribution. It adapts for use in LaTeX most of the mathematical features found in AMS-TeX; it is highly recommended as an adjunct to serious mathematical typesetting in LaTeX. When amsmath is loaded, AMS-LaTeX packages amsbsy (for bold symbols), amsopn (for operator names) and amstext (for text embedded in mathematics) are also loaded. amsmath is part of the LaTeX required distribution; however, several contributed packages add still further to its appeal; examples are empheq, which provides functions for decorating and highlighting mathematics, and ntheorem, for specifying theorem (and similar) definitions."
-}

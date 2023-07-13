@@ -1,5 +1,6 @@
 mod label;
 mod line_index;
+pub mod queries;
 mod regex_filter;
 
 pub use self::{
