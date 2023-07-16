@@ -230,8 +230,8 @@ name = "citeproc"
 version = "0.0.0"
 dependencies = [
  "chrono",
+ "expect-test",
  "human_name",
- "insta",
  "isocountry",
  "itertools",
  "parser",

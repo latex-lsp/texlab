@@ -1,18 +1,19 @@
-use insta::assert_snapshot;
+use expect_test::{expect, Expect};
 use parser::parse_bibtex;
 use rowan::ast::AstNode;
 use syntax::bibtex;
 
-fn render_entry(input: &str) -> String {
+fn check(input: &str, expect: Expect) {
     let green = parse_bibtex(input);
     let root = bibtex::Root::cast(bibtex::SyntaxNode::new_root(green)).unwrap();
     let entry = root.entries().next().unwrap();
-    super::render(&entry).unwrap()
+    let output = super::render(&entry).unwrap();
+    expect.assert_eq(&output);
 }
 
 #[test]
-fn article_rivest_1978() {
-    assert_snapshot!(render_entry(
+fn test_article_rivest_1978() {
+    check(
         r#"
 @article{10.1145/359340.359342,
     author = {Rivest, R. L. and Shamir, A. and Adleman, L.},
@@ -30,13 +31,16 @@ fn article_rivest_1978() {
     month = {feb},
     pages = {120-126},
     numpages = {7},
-}"#
-    ));
+}"#,
+        expect![[
+            r#"R. Rivest, A. Shamir, L. Adleman: "A Method for Obtaining Digital Signatures and Public-Key Cryptosystems". *Commun. ACM* 21.2 (Feb. 1978): 120-126. ISSN: 0001-0782. DOI: [10.1145/359340.359342](https://doi.org/10.1145/359340.359342). URL: [https://doi.org/10.1145/359340.359342](https://doi.org/10.1145/359340.359342)."#
+        ]],
+    );
 }
 
 #[test]
-fn article_jain_1999() {
-    assert_snapshot!(render_entry(
+fn test_article_jain_1999() {
+    check(
         r#"
 @article{10.1145/331499.331504,
     author = {Jain, A. K. and Murty, M. N. and Flynn, P. J.},
@@ -55,13 +59,16 @@ fn article_jain_1999() {
     pages = {264-323},
     numpages = {60},
     keywords = {incremental clustering, clustering applications, exploratory data analysis, cluster analysis, similarity indices, unsupervised learning}
-}"#
-    ));
+}"#,
+        expect![[
+            r#"A. Jain, M. Murty, P. Flynn: "Data Clustering: A Review". *ACM Comput. Surv.* 31.3 (Sep. 1999): 264-323. ISSN: 0360-0300. DOI: [10.1145/331499.331504](https://doi.org/10.1145/331499.331504). URL: [https://doi.org/10.1145/331499.331504](https://doi.org/10.1145/331499.331504)."#
+        ]],
+    );
 }
 
 #[test]
-fn article_aksin_2006() {
-    assert_snapshot!(render_entry(
+fn test_article_aksin_2006() {
+    check(
         r#"
 @string{jomch   = {J.~Organomet. Chem.}}
 
@@ -78,13 +85,16 @@ fn article_aksin_2006() {
     number       = 13,
     pages        = {3027-3036},
     indextitle   = {Effect of immobilization on catalytic characteristics},
-}"#
-    ));
+}"#,
+        expect![[
+            r#"O. Aksın, H. Türkmen, L. Artok, B. Çetinkaya, C. Ni, O. Büyükgüngör, E. Özkal: "Effect of immobilization on catalytic characteristics of saturated Pd-N-heterocyclic carbenes in Mizoroki-Heck reactions". *J. Organomet. Chem.* 691.13 (2006): 3027-3036."#
+        ]],
+    );
 }
 
 #[test]
-fn article_betram_1996() {
-    assert_snapshot!(render_entry(
+fn test_article_betram_1996() {
+    check(
         r#"
 @string{jams    = {J.~Amer. Math. Soc.}}
 
@@ -101,13 +111,16 @@ fn article_betram_1996() {
     shorttitle   = {Gromov invariants},
     annotation   = {An \texttt{article} entry with a \texttt{volume} and a
                     \texttt{number} field},
-}"#
-    ));
+}"#,
+        expect![[
+            r#"A. Bertram, R. Wentworth: "Gromov invariants for holomorphic maps on Riemann surfaces". *J. Amer. Math. Soc.* 9.2 (1996): 529-571."#
+        ]],
+    );
 }
 
 #[test]
-fn article_kastenholz_2006() {
-    assert_snapshot!(render_entry(
+fn test_article_kastenholz_2006() {
+    check(
         r#"
 @string{jchph   = {J.~Chem. Phys.}}
 
@@ -129,13 +142,16 @@ fn article_kastenholz_2006() {
                     into a clickable link if \texttt{hyperref} support has been
                     enabled},
 }
-        "#
-    ));
+        "#,
+        expect![[
+            r#"M. Kastenholz, P. Hünenberger: "Computation of methodology- independent ionic solvation free energies from molecular simulations. I. The electrostatic potential in molecular liquids". *J. Chem. Phys.* 124, 124106 (2006): DOI: [10.1063/1.2172593](https://doi.org/10.1063/1.2172593)."#
+        ]],
+    );
 }
 
 #[test]
-fn article_blom_2021() {
-    assert_snapshot!(render_entry(
+fn test_article_blom_2021() {
+    check(
         r#"
 @article{DBLP:journals/corr/abs-2107-11903,
     author    = {Michelle L. Blom and
@@ -156,13 +172,16 @@ fn article_blom_2021() {
     timestamp = {Thu, 29 Jul 2021 16:14:15 +0200},
     biburl    = {https://dblp.org/rec/journals/corr/abs-2107-11903.bib},
     bibsource = {dblp computer science bibliography, https://dblp.org}
-}"#
-    ));
+}"#,
+        expect![[
+            r#"M. Blom, J. Budurushi, R. Rivest, P. Stark, P. Stuckey, V. Teague, D. Vukcevic: "Assertion-based Approaches to Auditing Complex Elections, with application to party-list proportional elections". *CoRR* abs/2107.11903 (2021): arXiv: [2107.11903](https://arxiv.org/abs/2107.11903). URL: [https://arxiv.org/abs/2107.11903](https://arxiv.org/abs/2107.11903)."#
+        ]],
+    );
 }
 
 #[test]
-fn book_aho_2006() {
-    assert_snapshot!(render_entry(
+fn test_book_aho_2006() {
+    check(
         r#"
 @book{10.5555/1177220,
     author = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},
@@ -171,13 +190,16 @@ fn book_aho_2006() {
     isbn = {0321486811},
     publisher = {Addison-Wesley Longman Publishing Co., Inc.},
     address = {USA}
-}"#
-    ));
+}"#,
+        expect![[
+            r#"A. Aho, M. Lam, R. Sethi, J. Ullman: "Compilers: Principles, Techniques, and Tools (2nd Edition)". Addison-Wesley Longman Publishing Co., Inc., 2006. ISBN: 0321486811."#
+        ]],
+    );
 }
 
 #[test]
-fn book_averroes_1998() {
-    assert_snapshot!(render_entry(
+fn test_book_averroes_1998() {
+    check(
         r#"
 @book{averroes/bland,
     author       = {Averroes},
@@ -199,13 +221,16 @@ fn book_averroes_1998() {
                     \texttt{number}. Note the concatenation of the \texttt{editor}
                     and \texttt{translator} fields as well as the
                     \texttt{indextitle} field},
-}"#
-    ));
+}"#,
+        expect![[
+            r#""The Epistle on the Possibility of Conjunction with the Active Intellect by Ibn Rushd with the Commentary of Moses Narboni". Ed. by K. Bland. Trans. by K. Bland. Moreshet: Studies in Jewish History, Literature and Thought 7. New York: Jewish Theological Seminary of America, 1982."#
+        ]],
+    );
 }
 
 #[test]
-fn book_knuth_1984() {
-    assert_snapshot!(render_entry(
+fn test_book_knuth_1984() {
+    check(
         r#"
 @book{knuth:ct:a,
     author       = {Knuth, Donald E.},
@@ -229,13 +254,16 @@ fn book_knuth_1984() {
                     generate robust index entries require some control sequences
                     to be protected from expansion},
 }
-    "#
-    ));
+    "#,
+        expect![[
+            r#"D. Knuth: "The TeX book". *Computers & Typesetting*. Vol. A. Reading, Mass.: Addison-Wesley, 1984."#
+        ]],
+    );
 }
 
 #[test]
-fn mvbook_nietzsche_1988() {
-    assert_snapshot!(render_entry(
+fn test_mvbook_nietzsche_1988() {
+    check(
         r#"
 @string{dtv     = {Deutscher Taschenbuch-Verlag}}
 
@@ -260,13 +288,16 @@ fn mvbook_nietzsche_1988() {
                     field which is used to fine-tune the
                     sorting order of the bibliography. We want this item listed
                     first in the bibliography},
-}"#
-    ));
+}"#,
+        expect![[
+            r#"F. Nietzsche: "Sämtliche Werke. Kritische Studienausgabe". Ed. by G. Colli, M. Montinari. 2nd. München and Berlin and New York: Deutscher Taschenbuch-Verlag and Walter de Gruyter, 1988."#
+        ]],
+    );
 }
 
 #[test]
-fn inproceedings_erwin_2007() {
-    assert_snapshot!(render_entry(
+fn test_inproceedings_erwin_2007() {
+    check(
         r#"
 @inproceedings{10.5555/1386993.1386994,
     author = {Erwin, Alva and Gopalan, Raj P. and Achuthan, N. R.},
@@ -281,13 +312,16 @@ fn inproceedings_erwin_2007() {
     keywords = {pattern growth, high utility itemset mining},
     location = {Gold Coast, Australia},
     series = {AIDM '07}
-}"#
-    ));
+}"#,
+        expect![[
+            r#"A. Erwin, R. Gopalan, N. Achuthan: "A Bottom-up Projection Based Algorithm for Mining High Utility Itemsets". *Proceedings of the 2nd International Workshop on Integrating Artificial Intelligence and Data Mining - Volume 84*. AIDM '07. Gold Coast, Australia: Australian Computer Society, Inc., 2007, 3-11. ISBN: 9781920682651."#
+        ]],
+    );
 }
 
 #[test]
-fn inproceedings_combi_2004() {
-    assert_snapshot!(render_entry(
+fn test_inproceedings_combi_2004() {
+    check(
         r#"
 @inproceedings{10.1145/967900.968040,
     author = {Combi, Carlo and Pozzi, Giuseppe},
@@ -304,13 +338,16 @@ fn inproceedings_combi_2004() {
     keywords = {active DBMS, temporal DBMS, workflow management system - WfMS, temporal workflow management system},
     location = {Nicosia, Cyprus},
     series = {SAC '04}
-}"#
-    ));
+}"#,
+        expect![[
+            r#"C. Combi, G. Pozzi: "Architectures for a Temporal Workflow Management System". *Proceedings of the 2004 ACM Symposium on Applied Computing*. SAC '04. Nicosia, Cyprus: Association for Computing Machinery, 2004, 659-666. ISBN: 1581138121. DOI: [10.1145/967900.968040](https://doi.org/10.1145/967900.968040). URL: [https://doi.org/10.1145/967900.968040](https://doi.org/10.1145/967900.968040)."#
+        ]],
+    );
 }
 
 #[test]
-fn collection_matuz_1990() {
-    assert_snapshot!(render_entry(
+fn test_collection_matuz_1990() {
+    check(
         r#"
 @collection{matuz:doody,
     editor       = {Matuz, Roger},
@@ -325,13 +362,16 @@ fn collection_matuz_1990() {
     annotation   = {A \texttt{collection} entry providing the excerpt information
                     for the \texttt{doody} entry. Note the format of the
                     \texttt{pages} field},
-}"#
-    ));
+}"#,
+        expect![[
+            r#""Contemporary Literary Criticism". Ed. by R. Matuz. Vol. 61. Detroit: Gale, 1990, 204-208."#
+        ]],
+    );
 }
 
 #[test]
-fn patent_almendro_1998() {
-    assert_snapshot!(render_entry(
+fn test_patent_almendro_1998() {
+    check(
         r#"
 @patent{almendro,
     author       = {Almendro, Jos{\'e} L. and Mart{\'i}n, Jacinto and S{\'a}nchez,
@@ -346,6 +386,9 @@ fn patent_almendro_1998() {
                     the format of the \texttt{location} field in the database
                     file. Compare \texttt{laufenberg}, \texttt{sorace}, and
                     \texttt{kowalik}},
-}"#
-    ));
+}"#,
+        expect![[
+            r#"J. Almendro, J. Martín, A. Sánchez, F. Nozal: "Elektromagnetisches Signalhorn". EU-29702195U (France and United Kingdom and Germany). 1998."#
+        ]],
+    );
 }

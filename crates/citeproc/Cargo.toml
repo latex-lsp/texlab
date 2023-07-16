@@ -22,5 +22,5 @@ url = "2.3.1"
 doctest = false
 
 [dev-dependencies]
-insta = "1.29.0"
+expect-test = "1.4.1"
 parser = { path = "../parser" }
