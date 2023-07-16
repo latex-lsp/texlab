@@ -9,11 +9,19 @@ pub(super) fn find_hover<'db>(params: &HoverParams<'db>) -> Option<Hover<'db>> {
 
     let (name, range) = match &params.document.data {
         DocumentData::Tex(data) => {
-            let result = queries::object_at_cursor(&data.semantics.citations, offset)?;
+            let result = queries::object_at_cursor(
+                &data.semantics.citations,
+                offset,
+                queries::SearchMode::Full,
+            )?;
             (&result.object.name.text, result.range)
         }
         DocumentData::Bib(data) => {
-            let result = queries::object_at_cursor(&data.semantics.entries, offset)?;
+            let result = queries::object_at_cursor(
+                &data.semantics.entries,
+                offset,
+                queries::SearchMode::Name,
+            )?;
             (&result.object.name.text, result.range)
         }
         _ => return None,

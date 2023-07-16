@@ -5,7 +5,13 @@ use crate::{
     Project,
 };
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum SearchMode {
+    Name,
+    Full,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum ObjectKind {
     Definition,
     Reference,
@@ -123,15 +129,25 @@ impl<T> ObjectWithRange<T> {
     }
 }
 
-pub fn object_at_cursor<T: Object>(objs: &[T], offset: TextSize) -> Option<ObjectWithRange<&T>> {
-    objs.iter()
+pub fn object_at_cursor<T: Object>(
+    objs: &[T],
+    offset: TextSize,
+    mode: SearchMode,
+) -> Option<ObjectWithRange<&T>> {
+    let mut result = objs
+        .iter()
         .find(|obj| obj.name_range().contains_inclusive(offset))
-        .map(|obj| ObjectWithRange::new(obj, obj.name_range()))
-        .or_else(|| {
+        .map(|obj| ObjectWithRange::new(obj, obj.name_range()));
+
+    if mode == SearchMode::Full {
+        result = result.or_else(|| {
             objs.iter()
                 .find(|obj| obj.full_range().contains_inclusive(offset))
                 .map(|obj| ObjectWithRange::new(obj, obj.full_range()))
-        })
+        });
+    }
+
+    result
 }
 
 pub fn definition<'db, T: Object>(project: &'db Project, name: &str) -> Option<&'db T> {

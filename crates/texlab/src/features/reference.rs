@@ -1,39 +1,33 @@
-mod entry;
-mod label;
-mod string;
+use base_db::Workspace;
+use references::{ReferenceKind, ReferenceParams};
 
-use base_db::{Document, Workspace};
-use lsp_types::{Location, Position, ReferenceContext, Url};
-use rowan::TextRange;
-
-use crate::util::{cursor::CursorContext, line_index_ext::LineIndexExt};
+use crate::util::line_index_ext::LineIndexExt;
 
 pub fn find_all(
     workspace: &Workspace,
-    uri: &Url,
-    position: Position,
-    params: &ReferenceContext,
-) -> Option<Vec<Location>> {
+    uri: &lsp_types::Url,
+    position: lsp_types::Position,
+    context: &lsp_types::ReferenceContext,
+) -> Option<Vec<lsp_types::Location>> {
+    let document = workspace.lookup(uri)?;
+    let offset = document.line_index.offset_lsp(position);
+    let params = ReferenceParams {
+        workspace,
+        document,
+        offset,
+    };
+
     let mut results = Vec::new();
-    let context = CursorContext::new(workspace, uri, position, params)?;
-    log::debug!("[References] Cursor: {:?}", context.cursor);
-    label::find_all_references(&context, &mut results);
-    entry::find_all_references(&context, &mut results);
-    string::find_all_references(&context, &mut results);
-
-    let locations = results
+    for result in references::find_all(params)
         .into_iter()
-        .map(|result| Location {
-            uri: result.document.uri.clone(),
-            range: result.document.line_index.line_col_lsp_range(result.range),
-        })
-        .collect();
+        .filter(|result| result.kind == ReferenceKind::Reference || context.include_declaration)
+    {
+        let document = result.document;
+        let uri = document.uri.clone();
+        let range = document.line_index.line_col_lsp_range(result.range);
+        let location = lsp_types::Location::new(uri, range);
+        results.push(location);
+    }
 
-    Some(locations)
-}
-
-#[derive(Debug)]
-struct ReferenceResult<'a> {
-    document: &'a Document,
-    range: TextRange,
+    Some(results)
 }

@@ -1319,6 +1319,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "references"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "rowan",
+ "syntax",
+ "test-utils",
+]
+
+[[package]]
 name = "regex"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1596,6 +1606,7 @@ dependencies = [
  "once_cell",
  "parking_lot",
  "parser",
+ "references",
  "regex",
  "rowan",
  "rustc-hash",

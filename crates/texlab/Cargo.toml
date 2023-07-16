@@ -55,6 +55,7 @@ notify = "6.0.0"
 once_cell = "1.17.1"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
+references = { path = "../references" }
 regex = "1.8.1"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
