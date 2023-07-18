@@ -300,7 +300,7 @@ dependencies = [
  "bstr",
  "crossbeam-channel",
  "distro",
- "insta",
+ "expect-test",
  "itertools",
  "libc",
  "log",

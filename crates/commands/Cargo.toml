@@ -22,7 +22,7 @@ url = "2.3.1"
 
 [dev-dependencies]
 distro = { path = "../distro" }
-insta = { version = "1.29.0", features = ["json"] }
+expect-test = "1.4.1"
 test-utils = { path = "../test-utils" }
 
 [lib]
