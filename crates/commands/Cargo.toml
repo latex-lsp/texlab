@@ -7,18 +7,18 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 base-db = { path = "../base-db" }
-bstr = "1.4.0"
+bstr = "1.6.0"
 crossbeam-channel = "0.5.8"
-itertools = "0.10.5"
-libc = "0.2.144"
-log = "0.4.17"
+itertools = "0.11.0"
+libc = "0.2.147"
+log = "0.4.19"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-thiserror = "1.0.40"
-url = "2.3.1"
+thiserror = "1.0.43"
+url = "2.4.0"
 
 [dev-dependencies]
 distro = { path = "../distro" }

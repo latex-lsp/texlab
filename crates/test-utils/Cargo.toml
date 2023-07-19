@@ -10,8 +10,7 @@ rust-version.workspace = true
 base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 rowan = "0.15.11"
-syntax = { path = "../syntax" }
-url = "2.3.1"
+url = "2.4.0"
 
 [lib]
 doctest = false

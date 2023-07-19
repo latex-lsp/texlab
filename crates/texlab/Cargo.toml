@@ -31,10 +31,10 @@ test = false
 doctest = false
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.72"
 base-db = { path = "../base-db" }
 citeproc = { path = "../citeproc" }
-clap = { version = "4.3.0", features = ["derive"] }
+clap = { version = "4.3.15", features = ["derive"] }
 commands = { path = "../commands" }
 completion-data = { path = "../completion-data" }
 crossbeam-channel = "0.5.8"
@@ -44,36 +44,33 @@ distro = { path = "../distro" }
 encoding_rs = "0.8.32"
 encoding_rs_io = "0.1.7"
 fern = "0.6.2"
-flate2 = "1.0.26"
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 hover = { path = "../hover" }
-itertools = "0.10.5"
-log = "0.4.17"
-lsp-server = "0.7.0"
+itertools = "0.11.0"
+log = "0.4.19"
+lsp-server = "0.7.2"
 lsp-types = "0.94.0"
-notify = "6.0.0"
-once_cell = "1.17.1"
+notify = "6.0.1"
+once_cell = "1.18.0"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
 references = { path = "../references" }
-regex = "1.8.1"
+regex = "1.9.1"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
-serde = "1.0.163"
-serde_json = "1.0.96"
+serde = "1.0.171"
+serde_json = "1.0.103"
 serde_regex = "1.1.0"
-serde_repr = "0.1.12"
-smol_str = { version = "0.2.0", features = ["serde"] }
+serde_repr = "0.1.14"
 symbols = { path = "../symbols" }
 syntax = { path = "../syntax" }
-tempfile = "3.5.0"
+tempfile = "3.6.0"
 threadpool = "1.8.1"
-titlecase = "2.2.1"
 
 [dev-dependencies]
 assert_unordered = "0.3.5"
 criterion = { version = "0.5.1" }
-insta = { version = "1.29.0", features = ["glob", "redactions", "json"] }
+insta = { version = "1.31.0", features = ["glob", "redactions", "json"] }
 
 [[bench]]
 name = "bench_main"
