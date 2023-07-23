@@ -32,4 +32,5 @@ pub enum BibError {
     ExpectingEq,
     ExpectingFieldValue,
     UnusedEntry,
+    DuplicateEntry(Vec<TextRange>),
 }

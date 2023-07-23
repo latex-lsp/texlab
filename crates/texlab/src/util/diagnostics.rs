@@ -48,6 +48,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             BibError::ExpectingEq => lsp_types::DiagnosticSeverity::ERROR,
             BibError::ExpectingFieldValue => lsp_types::DiagnosticSeverity::ERROR,
             BibError::UnusedEntry => lsp_types::DiagnosticSeverity::HINT,
+            BibError::DuplicateEntry(_) => lsp_types::DiagnosticSeverity::ERROR,
         },
         DiagnosticData::Build(error) => match error.level {
             BuildErrorLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
@@ -71,6 +72,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             BibError::ExpectingEq => Some(7),
             BibError::ExpectingFieldValue => Some(8),
             BibError::UnusedEntry => Some(12),
+            BibError::DuplicateEntry(_) => Some(13),
         },
         DiagnosticData::Build(_) => None,
     };
@@ -96,6 +98,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             BibError::ExpectingEq => "Expecting an equality sign: \"=\"",
             BibError::ExpectingFieldValue => "Expecting a field value",
             BibError::UnusedEntry => "Unused entry",
+            BibError::DuplicateEntry(_) => "Duplicate entry key",
         },
         DiagnosticData::Build(error) => &error.message,
     });
@@ -116,6 +119,31 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             BibError::ExpectingEq => None,
             BibError::ExpectingFieldValue => None,
             BibError::UnusedEntry => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
+            BibError::DuplicateEntry(_) => None,
+        },
+        DiagnosticData::Build(_) => None,
+    };
+
+    let related_information = match &diagnostic.data {
+        DiagnosticData::Tex(_) => None,
+        DiagnosticData::Bib(error) => match error {
+            BibError::ExpectingLCurly => None,
+            BibError::ExpectingKey => None,
+            BibError::ExpectingRCurly => None,
+            BibError::ExpectingEq => None,
+            BibError::ExpectingFieldValue => None,
+            BibError::UnusedEntry => None,
+            BibError::DuplicateEntry(ranges) => {
+                let mut items = Vec::new();
+                for range in ranges {
+                    let range = document.line_index.line_col_lsp_range(*range);
+                    let message = String::from("entry defined here");
+                    let location = lsp_types::Location::new(document.uri.clone(), range);
+                    items.push(lsp_types::DiagnosticRelatedInformation { location, message });
+                }
+
+                Some(items)
+            }
         },
         DiagnosticData::Build(_) => None,
     };
@@ -125,6 +153,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
         code: code.map(lsp_types::NumberOrString::Number),
         source: Some(String::from(source)),
         tags,
+        related_information,
         ..lsp_types::Diagnostic::new_simple(range, message)
     }
 }

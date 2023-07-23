@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Report diagnostics for unused and undefined labels or BibTeX keys
+- Report diagnostics for unused and undefined labels
+- Report diagnostics for unused BibTeX entries and undefined citations
+- Report diagnostics for duplicate BibTeX entry keys
 
 ### Fixed
 
