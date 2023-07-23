@@ -137,7 +137,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
                 let mut items = Vec::new();
                 for range in ranges {
                     let range = document.line_index.line_col_lsp_range(*range);
-                    let message = String::from("entry defined here");
+                    let message = String::from("conflicting entry defined here");
                     let location = lsp_types::Location::new(document.uri.clone(), range);
                     items.push(lsp_types::DiagnosticRelatedInformation { location, message });
                 }

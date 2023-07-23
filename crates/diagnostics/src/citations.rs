@@ -104,14 +104,21 @@ impl CitationErrors {
             .map(|entry| (&entry.name.text, entry.name.range))
             .into_group_map();
 
-        for mut ranges in entries.into_values().filter(|ranges| ranges.len() > 1) {
-            let others = ranges.split_off(1);
+        for ranges in entries.into_values().filter(|ranges| ranges.len() > 1) {
+            for current in &ranges {
+                let others = ranges
+                    .iter()
+                    .copied()
+                    .filter(|range| range != current)
+                    .collect();
 
-            let diagnostic = Diagnostic {
-                range: ranges.pop().unwrap(),
-                data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
-            };
-            builder.push(&document.uri, Cow::Owned(diagnostic));
+                let diagnostic = Diagnostic {
+                    range: *current,
+                    data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
+                };
+
+                builder.push(&document.uri, Cow::Owned(diagnostic));
+            }
         }
     }
 }
