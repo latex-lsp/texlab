@@ -454,6 +454,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "definition"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "itertools 0.11.0",
+ "rowan",
+ "syntax",
+ "test-utils",
+]
+
+[[package]]
 name = "diagnostics"
 version = "0.0.0"
 dependencies = [
@@ -746,9 +757,9 @@ dependencies = [
 
 [[package]]
 name = "idna"
-version = "0.4.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d20d6b07bfbc108882d88ed8e37d39636dcc260e15e30c45e6ba089610b917c"
+checksum = "e14ddfc70884202db2244c223200c204c2bda1bc6e0998d11b5e024d657209e6"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
@@ -1584,6 +1595,7 @@ dependencies = [
  "completion-data",
  "criterion",
  "crossbeam-channel",
+ "definition",
  "diagnostics",
  "dirs",
  "distro",
@@ -1749,9 +1761,9 @@ checksum = "402bb19d8e03f1d1a7450e2bd613980869438e0666331be3e073089124aa1adc"
 
 [[package]]
 name = "url"
-version = "2.4.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50bff7831e19200a85b17131d085c25d7811bc4e186efdaf54bbd132994a88cb"
+checksum = "0d68c799ae75762b8c3fe375feb6600ef5602c883c5d21eb51c09f22b83c4643"
 dependencies = [
  "form_urlencoded",
  "idna",

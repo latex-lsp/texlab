@@ -2,7 +2,7 @@ use text_size::{TextRange, TextSize};
 
 use crate::{
     semantics::{bib, tex},
-    Project,
+    Document, Project,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
@@ -24,9 +24,20 @@ pub trait Object {
 
     fn full_range(&self) -> TextRange;
 
-    fn find<'db>(project: &'db Project) -> Box<dyn Iterator<Item = &'db Self> + 'db>;
-
     fn kind(&self) -> ObjectKind;
+
+    fn find<'db>(document: &'db Document) -> Box<dyn Iterator<Item = &'db Self> + 'db>;
+
+    fn find_all<'a, 'db>(
+        project: &'a Project<'db>,
+    ) -> Box<dyn Iterator<Item = (&'db Document, &'db Self)> + 'a> {
+        let iter = project
+            .documents
+            .iter()
+            .flat_map(|document| Self::find(document).map(|obj| (*document, obj)));
+
+        Box::new(iter)
+    }
 }
 
 impl Object for tex::Label {
@@ -50,11 +61,10 @@ impl Object for tex::Label {
         }
     }
 
-    fn find<'db>(project: &'db Project) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
-        let iter = project
-            .documents
-            .iter()
-            .filter_map(|document| document.data.as_tex())
+    fn find<'db>(document: &'db Document) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
+        let data = document.data.as_tex();
+        let iter = data
+            .into_iter()
             .flat_map(|data| data.semantics.labels.iter());
 
         Box::new(iter)
@@ -74,11 +84,10 @@ impl Object for tex::Citation {
         self.full_range
     }
 
-    fn find<'db>(project: &'db Project) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
-        let iter = project
-            .documents
-            .iter()
-            .filter_map(|document| document.data.as_tex())
+    fn find<'db>(document: &'db Document) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
+        let data = document.data.as_tex();
+        let iter = data
+            .into_iter()
             .flat_map(|data| data.semantics.citations.iter());
 
         Box::new(iter)
@@ -102,11 +111,10 @@ impl Object for bib::Entry {
         self.full_range
     }
 
-    fn find<'db>(project: &'db Project) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
-        let iter = project
-            .documents
-            .iter()
-            .filter_map(|document| document.data.as_bib())
+    fn find<'db>(document: &'db Document) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
+        let data = document.data.as_bib();
+        let iter = data
+            .into_iter()
             .flat_map(|data| data.semantics.entries.iter());
 
         Box::new(iter)
@@ -150,8 +158,9 @@ pub fn object_at_cursor<T: Object>(
     result
 }
 
-pub fn definition<'db, T: Object>(project: &'db Project, name: &str) -> Option<&'db T> {
-    T::find(project)
-        .filter(|obj| obj.kind() == ObjectKind::Definition)
-        .find(|obj| obj.name_text() == name)
+pub fn objects_with_name<'a, 'db, T: Object + 'static>(
+    project: &'a Project<'db>,
+    name: &'a str,
+) -> impl Iterator<Item = (&'db Document, &'db T)> + 'a {
+    T::find_all(project).filter(move |(_, obj)| obj.name_text() == name)
 }

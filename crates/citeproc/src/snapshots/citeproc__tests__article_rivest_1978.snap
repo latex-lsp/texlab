@@ -1,5 +1,0 @@
----
-source: crates/citeproc/src/tests.rs
-expression: "render_entry(r#\"\n@article{10.1145/359340.359342,\n    author = {Rivest, R. L. and Shamir, A. and Adleman, L.},\n    title = {A Method for Obtaining Digital Signatures and Public-Key Cryptosystems},\n    year = {1978},\n    issue_date = {Feb. 1978},\n    publisher = {Association for Computing Machinery},\n    address = {New York, NY, USA},\n    volume = {21},\n    number = {2},\n    issn = {0001-0782},\n    url = {https://doi.org/10.1145/359340.359342},\n    doi = {10.1145/359340.359342},\n    journal = {Commun. ACM},\n    month = {feb},\n    pages = {120-126},\n    numpages = {7},\n}\"#)"
----
-R. Rivest, A. Shamir, L. Adleman: "A Method for Obtaining Digital Signatures and Public-Key Cryptosystems". *Commun. ACM* 21.2 (Feb. 1978): 120-126. ISSN: 0001-0782. DOI: [10.1145/359340.359342](https://doi.org/10.1145/359340.359342). URL: [https://doi.org/10.1145/359340.359342](https://doi.org/10.1145/359340.359342).

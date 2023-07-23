@@ -1,5 +1,4 @@
 mod completion;
-mod definition;
 mod document_highlight;
 mod document_link;
 mod document_symbol;

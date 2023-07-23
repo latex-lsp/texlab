@@ -1,5 +1,0 @@
----
-source: crates/citeproc/src/tests.rs
-expression: "render_entry(r#\"\n@book{10.5555/1177220,\n    author = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},\n    title = {Compilers: Principles, Techniques, and Tools (2nd Edition)},\n    year = {2006},\n    isbn = {0321486811},\n    publisher = {Addison-Wesley Longman Publishing Co., Inc.},\n    address = {USA}\n}\"#)"
----
-A. Aho, M. Lam, R. Sethi, J. Ullman: "Compilers: Principles, Techniques, and Tools (2nd Edition)". Addison-Wesley Longman Publishing Co., Inc., 2006. ISBN: 0321486811.

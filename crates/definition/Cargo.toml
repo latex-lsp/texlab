@@ -1,24 +1,19 @@
 [package]
-name = "symbols"
+name = "definition"
 version = "0.0.0"
 license.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 base-db = { path = "../base-db" }
-distro = { path = "../distro" }
-itertools = "0.11.0"
 rowan = "0.15.11"
 syntax = { path = "../syntax" }
-titlecase = "2.2.1"
-url = "=2.3.1"
 
 [dev-dependencies]
-insta = "1.31.0"
-regex = "1.9.1"
+itertools = "0.11.0"
 test-utils = { path = "../test-utils" }
+
+[lib]
+doctest = false

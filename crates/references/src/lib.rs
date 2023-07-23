@@ -29,7 +29,7 @@ pub struct ReferenceParams<'db> {
 struct ReferenceContext<'db> {
     params: ReferenceParams<'db>,
     project: Project<'db>,
-    items: Vec<Reference<'db>>,
+    results: Vec<Reference<'db>>,
 }
 
 pub fn find_all(params: ReferenceParams) -> Vec<Reference<'_>> {
@@ -37,13 +37,13 @@ pub fn find_all(params: ReferenceParams) -> Vec<Reference<'_>> {
     let mut context = ReferenceContext {
         params,
         project,
-        items: Vec::new(),
+        results: Vec::new(),
     };
 
     entry::find_all(&mut context);
     label::find_all(&mut context);
     string_def::find_all(&mut context);
-    context.items
+    context.results
 }
 
 #[cfg(test)]

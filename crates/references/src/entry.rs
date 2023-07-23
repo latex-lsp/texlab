@@ -1,4 +1,5 @@
 use base_db::{
+    semantics::{bib, tex},
     util::queries::{self, Object},
     DocumentData,
 };
@@ -28,26 +29,20 @@ pub(super) fn find_all<'db>(context: &mut ReferenceContext<'db>) -> Option<()> {
         _ => return None,
     };
 
-    for document in &context.project.documents {
-        if let DocumentData::Tex(data) = &document.data {
-            let citations = data.semantics.citations.iter();
-            for citation in citations.filter(|citation| citation.name.text == name) {
-                context.items.push(Reference {
-                    document,
-                    range: citation.name.range,
-                    kind: ReferenceKind::Reference,
-                });
-            }
-        } else if let DocumentData::Bib(data) = &document.data {
-            let entries = data.semantics.entries.iter();
-            for entry in entries.filter(|entry| entry.name.text == name) {
-                context.items.push(Reference {
-                    document,
-                    range: entry.name.range,
-                    kind: ReferenceKind::Definition,
-                });
-            }
-        }
+    for (document, obj) in queries::objects_with_name::<tex::Citation>(&context.project, name) {
+        context.results.push(Reference {
+            document,
+            range: obj.name.range,
+            kind: ReferenceKind::Reference,
+        });
+    }
+
+    for (document, obj) in queries::objects_with_name::<bib::Entry>(&context.project, name) {
+        context.results.push(Reference {
+            document,
+            range: obj.name.range,
+            kind: ReferenceKind::Definition,
+        });
     }
 
     Some(())

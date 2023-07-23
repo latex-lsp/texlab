@@ -38,6 +38,7 @@ clap = { version = "4.3.15", features = ["derive"] }
 commands = { path = "../commands" }
 completion-data = { path = "../completion-data" }
 crossbeam-channel = "0.5.8"
+definition = { path = "../definition" }
 diagnostics = { path = "../diagnostics" }
 dirs = "5.0.1"
 distro = { path = "../distro" }

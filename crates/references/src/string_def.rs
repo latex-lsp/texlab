@@ -17,7 +17,7 @@ pub(super) fn find_all<'db>(context: &mut ReferenceContext<'db>) -> Option<()> {
 
     for string in &data.semantics.strings {
         if string.name.text == name.text() {
-            context.items.push(Reference {
+            context.results.push(Reference {
                 document,
                 range: string.name.range,
                 kind: ReferenceKind::Definition,
@@ -31,7 +31,7 @@ pub(super) fn find_all<'db>(context: &mut ReferenceContext<'db>) -> Option<()> {
         .filter_map(|token| token.syntax().first_token())
         .filter(|token| token.text() == name.text())
     {
-        context.items.push(Reference {
+        context.results.push(Reference {
             document,
             range: token.text_range(),
             kind: ReferenceKind::Reference,

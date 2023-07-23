@@ -1,5 +1,0 @@
----
-source: crates/citeproc/src/tests.rs
-expression: "render_entry(r#\"\n@article{10.1145/331499.331504,\n    author = {Jain, A. K. and Murty, M. N. and Flynn, P. J.},\n    title = {Data Clustering: A Review},\n    year = {1999},\n    issue_date = {Sept. 1999},\n    publisher = {Association for Computing Machinery},\n    address = {New York, NY, USA},\n    volume = {31},\n    number = {3},\n    issn = {0360-0300},\n    url = {https://doi.org/10.1145/331499.331504},\n    doi = {10.1145/331499.331504},\n    journal = {ACM Comput. Surv.},\n    month = {sep},\n    pages = {264-323},\n    numpages = {60},\n    keywords = {incremental clustering, clustering applications, exploratory data analysis, cluster analysis, similarity indices, unsupervised learning}\n}\"#)"
----
-A. Jain, M. Murty, P. Flynn: "Data Clustering: A Review". *ACM Comput. Surv.* 31.3 (Sep. 1999): 264-323. ISSN: 0360-0300. DOI: [10.1145/331499.331504](https://doi.org/10.1145/331499.331504). URL: [https://doi.org/10.1145/331499.331504](https://doi.org/10.1145/331499.331504).

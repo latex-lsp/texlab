@@ -20,7 +20,7 @@ rowan = "0.15.11"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
 text-size = "1.1.1"
-url = "2.4.0"
+url = "=2.3.1"
 
 [lib]
 doctest = false
