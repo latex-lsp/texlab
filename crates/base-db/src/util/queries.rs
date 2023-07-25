@@ -1,8 +1,11 @@
+use itertools::Itertools;
+use rustc_hash::FxHashMap;
 use text_size::{TextRange, TextSize};
+use url::Url;
 
 use crate::{
     semantics::{bib, tex},
-    Document, Project,
+    Document, DocumentLocation, Project, Workspace,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
@@ -163,4 +166,50 @@ pub fn objects_with_name<'a, 'db, T: Object + 'static>(
     name: &'a str,
 ) -> impl Iterator<Item = (&'db Document, &'db T)> + 'a {
     T::find_all(project).filter(move |(_, obj)| obj.name_text() == name)
+}
+
+#[derive(Debug)]
+pub struct Conflict<'a> {
+    pub main: DocumentLocation<'a>,
+    pub rest: Vec<DocumentLocation<'a>>,
+}
+
+impl<'a> Conflict<'a> {
+    pub fn find_all<T: Object + std::fmt::Debug>(workspace: &'a Workspace) -> Vec<Self> {
+        let groups = workspace
+            .iter()
+            .flat_map(|document| T::find(document).map(move |obj| (document, obj)))
+            .filter(|(_, obj)| obj.kind() == ObjectKind::Definition)
+            .into_group_map_by(|(_, obj)| obj.name_text());
+
+        let projects: FxHashMap<&Url, Project> = workspace
+            .iter()
+            .map(|document| (&document.uri, workspace.project(document)))
+            .collect();
+
+        let mut conflicts = Vec::new();
+        for group in groups.into_values().filter(|group| group.len() > 1) {
+            for (i, main) in group
+                .iter()
+                .enumerate()
+                .map(|(i, (document, obj))| (i, DocumentLocation::new(document, obj.name_range())))
+            {
+                let mut rest = Vec::new();
+
+                let project = &projects[&main.document.uri];
+
+                for (_, (other, obj)) in group.iter().enumerate().filter(|(j, _)| *j != i) {
+                    if project.documents.contains(other) {
+                        rest.push(DocumentLocation::new(other, obj.name_range()));
+                    }
+                }
+
+                if !rest.is_empty() {
+                    conflicts.push(Conflict { main, rest });
+                }
+            }
+        }
+
+        conflicts
+    }
 }

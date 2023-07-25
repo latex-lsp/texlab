@@ -1,5 +1,6 @@
 use rowan::TextRange;
 use syntax::BuildError;
+use url::Url;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Diagnostic {
@@ -22,6 +23,7 @@ pub enum TexError {
     UnusedLabel,
     UndefinedLabel,
     UndefinedCitation,
+    DuplicateLabel(Vec<(Url, TextRange)>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -32,5 +34,5 @@ pub enum BibError {
     ExpectingEq,
     ExpectingFieldValue,
     UnusedEntry,
-    DuplicateEntry(Vec<TextRange>),
+    DuplicateEntry(Vec<(Url, TextRange)>),
 }

@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Report diagnostics for unused and undefined labels
 - Report diagnostics for unused BibTeX entries and undefined citations
-- Report diagnostics for duplicate BibTeX entry keys
+- Report diagnostics for duplicate BibTeX entries
+- Report diagnostics for duplicate labels
 
 ### Fixed
 
