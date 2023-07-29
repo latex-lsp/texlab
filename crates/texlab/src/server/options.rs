@@ -69,6 +69,8 @@ pub struct BuildOptions {
     pub args: Option<Vec<String>>,
     pub on_save: bool,
     pub forward_search_after: bool,
+    pub aux_directory: Option<String>,
+    pub log_directory: Option<String>,
     pub filename: Option<String>,
 }
 
@@ -155,7 +157,19 @@ impl From<Options> for Config {
         config.build.args = value.build.args.unwrap_or(config.build.args);
         config.build.on_save = value.build.on_save;
         config.build.forward_search_after = value.build.forward_search_after;
-        config.build.output_dir = value.aux_directory.unwrap_or_else(|| String::from("."));
+
+        config.build.aux_dir = value
+            .build
+            .aux_directory
+            .or_else(|| value.aux_directory.clone())
+            .unwrap_or_else(|| String::from("."));
+
+        config.build.log_dir = value
+            .build
+            .log_directory
+            .or_else(|| value.aux_directory)
+            .unwrap_or_else(|| String::from("."));
+
         config.build.output_filename = value.build.filename.map(PathBuf::from);
 
         config.diagnostics.allowed_patterns = value

@@ -109,9 +109,22 @@ impl Workspace {
         self.iter()
             .filter(|document| document.uri.scheme() == "file")
             .flat_map(|document| {
-                let dir1 = self.output_dir(&self.current_dir(&document.dir));
-                let dir2 = &document.dir;
-                [dir1.to_file_path(), dir2.to_file_path()]
+                let dir1 = self.output_dir(
+                    &self.current_dir(&document.dir),
+                    self.config.build.aux_dir.clone(),
+                );
+
+                let dir2 = self.output_dir(
+                    &self.current_dir(&document.dir),
+                    self.config.build.log_dir.clone(),
+                );
+
+                let dir3 = &document.dir;
+                [
+                    dir1.to_file_path(),
+                    dir2.to_file_path(),
+                    dir3.to_file_path(),
+                ]
             })
             .flatten()
             .for_each(|path| {
@@ -135,8 +148,8 @@ impl Workspace {
             .unwrap_or_else(|| base_dir.clone())
     }
 
-    pub fn output_dir(&self, base_dir: &Url) -> Url {
-        let mut path = self.config.build.output_dir.clone();
+    pub fn output_dir(&self, base_dir: &Url, relative_path: String) -> Url {
+        let mut path = relative_path;
         if !path.ends_with('/') {
             path.push('/');
         }
@@ -168,7 +181,9 @@ impl Workspace {
     pub fn parents(&self, child: &Document) -> FxHashSet<&Document> {
         self.iter()
             .filter(|document| {
-                let DocumentData::Tex(data) = &document.data else { return false };
+                let DocumentData::Tex(data) = &document.data else {
+                    return false;
+                };
                 data.semantics.can_be_root
             })
             .filter(|parent| {
@@ -264,14 +279,18 @@ impl Workspace {
                 continue;
             }
 
-            let Ok(entries) = std::fs::read_dir(dir) else { continue };
+            let Ok(entries) = std::fs::read_dir(dir) else {
+                continue;
+            };
 
             for file in entries
                 .flatten()
                 .filter(|entry| entry.file_type().map_or(false, |type_| type_.is_file()))
                 .map(|entry| entry.path())
             {
-                let Some(lang) = Language::from_path(&file) else { continue };
+                let Some(lang) = Language::from_path(&file) else {
+                    continue;
+                };
                 if !matches!(lang, Language::Tex | Language::Root | Language::Tectonic) {
                     continue;
                 }
