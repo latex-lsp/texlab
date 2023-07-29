@@ -3,6 +3,7 @@ use diagnostics::{
     types::{BibError, Diagnostic, DiagnosticData, TexError},
     DiagnosticBuilder, DiagnosticSource,
 };
+use rowan::TextRange;
 use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
@@ -21,7 +22,7 @@ pub fn collect<'db>(
         .map(|(document, diags)| {
             let diags = diags
                 .into_iter()
-                .map(|diag| create_diagnostic(document, &diag))
+                .map(|diag| create_diagnostic(workspace, document, &diag))
                 .collect::<Vec<_>>();
 
             (document, diags)
@@ -29,7 +30,11 @@ pub fn collect<'db>(
         .collect()
 }
 
-fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types::Diagnostic {
+fn create_diagnostic(
+    workspace: &Workspace,
+    document: &Document,
+    diagnostic: &Diagnostic,
+) -> lsp_types::Diagnostic {
     let range = document.line_index.line_col_lsp_range(diagnostic.range);
 
     let severity = match &diagnostic.data {
@@ -40,6 +45,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             TexError::UnusedLabel => lsp_types::DiagnosticSeverity::HINT,
             TexError::UndefinedLabel => lsp_types::DiagnosticSeverity::ERROR,
             TexError::UndefinedCitation => lsp_types::DiagnosticSeverity::ERROR,
+            TexError::DuplicateLabel(_) => lsp_types::DiagnosticSeverity::ERROR,
         },
         DiagnosticData::Bib(error) => match error {
             BibError::ExpectingLCurly => lsp_types::DiagnosticSeverity::ERROR,
@@ -64,6 +70,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             TexError::UnusedLabel => Some(9),
             TexError::UndefinedLabel => Some(10),
             TexError::UndefinedCitation => Some(11),
+            TexError::DuplicateLabel(_) => Some(14),
         },
         DiagnosticData::Bib(error) => match error {
             BibError::ExpectingLCurly => Some(4),
@@ -90,6 +97,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             TexError::UnusedLabel => "Unused label",
             TexError::UndefinedLabel => "Undefined reference",
             TexError::UndefinedCitation => "Undefined reference",
+            TexError::DuplicateLabel(_) => "Duplicate label",
         },
         DiagnosticData::Bib(error) => match error {
             BibError::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
@@ -111,6 +119,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             TexError::UnusedLabel => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
             TexError::UndefinedLabel => None,
             TexError::UndefinedCitation => None,
+            TexError::DuplicateLabel(_) => None,
         },
         DiagnosticData::Bib(error) => match error {
             BibError::ExpectingLCurly => None,
@@ -125,7 +134,15 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
     };
 
     let related_information = match &diagnostic.data {
-        DiagnosticData::Tex(_) => None,
+        DiagnosticData::Tex(error) => match error {
+            TexError::UnexpectedRCurly => None,
+            TexError::ExpectingRCurly => None,
+            TexError::MismatchedEnvironment => None,
+            TexError::UnusedLabel => None,
+            TexError::UndefinedLabel => None,
+            TexError::UndefinedCitation => None,
+            TexError::DuplicateLabel(others) => make_conflict_info(workspace, others, "label"),
+        },
         DiagnosticData::Bib(error) => match error {
             BibError::ExpectingLCurly => None,
             BibError::ExpectingKey => None,
@@ -133,17 +150,7 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
             BibError::ExpectingEq => None,
             BibError::ExpectingFieldValue => None,
             BibError::UnusedEntry => None,
-            BibError::DuplicateEntry(ranges) => {
-                let mut items = Vec::new();
-                for range in ranges {
-                    let range = document.line_index.line_col_lsp_range(*range);
-                    let message = String::from("entry defined here");
-                    let location = lsp_types::Location::new(document.uri.clone(), range);
-                    items.push(lsp_types::DiagnosticRelatedInformation { location, message });
-                }
-
-                Some(items)
-            }
+            BibError::DuplicateEntry(others) => make_conflict_info(workspace, others, "entry"),
         },
         DiagnosticData::Build(_) => None,
     };
@@ -156,6 +163,27 @@ fn create_diagnostic(document: &Document, diagnostic: &Diagnostic) -> lsp_types:
         related_information,
         ..lsp_types::Diagnostic::new_simple(range, message)
     }
+}
+
+fn make_conflict_info(
+    workspace: &Workspace,
+    locations: &Vec<(lsp_types::Url, TextRange)>,
+    object: &str,
+) -> Option<Vec<lsp_types::DiagnosticRelatedInformation>> {
+    let mut items = Vec::new();
+    for (uri, range) in locations {
+        let range = workspace
+            .lookup(uri)
+            .unwrap()
+            .line_index
+            .line_col_lsp_range(*range);
+
+        let message = format!("conflicting {object} defined here");
+        let location = lsp_types::Location::new(uri.clone(), range);
+        items.push(lsp_types::DiagnosticRelatedInformation { location, message });
+    }
+
+    Some(items)
 }
 
 pub fn filter(

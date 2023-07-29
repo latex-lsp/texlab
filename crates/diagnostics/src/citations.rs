@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
-use base_db::{graph::Graph, BibDocumentData, Document, DocumentData, TexDocumentData, Workspace};
-use itertools::Itertools;
+use base_db::{
+    semantics::{bib::Entry, tex::Citation},
+    util::queries::{self, Object},
+    BibDocumentData, Document, DocumentData, Project, TexDocumentData, Workspace,
+};
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -18,100 +21,77 @@ impl DiagnosticSource for CitationErrors {
         workspace: &'db Workspace,
         builder: &mut DiagnosticBuilder<'db>,
     ) {
-        let graphs: Vec<_> = workspace
-            .iter()
-            .map(|start| Graph::new(workspace, start))
-            .collect();
-
         for document in workspace.iter() {
-            let project = graphs
-                .iter()
-                .filter(|graph| graph.preorder().contains(&document))
-                .flat_map(|graph| graph.preorder());
+            let project = workspace.project(document);
 
             if let DocumentData::Tex(data) = &document.data {
-                self.process_tex(project, document, data, builder);
+                detect_undefined_citations(&project, document, data, builder);
             } else if let DocumentData::Bib(data) = &document.data {
-                self.process_bib(project, document, data, builder);
+                detect_unused_entries(&project, document, data, builder);
             }
+        }
+
+        detect_duplicate_entries(workspace, builder);
+    }
+}
+
+fn detect_undefined_citations<'db>(
+    project: &Project<'db>,
+    document: &'db Document,
+    data: &TexDocumentData,
+    builder: &mut DiagnosticBuilder<'db>,
+) {
+    let entries: FxHashSet<&str> = Entry::find_all(project)
+        .map(|(_, entry)| entry.name_text())
+        .collect();
+
+    for citation in &data.semantics.citations {
+        if !entries.contains(citation.name.text.as_str()) {
+            let diagnostic = Diagnostic {
+                range: citation.name.range,
+                data: DiagnosticData::Tex(TexError::UndefinedCitation),
+            };
+
+            builder.push(&document.uri, Cow::Owned(diagnostic));
         }
     }
 }
 
-impl CitationErrors {
-    fn process_tex<'db>(
-        &mut self,
-        project: impl Iterator<Item = &'db Document>,
-        document: &'db Document,
-        data: &TexDocumentData,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        let entries: FxHashSet<&str> = project
-            .filter_map(|child| child.data.as_bib())
-            .flat_map(|data| data.semantics.entries.iter())
-            .map(|entry| entry.name.text.as_str())
-            .collect();
+fn detect_unused_entries<'db>(
+    project: &Project<'db>,
+    document: &'db Document,
+    data: &BibDocumentData,
+    builder: &mut DiagnosticBuilder<'db>,
+) {
+    let citations: FxHashSet<&str> = Citation::find_all(project)
+        .map(|(_, citation)| citation.name_text())
+        .collect();
 
-        for citation in &data.semantics.citations {
-            if !entries.contains(citation.name.text.as_str()) {
-                let diagnostic = Diagnostic {
-                    range: citation.name.range,
-                    data: DiagnosticData::Tex(TexError::UndefinedCitation),
-                };
-
-                builder.push(&document.uri, Cow::Owned(diagnostic));
-            }
-        }
-    }
-
-    fn process_bib<'db>(
-        &mut self,
-        project: impl Iterator<Item = &'db Document>,
-        document: &'db Document,
-        data: &BibDocumentData,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        let citations: FxHashSet<&str> = project
-            .filter_map(|child| child.data.as_tex())
-            .flat_map(|data| data.semantics.citations.iter())
-            .map(|entry| entry.name.text.as_str())
-            .collect();
-
-        for entry in &data.semantics.entries {
-            if !citations.contains(entry.name.text.as_str()) {
-                let diagnostic = Diagnostic {
-                    range: entry.name.range,
-                    data: DiagnosticData::Bib(BibError::UnusedEntry),
-                };
-
-                builder.push(&document.uri, Cow::Owned(diagnostic));
-            }
-        }
-
-        self.process_bib_duplicates(document, data, builder);
-    }
-
-    fn process_bib_duplicates<'db>(
-        &mut self,
-        document: &'db Document,
-        data: &BibDocumentData,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        let entries = data
-            .semantics
-            .entries
-            .iter()
-            .map(|entry| (&entry.name.text, entry.name.range))
-            .into_group_map();
-
-        for mut ranges in entries.into_values().filter(|ranges| ranges.len() > 1) {
-            let others = ranges.split_off(1);
-
+    for entry in &data.semantics.entries {
+        if !citations.contains(entry.name.text.as_str()) {
             let diagnostic = Diagnostic {
-                range: ranges.pop().unwrap(),
-                data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
+                range: entry.name.range,
+                data: DiagnosticData::Bib(BibError::UnusedEntry),
             };
+
             builder.push(&document.uri, Cow::Owned(diagnostic));
         }
+    }
+}
+
+fn detect_duplicate_entries<'db>(workspace: &'db Workspace, builder: &mut DiagnosticBuilder<'db>) {
+    for conflict in queries::Conflict::find_all::<Entry>(workspace) {
+        let others = conflict
+            .rest
+            .iter()
+            .map(|location| (location.document.uri.clone(), location.range))
+            .collect();
+
+        let diagnostic = Diagnostic {
+            range: conflict.main.range,
+            data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
+        };
+
+        builder.push(&conflict.main.document.uri, Cow::Owned(diagnostic));
     }
 }

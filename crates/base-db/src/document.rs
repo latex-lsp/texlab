@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use distro::Language;
 use syntax::{bibtex, latex, BuildError};
+use text_size::TextRange;
 use url::Url;
 
 use crate::{
@@ -80,7 +81,7 @@ impl Document {
             Language::Tectonic => DocumentData::Tectonic,
         };
 
-        let document = Self {
+        Self {
             uri,
             dir,
             path,
@@ -90,9 +91,7 @@ impl Document {
             cursor: params.cursor,
             language: params.language,
             data,
-        };
-
-        document
+        }
     }
 }
 
@@ -205,4 +204,16 @@ pub struct LogDocumentData {
 pub struct AuxDocumentData {
     pub green: rowan::GreenNode,
     pub semantics: semantics::auxiliary::Semantics,
+}
+
+#[derive(Debug, Clone)]
+pub struct DocumentLocation<'a> {
+    pub document: &'a Document,
+    pub range: TextRange,
+}
+
+impl<'a> DocumentLocation<'a> {
+    pub fn new(document: &'a Document, range: TextRange) -> Self {
+        Self { document, range }
+    }
 }
