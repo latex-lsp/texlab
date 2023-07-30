@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use commands::ForwardSearchError;
 use lsp_types::{Position, Range, TextDocumentIdentifier, TextDocumentPositionParams};
 use serde::{Deserialize, Serialize};
