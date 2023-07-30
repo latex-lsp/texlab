@@ -59,7 +59,10 @@ impl ForwardSearch {
         }
 
         let dir = workspace.current_dir(&parent.dir);
-        let dir = workspace.output_dir(&dir).to_file_path().unwrap();
+        let dir = workspace
+            .output_dir(&dir, workspace.config().build.log_dir.clone())
+            .to_file_path()
+            .unwrap();
 
         let Some(tex_path) = &child.path else {
             return Err(ForwardSearchError::InvalidPath(child.uri.clone()));
@@ -67,11 +70,12 @@ impl ForwardSearch {
 
         let override_path = workspace.config().build.output_filename.as_deref();
 
-        let Some(pdf_path) = override_path.or(parent.path.as_deref())
+        let Some(pdf_path) = override_path
+            .or(parent.path.as_deref())
             .and_then(Path::file_stem)
             .and_then(OsStr::to_str)
-            .map(|stem| dir.join(format!("{stem}.pdf"))) else 
-        {
+            .map(|stem| dir.join(format!("{stem}.pdf")))
+        else {
             return Err(ForwardSearchError::InvalidPath(parent.uri.clone()));
         };
 

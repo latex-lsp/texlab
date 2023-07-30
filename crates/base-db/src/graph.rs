@@ -48,15 +48,18 @@ impl<'a> Graph<'a> {
 
         while let Some((source, base_dir)) = stack.pop() {
             let index = graph.edges.len();
-            graph.explicit_edges(source, &base_dir);
+            graph.add_explicit_edges(source, &base_dir);
             for edge in &graph.edges[index..] {
-                let Some(weight) = edge.weight.as_ref() else { continue };
+                let Some(weight) = edge.weight.as_ref() else {
+                    continue;
+                };
+
                 if visited.insert(&edge.target.uri) {
                     stack.push((edge.target, weight.new_base_dir.clone()));
                 }
             }
 
-            graph.implicit_edges(source, &base_dir);
+            graph.add_implicit_edges(source, &base_dir);
         }
 
         graph
@@ -68,19 +71,17 @@ impl<'a> Graph<'a> {
             .unique_by(|document| &document.uri)
     }
 
-    fn explicit_edges(&mut self, source: &'a Document, base_dir: &Url) {
-        let DocumentData::Tex(data) = &source.data else { return };
+    fn add_explicit_edges(&mut self, source: &'a Document, base_dir: &Url) {
+        let DocumentData::Tex(data) = &source.data else {
+            return;
+        };
+
         for link in &data.semantics.links {
-            self.explicit_edge(source, base_dir, link);
+            self.add_link(source, base_dir, link);
         }
     }
 
-    fn explicit_edge(
-        &mut self,
-        source: &'a Document,
-        base_dir: &Url,
-        link: &'a semantics::tex::Link,
-    ) {
+    fn add_link(&mut self, source: &'a Document, base_dir: &Url, link: &'a semantics::tex::Link) {
         let home_dir = HOME_DIR.as_deref();
 
         let stem = &link.path.text;
@@ -130,15 +131,20 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn implicit_edges(&mut self, source: &'a Document, base_dir: &Url) {
-        let uri = source.uri.as_str();
-        if source.language == Language::Tex && !uri.ends_with(".aux") {
-            self.implicit_edge(source, base_dir, "log");
-            self.implicit_edge(source, base_dir, "aux");
+    fn add_implicit_edges(&mut self, source: &'a Document, base_dir: &Url) {
+        if source.language == Language::Tex {
+            let config = &self.workspace.config().build;
+            let aux_dir = self.workspace.output_dir(base_dir, config.aux_dir.clone());
+            let log_dir = self.workspace.output_dir(base_dir, config.log_dir.clone());
+
+            self.add_artifact(source, &aux_dir, "aux");
+            self.add_artifact(source, base_dir, "aux");
+            self.add_artifact(source, &log_dir, "log");
+            self.add_artifact(source, base_dir, "log");
         }
     }
 
-    fn implicit_edge(&mut self, source: &'a Document, base_dir: &Url, extension: &str) {
+    fn add_artifact(&mut self, source: &'a Document, base_dir: &Url, extension: &str) {
         let mut path = PathBuf::from(
             percent_decode_str(source.uri.path())
                 .decode_utf8_lossy()
@@ -146,9 +152,13 @@ impl<'a> Graph<'a> {
         );
 
         path.set_extension(extension);
-        let Some(target_uri) = path.file_name()
+        let Some(target_uri) = path
+            .file_name()
             .and_then(OsStr::to_str)
-            .and_then(|name| self.workspace.output_dir(base_dir).join(name).ok()) else { return };
+            .and_then(|name| base_dir.join(name).ok())
+        else {
+            return;
+        };
 
         match self.workspace.lookup(&target_uri) {
             Some(target) => {

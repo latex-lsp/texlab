@@ -22,7 +22,10 @@ impl CleanCommand {
         };
 
         let dir = workspace.current_dir(&document.dir);
-        let dir = workspace.output_dir(&dir).to_file_path().unwrap();
+        let dir = workspace
+            .output_dir(&dir, workspace.config().build.log_dir.clone())
+            .to_file_path()
+            .unwrap();
 
         let flag = match target {
             CleanTarget::Auxiliary => "-c",

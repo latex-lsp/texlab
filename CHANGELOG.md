@@ -13,11 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report diagnostics for unused BibTeX entries and undefined citations
 - Report diagnostics for duplicate BibTeX entries
 - Report diagnostics for duplicate labels
+- Add `texlab.build.auxDirectory` and `texlab.build.logDirectory` settings ([#906](https://github.com/latex-lsp/texlab/issues/906))
+
+### Deprecated
+
+- Deprecate `texlab.auxDirectory` in favor of `texlab.build.auxDirectory`
 
 ### Fixed
 
 - Fix parsing paths with `|` ([#568](https://github.com/latex-lsp/texlab/issues/568))
 - Fix parsing LaTeX identifiers with `=` ([#568](https://github.com/latex-lsp/texlab/issues/568))
+- Fix search path for aux files when using `\include` instead of `\input` ([[#906](https://github.com/latex-lsp/texlab/issues/906))
 
 ## [5.7.0] - 2023-06-07
 

@@ -22,7 +22,8 @@ pub struct BuildConfig {
     pub args: Vec<String>,
     pub on_save: bool,
     pub forward_search_after: bool,
-    pub output_dir: String,
+    pub aux_dir: String,
+    pub log_dir: String,
     pub output_filename: Option<PathBuf>,
 }
 
@@ -112,7 +113,8 @@ impl Default for BuildConfig {
                 .collect(),
             on_save: false,
             forward_search_after: false,
-            output_dir: String::from("."),
+            aux_dir: String::from("."),
+            log_dir: String::from("."),
             output_filename: None,
         }
     }
