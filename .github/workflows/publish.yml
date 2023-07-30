@@ -95,19 +95,9 @@ jobs:
           gh release upload ${{ github.ref_name }} $(find . -iname texlab*.tar.gz)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  crates-io:
-    name: crates.io
-    needs: [github]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
-      # - run: cargo publish
-      #   env:
-      #     CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
   ctan:
     name: CTAN
-    needs: [github, crates-io]
+    needs: [github]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
