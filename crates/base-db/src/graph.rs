@@ -137,8 +137,13 @@ impl<'a> Graph<'a> {
             let aux_dir = self.workspace.output_dir(base_dir, config.aux_dir.clone());
             let log_dir = self.workspace.output_dir(base_dir, config.log_dir.clone());
 
+            let relative_path = base_dir.make_relative(&source.uri).unwrap();
+
+            self.add_artifact(source, &aux_dir.join(&relative_path).unwrap(), "aux");
             self.add_artifact(source, &aux_dir, "aux");
             self.add_artifact(source, base_dir, "aux");
+
+            self.add_artifact(source, &log_dir.join(&relative_path).unwrap(), "log");
             self.add_artifact(source, &log_dir, "log");
             self.add_artifact(source, base_dir, "log");
         }
