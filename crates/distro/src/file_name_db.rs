@@ -47,6 +47,10 @@ pub struct FileNameDB {
 }
 
 impl FileNameDB {
+    pub(crate) fn insert(&mut self, path: PathBuf) {
+        self.files.insert(DistroFile(path));
+    }
+
     pub fn get(&self, name: &str) -> Option<&Path> {
         self.files.get(name).map(|file| file.path())
     }
