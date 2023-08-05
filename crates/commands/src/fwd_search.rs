@@ -60,7 +60,7 @@ impl ForwardSearch {
 
         let dir = workspace.current_dir(&parent.dir);
         let dir = workspace
-            .output_dir(&dir, workspace.config().build.log_dir.clone())
+            .output_dir(&dir, workspace.config().build.pdf_dir.clone())
             .to_file_path()
             .unwrap();
 

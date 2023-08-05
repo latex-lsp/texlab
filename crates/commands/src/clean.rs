@@ -21,20 +21,26 @@ impl CleanCommand {
             anyhow::bail!("document '{}' is not a local file", document.uri)
         };
 
-        let dir = workspace.current_dir(&document.dir);
-        let dir = workspace
-            .output_dir(&dir, workspace.config().build.log_dir.clone())
-            .to_file_path()
-            .unwrap();
+        let base_dir = workspace.current_dir(&document.dir);
 
         let flag = match target {
             CleanTarget::Auxiliary => "-c",
             CleanTarget::Artifacts => "-C",
         };
 
+        let out_dir = match target {
+            CleanTarget::Auxiliary => &workspace.config().build.aux_dir,
+            CleanTarget::Artifacts => &workspace.config().build.pdf_dir,
+        };
+
+        let out_dir = workspace
+            .output_dir(&base_dir, out_dir.clone())
+            .to_file_path()
+            .unwrap();
+
         let executable = String::from("latexmk");
         let args = vec![
-            format!("-outdir={}", dir.display()),
+            format!("-outdir={}", out_dir.display()),
             String::from(flag),
             path.display().to_string(),
         ];
