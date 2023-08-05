@@ -58,7 +58,7 @@ impl Distro {
             }
         };
 
-        let file_name_db = match kind {
+        let mut file_name_db = match kind {
             DistroKind::Texlive => {
                 let root_dirs = kpsewhich::root_directories()?;
                 FileNameDB::parse(&root_dirs, &mut texlive::read_database)?
@@ -69,6 +69,20 @@ impl Distro {
             }
             DistroKind::Tectonic | DistroKind::Unknown => FileNameDB::default(),
         };
+
+        if let Some(bibinputs) = std::env::var_os("BIBINPUTS") {
+            for dir in std::env::split_paths(&bibinputs) {
+                if let Ok(entries) = std::fs::read_dir(dir) {
+                    for file in entries
+                        .flatten()
+                        .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
+                        .map(|entry| entry.path())
+                    {
+                        file_name_db.insert(file);
+                    }
+                }
+            }
+        }
 
         Ok(Self { kind, file_name_db })
     }
