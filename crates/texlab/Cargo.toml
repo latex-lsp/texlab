@@ -1,7 +1,7 @@
 [package]
 name = "texlab"
 description = "LaTeX Language Server"
-version = "5.8.0"
+version = "5.9.0"
 license.workspace = true
 readme = "README.md"
 authors.workspace = true
@@ -12,16 +12,7 @@ repository = "https://github.com/latex-lsp/texlab"
 documentation = "https://github.com/latex-lsp/texlab"
 keywords = ["lsp", "server", "latex", "bibtex"]
 categories = ["development-tools"]
-exclude = [
-  ".gitattributes",
-  ".gitignore",
-  ".github/**",
-  "tests/it/**",
-  "*.snap",
-  "texlab.1",
-  "texlab.pdf",
-  "texlab.tex",
-]
+exclude = ["tests/it/**", "*.snap"]
 
 [[bin]]
 name = "texlab"
