@@ -13,7 +13,7 @@ pub fn complete<'db>(
             builder.component_command(
                 range,
                 &command.name,
-                command.image.as_deref(),
+                command.image,
                 command.glyph.as_deref(),
                 &package.file_names,
             );

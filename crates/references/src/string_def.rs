@@ -3,7 +3,7 @@ use syntax::bibtex;
 
 use crate::{Reference, ReferenceContext, ReferenceKind};
 
-pub(super) fn find_all<'db>(context: &mut ReferenceContext<'db>) -> Option<()> {
+pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
     let document = context.params.document;
     let data = document.data.as_bib()?;
     let root = data.root_node();

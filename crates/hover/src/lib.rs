@@ -49,12 +49,12 @@ pub enum HoverData<'db> {
 }
 
 pub fn find<'db>(params: &'db HoverParams<'db>) -> Option<Hover<'db>> {
-    citation::find_hover(&params)
-        .or_else(|| package::find_hover(&params))
-        .or_else(|| entry_type::find_hover(&params))
-        .or_else(|| field_type::find_hover(&params))
-        .or_else(|| label::find_hover(&params))
-        .or_else(|| string_ref::find_hover(&params))
+    citation::find_hover(params)
+        .or_else(|| package::find_hover(params))
+        .or_else(|| entry_type::find_hover(params))
+        .or_else(|| field_type::find_hover(params))
+        .or_else(|| label::find_hover(params))
+        .or_else(|| string_ref::find_hover(params))
 }
 
 #[cfg(test)]

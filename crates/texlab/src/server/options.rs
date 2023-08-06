@@ -168,7 +168,7 @@ impl From<Options> for Config {
         config.build.pdf_dir = value
             .build
             .pdf_directory
-            .or_else(|| value.aux_directory)
+            .or(value.aux_directory)
             .unwrap_or_else(|| String::from("."));
 
         config.build.log_dir = value

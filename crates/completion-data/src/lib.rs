@@ -107,7 +107,7 @@ const JSON_GZ: &[u8] = include_bytes!("../data/completion.json.gz");
 
 pub static DATABASE: Lazy<Database<'static>> = Lazy::new(|| {
     let mut decoder = GzDecoder::new(JSON_GZ);
-    let json = Box::leak(Box::new(String::new()));
+    let json = Box::leak(Box::default());
     decoder.read_to_string(json).unwrap();
     let mut db: Database = serde_json::from_str(json).unwrap();
     db.lookup_packages = db

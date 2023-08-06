@@ -1151,7 +1151,7 @@ impl FileWatcher {
     pub fn new(sender: Sender<InternalMessage>) -> Result<Self> {
         let handle = move |event| {
             if let Ok(event) = event {
-                sender.send(InternalMessage::FileEvent(event)).unwrap();
+                let _ = sender.send(InternalMessage::FileEvent(event));
             }
         };
 

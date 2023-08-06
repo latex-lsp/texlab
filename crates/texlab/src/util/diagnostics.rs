@@ -17,12 +17,11 @@ pub fn collect<'db>(
     source.publish(workspace, &mut builder);
     builder
         .iter()
-        .into_iter()
         .filter_map(|(uri, diags)| workspace.lookup(uri).map(|document| (document, diags)))
         .map(|(document, diags)| {
             let diags = diags
                 .into_iter()
-                .map(|diag| create_diagnostic(workspace, document, &diag))
+                .map(|diag| create_diagnostic(workspace, document, diag))
                 .collect::<Vec<_>>();
 
             (document, diags)

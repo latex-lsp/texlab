@@ -20,7 +20,7 @@ pub(super) fn find_hover<'db>(params: &'db HoverParams<'db>) -> Option<Hover<'db
         .filter(|(_, label)| label.kind == tex::LabelKind::Definition)
         .find(|(_, label)| label.name_text() == cursor.object.name_text())?;
 
-    let label = render_label(&params.workspace, &params.project, definition)?;
+    let label = render_label(params.workspace, &params.project, definition)?;
     Some(Hover {
         range: cursor.range,
         data: HoverData::Label(label),

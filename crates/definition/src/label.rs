@@ -10,7 +10,7 @@ use crate::DefinitionContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_definition<'db>(context: &mut DefinitionContext<'db>) -> Option<()> {
+pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     let data = context.params.document.data.as_tex()?;
     let reference = queries::object_at_cursor(
         &data.semantics.labels,

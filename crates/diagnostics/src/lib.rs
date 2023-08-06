@@ -23,7 +23,7 @@ pub struct DiagnosticBuilder<'db> {
 
 impl<'db> DiagnosticBuilder<'db> {
     pub fn push(&mut self, uri: &'db Url, diagnostic: Cow<'db, Diagnostic>) {
-        self.inner.entry(&uri).or_default().push(diagnostic);
+        self.inner.entry(uri).or_default().push(diagnostic);
     }
 
     pub fn push_many(
@@ -31,7 +31,7 @@ impl<'db> DiagnosticBuilder<'db> {
         uri: &'db Url,
         diagnostics: impl Iterator<Item = Cow<'db, Diagnostic>>,
     ) {
-        self.inner.entry(&uri).or_default().extend(diagnostics);
+        self.inner.entry(uri).or_default().extend(diagnostics);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&'db Url, impl Iterator<Item = &Diagnostic>)> {
@@ -54,12 +54,14 @@ pub struct DiagnosticManager {
 
 impl Default for DiagnosticManager {
     fn default() -> Self {
-        let mut sources: Vec<Box<dyn DiagnosticSource>> = Vec::new();
-        sources.push(Box::new(TexSyntaxErrors::default()));
-        sources.push(Box::new(BibSyntaxErrors::default()));
-        sources.push(Box::new(BuildErrors::default()));
-        sources.push(Box::new(LabelErrors::default()));
-        sources.push(Box::new(CitationErrors::default()));
+        let sources: Vec<Box<dyn DiagnosticSource>> = vec![
+            Box::<TexSyntaxErrors>::default(),
+            Box::<BibSyntaxErrors>::default(),
+            Box::<BuildErrors>::default(),
+            Box::<LabelErrors>::default(),
+            Box::<CitationErrors>::default(),
+        ];
+
         Self { sources }
     }
 }

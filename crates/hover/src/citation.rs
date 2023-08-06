@@ -30,7 +30,7 @@ pub(super) fn find_hover<'db>(params: &HoverParams<'db>) -> Option<Hover<'db>> {
     let text = params.project.documents.iter().find_map(|document| {
         let data = document.data.as_bib()?;
         let root = bibtex::Root::cast(data.root_node())?;
-        let entry = root.find_entry(&name)?;
+        let entry = root.find_entry(name)?;
         citeproc::render(&entry)
     })?;
 

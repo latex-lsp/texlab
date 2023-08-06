@@ -29,7 +29,7 @@ struct DefinitionContext<'db> {
     results: Vec<DefinitionResult<'db>>,
 }
 
-pub fn goto_definition<'db>(params: DefinitionParams<'db>) -> Vec<DefinitionResult<'db>> {
+pub fn goto_definition(params: DefinitionParams) -> Vec<DefinitionResult> {
     let project = params.workspace.project(params.document);
     let mut context = DefinitionContext {
         params,

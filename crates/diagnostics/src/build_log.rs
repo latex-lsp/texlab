@@ -25,19 +25,24 @@ impl DiagnosticSource for BuildErrors {
     fn update(&mut self, workspace: &Workspace, log_document: &Document) {
         let mut errors: FxHashMap<Url, Vec<Diagnostic>> = FxHashMap::default();
 
-        let Some(data) = log_document.data.as_log() else { return };
+        let Some(data) = log_document.data.as_log() else {
+            return;
+        };
 
         let parents = workspace.parents(log_document);
-        let Some(root_document) = parents.iter().next() else { return };
+        let Some(root_document) = parents.iter().next() else {
+            return;
+        };
 
-        let Some(base_path) = root_document
-            .path
-            .as_deref()
-            .and_then(|path| path.parent()) else { return };
+        let Some(base_path) = root_document.path.as_deref().and_then(|path| path.parent()) else {
+            return;
+        };
 
         for error in &data.errors {
             let full_path = base_path.join(&error.relative_path);
-            let Ok(full_path_uri) = Url::from_file_path(&full_path) else { continue };
+            let Ok(full_path_uri) = Url::from_file_path(&full_path) else {
+                continue;
+            };
             let tex_document = workspace.lookup(&full_path_uri).unwrap_or(root_document);
 
             let range = find_range_of_hint(tex_document, error).unwrap_or_else(|| {
@@ -74,9 +79,12 @@ impl DiagnosticSource for BuildErrors {
         self.logs.retain(|uri, _| workspace.lookup(uri).is_some());
 
         for document in workspace.iter() {
-            let Some(log) = self.logs.get(&document.uri) else { continue };
+            let Some(log) = self.logs.get(&document.uri) else {
+                continue;
+            };
+
             for (uri, errors) in &log.errors {
-                builder.push_many(&uri, errors.iter().map(Cow::Borrowed));
+                builder.push_many(uri, errors.iter().map(Cow::Borrowed));
             }
         }
     }

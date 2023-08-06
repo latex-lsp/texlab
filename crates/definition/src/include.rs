@@ -4,7 +4,7 @@ use crate::DefinitionContext;
 
 use super::DefinitionResult;
 
-pub(super) fn goto_definition<'db>(context: &mut DefinitionContext<'db>) -> Option<()> {
+pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     let start = context.params.document;
     let parents = context.params.workspace.parents(start);
     let results = parents

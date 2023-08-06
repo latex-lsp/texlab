@@ -47,7 +47,7 @@ pub fn complete<'a>(context: &'a CursorContext, builder: &mut CompletionBuilder<
                 .filter(|(i, _)| *i == index)
             {
                 for arg in &param.0 {
-                    builder.generic_argument(range, &arg.name, arg.image.as_deref());
+                    builder.generic_argument(range, arg.name, arg.image);
                 }
             }
         }

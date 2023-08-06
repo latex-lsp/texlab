@@ -6,7 +6,7 @@ use base_db::{
 
 use crate::{Reference, ReferenceContext, ReferenceKind};
 
-pub(super) fn find_all<'db>(context: &mut ReferenceContext<'db>) -> Option<()> {
+pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
     let offset = context.params.offset;
 
     let name = match &context.params.document.data {
