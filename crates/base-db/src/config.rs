@@ -24,6 +24,7 @@ pub struct BuildConfig {
     pub forward_search_after: bool,
     pub aux_dir: String,
     pub log_dir: String,
+    pub pdf_dir: String,
     pub output_filename: Option<PathBuf>,
 }
 
@@ -115,6 +116,7 @@ impl Default for BuildConfig {
             forward_search_after: false,
             aux_dir: String::from("."),
             log_dir: String::from("."),
+            pdf_dir: String::from("."),
             output_filename: None,
         }
     }

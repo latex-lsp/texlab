@@ -71,6 +71,7 @@ pub struct BuildOptions {
     pub forward_search_after: bool,
     pub aux_directory: Option<String>,
     pub log_directory: Option<String>,
+    pub pdf_directory: Option<String>,
     pub filename: Option<String>,
 }
 
@@ -164,11 +165,16 @@ impl From<Options> for Config {
             .or_else(|| value.aux_directory.clone())
             .unwrap_or_else(|| String::from("."));
 
+        config.build.pdf_dir = value
+            .build
+            .pdf_directory
+            .or_else(|| value.aux_directory)
+            .unwrap_or_else(|| String::from("."));
+
         config.build.log_dir = value
             .build
             .log_directory
-            .or_else(|| value.aux_directory)
-            .unwrap_or_else(|| String::from("."));
+            .unwrap_or_else(|| config.build.pdf_dir.clone());
 
         config.build.output_filename = value.build.filename.map(PathBuf::from);
 

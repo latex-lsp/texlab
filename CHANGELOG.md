@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Use bibliographies found in `BIBINPUTS` environment variable ([#493](https://github.com/latex-lsp/texlab/issues/493))
+- Add `texlab.build.pdfDirectory` setting ([#911](https://github.com/latex-lsp/texlab/issues/911))
 
 ### Fixed
 
