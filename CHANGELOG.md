@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use bibliographies found in `BIBINPUTS` environment variable ([#493](https://github.com/latex-lsp/texlab/issues/493))
 
+### Fixed
+
+- Fix search path for aux files when using `\include` instead of `\input` ([#906](https://github.com/latex-lsp/texlab/issues/906))
+
 ## [5.8.0] - 2023-07-30
 
 ### Added
@@ -29,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix parsing paths with `|` ([#568](https://github.com/latex-lsp/texlab/issues/568))
 - Fix parsing LaTeX identifiers with `=` ([#568](https://github.com/latex-lsp/texlab/issues/568))
-- Fix search path for aux files when using `\include` instead of `\input` ([[#906](https://github.com/latex-lsp/texlab/issues/906))
 
 ## [5.7.0] - 2023-06-07
 
