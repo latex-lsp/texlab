@@ -7,6 +7,7 @@ use std::{
     collections::HashMap,
     path::PathBuf,
     sync::{atomic::AtomicI32, Arc},
+    time::Duration,
 };
 
 use anyhow::Result;
@@ -17,6 +18,7 @@ use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
+use notify_debouncer_full::{DebouncedEvent, Debouncer, FileIdMap};
 use parking_lot::{Mutex, RwLock};
 use rowan::ast::AstNode;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -49,7 +51,7 @@ use self::{
 enum InternalMessage {
     SetDistro(Distro),
     SetOptions(Options),
-    FileEvent(notify::Event),
+    FileEvent(Vec<DebouncedEvent>),
     Diagnostics,
     ChktexResult(Url, Vec<lsp_types::Diagnostic>),
     ForwardSearch(Url, Option<Position>),
@@ -887,7 +889,8 @@ impl Server {
         Ok(())
     }
 
-    fn handle_file_event(&mut self, event: notify::Event) {
+    fn handle_file_event(&mut self, debounced_event: DebouncedEvent) {
+        let event = debounced_event.event;
         let mut changed = false;
 
         let mut workspace = self.workspace.write();
@@ -1115,8 +1118,10 @@ impl Server {
                         InternalMessage::SetOptions(options) => {
                             self.update_options(options);
                         }
-                        InternalMessage::FileEvent(event) => {
-                            self.handle_file_event(event);
+                        InternalMessage::FileEvent(events) => {
+                            for event in events {
+                                self.handle_file_event(event);
+                            }
                         }
                         InternalMessage::Diagnostics => {
                             self.publish_diagnostics()?;
@@ -1143,7 +1148,7 @@ impl Server {
 }
 
 struct FileWatcher {
-    watcher: notify::RecommendedWatcher,
+    watcher: Debouncer<notify::RecommendedWatcher, FileIdMap>,
     watched_dirs: FxHashSet<PathBuf>,
 }
 
@@ -1156,12 +1161,12 @@ impl FileWatcher {
         };
 
         Ok(Self {
-            watcher: notify::recommended_watcher(handle)?,
+            watcher: notify_debouncer_full::new_debouncer(Duration::from_secs(1), None, handle)?,
             watched_dirs: FxHashSet::default(),
         })
     }
 
     pub fn watch(&mut self, workspace: &mut Workspace) {
-        workspace.watch(&mut self.watcher, &mut self.watched_dirs);
+        workspace.watch(self.watcher.watcher(), &mut self.watched_dirs);
     }
 }
