@@ -75,6 +75,12 @@ impl Workspace {
             Cow::Owned(text) => text,
         };
 
+        if let Some(document) = self.lookup_path(path) {
+            if document.text == text {
+                return Ok(());
+            }
+        }
+
         self.open(uri, text, language, owner, LineCol { line: 0, col: 0 });
         Ok(())
     }
