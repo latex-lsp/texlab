@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use base_db::{
     semantics::{bib::Entry, tex::Citation},
     util::queries::{self, Object},
-    BibDocumentData, Document, DocumentData, Project, TexDocumentData, Workspace,
+    Document, Project, Workspace,
 };
 use rustc_hash::FxHashSet;
 
@@ -11,6 +11,8 @@ use crate::{
     types::{BibError, Diagnostic, DiagnosticData, TexError},
     DiagnosticBuilder, DiagnosticSource,
 };
+
+const MAX_UNUSED_ENTRIES: usize = 1000;
 
 #[derive(Default)]
 pub struct CitationErrors;
@@ -23,12 +25,8 @@ impl DiagnosticSource for CitationErrors {
     ) {
         for document in workspace.iter() {
             let project = workspace.project(document);
-
-            if let DocumentData::Tex(data) = &document.data {
-                detect_undefined_citations(&project, document, data, builder);
-            } else if let DocumentData::Bib(data) = &document.data {
-                detect_unused_entries(&project, document, data, builder);
-            }
+            detect_undefined_citations(&project, document, builder);
+            detect_unused_entries(&project, document, builder);
         }
 
         detect_duplicate_entries(workspace, builder);
@@ -38,9 +36,12 @@ impl DiagnosticSource for CitationErrors {
 fn detect_undefined_citations<'db>(
     project: &Project<'db>,
     document: &'db Document,
-    data: &TexDocumentData,
     builder: &mut DiagnosticBuilder<'db>,
 ) {
+    let Some(data) = document.data.as_tex() else {
+        return;
+    };
+
     let entries: FxHashSet<&str> = Entry::find_all(project)
         .map(|(_, entry)| entry.name_text())
         .collect();
@@ -60,9 +61,17 @@ fn detect_undefined_citations<'db>(
 fn detect_unused_entries<'db>(
     project: &Project<'db>,
     document: &'db Document,
-    data: &BibDocumentData,
     builder: &mut DiagnosticBuilder<'db>,
 ) {
+    let Some(data) = document.data.as_bib() else {
+        return;
+    };
+
+    // If this is a huge bibliography, then don't bother checking for unused entries.
+    if data.semantics.entries.len() > MAX_UNUSED_ENTRIES {
+        return;
+    }
+
     let citations: FxHashSet<&str> = Citation::find_all(project)
         .map(|(_, citation)| citation.name_text())
         .collect();
