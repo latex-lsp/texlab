@@ -1,3 +1,9 @@
+use bibtex_utils::field::{
+    author::AuthorField,
+    date::DateField,
+    number::{NumberField, NumberFieldData},
+    text::TextField,
+};
 use isocountry::CountryCode;
 use itertools::Itertools;
 use syntax::bibtex;
@@ -6,12 +12,6 @@ use url::Url;
 
 use super::{
     entry::{EntryData, EntryKind},
-    field::{
-        author::AuthorField,
-        date::DateField,
-        number::{NumberField, NumberFieldData},
-        text::TextField,
-    },
     output::{Inline, InlineBuilder, Punct},
 };
 

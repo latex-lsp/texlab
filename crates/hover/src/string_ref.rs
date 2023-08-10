@@ -1,4 +1,4 @@
-use citeproc::field::text::TextFieldData;
+use bibtex_utils::field::text::TextFieldData;
 use rowan::ast::AstNode;
 use syntax::bibtex::{self, HasName, HasValue};
 
