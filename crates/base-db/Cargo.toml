@@ -21,6 +21,7 @@ rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
 text-size = "1.1.1"
 url = "=2.3.1"
+bibtex-utils = { path = "../bibtex-utils" }
 
 [lib]
 doctest = false
