@@ -1,5 +1,6 @@
 use base_db::{
     data::{BibtexEntryType, BibtexEntryTypeCategory, BibtexFieldType},
+    semantics::bib,
     Document, MatchingAlgo,
 };
 use fuzzy_matcher::skim::SkimMatcherV2;
@@ -8,14 +9,10 @@ use lsp_types::{
     ClientCapabilities, ClientInfo, CompletionItem, CompletionItemKind, CompletionList,
     CompletionTextEdit, Documentation, InsertTextFormat, MarkupContent, MarkupKind, TextEdit, Url,
 };
-use once_cell::sync::Lazy;
-use regex::Regex;
+use rayon::prelude::{IntoParallelRefIterator, ParallelExtend, ParallelIterator};
 use rowan::{ast::AstNode, TextRange, TextSize};
 use serde::{Deserialize, Serialize};
-use syntax::{
-    bibtex::{self, HasName, HasType},
-    latex,
-};
+use syntax::{bibtex, latex};
 
 use crate::util::{
     capabilities::ClientCapabilitiesExt,
@@ -176,33 +173,51 @@ impl<'a> CompletionBuilder<'a> {
         Some(())
     }
 
+    pub fn citations(&mut self, range: TextRange, document: &'a Document) {
+        let Some(data) = document.data.as_bib() else {
+            return;
+        };
+
+        let iter = data
+            .semantics
+            .entries
+            .par_iter()
+            .filter_map(|entry| {
+                let score = self.matcher.score(&entry.keywords, &self.text_pattern)?;
+                Some((entry, score))
+            })
+            .map(|(entry, score)| {
+                let data = Data::Citation {
+                    document,
+                    key: &entry.name.text,
+                    filter_text: &entry.keywords,
+                    category: entry.category,
+                };
+
+                Item {
+                    range,
+                    data,
+                    preselect: false,
+                    score,
+                }
+            });
+
+        self.items.par_extend(iter);
+    }
+
     pub fn citation(
         &mut self,
         range: TextRange,
         document: &'a Document,
-        entry: &bibtex::Entry,
+        entry: &'a bib::Entry,
     ) -> Option<()> {
-        let key = entry.name_token()?.to_string();
-
-        let category = BibtexEntryType::find(&entry.type_token()?.text()[1..])
-            .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
-
-        let code = entry.syntax().text().to_string();
-        let filter_text = format!(
-            "{} {}",
-            key,
-            WHITESPACE_REGEX
-                .replace_all(&code.replace(['{', '}', ',', '='], " "), " ")
-                .trim(),
-        );
-
-        let score = self.matcher.score(&filter_text, &self.text_pattern)?;
+        let score = self.matcher.score(&entry.keywords, &self.text_pattern)?;
 
         let data = Data::Citation {
             document,
-            key,
-            filter_text,
-            category,
+            key: &entry.name.text,
+            filter_text: &entry.keywords,
+            category: entry.category,
         };
 
         self.items.push(Item {
@@ -509,18 +524,17 @@ impl<'a> CompletionBuilder<'a> {
                 filter_text,
                 category,
             } => CompletionItem {
-                label: key.clone(),
+                label: key.into(),
                 kind: Some(Structure::Entry(category).completion_kind()),
-                filter_text: Some(filter_text.clone()),
-                sort_text: Some(filter_text),
+                filter_text: Some(filter_text.into()),
                 data: Some(
                     serde_json::to_value(CompletionItemData::Citation {
                         uri: document.uri.clone(),
-                        key: key.clone(),
+                        key: key.into(),
                     })
                     .unwrap(),
                 ),
-                text_edit: Some(TextEdit::new(range, key).into()),
+                text_edit: Some(TextEdit::new(range, key.into()).into()),
                 ..CompletionItem::default()
             },
             Data::ComponentCommand {
@@ -599,7 +613,6 @@ impl<'a> CompletionBuilder<'a> {
                 kind: Some(kind.completion_kind()),
                 detail: header,
                 documentation: footer.map(|footer| Documentation::String(footer.into())),
-                sort_text: Some(text.clone()),
                 filter_text: Some(text),
                 text_edit: Some(TextEdit::new(range, name.into()).into()),
                 ..CompletionItem::default()
@@ -634,16 +647,7 @@ impl<'a> CompletionBuilder<'a> {
             item.kind = Some(CompletionItemKind::TEXT);
         }
 
-        let sort_prefix = format!("{:0>2}", index);
-        match &item.sort_text {
-            Some(sort_text) => {
-                item.sort_text = Some(format!("{} {}", sort_prefix, sort_text));
-            }
-            None => {
-                item.sort_text = Some(sort_prefix);
-            }
-        };
-
+        item.sort_text = Some(format!("{:0>2}", index));
         item
     }
 
@@ -693,8 +697,8 @@ enum Data<'a> {
     BeginSnippet,
     Citation {
         document: &'a Document,
-        key: String,
-        filter_text: String,
+        key: &'a str,
+        filter_text: &'a str,
         category: BibtexEntryTypeCategory,
     },
     ComponentCommand {
@@ -778,5 +782,3 @@ pub(crate) enum CompletionItemData {
     Class,
     Citation { uri: Url, key: String },
 }
-
-static WHITESPACE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new("\\s+").unwrap());

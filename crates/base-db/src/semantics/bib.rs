@@ -1,6 +1,10 @@
+use bibtex_utils::field::text::TextFieldData;
+use itertools::Itertools;
 use rowan::ast::AstNode;
-use syntax::bibtex::{self, HasName};
+use syntax::bibtex::{self, HasName, HasType, HasValue};
 use text_size::TextRange;
+
+use crate::data::{BibtexEntryType, BibtexEntryTypeCategory};
 
 use super::Span;
 
@@ -23,12 +27,27 @@ impl Semantics {
 
     fn process_entry(&mut self, entry: bibtex::Entry) {
         if let Some(name) = entry.name_token() {
+            let type_token = entry.type_token().unwrap();
+            let category = BibtexEntryType::find(&type_token.text()[1..])
+                .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
+
+            let field_values = entry
+                .fields()
+                .filter_map(|field| Some(TextFieldData::parse(&field.value()?)?.text));
+
+            let keywords = [name.text().into(), type_token.text().into()]
+                .into_iter()
+                .chain(field_values)
+                .join(" ");
+
             self.entries.push(Entry {
                 name: Span {
                     range: name.text_range(),
                     text: name.text().into(),
                 },
                 full_range: entry.syntax().text_range(),
+                category,
+                keywords,
             });
         }
     }
@@ -50,6 +69,8 @@ impl Semantics {
 pub struct Entry {
     pub name: Span,
     pub full_range: TextRange,
+    pub keywords: String,
+    pub category: BibtexEntryTypeCategory,
 }
 
 #[derive(Debug, Clone)]

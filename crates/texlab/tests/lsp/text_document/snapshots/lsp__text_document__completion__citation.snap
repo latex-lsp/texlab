@@ -1,16 +1,16 @@
 ---
-source: tests/lsp/text_document/completion.rs
+source: crates/texlab/tests/lsp/text_document/completion.rs
 expression: "complete(r#\"\n%! main.tex\n\\documentclass{article}\n\\bibliography{main}\n\\begin{document}\n\\cite{\n      |\n\\end{document}\n\n%! main.bib\n@article{foo:2019,\n    author = {Foo Bar},\n    title = {Baz Qux},\n    year = {2019},\n}\n\n@article{bar:2005,}\"#)"
 ---
 [
   {
     "label": "bar:2005",
     "preselect": false,
-    "filterText": "bar:2005 @article bar:2005"
+    "filterText": "bar:2005 @article"
   },
   {
     "label": "foo:2019",
     "preselect": false,
-    "filterText": "foo:2019 @article foo:2019 author Foo Bar title Baz Qux year 2019"
+    "filterText": "foo:2019 @article Foo Bar Baz Qux 2019"
   }
 ]

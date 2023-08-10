@@ -1,9 +1,9 @@
-pub trait Matcher {
-    fn score(&mut self, choice: &str, pattern: &str) -> Option<i32>;
+pub trait Matcher: Send + Sync {
+    fn score(&self, choice: &str, pattern: &str) -> Option<i32>;
 }
 
 impl<T: fuzzy_matcher::FuzzyMatcher> Matcher for T {
-    fn score(&mut self, choice: &str, pattern: &str) -> Option<i32> {
+    fn score(&self, choice: &str, pattern: &str) -> Option<i32> {
         fuzzy_matcher::FuzzyMatcher::fuzzy_match(self, choice, pattern)
     }
 }
@@ -12,7 +12,7 @@ impl<T: fuzzy_matcher::FuzzyMatcher> Matcher for T {
 pub struct Prefix;
 
 impl Matcher for Prefix {
-    fn score(&mut self, choice: &str, pattern: &str) -> Option<i32> {
+    fn score(&self, choice: &str, pattern: &str) -> Option<i32> {
         if choice.starts_with(pattern) {
             Some(-(choice.len() as i32))
         } else {
@@ -25,7 +25,7 @@ impl Matcher for Prefix {
 pub struct PrefixIgnoreCase;
 
 impl Matcher for PrefixIgnoreCase {
-    fn score(&mut self, choice: &str, pattern: &str) -> Option<i32> {
+    fn score(&self, choice: &str, pattern: &str) -> Option<i32> {
         if pattern.len() > choice.len() {
             return None;
         }

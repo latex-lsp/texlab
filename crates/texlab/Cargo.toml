@@ -47,6 +47,7 @@ notify-debouncer-full = "0.2.0"
 once_cell = "1.18.0"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
+rayon = "1.7.0"
 references = { path = "../references" }
 regex = "1.9.1"
 rowan = "0.15.11"

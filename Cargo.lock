@@ -121,6 +121,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 name = "base-db"
 version = "0.0.0"
 dependencies = [
+ "bibtex-utils",
  "dirs",
  "distro",
  "itertools 0.11.0",
@@ -142,6 +143,21 @@ name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
+
+[[package]]
+name = "bibtex-utils"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "expect-test",
+ "human_name",
+ "itertools 0.11.0",
+ "parser",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "unicode-normalization",
+]
 
 [[package]]
 name = "bitflags"
@@ -234,9 +250,8 @@ dependencies = [
 name = "citeproc"
 version = "0.0.0"
 dependencies = [
- "chrono",
+ "bibtex-utils",
  "expect-test",
- "human_name",
  "isocountry",
  "itertools 0.11.0",
  "parser",
@@ -737,6 +752,7 @@ name = "hover"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "bibtex-utils",
  "citeproc",
  "completion-data",
  "expect-test",
@@ -1636,6 +1652,7 @@ dependencies = [
  "once_cell",
  "parking_lot",
  "parser",
+ "rayon",
  "references",
  "regex",
  "rowan",
