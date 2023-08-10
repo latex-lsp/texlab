@@ -1,12 +1,11 @@
-use rustc_hash::FxHashMap;
-use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};
-
-use super::field::{
+use bibtex_utils::field::{
     author::{AuthorField, AuthorFieldData},
     date::{DateField, DateFieldData},
     number::{NumberField, NumberFieldData},
     text::{TextField, TextFieldData},
 };
+use rustc_hash::FxHashMap;
+use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum EntryKind {

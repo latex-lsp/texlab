@@ -1,6 +1,5 @@
 mod driver;
 mod entry;
-pub mod field;
 mod output;
 
 use syntax::bibtex;
