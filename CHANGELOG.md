@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Don't crash when using comments inside `\include`-like commands ([#919](https://github.com/latex-lsp/texlab/issues/919))
+- Folding ranges include only the contents instead of the entire range of the structure.
+  For example, the folding range of an environment will start after the `\begin` and stop before the `\end`
+  ([#915](https://github.com/latex-lsp/texlab/issues/915))
 
 ## [5.9.1] - 2023-08-11
 

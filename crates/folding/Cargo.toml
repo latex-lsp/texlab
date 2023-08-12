@@ -1,0 +1,19 @@
+[package]
+name = "folding"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base-db = { path = "../base-db" }
+rowan = "0.15.11"
+syntax = { path = "../syntax" }
+
+[dev-dependencies]
+expect-test = "1.4.1"
+test-utils = { path = "../test-utils" }
+
+[lib]
+doctest = false

@@ -654,6 +654,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "folding"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "expect-test",
+ "rowan",
+ "syntax",
+ "test-utils",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1640,6 +1651,7 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "fern",
+ "folding",
  "fuzzy-matcher",
  "hover",
  "insta",

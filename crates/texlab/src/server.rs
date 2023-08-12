@@ -605,8 +605,9 @@ impl Server {
     fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
+        let client_capabilities = Arc::clone(&self.client_capabilities);
         self.run_query(id, move |db| {
-            folding::find_all(db, &uri).unwrap_or_default()
+            folding::find_all(db, &uri, &client_capabilities).unwrap_or_default()
         });
         Ok(())
     }
