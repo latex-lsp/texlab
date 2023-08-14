@@ -1,62 +1,44 @@
-use base_db::{DocumentData, Workspace};
-use lsp_types::{FoldingRange, FoldingRangeKind, Range, Url};
-use rowan::ast::AstNode;
-use syntax::{bibtex, latex};
+use base_db::Workspace;
+use folding::FoldingRangeKind;
+use lsp_types::{ClientCapabilities, Url};
 
 use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_all(workspace: &Workspace, uri: &Url) -> Option<Vec<FoldingRange>> {
+pub fn find_all(
+    workspace: &Workspace,
+    uri: &Url,
+    capabilities: &ClientCapabilities,
+) -> Option<Vec<serde_json::Value>> {
+    let custom_kinds = capabilities
+        .text_document
+        .as_ref()
+        .and_then(|cap| cap.folding_range.as_ref())
+        .and_then(|cap| cap.folding_range_kind.as_ref())
+        .and_then(|cap| cap.value_set.as_ref())
+        .is_some();
+
     let document = workspace.lookup(uri)?;
-    let line_index = &document.line_index;
-    let foldings = match &document.data {
-        DocumentData::Tex(data) => {
-            let mut results = Vec::new();
-            for node in data.root_node().descendants() {
-                if let Some(folding) = latex::Environment::cast(node.clone())
-                    .map(|node| latex::small_range(&node))
-                    .or_else(|| {
-                        latex::Section::cast(node.clone()).map(|node| latex::small_range(&node))
-                    })
-                    .or_else(|| latex::EnumItem::cast(node).map(|node| latex::small_range(&node)))
-                    .map(|node| line_index.line_col_lsp_range(node))
-                    .map(create_range)
-                {
-                    results.push(folding);
-                }
-            }
+    let foldings = folding::find_all(document).into_iter().map(|folding| {
+        let range = document.line_index.line_col_lsp_range(folding.range);
 
-            results
-        }
-        DocumentData::Bib(data) => {
-            let root = data.root_node();
-            root.descendants()
-                .filter(|node| {
-                    matches!(
-                        node.kind(),
-                        bibtex::PREAMBLE | bibtex::STRING | bibtex::ENTRY
-                    )
-                })
-                .map(|node| create_range(line_index.line_col_lsp_range(node.text_range())))
-                .collect()
-        }
-        DocumentData::Aux(_)
-        | DocumentData::Log(_)
-        | DocumentData::Root
-        | DocumentData::Tectonic => {
-            return None;
-        }
-    };
+        let kind = if custom_kinds {
+            Some(match folding.kind {
+                FoldingRangeKind::Section => "section",
+                FoldingRangeKind::Environment => "environment",
+                FoldingRangeKind::Entry => "entry",
+            })
+        } else {
+            None
+        };
 
-    Some(foldings)
-}
+        serde_json::json!({
+            "startLine": range.start.line,
+            "startCharacter": range.start.character,
+            "endLine": range.end.line,
+            "endCharacter": range.end.character,
+            "kind": kind,
+        })
+    });
 
-fn create_range(range: Range) -> FoldingRange {
-    FoldingRange {
-        start_line: range.start.line,
-        start_character: Some(range.start.character),
-        end_line: range.end.line,
-        end_character: Some(range.end.character),
-        collapsed_text: None,
-        kind: Some(FoldingRangeKind::Region),
-    }
+    Some(foldings.collect())
 }
