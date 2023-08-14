@@ -732,15 +732,18 @@ impl<'a> Parser<'a> {
 
         while let Some(kind) = self.peek() {
             match kind {
-                Token::LineComment
-                | Token::Word
+                Token::Word
                 | Token::Eq
                 | Token::LBrack
                 | Token::RBrack
                 | Token::LParen
                 | Token::RParen
                 | Token::CommandName(CommandName::Generic) => self.path(),
-                Token::Whitespace | Token::LineBreak | Token::Comma | Token::Pipe => self.eat(),
+                Token::Whitespace
+                | Token::LineBreak
+                | Token::LineComment
+                | Token::Comma
+                | Token::Pipe => self.eat(),
                 Token::LCurly => self.curly_group_path(),
                 _ => break,
             };

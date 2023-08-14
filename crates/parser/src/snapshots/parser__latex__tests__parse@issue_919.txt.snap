@@ -1,0 +1,61 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/issue_919.txt
+---
+ROOT@0..217
+  PREAMBLE@0..217
+    CLASS_INCLUDE@0..25
+      COMMAND_NAME@0..14 "\\documentclass"
+      CURLY_GROUP_WORD_LIST@14..25
+        L_CURLY@14..15 "{"
+        KEY@15..22
+          WORD@15..22 "article"
+        R_CURLY@22..23 "}"
+        LINE_BREAK@23..25 "\n\n"
+    PACKAGE_INCLUDE@25..173
+      COMMAND_NAME@25..36 "\\usepackage"
+      CURLY_GROUP_WORD_LIST@36..173
+        L_CURLY@36..37 "{"
+        LINE_BREAK@37..38 "\n"
+        WHITESPACE@38..42 "    "
+        KEY@42..48
+          WORD@42..48 "lipsum"
+        COMMA@48..49 ","
+        WHITESPACE@49..50 " "
+        COMMENT@50..70 "% provides blindtext"
+        LINE_BREAK@70..71 "\n"
+        WHITESPACE@71..75 "    "
+        KEY@75..83
+          WORD@75..83 "booktabs"
+        COMMA@83..84 ","
+        WHITESPACE@84..85 " "
+        COMMENT@85..110 "% better rules for ta ..."
+        LINE_BREAK@110..111 "\n"
+        WHITESPACE@111..115 "    "
+        COMMENT@115..169 "%xcolor % easily defi ..."
+        LINE_BREAK@169..170 "\n"
+        R_CURLY@170..171 "}"
+        LINE_BREAK@171..173 "\n\n"
+    ENVIRONMENT@173..217
+      BEGIN@173..194
+        COMMAND_NAME@173..179 "\\begin"
+        CURLY_GROUP_WORD@179..194
+          L_CURLY@179..180 "{"
+          KEY@180..188
+            WORD@180..188 "document"
+          R_CURLY@188..189 "}"
+          LINE_BREAK@189..190 "\n"
+          WHITESPACE@190..194 "    "
+      GENERIC_COMMAND@194..202
+        COMMAND_NAME@194..201 "\\lipsum"
+        LINE_BREAK@201..202 "\n"
+      END@202..217
+        COMMAND_NAME@202..206 "\\end"
+        CURLY_GROUP_WORD@206..217
+          L_CURLY@206..207 "{"
+          KEY@207..215
+            WORD@207..215 "document"
+          R_CURLY@215..216 "}"
+          LINE_BREAK@216..217 "\n"
+
