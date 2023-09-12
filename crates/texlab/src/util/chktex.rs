@@ -16,6 +16,7 @@ use regex::Regex;
 pub struct Command {
     text: String,
     working_dir: PathBuf,
+    additional_args: Vec<String>,
 }
 
 impl Command {
@@ -39,13 +40,21 @@ impl Command {
         log::debug!("Calling ChkTeX from directory: {}", working_dir.display());
 
         let text = document.text.clone();
-
-        Some(Self { text, working_dir })
+        let config = &workspace.config().diagnostics.chktex;
+        let additional_args = config.additional_args.clone();
+        Some(Self {
+            text,
+            working_dir,
+            additional_args,
+        })
     }
 
-    pub fn run(self) -> std::io::Result<Vec<Diagnostic>> {
+    pub fn run(mut self) -> std::io::Result<Vec<Diagnostic>> {
+        let mut args = vec!["-I0".into(), "-f%l:%c:%d:%k:%n:%m\n".into()];
+        args.append(&mut self.additional_args);
+
         let mut child = std::process::Command::new("chktex")
-            .args(["-I0", "-f%l:%c:%d:%k:%n:%m\n"])
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

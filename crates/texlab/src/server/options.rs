@@ -81,6 +81,7 @@ pub struct BuildOptions {
 pub struct ChktexOptions {
     pub on_open_and_save: bool,
     pub on_edit: bool,
+    pub additional_args: Option<Vec<String>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -199,6 +200,8 @@ impl From<Options> for Config {
         config.diagnostics.chktex.on_open = value.chktex.on_open_and_save;
         config.diagnostics.chktex.on_save = value.chktex.on_open_and_save;
         config.diagnostics.chktex.on_edit = value.chktex.on_edit;
+        config.diagnostics.chktex.additional_args =
+            value.chktex.additional_args.unwrap_or_default();
 
         config.formatting.tex_formatter = match value.latex_formatter {
             LatexFormatter::None => Formatter::Null,
