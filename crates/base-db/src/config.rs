@@ -41,6 +41,7 @@ pub struct ChktexConfig {
     pub on_open: bool,
     pub on_save: bool,
     pub on_edit: bool,
+    pub additional_args: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -139,6 +140,7 @@ impl Default for ChktexConfig {
             on_open: false,
             on_save: false,
             on_edit: false,
+            additional_args: Vec::new(),
         }
     }
 }
