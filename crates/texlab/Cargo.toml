@@ -51,6 +51,7 @@ parser = { path = "../parser" }
 rayon = "1.7.0"
 references = { path = "../references" }
 regex = "1.9.1"
+rename = { path = "../rename" }
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
 serde = "1.0.171"

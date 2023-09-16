@@ -645,24 +645,15 @@ impl Server {
         Ok(())
     }
 
-    fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
-        self.run_query(id, move |db| {
-            rename::prepare_rename_all(db, &uri, params.position)
-        });
-
+    fn prepare_rename(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
+        self.run_query(id, move |db| rename::prepare_rename_all(db, &params));
         Ok(())
     }
 
-    fn rename(&self, id: RequestId, params: RenameParams) -> Result<()> {
-        let mut uri = params.text_document_position.text_document.uri;
-        normalize_uri(&mut uri);
-        let position = params.text_document_position.position;
-        self.run_query(id, move |db| {
-            rename::rename_all(db, &uri, position, params.new_name)
-        });
-
+    fn rename(&self, id: RequestId, mut params: RenameParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
+        self.run_query(id, move |db| rename::rename_all(db, &params));
         Ok(())
     }
 

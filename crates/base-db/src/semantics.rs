@@ -8,6 +8,12 @@ pub struct Span {
     pub range: rowan::TextRange,
 }
 
+impl Span {
+    pub fn new(text: String, range: rowan::TextRange) -> Self {
+        Self { text, range }
+    }
+}
+
 impl std::fmt::Debug for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("Span")
@@ -26,8 +32,8 @@ impl From<&syntax::latex::Key> for Span {
     }
 }
 
-impl From<&syntax::bibtex::SyntaxToken> for Span {
-    fn from(token: &syntax::bibtex::SyntaxToken) -> Self {
+impl<L: rowan::Language> From<&rowan::SyntaxToken<L>> for Span {
+    fn from(token: &rowan::SyntaxToken<L>) -> Self {
         Self {
             text: token.text().into(),
             range: token.text_range(),

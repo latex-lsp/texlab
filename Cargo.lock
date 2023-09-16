@@ -1423,6 +1423,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5ea92a5b6195c6ef2a0295ea818b312502c6fc94dde986c5553242e18fd4ce2"
 
 [[package]]
+name = "rename"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "test-utils",
+]
+
+[[package]]
 name = "rowan"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1667,6 +1678,7 @@ dependencies = [
  "rayon",
  "references",
  "regex",
+ "rename",
  "rowan",
  "rustc-hash",
  "serde",
