@@ -39,7 +39,7 @@ impl SymbolBuilder {
             .filter_map(|field| self.visit_field(&field))
             .collect();
 
-        let category = BibtexEntryType::find(&ty.text()[1..])
+        let category = BibtexEntryType::find(ty.text())
             .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
 
         Some(Symbol {

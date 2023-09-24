@@ -98,7 +98,7 @@ fn test_bibtex_entry_type_known() {
             Some(
                 EntryType(
                     BibtexEntryType {
-                        name: "article",
+                        name: "@article",
                         category: Article,
                         documentation: Some(
                             "An article in a journal, magazine, newspaper, or other periodical which forms a \n self-contained unit with its own title. The title of the periodical is given in the \n journaltitle field. If the issue has its own title in addition to the main title of \n the periodical, it goes in the issuetitle field. Note that editor and related \n fields refer to the journal while translator and related fields refer to the article.\n\nRequired fields: `author`, `title`, `journaltitle`, `year/date`",

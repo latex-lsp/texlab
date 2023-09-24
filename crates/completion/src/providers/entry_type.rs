@@ -1,5 +1,4 @@
 use base_db::semantics::Span;
-use rowan::{TextRange, TextSize};
 use syntax::bibtex;
 
 use crate::{
@@ -36,8 +35,6 @@ fn find_entry_type(params: &CompletionParams) -> Option<Span> {
     if range.start() == params.offset {
         None
     } else {
-        let text = &token.text()[1..];
-        let range = TextRange::new(range.start() + TextSize::of('@'), range.end());
-        Some(Span::new(text.into(), range))
+        Some(Span::from(&token))
     }
 }

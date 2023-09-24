@@ -10,7 +10,7 @@ pub(super) fn find_hover<'db>(params: &'db HoverParams) -> Option<Hover<'db>> {
         .token_at_offset(params.offset)
         .find(|x| x.kind() == bibtex::TYPE)?;
 
-    let entry_type = BibtexEntryType::find(&name.text()[1..])?;
+    let entry_type = BibtexEntryType::find(name.text())?;
     Some(Hover {
         range: name.text_range(),
         data: HoverData::EntryType(entry_type),

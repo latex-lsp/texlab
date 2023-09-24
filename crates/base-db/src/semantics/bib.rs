@@ -27,7 +27,7 @@ impl Semantics {
     fn process_entry(&mut self, entry: bibtex::Entry) {
         if let Some(name) = entry.name_token() {
             let type_token = entry.type_token().unwrap();
-            let category = BibtexEntryType::find(&type_token.text()[1..])
+            let category = BibtexEntryType::find(type_token.text())
                 .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
 
             let field_values = entry

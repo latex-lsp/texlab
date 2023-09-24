@@ -996,32 +996,33 @@ fn entry_type_at_empty() {
         r#"
 %! main.bib
 @
- |"#,
+ |
+^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "article",
+                        "@article",
                     ),
                 ),
                 EntryType(
                     EntryTypeData(
-                        "artwork",
+                        "@artwork",
                     ),
                 ),
                 EntryType(
                     EntryTypeData(
-                        "audio",
+                        "@audio",
                     ),
                 ),
                 EntryType(
                     EntryTypeData(
-                        "bibnote",
+                        "@bibnote",
                     ),
                 ),
                 EntryType(
                     EntryTypeData(
-                        "book",
+                        "@book",
                     ),
                 ),
             ]
@@ -1036,12 +1037,12 @@ fn entry_type_before_preamble() {
 %! main.bib
 @preamble
  |
- ^^^^^^^^"#,
+^^^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "preamble",
+                        "@preamble",
                     ),
                 ),
             ]
@@ -1056,12 +1057,12 @@ fn entry_type_before_string() {
 %! main.bib
 @string
  |
- ^^^^^^"#,
+^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "string",
+                        "@string",
                     ),
                 ),
             ]
@@ -1076,12 +1077,12 @@ fn entry_type_before_article() {
 %! main.bib
 @article
  |
- ^^^^^^^"#,
+^^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "article",
+                        "@article",
                     ),
                 ),
             ]
@@ -1096,12 +1097,12 @@ fn entry_type_after_preamble() {
 %! main.bib
 @preamble{
          |
- ^^^^^^^^"#,
+^^^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "preamble",
+                        "@preamble",
                     ),
                 ),
             ]
@@ -1116,12 +1117,12 @@ fn entry_type_after_string() {
 %! main.bib
 @string{
        |
- ^^^^^^"#,
+^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "string",
+                        "@string",
                     ),
                 ),
             ]
@@ -1136,12 +1137,12 @@ fn entry_type_complete_entry() {
 %! main.bib
 @article{foo, author = {foo}}
    |
- ^^^^^^^"#,
+^^^^^^^^"#,
         expect![[r#"
             [
                 EntryType(
                     EntryTypeData(
-                        "article",
+                        "@article",
                     ),
                 ),
             ]
