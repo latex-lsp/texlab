@@ -266,6 +266,7 @@ impl Workspace {
     fn discover_parents(&mut self, checked_paths: &mut FxHashSet<PathBuf>) -> bool {
         let dirs = self
             .iter()
+            .filter(|document| document.language != Language::Bib)
             .filter_map(|document| document.path.as_deref())
             .flat_map(|path| path.ancestors().skip(1))
             .filter(|path| self.contains(path))
@@ -296,11 +297,12 @@ impl Workspace {
                 let Some(lang) = Language::from_path(&file) else {
                     continue;
                 };
+
                 if !matches!(lang, Language::Tex | Language::Root | Language::Tectonic) {
                     continue;
                 }
 
-                if self.lookup_path(&file).is_none() {
+                if self.lookup_path(&file).is_none() && file.exists() {
                     changed |= self.load(&file, lang, Owner::Server).is_ok();
                     checked_paths.insert(file);
                 }
@@ -322,7 +324,7 @@ impl Workspace {
         let mut changed = false;
         for file in files {
             let language = Language::from_path(&file).unwrap_or(Language::Tex);
-            if self.lookup_path(&file).is_none() {
+            if self.lookup_path(&file).is_none() && file.exists() {
                 changed |= self.load(&file, language, Owner::Server).is_ok();
                 checked_paths.insert(file);
             }

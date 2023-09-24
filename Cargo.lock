@@ -1643,7 +1643,6 @@ dependencies = [
  "crossbeam-channel",
  "definition",
  "diagnostics",
- "dirs",
  "distro",
  "encoding_rs",
  "encoding_rs_io",

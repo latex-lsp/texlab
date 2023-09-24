@@ -4,14 +4,7 @@ pub mod diagnostics;
 pub mod line_index_ext;
 pub mod lsp_enums;
 
-use std::path::PathBuf;
-
-use lsp_types::Url;
-use once_cell::sync::Lazy;
-
-pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
-
-pub fn normalize_uri(uri: &mut Url) {
+pub fn normalize_uri(uri: &mut lsp_types::Url) {
     if let Some(mut segments) = uri.path_segments() {
         if let Some(mut path) = segments.next().and_then(fix_drive_letter) {
             for segment in segments {

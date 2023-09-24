@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow passing additional arguments to `ChkTeX` using `texlab.chktex.additionalArgs` ([#927](https://github.com/latex-lsp/texlab/issues/927))
 
+### Fixed
+
+- Fix loading bibliographies from `kpathsea` search path ([#923](https://github.com/latex-lsp/texlab/issues/923))
+
 ## [5.9.2] - 2023-08-14
 
 ### Fixed

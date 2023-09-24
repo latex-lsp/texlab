@@ -96,7 +96,10 @@ impl<'a> Graph<'a> {
         let distro_files = file_names
             .iter()
             .filter_map(|name| file_name_db.get(name))
-            .filter(|path| home_dir.map_or(false, |dir| path.starts_with(dir)))
+            .filter(|path| {
+                home_dir.map_or(false, |dir| path.starts_with(dir))
+                    || Language::from_path(path) == Some(Language::Bib)
+            })
             .flat_map(Url::from_file_path);
 
         for target_uri in file_names

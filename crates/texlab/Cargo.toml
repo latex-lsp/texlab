@@ -32,7 +32,6 @@ completion-data = { path = "../completion-data" }
 crossbeam-channel = "0.5.8"
 definition = { path = "../definition" }
 diagnostics = { path = "../diagnostics" }
-dirs = "5.0.1"
 distro = { path = "../distro" }
 encoding_rs = "0.8.33"
 encoding_rs_io = "0.1.7"
