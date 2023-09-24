@@ -1,8 +1,7 @@
 use bibtex_utils::field::text::TextFieldData;
 use itertools::Itertools;
-use rowan::ast::AstNode;
+use rowan::{ast::AstNode, TextRange};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
-use text_size::TextRange;
 
 use crate::data::{BibtexEntryType, BibtexEntryTypeCategory};
 
@@ -65,7 +64,7 @@ impl Semantics {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Entry {
     pub name: Span,
     pub full_range: TextRange,

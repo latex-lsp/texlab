@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryType<'a> {
    pub name: &'a str,
    pub category: BibtexEntryTypeCategory,
@@ -16,7 +16,7 @@ pub enum BibtexEntryTypeCategory {
     Collection,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexFieldType<'a> {
    pub name: &'a str,
    pub documentation: &'a str,

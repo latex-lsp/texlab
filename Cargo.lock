@@ -134,7 +134,6 @@ dependencies = [
  "rowan",
  "rustc-hash",
  "syntax",
- "text-size",
  "url",
 ]
 
@@ -328,6 +327,26 @@ dependencies = [
  "syntax",
  "test-utils",
  "thiserror",
+ "url",
+]
+
+[[package]]
+name = "completion"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "completion-data",
+ "criterion",
+ "distro",
+ "expect-test",
+ "fuzzy-matcher",
+ "itertools 0.11.0",
+ "log",
+ "rayon",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "test-utils",
  "url",
 ]
 
@@ -976,9 +995,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.19"
+version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
+checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "logos"
@@ -1489,18 +1508,18 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "serde"
-version = "1.0.171"
+version = "1.0.188"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30e27d1e4fd7659406c492fd6cfaf2066ba8773de45ca75e855590f856dc34a9"
+checksum = "cf9e0fcba69a370eed61bcf2b728575f726b50b55cba78064753d708ddc7549e"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.171"
+version = "1.0.188"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389894603bd18c46fa56231694f8d827779c0951a667087194cf9de94ed24682"
+checksum = "4eca7ac642d82aa35b60049a6eccb4be6be75e599bd2e9adb5f875a737654af2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1601,9 +1620,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.26"
+version = "2.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45c3457aacde3c65315de5031ec191ce46604304d2446e803d71ade03308d970"
+checksum = "239814284fd6f1a4ffe4ca893952cdd93c224b6a1571c9a9eadd670295c0c9e2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1652,6 +1671,7 @@ dependencies = [
  "citeproc",
  "clap",
  "commands",
+ "completion",
  "completion-data",
  "criterion",
  "crossbeam-channel",

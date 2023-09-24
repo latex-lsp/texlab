@@ -29,7 +29,7 @@ use threadpool::ThreadPool;
 use crate::{
     client::LspClient,
     features::{
-        completion::{self, builder::CompletionItemData},
+        completion::{self, ResolveInfo},
         definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
         symbols,
     },
@@ -528,24 +528,16 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
-        let mut uri = params.text_document_position.text_document.uri;
-        normalize_uri(&mut uri);
+    fn completion(&self, id: RequestId, mut params: CompletionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
         let position = params.text_document_position.position;
         let client_capabilities = Arc::clone(&self.client_capabilities);
         let client_info = self.client_info.clone();
-
-        self.update_cursor(&uri, position);
-
+        self.update_cursor(&params.text_document_position.text_document.uri, position);
         self.run_query(id, move |db| {
-            completion::complete(
-                db,
-                &uri,
-                position,
-                &client_capabilities,
-                client_info.as_deref(),
-            )
+            completion::complete(db, &params, &client_capabilities, client_info.as_deref())
         });
+
         Ok(())
     }
 
@@ -566,7 +558,7 @@ impl Server {
                 .clone()
                 .map(|data| serde_json::from_value(data).unwrap())
             {
-                Some(CompletionItemData::Package | CompletionItemData::Class) => {
+                Some(ResolveInfo::Package | ResolveInfo::DocumentClass) => {
                     item.documentation = completion_data::DATABASE
                         .meta(&item.label)
                         .and_then(|meta| meta.description.as_deref())
@@ -577,7 +569,7 @@ impl Server {
                             })
                         });
                 }
-                Some(CompletionItemData::Citation { uri, key }) => {
+                Some(ResolveInfo::Citation { uri, key }) => {
                     if let Some(data) = workspace
                         .lookup(&uri)
                         .and_then(|document| document.data.as_bib())

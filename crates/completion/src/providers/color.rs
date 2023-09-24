@@ -1,25 +1,31 @@
 use rowan::ast::AstNode;
 use syntax::latex;
 
-use crate::util::cursor::CursorContext;
+use crate::{
+    util::{find_curly_group_word, CompletionBuilder},
+    CompletionItem, CompletionItemData, CompletionParams,
+};
 
-use super::builder::CompletionBuilder;
-
-pub fn complete<'db>(
-    context: &'db CursorContext,
-    builder: &mut CompletionBuilder<'db>,
+pub fn complete_colors<'a>(
+    params: &'a CompletionParams<'a>,
+    builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
-    let (_, range, group) = context.find_curly_group_word()?;
+    let (cursor, group) = find_curly_group_word(params)?;
     latex::ColorReference::cast(group.syntax().parent()?)?;
 
     for name in COLORS {
-        builder.color(range, name);
+        if let Some(score) = builder.matcher.score(&name, &cursor.text) {
+            let data = CompletionItemData::Color(name);
+            builder
+                .items
+                .push(CompletionItem::new_simple(score, cursor.range, data));
+        }
     }
 
     Some(())
 }
 
-static COLORS: &[&str] = &[
+const COLORS: &[&str] = &[
     "black",
     "blue",
     "brown",

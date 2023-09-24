@@ -12,6 +12,13 @@ impl Span {
     pub fn new(text: String, range: rowan::TextRange) -> Self {
         Self { text, range }
     }
+
+    pub fn empty(offset: rowan::TextSize) -> Self {
+        Self {
+            text: String::new(),
+            range: rowan::TextRange::empty(offset),
+        }
+    }
 }
 
 impl std::fmt::Debug for Span {

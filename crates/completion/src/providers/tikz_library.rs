@@ -1,25 +1,31 @@
 use rowan::ast::AstNode;
 use syntax::latex;
 
-use crate::util::cursor::CursorContext;
+use crate::{
+    util::{find_curly_group_word_list, CompletionBuilder},
+    CompletionItem, CompletionItemData, CompletionParams,
+};
 
-use super::builder::CompletionBuilder;
-
-pub fn complete<'db>(
-    context: &'db CursorContext,
-    builder: &mut CompletionBuilder<'db>,
+pub fn complete_tikz_libraries<'a>(
+    params: &'a CompletionParams,
+    builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
-    let (_, range, group) = context.find_curly_group_word_list()?;
+    let (cursor, group) = find_curly_group_word_list(params)?;
 
     let import = latex::TikzLibraryImport::cast(group.syntax().parent()?)?;
 
-    if import.command()?.text() == "\\usepgflibrary" {
-        for name in PGF_LIBRARIES {
-            builder.tikz_library(range, name);
-        }
+    let libraries = if import.command()?.text() == "\\usepgflibrary" {
+        PGF_LIBRARIES
     } else {
-        for name in TIKZ_LIBRARIES {
-            builder.tikz_library(range, name);
+        TIKZ_LIBRARIES
+    };
+
+    for name in libraries {
+        if let Some(score) = builder.matcher.score(&name, &cursor.text) {
+            let data = CompletionItemData::TikzLibrary(name);
+            builder
+                .items
+                .push(CompletionItem::new_simple(score, cursor.range, data));
         }
     }
 

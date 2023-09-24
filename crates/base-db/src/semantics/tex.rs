@@ -1,7 +1,6 @@
-use rowan::{ast::AstNode, TextLen};
+use rowan::{ast::AstNode, TextLen, TextRange};
 use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
-use text_size::TextRange;
 
 use super::Span;
 

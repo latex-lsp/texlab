@@ -98,23 +98,6 @@ impl Cursor {
             None
         }
     }
-
-    pub fn command_range(&self, offset: TextSize) -> Option<TextRange> {
-        self.as_tex()
-            .filter(|token| token.kind() == latex::COMMAND_NAME)
-            .filter(|token| token.text_range().start() != offset)
-            .map(|token| token.text_range())
-            .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
-            .or_else(|| {
-                self.as_bib()
-                    .filter(|token| {
-                        matches!(token.kind(), bibtex::COMMAND_NAME | bibtex::ACCENT_NAME)
-                    })
-                    .filter(|token| token.text_range().start() != offset)
-                    .map(|token| token.text_range())
-                    .map(|range| TextRange::new(range.start() + TextSize::from(1), range.end()))
-            })
-    }
 }
 
 pub struct CursorContext<'a, T = ()> {
@@ -160,41 +143,6 @@ impl<'a, T> CursorContext<'a, T> {
         })
     }
 
-    pub fn is_inside_latex_curly(&self, group: &impl latex::HasCurly) -> bool {
-        latex::small_range(group).contains(self.offset) || group.right_curly().is_none()
-    }
-
-    pub fn find_citation_key_word(&self) -> Option<(String, TextRange)> {
-        let word = self
-            .cursor
-            .as_tex()
-            .filter(|token| token.kind() == latex::WORD)?;
-
-        let key = latex::Key::cast(word.parent()?)?;
-
-        let group = latex::CurlyGroupWordList::cast(key.syntax().parent()?)?;
-        latex::Citation::cast(group.syntax().parent()?)?;
-        Some((key.to_string(), latex::small_range(&key)))
-    }
-
-    pub fn find_citation_key_command(&self) -> Option<(String, TextRange)> {
-        let command = self.cursor.as_tex()?;
-
-        let citation = latex::Citation::cast(command.parent()?)?;
-        let key = citation.key_list()?.keys().next()?;
-        Some((key.to_string(), latex::small_range(&key)))
-    }
-
-    pub fn find_entry_key(&self) -> Option<(String, TextRange)> {
-        let key = self
-            .cursor
-            .as_bib()
-            .filter(|token| token.kind() == bibtex::NAME)?;
-
-        bibtex::Entry::cast(key.parent()?)?;
-        Some((key.to_string(), key.text_range()))
-    }
-
     pub fn find_label_name_key(&self) -> Option<(String, TextRange)> {
         let name = self
             .cursor
@@ -211,106 +159,5 @@ impl<'a, T> CursorContext<'a, T> {
         } else {
             None
         }
-    }
-
-    pub fn find_label_name_command(&self) -> Option<(String, TextRange)> {
-        let node = self.cursor.as_tex()?.parent()?;
-        if let Some(label) = latex::LabelDefinition::cast(node.clone()) {
-            let name = label.name()?.key()?;
-            Some((name.to_string(), latex::small_range(&name)))
-        } else if let Some(label) = latex::LabelReference::cast(node.clone()) {
-            let name = label.name_list()?.keys().next()?;
-            Some((name.to_string(), latex::small_range(&name)))
-        } else if let Some(label) = latex::LabelReferenceRange::cast(node) {
-            let name = label.from()?.key()?;
-            Some((name.to_string(), latex::small_range(&name)))
-        } else {
-            None
-        }
-    }
-
-    pub fn find_environment_name(&self) -> Option<TextRange> {
-        let (_, range, group) = self.find_curly_group_word()?;
-
-        if !matches!(group.syntax().parent()?.kind(), latex::BEGIN | latex::END) {
-            return None;
-        }
-
-        Some(range)
-    }
-
-    pub fn find_environment(&self) -> Option<(latex::Key, latex::Key)> {
-        let token = self.cursor.as_tex()?;
-        let env = token
-            .parent_ancestors()
-            .find_map(latex::Environment::cast)?;
-
-        let beg = env.begin()?.name()?.key()?;
-        let end = env.end()?.name()?.key()?;
-        Some((beg, end))
-    }
-
-    pub fn find_curly_group_word(&self) -> Option<(String, TextRange, latex::CurlyGroupWord)> {
-        let token = self.cursor.as_tex()?;
-        let key = latex::Key::cast(token.parent()?);
-
-        let group = key
-            .as_ref()
-            .and_then(|key| key.syntax().parent())
-            .unwrap_or(token.parent()?);
-
-        let group =
-            latex::CurlyGroupWord::cast(group).filter(|group| self.is_inside_latex_curly(group))?;
-
-        key.map(|key| (key.to_string(), latex::small_range(&key), group.clone()))
-            .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
-    }
-
-    pub fn find_curly_group_word_list(
-        &self,
-    ) -> Option<(String, TextRange, latex::CurlyGroupWordList)> {
-        let token = self.cursor.as_tex()?;
-        let key = latex::Key::cast(token.parent()?);
-
-        let group = key
-            .as_ref()
-            .and_then(|key| key.syntax().parent())
-            .unwrap_or(token.parent()?);
-
-        let group = latex::CurlyGroupWordList::cast(group)
-            .filter(|group| self.is_inside_latex_curly(group))?;
-
-        key.map(|key| {
-            let range = if group
-                .syntax()
-                .last_token()
-                .map_or(false, |tok| tok.kind() != latex::R_CURLY)
-            {
-                TextRange::new(latex::small_range(&key).start(), token.text_range().end())
-            } else {
-                latex::small_range(&key)
-            };
-
-            (key.to_string(), range, group.clone())
-        })
-        .or_else(|| Some((String::new(), TextRange::empty(self.offset), group)))
-    }
-
-    pub fn included_packages(&self) -> impl Iterator<Item = &completion_data::Package<'_>> + '_ {
-        let db = &completion_data::DATABASE;
-        self.project
-            .documents
-            .iter()
-            .filter_map(|document| document.data.as_tex())
-            .flat_map(|data| data.semantics.links.iter())
-            .filter_map(|link| link.package_name())
-            .filter_map(|name| db.find(&name))
-            .chain(std::iter::once(db.kernel()))
-            .flat_map(|pkg| {
-                pkg.references
-                    .iter()
-                    .filter_map(|name| db.find(name))
-                    .chain(std::iter::once(pkg))
-            })
     }
 }

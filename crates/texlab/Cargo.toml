@@ -27,6 +27,7 @@ base-db = { path = "../base-db" }
 citeproc = { path = "../citeproc" }
 clap = { version = "4.3.15", features = ["derive"] }
 commands = { path = "../commands" }
+completion = { path = "../completion" }
 completion-data = { path = "../completion-data" }
 crossbeam-channel = "0.5.8"
 definition = { path = "../definition" }

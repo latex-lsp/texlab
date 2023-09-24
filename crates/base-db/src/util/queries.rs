@@ -1,6 +1,6 @@
 use itertools::Itertools;
+use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
-use text_size::{TextRange, TextSize};
 use url::Url;
 
 use crate::{

@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use distro::Language;
+use rowan::TextRange;
 use syntax::{bibtex, latex, BuildError};
-use text_size::TextRange;
 use url::Url;
 
 use crate::{

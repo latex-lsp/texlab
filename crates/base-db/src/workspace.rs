@@ -5,9 +5,8 @@ use std::{
 
 use distro::{Distro, Language};
 use itertools::Itertools;
-use rowan::TextRange;
+use rowan::{TextLen, TextRange};
 use rustc_hash::FxHashSet;
-use text_size::TextLen;
 use url::Url;
 
 use crate::{graph, util::LineCol, Config, Document, DocumentData, DocumentParams, Owner};

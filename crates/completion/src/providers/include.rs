@@ -1,26 +1,26 @@
 use std::{
-    convert::TryFrom,
     fs,
     path::{Path, PathBuf},
 };
 
-use base_db::DocumentData;
-use rowan::{ast::AstNode, TextRange, TextSize};
+use base_db::{DocumentData, FeatureParams};
+use rowan::{ast::AstNode, TextLen, TextRange};
 use syntax::latex;
 
-use crate::util::cursor::CursorContext;
+use crate::{
+    util::{find_curly_group_word_list, CompletionBuilder},
+    CompletionItem, CompletionItemData, CompletionParams,
+};
 
-use super::builder::CompletionBuilder;
-
-pub fn complete<'db>(
-    context: &'db CursorContext,
-    builder: &mut CompletionBuilder<'db>,
+pub fn complete_includes<'a>(
+    params: &'a CompletionParams<'a>,
+    builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
-    if context.document.path.is_none() {
+    if params.feature.document.path.is_none() {
         return None;
     }
 
-    let (path_text, path_range, group) = context.find_curly_group_word_list()?;
+    let (cursor, group) = find_curly_group_word_list(params)?;
 
     let include = group.syntax().parent()?;
     let (include_extension, extensions): (bool, &[&str]) = match include.kind() {
@@ -42,20 +42,28 @@ pub fn complete<'db>(
         _ => return None,
     };
 
-    let segment_range = if path_text.is_empty() {
-        path_range
+    let segment_range = if cursor.text.is_empty() {
+        cursor.range
     } else {
-        let start =
-            path_range.end() - TextSize::try_from(path_text.split('/').last()?.len()).ok()?;
-        TextRange::new(start, path_range.end())
+        let start = cursor.range.end() - cursor.text.split('/').last()?.text_len();
+        TextRange::new(start, cursor.range.end())
     };
 
-    let mut dirs = vec![current_dir(context, &path_text, None)];
+    let segment_text = &params.feature.document.text[std::ops::Range::from(segment_range)];
+
+    let mut dirs = vec![current_dir(&params.feature, &cursor.text, None)];
     if include.kind() == latex::GRAPHICS_INCLUDE {
-        for document in &context.project.documents {
-            let DocumentData::Tex(data) = &document.data else { continue };
+        for document in &params.feature.project.documents {
+            let DocumentData::Tex(data) = &document.data else {
+                continue;
+            };
+
             for graphics_path in &data.semantics.graphics_paths {
-                dirs.push(current_dir(context, &path_text, Some(graphics_path)));
+                dirs.push(current_dir(
+                    &params.feature,
+                    &cursor.text,
+                    Some(graphics_path),
+                ));
             }
         }
     }
@@ -75,11 +83,23 @@ pub fn complete<'db>(
                 remove_extension(&mut path);
             }
 
-            let name = path.file_name()?.to_str()?.into();
-            builder.file(segment_range, name);
+            let name = String::from(path.file_name()?.to_str()?);
+            if let Some(score) = builder.matcher.score(&name, segment_text) {
+                builder.items.push(CompletionItem::new_simple(
+                    score,
+                    cursor.range,
+                    CompletionItemData::File(name),
+                ));
+            }
         } else if file_type.is_dir() {
-            let name = path.file_name()?.to_str()?.into();
-            builder.directory(segment_range, name);
+            let name = String::from(path.file_name()?.to_str()?);
+            if let Some(score) = builder.matcher.score(&name, segment_text) {
+                builder.items.push(CompletionItem::new_simple(
+                    score,
+                    cursor.range,
+                    CompletionItemData::Directory(name),
+                ));
+            }
         }
     }
 
@@ -87,22 +107,18 @@ pub fn complete<'db>(
 }
 
 fn current_dir(
-    context: &CursorContext,
+    params: &FeatureParams,
     path_text: &str,
     graphics_path: Option<&str>,
 ) -> Option<PathBuf> {
-    let parent = context
-        .workspace
-        .parents(context.document)
+    let workspace = &params.workspace;
+    let parent = workspace
+        .parents(params.document)
         .iter()
         .next()
-        .map_or(context.document, Clone::clone);
+        .map_or(params.document, Clone::clone);
 
-    let path = context
-        .workspace
-        .current_dir(&parent.dir)
-        .to_file_path()
-        .ok()?;
+    let path = workspace.current_dir(&parent.dir).to_file_path().ok()?;
 
     let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
     if !path_text.is_empty() {
@@ -115,6 +131,7 @@ fn current_dir(
             path.pop();
         }
     }
+
     Some(path)
 }
 
