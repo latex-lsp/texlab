@@ -1,4 +1,4 @@
-use insta::assert_debug_snapshot;
+use expect_test::{expect, Expect};
 use test_utils::fixture::Fixture;
 
 use crate::workspace_symbols;
@@ -68,32 +68,273 @@ static FIXTURE: &str = r#"
 
 @string{bar = "bar"}"#;
 
+fn check(query: &str, expect: Expect) {
+    let fixture = Fixture::parse(FIXTURE);
+    let symbols = workspace_symbols(&fixture.workspace, query);
+    expect.assert_debug_eq(&symbols);
+}
+
 #[test]
 fn filter_type_section() {
-    let fixture = Fixture::parse(FIXTURE);
-    assert_debug_snapshot!(workspace_symbols(&fixture.workspace, "section"));
+    check(
+        "section",
+        expect![[r#"
+        [
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "1 Foo",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:foo",
+                            118..133,
+                        ),
+                    ),
+                    full_range: 105..188,
+                    selection_range: 118..133,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "2 Bar",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:bar",
+                            203..218,
+                        ),
+                    ),
+                    full_range: 190..293,
+                    selection_range: 203..218,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "3 Baz",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:baz",
+                            308..323,
+                        ),
+                    ),
+                    full_range: 295..445,
+                    selection_range: 308..323,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "4 Qux",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:qux",
+                            460..475,
+                        ),
+                    ),
+                    full_range: 447..557,
+                    selection_range: 460..475,
+                    children: [],
+                },
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
 fn filter_type_figure() {
-    let fixture = Fixture::parse(FIXTURE);
-    assert_debug_snapshot!(workspace_symbols(&fixture.workspace, "figure"));
+    check(
+        "figure",
+        expect![[r#"
+        [
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "Figure 1: Bar",
+                    kind: Figure,
+                    label: Some(
+                        Span(
+                            "fig:bar",
+                            265..280,
+                        ),
+                    ),
+                    full_range: 220..293,
+                    selection_range: 265..280,
+                    children: [],
+                },
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
 fn filter_type_item() {
-    let fixture = Fixture::parse(FIXTURE);
-    assert_debug_snapshot!(workspace_symbols(&fixture.workspace, "item"));
+    check(
+        "item",
+        expect![[r#"
+        [
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "1",
+                    kind: EnumerationItem,
+                    label: Some(
+                        Span(
+                            "itm:foo",
+                            352..367,
+                        ),
+                    ),
+                    full_range: 347..371,
+                    selection_range: 352..367,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "2",
+                    kind: EnumerationItem,
+                    label: Some(
+                        Span(
+                            "itm:bar",
+                            381..396,
+                        ),
+                    ),
+                    full_range: 376..400,
+                    selection_range: 381..396,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "3",
+                    kind: EnumerationItem,
+                    label: Some(
+                        Span(
+                            "itm:baz",
+                            410..425,
+                        ),
+                    ),
+                    full_range: 405..429,
+                    selection_range: 410..425,
+                    children: [],
+                },
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
 fn filter_type_math() {
-    let fixture = Fixture::parse(FIXTURE);
-    assert_debug_snapshot!(workspace_symbols(&fixture.workspace, "math"));
+    check(
+        "math",
+        expect![[r#"
+        [
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "Equation (1)",
+                    kind: Equation,
+                    label: Some(
+                        Span(
+                            "eq:foo",
+                            151..165,
+                        ),
+                    ),
+                    full_range: 135..188,
+                    selection_range: 151..165,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "Lemma 1 (Qux)",
+                    kind: Theorem,
+                    label: Some(
+                        Span(
+                            "thm:qux",
+                            522..537,
+                        ),
+                    ),
+                    full_range: 504..557,
+                    selection_range: 522..537,
+                    children: [],
+                },
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
 fn filter_bibtex() {
-    let fixture = Fixture::parse(FIXTURE);
-    assert_debug_snapshot!(workspace_symbols(&fixture.workspace, "bibtex"));
+    check(
+        "bibtex",
+        expect![[r#"
+        [
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.bib",
+                ),
+                symbol: Symbol {
+                    name: "foo",
+                    kind: Entry(
+                        Article,
+                    ),
+                    label: None,
+                    full_range: 0..14,
+                    selection_range: 9..12,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.bib",
+                ),
+                symbol: Symbol {
+                    name: "bar",
+                    kind: Entry(
+                        String,
+                    ),
+                    label: None,
+                    full_range: 16..36,
+                    selection_range: 24..27,
+                    children: [],
+                },
+            },
+        ]
+    "#]],
+    );
 }

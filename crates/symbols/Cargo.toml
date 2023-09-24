@@ -19,6 +19,6 @@ titlecase = "2.2.1"
 url = "=2.3.1"
 
 [dev-dependencies]
-insta = "1.32.0"
 regex = "1.9.1"
 test-utils = { path = "../test-utils" }
+expect-test = "1.4.1"

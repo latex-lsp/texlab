@@ -1,9 +1,15 @@
 use base_db::{Config, SymbolConfig};
-use insta::assert_debug_snapshot;
+use expect_test::{expect, Expect};
 use regex::Regex;
 use test_utils::fixture::Fixture;
 
 use crate::document_symbols;
+
+fn check(fixture: &Fixture, expect: Expect) {
+    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
+    let symbols = document_symbols(&fixture.workspace, document);
+    expect.assert_debug_eq(&symbols);
+}
 
 #[test]
 fn test_enumerate() {
@@ -29,8 +35,69 @@ fn test_enumerate() {
 \newlabel{it:qux}{{2}{1}}"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Enumerate",
+                kind: Enumeration,
+                label: None,
+                full_range: 43..184,
+                selection_range: 43..184,
+                children: [
+                    Symbol {
+                        name: "1",
+                        kind: EnumerationItem,
+                        label: Some(
+                            Span(
+                                "it:foo",
+                                70..84,
+                            ),
+                        ),
+                        full_range: 65..88,
+                        selection_range: 70..84,
+                        children: [],
+                    },
+                    Symbol {
+                        name: "Item",
+                        kind: EnumerationItem,
+                        label: Some(
+                            Span(
+                                "it:bar",
+                                98..112,
+                            ),
+                        ),
+                        full_range: 93..116,
+                        selection_range: 98..112,
+                        children: [],
+                    },
+                    Symbol {
+                        name: "Baz",
+                        kind: EnumerationItem,
+                        label: None,
+                        full_range: 121..135,
+                        selection_range: 121..135,
+                        children: [],
+                    },
+                    Symbol {
+                        name: "2",
+                        kind: EnumerationItem,
+                        label: Some(
+                            Span(
+                                "it:qux",
+                                150..164,
+                            ),
+                        ),
+                        full_range: 140..168,
+                        selection_range: 150..164,
+                        children: [],
+                    },
+                ],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -61,8 +128,47 @@ fn test_equation() {
 \newlabel{eq:foo}{{1}{1}}"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Equation (1)",
+                kind: Equation,
+                label: Some(
+                    Span(
+                        "eq:foo",
+                        59..73,
+                    ),
+                ),
+                full_range: 43..96,
+                selection_range: 59..73,
+                children: [],
+            },
+            Symbol {
+                name: "Equation",
+                kind: Equation,
+                label: Some(
+                    Span(
+                        "eq:bar",
+                        114..128,
+                    ),
+                ),
+                full_range: 98..151,
+                selection_range: 114..128,
+                children: [],
+            },
+            Symbol {
+                name: "Equation",
+                kind: Equation,
+                label: None,
+                full_range: 153..192,
+                selection_range: 153..192,
+                children: [],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -104,8 +210,47 @@ fn test_float() {
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Baz}}{1}\protected@file@percent }"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Figure 1: Foo",
+                kind: Figure,
+                label: Some(
+                    Span(
+                        "fig:foo",
+                        83..98,
+                    ),
+                ),
+                full_range: 43..111,
+                selection_range: 83..98,
+                children: [],
+            },
+            Symbol {
+                name: "Figure: Bar",
+                kind: Figure,
+                label: Some(
+                    Span(
+                        "fig:bar",
+                        153..168,
+                    ),
+                ),
+                full_range: 113..181,
+                selection_range: 153..168,
+                children: [],
+            },
+            Symbol {
+                name: "Figure: Baz",
+                kind: Figure,
+                label: None,
+                full_range: 183..236,
+                selection_range: 183..236,
+                children: [],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -133,8 +278,48 @@ fn test_section() {
 \newlabel{sec:bar}{{2}{1}}"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Foo",
+                kind: Section,
+                label: None,
+                full_range: 43..56,
+                selection_range: 43..56,
+                children: [],
+            },
+            Symbol {
+                name: "2 Bar",
+                kind: Section,
+                label: Some(
+                    Span(
+                        "sec:bar",
+                        71..86,
+                    ),
+                ),
+                full_range: 58..119,
+                selection_range: 71..86,
+                children: [
+                    Symbol {
+                        name: "Baz",
+                        kind: Section,
+                        label: Some(
+                            Span(
+                                "sec:baz",
+                                104..119,
+                            ),
+                        ),
+                        full_range: 88..119,
+                        selection_range: 104..119,
+                        children: [],
+                    },
+                ],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -173,8 +358,60 @@ fn test_theorem_amsthm() {
 \newlabel{thm:bar}{{2}{1}}"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Lemma 1 (Foo)",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:foo",
+                        107..122,
+                    ),
+                ),
+                full_range: 89..142,
+                selection_range: 107..122,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma 2",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:bar",
+                        157..172,
+                    ),
+                ),
+                full_range: 144..192,
+                selection_range: 157..172,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:baz",
+                        207..222,
+                    ),
+                ),
+                full_range: 194..242,
+                selection_range: 207..222,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma (Qux)",
+                kind: Theorem,
+                label: None,
+                full_range: 244..282,
+                selection_range: 244..282,
+                children: [],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -213,8 +450,60 @@ fn test_theorem_thmtools() {
 \newlabel{thm:bar}{{2}{1}}"#,
     );
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Lemma 1 (Foo)",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:foo",
+                        147..162,
+                    ),
+                ),
+                full_range: 129..182,
+                selection_range: 147..162,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma 2",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:bar",
+                        197..212,
+                    ),
+                ),
+                full_range: 184..232,
+                selection_range: 197..212,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma",
+                kind: Theorem,
+                label: Some(
+                    Span(
+                        "thm:baz",
+                        247..262,
+                    ),
+                ),
+                full_range: 234..282,
+                selection_range: 247..262,
+                children: [],
+            },
+            Symbol {
+                name: "Lemma (Qux)",
+                kind: Theorem,
+                label: None,
+                full_range: 284..322,
+                selection_range: 284..322,
+                children: [],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -249,8 +538,38 @@ fn test_allowed_patterns() {
         ..Config::default()
     });
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Enumerate",
+                kind: Enumeration,
+                label: None,
+                full_range: 98..159,
+                selection_range: 98..159,
+                children: [
+                    Symbol {
+                        name: "Item",
+                        kind: EnumerationItem,
+                        label: None,
+                        full_range: 120..129,
+                        selection_range: 120..129,
+                        children: [],
+                    },
+                    Symbol {
+                        name: "Item",
+                        kind: EnumerationItem,
+                        label: None,
+                        full_range: 134..143,
+                        selection_range: 134..143,
+                        children: [],
+                    },
+                ],
+            },
+        ]
+    "#]],
+    );
 }
 
 #[test]
@@ -285,6 +604,24 @@ fn test_ignored_patterns() {
         ..Config::default()
     });
 
-    let document = fixture.workspace.lookup(&fixture.documents[0].uri).unwrap();
-    assert_debug_snapshot!(document_symbols(&fixture.workspace, document));
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Equation",
+                kind: Equation,
+                label: Some(
+                    Span(
+                        "eq:foo",
+                        59..73,
+                    ),
+                ),
+                full_range: 43..96,
+                selection_range: 59..73,
+                children: [],
+            },
+        ]
+    "#]],
+    );
 }

@@ -1575,7 +1575,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "distro",
- "insta",
+ "expect-test",
  "itertools 0.11.0",
  "regex",
  "rowan",
