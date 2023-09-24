@@ -15,7 +15,7 @@ rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
 
 [dev-dependencies]
-insta = { version = "1.31.0", features = ["glob", "redactions", "json"] }
+insta = { version = "1.32.0", features = ["glob", "redactions", "json"] }
 
 [lib]
 doctest = false
