@@ -1,6 +1,5 @@
 pub mod capabilities;
 pub mod chktex;
-pub mod cursor;
 pub mod diagnostics;
 pub mod line_index_ext;
 pub mod lsp_enums;

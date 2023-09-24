@@ -1,26 +1,33 @@
-use base_db::{semantics::tex::LabelKind, DocumentData};
-use lsp_types::{DocumentHighlight, DocumentHighlightKind};
+use base_db::{semantics::tex::LabelKind, Document};
+use lsp_types::DocumentHighlight;
+use rowan::TextSize;
 
-use crate::util::{cursor::CursorContext, line_index_ext::LineIndexExt};
+use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_highlights(context: &CursorContext) -> Option<Vec<DocumentHighlight>> {
-    let (name_text, _) = context.find_label_name_key()?;
-
-    let DocumentData::Tex(data) = &context.document.data else { return None };
+pub fn find_highlights(
+    document: &Document,
+    offset: TextSize,
+) -> Option<Vec<lsp_types::DocumentHighlight>> {
+    let data = document.data.as_tex()?;
+    let cursor = data
+        .semantics
+        .labels
+        .iter()
+        .find(|label| label.name.range.contains(offset))?;
 
     let mut highlights = Vec::new();
-    let line_index = &context.document.line_index;
+    let line_index = &document.line_index;
     for label in data
         .semantics
         .labels
         .iter()
-        .filter(|label| label.name.text == name_text)
+        .filter(|label| label.name.text == cursor.name.text)
     {
         let range = line_index.line_col_lsp_range(label.name.range);
         let kind = Some(match label.kind {
-            LabelKind::Definition => DocumentHighlightKind::WRITE,
-            LabelKind::Reference => DocumentHighlightKind::READ,
-            LabelKind::ReferenceRange => DocumentHighlightKind::READ,
+            LabelKind::Definition => lsp_types::DocumentHighlightKind::WRITE,
+            LabelKind::Reference => lsp_types::DocumentHighlightKind::READ,
+            LabelKind::ReferenceRange => lsp_types::DocumentHighlightKind::READ,
         });
 
         highlights.push(DocumentHighlight { range, kind });

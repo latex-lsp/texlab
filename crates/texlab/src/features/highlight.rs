@@ -1,15 +1,17 @@
 mod label;
 
 use base_db::Workspace;
-use lsp_types::{DocumentHighlight, Position, Url};
+use lsp_types::DocumentHighlight;
 
-use crate::util::cursor::CursorContext;
+use crate::util::line_index_ext::LineIndexExt;
 
 pub fn find_all(
     workspace: &Workspace,
-    uri: &Url,
-    position: Position,
+    params: &lsp_types::DocumentHighlightParams,
 ) -> Option<Vec<DocumentHighlight>> {
-    let context = CursorContext::new(workspace, uri, position, ())?;
-    label::find_highlights(&context)
+    let uri = &params.text_document_position_params.text_document.uri;
+    let document = workspace.lookup(uri)?;
+    let position = params.text_document_position_params.position;
+    let offset = document.line_index.offset_lsp(position);
+    label::find_highlights(document, offset)
 }

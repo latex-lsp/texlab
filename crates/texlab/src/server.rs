@@ -649,13 +649,12 @@ impl Server {
         Ok(())
     }
 
-    fn document_highlight(&self, id: RequestId, params: DocumentHighlightParams) -> Result<()> {
-        let mut uri = params.text_document_position_params.text_document.uri;
-        normalize_uri(&mut uri);
-        let position = params.text_document_position_params.position;
+    fn document_highlight(&self, id: RequestId, mut params: DocumentHighlightParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
         self.run_query(id, move |db| {
-            highlight::find_all(db, &uri, position).unwrap_or_default()
+            highlight::find_all(db, &params).unwrap_or_default()
         });
+
         Ok(())
     }
 
