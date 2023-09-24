@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use base_db::{util::LineCol, Owner, Workspace};
+use base_db::{
+    util::{LineCol, LineIndex},
+    Owner, Workspace,
+};
 use rowan::{TextRange, TextSize};
 use url::Url;
 
@@ -68,32 +71,39 @@ impl DocumentSpec {
         let mut cursor = None;
 
         let mut text = String::new();
-        let mut line_start = 0;
+        let mut line_nbr = 0;
         for line in input.lines().map(|line| line.trim_end()) {
             if line.chars().all(|c| matches!(c, ' ' | '^' | '|' | '!')) && !line.is_empty() {
                 cursor = cursor.or_else(|| {
                     let offset = line.find('|')?;
-                    Some(TextSize::from((line_start + offset) as u32))
+                    Some(CharacterPosition::new(line_nbr, offset))
                 });
 
                 if let Some(start) = line.find('!') {
-                    let position = TextSize::from((line_start + start) as u32);
-                    ranges.push(TextRange::new(position, position));
+                    let position = CharacterPosition::new(line_nbr, start);
+                    ranges.push(CharacterRange::new(position, position));
                 }
 
                 if let Some(start) = line.find('^') {
                     let end = line.rfind('^').unwrap() + 1;
-                    ranges.push(TextRange::new(
-                        TextSize::from((line_start + start) as u32),
-                        TextSize::from((line_start + end) as u32),
-                    ));
+                    let start = CharacterPosition::new(line_nbr, start);
+                    let end = CharacterPosition::new(line_nbr, end);
+                    ranges.push(CharacterRange::new(start, end));
                 }
             } else {
-                line_start = text.len();
                 text.push_str(line);
                 text.push('\n');
+                line_nbr += 1;
             }
         }
+
+        let line_index = LineIndex::new(&text);
+
+        let cursor = cursor.map(|cursor| cursor.to_offset(&text, &line_index));
+        let ranges = ranges
+            .into_iter()
+            .map(|range| range.to_offset(&text, &line_index))
+            .collect();
 
         Self {
             uri,
@@ -101,5 +111,50 @@ impl DocumentSpec {
             cursor,
             ranges,
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+struct CharacterPosition {
+    line: usize,
+    col: usize,
+}
+
+impl CharacterPosition {
+    fn new(line: usize, col: usize) -> Self {
+        Self { line, col }
+    }
+
+    fn to_offset(self, text: &str, line_index: &LineIndex) -> TextSize {
+        let start = line_index.offset(LineCol {
+            line: (self.line - 1) as u32,
+            col: 0,
+        });
+
+        let slice = &text[start.into()..];
+        let len = slice
+            .char_indices()
+            .nth(self.col)
+            .map_or_else(|| slice.len(), |(i, _)| i);
+
+        start + TextSize::try_from(len).unwrap()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+struct CharacterRange {
+    start: CharacterPosition,
+    end: CharacterPosition,
+}
+
+impl CharacterRange {
+    fn new(start: CharacterPosition, end: CharacterPosition) -> Self {
+        Self { start, end }
+    }
+
+    fn to_offset(self, text: &str, line_index: &LineIndex) -> TextRange {
+        let start = self.start.to_offset(text, line_index);
+        let end = self.end.to_offset(text, line_index);
+        TextRange::new(start, end)
     }
 }

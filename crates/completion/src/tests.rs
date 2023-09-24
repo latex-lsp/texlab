@@ -1,5 +1,6 @@
 use base_db::FeatureParams;
 use expect_test::{expect, Expect};
+use rowan::TextRange;
 
 use crate::CompletionParams;
 
@@ -15,9 +16,25 @@ fn check(input: &str, expect: Expect) {
     let document = fixture.workspace.lookup(&spec.uri).unwrap();
     let feature = FeatureParams::new(&fixture.workspace, document);
     let params = CompletionParams { feature, offset };
-    let mut result = crate::complete(&params);
-    result.items.truncate(5);
-    expect.assert_debug_eq(&result.items);
+    let result = crate::complete(&params);
+
+    let range = spec
+        .ranges
+        .first()
+        .map_or_else(|| TextRange::empty(offset), |range| *range);
+
+    for item in &result.items {
+        assert_eq!(item.range, range);
+    }
+
+    let items = result
+        .items
+        .into_iter()
+        .take(5)
+        .map(|item| item.data)
+        .collect::<Vec<_>>();
+
+    expect.assert_debug_eq(&items);
 }
 
 #[test]
@@ -31,16 +48,11 @@ fn acronym_ref_simple() {
           ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 87..88,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -56,16 +68,11 @@ fn acronym_ref_empty() {
           |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 87..87,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -96,16 +103,11 @@ fn acronym_ref_open_brace() {
           ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 87..88,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -122,16 +124,11 @@ fn acronym_package_ref() {
     ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 47..48,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -148,16 +145,11 @@ fn glossary_ref_simple() {
      ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 82..83,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -174,16 +166,11 @@ fn glossary_ref_open_brace() {
      ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 82..83,
-                    preselect: false,
-                    data: GlossaryEntry(
-                        GlossaryEntryData {
-                            name: "fpsLabel",
-                        },
-                    ),
-                },
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "fpsLabel",
+                    },
+                ),
             ]
         "#]],
     );
@@ -199,56 +186,31 @@ fn argument_empty() {
         |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "A",
-                        ),
+                Argument(
+                    ArgumentData(
+                        "A",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "B",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "B",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "C",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "C",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "D",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "D",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "E",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "E",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -265,16 +227,11 @@ fn argument_word() {
         ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 30..31,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "A",
-                        ),
+                Argument(
+                    ArgumentData(
+                        "A",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -291,56 +248,31 @@ fn argument_open_brace() {
 Test"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "A",
-                        ),
+                Argument(
+                    ArgumentData(
+                        "A",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "B",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "B",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "C",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "C",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "D",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "D",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 30..30,
-                    preselect: false,
-                    data: Argument(
-                        ArgumentData(
-                            "E",
-                        ),
+                ),
+                Argument(
+                    ArgumentData(
+                        "E",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -371,56 +303,31 @@ fn begin_environment_without_snippet_support() {
  ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 1..4,
-                    preselect: false,
-                    data: BeginEnvironment,
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 1..4,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "begingroup",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 59,
-                    range: 1..4,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "AtBeginDocument",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 59,
-                    range: 1..4,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "AtBeginDvi",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 53,
-                    range: 1..4,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "bigwedge",
-                            package: [],
-                        },
-                    ),
-                },
+                BeginEnvironment,
+                Command(
+                    CommandData {
+                        name: "begingroup",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "AtBeginDocument",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "AtBeginDvi",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "bigwedge",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -448,48 +355,38 @@ fn citation() {
 @article{bar:2005,}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 67..67,
-                    preselect: false,
-                    data: Citation(
-                        CitationData {
-                            document: Document(
-                                "file:///texlab/main.bib",
+                Citation(
+                    CitationData {
+                        document: Document(
+                            "file:///texlab/main.bib",
+                        ),
+                        entry: Entry {
+                            name: Span(
+                                "bar:2005",
+                                97..105,
                             ),
-                            entry: Entry {
-                                name: Span(
-                                    "bar:2005",
-                                    97..105,
-                                ),
-                                full_range: 88..107,
-                                keywords: "bar:2005 @article",
-                                category: Article,
-                            },
+                            full_range: 88..107,
+                            keywords: "bar:2005 @article",
+                            category: Article,
                         },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 67..67,
-                    preselect: false,
-                    data: Citation(
-                        CitationData {
-                            document: Document(
-                                "file:///texlab/main.bib",
+                    },
+                ),
+                Citation(
+                    CitationData {
+                        document: Document(
+                            "file:///texlab/main.bib",
+                        ),
+                        entry: Entry {
+                            name: Span(
+                                "foo:2019",
+                                9..17,
                             ),
-                            entry: Entry {
-                                name: Span(
-                                    "foo:2019",
-                                    9..17,
-                                ),
-                                full_range: 0..86,
-                                keywords: "foo:2019 @article Foo Bar Baz Qux 2019",
-                                category: Article,
-                            },
+                            full_range: 0..86,
+                            keywords: "foo:2019 @article Foo Bar Baz Qux 2019",
+                            category: Article,
                         },
-                    ),
-                },
+                    },
+                ),
             ]
         "#]],
     );
@@ -508,27 +405,22 @@ fn citation_open_brace() {
 @article{foo,}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 32..32,
-                    preselect: false,
-                    data: Citation(
-                        CitationData {
-                            document: Document(
-                                "file:///texlab/main.bib",
+                Citation(
+                    CitationData {
+                        document: Document(
+                            "file:///texlab/main.bib",
+                        ),
+                        entry: Entry {
+                            name: Span(
+                                "foo",
+                                9..12,
                             ),
-                            entry: Entry {
-                                name: Span(
-                                    "foo",
-                                    9..12,
-                                ),
-                                full_range: 0..14,
-                                keywords: "foo @article",
-                                category: Article,
-                            },
+                            full_range: 0..14,
+                            keywords: "foo @article",
+                            category: Article,
                         },
-                    ),
-                },
+                    },
+                ),
             ]
         "#]],
     );
@@ -548,27 +440,22 @@ fn citation_open_brace_multiple() {
 @article{foo,}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 36..37,
-                    preselect: false,
-                    data: Citation(
-                        CitationData {
-                            document: Document(
-                                "file:///texlab/main.bib",
+                Citation(
+                    CitationData {
+                        document: Document(
+                            "file:///texlab/main.bib",
+                        ),
+                        entry: Entry {
+                            name: Span(
+                                "foo",
+                                9..12,
                             ),
-                            entry: Entry {
-                                name: Span(
-                                    "foo",
-                                    9..12,
-                                ),
-                                full_range: 0..14,
-                                keywords: "foo @article",
-                                category: Article,
-                            },
+                            full_range: 0..14,
+                            keywords: "foo @article",
+                            category: Article,
                         },
-                    ),
-                },
+                    },
+                ),
             ]
         "#]],
     );
@@ -587,27 +474,22 @@ fn citation_acronym() {
 @article{foo,}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 53..53,
-                    preselect: false,
-                    data: Citation(
-                        CitationData {
-                            document: Document(
-                                "file:///texlab/main.bib",
+                Citation(
+                    CitationData {
+                        document: Document(
+                            "file:///texlab/main.bib",
+                        ),
+                        entry: Entry {
+                            name: Span(
+                                "foo",
+                                9..12,
                             ),
-                            entry: Entry {
-                                name: Span(
-                                    "foo",
-                                    9..12,
-                                ),
-                                full_range: 0..14,
-                                keywords: "foo @article",
-                                category: Article,
-                            },
+                            full_range: 0..14,
+                            keywords: "foo @article",
+                            category: Article,
                         },
-                    ),
-                },
+                    },
+                ),
             ]
         "#]],
     );
@@ -642,46 +524,21 @@ fn color_model_definition_simple() {
                   |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "HTML",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "RGB",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "cmyk",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "gray",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "rgb",
-                    ),
-                },
+                ColorModel(
+                    "HTML",
+                ),
+                ColorModel(
+                    "RGB",
+                ),
+                ColorModel(
+                    "cmyk",
+                ),
+                ColorModel(
+                    "gray",
+                ),
+                ColorModel(
+                    "rgb",
+                ),
             ]
         "#]],
     );
@@ -696,46 +553,21 @@ fn color_model_definition_open_brace() {
                   |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "HTML",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "RGB",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "cmyk",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "gray",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 18..18,
-                    preselect: false,
-                    data: ColorModel(
-                        "rgb",
-                    ),
-                },
+                ColorModel(
+                    "HTML",
+                ),
+                ColorModel(
+                    "RGB",
+                ),
+                ColorModel(
+                    "cmyk",
+                ),
+                ColorModel(
+                    "gray",
+                ),
+                ColorModel(
+                    "rgb",
+                ),
             ]
         "#]],
     );
@@ -750,46 +582,21 @@ fn color_model_definition_set_simple() {
                 |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "HTML",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "RGB",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "cmyk",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "gray",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "rgb",
-                    ),
-                },
+                ColorModel(
+                    "HTML",
+                ),
+                ColorModel(
+                    "RGB",
+                ),
+                ColorModel(
+                    "cmyk",
+                ),
+                ColorModel(
+                    "gray",
+                ),
+                ColorModel(
+                    "rgb",
+                ),
             ]
         "#]],
     );
@@ -804,46 +611,21 @@ fn color_model_definition_set_open_brace() {
                 |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "HTML",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "RGB",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "cmyk",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "gray",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 16..16,
-                    preselect: false,
-                    data: ColorModel(
-                        "rgb",
-                    ),
-                },
+                ColorModel(
+                    "HTML",
+                ),
+                ColorModel(
+                    "RGB",
+                ),
+                ColorModel(
+                    "cmyk",
+                ),
+                ColorModel(
+                    "gray",
+                ),
+                ColorModel(
+                    "rgb",
+                ),
             ]
         "#]],
     );
@@ -858,46 +640,21 @@ fn color_simple() {
        |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Apricot",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Aquamarine",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Bittersweet",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Black",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Blue",
-                    ),
-                },
+                Color(
+                    "Apricot",
+                ),
+                Color(
+                    "Aquamarine",
+                ),
+                Color(
+                    "Bittersweet",
+                ),
+                Color(
+                    "Black",
+                ),
+                Color(
+                    "Blue",
+                ),
             ]
         "#]],
     );
@@ -913,46 +670,21 @@ fn color_word() {
        ^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 51,
-                    range: 7..9,
-                    preselect: false,
-                    data: Color(
-                        "red",
-                    ),
-                },
-                CompletionItem {
-                    score: 49,
-                    range: 7..9,
-                    preselect: false,
-                    data: Color(
-                        "Red",
-                    ),
-                },
-                CompletionItem {
-                    score: 49,
-                    range: 7..9,
-                    preselect: false,
-                    data: Color(
-                        "RedOrange",
-                    ),
-                },
-                CompletionItem {
-                    score: 49,
-                    range: 7..9,
-                    preselect: false,
-                    data: Color(
-                        "RedViolet",
-                    ),
-                },
-                CompletionItem {
-                    score: 39,
-                    range: 7..9,
-                    preselect: false,
-                    data: Color(
-                        "BrickRed",
-                    ),
-                },
+                Color(
+                    "red",
+                ),
+                Color(
+                    "Red",
+                ),
+                Color(
+                    "RedOrange",
+                ),
+                Color(
+                    "RedViolet",
+                ),
+                Color(
+                    "BrickRed",
+                ),
             ]
         "#]],
     );
@@ -967,46 +699,21 @@ fn color_open_brace() {
        |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Apricot",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Aquamarine",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Bittersweet",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Black",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 7..7,
-                    preselect: false,
-                    data: Color(
-                        "Blue",
-                    ),
-                },
+                Color(
+                    "Apricot",
+                ),
+                Color(
+                    "Aquamarine",
+                ),
+                Color(
+                    "Bittersweet",
+                ),
+                Color(
+                    "Black",
+                ),
+                Color(
+                    "Blue",
+                ),
             ]
         "#]],
     );
@@ -1021,61 +728,36 @@ fn component_command_simple() {
  |"#,
         expect![[r##"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "!",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "\"",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "#",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "$",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "%",
-                            package: [],
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "!",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "\"",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "#",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "$",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "%",
+                        package: [],
+                    },
+                ),
             ]
         "##]],
     );
@@ -1105,71 +787,46 @@ fn component_command_simple_package() {
  ^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 91,
-                    range: 21..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsum",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 21..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsumexp",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 89,
-                    range: 21..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumPar",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 89,
-                    range: 21..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumProtect",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 89,
-                    range: 21..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumRestoreAll",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "lipsum",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "lipsumexp",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumPar",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumProtect",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumRestoreAll",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1187,61 +844,36 @@ fn component_command_bibtex() {
 }"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 73,
-                    range: 22..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LaTeX",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 73,
-                    range: 22..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LaTeXe",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 67,
-                    range: 22..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "latexreleaseversion",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 61,
-                    range: 22..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LastDeclaredEncoding",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 59,
-                    range: 22..25,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "last",
-                            package: [],
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "LaTeX",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LaTeXe",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "latexreleaseversion",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LastDeclaredEncoding",
+                        package: [],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "last",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1257,17 +889,12 @@ fn component_environment_simple() {
        ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 7..10,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "document",
-                            package: [],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "document",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1283,61 +910,36 @@ fn component_environment_simple_end() {
      |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 22..22,
-                    preselect: true,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "document",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 22..22,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "abstract",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 22..22,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "array",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 22..22,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "center",
-                            package: [],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 22..22,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "csname",
-                            package: [],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "document",
+                        package: [],
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "abstract",
+                        package: [],
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "array",
+                        package: [],
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "center",
+                        package: [],
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "csname",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1354,19 +956,14 @@ fn component_environment_class() {
        ^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 111,
-                    range: 31..36,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "theindex",
-                            package: [
-                                "article.cls",
-                            ],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "theindex",
+                        package: [
+                            "article.cls",
+                        ],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1382,17 +979,12 @@ fn component_environment_command_definition() {
                          ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 25..28,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "document",
-                            package: [],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "document",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -1407,56 +999,31 @@ fn entry_type_at_empty() {
  |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "article",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "article",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "artwork",
-                        ),
+                ),
+                EntryType(
+                    EntryTypeData(
+                        "artwork",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "audio",
-                        ),
+                ),
+                EntryType(
+                    EntryTypeData(
+                        "audio",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "bibnote",
-                        ),
+                ),
+                EntryType(
+                    EntryTypeData(
+                        "bibnote",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 1..1,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "book",
-                        ),
+                ),
+                EntryType(
+                    EntryTypeData(
+                        "book",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1472,16 +1039,11 @@ fn entry_type_before_preamble() {
  ^^^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 171,
-                    range: 1..9,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "preamble",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "preamble",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1497,16 +1059,11 @@ fn entry_type_before_string() {
  ^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 131,
-                    range: 1..7,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "string",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "string",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1522,16 +1079,11 @@ fn entry_type_before_article() {
  ^^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 151,
-                    range: 1..8,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "article",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "article",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1547,16 +1099,11 @@ fn entry_type_after_preamble() {
  ^^^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 171,
-                    range: 1..9,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "preamble",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "preamble",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1572,16 +1119,11 @@ fn entry_type_after_string() {
  ^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 131,
-                    range: 1..7,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "string",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "string",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1597,16 +1139,11 @@ fn entry_type_complete_entry() {
  ^^^^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 151,
-                    range: 1..8,
-                    preselect: false,
-                    data: EntryType(
-                        EntryTypeData(
-                            "article",
-                        ),
+                EntryType(
+                    EntryTypeData(
+                        "article",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1621,56 +1158,31 @@ fn field_empty_entry_open() {
              |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "abstract",
-                        ),
+                Field(
+                    FieldTypeData(
+                        "abstract",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "addendum",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "addendum",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "address",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "address",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "afterword",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "afterword",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "annotation",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "annotation",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1685,56 +1197,31 @@ fn field_empty_entry_closed() {
              |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "abstract",
-                        ),
+                Field(
+                    FieldTypeData(
+                        "abstract",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "addendum",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "addendum",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "address",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "address",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "afterword",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "afterword",
                     ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 13..13,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "annotation",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "annotation",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1750,56 +1237,31 @@ fn field_entry_field_name() {
               ^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 14..15,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "abstract",
-                        ),
+                Field(
+                    FieldTypeData(
+                        "abstract",
                     ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 14..15,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "addendum",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "addendum",
                     ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 14..15,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "address",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "address",
                     ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 14..15,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "afterword",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "afterword",
                     ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 14..15,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "annotation",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "annotation",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1815,56 +1277,31 @@ fn field_entry_two_fields_name_open() {
                             ^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "edition",
-                        ),
+                Field(
+                    FieldTypeData(
+                        "edition",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editor",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editor",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editora",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editora",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editoratype",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editoratype",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editorb",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editorb",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1880,56 +1317,31 @@ fn field_entry_two_fields_name_closed() {
                             ^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "edition",
-                        ),
+                Field(
+                    FieldTypeData(
+                        "edition",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editor",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editor",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editora",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editora",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editoratype",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editoratype",
                     ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 28..32,
-                    preselect: false,
-                    data: Field(
-                        FieldTypeData(
-                            "editorb",
-                        ),
+                ),
+                Field(
+                    FieldTypeData(
+                        "editorb",
                     ),
-                },
+                ),
             ]
         "#]],
     );
@@ -1945,46 +1357,21 @@ fn import_package_open_brace() {
             ^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 91,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lips",
-                    ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lipsum",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lisp-simple-alloc",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lisp-string",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lwarp-lips",
-                    ),
-                },
+                Package(
+                    "lips",
+                ),
+                Package(
+                    "lipsum",
+                ),
+                Package(
+                    "lisp-simple-alloc",
+                ),
+                Package(
+                    "lisp-string",
+                ),
+                Package(
+                    "lwarp-lips",
+                ),
             ]
         "#]],
     );
@@ -2000,46 +1387,21 @@ fn import_package_closed_brace() {
             ^^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 91,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lips",
-                    ),
-                },
-                CompletionItem {
-                    score: 91,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lipsum",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lisp-simple-alloc",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lisp-string",
-                    ),
-                },
-                CompletionItem {
-                    score: 82,
-                    range: 12..16,
-                    preselect: false,
-                    data: Package(
-                        "lwarp-lips",
-                    ),
-                },
+                Package(
+                    "lips",
+                ),
+                Package(
+                    "lipsum",
+                ),
+                Package(
+                    "lisp-simple-alloc",
+                ),
+                Package(
+                    "lisp-string",
+                ),
+                Package(
+                    "lwarp-lips",
+                ),
             ]
         "#]],
     );
@@ -2055,46 +1417,21 @@ fn import_class_open_brace() {
                ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "article",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "articleingud",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "articoletteracdp",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "artikel1",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "artikel2",
-                    ),
-                },
+                DocumentClass(
+                    "article",
+                ),
+                DocumentClass(
+                    "articleingud",
+                ),
+                DocumentClass(
+                    "articoletteracdp",
+                ),
+                DocumentClass(
+                    "artikel1",
+                ),
+                DocumentClass(
+                    "artikel2",
+                ),
             ]
         "#]],
     );
@@ -2110,46 +1447,21 @@ fn import_class_closed_brace() {
                ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "article",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "articleingud",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "articoletteracdp",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "artikel1",
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 15..18,
-                    preselect: false,
-                    data: DocumentClass(
-                        "artikel2",
-                    ),
-                },
+                DocumentClass(
+                    "article",
+                ),
+                DocumentClass(
+                    "articleingud",
+                ),
+                DocumentClass(
+                    "articoletteracdp",
+                ),
+                DocumentClass(
+                    "artikel1",
+                ),
+                DocumentClass(
+                    "artikel2",
+                ),
             ]
         "#]],
     );
@@ -2218,107 +1530,82 @@ Lorem ipsum dolor sit amet.
 \@input{bar.aux}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 65..65,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "eq:bar",
-                            header: Some(
-                                "Equation (2)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Equation,
-                            ),
-                            keywords: "eq:bar Equation (2)",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 65..65,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "eq:foo",
-                            header: Some(
-                                "Equation (1)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Equation,
-                            ),
-                            keywords: "eq:foo Equation (1)",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 65..65,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "fig:baz",
-                            header: Some(
-                                "Figure 1",
-                            ),
-                            footer: Some(
-                                "Baz",
-                            ),
-                            object: Some(
-                                Float {
-                                    kind: Figure,
-                                    caption: "Baz",
-                                },
-                            ),
-                            keywords: "fig:baz Figure 1: Baz",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 65..65,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "sec:bar",
-                            header: Some(
-                                "Section (Bar)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Section {
-                                    prefix: "Section",
-                                    text: "Bar",
-                                },
-                            ),
-                            keywords: "sec:bar Section (Bar)",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 65..65,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "sec:foo",
-                            header: Some(
-                                "Section 1 (Foo)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Section {
-                                    prefix: "Section",
-                                    text: "Foo",
-                                },
-                            ),
-                            keywords: "sec:foo Section 1 (Foo)",
-                        },
-                    ),
-                },
+                Label(
+                    LabelData {
+                        name: "eq:bar",
+                        header: Some(
+                            "Equation (2)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Equation,
+                        ),
+                        keywords: "eq:bar Equation (2)",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "eq:foo",
+                        header: Some(
+                            "Equation (1)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Equation,
+                        ),
+                        keywords: "eq:foo Equation (1)",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "fig:baz",
+                        header: Some(
+                            "Figure 1",
+                        ),
+                        footer: Some(
+                            "Baz",
+                        ),
+                        object: Some(
+                            Float {
+                                kind: Figure,
+                                caption: "Baz",
+                            },
+                        ),
+                        keywords: "fig:baz Figure 1: Baz",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "sec:bar",
+                        header: Some(
+                            "Section (Bar)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Section {
+                                prefix: "Section",
+                                text: "Bar",
+                            },
+                        ),
+                        keywords: "sec:bar Section (Bar)",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "sec:foo",
+                        header: Some(
+                            "Section 1 (Foo)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Section {
+                                prefix: "Section",
+                                text: "Foo",
+                            },
+                        ),
+                        keywords: "sec:foo Section 1 (Foo)",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2335,17 +1622,12 @@ fn theorem_begin() {
        ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 33..36,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "lemma",
-                            package: "<user>",
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "lemma",
+                        package: "<user>",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2363,17 +1645,12 @@ fn theorem_end() {
      ^^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 40..43,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "lemma",
-                            package: "<user>",
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "lemma",
+                        package: "<user>",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2388,46 +1665,21 @@ fn tikz_library_open_brace() {
                |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows.meta",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows.spaced",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "curvilinear",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "datavisualization.barcharts",
-                    ),
-                },
+                TikzLibrary(
+                    "arrows",
+                ),
+                TikzLibrary(
+                    "arrows.meta",
+                ),
+                TikzLibrary(
+                    "arrows.spaced",
+                ),
+                TikzLibrary(
+                    "curvilinear",
+                ),
+                TikzLibrary(
+                    "datavisualization.barcharts",
+                ),
             ]
         "#]],
     );
@@ -2442,46 +1694,21 @@ fn tikz_library_closed_brace() {
                |"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows.meta",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "arrows.spaced",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "curvilinear",
-                    ),
-                },
-                CompletionItem {
-                    score: 0,
-                    range: 15..15,
-                    preselect: false,
-                    data: TikzLibrary(
-                        "datavisualization.barcharts",
-                    ),
-                },
+                TikzLibrary(
+                    "arrows",
+                ),
+                TikzLibrary(
+                    "arrows.meta",
+                ),
+                TikzLibrary(
+                    "arrows.spaced",
+                ),
+                TikzLibrary(
+                    "curvilinear",
+                ),
+                TikzLibrary(
+                    "datavisualization.barcharts",
+                ),
             ]
         "#]],
     );
@@ -2501,17 +1728,12 @@ fn test_user_command() {
 \begin{fo}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 111,
-                    range: 9..14,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "foobar",
-                            package: "<user>",
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "foobar",
+                        package: "<user>",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2531,28 +1753,18 @@ fn test_user_environment() {
        ^^"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 51,
-                    range: 44..46,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "foo",
-                            package: "<user>",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 40,
-                    range: 44..46,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "filecontents",
-                            package: [],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "foo",
+                        package: "<user>",
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "filecontents",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -2576,71 +1788,46 @@ fn test_project_resolution_import() {
 \usepackage{lipsum}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 111,
-                    range: 47..52,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsum",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 111,
-                    range: 47..52,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsumexp",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 47..52,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumPar",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 47..52,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumProtect",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 47..52,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumRestoreAll",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "lipsum",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "lipsumexp",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumPar",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumProtect",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumRestoreAll",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
             ]
         "#]],
     );
@@ -2666,71 +1853,46 @@ fn test_project_resolution_texlabroot() {
 %! .texlabroot"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 111,
-                    range: 43..48,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsum",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 111,
-                    range: 43..48,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "lipsumexp",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 43..48,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumPar",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 43..48,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumProtect",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 109,
-                    range: 43..48,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "LipsumRestoreAll",
-                            package: [
-                                "lipsum.sty",
-                            ],
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "lipsum",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "lipsumexp",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumPar",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumProtect",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "LipsumRestoreAll",
+                        package: [
+                            "lipsum.sty",
+                        ],
+                    },
+                ),
             ]
         "#]],
     );
@@ -2753,39 +1915,24 @@ fn issue_857_1() {
 "#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 115..117,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "ö",
-                            package: "<user>",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 115..117,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "öö",
-                            package: "<user>",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 31,
-                    range: 115..117,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "ööabc",
-                            package: "<user>",
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "ö",
+                        package: "<user>",
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "öö",
+                        package: "<user>",
+                    },
+                ),
+                Command(
+                    CommandData {
+                        name: "ööabc",
+                        package: "<user>",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2805,17 +1952,12 @@ fn issue_864() {
 \end{document}"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 31,
-                    range: 65..68,
-                    preselect: false,
-                    data: Command(
-                        CommandData {
-                            name: "あいうえお",
-                            package: "<user>",
-                        },
-                    ),
-                },
+                Command(
+                    CommandData {
+                        name: "あいうえお",
+                        package: "<user>",
+                    },
+                ),
             ]
         "#]],
     );
@@ -2832,17 +1974,12 @@ fn issue_883() {
 % Comment"#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 7..10,
-                    preselect: false,
-                    data: Environment(
-                        EnvironmentData {
-                            name: "document",
-                            package: [],
-                        },
-                    ),
-                },
+                Environment(
+                    EnvironmentData {
+                        name: "document",
+                        package: [],
+                    },
+                ),
             ]
         "#]],
     );
@@ -2895,48 +2032,38 @@ fn issue_885() {
 "#,
         expect![[r#"
             [
-                CompletionItem {
-                    score: 71,
-                    range: 116..119,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "section 1",
-                            header: Some(
-                                "Section (1)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Section {
-                                    prefix: "Section",
-                                    text: "1",
-                                },
-                            ),
-                            keywords: "section 1 Section (1)",
-                        },
-                    ),
-                },
-                CompletionItem {
-                    score: 71,
-                    range: 116..119,
-                    preselect: false,
-                    data: Label(
-                        LabelData {
-                            name: "section 2",
-                            header: Some(
-                                "Section (2)",
-                            ),
-                            footer: None,
-                            object: Some(
-                                Section {
-                                    prefix: "Section",
-                                    text: "2",
-                                },
-                            ),
-                            keywords: "section 2 Section (2)",
-                        },
-                    ),
-                },
+                Label(
+                    LabelData {
+                        name: "section 1",
+                        header: Some(
+                            "Section (1)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Section {
+                                prefix: "Section",
+                                text: "1",
+                            },
+                        ),
+                        keywords: "section 1 Section (1)",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "section 2",
+                        header: Some(
+                            "Section (2)",
+                        ),
+                        footer: None,
+                        object: Some(
+                            Section {
+                                prefix: "Section",
+                                text: "2",
+                            },
+                        ),
+                        keywords: "section 2 Section (2)",
+                    },
+                ),
             ]
         "#]],
     );

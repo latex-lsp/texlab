@@ -118,7 +118,7 @@ fn test_tex_unmatched_braces() {
 %! main.tex
 } 
 ^
-{
+{  
   !
 "#,
         &[
