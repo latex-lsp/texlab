@@ -126,6 +126,8 @@ impl<'a> Graph<'a> {
                         target,
                         weight,
                     });
+
+                    break;
                 }
                 None => {
                     self.missing.push(target_uri);

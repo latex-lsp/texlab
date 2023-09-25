@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix loading bibliographies from `kpathsea` search path ([#923](https://github.com/latex-lsp/texlab/issues/923))
 - Don't report duplicate results when using goto definition on includes ([#924](https://github.com/latex-lsp/texlab/issues/924))
+- Fix project detection when there exist files with the same name ([#923](https://github.com/latex-lsp/texlab/issues/923))
 
 ## [5.9.2] - 2023-08-14
 
