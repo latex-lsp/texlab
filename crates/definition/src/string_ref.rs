@@ -23,7 +23,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
         .iter()
         .filter(|string| string.name.text == name.text())
     {
-        context.results.push(DefinitionResult {
+        context.results.insert(DefinitionResult {
             origin_selection_range,
             target: context.params.document,
             target_range: string.full_range,

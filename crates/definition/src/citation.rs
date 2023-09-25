@@ -18,7 +18,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
 
     let name = citation.object.name_text();
     for (document, entry) in queries::objects_with_name::<bib::Entry>(&context.project, name) {
-        context.results.push(DefinitionResult {
+        context.results.insert(DefinitionResult {
             origin_selection_range: citation.object.name_range(),
             target: document,
             target_range: entry.full_range,

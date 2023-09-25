@@ -485,6 +485,7 @@ dependencies = [
  "base-db",
  "itertools 0.11.0",
  "rowan",
+ "rustc-hash",
  "syntax",
  "test-utils",
 ]

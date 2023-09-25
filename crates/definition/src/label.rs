@@ -25,7 +25,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
         let target_range = render_label(context.params.workspace, &context.project, label)
             .map_or(target_selection_range, |label| label.range);
 
-        context.results.push(DefinitionResult {
+        context.results.insert(DefinitionResult {
             origin_selection_range: reference.object.name_range(),
             target: document,
             target_range,

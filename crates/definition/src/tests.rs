@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use crate::{DefinitionParams, DefinitionResult};
 
 fn check(input: &str) {
@@ -23,7 +25,7 @@ fn check(input: &str) {
 
     let origin_document = origin_document.unwrap();
 
-    let mut expected = Vec::new();
+    let mut expected = FxHashSet::default();
     for document in &fixture.documents {
         let mut ranges = document.ranges.iter();
         while let Some(target_selection_range) = ranges.next().copied() {
@@ -31,7 +33,7 @@ fn check(input: &str) {
             if (&origin_document.uri, origin_selection_range)
                 != (&document.uri, target_selection_range)
             {
-                expected.push(DefinitionResult {
+                expected.insert(DefinitionResult {
                     origin_selection_range,
                     target: fixture.workspace.lookup(&document.uri).unwrap(),
                     target_range: *ranges.next().unwrap(),
@@ -41,24 +43,13 @@ fn check(input: &str) {
         }
     }
 
-    let mut actual = crate::goto_definition(DefinitionParams {
+    let actual = crate::goto_definition(DefinitionParams {
         workspace,
         document: workspace.lookup(&origin_document.uri).unwrap(),
         offset: origin_cursor.unwrap(),
     });
 
-    sort_results(&mut expected);
-    sort_results(&mut actual);
-
     assert_eq!(actual, expected);
-}
-
-fn sort_results(items: &mut Vec<DefinitionResult>) {
-    items.sort_by(|a, b| {
-        let a = (&a.target.uri, a.target_range.start());
-        let b = (&b.target.uri, b.target_range.start());
-        a.cmp(&b)
-    });
 }
 
 #[test]

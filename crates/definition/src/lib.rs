@@ -6,6 +6,7 @@ mod string_ref;
 
 use base_db::{Document, Project, Workspace};
 use rowan::{TextRange, TextSize};
+use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct DefinitionParams<'db> {
@@ -14,7 +15,7 @@ pub struct DefinitionParams<'db> {
     pub offset: TextSize,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct DefinitionResult<'a> {
     pub origin_selection_range: TextRange,
     pub target: &'a Document,
@@ -26,15 +27,15 @@ pub struct DefinitionResult<'a> {
 struct DefinitionContext<'db> {
     params: DefinitionParams<'db>,
     project: Project<'db>,
-    results: Vec<DefinitionResult<'db>>,
+    results: FxHashSet<DefinitionResult<'db>>,
 }
 
-pub fn goto_definition(params: DefinitionParams) -> Vec<DefinitionResult> {
+pub fn goto_definition(params: DefinitionParams) -> FxHashSet<DefinitionResult> {
     let project = params.workspace.project(params.document);
     let mut context = DefinitionContext {
         params,
         project,
-        results: Vec::new(),
+        results: FxHashSet::default(),
     };
 
     command::goto_definition(&mut context);
