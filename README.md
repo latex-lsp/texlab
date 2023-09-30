@@ -3,7 +3,6 @@
 [![Wiki](https://img.shields.io/badge/docs-Wiki-success)](https://github.com/latex-lsp/texlab/wiki)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
-[![crates.io](https://img.shields.io/crates/v/texlab)](https://crates.io/crates/texlab)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
 
 # TexLab
@@ -46,10 +45,12 @@ Then run the following command in the project folder:
 cargo build --release
 ```
 
-Alternatively, you can install `texlab` from [crates.io](https://crates.io/crates/texlab) and run
+Avoid installing `texlab` from [crates.io](https://crates.io/crates/texlab)
+because we don't publish new versions of the server to the registry, anymore.
+Instead, you can use
 
 ```shell
-cargo install texlab
+cargo install --git https://github.com/latex-lsp/texlab --locked --tag <insert version here>
 ```
 
 ## Usage
