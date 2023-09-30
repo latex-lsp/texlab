@@ -1,0 +1,16 @@
+---
+source: crates/parser/src/latex.rs
+expression: root
+input_file: crates/parser/src/test_data/latex/issue_931.txt
+---
+ROOT@0..31
+  PREAMBLE@0..31
+    BIBTEX_INCLUDE@0..31
+      COMMAND_NAME@0..13 "\\bibliography"
+      CURLY_GROUP_WORD_LIST@13..31
+        L_CURLY@13..14 "{"
+        KEY@14..30
+          DOLLAR@14..15 "$"
+          WORD@15..30 "HOME/Literature"
+        R_CURLY@30..31 "}"
+
