@@ -801,6 +801,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "inlay-hints"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "rowan",
+ "syntax",
+ "test-utils",
+]
+
+[[package]]
 name = "inotify"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1651,6 +1661,7 @@ dependencies = [
  "folding",
  "fuzzy-matcher",
  "hover",
+ "inlay-hints",
  "insta",
  "itertools 0.11.0",
  "log",
