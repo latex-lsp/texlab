@@ -8,6 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
+citeproc = { path = "../citeproc" }
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }

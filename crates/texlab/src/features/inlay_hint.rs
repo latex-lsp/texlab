@@ -60,6 +60,16 @@ pub fn find_all(
                     data: None,
                 }
             }
+            InlayHintData::Citation(text) => lsp_types::InlayHint {
+                position,
+                label: lsp_types::InlayHintLabel::String(format!(" {text} ")),
+                kind: None,
+                text_edits: None,
+                tooltip: None,
+                padding_left: Some(true),
+                padding_right: None,
+                data: None,
+            },
         })
     });
 

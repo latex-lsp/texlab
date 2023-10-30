@@ -805,6 +805,7 @@ name = "inlay-hints"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "citeproc",
  "rowan",
  "rustc-hash",
  "syntax",

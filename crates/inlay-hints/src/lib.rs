@@ -1,3 +1,4 @@
+mod citations;
 mod label;
 
 use base_db::{util::RenderedLabel, FeatureParams};
@@ -18,6 +19,7 @@ pub struct InlayHint<'a> {
 pub enum InlayHintData<'a> {
     LabelDefinition(RenderedLabel<'a>),
     LabelReference(RenderedLabel<'a>),
+    Citation(String),
 }
 
 pub fn find_all<'a>(params: InlayHintParams<'a>) -> Option<Vec<InlayHint>> {
@@ -27,6 +29,7 @@ pub fn find_all<'a>(params: InlayHintParams<'a>) -> Option<Vec<InlayHint>> {
     };
 
     label::find_hints(&mut builder);
+    citations::find_hints(&mut builder);
     Some(builder.hints)
 }
 
