@@ -1,5 +1,5 @@
 use base_db::{util::RenderedObject, FeatureParams, Workspace};
-use inlay_hints::InlayHintParams;
+use inlay_hints::{InlayHintData, InlayHintParams};
 
 use crate::util::line_index_ext::LineIndexExt;
 
@@ -18,7 +18,7 @@ pub fn find_all(
     let hints = hints.into_iter().filter_map(|hint| {
         let position = line_index.line_col_lsp(hint.offset);
         Some(match hint.data {
-            inlay_hints::InlayHintData::LabelDefinition(label) => {
+            InlayHintData::LabelDefinition(label) => {
                 let number = label.number?;
 
                 let text = match &label.object {
@@ -34,6 +34,20 @@ pub fn find_all(
                     RenderedObject::Equation => format!("Equation ({})", number),
                     RenderedObject::EnumItem => format!("Item {}", number),
                 };
+
+                lsp_types::InlayHint {
+                    position,
+                    label: lsp_types::InlayHintLabel::String(format!(" {text} ")),
+                    kind: None,
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(true),
+                    padding_right: None,
+                    data: None,
+                }
+            }
+            InlayHintData::LabelReference(label) => {
+                let text = label.reference();
 
                 lsp_types::InlayHint {
                     position,

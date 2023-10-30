@@ -17,6 +17,7 @@ pub struct InlayHint<'a> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum InlayHintData<'a> {
     LabelDefinition(RenderedLabel<'a>),
+    LabelReference(RenderedLabel<'a>),
 }
 
 pub fn find_all<'a>(params: InlayHintParams<'a>) -> Option<Vec<InlayHint>> {

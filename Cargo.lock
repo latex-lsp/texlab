@@ -806,6 +806,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "rowan",
+ "rustc-hash",
  "syntax",
  "test-utils",
 ]

@@ -22,6 +22,7 @@ pub struct Options {
     pub latexindent: LatexindentOptions,
     pub forward_search: ForwardSearchOptions,
     pub completion: CompletionOptions,
+    pub inlay_hints: InlayHintOptions,
     pub experimental: ExperimentalOptions,
 }
 
@@ -98,6 +99,14 @@ pub struct ForwardSearchOptions {
 pub struct DiagnosticsOptions {
     pub allowed_patterns: Vec<RegexPattern>,
     pub ignored_patterns: Vec<RegexPattern>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct InlayHintOptions {
+    pub label_definitions: Option<bool>,
+    pub label_references: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -242,6 +251,9 @@ impl From<Options> for Config {
             .into_iter()
             .map(|pattern| pattern.0)
             .collect();
+
+        config.inlay_hints.label_definitions = value.inlay_hints.label_definitions.unwrap_or(true);
+        config.inlay_hints.label_references = value.inlay_hints.label_references.unwrap_or(true);
 
         config.completion.matcher = match value.completion.matcher {
             CompletionMatcher::Fuzzy => base_db::MatchingAlgo::Skim,
