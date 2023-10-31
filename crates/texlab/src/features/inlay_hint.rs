@@ -1,48 +1,67 @@
-mod label;
-
-use base_db::{Document, Project, Workspace};
-use lsp_types::{InlayHint, InlayHintLabel, Range, Url};
-use rowan::{TextRange, TextSize};
+use base_db::{util::RenderedObject, FeatureParams, Workspace};
+use inlay_hints::{InlayHintData, InlayHintParams};
 
 use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find_all(workspace: &Workspace, uri: &Url, range: Range) -> Option<Vec<InlayHint>> {
+pub fn find_all(
+    workspace: &Workspace,
+    uri: &lsp_types::Url,
+    range: lsp_types::Range,
+) -> Option<Vec<lsp_types::InlayHint>> {
     let document = workspace.lookup(uri)?;
-    let range = document.line_index.offset_lsp_range(range);
-    let project = workspace.project(document);
+    let line_index = &document.line_index;
+    let range = line_index.offset_lsp_range(range);
 
-    let mut builder = InlayHintBuilder {
-        workspace,
-        document,
-        project,
-        range,
-        hints: Vec::new(),
-    };
+    let feature = FeatureParams::new(workspace, document);
+    let params = InlayHintParams { range, feature };
+    let hints = inlay_hints::find_all(params)?;
+    let hints = hints.into_iter().filter_map(|hint| {
+        let position = line_index.line_col_lsp(hint.offset);
+        Some(match hint.data {
+            InlayHintData::LabelDefinition(label) => {
+                let number = label.number?;
 
-    label::find_hints(&mut builder);
-    Some(builder.hints)
-}
+                let text = match &label.object {
+                    RenderedObject::Section { prefix, .. } => {
+                        format!("{} {}", prefix, number)
+                    }
+                    RenderedObject::Float { kind, .. } => {
+                        format!("{} {}", kind.as_str(), number)
+                    }
+                    RenderedObject::Theorem { kind, .. } => {
+                        format!("{} {}", kind, number)
+                    }
+                    RenderedObject::Equation => format!("Equation ({})", number),
+                    RenderedObject::EnumItem => format!("Item {}", number),
+                };
 
-struct InlayHintBuilder<'a> {
-    workspace: &'a Workspace,
-    document: &'a Document,
-    project: Project<'a>,
-    range: TextRange,
-    hints: Vec<InlayHint>,
-}
+                lsp_types::InlayHint {
+                    position,
+                    label: lsp_types::InlayHintLabel::String(format!(" {text} ")),
+                    kind: None,
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(true),
+                    padding_right: None,
+                    data: None,
+                }
+            }
+            InlayHintData::LabelReference(label) => {
+                let text = label.reference();
 
-impl<'db> InlayHintBuilder<'db> {
-    pub fn push(&mut self, offset: TextSize, text: String) {
-        let position = self.document.line_index.line_col_lsp(offset);
-        self.hints.push(InlayHint {
-            position,
-            label: InlayHintLabel::String(format!(" {text} ")),
-            kind: None,
-            text_edits: None,
-            tooltip: None,
-            padding_left: Some(true),
-            padding_right: None,
-            data: None,
-        });
-    }
+                lsp_types::InlayHint {
+                    position,
+                    label: lsp_types::InlayHintLabel::String(format!(" {text} ")),
+                    kind: None,
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(true),
+                    padding_right: None,
+                    data: None,
+                }
+            }
+        })
+    });
+
+    Some(hints.collect())
 }

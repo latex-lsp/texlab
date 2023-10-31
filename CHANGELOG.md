@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add `texlab.inlayHints.labelDefinitions` and `texlab.inlayHints.labelReferences` options ([#753](https://github.com/latex-lsp/texlab/issues/753))
+- Display inlay hints for label references by default ([#753](https://github.com/latex-lsp/texlab/issues/753))
+
 ## [5.10.1] - 2023-10-10
 
 ### Fixed

@@ -14,6 +14,7 @@ pub struct Config {
     pub symbols: SymbolConfig,
     pub syntax: SyntaxConfig,
     pub completion: CompletionConfig,
+    pub inlay_hints: InlayHintConfig,
 }
 
 #[derive(Debug)]
@@ -78,6 +79,12 @@ pub struct SymbolConfig {
 }
 
 #[derive(Debug)]
+pub struct InlayHintConfig {
+    pub label_definitions: bool,
+    pub label_references: bool,
+}
+
+#[derive(Debug)]
 pub struct CompletionConfig {
     pub matcher: MatchingAlgo,
 }
@@ -101,6 +108,7 @@ impl Default for Config {
             symbols: SymbolConfig::default(),
             syntax: SyntaxConfig::default(),
             completion: CompletionConfig::default(),
+            inlay_hints: InlayHintConfig::default(),
         }
     }
 }
@@ -170,6 +178,15 @@ impl Default for SymbolConfig {
         Self {
             allowed_patterns: Vec::new(),
             ignored_patterns: Vec::new(),
+        }
+    }
+}
+
+impl Default for InlayHintConfig {
+    fn default() -> Self {
+        Self {
+            label_definitions: true,
+            label_references: true,
         }
     }
 }

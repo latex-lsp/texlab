@@ -1,0 +1,19 @@
+[package]
+name = "inlay-hints"
+version = "0.0.0"
+license.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+base-db = { path = "../base-db" }
+rowan = "0.15.11"
+rustc-hash = "1.1.0"
+syntax = { path = "../syntax" }
+
+[dev-dependencies]
+test-utils = { path = "../test-utils" }
+
+[lib]
+doctest = false
