@@ -82,6 +82,7 @@ pub struct SymbolConfig {
 pub struct InlayHintConfig {
     pub label_definitions: bool,
     pub label_references: bool,
+    pub citations: bool,
 }
 
 #[derive(Debug)]
@@ -187,6 +188,7 @@ impl Default for InlayHintConfig {
         Self {
             label_definitions: true,
             label_references: true,
+            citations: false,
         }
     }
 }

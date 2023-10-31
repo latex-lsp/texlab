@@ -7,10 +7,27 @@ use unicode_normalization::UnicodeNormalization;
 
 use self::{driver::Driver, output::Inline};
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+pub enum Mode {
+    Detailed,
+    Overview,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self::Detailed
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Options {
+    pub mode: Mode,
+}
+
 #[must_use]
-pub fn render(entry: &bibtex::Entry) -> Option<String> {
+pub fn render(entry: &bibtex::Entry, options: &Options) -> Option<String> {
     let mut output = String::new();
-    let mut driver = Driver::default();
+    let mut driver = Driver::new(options);
     driver.process(entry);
     driver.finish().for_each(|(inline, punct)| {
         let text = match inline {

@@ -46,7 +46,11 @@ fn process_citation<'a>(
         .right_biased()?;
 
     let entry = name.parent_ancestors().find_map(bibtex::Entry::cast)?;
-    let text = citeproc::render(&entry)?;
+    let options = citeproc::Options {
+        mode: citeproc::Mode::Overview,
+    };
+
+    let text = citeproc::render(&entry, &options)?;
     let data = InlayHintData::Citation(text);
     Some(InlayHint { offset, data })
 }

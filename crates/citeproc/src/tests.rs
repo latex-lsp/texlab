@@ -3,11 +3,13 @@ use parser::parse_bibtex;
 use rowan::ast::AstNode;
 use syntax::bibtex;
 
+use crate::Options;
+
 fn check(input: &str, expect: Expect) {
     let green = parse_bibtex(input);
     let root = bibtex::Root::cast(bibtex::SyntaxNode::new_root(green)).unwrap();
     let entry = root.entries().next().unwrap();
-    let output = super::render(&entry).unwrap();
+    let output = super::render(&entry, &Options::default()).unwrap();
     expect.assert_eq(&output);
 }
 
