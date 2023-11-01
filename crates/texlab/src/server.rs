@@ -18,6 +18,7 @@ use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
+use notify::event::ModifyKind;
 use notify_debouncer_full::{DebouncedEvent, Debouncer, FileIdMap};
 use parking_lot::{Mutex, RwLock};
 use rowan::ast::AstNode;
@@ -878,6 +879,17 @@ impl Server {
 
         let mut workspace = self.workspace.write();
         match event.kind {
+            notify::EventKind::Remove(_) | notify::EventKind::Modify(ModifyKind::Name(_)) => {
+                for path in event.paths {
+                    if let Some(document) = workspace.lookup_path(&path) {
+                        if document.owner == Owner::Server {
+                            let uri = document.uri.clone();
+                            workspace.remove(&uri);
+                            changed = true;
+                        }
+                    }
+                }
+            }
             notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
                 for path in event.paths {
                     if workspace
@@ -890,17 +902,6 @@ impl Server {
                             if let Some(document) = workspace.lookup_path(&path) {
                                 self.diagnostic_manager.update(&workspace, document);
                             }
-                        }
-                    }
-                }
-            }
-            notify::EventKind::Remove(_) => {
-                for path in event.paths {
-                    if let Some(document) = workspace.lookup_path(&path) {
-                        if document.owner == Owner::Server {
-                            let uri = document.uri.clone();
-                            workspace.remove(&uri);
-                            changed = true;
                         }
                     }
                 }

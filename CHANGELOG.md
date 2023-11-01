@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `texlab.inlayHints.labelDefinitions` and `texlab.inlayHints.labelReferences` options ([#753](https://github.com/latex-lsp/texlab/issues/753))
 - Display inlay hints for label references by default ([#753](https://github.com/latex-lsp/texlab/issues/753))
 
+### Fixed
+
+- Moving the build logs to the recycle bin will now clear the diagnostics ([texlab-vscode/#825](https://github.com/latex-lsp/texlab-vscode/issues/825))
+
 ## [5.10.1] - 2023-10-10
 
 ### Fixed
