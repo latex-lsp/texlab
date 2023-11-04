@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Moving the build logs to the recycle bin will now clear the diagnostics ([texlab-vscode/#825](https://github.com/latex-lsp/texlab-vscode/issues/825))
+- Fix false positive when reporting syntax errors for BibTeX accents ([#945](https://github.com/latex-lsp/texlab/issues/945))
 
 ## [5.10.1] - 2023-10-10
 

@@ -181,7 +181,9 @@ fn accent(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
         ptr.expect(ContentToken::Whitespace);
     }
 
-    ptr.expect(ContentToken::Word);
+    if ptr.at(ContentToken::Word) || ptr.at(ContentToken::CommandName) {
+        ptr.bump();
+    }
 
     if group {
         ptr.expect(ContentToken::Whitespace);
