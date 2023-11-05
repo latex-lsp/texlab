@@ -11,11 +11,12 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::{util::LineCol, Config, Owner, Workspace};
+use base_db::{Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
+use line_index::LineCol;
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
 use lsp_types::{notification::*, request::*, *};
 use notify::event::ModifyKind;
@@ -413,7 +414,7 @@ impl Server {
             };
             match change.range {
                 Some(range) => {
-                    let range = document.line_index.offset_lsp_range(range);
+                    let range = document.line_index.offset_lsp_range(range).unwrap();
                     workspace.edit(&uri, range, &change.text);
                 }
                 None => {
@@ -941,15 +942,17 @@ impl Server {
         };
 
         let line_index = &document.line_index;
-        let position = line_index.offset_lsp(params.text_document_position.position);
+        let Some(position) = line_index.offset_lsp(params.text_document_position.position) else {
+            anyhow::bail!("Invalid position for document {uri}!")
+        };
 
         let Some(result) = commands::change_environment(document, position, &params.new_name)
         else {
             anyhow::bail!("No environment found at the current position");
         };
 
-        let range1 = line_index.line_col_lsp_range(result.begin);
-        let range2 = line_index.line_col_lsp_range(result.end);
+        let range1 = line_index.line_col_lsp_range(result.begin).unwrap();
+        let range2 = line_index.line_col_lsp_range(result.end).unwrap();
 
         let mut changes = HashMap::new();
         changes.insert(
@@ -985,15 +988,18 @@ impl Server {
         };
 
         let line_index = &document.line_index;
-        let offset = line_index.offset_lsp(params.position);
+        let Some(offset) = line_index.offset_lsp(params.position) else {
+            anyhow::bail!("Invalid position for document {uri}!")
+        };
+
         let results = commands::find_environments(document, offset)
             .into_iter()
             .map(|result| EnvironmentLocation {
                 name: TextWithRange {
-                    range: line_index.line_col_lsp_range(result.name.range),
+                    range: line_index.line_col_lsp_range(result.name.range).unwrap(),
                     text: result.name.text,
                 },
-                full_range: line_index.line_col_lsp_range(result.full_range),
+                full_range: line_index.line_col_lsp_range(result.full_range).unwrap(),
             })
             .collect();
 

@@ -38,8 +38,9 @@ impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
 
 #[cfg(test)]
 mod tests {
-    use base_db::{util::LineCol, Owner};
+    use base_db::Owner;
     use distro::Language;
+    use line_index::LineCol;
 
     use super::{ProjectOrdering, Url, Workspace};
 

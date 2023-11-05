@@ -14,7 +14,7 @@ pub fn document_symbols(
     if capabilities.has_hierarchical_document_symbol_support() {
         let results = symbols
             .into_iter()
-            .map(|symbol| convert_to_nested_symbol(symbol, document))
+            .filter_map(|symbol| convert_to_nested_symbol(symbol, document))
             .collect();
 
         DocumentSymbolResponse::Nested(results)
@@ -38,26 +38,29 @@ pub fn workspace_symbols(workspace: &Workspace, query: &str) -> WorkspaceSymbolR
     WorkspaceSymbolResponse::Flat(results)
 }
 
-fn convert_to_nested_symbol(symbol: symbols::Symbol, document: &Document) -> DocumentSymbol {
+fn convert_to_nested_symbol(
+    symbol: symbols::Symbol,
+    document: &Document,
+) -> Option<DocumentSymbol> {
     let children = symbol
         .children
         .into_iter()
-        .map(|child| convert_to_nested_symbol(child, document))
+        .filter_map(|child| convert_to_nested_symbol(child, document))
         .collect();
 
     #[allow(deprecated)]
-    DocumentSymbol {
+    Some(DocumentSymbol {
         name: symbol.name,
         detail: symbol.label.map(|label| label.text),
         kind: convert_symbol_kind(symbol.kind),
         deprecated: Some(false),
-        range: document.line_index.line_col_lsp_range(symbol.full_range),
+        range: document.line_index.line_col_lsp_range(symbol.full_range)?,
         selection_range: document
             .line_index
-            .line_col_lsp_range(symbol.selection_range),
+            .line_col_lsp_range(symbol.selection_range)?,
         children: Some(children),
         tags: None,
-    }
+    })
 }
 
 fn convert_to_flat_symbols(
@@ -65,7 +68,9 @@ fn convert_to_flat_symbols(
     document: &Document,
     results: &mut Vec<lsp_types::SymbolInformation>,
 ) {
-    let range = document.line_index.line_col_lsp_range(symbol.full_range);
+    let Some(range) = document.line_index.line_col_lsp_range(symbol.full_range) else {
+        return;
+    };
 
     #[allow(deprecated)]
     results.push(lsp_types::SymbolInformation {

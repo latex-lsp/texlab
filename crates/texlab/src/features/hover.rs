@@ -9,7 +9,7 @@ pub fn find(
     position: lsp_types::Position,
 ) -> Option<lsp_types::Hover> {
     let document = workspace.lookup(uri)?;
-    let offset = document.line_index.offset_lsp(position);
+    let offset = document.line_index.offset_lsp(position)?;
     let params = HoverParams::new(workspace, document, offset);
     let hover = ::hover::find(&params)?;
 
@@ -42,6 +42,6 @@ pub fn find(
 
     Some(lsp_types::Hover {
         contents: lsp_types::HoverContents::Markup(contents),
-        range: Some(document.line_index.line_col_lsp_range(hover.range)),
+        range: document.line_index.line_col_lsp_range(hover.range),
     })
 }

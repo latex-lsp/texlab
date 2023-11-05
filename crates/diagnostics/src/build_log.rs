@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use base_db::{Document, Workspace};
+use line_index::LineCol;
 use rowan::{TextLen, TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use syntax::BuildError;
@@ -43,15 +44,15 @@ impl DiagnosticSource for BuildErrors {
             let Ok(full_path_uri) = Url::from_file_path(&full_path) else {
                 continue;
             };
+
             let tex_document = workspace.lookup(&full_path_uri).unwrap_or(root_document);
 
             let range = find_range_of_hint(tex_document, error).unwrap_or_else(|| {
                 let line = error.line.unwrap_or(0);
-                let offset = *tex_document
+                let offset = tex_document
                     .line_index
-                    .newlines
-                    .get(line as usize)
-                    .unwrap_or(&TextSize::from(0));
+                    .offset(LineCol { line, col: 0 })
+                    .unwrap_or(TextSize::from(0));
 
                 TextRange::empty(offset)
             });
@@ -91,16 +92,17 @@ impl DiagnosticSource for BuildErrors {
 }
 
 fn find_range_of_hint(document: &Document, error: &BuildError) -> Option<TextRange> {
-    let line = error.line? as usize;
+    let line = error.line?;
     let hint = error.hint.as_deref()?;
     let line_index = &document.line_index;
 
-    let line_start = line_index.newlines.get(line).copied()?;
+    let line_start = line_index.offset(LineCol { line, col: 0 })?;
     let line_end = line_index
-        .newlines
-        .get(line + 1)
-        .copied()
-        .unwrap_or((&document.text).text_len());
+        .offset(LineCol {
+            line: line + 1,
+            col: 0,
+        })
+        .unwrap_or_else(|| document.text.text_len());
 
     let line_text = &document.text[line_start.into()..line_end.into()];
     let hint_start = line_start + TextSize::try_from(line_text.find(hint)?).unwrap();

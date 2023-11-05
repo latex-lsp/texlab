@@ -1,4 +1,5 @@
-use base_db::{util::LineIndex, Document, Workspace};
+use base_db::{Document, Workspace};
+use line_index::LineIndex;
 use lsp_types::{FormattingOptions, TextEdit};
 use rowan::{ast::AstNode, NodeOrToken};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
@@ -40,7 +41,7 @@ pub fn format_bibtex_internal(
 
         formatter.visit_node(node);
         edits.push(TextEdit {
-            range: line_index.line_col_lsp_range(range),
+            range: line_index.line_col_lsp_range(range)?,
             new_text: formatter.output,
         });
     }
@@ -78,8 +79,16 @@ impl<'a> Formatter<'a> {
         previous: &bibtex::SyntaxToken,
         current: &bibtex::SyntaxToken,
     ) -> bool {
-        let previous_range = self.line_index.line_col_lsp_range(previous.text_range());
-        let current_range = self.line_index.line_col_lsp_range(current.text_range());
+        let previous_range = self
+            .line_index
+            .line_col_lsp_range(previous.text_range())
+            .unwrap();
+
+        let current_range = self
+            .line_index
+            .line_col_lsp_range(current.text_range())
+            .unwrap();
+
         previous_range.start.line != current_range.start.line
             || previous_range.end.character < current_range.start.character
     }

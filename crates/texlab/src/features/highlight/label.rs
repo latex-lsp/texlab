@@ -23,7 +23,10 @@ pub fn find_highlights(
         .iter()
         .filter(|label| label.name.text == cursor.name.text)
     {
-        let range = line_index.line_col_lsp_range(label.name.range);
+        let Some(range) = line_index.line_col_lsp_range(label.name.range) else {
+            continue;
+        };
+
         let kind = Some(match label.kind {
             LabelKind::Definition => lsp_types::DocumentHighlightKind::WRITE,
             LabelKind::Reference => lsp_types::DocumentHighlightKind::READ,

@@ -10,13 +10,13 @@ pub fn find_all(
 ) -> Option<Vec<lsp_types::InlayHint>> {
     let document = workspace.lookup(uri)?;
     let line_index = &document.line_index;
-    let range = line_index.offset_lsp_range(range);
+    let range = line_index.offset_lsp_range(range)?;
 
     let feature = FeatureParams::new(workspace, document);
     let params = InlayHintParams { range, feature };
     let hints = inlay_hints::find_all(params)?;
     let hints = hints.into_iter().filter_map(|hint| {
-        let position = line_index.line_col_lsp(hint.offset);
+        let position = line_index.line_col_lsp(hint.offset)?;
         Some(match hint.data {
             InlayHintData::LabelDefinition(label) => {
                 let number = label.number?;

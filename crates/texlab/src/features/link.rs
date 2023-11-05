@@ -26,7 +26,10 @@ struct LinkBuilder<'a> {
 
 impl<'a> LinkBuilder<'a> {
     pub fn push(&mut self, range: TextRange, target: &Document) {
-        let range = self.document.line_index.line_col_lsp_range(range);
+        let Some(range) = self.document.line_index.line_col_lsp_range(range) else {
+            return;
+        };
+
         let target = Some(target.uri.clone());
         self.links.push(DocumentLink {
             range,

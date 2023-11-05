@@ -12,6 +12,6 @@ pub fn find_all(
     let uri = &params.text_document_position_params.text_document.uri;
     let document = workspace.lookup(uri)?;
     let position = params.text_document_position_params.position;
-    let offset = document.line_index.offset_lsp(position);
+    let offset = document.line_index.offset_lsp(position)?;
     label::find_highlights(document, offset)
 }
