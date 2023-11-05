@@ -1,9 +1,7 @@
 use std::path::PathBuf;
 
-use base_db::{
-    util::{LineCol, LineIndex},
-    Owner, Workspace,
-};
+use base_db::{Owner, Workspace};
+use line_index::{LineCol, LineIndex};
 use rowan::{TextRange, TextSize};
 use url::Url;
 
@@ -99,10 +97,10 @@ impl DocumentSpec {
 
         let line_index = LineIndex::new(&text);
 
-        let cursor = cursor.map(|cursor| cursor.to_offset(&text, &line_index));
+        let cursor = cursor.and_then(|cursor| cursor.to_offset(&text, &line_index));
         let ranges = ranges
             .into_iter()
-            .map(|range| range.to_offset(&text, &line_index))
+            .filter_map(|range| range.to_offset(&text, &line_index))
             .collect();
 
         Self {
@@ -125,11 +123,11 @@ impl CharacterPosition {
         Self { line, col }
     }
 
-    fn to_offset(self, text: &str, line_index: &LineIndex) -> TextSize {
+    fn to_offset(self, text: &str, line_index: &LineIndex) -> Option<TextSize> {
         let start = line_index.offset(LineCol {
             line: (self.line - 1) as u32,
             col: 0,
-        });
+        })?;
 
         let slice = &text[start.into()..];
         let len = slice
@@ -137,7 +135,7 @@ impl CharacterPosition {
             .nth(self.col)
             .map_or_else(|| slice.len(), |(i, _)| i);
 
-        start + TextSize::try_from(len).unwrap()
+        Some(start + TextSize::try_from(len).ok()?)
     }
 }
 
@@ -152,9 +150,9 @@ impl CharacterRange {
         Self { start, end }
     }
 
-    fn to_offset(self, text: &str, line_index: &LineIndex) -> TextRange {
-        let start = self.start.to_offset(text, line_index);
-        let end = self.end.to_offset(text, line_index);
-        TextRange::new(start, end)
+    fn to_offset(self, text: &str, line_index: &LineIndex) -> Option<TextRange> {
+        let start = self.start.to_offset(text, line_index)?;
+        let end = self.end.to_offset(text, line_index)?;
+        Some(TextRange::new(start, end))
     }
 }

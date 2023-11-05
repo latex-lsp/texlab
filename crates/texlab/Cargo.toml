@@ -41,6 +41,7 @@ fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
 itertools = "0.11.0"
+line-index = "0.1.0"
 log = "0.4.19"
 lsp-server = "0.7.4"
 lsp-types = "0.94.1"

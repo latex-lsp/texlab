@@ -1,5 +1,5 @@
-use base_db::util::LineIndex;
 use insta::assert_snapshot;
+use line_index::LineIndex;
 use lsp_types::{
     request::Formatting, ClientCapabilities, DocumentFormattingParams, FormattingOptions,
 };
@@ -30,7 +30,7 @@ fn format(fixture: &str) -> String {
     let line_index = LineIndex::new(old_text);
     let mut new_text = String::from(old_text);
     for edit in edits.into_iter().rev() {
-        let range = line_index.offset_lsp_range(edit.range);
+        let range = line_index.offset_lsp_range(edit.range).unwrap();
         new_text.replace_range::<std::ops::Range<usize>>(range.into(), &edit.new_text);
     }
 

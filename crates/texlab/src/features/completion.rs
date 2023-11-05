@@ -1,11 +1,9 @@
-use base_db::{
-    util::{LineIndex, RenderedObject},
-    Document, FeatureParams, Workspace,
-};
+use base_db::{util::RenderedObject, Document, FeatureParams, Workspace};
 use completion::{
     ArgumentData, CompletionItem, CompletionItemData, CompletionParams, EntryTypeData,
     FieldTypeData,
 };
+use line_index::LineIndex;
 use lsp_types::{ClientCapabilities, ClientInfo, CompletionList};
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +21,7 @@ pub fn complete(
     let feature = FeatureParams::new(workspace, document);
     let offset = document
         .line_index
-        .offset_lsp(params.text_document_position.position);
+        .offset_lsp(params.text_document_position.position)?;
 
     let params = CompletionParams { feature, offset };
     let result = completion::complete(&params);
@@ -36,7 +34,7 @@ pub fn complete(
         .items
         .into_iter()
         .enumerate()
-        .map(|(i, item)| item_builder.convert(item, i))
+        .filter_map(|(i, item)| item_builder.convert(item, i))
         .collect();
 
     Some(list)
@@ -70,9 +68,9 @@ impl<'a> ItemBuilder<'a> {
         }
     }
 
-    pub fn convert(&self, item: CompletionItem, index: usize) -> lsp_types::CompletionItem {
+    pub fn convert(&self, item: CompletionItem, index: usize) -> Option<lsp_types::CompletionItem> {
         let mut result = lsp_types::CompletionItem::default();
-        let range = self.line_index.line_col_lsp_range(item.range);
+        let range = self.line_index.line_col_lsp_range(item.range)?;
 
         match item.data {
             CompletionItemData::Command(data) => {
@@ -134,7 +132,7 @@ impl<'a> ItemBuilder<'a> {
 
         result.sort_text = Some(format!("{:0>2}", index));
         result.preselect = Some(item.preselect);
-        result
+        Some(result)
     }
 
     fn convert_command(

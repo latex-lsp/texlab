@@ -5,11 +5,12 @@ use std::{
 
 use distro::{Distro, Language};
 use itertools::Itertools;
+use line_index::LineCol;
 use rowan::{TextLen, TextRange};
 use rustc_hash::FxHashSet;
 use url::Url;
 
-use crate::{graph, util::LineCol, Config, Document, DocumentData, DocumentParams, Owner};
+use crate::{graph, Config, Document, DocumentData, DocumentParams, Owner};
 
 #[derive(Debug, Default)]
 pub struct Workspace {

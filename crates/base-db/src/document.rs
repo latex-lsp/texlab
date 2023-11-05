@@ -1,15 +1,12 @@
 use std::path::PathBuf;
 
 use distro::Language;
+use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
 use syntax::{bibtex, latex, BuildError};
 use url::Url;
 
-use crate::{
-    semantics,
-    util::{LineCol, LineIndex},
-    Config,
-};
+use crate::{semantics, Config};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Owner {

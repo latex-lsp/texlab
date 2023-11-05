@@ -52,7 +52,7 @@ pub fn format_with_latexindent(
     } else {
         let line_index = &document.line_index;
         let start = Position::new(0, 0);
-        let end = line_index.line_col_lsp(old_text.text_len());
+        let end = line_index.line_col_lsp(old_text.text_len())?;
         Some(vec![TextEdit {
             range: lsp_types::Range::new(start, end),
             new_text,

@@ -11,6 +11,7 @@ base-db = { path = "../base-db" }
 completion-data = { path = "../completion-data" }
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 itertools = "0.11.0"
+line-index = "0.1.0"
 log = "0.4.20"
 rayon = "1.7.0"
 rowan = "0.15.11"

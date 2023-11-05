@@ -10,7 +10,7 @@ pub fn find_all(
     context: &lsp_types::ReferenceContext,
 ) -> Option<Vec<lsp_types::Location>> {
     let document = workspace.lookup(uri)?;
-    let offset = document.line_index.offset_lsp(position);
+    let offset = document.line_index.offset_lsp(position)?;
     let params = ReferenceParams {
         workspace,
         document,
@@ -24,9 +24,10 @@ pub fn find_all(
     {
         let document = result.document;
         let uri = document.uri.clone();
-        let range = document.line_index.line_col_lsp_range(result.range);
-        let location = lsp_types::Location::new(uri, range);
-        results.push(location);
+        if let Some(range) = document.line_index.line_col_lsp_range(result.range) {
+            let location = lsp_types::Location::new(uri, range);
+            results.push(location);
+        }
     }
 
     Some(results)

@@ -21,7 +21,7 @@ pub fn collect<'db>(
         .map(|(document, diags)| {
             let diags = diags
                 .into_iter()
-                .map(|diag| create_diagnostic(workspace, document, diag))
+                .filter_map(|diag| create_diagnostic(workspace, document, diag))
                 .collect::<Vec<_>>();
 
             (document, diags)
@@ -33,8 +33,8 @@ fn create_diagnostic(
     workspace: &Workspace,
     document: &Document,
     diagnostic: &Diagnostic,
-) -> lsp_types::Diagnostic {
-    let range = document.line_index.line_col_lsp_range(diagnostic.range);
+) -> Option<lsp_types::Diagnostic> {
+    let range = document.line_index.line_col_lsp_range(diagnostic.range)?;
 
     let severity = match &diagnostic.data {
         DiagnosticData::Tex(error) => match error {
@@ -154,14 +154,14 @@ fn create_diagnostic(
         DiagnosticData::Build(_) => None,
     };
 
-    lsp_types::Diagnostic {
+    Some(lsp_types::Diagnostic {
         severity: Some(severity),
         code: code.map(lsp_types::NumberOrString::Number),
         source: Some(String::from(source)),
         tags,
         related_information,
         ..lsp_types::Diagnostic::new_simple(range, message)
-    }
+    })
 }
 
 fn make_conflict_info(
@@ -172,10 +172,9 @@ fn make_conflict_info(
     let mut items = Vec::new();
     for (uri, range) in locations {
         let range = workspace
-            .lookup(uri)
-            .unwrap()
+            .lookup(uri)?
             .line_index
-            .line_col_lsp_range(*range);
+            .line_col_lsp_range(*range)?;
 
         let message = format!("conflicting {object} defined here");
         let location = lsp_types::Location::new(uri.clone(), range);

@@ -109,6 +109,7 @@ dependencies = [
  "dirs",
  "distro",
  "itertools 0.11.0",
+ "line-index",
  "log",
  "notify",
  "once_cell",
@@ -332,6 +333,7 @@ dependencies = [
  "expect-test",
  "fuzzy-matcher",
  "itertools 0.11.0",
+ "line-index",
  "log",
  "rayon",
  "rowan",
@@ -496,6 +498,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "itertools 0.11.0",
+ "line-index",
  "rowan",
  "rustc-hash",
  "syntax",
@@ -942,6 +945,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9cdc71e17332e86d2e1d38c1f99edcb6288ee11b815fb1a4b049eaa2114d369b"
 
 [[package]]
+name = "line-index"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ee59ea2e50e61bae4f09eee6416820f2ba9796d6e924c86f6e4f699dcb1a7ac"
+dependencies = [
+ "nohash-hasher",
+ "text-size",
+]
+
+[[package]]
 name = "linked-hash-map"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1070,6 +1083,12 @@ dependencies = [
  "wasi",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "nohash-hasher"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
 name = "notify"
@@ -1589,6 +1608,7 @@ dependencies = [
  "distro",
  "expect-test",
  "itertools 0.11.0",
+ "line-index",
  "regex",
  "rowan",
  "syntax",
@@ -1635,6 +1655,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "distro",
+ "line-index",
  "rowan",
  "url",
 ]
@@ -1665,6 +1686,7 @@ dependencies = [
  "inlay-hints",
  "insta",
  "itertools 0.11.0",
+ "line-index",
  "log",
  "lsp-server",
  "lsp-types",

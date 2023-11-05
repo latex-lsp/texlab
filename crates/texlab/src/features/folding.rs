@@ -18,27 +18,29 @@ pub fn find_all(
         .is_some();
 
     let document = workspace.lookup(uri)?;
-    let foldings = folding::find_all(document).into_iter().map(|folding| {
-        let range = document.line_index.line_col_lsp_range(folding.range);
+    let foldings = folding::find_all(document)
+        .into_iter()
+        .filter_map(|folding| {
+            let range = document.line_index.line_col_lsp_range(folding.range)?;
 
-        let kind = if custom_kinds {
-            Some(match folding.kind {
-                FoldingRangeKind::Section => "section",
-                FoldingRangeKind::Environment => "environment",
-                FoldingRangeKind::Entry => "entry",
-            })
-        } else {
-            None
-        };
+            let kind = if custom_kinds {
+                Some(match folding.kind {
+                    FoldingRangeKind::Section => "section",
+                    FoldingRangeKind::Environment => "environment",
+                    FoldingRangeKind::Entry => "entry",
+                })
+            } else {
+                None
+            };
 
-        serde_json::json!({
-            "startLine": range.start.line,
-            "startCharacter": range.start.character,
-            "endLine": range.end.line,
-            "endCharacter": range.end.character,
-            "kind": kind,
-        })
-    });
+            Some(serde_json::json!({
+                "startLine": range.start.line,
+                "startCharacter": range.start.character,
+                "endLine": range.end.line,
+                "endCharacter": range.end.character,
+                "kind": kind,
+            }))
+        });
 
     Some(foldings.collect())
 }

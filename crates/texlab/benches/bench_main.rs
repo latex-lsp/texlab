@@ -1,6 +1,7 @@
-use base_db::{util::LineCol, Owner, Workspace};
+use base_db::{Owner, Workspace};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use distro::Language;
+use line_index::LineCol;
 use lsp_types::{ClientCapabilities, CompletionParams, Position, TextDocumentPositionParams, Url};
 use parser::{parse_latex, SyntaxConfig};
 
@@ -12,7 +13,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| parse_latex(black_box(CODE), &config));
     });
 
-    c.bench_function("LaTeX/Completion/Command_v2", |b| {
+    c.bench_function("LaTeX/Completion/Command", |b| {
         let uri = Url::parse("http://example.com/texlab.tex").unwrap();
         let text = CODE.to_string();
         let mut workspace = Workspace::default();
