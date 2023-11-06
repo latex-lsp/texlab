@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `texlab.inlayHints.labelDefinitions` and `texlab.inlayHints.labelReferences` options ([#753](https://github.com/latex-lsp/texlab/issues/753))
-- Display inlay hints for label references by default ([#753](https://github.com/latex-lsp/texlab/issues/753))
+- Add inlay hints for label references and citations ([#753](https://github.com/latex-lsp/texlab/issues/753))
+- Add new options to configure inlay hints ([#753](https://github.com/latex-lsp/texlab/issues/753)):
+  - `texlab.inlayHints.labelDefinitions`
+  - `texlab.inlayHints.labelReferences`
+  - `texlab.inlayHints.citations`
 
 ### Fixed
 

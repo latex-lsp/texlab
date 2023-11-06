@@ -10,17 +10,27 @@ use syntax::bibtex;
 use titlecase::titlecase;
 use url::Url;
 
+use crate::{Mode, Options};
+
 use super::{
     entry::{EntryData, EntryKind},
     output::{Inline, InlineBuilder, Punct},
 };
 
-#[derive(Debug, Default)]
-pub struct Driver {
+#[derive(Debug)]
+pub struct Driver<'a> {
     builder: InlineBuilder,
+    options: &'a Options,
 }
 
-impl Driver {
+impl<'a> Driver<'a> {
+    pub fn new(options: &'a Options) -> Self {
+        Self {
+            builder: InlineBuilder::default(),
+            options,
+        }
+    }
+
     pub fn process(&mut self, entry: &bibtex::Entry) {
         let entry = EntryData::from(entry);
         match entry.kind {
@@ -531,6 +541,8 @@ impl Driver {
     }
 
     fn introduction(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let author = entry.author.remove(&AuthorField::Introduction)?;
         self.builder.push(
             Inline::Regular(format!("With an intro. by {}", author)),
@@ -542,6 +554,8 @@ impl Driver {
     }
 
     fn foreword(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let author = entry.author.remove(&AuthorField::Commentator)?;
         self.builder.push(
             Inline::Regular(format!("With a forew. by {}", author)),
@@ -553,6 +567,8 @@ impl Driver {
     }
 
     fn afterword(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let author = entry.author.remove(&AuthorField::Commentator)?;
         self.builder.push(
             Inline::Regular(format!("With an afterw. by {}", author)),
@@ -564,6 +580,8 @@ impl Driver {
     }
 
     fn note(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let note = entry.text.remove(&TextField::Note)?;
         self.builder
             .push(Inline::Regular(note.text), Punct::Dot, Punct::Comma);
@@ -614,6 +632,8 @@ impl Driver {
     }
 
     fn eid(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let eid = entry.text.remove(&TextField::Eid)?;
         self.builder
             .push(Inline::Regular(eid.text), Punct::Comma, Punct::Space);
@@ -622,6 +642,8 @@ impl Driver {
     }
 
     fn isbn(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let isbn = entry.text.remove(&TextField::Isbn)?;
         self.builder.push(
             Inline::Regular("ISBN".to_string()),
@@ -636,6 +658,8 @@ impl Driver {
     }
 
     fn issn(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let issn = entry.text.remove(&TextField::Issn)?;
         self.builder.push(
             Inline::Regular("ISSN".to_string()),
@@ -650,6 +674,8 @@ impl Driver {
     }
 
     fn url(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let url = entry.text.remove(&TextField::Url)?;
 
         self.builder
@@ -672,6 +698,8 @@ impl Driver {
     }
 
     fn doi(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let doi = entry.text.remove(&TextField::Doi)?;
         self.builder
             .push(Inline::Regular("DOI".to_string()), Punct::Dot, Punct::Colon);
@@ -690,6 +718,8 @@ impl Driver {
     }
 
     fn eprint(&mut self, entry: &mut EntryData) -> Option<()> {
+        self.check_detailed_mode()?;
+
         let eprint = entry.text.remove(&TextField::Eprint)?;
         let eprint_type = entry
             .text
@@ -720,6 +750,13 @@ impl Driver {
         }
 
         Some(())
+    }
+
+    fn check_detailed_mode(&self) -> Option<()> {
+        match self.options.mode {
+            Mode::Detailed => Some(()),
+            Mode::Overview => None,
+        }
     }
 
     pub fn finish(self) -> impl Iterator<Item = (Inline, Punct)> {

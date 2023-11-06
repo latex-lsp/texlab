@@ -578,7 +578,9 @@ impl Server {
                     {
                         item.documentation = bibtex::Root::cast(data.root_node())
                             .and_then(|root| root.find_entry(&key))
-                            .and_then(|entry| citeproc::render(&entry))
+                            .and_then(|entry| {
+                                citeproc::render(&entry, &citeproc::Options::default())
+                            })
                             .map(|value| {
                                 Documentation::MarkupContent(MarkupContent {
                                     kind: MarkupKind::Markdown,

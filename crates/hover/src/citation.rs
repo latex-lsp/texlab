@@ -31,7 +31,7 @@ pub(super) fn find_hover<'db>(params: &HoverParams<'db>) -> Option<Hover<'db>> {
         let data = document.data.as_bib()?;
         let root = bibtex::Root::cast(data.root_node())?;
         let entry = root.find_entry(name)?;
-        citeproc::render(&entry)
+        citeproc::render(&entry, &citeproc::Options::default())
     })?;
 
     let data = HoverData::Citation(text);
