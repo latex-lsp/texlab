@@ -1,5 +1,0 @@
----
-source: tests/lsp/text_document/formatting.rs
-expression: "format(r#\"\n%! main.bib\n@preamble{\n    \"foo bar baz\" }\n|\"#)"
----
-@preamble{"foo bar baz"}
