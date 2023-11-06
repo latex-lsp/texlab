@@ -252,10 +252,6 @@ impl TestBed {
         &self.temp_dir_path
     }
 
-    pub fn documents(&self) -> &[Document] {
-        &self.fixture.documents
-    }
-
     pub fn redact(&self, uri: &Url) -> Url {
         if uri.scheme() != "file" {
             return uri.clone();

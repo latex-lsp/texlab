@@ -1,7 +1,0 @@
----
-source: tests/lsp/text_document/formatting.rs
-expression: "format(r#\"\n%! main.bib\n@article{foo, bar = baz}\n|\"#)"
----
-@article{foo,
-    bar = baz,
-}

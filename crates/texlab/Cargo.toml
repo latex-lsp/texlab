@@ -12,7 +12,7 @@ repository = "https://github.com/latex-lsp/texlab"
 documentation = "https://github.com/latex-lsp/texlab"
 keywords = ["lsp", "server", "latex", "bibtex"]
 categories = ["development-tools"]
-exclude = ["tests/it/**", "*.snap"]
+exclude = ["*.snap"]
 
 [[bin]]
 name = "texlab"
@@ -24,6 +24,7 @@ doctest = false
 [dependencies]
 anyhow = "1.0.75"
 base-db = { path = "../base-db" }
+bibfmt = { path = "../bibfmt" }
 citeproc = { path = "../citeproc" }
 clap = { version = "4.4.4", features = ["derive"] }
 commands = { path = "../commands" }

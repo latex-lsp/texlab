@@ -1,5 +1,0 @@
----
-source: tests/lsp/text_document/formatting.rs
-expression: "format(r#\"\n%! main.bib\n@string{foo=\"bar\"}\n|\"#)"
----
-@string{foo = "bar"}
