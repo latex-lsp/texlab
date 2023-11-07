@@ -819,6 +819,7 @@ name = "inlay-hints"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "expect-test",
  "rowan",
  "rustc-hash",
  "syntax",

@@ -34,3 +34,6 @@ struct InlayHintBuilder<'a> {
     params: InlayHintParams<'a>,
     hints: Vec<InlayHint<'a>>,
 }
+
+#[cfg(test)]
+mod tests;
