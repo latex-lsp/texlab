@@ -39,6 +39,7 @@ encoding_rs_io = "0.1.7"
 fern = "0.6.2"
 folding = { path = "../folding" }
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
+highlights = { path = "../highlights" }
 hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
 itertools = "0.11.0"
@@ -67,7 +68,6 @@ tempfile = "3.8.0"
 threadpool = "1.8.1"
 
 [dev-dependencies]
-assert_unordered = "0.3.5"
 criterion = { version = "0.5.1" }
 insta = { version = "1.32.0", features = ["glob", "redactions", "json"] }
 

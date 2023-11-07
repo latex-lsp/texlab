@@ -10,8 +10,8 @@ use lsp_server::Connection;
 use lsp_types::{
     notification::{DidOpenTextDocument, Exit, Initialized},
     request::{Initialize, Shutdown},
-    ClientCapabilities, DidOpenTextDocumentParams, InitializeParams, InitializedParams, Location,
-    Position, Range, TextDocumentIdentifier, TextDocumentItem, TextDocumentPositionParams, Url,
+    ClientCapabilities, DidOpenTextDocumentParams, InitializeParams, InitializedParams, Position,
+    Range, TextDocumentIdentifier, TextDocumentItem, TextDocumentPositionParams, Url,
 };
 use tempfile::{tempdir, TempDir};
 use texlab::{LspClient, Server};
@@ -126,7 +126,6 @@ static LOGGER: Once = Once::new();
 #[derive(Debug)]
 pub struct TestBed {
     fixture: Fixture,
-    locations: Vec<Location>,
     _temp_dir: TempDir,
     temp_dir_path: PathBuf,
     client: LspClient,
@@ -191,21 +190,8 @@ impl TestBed {
         let temp_dir = tempdir()?;
         let temp_dir_path = temp_dir.path().canonicalize()?;
 
-        let locations = fixture
-            .documents
-            .iter()
-            .flat_map(|document| {
-                let uri = Url::from_file_path(temp_dir_path.join(&document.path)).unwrap();
-                document
-                    .ranges
-                    .iter()
-                    .map(move |range| Location::new(uri.clone(), *range))
-            })
-            .collect();
-
         Ok(TestBed {
             fixture,
-            locations,
             _temp_dir: temp_dir,
             temp_dir_path,
             client,
@@ -242,10 +228,6 @@ impl TestBed {
         let uri = Url::from_file_path(self.temp_dir_path.join(&document.path)).unwrap();
         let id = TextDocumentIdentifier::new(uri);
         Some(TextDocumentPositionParams::new(id, cursor))
-    }
-
-    pub fn locations(&self) -> &[Location] {
-        &self.locations
     }
 
     pub fn directory(&self) -> &Path {

@@ -24,15 +24,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
-name = "ansi_term"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "anstream"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -85,15 +76,6 @@ name = "anyhow"
 version = "1.0.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
-
-[[package]]
-name = "assert_unordered"
-version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c74323b7881323eb351134e08ee5331594826789557afef8e309baf481b2264"
-dependencies = [
- "ansi_term",
-]
 
 [[package]]
 name = "autocfg"
@@ -770,6 +752,18 @@ name = "hermit-abi"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
+
+[[package]]
+name = "highlights"
+version = "0.0.0"
+dependencies = [
+ "base-db",
+ "expect-test",
+ "rowan",
+ "rustc-hash",
+ "syntax",
+ "test-utils",
+]
 
 [[package]]
 name = "hover"
@@ -1677,7 +1671,6 @@ name = "texlab"
 version = "5.11.0"
 dependencies = [
  "anyhow",
- "assert_unordered",
  "base-db",
  "bibfmt",
  "citeproc",
@@ -1695,6 +1688,7 @@ dependencies = [
  "fern",
  "folding",
  "fuzzy-matcher",
+ "highlights",
  "hover",
  "inlay-hints",
  "insta",
