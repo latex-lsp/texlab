@@ -1,41 +1,20 @@
-mod include;
-
-use base_db::{Document, Workspace};
+use base_db::{FeatureParams, Workspace};
 use lsp_types::{DocumentLink, Url};
-use rowan::TextRange;
 
 use crate::util::line_index_ext::LineIndexExt;
 
 pub fn find_all(workspace: &Workspace, uri: &Url) -> Option<Vec<DocumentLink>> {
     let document = workspace.lookup(uri)?;
-    let mut builder = LinkBuilder {
-        workspace,
-        document,
-        links: Vec::new(),
-    };
 
-    include::find_links(&mut builder);
-    Some(builder.links)
-}
-
-struct LinkBuilder<'a> {
-    workspace: &'a Workspace,
-    document: &'a Document,
-    links: Vec<DocumentLink>,
-}
-
-impl<'a> LinkBuilder<'a> {
-    pub fn push(&mut self, range: TextRange, target: &Document) {
-        let Some(range) = self.document.line_index.line_col_lsp_range(range) else {
-            return;
-        };
-
-        let target = Some(target.uri.clone());
-        self.links.push(DocumentLink {
-            range,
-            target,
-            tooltip: None,
+    let links = links::find_links(FeatureParams::new(workspace, document)).into_iter();
+    let links = links.filter_map(|link| {
+        Some(lsp_types::DocumentLink {
             data: None,
-        });
-    }
+            tooltip: None,
+            target: Some(link.document.uri.clone()),
+            range: document.line_index.line_col_lsp_range(link.range)?,
+        })
+    });
+
+    Some(links.collect())
 }

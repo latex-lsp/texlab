@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use base_db::{Owner, Workspace};
+use base_db::{DocumentLocation, FeatureParams, Owner, Workspace};
 use line_index::{LineCol, LineIndex};
 use rowan::{TextRange, TextSize};
 use url::Url;
@@ -44,6 +44,28 @@ impl Fixture {
             workspace,
             documents,
         }
+    }
+
+    pub fn make_params(&self) -> Option<(FeatureParams, TextSize)> {
+        let spec = self
+            .documents
+            .iter()
+            .find(|spec| spec.cursor.is_some())
+            .or_else(|| self.documents.first())?;
+
+        let document = self.workspace.lookup(&spec.uri)?;
+        let params = FeatureParams::new(&self.workspace, document);
+        let cursor = spec.cursor.unwrap_or_default();
+        Some((params, cursor))
+    }
+
+    pub fn locations(&self) -> impl Iterator<Item = DocumentLocation> {
+        self.documents.iter().flat_map(|spec| {
+            let document = self.workspace.lookup(&spec.uri).unwrap();
+            spec.ranges
+                .iter()
+                .map(|range| DocumentLocation::new(document, *range))
+        })
     }
 }
 
