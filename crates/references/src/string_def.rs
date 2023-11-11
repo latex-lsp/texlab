@@ -1,10 +1,11 @@
+use base_db::DocumentLocation;
 use rowan::ast::AstNode;
 use syntax::bibtex;
 
 use crate::{Reference, ReferenceContext, ReferenceKind};
 
 pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
-    let document = context.params.document;
+    let document = context.params.feature.document;
     let data = document.data.as_bib()?;
     let root = data.root_node();
     let name = root
@@ -18,8 +19,7 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
     for string in &data.semantics.strings {
         if string.name.text == name.text() {
             context.results.push(Reference {
-                document,
-                range: string.name.range,
+                location: DocumentLocation::new(document, string.name.range),
                 kind: ReferenceKind::Definition,
             });
         }
@@ -32,8 +32,7 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
         .filter(|token| token.text() == name.text())
     {
         context.results.push(Reference {
-            document,
-            range: token.text_range(),
+            location: DocumentLocation::new(document, token.text_range()),
             kind: ReferenceKind::Reference,
         });
     }

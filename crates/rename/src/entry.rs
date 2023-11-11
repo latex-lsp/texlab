@@ -7,7 +7,7 @@ use base_db::{
 use crate::{RenameBuilder, RenameParams};
 
 pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
-    match &params.inner.document.data {
+    match &params.feature.document.data {
         DocumentData::Tex(data) => {
             let result = queries::object_at_cursor(
                 &data.semantics.citations,
@@ -33,7 +33,7 @@ pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
 pub(super) fn rename<'a>(builder: &mut RenameBuilder) -> Option<()> {
     let name = prepare_rename(&builder.params)?;
 
-    let project = &builder.params.inner.project;
+    let project = &builder.params.feature.project;
     let citations = queries::objects_with_name::<tex::Citation>(project, &name.text)
         .map(|(doc, obj)| (doc, obj.name.range));
 

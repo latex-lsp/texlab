@@ -606,25 +606,20 @@ impl Server {
         Ok(())
     }
 
-    fn references(&self, id: RequestId, params: ReferenceParams) -> Result<()> {
-        let mut uri = params.text_document_position.text_document.uri;
-        normalize_uri(&mut uri);
-        let position = params.text_document_position.position;
+    fn references(&self, id: RequestId, mut params: ReferenceParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position.text_document.uri);
         self.run_query(id, move |db| {
-            reference::find_all(db, &uri, position, &params.context).unwrap_or_default()
+            reference::find_all(db, params).unwrap_or_default()
         });
 
         Ok(())
     }
 
-    fn hover(&mut self, id: RequestId, params: HoverParams) -> Result<()> {
-        let mut uri = params.text_document_position_params.text_document.uri;
-        normalize_uri(&mut uri);
-
-        let position = params.text_document_position_params.position;
-        self.update_cursor(&uri, position);
-
-        self.run_query(id, move |db| hover::find(db, &uri, position));
+    fn hover(&mut self, id: RequestId, mut params: HoverParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
+        let uri_and_pos = &params.text_document_position_params;
+        self.update_cursor(&uri_and_pos.text_document.uri, uri_and_pos.position);
+        self.run_query(id, move |db| hover::find(db, params));
         Ok(())
     }
 

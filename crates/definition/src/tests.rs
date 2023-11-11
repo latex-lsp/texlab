@@ -1,35 +1,22 @@
+use rowan::TextRange;
 use rustc_hash::FxHashSet;
 
 use crate::{DefinitionParams, DefinitionResult};
 
 fn check(input: &str) {
     let fixture = test_utils::fixture::Fixture::parse(input);
-    let workspace = &fixture.workspace;
-
-    let mut origin_selection_range = None;
-    let mut origin_document = None;
-    let mut origin_cursor = None;
-    for document in &fixture.documents {
-        if let Some(cursor) = document.cursor {
-            origin_document = Some(document);
-            origin_cursor = Some(cursor);
-            origin_selection_range = document
-                .ranges
-                .iter()
-                .find(|range| range.contains_inclusive(cursor))
-                .copied();
-
-            break;
-        }
-    }
-
-    let origin_document = origin_document.unwrap();
+    let (feature, offset) = fixture.make_params().unwrap();
+    let origin_document = feature.document;
+    let origin_selection_range = fixture
+        .locations()
+        .filter(|location| location.document == origin_document)
+        .find(|location| location.range.contains_inclusive(offset))
+        .map_or_else(|| TextRange::default(), |location| location.range);
 
     let mut expected = FxHashSet::default();
     for document in &fixture.documents {
         let mut ranges = document.ranges.iter();
         while let Some(target_selection_range) = ranges.next().copied() {
-            let origin_selection_range = origin_selection_range.unwrap();
             if (&origin_document.uri, origin_selection_range)
                 != (&document.uri, target_selection_range)
             {
@@ -43,11 +30,7 @@ fn check(input: &str) {
         }
     }
 
-    let actual = crate::goto_definition(DefinitionParams {
-        workspace,
-        document: workspace.lookup(&origin_document.uri).unwrap(),
-        offset: origin_cursor.unwrap(),
-    });
+    let actual = crate::goto_definition(DefinitionParams { feature, offset });
 
     assert_eq!(actual, expected);
 }

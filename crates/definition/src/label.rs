@@ -11,7 +11,8 @@ use crate::DefinitionContext;
 use super::DefinitionResult;
 
 pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
-    let data = context.params.document.data.as_tex()?;
+    let feature = &context.params.feature;
+    let data = feature.document.data.as_tex()?;
     let reference = queries::object_at_cursor(
         &data.semantics.labels,
         context.params.offset,
@@ -19,10 +20,10 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     )?;
 
     let name = reference.object.name_text();
-    let labels = queries::objects_with_name::<tex::Label>(&context.project, name);
+    let labels = queries::objects_with_name::<tex::Label>(&feature.project, name);
     for (document, label) in labels.filter(|(_, label)| label.kind == tex::LabelKind::Definition) {
         let target_selection_range = label.name.range;
-        let target_range = render_label(context.params.workspace, &context.project, label)
+        let target_range = render_label(feature.workspace, &feature.project, label)
             .map_or(target_selection_range, |label| label.range);
 
         context.results.insert(DefinitionResult {

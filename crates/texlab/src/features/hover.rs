@@ -1,17 +1,14 @@
-use base_db::Workspace;
+use base_db::{FeatureParams, Workspace};
 use hover::{HoverData, HoverParams};
 
 use crate::util::line_index_ext::LineIndexExt;
 
-pub fn find(
-    workspace: &Workspace,
-    uri: &lsp_types::Url,
-    position: lsp_types::Position,
-) -> Option<lsp_types::Hover> {
-    let document = workspace.lookup(uri)?;
-    let offset = document.line_index.offset_lsp(position)?;
-    let params = HoverParams::new(workspace, document, offset);
-    let hover = ::hover::find(&params)?;
+pub fn find(workspace: &Workspace, params: lsp_types::HoverParams) -> Option<lsp_types::Hover> {
+    let uri_and_pos = &params.text_document_position_params;
+    let document = workspace.lookup(&uri_and_pos.text_document.uri)?;
+    let feature = FeatureParams::new(workspace, document);
+    let offset = document.line_index.offset_lsp(uri_and_pos.position)?;
+    let hover = ::hover::find(HoverParams { feature, offset })?;
 
     let contents = match hover.data {
         HoverData::Citation(text) => lsp_types::MarkupContent {

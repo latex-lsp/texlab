@@ -5,7 +5,7 @@ use syntax::latex;
 use crate::{RenameBuilder, RenameParams};
 
 pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
-    let data = params.inner.document.data.as_tex()?;
+    let data = params.feature.document.data.as_tex()?;
     let token = data
         .root_node()
         .token_at_offset(params.offset)
@@ -22,7 +22,7 @@ pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
 pub(super) fn rename<'a>(builder: &mut RenameBuilder) -> Option<()> {
     let name = prepare_rename(&builder.params)?;
 
-    for document in &builder.params.inner.project.documents {
+    for document in &builder.params.feature.project.documents {
         let DocumentData::Tex(data) = &document.data else {
             continue;
         };

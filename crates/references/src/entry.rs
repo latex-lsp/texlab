@@ -1,7 +1,7 @@
 use base_db::{
     semantics::{bib, tex},
     util::queries::{self, Object},
-    DocumentData,
+    DocumentData, DocumentLocation,
 };
 
 use crate::{Reference, ReferenceContext, ReferenceKind};
@@ -9,7 +9,7 @@ use crate::{Reference, ReferenceContext, ReferenceKind};
 pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
     let offset = context.params.offset;
 
-    let name = match &context.params.document.data {
+    let name = match &context.params.feature.document.data {
         DocumentData::Tex(data) => {
             let result = queries::object_at_cursor(
                 &data.semantics.citations,
@@ -29,18 +29,17 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
         _ => return None,
     };
 
-    for (document, obj) in queries::objects_with_name::<tex::Citation>(&context.project, name) {
+    let project = &context.params.feature.project;
+    for (document, obj) in queries::objects_with_name::<tex::Citation>(&project, name) {
         context.results.push(Reference {
-            document,
-            range: obj.name.range,
+            location: DocumentLocation::new(document, obj.name.range),
             kind: ReferenceKind::Reference,
         });
     }
 
-    for (document, obj) in queries::objects_with_name::<bib::Entry>(&context.project, name) {
+    for (document, obj) in queries::objects_with_name::<bib::Entry>(&project, name) {
         context.results.push(Reference {
-            document,
-            range: obj.name.range,
+            location: DocumentLocation::new(document, obj.name.range),
             kind: ReferenceKind::Definition,
         });
     }

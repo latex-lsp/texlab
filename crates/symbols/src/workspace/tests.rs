@@ -75,7 +75,7 @@ fn check(query: &str, expect: Expect) {
 }
 
 #[test]
-fn filter_type_section() {
+fn test_filter_type_section() {
     check(
         "section",
         expect![[r#"
@@ -158,7 +158,7 @@ fn filter_type_section() {
 }
 
 #[test]
-fn filter_type_figure() {
+fn test_filter_type_figure() {
     check(
         "figure",
         expect![[r#"
@@ -187,7 +187,7 @@ fn filter_type_figure() {
 }
 
 #[test]
-fn filter_type_item() {
+fn test_filter_type_item() {
     check(
         "item",
         expect![[r#"
@@ -252,7 +252,7 @@ fn filter_type_item() {
 }
 
 #[test]
-fn filter_type_math() {
+fn test_filter_type_math() {
     check(
         "math",
         expect![[r#"
@@ -299,7 +299,7 @@ fn filter_type_math() {
 }
 
 #[test]
-fn filter_bibtex() {
+fn test_filter_bibtex() {
     check(
         "bibtex",
         expect![[r#"

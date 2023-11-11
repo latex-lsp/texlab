@@ -4,30 +4,13 @@ use crate::{ReferenceKind, ReferenceParams};
 
 fn check(fixture: &str, include_def: bool) {
     let fixture = test_utils::fixture::Fixture::parse(fixture);
-    let workspace = &fixture.workspace;
+    let (feature, offset) = fixture.make_params().unwrap();
 
-    let expected = fixture
-        .documents
-        .iter()
-        .flat_map(|document| document.ranges.iter().map(|&range| (&document.uri, range)))
-        .collect::<HashSet<_>>();
-
-    let (document, offset) = fixture
-        .documents
-        .iter()
-        .find_map(|document| Some((workspace.lookup(&document.uri)?, document.cursor?)))
-        .unwrap();
-
-    let params = ReferenceParams {
-        workspace,
-        document,
-        offset,
-    };
-
-    let actual = crate::find_all(params)
+    let expected = fixture.locations().collect::<HashSet<_>>();
+    let actual = crate::find_all(ReferenceParams { feature, offset })
         .into_iter()
         .filter(|reference| reference.kind == ReferenceKind::Reference || include_def)
-        .map(|reference| (&reference.document.uri, reference.range))
+        .map(|reference| reference.location)
         .collect::<HashSet<_>>();
 
     assert_eq!(actual, expected);

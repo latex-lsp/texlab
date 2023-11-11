@@ -213,4 +213,22 @@ impl<'a> DocumentLocation<'a> {
     pub fn new(document: &'a Document, range: TextRange) -> Self {
         Self { document, range }
     }
+
+    fn eq_key(&self) -> (&Url, TextRange) {
+        (&self.document.uri, self.range)
+    }
+}
+
+impl<'a> PartialEq for DocumentLocation<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.eq_key() == other.eq_key()
+    }
+}
+
+impl<'a> Eq for DocumentLocation<'a> {}
+
+impl<'a> std::hash::Hash for DocumentLocation<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.eq_key().hash(state)
+    }
 }

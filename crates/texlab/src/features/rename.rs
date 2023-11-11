@@ -11,7 +11,7 @@ pub fn prepare_rename_all(
 ) -> Option<lsp_types::Range> {
     let params = create_params(workspace, params)?;
     let range = rename::prepare_rename(&params)?;
-    params.inner.document.line_index.line_col_lsp_range(range)
+    params.feature.document.line_index.line_col_lsp_range(range)
 }
 
 pub fn rename_all(
@@ -20,7 +20,7 @@ pub fn rename_all(
 ) -> Option<lsp_types::WorkspaceEdit> {
     let new_name = &params.new_name;
     let params = create_params(workspace, &params.text_document_position)?;
-    let result = rename::rename(&params);
+    let result = rename::rename(params);
 
     let mut changes = HashMap::default();
     for (document, ranges) in result.changes {
@@ -43,5 +43,8 @@ fn create_params<'db>(
     let document = workspace.lookup(&params.text_document.uri)?;
     let inner = FeatureParams::new(workspace, document);
     let offset = document.line_index.offset_lsp(params.position)?;
-    Some(RenameParams { inner, offset })
+    Some(RenameParams {
+        feature: inner,
+        offset,
+    })
 }

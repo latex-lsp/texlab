@@ -1,4 +1,4 @@
-use base_db::Workspace;
+use base_db::{FeatureParams, Workspace};
 use definition::DefinitionParams;
 use lsp_types::{GotoDefinitionResponse, LocationLink, Position, Url};
 
@@ -11,11 +11,8 @@ pub fn goto_definition(
 ) -> Option<GotoDefinitionResponse> {
     let document = workspace.lookup(uri)?;
     let offset = document.line_index.offset_lsp(position)?;
-    let params = DefinitionParams {
-        workspace,
-        document,
-        offset,
-    };
+    let feature = FeatureParams::new(workspace, document);
+    let params = DefinitionParams { feature, offset };
 
     let mut links = Vec::new();
     for result in definition::goto_definition(params) {

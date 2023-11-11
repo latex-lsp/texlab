@@ -7,7 +7,8 @@ use crate::DefinitionContext;
 use super::DefinitionResult;
 
 pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
-    let data = context.params.document.data.as_tex()?;
+    let feature = &context.params.feature;
+    let data = feature.document.data.as_tex()?;
     let root = data.root_node();
     let name = root
         .token_at_offset(context.params.offset)
@@ -15,7 +16,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
 
     let origin_selection_range = name.text_range();
 
-    for document in &context.project.documents {
+    for document in &feature.project.documents {
         let DocumentData::Tex(data) = &document.data else {
             continue;
         };

@@ -2,8 +2,8 @@ use base_db::semantics::tex::LinkKind;
 
 use crate::{Hover, HoverData, HoverParams};
 
-pub(super) fn find_hover<'db>(params: &HoverParams<'db>) -> Option<Hover<'db>> {
-    let data = params.document.data.as_tex()?;
+pub(super) fn find_hover<'a>(params: &HoverParams<'a>) -> Option<Hover<'a>> {
+    let data = params.feature.document.data.as_tex()?;
     data.semantics
         .links
         .iter()

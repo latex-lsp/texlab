@@ -2,8 +2,7 @@ use expect_test::{expect, Expect};
 
 fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
-    let workspace = &fixture.workspace;
-    let document = workspace.lookup(&fixture.documents[0].uri).unwrap();
+    let document = fixture.make_params().unwrap().0.document;
     let data = crate::find_all(document);
     expect.assert_debug_eq(&data);
 }

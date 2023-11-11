@@ -4,12 +4,9 @@ use crate::HoverParams;
 
 fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
-    let workspace = &fixture.workspace;
-    let document = workspace.lookup(&fixture.documents[0].uri).unwrap();
-    let offset = fixture.documents[0].cursor.unwrap();
-    let params = HoverParams::new(workspace, document, offset);
-
-    let data = crate::find(&params).map(|hover| {
+    let (feature, offset) = fixture.make_params().unwrap();
+    let params = HoverParams { feature, offset };
+    let data = crate::find(params).map(|hover| {
         assert_eq!(fixture.documents[0].ranges[0], hover.range);
         hover.data
     });

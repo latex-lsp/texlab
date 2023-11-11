@@ -6,7 +6,8 @@ use crate::DefinitionContext;
 use super::DefinitionResult;
 
 pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
-    let data = context.params.document.data.as_bib()?;
+    let feature = &context.params.feature;
+    let data = feature.document.data.as_bib()?;
     let root = data.root_node();
     let name = root
         .token_at_offset(context.params.offset)
@@ -25,7 +26,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     {
         context.results.insert(DefinitionResult {
             origin_selection_range,
-            target: context.params.document,
+            target: feature.document,
             target_range: string.full_range,
             target_selection_range: string.name.range,
         });

@@ -1,30 +1,30 @@
-use base_db::Workspace;
+use base_db::{FeatureParams, Workspace};
 use references::{ReferenceKind, ReferenceParams};
 
 use crate::util::line_index_ext::LineIndexExt;
 
 pub fn find_all(
     workspace: &Workspace,
-    uri: &lsp_types::Url,
-    position: lsp_types::Position,
-    context: &lsp_types::ReferenceContext,
+    params: lsp_types::ReferenceParams,
 ) -> Option<Vec<lsp_types::Location>> {
-    let document = workspace.lookup(uri)?;
-    let offset = document.line_index.offset_lsp(position)?;
-    let params = ReferenceParams {
-        workspace,
-        document,
-        offset,
-    };
+    let uri_and_pos = params.text_document_position;
+    let include_declaration = params.context.include_declaration;
 
+    let document = workspace.lookup(&uri_and_pos.text_document.uri)?;
+    let offset = document.line_index.offset_lsp(uri_and_pos.position)?;
+
+    let feature = FeatureParams::new(workspace, document);
     let mut results = Vec::new();
-    for result in references::find_all(params)
+    for result in references::find_all(ReferenceParams { feature, offset })
         .into_iter()
-        .filter(|result| result.kind == ReferenceKind::Reference || context.include_declaration)
+        .filter(|result| result.kind == ReferenceKind::Reference || include_declaration)
     {
-        let document = result.document;
+        let document = result.location.document;
         let uri = document.uri.clone();
-        if let Some(range) = document.line_index.line_col_lsp_range(result.range) {
+        if let Some(range) = document
+            .line_index
+            .line_col_lsp_range(result.location.range)
+        {
             let location = lsp_types::Location::new(uri, range);
             results.push(location);
         }

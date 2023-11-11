@@ -2,13 +2,12 @@ mod entry;
 mod label;
 mod string_def;
 
-use base_db::{Document, Project, Workspace};
-use rowan::{TextRange, TextSize};
+use base_db::{DocumentLocation, FeatureParams};
+use rowan::TextSize;
 
 #[derive(Debug)]
-pub struct Reference<'db> {
-    pub document: &'db Document,
-    pub range: TextRange,
+pub struct Reference<'a> {
+    pub location: DocumentLocation<'a>,
     pub kind: ReferenceKind,
 }
 
@@ -19,24 +18,20 @@ pub enum ReferenceKind {
 }
 
 #[derive(Debug)]
-pub struct ReferenceParams<'db> {
-    pub workspace: &'db Workspace,
-    pub document: &'db Document,
+pub struct ReferenceParams<'a> {
+    pub feature: FeatureParams<'a>,
     pub offset: TextSize,
 }
 
 #[derive(Debug)]
-struct ReferenceContext<'db> {
-    params: ReferenceParams<'db>,
-    project: Project<'db>,
-    results: Vec<Reference<'db>>,
+struct ReferenceContext<'a> {
+    params: ReferenceParams<'a>,
+    results: Vec<Reference<'a>>,
 }
 
 pub fn find_all(params: ReferenceParams) -> Vec<Reference<'_>> {
-    let project = params.workspace.project(params.document);
     let mut context = ReferenceContext {
         params,
-        project,
         results: Vec::new(),
     };
 

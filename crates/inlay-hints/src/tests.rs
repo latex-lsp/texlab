@@ -1,20 +1,16 @@
-use base_db::FeatureParams;
 use expect_test::{expect, Expect};
 use rowan::{TextLen, TextRange};
 
 fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
-    let spec = fixture.documents.first().unwrap();
-    let document = fixture.workspace.lookup(&spec.uri).unwrap();
 
-    let range = TextRange::new(0.into(), document.text.text_len());
-    let feature = FeatureParams::new(&fixture.workspace, document);
+    let (feature, _) = fixture.make_params().unwrap();
+    let range = TextRange::new(0.into(), feature.document.text.text_len());
     let params = crate::InlayHintParams { range, feature };
     let actual = crate::find_all(params).unwrap_or_default();
 
-    let offsets = spec.ranges.iter().map(|range| range.start());
-
-    for (hint, offset) in actual.iter().zip(offsets) {
+    let expected_offsets = fixture.locations().map(|location| location.range.start());
+    for (hint, offset) in actual.iter().zip(expected_offsets) {
         assert_eq!(hint.offset, offset);
     }
 

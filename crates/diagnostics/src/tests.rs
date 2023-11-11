@@ -1,14 +1,12 @@
 use std::borrow::Cow;
 
-use test_utils::fixture::Fixture;
-
 use crate::{
     types::{BibError, Diagnostic, DiagnosticData, TexError},
     DiagnosticBuilder, DiagnosticManager, DiagnosticSource,
 };
 
 fn check(input: &str, expected_data: &[DiagnosticData]) {
-    let fixture = Fixture::parse(input);
+    let fixture = test_utils::fixture::Fixture::parse(input);
     let mut manager = DiagnosticManager::default();
 
     let mut expected = DiagnosticBuilder::default();

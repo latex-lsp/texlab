@@ -7,19 +7,19 @@ use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 
 #[derive(Debug)]
-pub struct RenameParams<'db> {
-    pub inner: FeatureParams<'db>,
+pub struct RenameParams<'a> {
+    pub feature: FeatureParams<'a>,
     pub offset: TextSize,
 }
 
 #[derive(Debug, Default)]
-pub struct RenameResult<'db> {
-    pub changes: FxHashMap<&'db Document, Vec<TextRange>>,
+pub struct RenameResult<'a> {
+    pub changes: FxHashMap<&'a Document, Vec<TextRange>>,
 }
 
-struct RenameBuilder<'db> {
-    params: &'db RenameParams<'db>,
-    result: RenameResult<'db>,
+struct RenameBuilder<'a> {
+    params: RenameParams<'a>,
+    result: RenameResult<'a>,
 }
 
 pub fn prepare_rename(params: &RenameParams) -> Option<TextRange> {
@@ -29,7 +29,7 @@ pub fn prepare_rename(params: &RenameParams) -> Option<TextRange> {
         .map(|span| span.range)
 }
 
-pub fn rename<'db>(params: &'db RenameParams<'db>) -> RenameResult<'db> {
+pub fn rename<'a>(params: RenameParams<'a>) -> RenameResult<'a> {
     let result = RenameResult::default();
     let mut builder = RenameBuilder { params, result };
 

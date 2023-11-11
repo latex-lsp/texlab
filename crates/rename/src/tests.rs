@@ -1,4 +1,3 @@
-use base_db::FeatureParams;
 use rustc_hash::FxHashMap;
 
 use crate::RenameParams;
@@ -14,20 +13,13 @@ fn check(input: &str) {
         }
     }
 
-    let (document, offset) = fixture
-        .documents
-        .iter()
-        .find_map(|spec| Some((fixture.workspace.lookup(&spec.uri)?, spec.cursor?)))
-        .unwrap();
-
-    let inner = FeatureParams::new(&fixture.workspace, document);
-    let params = RenameParams { inner, offset };
-    let actual = crate::rename(&params);
+    let (feature, offset) = fixture.make_params().unwrap();
+    let actual = crate::rename(RenameParams { feature, offset });
     assert_eq!(actual.changes, expected);
 }
 
 #[test]
-fn command() {
+fn test_command() {
     check(
         r#"
 %! foo.tex
@@ -44,7 +36,7 @@ fn command() {
 }
 
 #[test]
-fn entry() {
+fn test_entry() {
     check(
         r#"
 %! main.bib
@@ -61,7 +53,7 @@ fn entry() {
 }
 
 #[test]
-fn citation() {
+fn test_citation() {
     check(
         r#"
 %! main.bib
@@ -78,7 +70,7 @@ fn citation() {
 }
 
 #[test]
-fn label() {
+fn test_label() {
     check(
         r#"
 %! foo.tex

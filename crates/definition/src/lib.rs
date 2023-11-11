@@ -4,14 +4,13 @@ mod include;
 mod label;
 mod string_ref;
 
-use base_db::{Document, Project, Workspace};
+use base_db::{Document, FeatureParams};
 use rowan::{TextRange, TextSize};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
-pub struct DefinitionParams<'db> {
-    pub workspace: &'db Workspace,
-    pub document: &'db Document,
+pub struct DefinitionParams<'a> {
+    pub feature: FeatureParams<'a>,
     pub offset: TextSize,
 }
 
@@ -24,17 +23,14 @@ pub struct DefinitionResult<'a> {
 }
 
 #[derive(Debug)]
-struct DefinitionContext<'db> {
-    params: DefinitionParams<'db>,
-    project: Project<'db>,
-    results: FxHashSet<DefinitionResult<'db>>,
+struct DefinitionContext<'a> {
+    params: DefinitionParams<'a>,
+    results: FxHashSet<DefinitionResult<'a>>,
 }
 
 pub fn goto_definition(params: DefinitionParams) -> FxHashSet<DefinitionResult> {
-    let project = params.workspace.project(params.document);
     let mut context = DefinitionContext {
         params,
-        project,
         results: FxHashSet::default(),
     };
 

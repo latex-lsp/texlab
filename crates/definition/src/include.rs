@@ -5,12 +5,13 @@ use crate::DefinitionContext;
 use super::DefinitionResult;
 
 pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
-    let start = context.params.document;
-    let parents = context.params.workspace.parents(start);
+    let feature = &context.params.feature;
+    let start = feature.document;
+    let parents = feature.workspace.parents(start);
     let results = parents
         .into_iter()
         .chain(std::iter::once(start))
-        .flat_map(|parent| base_db::graph::Graph::new(context.params.workspace, parent).edges)
+        .flat_map(|parent| base_db::graph::Graph::new(feature.workspace, parent).edges)
         .filter(|edge| edge.source == start)
         .flat_map(|edge| {
             let origin_selection_range = edge.weight?.link.path.range;
