@@ -14,7 +14,7 @@ base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 itertools = "0.11.0"
 line-index = "0.1.0"
-rowan = "0.15.11"
+rowan = "0.15.13"
 syntax = { path = "../syntax" }
 titlecase = "2.2.1"
 url = "=2.3.1"
