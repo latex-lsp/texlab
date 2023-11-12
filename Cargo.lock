@@ -418,7 +418,7 @@ dependencies = [
  "autocfg",
  "cfg-if",
  "crossbeam-utils",
- "memoffset 0.9.0",
+ "memoffset",
  "scopeguard",
 ]
 
@@ -954,15 +954,6 @@ checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
 
 [[package]]
 name = "memoffset"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61c719bcfbcf5d62b3a09efa6088de8c54bc0bfcd3ea7ae39fcc186108b8de1"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
-name = "memoffset"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
@@ -1315,13 +1306,13 @@ dependencies = [
 
 [[package]]
 name = "rowan"
-version = "0.15.11"
+version = "0.15.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64449cfef9483a475ed56ae30e2da5ee96448789fb2aa240a04beb6a055078bf"
+checksum = "906057e449592587bf6724f00155bf82a6752c868d78a8fb3aa41f4e6357cfe8"
 dependencies = [
  "countme",
  "hashbrown",
- "memoffset 0.8.0",
+ "memoffset",
  "rustc-hash",
  "text-size",
 ]

@@ -7,7 +7,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-rowan = "0.15.11"
+rowan = "0.15.13"
 syntax = { path = "../syntax" }
 line-index = "0.1.0"
 
