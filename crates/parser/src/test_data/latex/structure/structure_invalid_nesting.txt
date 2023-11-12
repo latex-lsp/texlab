@@ -1,1 +1,0 @@
-\section{Foo} \chapter{Bar}

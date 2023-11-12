@@ -1,1 +1,0 @@
-\addbibresource{foo/bar.bib}

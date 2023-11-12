@@ -1201,19 +1201,4 @@ pub fn parse_latex(text: &str, config: &SyntaxConfig) -> GreenNode {
 }
 
 #[cfg(test)]
-mod tests {
-    use syntax::latex;
-
-    use crate::SyntaxConfig;
-
-    use super::parse_latex;
-
-    #[test]
-    fn test_parse() {
-        insta::glob!("test_data/latex/{,**/}*.txt", |path| {
-            let text = std::fs::read_to_string(path).unwrap().replace("\r\n", "\n");
-            let root = latex::SyntaxNode::new_root(parse_latex(&text, &SyntaxConfig::default()));
-            insta::assert_debug_snapshot!(root);
-        });
-    }
-}
+mod tests;

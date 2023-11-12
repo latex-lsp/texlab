@@ -1,6 +1,0 @@
-Some junk here
-
-@comment{foo,
-    author = {Foo Bar},
-    title = {Some Title},
-}

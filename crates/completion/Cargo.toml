@@ -10,9 +10,7 @@ rust-version.workspace = true
 base-db = { path = "../base-db" }
 completion-data = { path = "../completion-data" }
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
-itertools = "0.11.0"
 line-index = "0.1.0"
-log = "0.4.20"
 rayon = "1.7.0"
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
@@ -22,8 +20,8 @@ url = "=2.3.1"
 [dev-dependencies]
 criterion = "0.5.1"
 distro = { path = "../distro" }
-test-utils = { path = "../test-utils" }
 expect-test = "1.4.1"
+test-utils = { path = "../test-utils" }
 
 [lib]
 doctest = false

@@ -1,9 +1,0 @@
-Foo
-\iffalse
-Test1
-\fi
-Bar
-\iffalse
-\fii
-\fi
-Baz

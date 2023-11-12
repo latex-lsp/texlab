@@ -1,1 +1,0 @@
-\newlabel{foo}{{1.1}}

@@ -1,2 +1,0 @@
-\input{|ipython scripts/test.ipynb}
-\label{fig:x=2}

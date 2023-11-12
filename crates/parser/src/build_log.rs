@@ -174,14 +174,4 @@ impl PartialOrd for FileRange {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::parse_build_log;
-
-    #[test]
-    fn test_parse() {
-        insta::glob!("test_data/build_log/*.txt", |path| {
-            let text = std::fs::read_to_string(path).unwrap().replace("\r\n", "\n");
-            insta::assert_debug_snapshot!(parse_build_log(&text));
-        });
-    }
-}
+mod tests;

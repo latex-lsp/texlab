@@ -1,1 +1,0 @@
-\newcommand[1]{\id}{#1}

@@ -1,1 +1,0 @@
-\DeclareAcronym{eg}{short = e.g,long = for example,tag = abbrev}

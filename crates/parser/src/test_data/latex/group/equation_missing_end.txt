@@ -1,1 +1,0 @@
-\begin{a} \[ foo bar \end{b}

@@ -1,8 +1,0 @@
-@book{10.5555/1177220,
-    author = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},
-    title = {Compilers: Principles, Techniques, and Tools (2nd Edition)},
-    year = {2006},
-    isbn = {0321486811},
-    publisher = {Addison-Wesley Longman Publishing Co., Inc.},
-    address = {USA}
-}

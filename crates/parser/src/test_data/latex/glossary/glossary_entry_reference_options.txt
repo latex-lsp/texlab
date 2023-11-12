@@ -1,1 +1,0 @@
-\gls[foo = bar, qux]{baz}

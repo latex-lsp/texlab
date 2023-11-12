@@ -1,8 +1,0 @@
-\documentclass{minimal}
-\begin{document}
-This is an asdf undefined command
-\iffalse
-  \iffalse\fi
-  \end{enumerate} 
-\fi
-\end{document}

@@ -10,7 +10,6 @@ rust-version.workspace = true
 base-db = { path = "../base-db" }
 rowan = "0.15.11"
 rustc-hash = "1.1.0"
-syntax = { path = "../syntax" }
 
 [dev-dependencies]
 test-utils = { path = "../test-utils" }

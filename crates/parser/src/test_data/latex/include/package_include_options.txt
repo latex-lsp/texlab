@@ -1,1 +1,0 @@
-\usepackage[foo = bar, baz, qux]{amsmath}

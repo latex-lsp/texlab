@@ -1,1 +1,0 @@
-\newacronym{fpsLabel}{FPS}{Frame per Second}

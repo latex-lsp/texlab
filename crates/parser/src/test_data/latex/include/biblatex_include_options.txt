@@ -1,1 +1,0 @@
-\addbibresource[foo=bar, baz]{foo/bar.bib}

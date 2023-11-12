@@ -38,11 +38,9 @@ encoding_rs = "0.8.33"
 encoding_rs_io = "0.1.7"
 fern = "0.6.2"
 folding = { path = "../folding" }
-fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 highlights = { path = "../highlights" }
 hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
-itertools = "0.11.0"
 line-index = "0.1.0"
 links = { path = "../links" }
 log = "0.4.19"
@@ -53,7 +51,6 @@ notify-debouncer-full = "0.3.1"
 once_cell = "1.18.0"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
-rayon = "1.8.0"
 references = { path = "../references" }
 regex = "1.9.5"
 rename = { path = "../rename" }
@@ -70,7 +67,6 @@ threadpool = "1.8.1"
 
 [dev-dependencies]
 criterion = { version = "0.5.1" }
-insta = { version = "1.32.0", features = ["glob", "redactions", "json"] }
 
 [[bench]]
 name = "bench_main"

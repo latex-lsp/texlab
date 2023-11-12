@@ -1,1 +1,0 @@
-\acro{fps}[FPS]{Frames per Second}

@@ -1,3 +1,0 @@
-\begin{asy}
-    printf("Hello World\n");
-\end{asy}

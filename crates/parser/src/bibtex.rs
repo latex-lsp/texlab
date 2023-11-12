@@ -436,17 +436,4 @@ impl From<ContentToken> for SyntaxKind {
 }
 
 #[cfg(test)]
-mod tests {
-    use syntax::bibtex;
-
-    use super::parse_bibtex;
-
-    #[test]
-    fn test_parse() {
-        insta::glob!("test_data/bibtex/{,**/}*.txt", |path| {
-            let text = std::fs::read_to_string(path).unwrap().replace("\r\n", "\n");
-            let root = bibtex::SyntaxNode::new_root(parse_bibtex(&text));
-            insta::assert_debug_snapshot!(root);
-        });
-    }
-}
+mod tests;
