@@ -47,7 +47,8 @@ fn detect_undefined_citations<'db>(
         .collect();
 
     for citation in &data.semantics.citations {
-        if !entries.contains(citation.name.text.as_str()) {
+        let name = citation.name_text();
+        if name != "*" && !entries.contains(name) {
             let diagnostic = Diagnostic {
                 range: citation.name.range,
                 data: DiagnosticData::Tex(TexError::UndefinedCitation),
