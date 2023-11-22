@@ -9,7 +9,7 @@ rust-version.workspace = true
 [dependencies]
 rowan = "0.15.13"
 syntax = { path = "../syntax" }
-line-index = "0.1.0"
+line-index = { path = "../line-index" }
 
 [lib]
 doctest = false
