@@ -11,7 +11,7 @@ bibtex-utils = { path = "../bibtex-utils" }
 dirs = "5.0.1"
 distro = { path = "../distro" }
 itertools = "0.11.0"
-line-index = "0.1.0"
+line-index = { path = "../line-index" }
 log = "0.4.20"
 notify = "6.0.1"
 once_cell = "1.18.0"

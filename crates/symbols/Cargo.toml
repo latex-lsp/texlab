@@ -13,7 +13,7 @@ doctest = false
 base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 itertools = "0.11.0"
-line-index = "0.1.0"
+line-index = { path = "../line-index" }
 rowan = "0.15.13"
 syntax = { path = "../syntax" }
 titlecase = "2.2.1"

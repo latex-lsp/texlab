@@ -41,7 +41,7 @@ folding = { path = "../folding" }
 highlights = { path = "../highlights" }
 hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
-line-index = "0.1.0"
+line-index = { path = "../line-index" }
 links = { path = "../links" }
 log = "0.4.19"
 lsp-server = "0.7.4"

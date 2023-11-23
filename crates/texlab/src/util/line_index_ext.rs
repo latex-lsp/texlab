@@ -1,4 +1,4 @@
-use line_index::{LineCol, LineIndex, WideEncoding, WideLineCol};
+use line_index::{LineCol, LineColUtf16, LineIndex};
 use lsp_types::{Position, Range};
 use rowan::{TextRange, TextSize};
 
@@ -14,12 +14,12 @@ pub trait LineIndexExt {
 
 impl LineIndexExt for LineIndex {
     fn offset_lsp(&self, line_col: Position) -> Option<TextSize> {
-        let line_col = WideLineCol {
+        let line_col = LineColUtf16 {
             line: line_col.line,
             col: line_col.character,
         };
 
-        let line_col = self.to_utf8(WideEncoding::Utf16, line_col)?;
+        let line_col = self.to_utf8(line_col)?;
         self.offset(line_col)
     }
 
@@ -31,7 +31,7 @@ impl LineIndexExt for LineIndex {
 
     fn line_col_lsp(&self, offset: TextSize) -> Option<Position> {
         let line_col = self.line_col(offset);
-        let line_col = self.to_wide(WideEncoding::Utf16, line_col)?;
+        let line_col = self.to_utf16(line_col)?;
         Some(Position::new(line_col.line, line_col.col))
     }
 
