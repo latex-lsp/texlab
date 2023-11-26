@@ -24,6 +24,10 @@ pub fn format_source_code(
             Formatter::Server => format_bibtex_internal(workspace, document, options),
             Formatter::LatexIndent => format_with_latexindent(workspace, document),
         },
-        Language::Aux | Language::Log | Language::Root | Language::Tectonic => None,
+        Language::Aux
+        | Language::Log
+        | Language::Root
+        | Language::Latexmkrc
+        | Language::Tectonic => None,
     }
 }

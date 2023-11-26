@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use distro::Language;
 use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
-use syntax::{bibtex, latex, BuildError};
+use syntax::{bibtex, latex, latexmkrc::LatexmkrcData, BuildError};
 use url::Url;
 
 use crate::{semantics, Config};
@@ -75,6 +75,10 @@ impl Document {
                 DocumentData::Log(LogDocumentData { errors })
             }
             Language::Root => DocumentData::Root,
+            Language::Latexmkrc => {
+                let data = parser::parse_latexmkrc(&text).unwrap_or_default();
+                DocumentData::Latexmkrc(data)
+            }
             Language::Tectonic => DocumentData::Tectonic,
         };
 
@@ -131,6 +135,7 @@ pub enum DocumentData {
     Aux(AuxDocumentData),
     Log(LogDocumentData),
     Root,
+    Latexmkrc(LatexmkrcData),
     Tectonic,
 }
 
@@ -161,6 +166,14 @@ impl DocumentData {
 
     pub fn as_log(&self) -> Option<&LogDocumentData> {
         if let DocumentData::Log(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_latexmkrc(&self) -> Option<&LatexmkrcData> {
+        if let DocumentData::Latexmkrc(data) = self {
             Some(data)
         } else {
             None

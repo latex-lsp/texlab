@@ -1,5 +1,6 @@
 pub mod bibtex;
 pub mod latex;
+pub mod latexmkrc;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
 pub enum BuildErrorLevel {
