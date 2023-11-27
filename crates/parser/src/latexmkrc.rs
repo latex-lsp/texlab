@@ -38,8 +38,7 @@ pub fn parse_latexmkrc(_input: &str) -> std::io::Result<LatexmkrcData> {
 ///   Latexmk: Normalized aux dir and out dir: '$aux_dir', '$out_dir'
 fn extract_dirs(line: &str) -> Option<(String, String)> {
     let mut it = line
-        .strip_prefix("Latexmk: Normalized aux dir and out dir: ")
-        .filter(|path| !path.is_empty())?
+        .strip_prefix("Latexmk: Normalized aux dir and out dir: ")?
         .split(", ");
 
     let aux_dir = it.next()?.strip_prefix('\'')?.strip_suffix('\'')?;
