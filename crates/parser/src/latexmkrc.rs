@@ -3,43 +3,55 @@ use std::io::Write;
 use syntax::latexmkrc::LatexmkrcData;
 use tempfile::tempdir;
 
-/// Extra section at the bottom of the latexmkrc file to print the values of $aux_dir and $log_dir.
-const EXTRA: &str = r#"
-print "texlab:aux_dir=" . $aux_dir . "\n";
-print "texlab:out_dir=" . $out_dir . "\n";
-exit 0; # Don't build the document"#;
-
-pub fn parse_latexmkrc(input: &str) -> std::io::Result<LatexmkrcData> {
+pub fn parse_latexmkrc(_input: &str) -> std::io::Result<LatexmkrcData> {
     let temp_dir = tempdir()?;
-    let rc_path = temp_dir.path().join("latexmkrc");
-    let mut rc_file = std::fs::File::create(&rc_path)?;
-    rc_file.write_all(input.as_bytes())?;
-    rc_file.write_all(EXTRA.as_bytes())?;
-    drop(rc_file);
+    let non_existent_tex = temp_dir.path().join("NONEXISTENT.tex");
 
+    // Run `latexmk -dir-report $TMPDIR/NONEXISTENT.tex` to obtain out_dir
+    // and aux_dir values. We pass nonexistent file to prevent latexmk from
+    // building anything, since we need this invocation only to extract the
+    // -dir-report variables.
+    //
+    // In the future, latexmk plans to implement -dir-report-only option and we
+    // won't have to resort to this hack with NONEXISTENT.tex.
     let output = std::process::Command::new("latexmk")
-        .arg("-r")
-        .arg(rc_path)
+        .arg("-dir-report")
+        .arg(non_existent_tex)
         .output()?;
 
-    let mut result = LatexmkrcData::default();
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    for line in stdout.lines() {
-        result.aux_dir = result
-            .aux_dir
-            .or_else(|| extract_dir(line, "texlab:aux_dir="));
+    let (aux_dir, out_dir) = stdout
+        .lines()
+        .filter_map(extract_dirs)
+        .next()
+        .expect("Normalized aux and out dir were not found in latexmk output");
 
-        result.out_dir = result
-            .out_dir
-            .or_else(|| extract_dir(line, "texlab:out_dir="));
-    }
-
-    Ok(result)
+    Ok(LatexmkrcData {
+        aux_dir: Some(aux_dir),
+        out_dir: Some(out_dir),
+    })
 }
 
-fn extract_dir(line: &str, key: &str) -> Option<String> {
-    line.strip_prefix(key)
-        .filter(|path| !path.is_empty())
-        .map(String::from)
+/// Extracts $aux_dir and $out_dir from lines of the form
+///
+///   Latexmk: Normalized aux dir and out dir: '$aux_dir', '$out_dir'
+fn extract_dirs(line: &str) -> Option<(String, String)> {
+    let mut it = line
+        .strip_prefix("Latexmk: Normalized aux dir and out dir: ")
+        .filter(|path| !path.is_empty())?
+        .split(", ");
+
+    let aux_dir = it.next()?.strip_prefix('\'')?.strip_suffix('\'')?;
+    let out_dir = it.next()?.strip_prefix('\'')?.strip_suffix('\'')?;
+
+    // Ensure there's no more data
+    if it.next().is_some() {
+        return None;
+    }
+
+    Some((
+        String::from(aux_dir),
+        String::from(out_dir),
+    ))
 }
