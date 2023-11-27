@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use syntax::latexmkrc::LatexmkrcData;
 use tempfile::tempdir;
 
@@ -49,8 +47,5 @@ fn extract_dirs(line: &str) -> Option<(String, String)> {
         return None;
     }
 
-    Some((
-        String::from(aux_dir),
-        String::from(out_dir),
-    ))
+    Some((String::from(aux_dir), String::from(out_dir)))
 }
