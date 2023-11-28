@@ -58,9 +58,8 @@ impl ForwardSearch {
             return Err(ForwardSearchError::NotLocal(parent.uri.clone()));
         }
 
-        let dir = workspace.current_dir(&parent.dir);
         let dir = workspace
-            .output_dir(&dir, workspace.config().build.pdf_dir.clone())
+            .pdf_dir(&workspace.current_dir(&parent.dir))
             .to_file_path()
             .unwrap();
 

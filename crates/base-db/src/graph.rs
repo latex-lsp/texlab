@@ -138,9 +138,8 @@ impl<'a> Graph<'a> {
 
     fn add_implicit_edges(&mut self, source: &'a Document, base_dir: &Url) {
         if source.language == Language::Tex {
-            let config = &self.workspace.config().build;
-            let aux_dir = self.workspace.output_dir(base_dir, config.aux_dir.clone());
-            let log_dir = self.workspace.output_dir(base_dir, config.log_dir.clone());
+            let aux_dir = self.workspace.aux_dir(base_dir);
+            let log_dir = self.workspace.log_dir(base_dir);
 
             let relative_path = base_dir.make_relative(&source.uri).unwrap();
 

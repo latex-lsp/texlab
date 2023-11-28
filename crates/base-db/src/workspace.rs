@@ -8,6 +8,7 @@ use itertools::Itertools;
 use line_index::LineCol;
 use rowan::{TextLen, TextRange};
 use rustc_hash::FxHashSet;
+use syntax::latexmkrc::LatexmkrcData;
 use url::Url;
 
 use crate::{graph, Config, Document, DocumentData, DocumentParams, Owner};
@@ -115,22 +116,11 @@ impl Workspace {
         self.iter()
             .filter(|document| document.uri.scheme() == "file")
             .flat_map(|document| {
-                let dir1 = self.output_dir(
-                    &self.current_dir(&document.dir),
-                    self.config.build.aux_dir.clone(),
-                );
-
-                let dir2 = self.output_dir(
-                    &self.current_dir(&document.dir),
-                    self.config.build.log_dir.clone(),
-                );
-
-                let dir3 = &document.dir;
-                [
-                    dir1.to_file_path(),
-                    dir2.to_file_path(),
-                    dir3.to_file_path(),
-                ]
+                let current_dir = &self.current_dir(&document.dir);
+                let doc_dir = document.dir.to_file_path();
+                let aux_dir = self.aux_dir(current_dir).to_file_path();
+                let log_dir = self.log_dir(current_dir).to_file_path();
+                [aux_dir, log_dir, doc_dir]
             })
             .flatten()
             .for_each(|path| {
@@ -154,13 +144,45 @@ impl Workspace {
             .unwrap_or_else(|| base_dir.clone())
     }
 
-    pub fn output_dir(&self, base_dir: &Url, relative_path: String) -> Url {
-        let mut path = relative_path;
-        if !path.ends_with('/') {
-            path.push('/');
+    pub fn aux_dir(&self, base_dir: &Url) -> Url {
+        self.output_dir(base_dir, &self.config.build.aux_dir, |data| {
+            data.aux_dir.as_deref()
+        })
+    }
+
+    pub fn log_dir(&self, base_dir: &Url) -> Url {
+        self.output_dir(base_dir, &self.config.build.log_dir, |_| None)
+    }
+
+    pub fn pdf_dir(&self, base_dir: &Url) -> Url {
+        self.output_dir(base_dir, &self.config.build.pdf_dir, |_| None)
+    }
+
+    fn current_latexmkrc(&self, base_dir: &Url) -> Option<&LatexmkrcData> {
+        self.documents
+            .iter()
+            .filter(|document| document.language == Language::Latexmkrc)
+            .find(|document| document.uri.join(".").as_ref() == Ok(base_dir))
+            .and_then(|document| document.data.as_latexmkrc())
+    }
+
+    fn output_dir(
+        &self,
+        base_dir: &Url,
+        config: &str,
+        extract_latexmkrc: impl FnOnce(&LatexmkrcData) -> Option<&str>,
+    ) -> Url {
+        let mut dir: String = self
+            .current_latexmkrc(base_dir)
+            .and_then(|data| extract_latexmkrc(data).or_else(|| data.out_dir.as_deref()))
+            .unwrap_or(config)
+            .into();
+
+        if !dir.ends_with('/') {
+            dir.push('/');
         }
 
-        base_dir.join(&path).unwrap_or_else(|_| base_dir.clone())
+        base_dir.join(&dir).unwrap_or_else(|_| base_dir.clone())
     }
 
     pub fn contains(&self, path: &Path) -> bool {
@@ -299,7 +321,10 @@ impl Workspace {
                     continue;
                 };
 
-                if !matches!(lang, Language::Tex | Language::Root | Language::Tectonic) {
+                if !matches!(
+                    lang,
+                    Language::Tex | Language::Root | Language::Tectonic | Language::Latexmkrc
+                ) {
                     continue;
                 }
 

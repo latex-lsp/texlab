@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Infer `texlab.build.auxDirectory`, `texlab.build.logDirectory` and `texlab.build.pdfDirectory` from `latexmkrc` if available ([#907](https://github.com/latex-lsp/texlab/issues/907))
+
 ### Fixed
 
 - Do not report `undefined reference` errors when using `\nocite{*}` ([#964](https://github.com/latex-lsp/texlab/issues/964))
