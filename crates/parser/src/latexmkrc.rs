@@ -17,13 +17,14 @@ pub fn parse_latexmkrc(_input: &str) -> std::io::Result<LatexmkrcData> {
         .arg(non_existent_tex)
         .output()?;
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
 
-    let (aux_dir, out_dir) = stdout
-        .lines()
-        .filter_map(extract_dirs)
-        .next()
-        .expect("Normalized aux and out dir were not found in latexmk output");
+    let (aux_dir, out_dir) = stderr.lines().find_map(extract_dirs).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Normalized aux and out dir were not found in latexmk output",
+        )
+    })?;
 
     Ok(LatexmkrcData {
         aux_dir: Some(aux_dir),
