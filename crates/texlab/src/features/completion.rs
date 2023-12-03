@@ -169,7 +169,7 @@ impl<'a> ItemBuilder<'a> {
         if self.supports_snippets {
             result.kind = Some(Structure::Snippet.completion_kind());
             result.text_edit =
-                Some(lsp_types::TextEdit::new(range, "begin{$1}\n\t\n\\end{$1}".into()).into());
+                Some(lsp_types::TextEdit::new(range, "begin{$1}\n\t$0\n\\end{$1}".into()).into());
 
             result.insert_text_format = Some(lsp_types::InsertTextFormat::SNIPPET);
         } else {

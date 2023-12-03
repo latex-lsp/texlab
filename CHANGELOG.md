@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not report `undefined reference` errors when using `\nocite{*}` ([#964](https://github.com/latex-lsp/texlab/issues/964))
 - Fix potential crash when parsing build log files ([#973](https://github.com/latex-lsp/texlab/issues/973))
+- Set the final tab stop of the `\begin` snippet inside the environment ([#963](https://github.com/latex-lsp/texlab/issues/963))
 
 ## [5.11.0] - 2023-11-05
 
