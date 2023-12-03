@@ -21,7 +21,7 @@ regex = "1.9.5"
 rowan = "0.15.13"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-url = "=2.3.1"
+url = "2.5.0"
 
 [lib]
 doctest = false
