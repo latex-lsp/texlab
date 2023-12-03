@@ -52,7 +52,7 @@ once_cell = "1.18.0"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
 references = { path = "../references" }
-regex = "1.9.5"
+regex = "1.10.2"
 rename = { path = "../rename" }
 rowan = "0.15.13"
 rustc-hash = "1.1.0"
