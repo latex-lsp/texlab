@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-itertools = "0.11.0"
+itertools = "0.12.0"
 line-index = { path = "../line-index" }
 rowan = "0.15.13"
 rustc-hash = "1.1.0"
