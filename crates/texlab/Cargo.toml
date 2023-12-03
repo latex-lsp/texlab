@@ -57,7 +57,7 @@ rename = { path = "../rename" }
 rowan = "0.15.13"
 rustc-hash = "1.1.0"
 serde = "1.0.192"
-serde_json = "1.0.107"
+serde_json = "1.0.108"
 serde_regex = "1.1.0"
 serde_repr = "0.1.17"
 symbols = { path = "../symbols" }
