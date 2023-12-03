@@ -114,7 +114,7 @@ impl LineIndex {
     }
 
     pub fn offset(&self, line_col: LineCol) -> Option<TextSize> {
-        Some(self.newlines[line_col.line as usize] + TextSize::from(line_col.col))
+        Some(self.newlines.get(line_col.line as usize)? + TextSize::from(line_col.col))
     }
 
     pub fn to_utf16(&self, line_col: LineCol) -> Option<LineColUtf16> {
