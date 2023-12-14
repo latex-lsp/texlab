@@ -1,8 +1,11 @@
-pub mod capabilities;
 pub mod chktex;
+mod client_flags;
 pub mod diagnostics;
+pub mod from_proto;
 pub mod line_index_ext;
 pub mod lsp_enums;
+
+pub use self::client_flags::ClientFlags;
 
 pub fn normalize_uri(uri: &mut lsp_types::Url) {
     if let Some(mut segments) = uri.path_segments() {

@@ -1,17 +1,15 @@
 use base_db::{data::BibtexEntryTypeCategory, Document, Workspace};
-use lsp_types::{
-    ClientCapabilities, DocumentSymbol, DocumentSymbolResponse, Location, WorkspaceSymbolResponse,
-};
+use lsp_types::{DocumentSymbol, DocumentSymbolResponse, Location, WorkspaceSymbolResponse};
 
-use crate::util::{capabilities::ClientCapabilitiesExt, line_index_ext::LineIndexExt};
+use crate::util::{line_index_ext::LineIndexExt, ClientFlags};
 
 pub fn document_symbols(
     workspace: &Workspace,
     document: &Document,
-    capabilities: &ClientCapabilities,
+    client_flags: &ClientFlags,
 ) -> DocumentSymbolResponse {
     let symbols = symbols::document_symbols(workspace, document);
-    if capabilities.has_hierarchical_document_symbol_support() {
+    if client_flags.hierarchical_document_symbols {
         let results = symbols
             .into_iter()
             .filter_map(|symbol| convert_to_nested_symbol(symbol, document))

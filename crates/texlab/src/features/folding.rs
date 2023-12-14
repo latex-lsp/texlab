@@ -1,29 +1,20 @@
 use base_db::Workspace;
 use folding::FoldingRangeKind;
-use lsp_types::{ClientCapabilities, Url};
 
-use crate::util::line_index_ext::LineIndexExt;
+use crate::util::{line_index_ext::LineIndexExt, ClientFlags};
 
 pub fn find_all(
     workspace: &Workspace,
-    uri: &Url,
-    capabilities: &ClientCapabilities,
+    uri: &lsp_types::Url,
+    client_flags: &ClientFlags,
 ) -> Option<Vec<serde_json::Value>> {
-    let custom_kinds = capabilities
-        .text_document
-        .as_ref()
-        .and_then(|cap| cap.folding_range.as_ref())
-        .and_then(|cap| cap.folding_range_kind.as_ref())
-        .and_then(|cap| cap.value_set.as_ref())
-        .is_some();
-
     let document = workspace.lookup(uri)?;
     let foldings = folding::find_all(document)
         .into_iter()
         .filter_map(|folding| {
             let range = document.line_index.line_col_lsp_range(folding.range)?;
 
-            let kind = if custom_kinds {
+            let kind = if client_flags.folding_custom_kinds {
                 Some(match folding.kind {
                     FoldingRangeKind::Section => "section",
                     FoldingRangeKind::Environment => "environment",

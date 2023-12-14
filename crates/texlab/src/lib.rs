@@ -1,6 +1,6 @@
 mod client;
-pub mod features;
+pub(crate) mod features;
 mod server;
-pub mod util;
+pub(crate) mod util;
 
 pub use self::{client::LspClient, server::Server};

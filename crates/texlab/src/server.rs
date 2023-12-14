@@ -35,9 +35,7 @@ use crate::{
         definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
         symbols,
     },
-    util::{
-        self, capabilities::ClientCapabilitiesExt, line_index_ext::LineIndexExt, normalize_uri,
-    },
+    util::{self, from_proto, line_index_ext::LineIndexExt, normalize_uri, ClientFlags},
 };
 
 use self::{
@@ -65,8 +63,7 @@ pub struct Server {
     internal_rx: Receiver<InternalMessage>,
     workspace: Arc<RwLock<Workspace>>,
     client: LspClient,
-    client_capabilities: Arc<ClientCapabilities>,
-    client_info: Option<Arc<ClientInfo>>,
+    client_flags: Arc<ClientFlags>,
     diagnostic_manager: DiagnosticManager,
     chktex_diagnostics: FxHashMap<Url, Vec<Diagnostic>>,
     watcher: FileWatcher,
@@ -75,60 +72,61 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(connection: Connection) -> Self {
+    pub fn exec(connection: Connection) -> Result<()> {
         let client = LspClient::new(connection.sender.clone());
         let (internal_tx, internal_rx) = crossbeam_channel::unbounded();
         let watcher = FileWatcher::new(internal_tx.clone()).expect("init file watcher");
 
-        Self {
+        let mut workspace = Workspace::default();
+
+        let (id, params) = connection.initialize_start()?;
+        let params: InitializeParams = serde_json::from_value(params)?;
+
+        let workspace_folders = params
+            .workspace_folders
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|folder| folder.uri.scheme() == "file")
+            .flat_map(|folder| folder.uri.to_file_path())
+            .collect();
+
+        workspace.set_folders(workspace_folders);
+
+        let result = InitializeResult {
+            capabilities: Self::capabilities(),
+            server_info: Some(ServerInfo {
+                name: "TexLab".to_owned(),
+                version: Some(env!("CARGO_PKG_VERSION").to_owned()),
+            }),
+        };
+
+        connection.initialize_finish(id, serde_json::to_value(result)?)?;
+
+        let server = Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
-            workspace: Default::default(),
+            workspace: Arc::new(RwLock::new(workspace)),
             client,
-            client_capabilities: Default::default(),
-            client_info: Default::default(),
+            client_flags: Arc::new(from_proto::client_flags(
+                params.capabilities,
+                params.client_info,
+            )),
             chktex_diagnostics: Default::default(),
             diagnostic_manager: DiagnosticManager::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
-        }
+        };
+
+        let options = serde_json::from_value(params.initialization_options.unwrap_or_default())
+            .unwrap_or_default();
+
+        server.run(options)?;
+        Ok(())
     }
 
-    fn run_query<R, Q>(&self, id: RequestId, query: Q)
-    where
-        R: Serialize,
-        Q: FnOnce(&Workspace) -> R + Send + 'static,
-    {
-        let client = self.client.clone();
-        let workspace = Arc::clone(&self.workspace);
-        self.pool.execute(move || {
-            let response = lsp_server::Response::new_ok(id, query(&workspace.read()));
-            client.send_response(response).unwrap();
-        });
-    }
-
-    fn run_fallible<R, Q>(&self, id: RequestId, query: Q)
-    where
-        R: Serialize,
-        Q: FnOnce() -> Result<R> + Send + 'static,
-    {
-        let client = self.client.clone();
-        self.pool.execute(move || match query() {
-            Ok(result) => {
-                let response = lsp_server::Response::new_ok(id, result);
-                client.send_response(response).unwrap();
-            }
-            Err(why) => {
-                client
-                    .send_error(id, ErrorCode::InternalError, why.to_string())
-                    .unwrap();
-            }
-        });
-    }
-
-    fn capabilities(&self) -> ServerCapabilities {
+    fn capabilities() -> ServerCapabilities {
         ServerCapabilities {
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
@@ -185,57 +183,40 @@ impl Server {
         }
     }
 
-    fn initialize(&mut self) -> Result<()> {
-        let (id, params) = self.connection.initialize_start()?;
-        let params: InitializeParams = serde_json::from_value(params)?;
+    fn run_query<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Serialize,
+        Q: FnOnce(&Workspace) -> R + Send + 'static,
+    {
+        let client = self.client.clone();
+        let workspace = Arc::clone(&self.workspace);
+        self.pool.execute(move || {
+            let response = lsp_server::Response::new_ok(id, query(&workspace.read()));
+            client.send_response(response).unwrap();
+        });
+    }
 
-        self.client_capabilities = Arc::new(params.capabilities);
-        self.client_info = params.client_info.map(Arc::new);
-
-        let workspace_folders = params
-            .workspace_folders
-            .unwrap_or_default()
-            .into_iter()
-            .filter(|folder| folder.uri.scheme() == "file")
-            .flat_map(|folder| folder.uri.to_file_path())
-            .collect();
-
-        self.workspace.write().set_folders(workspace_folders);
-
-        let result = InitializeResult {
-            capabilities: self.capabilities(),
-            server_info: Some(ServerInfo {
-                name: "TexLab".to_owned(),
-                version: Some(env!("CARGO_PKG_VERSION").to_owned()),
-            }),
-        };
-        self.connection
-            .initialize_finish(id, serde_json::to_value(result)?)?;
-
-        let StartupOptions { skip_distro } =
-            serde_json::from_value(params.initialization_options.unwrap_or_default())
-                .unwrap_or_default();
-
-        if !skip_distro {
-            let sender = self.internal_tx.clone();
-            self.pool.execute(move || {
-                let distro = Distro::detect().unwrap_or_else(|why| {
-                    log::warn!("Unable to load distro files: {}", why);
-                    Distro::default()
-                });
-
-                log::info!("Detected distribution: {:?}", distro.kind);
-                sender.send(InternalMessage::SetDistro(distro)).unwrap();
-            });
-        }
-
-        self.register_configuration();
-        self.pull_options();
-        Ok(())
+    fn run_fallible<R, Q>(&self, id: RequestId, query: Q)
+    where
+        R: Serialize,
+        Q: FnOnce() -> Result<R> + Send + 'static,
+    {
+        let client = self.client.clone();
+        self.pool.execute(move || match query() {
+            Ok(result) => {
+                let response = lsp_server::Response::new_ok(id, result);
+                client.send_response(response).unwrap();
+            }
+            Err(why) => {
+                client
+                    .send_error(id, ErrorCode::InternalError, why.to_string())
+                    .unwrap();
+            }
+        });
     }
 
     fn register_configuration(&mut self) {
-        if self.client_capabilities.has_push_configuration_support() {
+        if self.client_flags.configuration_push {
             let registration = Registration {
                 id: "pull-config".to_string(),
                 method: DidChangeConfiguration::METHOD.to_string(),
@@ -320,7 +301,7 @@ impl Server {
     }
 
     fn pull_options(&mut self) {
-        if !self.client_capabilities.has_pull_configuration_support() {
+        if !self.client_flags.configuration_pull {
             return;
         }
 
@@ -364,7 +345,7 @@ impl Server {
     }
 
     fn did_change_configuration(&mut self, params: DidChangeConfigurationParams) -> Result<()> {
-        if self.client_capabilities.has_pull_configuration_support() {
+        if self.client_flags.configuration_pull {
             self.pull_options();
         } else {
             let options = self.client.parse_options(params.settings)?;
@@ -510,13 +491,13 @@ impl Server {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
 
-        let capabilities = Arc::clone(&self.client_capabilities);
+        let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |workspace| {
             let Some(document) = workspace.lookup(&uri) else {
                 return DocumentSymbolResponse::Flat(vec![]);
             };
 
-            symbols::document_symbols(workspace, document, &capabilities)
+            symbols::document_symbols(workspace, document, &client_flags)
         });
 
         Ok(())
@@ -533,11 +514,10 @@ impl Server {
     fn completion(&self, id: RequestId, mut params: CompletionParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position.text_document.uri);
         let position = params.text_document_position.position;
-        let client_capabilities = Arc::clone(&self.client_capabilities);
-        let client_info = self.client_info.clone();
+        let client_flags = Arc::clone(&self.client_flags);
         self.update_cursor(&params.text_document_position.text_document.uri, position);
         self.run_query(id, move |db| {
-            completion::complete(db, &params, &client_capabilities, client_info.as_deref())
+            completion::complete(db, &params, &client_flags)
         });
 
         Ok(())
@@ -599,9 +579,9 @@ impl Server {
     fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
         let mut uri = params.text_document.uri;
         normalize_uri(&mut uri);
-        let client_capabilities = Arc::clone(&self.client_capabilities);
+        let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |db| {
-            folding::find_all(db, &uri, &client_capabilities).unwrap_or_default()
+            folding::find_all(db, &uri, &client_flags).unwrap_or_default()
         });
         Ok(())
     }
@@ -757,7 +737,7 @@ impl Server {
 
         let command = BuildCommand::new(&workspace, &uri);
         let internal = self.internal_tx.clone();
-        let progress = self.client_capabilities.has_work_done_progress_support();
+        let progress = self.client_flags.progress;
         let pending_builds = Arc::clone(&self.pending_builds);
 
         self.pool.execute(move || {
@@ -1124,8 +1104,22 @@ impl Server {
         }
     }
 
-    pub fn run(mut self) -> Result<()> {
-        self.initialize()?;
+    pub fn run(mut self, options: StartupOptions) -> Result<()> {
+        if !options.skip_distro {
+            let sender = self.internal_tx.clone();
+            self.pool.execute(move || {
+                let distro = Distro::detect().unwrap_or_else(|why| {
+                    log::warn!("Unable to load distro files: {}", why);
+                    Distro::default()
+                });
+
+                log::info!("Detected distribution: {:?}", distro.kind);
+                sender.send(InternalMessage::SetDistro(distro)).unwrap();
+            });
+        }
+
+        self.register_configuration();
+        self.pull_options();
         self.process_messages()?;
         self.pool.join();
         Ok(())

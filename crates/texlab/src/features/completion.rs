@@ -1,22 +1,18 @@
-use base_db::{util::RenderedObject, Document, FeatureParams, Workspace};
+use base_db::{util::RenderedObject, FeatureParams, Workspace};
 use completion::{
     ArgumentData, CompletionItem, CompletionItemData, CompletionParams, EntryTypeData,
     FieldTypeData,
 };
 use line_index::LineIndex;
-use lsp_types::{ClientCapabilities, ClientInfo, CompletionList};
 use serde::{Deserialize, Serialize};
 
-use crate::util::{
-    capabilities::ClientCapabilitiesExt, line_index_ext::LineIndexExt, lsp_enums::Structure,
-};
+use crate::util::{line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
 
 pub fn complete(
     workspace: &Workspace,
     params: &lsp_types::CompletionParams,
-    client_capabilities: &ClientCapabilities,
-    client_info: Option<&ClientInfo>,
-) -> Option<CompletionList> {
+    client_flags: &ClientFlags,
+) -> Option<lsp_types::CompletionList> {
     let document = workspace.lookup(&params.text_document_position.text_document.uri)?;
     let feature = FeatureParams::new(workspace, document);
     let offset = document
@@ -26,48 +22,33 @@ pub fn complete(
     let params = CompletionParams { feature, offset };
     let result = completion::complete(&params);
 
-    let mut list = CompletionList::default();
-    let item_builder = ItemBuilder::new(document, client_capabilities);
-    let always_incomplete = client_info.map_or(false, |info| info.name == "Visual Studio Code");
-    list.is_incomplete = always_incomplete || result.items.len() >= completion::LIMIT;
-    list.items = result
+    let item_builder = ItemBuilder {
+        line_index: &document.line_index,
+        client_flags,
+    };
+
+    let is_incomplete =
+        client_flags.completion_always_incomplete || result.items.len() >= completion::LIMIT;
+
+    let items = result
         .items
         .into_iter()
         .enumerate()
         .filter_map(|(i, item)| item_builder.convert(item, i))
         .collect();
 
-    Some(list)
+    Some(lsp_types::CompletionList {
+        is_incomplete,
+        items,
+    })
 }
 
 struct ItemBuilder<'a> {
     line_index: &'a LineIndex,
-    item_kinds: &'a [lsp_types::CompletionItemKind],
-    supports_snippets: bool,
-    supports_images: bool,
+    client_flags: &'a ClientFlags,
 }
 
 impl<'a> ItemBuilder<'a> {
-    pub fn new(document: &'a Document, client_capabilities: &'a ClientCapabilities) -> Self {
-        let line_index = &document.line_index;
-        let item_kinds = client_capabilities
-            .text_document
-            .as_ref()
-            .and_then(|cap| cap.completion.as_ref())
-            .and_then(|cap| cap.completion_item_kind.as_ref())
-            .and_then(|cap| cap.value_set.as_deref())
-            .unwrap_or_default();
-
-        let supports_snippets = client_capabilities.has_snippet_support();
-        let supports_images = client_capabilities.has_completion_markdown_support();
-        Self {
-            line_index,
-            item_kinds,
-            supports_snippets,
-            supports_images,
-        }
-    }
-
     pub fn convert(&self, item: CompletionItem, index: usize) -> Option<lsp_types::CompletionItem> {
         let mut result = lsp_types::CompletionItem::default();
         let range = self.line_index.line_col_lsp_range(item.range)?;
@@ -125,7 +106,7 @@ impl<'a> ItemBuilder<'a> {
 
         if result
             .kind
-            .is_some_and(|kind| !self.item_kinds.contains(&kind))
+            .is_some_and(|kind| !self.client_flags.completion_kinds.contains(&kind))
         {
             result.kind = Some(lsp_types::CompletionItemKind::TEXT);
         }
@@ -166,7 +147,7 @@ impl<'a> ItemBuilder<'a> {
         result: &mut lsp_types::CompletionItem,
         range: lsp_types::Range,
     ) {
-        if self.supports_snippets {
+        if self.client_flags.completion_snippets {
             result.kind = Some(Structure::Snippet.completion_kind());
             result.text_edit =
                 Some(lsp_types::TextEdit::new(range, "begin{$1}\n\t$0\n\\end{$1}".into()).into());
@@ -386,7 +367,7 @@ impl<'a> ItemBuilder<'a> {
     }
 
     fn inline_image(&self, name: &str, base64: &str) -> Option<lsp_types::Documentation> {
-        if self.supports_images {
+        if self.client_flags.completion_markdown {
             let kind = lsp_types::MarkupKind::Markdown;
             let value = format!("![{name}](data:image/png;base64,{base64}|width=48,height=48)");
             let content = lsp_types::MarkupContent { kind, value };
