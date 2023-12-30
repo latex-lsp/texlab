@@ -1,37 +1,23 @@
-use std::borrow::Cow;
+use expect_test::{expect, Expect};
+use itertools::Itertools;
 
-use crate::{
-    types::{BibError, Diagnostic, DiagnosticData, TexError},
-    DiagnosticBuilder, DiagnosticManager, DiagnosticSource,
-};
-
-fn check(input: &str, expected_data: &[DiagnosticData]) {
+fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
-    let mut manager = DiagnosticManager::default();
-
-    let mut expected = DiagnosticBuilder::default();
-    let mut expected_data = expected_data.iter();
-    for document in &fixture.documents {
-        let diagnostics = document.ranges.iter().copied().map(|range| {
-            let data = expected_data.next().unwrap().clone();
-            Cow::Owned(Diagnostic { range, data })
-        });
-
-        expected.push_many(&document.uri, diagnostics);
-    }
+    let mut manager = crate::Manager::default();
 
     for document in fixture.workspace.iter() {
-        manager.update(&fixture.workspace, &document);
+        manager.update_syntax(&fixture.workspace, &document);
     }
 
-    let mut actual = DiagnosticBuilder::default();
-    manager.publish(&fixture.workspace, &mut actual);
+    let results = manager.get(&fixture.workspace);
+    let results = results
+        .iter_all()
+        .filter(|(_, diags)| !diags.is_empty())
+        .sorted_by(|(uri1, _), (uri2, _)| uri1.cmp(&uri2))
+        .map(|(uri, diags)| (uri.as_str(), diags))
+        .collect_vec();
 
-    for diagnostics in actual.inner.values_mut() {
-        diagnostics.sort_by_key(|diag| (diag.range.start(), diag.range.len()));
-    }
-
-    assert_eq!(actual, expected);
+    expect.assert_debug_eq(&results);
 }
 
 #[test]
@@ -42,7 +28,19 @@ fn test_bib_entry_missing_l_delim() {
 @article
         !
 "#,
-        &[DiagnosticData::Bib(BibError::ExpectingLCurly)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            8..8,
+                            ExpectingLCurly,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -58,7 +56,19 @@ fn test_bib_entry_missing_r_delim() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Bib(BibError::ExpectingRCurly)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            14..14,
+                            ExpectingRCurly,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -69,7 +79,19 @@ fn test_bib_entry_missing_name() {
 %! main.bib
 @article{
          !"#,
-        &[DiagnosticData::Bib(BibError::ExpectingKey)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            9..9,
+                            ExpectingKey,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -87,7 +109,19 @@ fn test_bib_field_missing_eq() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Bib(BibError::ExpectingEq)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            23..23,
+                            ExpectingEq,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -105,7 +139,19 @@ fn test_bib_field_missing_value() {
 \bibliography{main}
 \cite{foo}
 "#,
-        &[DiagnosticData::Bib(BibError::ExpectingFieldValue)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            25..25,
+                            ExpectingFieldValue,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -119,10 +165,23 @@ fn test_tex_unmatched_braces() {
 {  
   !
 "#,
-        &[
-            DiagnosticData::Tex(TexError::UnexpectedRCurly),
-            DiagnosticData::Tex(TexError::ExpectingRCurly),
-        ],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            0..1,
+                            UnexpectedRCurly,
+                        ),
+                        Tex(
+                            4..4,
+                            ExpectingRCurly,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -135,7 +194,19 @@ fn test_tex_environment_mismatched() {
        ^^^
 \end{bar}
 "#,
-        &[DiagnosticData::Tex(TexError::MismatchedEnvironment)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            7..10,
+                            MismatchedEnvironment,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -148,7 +219,19 @@ fn test_label_unused() {
        ^^^
 \label{bar}\ref{bar}
 "#,
-        &[DiagnosticData::Tex(TexError::UnusedLabel)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            7..10,
+                            UnusedLabel,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -160,7 +243,19 @@ fn test_label_undefined() {
 \ref{foo}
      ^^^
 "#,
-        &[DiagnosticData::Tex(TexError::UndefinedLabel)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            5..8,
+                            UndefinedLabel,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -172,7 +267,19 @@ fn test_citation_undefined() {
 \cite{foo}
       ^^^
 "#,
-        &[DiagnosticData::Tex(TexError::UndefinedCitation)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            6..9,
+                            UndefinedCitation,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }
 
@@ -184,6 +291,18 @@ fn test_citation_unused() {
 @article{foo,}
          ^^^
 "#,
-        &[DiagnosticData::Bib(BibError::UnusedEntry)],
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.bib",
+                    [
+                        Bib(
+                            9..12,
+                            UnusedEntry,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
     )
 }

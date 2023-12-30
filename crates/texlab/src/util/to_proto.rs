@@ -1,43 +1,29 @@
-use base_db::{util::filter_regex_patterns, Document, Workspace};
-use diagnostics::{
-    types::{BibError, Diagnostic, DiagnosticData, TexError},
-    DiagnosticBuilder, DiagnosticSource,
-};
+use base_db::{Document, Workspace};
+use diagnostics::{BibError, ChktexSeverity, Diagnostic, TexError};
+use lsp_types::NumberOrString;
 use rowan::TextRange;
-use rustc_hash::FxHashMap;
 use syntax::BuildErrorLevel;
 
 use super::line_index_ext::LineIndexExt;
 
-pub fn collect<'db>(
-    workspace: &'db Workspace,
-    source: &mut dyn DiagnosticSource,
-) -> FxHashMap<&'db Document, Vec<lsp_types::Diagnostic>> {
-    let mut builder = DiagnosticBuilder::default();
-    source.publish(workspace, &mut builder);
-    builder
-        .iter()
-        .filter_map(|(uri, diags)| workspace.lookup(uri).map(|document| (document, diags)))
-        .map(|(document, diags)| {
-            let diags = diags
-                .into_iter()
-                .filter_map(|diag| create_diagnostic(workspace, document, diag))
-                .collect::<Vec<_>>();
-
-            (document, diags)
-        })
-        .collect()
-}
-
-fn create_diagnostic(
+pub fn diagnostic(
     workspace: &Workspace,
     document: &Document,
     diagnostic: &Diagnostic,
 ) -> Option<lsp_types::Diagnostic> {
-    let range = document.line_index.line_col_lsp_range(diagnostic.range)?;
+    let range = match diagnostic {
+        Diagnostic::Tex(range, _) | Diagnostic::Bib(range, _) | Diagnostic::Build(range, _) => {
+            document.line_index.line_col_lsp_range(*range)?
+        }
+        Diagnostic::Chktex(range) => {
+            let start = lsp_types::Position::new(range.start.line, range.start.col);
+            let end = lsp_types::Position::new(range.end.line, range.end.col);
+            lsp_types::Range::new(start, end)
+        }
+    };
 
-    let severity = match &diagnostic.data {
-        DiagnosticData::Tex(error) => match error {
+    let severity = match diagnostic {
+        Diagnostic::Tex(_, error) => match error {
             TexError::UnexpectedRCurly => lsp_types::DiagnosticSeverity::ERROR,
             TexError::ExpectingRCurly => lsp_types::DiagnosticSeverity::ERROR,
             TexError::MismatchedEnvironment => lsp_types::DiagnosticSeverity::ERROR,
@@ -46,7 +32,7 @@ fn create_diagnostic(
             TexError::UndefinedCitation => lsp_types::DiagnosticSeverity::ERROR,
             TexError::DuplicateLabel(_) => lsp_types::DiagnosticSeverity::ERROR,
         },
-        DiagnosticData::Bib(error) => match error {
+        Diagnostic::Bib(_, error) => match error {
             BibError::ExpectingLCurly => lsp_types::DiagnosticSeverity::ERROR,
             BibError::ExpectingKey => lsp_types::DiagnosticSeverity::ERROR,
             BibError::ExpectingRCurly => lsp_types::DiagnosticSeverity::ERROR,
@@ -55,41 +41,48 @@ fn create_diagnostic(
             BibError::UnusedEntry => lsp_types::DiagnosticSeverity::HINT,
             BibError::DuplicateEntry(_) => lsp_types::DiagnosticSeverity::ERROR,
         },
-        DiagnosticData::Build(error) => match error.level {
+        Diagnostic::Build(_, error) => match error.level {
             BuildErrorLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
             BuildErrorLevel::Warning => lsp_types::DiagnosticSeverity::WARNING,
         },
-    };
-
-    let code = match &diagnostic.data {
-        DiagnosticData::Tex(error) => match error {
-            TexError::UnexpectedRCurly => Some(1),
-            TexError::ExpectingRCurly => Some(2),
-            TexError::MismatchedEnvironment => Some(3),
-            TexError::UnusedLabel => Some(9),
-            TexError::UndefinedLabel => Some(10),
-            TexError::UndefinedCitation => Some(11),
-            TexError::DuplicateLabel(_) => Some(14),
+        Diagnostic::Chktex(error) => match error.severity {
+            ChktexSeverity::Message => lsp_types::DiagnosticSeverity::HINT,
+            ChktexSeverity::Warning => lsp_types::DiagnosticSeverity::WARNING,
+            ChktexSeverity::Error => lsp_types::DiagnosticSeverity::ERROR,
         },
-        DiagnosticData::Bib(error) => match error {
-            BibError::ExpectingLCurly => Some(4),
-            BibError::ExpectingKey => Some(5),
-            BibError::ExpectingRCurly => Some(6),
-            BibError::ExpectingEq => Some(7),
-            BibError::ExpectingFieldValue => Some(8),
-            BibError::UnusedEntry => Some(12),
-            BibError::DuplicateEntry(_) => Some(13),
+    };
+
+    let code: Option<NumberOrString> = match &diagnostic {
+        Diagnostic::Tex(_, error) => match error {
+            TexError::UnexpectedRCurly => Some(NumberOrString::Number(1)),
+            TexError::ExpectingRCurly => Some(NumberOrString::Number(2)),
+            TexError::MismatchedEnvironment => Some(NumberOrString::Number(3)),
+            TexError::UnusedLabel => Some(NumberOrString::Number(9)),
+            TexError::UndefinedLabel => Some(NumberOrString::Number(10)),
+            TexError::UndefinedCitation => Some(NumberOrString::Number(11)),
+            TexError::DuplicateLabel(_) => Some(NumberOrString::Number(14)),
         },
-        DiagnosticData::Build(_) => None,
+        Diagnostic::Bib(_, error) => match error {
+            BibError::ExpectingLCurly => Some(NumberOrString::Number(4)),
+            BibError::ExpectingKey => Some(NumberOrString::Number(5)),
+            BibError::ExpectingRCurly => Some(NumberOrString::Number(6)),
+            BibError::ExpectingEq => Some(NumberOrString::Number(7)),
+            BibError::ExpectingFieldValue => Some(NumberOrString::Number(8)),
+            BibError::UnusedEntry => Some(NumberOrString::Number(12)),
+            BibError::DuplicateEntry(_) => Some(NumberOrString::Number(13)),
+        },
+        Diagnostic::Build(_, _) => None,
+        Diagnostic::Chktex(error) => Some(NumberOrString::String(error.code.clone())),
     };
 
-    let source = match &diagnostic.data {
-        DiagnosticData::Tex(_) | DiagnosticData::Bib(_) => "texlab",
-        DiagnosticData::Build(_) => "latex",
+    let source = match &diagnostic {
+        Diagnostic::Tex(_, _) | Diagnostic::Bib(_, _) => "texlab",
+        Diagnostic::Build(_, _) => "latex",
+        Diagnostic::Chktex(_) => "ChkTeX",
     };
 
-    let message = String::from(match &diagnostic.data {
-        DiagnosticData::Tex(error) => match error {
+    let message = String::from(match &diagnostic {
+        Diagnostic::Tex(_, error) => match error {
             TexError::UnexpectedRCurly => "Unexpected \"}\"",
             TexError::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
             TexError::MismatchedEnvironment => "Mismatched environment",
@@ -98,7 +91,7 @@ fn create_diagnostic(
             TexError::UndefinedCitation => "Undefined reference",
             TexError::DuplicateLabel(_) => "Duplicate label",
         },
-        DiagnosticData::Bib(error) => match error {
+        Diagnostic::Bib(_, error) => match error {
             BibError::ExpectingLCurly => "Expecting a curly bracket: \"{\"",
             BibError::ExpectingKey => "Expecting a key",
             BibError::ExpectingRCurly => "Expecting a curly bracket: \"}\"",
@@ -107,11 +100,12 @@ fn create_diagnostic(
             BibError::UnusedEntry => "Unused entry",
             BibError::DuplicateEntry(_) => "Duplicate entry key",
         },
-        DiagnosticData::Build(error) => &error.message,
+        Diagnostic::Build(_, error) => &error.message,
+        Diagnostic::Chktex(error) => &error.message,
     });
 
-    let tags = match &diagnostic.data {
-        DiagnosticData::Tex(error) => match error {
+    let tags = match &diagnostic {
+        Diagnostic::Tex(_, error) => match error {
             TexError::UnexpectedRCurly => None,
             TexError::ExpectingRCurly => None,
             TexError::MismatchedEnvironment => None,
@@ -120,7 +114,7 @@ fn create_diagnostic(
             TexError::UndefinedCitation => None,
             TexError::DuplicateLabel(_) => None,
         },
-        DiagnosticData::Bib(error) => match error {
+        Diagnostic::Bib(_, error) => match error {
             BibError::ExpectingLCurly => None,
             BibError::ExpectingKey => None,
             BibError::ExpectingRCurly => None,
@@ -129,11 +123,32 @@ fn create_diagnostic(
             BibError::UnusedEntry => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
             BibError::DuplicateEntry(_) => None,
         },
-        DiagnosticData::Build(_) => None,
+        Diagnostic::Build(_, _) => None,
+        Diagnostic::Chktex(_) => None,
     };
 
-    let related_information = match &diagnostic.data {
-        DiagnosticData::Tex(error) => match error {
+    fn make_conflict_info(
+        workspace: &Workspace,
+        locations: &Vec<(lsp_types::Url, TextRange)>,
+        object: &str,
+    ) -> Option<Vec<lsp_types::DiagnosticRelatedInformation>> {
+        let mut items = Vec::new();
+        for (uri, range) in locations {
+            let range = workspace
+                .lookup(uri)?
+                .line_index
+                .line_col_lsp_range(*range)?;
+
+            let message = format!("conflicting {object} defined here");
+            let location = lsp_types::Location::new(uri.clone(), range);
+            items.push(lsp_types::DiagnosticRelatedInformation { location, message });
+        }
+
+        Some(items)
+    }
+
+    let related_information = match &diagnostic {
+        Diagnostic::Tex(_, error) => match error {
             TexError::UnexpectedRCurly => None,
             TexError::ExpectingRCurly => None,
             TexError::MismatchedEnvironment => None,
@@ -142,7 +157,7 @@ fn create_diagnostic(
             TexError::UndefinedCitation => None,
             TexError::DuplicateLabel(others) => make_conflict_info(workspace, others, "label"),
         },
-        DiagnosticData::Bib(error) => match error {
+        Diagnostic::Bib(_, error) => match error {
             BibError::ExpectingLCurly => None,
             BibError::ExpectingKey => None,
             BibError::ExpectingRCurly => None,
@@ -151,51 +166,16 @@ fn create_diagnostic(
             BibError::UnusedEntry => None,
             BibError::DuplicateEntry(others) => make_conflict_info(workspace, others, "entry"),
         },
-        DiagnosticData::Build(_) => None,
+        Diagnostic::Build(_, _) => None,
+        Diagnostic::Chktex(_) => None,
     };
 
     Some(lsp_types::Diagnostic {
         severity: Some(severity),
-        code: code.map(lsp_types::NumberOrString::Number),
+        code,
         source: Some(String::from(source)),
         tags,
         related_information,
         ..lsp_types::Diagnostic::new_simple(range, message)
     })
-}
-
-fn make_conflict_info(
-    workspace: &Workspace,
-    locations: &Vec<(lsp_types::Url, TextRange)>,
-    object: &str,
-) -> Option<Vec<lsp_types::DiagnosticRelatedInformation>> {
-    let mut items = Vec::new();
-    for (uri, range) in locations {
-        let range = workspace
-            .lookup(uri)?
-            .line_index
-            .line_col_lsp_range(*range)?;
-
-        let message = format!("conflicting {object} defined here");
-        let location = lsp_types::Location::new(uri.clone(), range);
-        items.push(lsp_types::DiagnosticRelatedInformation { location, message });
-    }
-
-    Some(items)
-}
-
-pub fn filter(
-    all_diagnostics: &mut FxHashMap<&Document, Vec<lsp_types::Diagnostic>>,
-    workspace: &Workspace,
-) {
-    let config = &workspace.config().diagnostics;
-    for diagnostics in all_diagnostics.values_mut() {
-        diagnostics.retain(|diagnostic| {
-            filter_regex_patterns(
-                &diagnostic.message,
-                &config.allowed_patterns,
-                &config.ignored_patterns,
-            )
-        });
-    }
 }

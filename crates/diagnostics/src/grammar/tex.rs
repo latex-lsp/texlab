@@ -1,56 +1,47 @@
-use base_db::{Config, Document, DocumentData, Workspace};
+use base_db::{Config, Document, TexDocumentData};
+use multimap::MultiMap;
 use rowan::{ast::AstNode, NodeOrToken, TextRange};
 use syntax::latex;
+use url::Url;
 
-use crate::{
-    types::{DiagnosticData, TexError},
-    util::SimpleDiagnosticSource,
-    Diagnostic, DiagnosticBuilder, DiagnosticSource,
-};
+use crate::types::{Diagnostic, TexError};
 
-#[derive(Default)]
-pub struct TexSyntaxErrors(SimpleDiagnosticSource);
-
-impl DiagnosticSource for TexSyntaxErrors {
-    fn update(&mut self, workspace: &Workspace, document: &Document) {
-        let mut analyzer = Analyzer {
-            document,
-            config: workspace.config(),
-            diagnostics: Vec::new(),
-        };
-
-        analyzer.analyze_root();
-        self.0
-            .errors
-            .insert(document.uri.clone(), analyzer.diagnostics);
+pub fn update(
+    document: &Document,
+    config: &Config,
+    results: &mut MultiMap<Url, Diagnostic>,
+) -> Option<()> {
+    let data = document.data.as_tex()?;
+    if !document.uri.as_str().ends_with(".tex") {
+        return None;
     }
 
-    fn publish<'db>(
-        &'db mut self,
-        workspace: &'db Workspace,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        self.0.publish(workspace, builder);
-    }
+    let mut analyzer = Analyzer {
+        data,
+        config,
+        diagnostics: Vec::new(),
+    };
+
+    analyzer.analyze_root();
+
+    *results
+        .entry(document.uri.clone())
+        .or_insert_vec(Vec::new()) = analyzer.diagnostics;
+
+    Some(())
 }
 
 struct Analyzer<'a> {
-    document: &'a Document,
+    data: &'a TexDocumentData,
     config: &'a Config,
     diagnostics: Vec<Diagnostic>,
 }
 
 impl<'a> Analyzer<'a> {
     fn analyze_root(&mut self) {
-        if !self.document.uri.as_str().ends_with(".tex") {
-            return;
-        }
-
-        let DocumentData::Tex(data) = &self.document.data else { return };
-
         let verbatim_envs = &self.config.syntax.verbatim_environments;
 
-        let mut traversal = latex::SyntaxNode::new_root(data.green.clone()).preorder();
+        let mut traversal = self.data.root_node().preorder();
         while let Some(event) = traversal.next() {
             match event {
                 rowan::WalkEvent::Enter(node) => {
@@ -82,10 +73,10 @@ impl<'a> Analyzer<'a> {
         let begin = environment.begin()?.name()?.key()?;
         let end = environment.end()?.name()?.key()?;
         if begin != end {
-            self.diagnostics.push(Diagnostic {
-                range: latex::small_range(&begin),
-                data: DiagnosticData::Tex(TexError::MismatchedEnvironment),
-            });
+            self.diagnostics.push(Diagnostic::Tex(
+                latex::small_range(&begin),
+                TexError::MismatchedEnvironment,
+            ));
         }
 
         Some(())
@@ -108,10 +99,10 @@ impl<'a> Analyzer<'a> {
             .filter_map(NodeOrToken::into_token)
             .any(|token| token.kind() == latex::R_CURLY)
         {
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(node.text_range().end()),
-                data: DiagnosticData::Tex(TexError::ExpectingRCurly),
-            });
+            self.diagnostics.push(Diagnostic::Tex(
+                TextRange::empty(node.text_range().end()),
+                TexError::ExpectingRCurly,
+            ));
         }
 
         Some(())
@@ -119,10 +110,10 @@ impl<'a> Analyzer<'a> {
 
     fn analyze_curly_braces(&mut self, node: latex::SyntaxNode) -> Option<()> {
         if node.kind() == latex::ERROR && node.first_token()?.text() == "}" {
-            self.diagnostics.push(Diagnostic {
-                range: node.text_range(),
-                data: DiagnosticData::Tex(TexError::UnexpectedRCurly),
-            });
+            self.diagnostics.push(Diagnostic::Tex(
+                node.text_range(),
+                TexError::UnexpectedRCurly,
+            ));
 
             Some(())
         } else {

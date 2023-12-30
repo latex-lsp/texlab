@@ -1,46 +1,22 @@
-use std::borrow::Cow;
-
 use base_db::{
     semantics::{bib::Entry, tex::Citation},
     util::queries::{self, Object},
     Document, Project, Workspace,
 };
+use multimap::MultiMap;
 use rustc_hash::FxHashSet;
+use url::Url;
 
-use crate::{
-    types::{BibError, Diagnostic, DiagnosticData, TexError},
-    DiagnosticBuilder, DiagnosticSource,
-};
+use crate::types::{BibError, Diagnostic, TexError};
 
 const MAX_UNUSED_ENTRIES: usize = 1000;
 
-#[derive(Default)]
-pub struct CitationErrors;
-
-impl DiagnosticSource for CitationErrors {
-    fn publish<'db>(
-        &'db mut self,
-        workspace: &'db Workspace,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        for document in workspace.iter() {
-            let project = workspace.project(document);
-            detect_undefined_citations(&project, document, builder);
-            detect_unused_entries(&project, document, builder);
-        }
-
-        detect_duplicate_entries(workspace, builder);
-    }
-}
-
-fn detect_undefined_citations<'db>(
-    project: &Project<'db>,
-    document: &'db Document,
-    builder: &mut DiagnosticBuilder<'db>,
-) {
-    let Some(data) = document.data.as_tex() else {
-        return;
-    };
+pub fn detect_undefined_citations<'a>(
+    project: &Project<'a>,
+    document: &'a Document,
+    results: &mut MultiMap<Url, Diagnostic>,
+) -> Option<()> {
+    let data = document.data.as_tex()?;
 
     let entries: FxHashSet<&str> = Entry::find_all(project)
         .map(|(_, entry)| entry.name_text())
@@ -49,28 +25,24 @@ fn detect_undefined_citations<'db>(
     for citation in &data.semantics.citations {
         let name = citation.name_text();
         if name != "*" && !entries.contains(name) {
-            let diagnostic = Diagnostic {
-                range: citation.name.range,
-                data: DiagnosticData::Tex(TexError::UndefinedCitation),
-            };
-
-            builder.push(&document.uri, Cow::Owned(diagnostic));
+            let diagnostic = Diagnostic::Tex(citation.name.range, TexError::UndefinedCitation);
+            results.insert(document.uri.clone(), diagnostic);
         }
     }
+
+    Some(())
 }
 
-fn detect_unused_entries<'db>(
-    project: &Project<'db>,
-    document: &'db Document,
-    builder: &mut DiagnosticBuilder<'db>,
-) {
-    let Some(data) = document.data.as_bib() else {
-        return;
-    };
+pub fn detect_unused_entries<'a>(
+    project: &Project<'a>,
+    document: &'a Document,
+    results: &mut MultiMap<Url, Diagnostic>,
+) -> Option<()> {
+    let data = document.data.as_bib()?;
 
     // If this is a huge bibliography, then don't bother checking for unused entries.
     if data.semantics.entries.len() > MAX_UNUSED_ENTRIES {
-        return;
+        return None;
     }
 
     let citations: FxHashSet<&str> = Citation::find_all(project)
@@ -79,17 +51,18 @@ fn detect_unused_entries<'db>(
 
     for entry in &data.semantics.entries {
         if !citations.contains(entry.name.text.as_str()) {
-            let diagnostic = Diagnostic {
-                range: entry.name.range,
-                data: DiagnosticData::Bib(BibError::UnusedEntry),
-            };
-
-            builder.push(&document.uri, Cow::Owned(diagnostic));
+            let diagnostic = Diagnostic::Bib(entry.name.range, BibError::UnusedEntry);
+            results.insert(document.uri.clone(), diagnostic);
         }
     }
+
+    Some(())
 }
 
-fn detect_duplicate_entries<'db>(workspace: &'db Workspace, builder: &mut DiagnosticBuilder<'db>) {
+pub fn detect_duplicate_entries<'a>(
+    workspace: &'a Workspace,
+    results: &mut MultiMap<Url, Diagnostic>,
+) {
     for conflict in queries::Conflict::find_all::<Entry>(workspace) {
         let others = conflict
             .rest
@@ -97,11 +70,7 @@ fn detect_duplicate_entries<'db>(workspace: &'db Workspace, builder: &mut Diagno
             .map(|location| (location.document.uri.clone(), location.range))
             .collect();
 
-        let diagnostic = Diagnostic {
-            range: conflict.main.range,
-            data: DiagnosticData::Bib(BibError::DuplicateEntry(others)),
-        };
-
-        builder.push(&conflict.main.document.uri, Cow::Owned(diagnostic));
+        let diagnostic = Diagnostic::Bib(conflict.main.range, BibError::DuplicateEntry(others));
+        results.insert(conflict.main.document.uri.clone(), diagnostic);
     }
 }

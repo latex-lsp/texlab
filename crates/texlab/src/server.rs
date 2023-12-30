@@ -14,7 +14,6 @@ use anyhow::Result;
 use base_db::{Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
-use diagnostics::{DiagnosticManager, DiagnosticSource};
 use distro::{Distro, Language};
 use line_index::LineCol;
 use lsp_server::{Connection, ErrorCode, Message, RequestId};
@@ -23,7 +22,7 @@ use notify::event::ModifyKind;
 use notify_debouncer_full::{DebouncedEvent, Debouncer, FileIdMap};
 use parking_lot::{Mutex, RwLock};
 use rowan::ast::AstNode;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde::{de::DeserializeOwned, Serialize};
 use syntax::bibtex;
 use threadpool::ThreadPool;
@@ -35,7 +34,7 @@ use crate::{
         definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
         symbols,
     },
-    util::{self, from_proto, line_index_ext::LineIndexExt, normalize_uri, ClientFlags},
+    util::{from_proto, line_index_ext::LineIndexExt, normalize_uri, to_proto, ClientFlags},
 };
 
 use self::{
@@ -53,7 +52,7 @@ enum InternalMessage {
     SetOptions(Options),
     FileEvent(Vec<DebouncedEvent>),
     Diagnostics,
-    ChktexResult(Url, Vec<lsp_types::Diagnostic>),
+    ChktexFinished(Url, Vec<diagnostics::Diagnostic>),
     ForwardSearch(Url, Option<Position>),
 }
 
@@ -64,8 +63,7 @@ pub struct Server {
     workspace: Arc<RwLock<Workspace>>,
     client: LspClient,
     client_flags: Arc<ClientFlags>,
-    diagnostic_manager: DiagnosticManager,
-    chktex_diagnostics: FxHashMap<Url, Vec<Diagnostic>>,
+    diagnostic_manager: diagnostics::Manager,
     watcher: FileWatcher,
     pool: ThreadPool,
     pending_builds: Arc<Mutex<FxHashSet<u32>>>,
@@ -112,8 +110,7 @@ impl Server {
                 params.capabilities,
                 params.client_info,
             )),
-            chktex_diagnostics: Default::default(),
-            diagnostic_manager: DiagnosticManager::default(),
+            diagnostic_manager: diagnostics::Manager::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
@@ -250,7 +247,7 @@ impl Server {
             .iter()
             .filter_map(|path| workspace.lookup_path(path))
         {
-            self.diagnostic_manager.update(&workspace, document);
+            self.diagnostic_manager.update_syntax(&workspace, document);
         }
 
         drop(workspace);
@@ -260,23 +257,16 @@ impl Server {
     fn publish_diagnostics(&mut self) -> Result<()> {
         let workspace = self.workspace.read();
 
-        let mut all_diagnostics =
-            util::diagnostics::collect(&workspace, &mut self.diagnostic_manager);
-
-        for (uri, diagnostics) in &self.chktex_diagnostics {
-            let Some(document) = workspace.lookup(uri) else {
+        for (uri, diagnostics) in self.diagnostic_manager.get(&workspace) {
+            let Some(document) = workspace.lookup(&uri) else {
                 continue;
             };
-            let Some(existing) = all_diagnostics.get_mut(document) else {
-                continue;
-            };
-            existing.extend(diagnostics.iter().cloned());
-        }
 
-        util::diagnostics::filter(&mut all_diagnostics, &workspace);
+            let diagnostics = diagnostics
+                .into_iter()
+                .filter_map(|diagnostic| to_proto::diagnostic(&workspace, document, &diagnostic))
+                .collect();
 
-        for (document, diagnostics) in all_diagnostics {
-            let uri = document.uri.clone();
             let version = None;
             let params = PublishDiagnosticsParams {
                 uri,
@@ -373,7 +363,7 @@ impl Server {
 
         let workspace = self.workspace.read();
         self.diagnostic_manager
-            .update(&workspace, workspace.lookup(&uri).unwrap());
+            .update_syntax(&workspace, workspace.lookup(&uri).unwrap());
 
         if workspace.config().diagnostics.chktex.on_open {
             drop(workspace);
@@ -416,7 +406,7 @@ impl Server {
         }
 
         self.diagnostic_manager
-            .update(&workspace, workspace.lookup(&uri).unwrap());
+            .update_syntax(&workspace, workspace.lookup(&uri).unwrap());
 
         drop(workspace);
         self.update_workspace();
@@ -459,23 +449,22 @@ impl Server {
         Ok(())
     }
 
-    fn run_chktex(&mut self, uri: &Url) {
+    fn run_chktex(&mut self, uri: &Url) -> Option<()> {
         let workspace = self.workspace.read();
-        let Some(document) = workspace.lookup(uri) else {
-            return;
-        };
-        let Some(command) = util::chktex::Command::new(&workspace, document) else {
-            return;
-        };
+
+        let document = workspace.lookup(uri)?;
+        let command = diagnostics::chktex::Command::new(&workspace, document)?;
 
         let sender = self.internal_tx.clone();
         let uri = document.uri.clone();
         self.pool.execute(move || {
             let diagnostics = command.run().unwrap_or_default();
             sender
-                .send(InternalMessage::ChktexResult(uri, diagnostics))
+                .send(InternalMessage::ChktexFinished(uri, diagnostics))
                 .unwrap();
         });
+
+        Some(())
     }
 
     fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
@@ -876,7 +865,7 @@ impl Server {
                             changed |= workspace.load(&path, language, Owner::Server).is_ok();
 
                             if let Some(document) = workspace.lookup_path(&path) {
-                                self.diagnostic_manager.update(&workspace, document);
+                                self.diagnostic_manager.update_syntax(&workspace, document);
                             }
                         }
                     }
@@ -1091,8 +1080,8 @@ impl Server {
                         InternalMessage::Diagnostics => {
                             self.publish_diagnostics()?;
                         }
-                        InternalMessage::ChktexResult(uri, diagnostics) => {
-                            self.chktex_diagnostics.insert(uri, diagnostics);
+                        InternalMessage::ChktexFinished(uri, diagnostics) => {
+                            self.diagnostic_manager.update_chktex(uri, diagnostics);
                             self.publish_diagnostics()?;
                         }
                         InternalMessage::ForwardSearch(uri, position) => {

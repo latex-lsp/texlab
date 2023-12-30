@@ -5,12 +5,12 @@ use std::{
 };
 
 use base_db::{Document, Workspace};
-use distro::Language;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use lsp_types::{Diagnostic, NumberOrString};
-use lsp_types::{DiagnosticSeverity, Position, Range};
+use line_index::LineCol;
 use once_cell::sync::Lazy;
 use regex::Regex;
+
+use crate::{types::Diagnostic, ChktexError, ChktexSeverity};
 
 #[derive(Debug)]
 pub struct Command {
@@ -21,9 +21,7 @@ pub struct Command {
 
 impl Command {
     pub fn new(workspace: &Workspace, document: &Document) -> Option<Self> {
-        if document.language != Language::Tex {
-            return None;
-        }
+        document.data.as_tex()?;
 
         let parent = workspace
             .parents(document)
@@ -31,7 +29,7 @@ impl Command {
             .next()
             .unwrap_or(document);
 
-        if parent.uri.scheme() != "file" {
+        if parent.path.is_none() {
             log::warn!("Calling ChkTeX on non-local files is not supported yet.");
             return None;
         }
@@ -78,30 +76,31 @@ impl Command {
                 let character = captures[2].parse::<u32>().unwrap() - 1;
                 let digit = captures[3].parse::<u32>().unwrap();
                 let kind = &captures[4];
-                let code = &captures[5];
+                let code = String::from(&captures[5]);
                 let message = captures[6].into();
-                let range = Range::new(
-                    Position::new(line, character),
-                    Position::new(line, character + digit),
-                );
-
-                let severity = match kind {
-                    "Message" => DiagnosticSeverity::INFORMATION,
-                    "Warning" => DiagnosticSeverity::WARNING,
-                    _ => DiagnosticSeverity::ERROR,
+                let start = LineCol {
+                    line,
+                    col: character,
                 };
 
-                diagnostics.push(Diagnostic {
-                    range,
-                    severity: Some(severity),
-                    code: Some(NumberOrString::String(code.into())),
+                let end = LineCol {
+                    line,
+                    col: character + digit,
+                };
+
+                let severity = match kind {
+                    "Message" => ChktexSeverity::Message,
+                    "Warning" => ChktexSeverity::Warning,
+                    _ => ChktexSeverity::Error,
+                };
+
+                diagnostics.push(Diagnostic::Chktex(ChktexError {
+                    start,
+                    end,
                     message,
-                    code_description: None,
-                    source: Some(String::from("ChkTeX")),
-                    related_information: None,
-                    tags: None,
-                    data: None,
-                });
+                    severity,
+                    code,
+                }));
             }
 
             diagnostics

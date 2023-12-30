@@ -1,4 +1,2 @@
-mod bib;
-mod tex;
-
-pub use self::{bib::BibSyntaxErrors, tex::TexSyntaxErrors};
+pub mod bib;
+pub mod tex;

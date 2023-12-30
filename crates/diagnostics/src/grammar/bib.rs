@@ -1,48 +1,35 @@
-use base_db::{Document, DocumentData, Workspace};
+use base_db::{BibDocumentData, Document};
+use multimap::MultiMap;
 use rowan::{ast::AstNode, TextRange};
 use syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue};
+use url::Url;
 
-use crate::{
-    types::{BibError, DiagnosticData},
-    util::SimpleDiagnosticSource,
-    Diagnostic, DiagnosticBuilder, DiagnosticSource,
-};
+use crate::types::{BibError, Diagnostic};
 
-#[derive(Default)]
-pub struct BibSyntaxErrors(SimpleDiagnosticSource);
+pub fn update(document: &Document, results: &mut MultiMap<Url, Diagnostic>) -> Option<()> {
+    let data = document.data.as_bib()?;
+    let mut analyzer = Analyzer {
+        data,
+        diagnostics: Vec::new(),
+    };
 
-impl DiagnosticSource for BibSyntaxErrors {
-    fn update(&mut self, _workspace: &Workspace, document: &Document) {
-        let mut analyzer = Analyzer {
-            document,
-            diagnostics: Vec::new(),
-        };
+    analyzer.analyze_root();
 
-        analyzer.analyze_root();
-        self.0
-            .errors
-            .insert(document.uri.clone(), analyzer.diagnostics);
-    }
+    *results
+        .entry(document.uri.clone())
+        .or_insert_vec(Vec::new()) = analyzer.diagnostics;
 
-    fn publish<'db>(
-        &'db mut self,
-        workspace: &'db Workspace,
-        builder: &mut DiagnosticBuilder<'db>,
-    ) {
-        self.0.publish(workspace, builder);
-    }
+    Some(())
 }
 
 struct Analyzer<'a> {
-    document: &'a Document,
+    data: &'a BibDocumentData,
     diagnostics: Vec<Diagnostic>,
 }
 
 impl<'a> Analyzer<'a> {
     fn analyze_root(&mut self) {
-        let DocumentData::Bib(data) = &self.document.data else { return };
-
-        for node in bibtex::SyntaxNode::new_root(data.green.clone()).descendants() {
+        for node in self.data.root_node().descendants() {
             if let Some(entry) = bibtex::Entry::cast(node.clone()) {
                 self.analyze_entry(entry);
             } else if let Some(field) = bibtex::Field::cast(node.clone()) {
@@ -54,50 +41,50 @@ impl<'a> Analyzer<'a> {
     fn analyze_entry(&mut self, entry: bibtex::Entry) {
         if entry.left_delim_token().is_none() {
             let offset = entry.type_token().unwrap().text_range().end();
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(offset),
-                data: DiagnosticData::Bib(BibError::ExpectingLCurly),
-            });
+            self.diagnostics.push(Diagnostic::Bib(
+                TextRange::empty(offset),
+                BibError::ExpectingLCurly,
+            ));
 
             return;
         }
 
         if entry.name_token().is_none() {
             let offset = entry.left_delim_token().unwrap().text_range().end();
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(offset),
-                data: DiagnosticData::Bib(BibError::ExpectingKey),
-            });
+            self.diagnostics.push(Diagnostic::Bib(
+                TextRange::empty(offset),
+                BibError::ExpectingKey,
+            ));
 
             return;
         }
 
         if entry.right_delim_token().is_none() {
             let offset = entry.syntax().text_range().end();
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(offset),
-                data: DiagnosticData::Bib(BibError::ExpectingRCurly),
-            });
+            self.diagnostics.push(Diagnostic::Bib(
+                TextRange::empty(offset),
+                BibError::ExpectingRCurly,
+            ));
         }
     }
 
     fn analyze_field(&mut self, field: bibtex::Field) {
         if field.eq_token().is_none() {
             let offset = field.name_token().unwrap().text_range().end();
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(offset),
-                data: DiagnosticData::Bib(BibError::ExpectingEq),
-            });
+            self.diagnostics.push(Diagnostic::Bib(
+                TextRange::empty(offset),
+                BibError::ExpectingEq,
+            ));
 
             return;
         }
 
         if field.value().is_none() {
             let offset = field.eq_token().unwrap().text_range().end();
-            self.diagnostics.push(Diagnostic {
-                range: TextRange::empty(offset),
-                data: DiagnosticData::Bib(BibError::ExpectingFieldValue),
-            });
+            self.diagnostics.push(Diagnostic::Bib(
+                TextRange::empty(offset),
+                BibError::ExpectingFieldValue,
+            ));
         }
     }
 }
