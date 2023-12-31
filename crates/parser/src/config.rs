@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct SyntaxConfig {
+    pub follow_package_links: bool,
     pub math_environments: FxHashSet<String>,
     pub enum_environments: FxHashSet<String>,
     pub verbatim_environments: FxHashSet<String>,
@@ -31,6 +32,7 @@ impl Default for SyntaxConfig {
             .collect();
 
         Self {
+            follow_package_links: false,
             math_environments,
             enum_environments,
             verbatim_environments,
