@@ -6,7 +6,7 @@ fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
     let (feature, offset) = fixture.make_params().unwrap();
     let params = HoverParams { feature, offset };
-    let data = crate::find(params).map(|hover| {
+    let data = crate::find(&params).map(|hover| {
         assert_eq!(fixture.documents[0].ranges[0], hover.range);
         hover.data
     });

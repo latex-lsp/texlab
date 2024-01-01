@@ -7,7 +7,7 @@ fn check(input: &str, expect: Expect) {
     let (feature, _) = fixture.make_params().unwrap();
     let range = TextRange::new(0.into(), feature.document.text.text_len());
     let params = crate::InlayHintParams { range, feature };
-    let actual = crate::find_all(params).unwrap_or_default();
+    let actual = crate::find_all(&params).unwrap_or_default();
 
     let expected_offsets = fixture.locations().map(|location| location.range.start());
     for (hint, offset) in actual.iter().zip(expected_offsets) {

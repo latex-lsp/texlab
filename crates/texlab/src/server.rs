@@ -506,7 +506,7 @@ impl Server {
         let client_flags = Arc::clone(&self.client_flags);
         self.update_cursor(&params.text_document_position.text_document.uri, position);
         self.run_query(id, move |db| {
-            completion::complete(db, &params, &client_flags)
+            completion::complete(db, params, &client_flags)
         });
 
         Ok(())
@@ -592,33 +592,28 @@ impl Server {
         Ok(())
     }
 
-    fn goto_definition(&self, id: RequestId, params: GotoDefinitionParams) -> Result<()> {
-        let mut uri = params.text_document_position_params.text_document.uri;
-        normalize_uri(&mut uri);
-        let position = params.text_document_position_params.position;
-        self.run_query(id, move |db| {
-            definition::goto_definition(db, &uri, position)
-        });
-
+    fn goto_definition(&self, id: RequestId, mut params: GotoDefinitionParams) -> Result<()> {
+        normalize_uri(&mut params.text_document_position_params.text_document.uri);
+        self.run_query(id, move |db| definition::goto_definition(db, params));
         Ok(())
     }
 
     fn prepare_rename(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
         normalize_uri(&mut params.text_document.uri);
-        self.run_query(id, move |db| rename::prepare_rename_all(db, &params));
+        self.run_query(id, move |db| rename::prepare_rename_all(db, params));
         Ok(())
     }
 
     fn rename(&self, id: RequestId, mut params: RenameParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position.text_document.uri);
-        self.run_query(id, move |db| rename::rename_all(db, &params));
+        self.run_query(id, move |db| rename::rename_all(db, params));
         Ok(())
     }
 
     fn document_highlight(&self, id: RequestId, mut params: DocumentHighlightParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position_params.text_document.uri);
         self.run_query(id, move |db| {
-            highlight::find_all(db, &params).unwrap_or_default()
+            highlight::find_all(db, params).unwrap_or_default()
         });
 
         Ok(())
@@ -685,11 +680,10 @@ impl Server {
         Ok(())
     }
 
-    fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+    fn inlay_hints(&self, id: RequestId, mut params: InlayHintParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         self.run_query(id, move |db| {
-            inlay_hint::find_all(db, &uri, params.range).unwrap_or_default()
+            inlay_hint::find_all(db, params).unwrap_or_default()
         });
         Ok(())
     }

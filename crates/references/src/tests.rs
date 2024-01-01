@@ -1,17 +1,19 @@
 use std::collections::HashSet;
 
-use crate::{ReferenceKind, ReferenceParams};
+use crate::ReferenceParams;
 
-fn check(fixture: &str, include_def: bool) {
+fn check(fixture: &str, include_declaration: bool) {
     let fixture = test_utils::fixture::Fixture::parse(fixture);
     let (feature, offset) = fixture.make_params().unwrap();
 
     let expected = fixture.locations().collect::<HashSet<_>>();
-    let actual = crate::find_all(ReferenceParams { feature, offset })
-        .into_iter()
-        .filter(|reference| reference.kind == ReferenceKind::Reference || include_def)
-        .map(|reference| reference.location)
-        .collect::<HashSet<_>>();
+    let actual = crate::find_all(&ReferenceParams {
+        feature,
+        offset,
+        include_declaration,
+    })
+    .into_iter()
+    .collect::<HashSet<_>>();
 
     assert_eq!(actual, expected);
 }

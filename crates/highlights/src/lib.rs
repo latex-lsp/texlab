@@ -21,7 +21,7 @@ pub struct HighlightParams<'a> {
     pub offset: TextSize,
 }
 
-pub fn find_all(params: HighlightParams) -> Vec<Highlight> {
+pub fn find_all(params: &HighlightParams) -> Vec<Highlight> {
     let mut results = Vec::new();
     label::find_highlights(&params, &mut results);
     results

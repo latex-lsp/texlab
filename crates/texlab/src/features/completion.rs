@@ -1,29 +1,20 @@
-use base_db::{util::RenderedObject, FeatureParams, Workspace};
-use completion::{
-    ArgumentData, CompletionItem, CompletionItemData, CompletionParams, EntryTypeData,
-    FieldTypeData,
-};
+use base_db::{util::RenderedObject, Workspace};
+use completion::{ArgumentData, CompletionItem, CompletionItemData, EntryTypeData, FieldTypeData};
 use line_index::LineIndex;
 use serde::{Deserialize, Serialize};
 
-use crate::util::{line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
+use crate::util::{from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
 
 pub fn complete(
     workspace: &Workspace,
-    params: &lsp_types::CompletionParams,
+    params: lsp_types::CompletionParams,
     client_flags: &ClientFlags,
 ) -> Option<lsp_types::CompletionList> {
-    let document = workspace.lookup(&params.text_document_position.text_document.uri)?;
-    let feature = FeatureParams::new(workspace, document);
-    let offset = document
-        .line_index
-        .offset_lsp(params.text_document_position.position)?;
-
-    let params = CompletionParams { feature, offset };
+    let params = from_proto::completion_params(workspace, params)?;
     let result = completion::complete(&params);
 
     let item_builder = ItemBuilder {
-        line_index: &document.line_index,
+        line_index: &params.feature.document.line_index,
         client_flags,
     };
 

@@ -1,4 +1,14 @@
-use super::ClientFlags;
+use base_db::{FeatureParams, Workspace};
+use completion::CompletionParams;
+use definition::DefinitionParams;
+use highlights::HighlightParams;
+use hover::HoverParams;
+use inlay_hints::InlayHintParams;
+use references::ReferenceParams;
+use rename::RenameParams;
+use rowan::TextSize;
+
+use super::{line_index_ext::LineIndexExt, ClientFlags};
 
 pub fn client_flags(
     capabilities: lsp_types::ClientCapabilities,
@@ -95,4 +105,111 @@ pub fn client_flags(
         folding_custom_kinds,
         progress,
     }
+}
+
+pub fn rename_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::TextDocumentPositionParams,
+) -> Option<RenameParams<'a>> {
+    let (feature, offset) =
+        feature_params_offset(workspace, params.text_document, params.position)?;
+
+    Some(RenameParams { feature, offset })
+}
+
+pub fn hover_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::HoverParams,
+) -> Option<HoverParams<'a>> {
+    let (feature, offset) = feature_params_offset(
+        workspace,
+        params.text_document_position_params.text_document,
+        params.text_document_position_params.position,
+    )?;
+
+    Some(HoverParams { feature, offset })
+}
+
+pub fn inlay_hint_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::InlayHintParams,
+) -> Option<InlayHintParams> {
+    let feature = feature_params(workspace, params.text_document)?;
+    let range = feature.document.line_index.offset_lsp_range(params.range)?;
+    Some(InlayHintParams { feature, range })
+}
+
+pub fn highlight_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::DocumentHighlightParams,
+) -> Option<HighlightParams<'a>> {
+    let (feature, offset) = feature_params_offset(
+        workspace,
+        params.text_document_position_params.text_document,
+        params.text_document_position_params.position,
+    )?;
+
+    Some(HighlightParams { feature, offset })
+}
+
+pub fn definition_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::GotoDefinitionParams,
+) -> Option<DefinitionParams<'a>> {
+    let (feature, offset) = feature_params_offset(
+        workspace,
+        params.text_document_position_params.text_document,
+        params.text_document_position_params.position,
+    )?;
+
+    Some(DefinitionParams { feature, offset })
+}
+
+pub fn completion_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::CompletionParams,
+) -> Option<CompletionParams<'a>> {
+    let (feature, offset) = feature_params_offset(
+        workspace,
+        params.text_document_position.text_document,
+        params.text_document_position.position,
+    )?;
+
+    Some(CompletionParams { feature, offset })
+}
+
+pub fn reference_params<'a>(
+    workspace: &'a Workspace,
+    params: lsp_types::ReferenceParams,
+) -> Option<ReferenceParams<'a>> {
+    let (feature, offset) = feature_params_offset(
+        workspace,
+        params.text_document_position.text_document,
+        params.text_document_position.position,
+    )?;
+
+    let include_declaration = params.context.include_declaration;
+    Some(ReferenceParams {
+        feature,
+        offset,
+        include_declaration,
+    })
+}
+
+pub fn feature_params<'a>(
+    workspace: &'a Workspace,
+    text_document: lsp_types::TextDocumentIdentifier,
+) -> Option<FeatureParams<'a>> {
+    let document = workspace.lookup(&text_document.uri)?;
+    Some(FeatureParams::new(workspace, document))
+}
+
+pub fn feature_params_offset<'a>(
+    workspace: &'a Workspace,
+    text_document: lsp_types::TextDocumentIdentifier,
+    position: lsp_types::Position,
+) -> Option<(FeatureParams<'a>, TextSize)> {
+    let feature = feature_params(workspace, text_document)?;
+    let offset = feature.document.line_index.offset_lsp(position)?;
+    Some((feature, offset))
 }

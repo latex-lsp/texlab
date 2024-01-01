@@ -30,7 +30,7 @@ fn check(input: &str) {
         }
     }
 
-    let actual = crate::goto_definition(DefinitionParams { feature, offset });
+    let actual = crate::goto_definition(&DefinitionParams { feature, offset });
 
     assert_eq!(actual, expected);
 }

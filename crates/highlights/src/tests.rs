@@ -10,7 +10,7 @@ fn check(input: &str, expected_kinds: &[HighlightKind]) {
         .map(|location| location.range)
         .collect::<Vec<_>>();
 
-    let results = crate::find_all(HighlightParams { feature, offset });
+    let results = crate::find_all(&HighlightParams { feature, offset });
 
     let actual_ranges = results
         .iter()

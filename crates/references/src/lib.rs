@@ -21,15 +21,16 @@ pub enum ReferenceKind {
 pub struct ReferenceParams<'a> {
     pub feature: FeatureParams<'a>,
     pub offset: TextSize,
+    pub include_declaration: bool,
 }
 
 #[derive(Debug)]
-struct ReferenceContext<'a> {
-    params: ReferenceParams<'a>,
+struct ReferenceContext<'a, 'b> {
+    params: &'b ReferenceParams<'a>,
     results: Vec<Reference<'a>>,
 }
 
-pub fn find_all(params: ReferenceParams) -> Vec<Reference<'_>> {
+pub fn find_all<'a>(params: &ReferenceParams<'a>) -> Vec<DocumentLocation<'a>> {
     let mut context = ReferenceContext {
         params,
         results: Vec::new(),
@@ -38,7 +39,13 @@ pub fn find_all(params: ReferenceParams) -> Vec<Reference<'_>> {
     entry::find_all(&mut context);
     label::find_all(&mut context);
     string_def::find_all(&mut context);
-    context.results
+
+    context
+        .results
+        .into_iter()
+        .filter(|r| r.kind == ReferenceKind::Reference || params.include_declaration)
+        .map(|reference| reference.location)
+        .collect()
 }
 
 #[cfg(test)]

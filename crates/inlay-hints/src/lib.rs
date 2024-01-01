@@ -20,7 +20,7 @@ pub enum InlayHintData<'a> {
     LabelReference(RenderedLabel<'a>),
 }
 
-pub fn find_all<'a>(params: InlayHintParams<'a>) -> Option<Vec<InlayHint>> {
+pub fn find_all<'a>(params: &InlayHintParams<'a>) -> Option<Vec<InlayHint<'a>>> {
     let mut builder = InlayHintBuilder {
         params,
         hints: Vec::new(),
@@ -30,8 +30,8 @@ pub fn find_all<'a>(params: InlayHintParams<'a>) -> Option<Vec<InlayHint>> {
     Some(builder.hints)
 }
 
-struct InlayHintBuilder<'a> {
-    params: InlayHintParams<'a>,
+struct InlayHintBuilder<'a, 'b> {
+    params: &'b InlayHintParams<'a>,
     hints: Vec<InlayHint<'a>>,
 }
 

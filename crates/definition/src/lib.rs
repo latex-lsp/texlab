@@ -23,12 +23,12 @@ pub struct DefinitionResult<'a> {
 }
 
 #[derive(Debug)]
-struct DefinitionContext<'a> {
-    params: DefinitionParams<'a>,
+struct DefinitionContext<'a, 'b> {
+    params: &'b DefinitionParams<'a>,
     results: FxHashSet<DefinitionResult<'a>>,
 }
 
-pub fn goto_definition(params: DefinitionParams) -> FxHashSet<DefinitionResult> {
+pub fn goto_definition<'a>(params: &DefinitionParams<'a>) -> FxHashSet<DefinitionResult<'a>> {
     let mut context = DefinitionContext {
         params,
         results: FxHashSet::default(),

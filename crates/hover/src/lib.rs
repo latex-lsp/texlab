@@ -34,7 +34,7 @@ pub enum HoverData<'db> {
     StringRef(String),
 }
 
-pub fn find(params: HoverParams) -> Option<Hover> {
+pub fn find<'a>(params: &HoverParams<'a>) -> Option<Hover<'a>> {
     citation::find_hover(&params)
         .or_else(|| package::find_hover(&params))
         .or_else(|| entry_type::find_hover(&params))
