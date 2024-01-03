@@ -8,6 +8,8 @@ use references::ReferenceParams;
 use rename::RenameParams;
 use rowan::TextSize;
 
+use crate::features::completion::ResolveInfo;
+
 use super::{line_index_ext::LineIndexExt, ClientFlags};
 
 pub fn client_flags(
@@ -212,4 +214,10 @@ pub fn feature_params_offset<'a>(
     let feature = feature_params(workspace, text_document)?;
     let offset = feature.document.line_index.offset_lsp(position)?;
     Some((feature, offset))
+}
+
+pub fn completion_resolve_info(item: &mut lsp_types::CompletionItem) -> Option<ResolveInfo> {
+    item.data
+        .take()
+        .and_then(|data| serde_json::from_value(data).ok())
 }

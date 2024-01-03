@@ -1,7 +1,9 @@
 use base_db::{util::RenderedObject, Workspace};
 use completion::{ArgumentData, CompletionItem, CompletionItemData, EntryTypeData, FieldTypeData};
 use line_index::LineIndex;
+use rowan::ast::AstNode;
 use serde::{Deserialize, Serialize};
+use syntax::bibtex;
 
 use crate::util::{from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
 
@@ -32,6 +34,36 @@ pub fn complete(
         is_incomplete,
         items,
     })
+}
+
+pub fn resolve(workspace: &Workspace, item: &mut lsp_types::CompletionItem) -> Option<()> {
+    let data = from_proto::completion_resolve_info(item)?;
+    match data {
+        ResolveInfo::Package | ResolveInfo::DocumentClass => {
+            let metadata = completion_data::DATABASE.meta(&item.label)?;
+            let value = metadata.description.as_deref()?.into();
+            item.documentation = Some(lsp_types::Documentation::MarkupContent(
+                lsp_types::MarkupContent {
+                    kind: lsp_types::MarkupKind::PlainText,
+                    value,
+                },
+            ));
+        }
+        ResolveInfo::Citation { uri, key } => {
+            let data = workspace.lookup(&uri)?.data.as_bib()?;
+            let root = bibtex::Root::cast(data.root_node())?;
+            let entry = root.find_entry(&key)?;
+            let value = citeproc::render(&entry)?;
+            item.documentation = Some(lsp_types::Documentation::MarkupContent(
+                lsp_types::MarkupContent {
+                    kind: lsp_types::MarkupKind::Markdown,
+                    value,
+                },
+            ));
+        }
+    }
+
+    Some(())
 }
 
 struct ItemBuilder<'a> {

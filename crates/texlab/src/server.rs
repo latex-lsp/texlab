@@ -21,18 +21,15 @@ use lsp_types::{notification::*, request::*, *};
 use notify::event::ModifyKind;
 use notify_debouncer_full::{DebouncedEvent, Debouncer, FileIdMap};
 use parking_lot::{Mutex, RwLock};
-use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use serde::{de::DeserializeOwned, Serialize};
-use syntax::bibtex;
 use threadpool::ThreadPool;
 
 use crate::{
     client::LspClient,
     features::{
-        completion::{self, ResolveInfo},
-        definition, folding, formatting, highlight, hover, inlay_hint, link, reference, rename,
-        symbols,
+        completion, definition, folding, formatting, highlight, hover, inlay_hint, link, reference,
+        rename, symbols,
     },
     util::{from_proto, line_index_ext::LineIndexExt, normalize_uri, to_proto, ClientFlags},
 };
@@ -524,41 +521,7 @@ impl Server {
 
     fn completion_resolve(&self, id: RequestId, mut item: CompletionItem) -> Result<()> {
         self.run_query(id, move |workspace| {
-            match item
-                .data
-                .clone()
-                .map(|data| serde_json::from_value(data).unwrap())
-            {
-                Some(ResolveInfo::Package | ResolveInfo::DocumentClass) => {
-                    item.documentation = completion_data::DATABASE
-                        .meta(&item.label)
-                        .and_then(|meta| meta.description.as_deref())
-                        .map(|value| {
-                            Documentation::MarkupContent(MarkupContent {
-                                kind: MarkupKind::PlainText,
-                                value: value.into(),
-                            })
-                        });
-                }
-                Some(ResolveInfo::Citation { uri, key }) => {
-                    if let Some(data) = workspace
-                        .lookup(&uri)
-                        .and_then(|document| document.data.as_bib())
-                    {
-                        item.documentation = bibtex::Root::cast(data.root_node())
-                            .and_then(|root| root.find_entry(&key))
-                            .and_then(|entry| citeproc::render(&entry))
-                            .map(|value| {
-                                Documentation::MarkupContent(MarkupContent {
-                                    kind: MarkupKind::Markdown,
-                                    value,
-                                })
-                            });
-                    }
-                }
-                None => {}
-            };
-
+            completion::resolve(workspace, &mut item);
             item
         });
 
