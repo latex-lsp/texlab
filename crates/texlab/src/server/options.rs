@@ -124,6 +124,7 @@ pub struct RegexPattern(#[serde(with = "serde_regex")] pub Regex);
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
 pub struct ExperimentalOptions {
+    pub follow_package_links: bool,
     pub math_environments: Vec<String>,
     pub enum_environments: Vec<String>,
     pub verbatim_environments: Vec<String>,

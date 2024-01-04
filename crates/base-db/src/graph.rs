@@ -76,6 +76,12 @@ impl<'a> Graph<'a> {
             return;
         };
 
+        let uri = source.uri.as_str();
+        let is_pkg = uri.ends_with(".sty") || uri.ends_with(".cls");
+        if is_pkg && !self.workspace.config().syntax.follow_package_links {
+            return;
+        }
+
         for link in &data.semantics.links {
             self.add_link(source, base_dir, link);
         }
