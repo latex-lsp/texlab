@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::time::Duration;
 
 use base_db::{Config, Formatter, SynctexConfig};
@@ -187,7 +186,7 @@ impl From<Options> for Config {
             .log_directory
             .unwrap_or_else(|| config.build.pdf_dir.clone());
 
-        config.build.output_filename = value.build.filename.map(PathBuf::from);
+        config.build.output_filename = value.build.filename;
 
         config.diagnostics.allowed_patterns = value
             .diagnostics
