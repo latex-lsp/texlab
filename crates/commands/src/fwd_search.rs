@@ -1,11 +1,7 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    process::Stdio,
-};
+use std::{path::PathBuf, process::Stdio};
 
 use anyhow::Result;
-use base_db::Workspace;
+use base_db::{Document, Workspace};
 use thiserror::Error;
 use url::Url;
 
@@ -44,62 +40,82 @@ impl ForwardSearch {
         uri: &Url,
         line: Option<u32>,
     ) -> Result<Self, ForwardSearchError> {
-        let Some(config) = &workspace.config().synctex else {
-            return Err(ForwardSearchError::Unconfigured);
-        };
+        log::debug!("[FwdSearch] Preparing forward search: document={uri}, line={line:#?}");
+        let synctex_config = workspace
+            .config()
+            .synctex
+            .as_ref()
+            .ok_or(ForwardSearchError::Unconfigured)?;
 
-        let Some(child) = workspace.lookup(uri) else {
-            return Err(ForwardSearchError::TexNotFound(uri.clone()));
-        };
+        log::debug!("[FwdSearch] synctex_config={:?}", synctex_config);
 
-        let parents = workspace.parents(child);
-        let parent = parents.into_iter().next().unwrap_or(child);
-        if parent.uri.scheme() != "file" {
-            return Err(ForwardSearchError::NotLocal(parent.uri.clone()));
-        }
+        let child = workspace
+            .lookup(uri)
+            .ok_or_else(|| ForwardSearchError::TexNotFound(uri.clone()))?;
 
-        let dir = workspace
-            .pdf_dir(&workspace.current_dir(&parent.dir))
-            .to_file_path()
-            .unwrap();
+        let parent = workspace.parents(child).into_iter().next().unwrap_or(child);
 
-        let Some(tex_path) = &child.path else {
-            return Err(ForwardSearchError::InvalidPath(child.uri.clone()));
-        };
+        log::debug!("[FwdSearch] root_document={}", parent.uri,);
 
-        let override_path = workspace.config().build.output_filename.as_deref();
-
-        let Some(pdf_path) = override_path
-            .or(parent.path.as_deref())
-            .and_then(Path::file_stem)
-            .and_then(OsStr::to_str)
-            .map(|stem| dir.join(format!("{stem}.pdf")))
-        else {
-            return Err(ForwardSearchError::InvalidPath(parent.uri.clone()));
-        };
-
-        if !pdf_path.exists() {
-            return Err(ForwardSearchError::PdfNotFound(pdf_path));
-        }
-
-        let tex_path = tex_path.to_string_lossy().into_owned();
+        let pdf_path = Self::find_pdf(workspace, parent)?;
         let pdf_path = pdf_path.to_string_lossy().into_owned();
+        let tex_path = child
+            .path
+            .as_deref()
+            .ok_or_else(|| ForwardSearchError::InvalidPath(child.uri.clone()))?;
+        let tex_path = tex_path.to_string_lossy().into_owned();
+
         let line = line.unwrap_or(child.cursor.line);
         let line = (line + 1).to_string();
 
-        let program = config.program.clone();
+        let program = synctex_config.program.clone();
         let args = replace_placeholders(
-            &config.args,
+            &synctex_config.args,
             &[('f', &tex_path), ('p', &pdf_path), ('l', &line)],
         );
 
         Ok(Self { program, args })
     }
+
+    fn find_pdf(workspace: &Workspace, document: &Document) -> Result<PathBuf, ForwardSearchError> {
+        let base_dir = workspace.current_dir(&document.dir);
+        let pdf_dir = workspace.pdf_dir(&base_dir);
+
+        log::debug!("[FwdSearch] base_dir={base_dir}, pdf_dir={pdf_dir}");
+
+        let pdf_dir = pdf_dir
+            .to_file_path()
+            .map_err(|()| ForwardSearchError::InvalidPath(document.uri.clone()))?;
+
+        let pdf_name_override = workspace.config().build.output_filename.clone();
+        log::debug!("[FwdSearch] pdf_name_override={pdf_name_override:?}");
+
+        let pdf_name = pdf_name_override
+            .or_else(|| {
+                let stem = document.path.as_ref()?.file_stem()?;
+                Some(format!("{}.pdf", stem.to_string_lossy()))
+            })
+            .ok_or_else(|| ForwardSearchError::InvalidPath(document.uri.clone()))?;
+
+        let pdf_path = pdf_dir.join(&pdf_name);
+        let pdf_exists = pdf_path.exists();
+
+        log::debug!("[FwdSearch] pdf_path={pdf_path:?}, pdf_exists={pdf_exists}");
+        if !pdf_exists {
+            return Err(ForwardSearchError::PdfNotFound(pdf_path));
+        }
+
+        Ok(pdf_path)
+    }
 }
 
 impl ForwardSearch {
     pub fn run(self) -> Result<(), ForwardSearchError> {
-        log::debug!("Executing forward search: {} {:?}", self.program, self.args);
+        log::debug!(
+            "[FwdSearch] Executing command: {} {:?}",
+            self.program,
+            self.args
+        );
 
         std::process::Command::new(self.program)
             .args(self.args)

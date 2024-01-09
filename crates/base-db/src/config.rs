@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::time::Duration;
 
 use parser::SyntaxConfig;
@@ -26,7 +25,7 @@ pub struct BuildConfig {
     pub aux_dir: String,
     pub log_dir: String,
     pub pdf_dir: String,
-    pub output_filename: Option<PathBuf>,
+    pub output_filename: Option<String>,
 }
 
 #[derive(Debug)]
