@@ -10,7 +10,7 @@ rust-version.workspace = true
 base-db = { path = "../base-db" }
 itertools = "0.12.0"
 line-index = { path = "../line-index" }
-rowan = "0.15.13"
+rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
 url = "2.5.0"

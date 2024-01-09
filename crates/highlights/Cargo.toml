@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-rowan = "0.15.13"
+rowan = "0.15.15"
 
 [dev-dependencies]
 expect-test = "1.4.1"
