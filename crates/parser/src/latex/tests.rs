@@ -3521,3 +3521,24 @@ fn test_theorem_definition_thmtools() {
     "#]],
     );
 }
+
+#[test]
+fn test_command_subscript() {
+    check(
+        r#"\foo_bar \foo_\bar"#,
+        expect![[r#"
+        ROOT@0..18
+          PREAMBLE@0..18
+            GENERIC_COMMAND@0..9
+              COMMAND_NAME@0..8 "\\foo_bar"
+              WHITESPACE@8..9 " "
+            GENERIC_COMMAND@9..13
+              COMMAND_NAME@9..13 "\\foo"
+            TEXT@13..14
+              WORD@13..14 "_"
+            GENERIC_COMMAND@14..18
+              COMMAND_NAME@14..18 "\\bar"
+
+    "#]],
+    );
+}

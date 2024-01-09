@@ -51,7 +51,7 @@ pub enum Token {
 fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
     let input = &lexer.source()[lexer.span().end..];
 
-    let mut chars = input.chars();
+    let mut chars = input.chars().peekable();
     let Some(c) = chars.next() else {
         return CommandName::Generic;
     };
@@ -65,7 +65,7 @@ fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
         return CommandName::Generic;
     }
 
-    for c in chars {
+    while let Some(c) = chars.next() {
         match c {
             '*' => {
                 lexer.bump(c.len_utf8());
@@ -74,13 +74,20 @@ fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
             c if c.is_alphanumeric() => {
                 lexer.bump(c.len_utf8());
             }
-            '@' | ':' | '_' => {
+            '_' => {
+                if !matches!(chars.peek(), Some(c) if c.is_alphanumeric()) {
+                    break;
+                }
+
+                lexer.bump(c.len_utf8());
+            }
+            '@' | ':' => {
                 lexer.bump(c.len_utf8());
             }
             _ => {
                 break;
             }
-        };
+        }
     }
 
     CommandName::Generic
