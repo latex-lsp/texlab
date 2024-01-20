@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix parsing commands when they are used with subscript ([#990](https://github.com/latex-lsp/texlab/issues/990))
+- Don't append a newline each time a BibTeX document is being formatted ([#996](https://github.com/latex-lsp/texlab/issues/996))
 
 ## [5.12.1] - 2024-01-04
 

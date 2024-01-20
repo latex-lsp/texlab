@@ -1,6 +1,6 @@
 use base_db::{Document, Workspace};
 use lsp_types::{FormattingOptions, TextEdit};
-use rowan::{TextLen, TextRange};
+use rowan::TextLen;
 
 use crate::util::line_index_ext::LineIndexExt;
 
@@ -17,7 +17,7 @@ pub fn format_bibtex_internal(
     };
 
     let output = bibfmt::format(&data.root_node(), &document.line_index, &options);
-    let range = TextRange::new(0.into(), document.text.text_len());
-    let range = document.line_index.line_col_lsp_range(range)?;
+    let end = document.line_index.line_col_lsp(document.text.text_len())?;
+    let range = lsp_types::Range::new(lsp_types::Position::new(0, 0), end);
     Some(vec![lsp_types::TextEdit::new(range, output)])
 }
