@@ -1,5 +1,4 @@
 use base_db::{Document, Workspace};
-use lsp_types::{FormattingOptions, TextEdit};
 use rowan::TextLen;
 
 use crate::util::line_index_ext::LineIndexExt;
@@ -7,8 +6,8 @@ use crate::util::line_index_ext::LineIndexExt;
 pub fn format_bibtex_internal(
     workspace: &Workspace,
     document: &Document,
-    options: &FormattingOptions,
-) -> Option<Vec<TextEdit>> {
+    options: &lsp_types::FormattingOptions,
+) -> Option<Vec<lsp_types::TextEdit>> {
     let data = document.data.as_bib()?;
     let options = bibfmt::Options {
         insert_spaces: options.insert_spaces,

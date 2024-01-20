@@ -1,7 +1,7 @@
 use base_db::{DocumentLocation, FeatureParams};
 
 pub(super) fn find_links<'a>(
-    params: FeatureParams<'a>,
+    params: &FeatureParams<'a>,
     results: &mut Vec<DocumentLocation<'a>>,
 ) -> Option<()> {
     let document = params.document;

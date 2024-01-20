@@ -3,15 +3,14 @@ mod latexindent;
 
 use base_db::{Formatter, Workspace};
 use distro::Language;
-use lsp_types::{FormattingOptions, TextEdit, Url};
 
 use self::{bibtex_internal::format_bibtex_internal, latexindent::format_with_latexindent};
 
 pub fn format_source_code(
     workspace: &Workspace,
-    uri: &Url,
-    options: &FormattingOptions,
-) -> Option<Vec<TextEdit>> {
+    uri: &lsp_types::Url,
+    options: &lsp_types::FormattingOptions,
+) -> Option<Vec<lsp_types::TextEdit>> {
     let document = workspace.lookup(uri)?;
     match document.language {
         Language::Tex => match workspace.config().formatting.tex_formatter {

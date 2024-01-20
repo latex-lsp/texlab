@@ -3,7 +3,7 @@ use expect_test::{expect, Expect};
 fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);
     let (params, _) = fixture.make_params().unwrap();
-    let links = crate::find_links(params);
+    let links = crate::find_links(&params);
 
     let actual_ranges = links.iter().map(|link| link.range).collect::<Vec<_>>();
 

@@ -368,6 +368,28 @@ pub fn symbol_kind(value: symbols::SymbolKind) -> lsp_types::SymbolKind {
     }
 }
 
+pub fn document_symbol_response(
+    document: &Document,
+    symbols: Vec<symbols::Symbol>,
+    client_flags: &ClientFlags,
+) -> lsp_types::DocumentSymbolResponse {
+    if client_flags.hierarchical_document_symbols {
+        let results = symbols
+            .into_iter()
+            .filter_map(|symbol| document_symbol(symbol, &document.line_index))
+            .collect();
+
+        lsp_types::DocumentSymbolResponse::Nested(results)
+    } else {
+        let mut results = Vec::new();
+        for symbol in symbols {
+            symbol_information(symbol, document, &mut results);
+        }
+
+        lsp_types::DocumentSymbolResponse::Flat(results)
+    }
+}
+
 pub fn workspace_edit(result: RenameResult, new_name: &str) -> lsp_types::WorkspaceEdit {
     let mut changes = HashMap::default();
     for (document, ranges) in result.changes {

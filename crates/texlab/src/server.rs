@@ -464,26 +464,20 @@ impl Server {
         Some(())
     }
 
-    fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+    fn document_link(&self, id: RequestId, mut params: DocumentLinkParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         self.run_query(id, move |workspace| {
-            link::find_all(workspace, &uri).unwrap_or_default()
+            link::find_all(workspace, params).unwrap_or_default()
         });
         Ok(())
     }
 
-    fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+    fn document_symbols(&self, id: RequestId, mut params: DocumentSymbolParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
 
         let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |workspace| {
-            let Some(document) = workspace.lookup(&uri) else {
-                return DocumentSymbolResponse::Flat(vec![]);
-            };
-
-            symbols::document_symbols(workspace, document, &client_flags)
+            symbols::document_symbols(workspace, params, &client_flags)
         });
 
         Ok(())
@@ -528,13 +522,13 @@ impl Server {
         Ok(())
     }
 
-    fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+    fn folding_range(&self, id: RequestId, mut params: FoldingRangeParams) -> Result<()> {
+        normalize_uri(&mut params.text_document.uri);
         let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |db| {
-            folding::find_all(db, &uri, &client_flags).unwrap_or_default()
+            folding::find_all(db, params, &client_flags).unwrap_or_default()
         });
+
         Ok(())
     }
 

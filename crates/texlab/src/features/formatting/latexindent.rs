@@ -5,7 +5,6 @@ use std::{
 
 use base_db::{Document, LatexIndentConfig, Workspace};
 use distro::Language;
-use lsp_types::{Position, TextEdit};
 use rowan::TextLen;
 use tempfile::tempdir;
 
@@ -14,7 +13,7 @@ use crate::util::line_index_ext::LineIndexExt;
 pub fn format_with_latexindent(
     workspace: &Workspace,
     document: &Document,
-) -> Option<Vec<TextEdit>> {
+) -> Option<Vec<lsp_types::TextEdit>> {
     let config = workspace.config();
     let target_dir = tempdir().ok()?;
     let source_dir = workspace.current_dir(&document.dir).to_file_path().ok()?;
@@ -51,9 +50,9 @@ pub fn format_with_latexindent(
         None
     } else {
         let line_index = &document.line_index;
-        let start = Position::new(0, 0);
+        let start = lsp_types::Position::new(0, 0);
         let end = line_index.line_col_lsp(old_text.text_len())?;
-        Some(vec![TextEdit {
+        Some(vec![lsp_types::TextEdit {
             range: lsp_types::Range::new(start, end),
             new_text,
         }])

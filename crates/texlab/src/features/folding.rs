@@ -1,16 +1,19 @@
 use base_db::Workspace;
 
-use crate::util::{to_proto, ClientFlags};
+use crate::util::{from_proto, to_proto, ClientFlags};
 
 pub fn find_all(
     workspace: &Workspace,
-    uri: &lsp_types::Url,
+    params: lsp_types::FoldingRangeParams,
     client_flags: &ClientFlags,
 ) -> Option<Vec<serde_json::Value>> {
-    let document = workspace.lookup(uri)?;
-    let foldings = folding::find_all(document)
+    let params = from_proto::feature_params(workspace, params.text_document)?;
+
+    let foldings = folding::find_all(&params.document)
         .into_iter()
-        .filter_map(|folding| to_proto::folding_range(folding, &document.line_index, client_flags))
+        .filter_map(|folding| {
+            to_proto::folding_range(folding, &params.document.line_index, client_flags)
+        })
         .collect();
 
     Some(foldings)
