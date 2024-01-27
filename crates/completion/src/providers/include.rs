@@ -87,7 +87,7 @@ pub fn complete_includes<'a>(
             if let Some(score) = builder.matcher.score(&name, segment_text) {
                 builder.items.push(CompletionItem::new_simple(
                     score,
-                    cursor.range,
+                    segment_range,
                     CompletionItemData::File(name),
                 ));
             }
@@ -96,7 +96,7 @@ pub fn complete_includes<'a>(
             if let Some(score) = builder.matcher.score(&name, segment_text) {
                 builder.items.push(CompletionItem::new_simple(
                     score,
-                    cursor.range,
+                    segment_range,
                     CompletionItemData::Directory(name),
                 ));
             }
@@ -121,11 +121,12 @@ fn current_dir(
     let path = workspace.current_dir(&parent.dir).to_file_path().ok()?;
 
     let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
-    if !path_text.is_empty() {
-        if let Some(graphics_path) = graphics_path {
-            path.push(graphics_path);
-        }
 
+    if let Some(graphics_path) = graphics_path {
+        path.push(graphics_path);
+    }
+
+    if !path_text.is_empty() {
         path.push(path_text);
         if !path_text.ends_with('/') {
             path.pop();

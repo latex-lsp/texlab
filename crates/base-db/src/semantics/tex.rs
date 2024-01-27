@@ -59,6 +59,8 @@ impl Semantics {
             self.process_environment(environment);
         } else if let Some(theorem_def) = latex::TheoremDefinition::cast(node.clone()) {
             self.process_theorem_definition(theorem_def);
+        } else if let Some(graphics_path) = latex::GraphicsPath::cast(node.clone()) {
+            self.process_graphics_path(graphics_path);
         }
     }
 
@@ -267,6 +269,12 @@ impl Semantics {
             name: Span::from(&name),
             heading,
         });
+    }
+
+    fn process_graphics_path(&mut self, graphics_path: latex::GraphicsPath) {
+        for path in graphics_path.path_list().filter_map(|path| path.key()) {
+            self.graphics_paths.insert(path.to_string());
+        }
     }
 }
 
