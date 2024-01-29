@@ -15,7 +15,7 @@ encoding_rs_io = "0.1.7"
 itertools = "0.12.0"
 line-index = { path = "../line-index" }
 log = "0.4.20"
-multimap = "0.9.1"
+multimap = "0.10.0"
 once_cell = "1.19.0"
 parking_lot = "0.12.1"
 regex = "1.10.2"
