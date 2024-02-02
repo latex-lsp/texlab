@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- When `workspace/didChangeConfiguration` contains the configuration of multiple LSP servers, `texlab` will try
+  to extract the `texlab` configuration instead of falling back to the default settings
+  ([#1003](https://github.com/latex-lsp/texlab/issues/1003))
+
 ## [5.12.3] - 2024-01-27
 
 ### Fixed
