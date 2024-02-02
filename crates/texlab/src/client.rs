@@ -93,8 +93,14 @@ impl LspClient {
         Ok(())
     }
 
-    pub fn parse_options(&self, value: serde_json::Value) -> Result<Options> {
-        let options = match serde_json::from_value(value) {
+    pub fn parse_options(&self, mut value: serde_json::Value) -> Result<Options> {
+        // if there are multiple servers, we need to extract the options for texlab first
+        let options = match value.get_mut("texlab") {
+            Some(section) => section.take(),
+            None => value,
+        };
+
+        let options = match serde_json::from_value(options) {
             Ok(new_options) => new_options,
             Err(why) => {
                 let message = format!(
