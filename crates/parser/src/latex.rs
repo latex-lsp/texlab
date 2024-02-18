@@ -25,6 +25,13 @@ impl Default for ParserContext {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct KeyOptions {
+    allow_eq: bool,
+    allow_parens: bool,
+    allow_bracks: bool,
+}
+
 #[derive(Debug)]
 struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -309,7 +316,11 @@ impl<'a> Parser<'a> {
         self.trivia();
         match self.peek() {
             Some(Token::Word | Token::Pipe) => {
-                self.key();
+                self.key_with_opts(KeyOptions {
+                    allow_eq: true,
+                    allow_bracks: false,
+                    allow_parens: true,
+                });
             }
             Some(_) | None => {}
         }
@@ -340,16 +351,22 @@ impl<'a> Parser<'a> {
     }
 
     fn key(&mut self) {
-        self.key_with_eq(true);
+        self.key_with_opts(KeyOptions {
+            allow_eq: true,
+            allow_parens: true,
+            allow_bracks: true,
+        });
     }
 
-    fn key_with_eq(&mut self, allow_eq: bool) {
+    fn key_with_opts(&mut self, options: KeyOptions) {
         self.builder.start_node(KEY.into());
         self.eat();
         while let Some(kind) = self.peek() {
             match kind {
                 Token::Whitespace | Token::LineComment | Token::Word | Token::Pipe => self.eat(),
-                Token::Eq if allow_eq => self.eat(),
+                Token::LBrack | Token::RBrack if options.allow_bracks => self.eat(),
+                Token::LParen | Token::RParen if options.allow_parens => self.eat(),
+                Token::Eq if options.allow_eq => self.eat(),
                 _ => break,
             }
         }
@@ -374,7 +391,12 @@ impl<'a> Parser<'a> {
 
     fn key_value_pair(&mut self) {
         self.builder.start_node(KEY_VALUE_PAIR.into());
-        self.key_with_eq(false);
+        self.key_with_opts(KeyOptions {
+            allow_eq: false,
+            allow_parens: true,
+            allow_bracks: false,
+        });
+
         if self.peek() == Some(Token::Eq) {
             self.eat();
             self.trivia();

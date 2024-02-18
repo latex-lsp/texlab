@@ -3542,3 +3542,72 @@ fn test_command_subscript() {
     "#]],
     );
 }
+
+#[test]
+fn test_label_parens() {
+    check(
+        r#"\label{foo (bar)}"#,
+        expect![[r#"
+        ROOT@0..17
+          PREAMBLE@0..17
+            LABEL_DEFINITION@0..17
+              COMMAND_NAME@0..6 "\\label"
+              CURLY_GROUP_WORD@6..17
+                L_CURLY@6..7 "{"
+                KEY@7..16
+                  WORD@7..10 "foo"
+                  WHITESPACE@10..11 " "
+                  L_PAREN@11..12 "("
+                  WORD@12..15 "bar"
+                  R_PAREN@15..16 ")"
+                R_CURLY@16..17 "}"
+
+    "#]],
+    );
+}
+
+#[test]
+fn test_label_brackets() {
+    check(
+        r#"\label{foo [bar]}"#,
+        expect![[r#"
+        ROOT@0..17
+          PREAMBLE@0..17
+            LABEL_DEFINITION@0..17
+              COMMAND_NAME@0..6 "\\label"
+              CURLY_GROUP_WORD@6..17
+                L_CURLY@6..7 "{"
+                KEY@7..16
+                  WORD@7..10 "foo"
+                  WHITESPACE@10..11 " "
+                  L_BRACK@11..12 "["
+                  WORD@12..15 "bar"
+                  R_BRACK@15..16 "]"
+                R_CURLY@16..17 "}"
+
+    "#]],
+    );
+}
+
+#[test]
+fn test_label_brackets_unbalanced() {
+    check(
+        r#"\label{foo ]bar[}"#,
+        expect![[r#"
+        ROOT@0..17
+          PREAMBLE@0..17
+            LABEL_DEFINITION@0..17
+              COMMAND_NAME@0..6 "\\label"
+              CURLY_GROUP_WORD@6..17
+                L_CURLY@6..7 "{"
+                KEY@7..16
+                  WORD@7..10 "foo"
+                  WHITESPACE@10..11 " "
+                  R_BRACK@11..12 "]"
+                  WORD@12..15 "bar"
+                  L_BRACK@15..16 "["
+                R_CURLY@16..17 "}"
+
+    "#]],
+    );
+}
