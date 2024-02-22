@@ -1,4 +1,4 @@
-use base_db::{util::RenderedObject, Workspace};
+use base_db::{util::RenderedObject, MatchingAlgo, Workspace};
 use completion::{ArgumentData, CompletionItem, CompletionItemData, EntryTypeData, FieldTypeData};
 use line_index::LineIndex;
 use rowan::ast::AstNode;
@@ -20,8 +20,16 @@ pub fn complete(
         client_flags,
     };
 
-    let is_incomplete =
-        client_flags.completion_always_incomplete || result.items.len() >= completion::LIMIT;
+    let is_fuzzy = match workspace.config().completion.matcher {
+        MatchingAlgo::Skim => true,
+        MatchingAlgo::SkimIgnoreCase => true,
+        MatchingAlgo::Prefix => false,
+        MatchingAlgo::PrefixIgnoreCase => false,
+    };
+
+    let is_incomplete = client_flags.completion_always_incomplete
+        || !is_fuzzy
+        || result.items.len() >= completion::LIMIT;
 
     let items = result
         .items
