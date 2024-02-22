@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When `workspace/didChangeConfiguration` contains the configuration of multiple LSP servers, `texlab` will try
   to extract the `texlab` configuration instead of falling back to the default settings
   ([#1003](https://github.com/latex-lsp/texlab/issues/1003))
+- Keep filtering completion lists server-side if prefix matcher is set ([#1003](https://github.com/latex-lsp/texlab/issues/1003))
 - Allow brackets and parentheses in label names and similar constructs ([#1016](https://github.com/latex-lsp/texlab/issues/1016))
 
 ## [5.12.3] - 2024-01-27
