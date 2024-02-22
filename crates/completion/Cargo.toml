@@ -11,7 +11,7 @@ base-db = { path = "../base-db" }
 completion-data = { path = "../completion-data" }
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 line-index = { path = "../line-index" }
-rayon = "1.7.0"
+rayon = "1.8.1"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
