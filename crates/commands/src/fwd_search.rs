@@ -1,7 +1,10 @@
 use std::{path::PathBuf, process::Stdio};
 
 use anyhow::Result;
-use base_db::{Document, Workspace};
+use base_db::{
+    deps::{self, ProjectRoot},
+    Document, Workspace,
+};
 use thiserror::Error;
 use url::Url;
 
@@ -53,7 +56,10 @@ impl ForwardSearch {
             .lookup(uri)
             .ok_or_else(|| ForwardSearchError::TexNotFound(uri.clone()))?;
 
-        let parent = workspace.parents(child).into_iter().next().unwrap_or(child);
+        let parent = deps::parents(workspace, child)
+            .into_iter()
+            .next()
+            .unwrap_or(child);
 
         log::debug!("[FwdSearch] root_document={}", parent.uri,);
 
@@ -78,12 +84,12 @@ impl ForwardSearch {
     }
 
     fn find_pdf(workspace: &Workspace, document: &Document) -> Result<PathBuf, ForwardSearchError> {
-        let base_dir = workspace.current_dir(&document.dir);
-        let pdf_dir = workspace.pdf_dir(&base_dir);
+        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
 
-        log::debug!("[FwdSearch] base_dir={base_dir}, pdf_dir={pdf_dir}");
+        log::debug!("[FwdSearch] root={root:#?}");
 
-        let pdf_dir = pdf_dir
+        let pdf_dir = root
+            .pdf_dir
             .to_file_path()
             .map_err(|()| ForwardSearchError::InvalidPath(document.uri.clone()))?;
 

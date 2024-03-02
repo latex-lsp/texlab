@@ -6,7 +6,10 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::Workspace;
+use base_db::{
+    deps::{self, ProjectRoot},
+    Workspace,
+};
 use bstr::io::BufReadExt;
 use crossbeam_channel::Sender;
 use thiserror::Error;
@@ -39,8 +42,7 @@ impl BuildCommand {
             return Err(BuildError::NotFound(uri.clone()));
         };
 
-        let document = workspace
-            .parents(document)
+        let document = deps::parents(workspace, document)
             .into_iter()
             .next()
             .unwrap_or(document);
@@ -53,7 +55,9 @@ impl BuildCommand {
         let program = config.program.clone();
         let args = replace_placeholders(&config.args, &[('f', path)]);
 
-        let Ok(working_dir) = workspace.current_dir(&document.dir).to_file_path() else {
+        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+
+        let Ok(working_dir) = root.compile_dir.to_file_path() else {
             return Err(BuildError::NotLocal(document.uri.clone()));
         };
 

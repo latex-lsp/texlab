@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::{Config, Owner, Workspace};
+use base_db::{deps, Config, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
@@ -237,7 +237,7 @@ impl Server {
     fn update_workspace(&mut self) {
         let mut checked_paths = FxHashSet::default();
         let mut workspace = self.workspace.write();
-        workspace.discover(&mut checked_paths);
+        base_db::deps::discover(&mut workspace, &mut checked_paths);
         self.watcher.watch(&mut workspace);
 
         for document in checked_paths
@@ -1086,6 +1086,6 @@ impl FileWatcher {
     }
 
     pub fn watch(&mut self, workspace: &mut Workspace) {
-        workspace.watch(self.watcher.watcher(), &mut self.watched_dirs);
+        deps::watch(workspace, self.watcher.watcher(), &mut self.watched_dirs);
     }
 }

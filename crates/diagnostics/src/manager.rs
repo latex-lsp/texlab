@@ -1,4 +1,4 @@
-use base_db::{util::filter_regex_patterns, Document, Owner, Workspace};
+use base_db::{deps::Project, util::filter_regex_patterns, Document, Owner, Workspace};
 use multimap::MultiMap;
 use rustc_hash::FxHashMap;
 use url::Url;
@@ -57,7 +57,7 @@ impl Manager {
             .iter()
             .filter(|document| Self::is_relevant(document))
         {
-            let project = workspace.project(document);
+            let project = Project::from_child(workspace, document);
             super::citations::detect_undefined_citations(&project, document, &mut results);
             super::citations::detect_unused_entries(&project, document, &mut results);
         }

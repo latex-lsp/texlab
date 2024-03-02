@@ -4,7 +4,10 @@ use std::{
     process::Stdio,
 };
 
-use base_db::{Document, Workspace};
+use base_db::{
+    deps::{self, ProjectRoot},
+    Document, Workspace,
+};
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use line_index::LineCol;
 use once_cell::sync::Lazy;
@@ -23,8 +26,7 @@ impl Command {
     pub fn new(workspace: &Workspace, document: &Document) -> Option<Self> {
         document.data.as_tex()?;
 
-        let parent = workspace
-            .parents(document)
+        let parent = deps::parents(workspace, document)
             .into_iter()
             .next()
             .unwrap_or(document);
@@ -34,7 +36,9 @@ impl Command {
             return None;
         }
 
-        let working_dir = workspace.current_dir(&parent.dir).to_file_path().ok()?;
+        let root = ProjectRoot::walk_and_find(workspace, &parent.dir);
+
+        let working_dir = root.src_dir.to_file_path().ok()?;
         log::debug!("Calling ChkTeX from directory: {}", working_dir.display());
 
         let text = document.text.clone();

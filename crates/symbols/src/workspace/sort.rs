@@ -1,4 +1,4 @@
-use base_db::{graph, Document, Workspace};
+use base_db::{deps, Document, Workspace};
 use itertools::Itertools;
 use url::Url;
 
@@ -26,7 +26,7 @@ impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
             })
             .chain(workspace.iter())
             .flat_map(|document| {
-                let graph = graph::Graph::new(workspace, document);
+                let graph = deps::Graph::new(workspace, document);
                 graph.preorder().rev().collect_vec()
             })
             .unique()

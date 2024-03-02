@@ -4,8 +4,9 @@ use rustc_hash::FxHashMap;
 use url::Url;
 
 use crate::{
+    deps::Project,
     semantics::{bib, tex},
-    Document, DocumentLocation, Project, Workspace,
+    Document, DocumentLocation, Workspace,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
@@ -184,7 +185,7 @@ impl<'a> Conflict<'a> {
 
         let projects: FxHashMap<&Url, Project> = workspace
             .iter()
-            .map(|document| (&document.uri, workspace.project(document)))
+            .map(|document| (&document.uri, Project::from_child(workspace, document)))
             .collect();
 
         let mut conflicts = Vec::new();

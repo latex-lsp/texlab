@@ -1,4 +1,5 @@
 use base_db::{
+    deps,
     semantics::tex::{Label, LabelKind},
     util::queries,
     DocumentData, Workspace,
@@ -16,7 +17,7 @@ pub fn detect_undefined_and_unused_labels(
 ) {
     let graphs: Vec<_> = workspace
         .iter()
-        .map(|start| base_db::graph::Graph::new(workspace, start))
+        .map(|start| deps::Graph::new(workspace, start))
         .collect();
 
     for document in workspace.iter() {

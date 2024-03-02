@@ -1,12 +1,12 @@
 mod bib;
 mod tex;
 
-use base_db::{util, Document, DocumentData, SymbolConfig, Workspace};
+use base_db::{deps::Project, util, Document, DocumentData, SymbolConfig, Workspace};
 
 use crate::Symbol;
 
 pub fn document_symbols(workspace: &Workspace, document: &Document) -> Vec<Symbol> {
-    let project = workspace.project(document);
+    let project = Project::from_child(workspace, document);
     let mut symbols = match &document.data {
         DocumentData::Tex(data) => {
             let builder = tex::SymbolBuilder::new(&project, workspace.config());
