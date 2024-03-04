@@ -62,7 +62,7 @@ serde_regex = "1.1.0"
 serde_repr = "0.1.18"
 symbols = { path = "../symbols" }
 syntax = { path = "../syntax" }
-tempfile = "3.8.0"
+tempfile = "3.10.1"
 threadpool = "1.8.1"
 
 [dev-dependencies]

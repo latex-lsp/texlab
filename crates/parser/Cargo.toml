@@ -13,7 +13,7 @@ regex = "1.10.2"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-tempfile = "3.8.1"
+tempfile = "3.10.1"
 
 [dev-dependencies]
 expect-test = "1.4.1"
