@@ -55,6 +55,11 @@ impl FileNameDB {
         self.files.get(name).map(|file| file.path())
     }
 
+    pub fn contains(&self, path: &Path) -> bool {
+        let name = path.file_name().unwrap().to_str().unwrap();
+        self.get(name) == Some(path)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&str, &Path)> + '_ {
         self.files.iter().map(|file| (file.name(), file.path()))
     }
