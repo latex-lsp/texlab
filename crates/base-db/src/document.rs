@@ -12,6 +12,7 @@ use crate::{semantics, Config};
 pub enum Owner {
     Client,
     Server,
+    Distro,
 }
 
 #[derive(Debug)]

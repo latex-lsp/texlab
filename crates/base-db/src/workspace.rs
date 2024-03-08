@@ -67,13 +67,19 @@ impl Workspace {
         }));
     }
 
-    pub fn load(&mut self, path: &Path, language: Language, owner: Owner) -> std::io::Result<()> {
+    pub fn load(&mut self, path: &Path, language: Language) -> std::io::Result<()> {
         log::debug!("Loading document {} from disk...", path.display());
         let uri = Url::from_file_path(path).unwrap();
         let data = std::fs::read(path)?;
         let text = match String::from_utf8_lossy(&data) {
             Cow::Borrowed(_) => unsafe { String::from_utf8_unchecked(data) },
             Cow::Owned(text) => text,
+        };
+
+        let owner = if self.distro.file_name_db.contains(&path) {
+            Owner::Distro
+        } else {
+            Owner::Server
         };
 
         if let Some(document) = self.lookup_path(path) {
@@ -329,7 +335,7 @@ impl Workspace {
                 }
 
                 if self.lookup_path(&file).is_none() && file.exists() {
-                    changed |= self.load(&file, lang, Owner::Server).is_ok();
+                    changed |= self.load(&file, lang).is_ok();
                     checked_paths.insert(file);
                 }
             }
@@ -350,8 +356,9 @@ impl Workspace {
         let mut changed = false;
         for file in files {
             let language = Language::from_path(&file).unwrap_or(Language::Tex);
+
             if self.lookup_path(&file).is_none() && file.exists() {
-                changed |= self.load(&file, language, Owner::Server).is_ok();
+                changed |= self.load(&file, language).is_ok();
                 checked_paths.insert(file);
             }
         }

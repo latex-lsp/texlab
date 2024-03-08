@@ -813,7 +813,7 @@ impl Server {
                         .map_or(true, |document| document.owner == Owner::Server)
                     {
                         if let Some(language) = Language::from_path(&path) {
-                            changed |= workspace.load(&path, language, Owner::Server).is_ok();
+                            changed |= workspace.load(&path, language).is_ok();
 
                             if let Some(document) = workspace.lookup_path(&path) {
                                 self.diagnostic_manager.update_syntax(&workspace, document);
