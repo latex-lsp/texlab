@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add experimental `texlab.experimental.labelReferenceCommands` setting to customize the list of `\ref`-like commands
+  ([#1032](https://github.com/latex-lsp/texlab/issues/1032))
+
 ### Fixed
 
 - Don't report diagnostics for files that are part of the TeX distro ([#1028](https://github.com/latex-lsp/texlab/issues/1028))

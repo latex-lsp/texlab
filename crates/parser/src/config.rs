@@ -7,6 +7,7 @@ pub struct SyntaxConfig {
     pub enum_environments: FxHashSet<String>,
     pub verbatim_environments: FxHashSet<String>,
     pub citation_commands: FxHashSet<String>,
+    pub label_reference_commands: FxHashSet<String>,
 }
 
 impl Default for SyntaxConfig {
@@ -31,12 +32,18 @@ impl Default for SyntaxConfig {
             .map(ToString::to_string)
             .collect();
 
+        let label_reference_commands = DEFAULT_LABEL_REFERENCE_COMMANDS
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+
         Self {
             follow_package_links: false,
             math_environments,
             enum_environments,
             verbatim_environments,
             citation_commands,
+            label_reference_commands,
         }
     }
 }
@@ -154,4 +161,25 @@ static DEFAULT_CITATION_COMMANDS: &[&str] = &[
     "fnotecite",
     "citeA",
     "citeA*",
+];
+
+static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
+    "ref",
+    "vref",
+    "Vref",
+    "autoref",
+    "pageref",
+    "cref",
+    "cref*",
+    "Cref",
+    "Cref*",
+    "namecref",
+    "nameCref",
+    "lcnamecref",
+    "namecrefs",
+    "nameCrefs",
+    "lcnamecrefs",
+    "labelcref",
+    "labelcpageref",
+    "eqref",
 ];
