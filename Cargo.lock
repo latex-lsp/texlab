@@ -1485,7 +1485,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "5.12.4"
+version = "5.13.0"
 dependencies = [
  "anyhow",
  "base-db",
