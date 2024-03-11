@@ -1,10 +1,11 @@
 use rowan::{ast::AstNode, NodeOrToken};
-use rustc_hash::FxHashSet;
 
 use syntax::bibtex::{
-    Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasValue, HasWord, Join,
-    Literal, QuoteGroup, Root, SyntaxKind::*, SyntaxToken, Value,
+    Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasWord, Join,
+    Literal, QuoteGroup, SyntaxKind::*, SyntaxToken, Value,
 };
+
+use super::FieldParseCache;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum TextField {
@@ -118,20 +119,28 @@ pub struct TextFieldData {
 }
 
 impl TextFieldData {
-    pub fn parse(value: &Value) -> Option<Self> {
-        let mut builder = TextFieldDataBuilder::default();
+    pub fn parse(value: &Value, cache: &FieldParseCache) -> Option<Self> {
+        let mut builder = TextFieldDataBuilder::new(cache);
         builder.visit_value(value)?;
         Some(builder.data)
     }
 }
 
-#[derive(Default)]
-struct TextFieldDataBuilder {
+struct TextFieldDataBuilder<'a> {
     data: TextFieldData,
-    string_stack: FxHashSet<String>,
+    cache: &'a FieldParseCache,
 }
 
-impl TextFieldDataBuilder {
+impl<'a> TextFieldDataBuilder<'a> {
+    fn new(cache: &'a FieldParseCache) -> Self {
+        TextFieldDataBuilder {
+            data: Default::default(),
+            cache,
+        }
+    }
+}
+
+impl<'a> TextFieldDataBuilder<'a> {
     fn visit_value(&mut self, value: &Value) -> Option<()> {
         match value {
             Value::Literal(lit) => {
@@ -170,24 +179,9 @@ impl TextFieldDataBuilder {
     }
 
     fn visit_string_reference(&mut self, name: &SyntaxToken) -> Option<()> {
-        let root = Root::cast(name.parent_ancestors().last()?)?;
         let name = name.text();
-
-        let value = root
-            .strings()
-            .filter(|string| {
-                string
-                    .name_token()
-                    .map_or(false, |token| token.text() == name)
-            })
-            .find_map(|string| string.value())?;
-
-        if !self.string_stack.insert(name.to_string()) {
-            return None;
-        }
-
-        let _ = self.visit_value(&value);
-        self.string_stack.remove(name);
+        let value = self.cache.get(name)?;
+        self.data.text.push_str(value);
         Some(())
     }
 

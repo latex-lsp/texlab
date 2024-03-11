@@ -217,6 +217,7 @@ dependencies = [
 name = "citeproc"
 version = "0.0.0"
 dependencies = [
+ "base-db",
  "bibtex-utils",
  "expect-test",
  "isocountry",

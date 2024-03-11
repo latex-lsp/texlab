@@ -1,3 +1,4 @@
+use base_db::semantics::bib::Semantics;
 use expect_test::{expect, Expect};
 use parser::parse_bibtex;
 use rowan::ast::AstNode;
@@ -5,9 +6,12 @@ use syntax::bibtex;
 
 fn check(input: &str, expect: Expect) {
     let green = parse_bibtex(input);
-    let root = bibtex::Root::cast(bibtex::SyntaxNode::new_root(green)).unwrap();
+    let root = bibtex::SyntaxNode::new_root(green);
+    let mut semantics = Semantics::default();
+    semantics.process_root(&root);
+    let root = bibtex::Root::cast(root).unwrap();
     let entry = root.entries().next().unwrap();
-    let output = super::render(&entry).unwrap();
+    let output = super::render(&entry, &semantics).unwrap();
     expect.assert_eq(&output);
 }
 

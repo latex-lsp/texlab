@@ -2,7 +2,7 @@ use std::fmt;
 
 use syntax::bibtex::Value;
 
-use super::text::TextFieldData;
+use super::{text::TextFieldData, FieldParseCache};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum NumberField {
@@ -48,8 +48,8 @@ impl fmt::Display for NumberFieldData {
 }
 
 impl NumberFieldData {
-    pub fn parse(value: &Value) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(value)?;
+    pub fn parse(value: &Value, cache: &FieldParseCache) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value, cache)?;
         text.split_once("--")
             .or_else(|| text.split_once('-'))
             .and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?)))

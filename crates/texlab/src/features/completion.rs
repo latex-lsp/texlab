@@ -61,7 +61,7 @@ pub fn resolve(workspace: &Workspace, item: &mut lsp_types::CompletionItem) -> O
             let data = workspace.lookup(&uri)?.data.as_bib()?;
             let root = bibtex::Root::cast(data.root_node())?;
             let entry = root.find_entry(&key)?;
-            let value = citeproc::render(&entry)?;
+            let value = citeproc::render(&entry, &data.semantics)?;
             item.documentation = Some(lsp_types::Documentation::MarkupContent(
                 lsp_types::MarkupContent {
                     kind: lsp_types::MarkupKind::Markdown,

@@ -4,7 +4,7 @@ use human_name::Name;
 use itertools::Itertools;
 use syntax::bibtex::Value;
 
-use super::text::TextFieldData;
+use super::{text::TextFieldData, FieldParseCache};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum AuthorField {
@@ -58,8 +58,8 @@ impl fmt::Display for AuthorFieldData {
 }
 
 impl AuthorFieldData {
-    pub fn parse(value: &Value) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(value)?;
+    pub fn parse(value: &Value, cache: &FieldParseCache) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value, cache)?;
         let mut authors = Vec::new();
         let mut words = Vec::new();
         for word in text.split_whitespace() {
