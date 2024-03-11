@@ -24,7 +24,7 @@ pub(super) fn find_hover<'a>(params: &HoverParams<'a>) -> Option<Hover<'a>> {
             continue;
         }
 
-        let value = TextFieldData::parse(&string.value()?)?.text;
+        let value = TextFieldData::parse(&string.value()?, &data.semantics.expanded_defs)?.text;
         return Some(Hover {
             range: name.text_range(),
             data: HoverData::StringRef(value),

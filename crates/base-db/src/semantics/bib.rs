@@ -2,6 +2,7 @@ use bibtex_utils::field::text::TextFieldData;
 use itertools::Itertools;
 use rowan::{ast::AstNode, TextRange};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
+use rustc_hash::FxHashMap;
 
 use crate::data::{BibtexEntryType, BibtexEntryTypeCategory};
 
@@ -11,6 +12,8 @@ use super::Span;
 pub struct Semantics {
     pub entries: Vec<Entry>,
     pub strings: Vec<StringDef>,
+    /// Map from string definition keys to their expanded values.
+    pub expanded_defs: FxHashMap<String, String>,
 }
 
 impl Semantics {
@@ -32,7 +35,7 @@ impl Semantics {
 
             let field_values = entry
                 .fields()
-                .filter_map(|field| Some(TextFieldData::parse(&field.value()?)?.text));
+                .filter_map(|field| Some(TextFieldData::parse(&field.value()?, &self.expanded_defs)?.text));
 
             let keywords = [name.text().into(), type_token.text().into()]
                 .into_iter()
@@ -60,6 +63,11 @@ impl Semantics {
                 },
                 full_range: string.syntax().text_range(),
             });
+            if let Some(value) = string.value() {
+                if let Some(data) = TextFieldData::parse(&value, &self.expanded_defs) {
+                    self.expanded_defs.insert(name.text().into(), data.text);
+                }
+            }
         }
     }
 }

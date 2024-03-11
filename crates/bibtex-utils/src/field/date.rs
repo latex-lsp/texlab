@@ -3,7 +3,7 @@ use std::{fmt, ops::Add, str::FromStr};
 use chrono::{Datelike, Month, NaiveDate};
 use syntax::bibtex::Value;
 
-use super::text::TextFieldData;
+use super::{text::TextFieldData, FieldParseCache};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum DateField {
@@ -73,8 +73,8 @@ impl fmt::Display for DateFieldData {
 }
 
 impl DateFieldData {
-    pub fn parse(value: &Value) -> Option<Self> {
-        let TextFieldData { text } = TextFieldData::parse(value)?;
+    pub fn parse(value: &Value, cache: &FieldParseCache) -> Option<Self> {
+        let TextFieldData { text } = TextFieldData::parse(value, cache)?;
         NaiveDate::from_str(&text)
             .ok()
             .map(Self::Date)
