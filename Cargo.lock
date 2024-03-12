@@ -217,6 +217,7 @@ dependencies = [
 name = "citeproc"
 version = "0.0.0"
 dependencies = [
+ "base-db",
  "bibtex-utils",
  "expect-test",
  "isocountry",
@@ -1485,7 +1486,7 @@ dependencies = [
 
 [[package]]
 name = "texlab"
-version = "5.12.4"
+version = "5.13.0"
 dependencies = [
  "anyhow",
  "base-db",

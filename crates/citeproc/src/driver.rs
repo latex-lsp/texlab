@@ -1,3 +1,4 @@
+use base_db::semantics::bib::Semantics;
 use bibtex_utils::field::{
     author::AuthorField,
     date::DateField,
@@ -21,8 +22,8 @@ pub struct Driver {
 }
 
 impl Driver {
-    pub fn process(&mut self, entry: &bibtex::Entry) {
-        let entry = EntryData::from(entry);
+    pub fn process(&mut self, entry: &bibtex::Entry, semantics: &Semantics) {
+        let entry = EntryData::from_entry(entry, semantics);
         match entry.kind {
             EntryKind::Article
             | EntryKind::DataSet

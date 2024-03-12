@@ -30,9 +30,6 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
             CommandName::Import
         }
         "label" => CommandName::LabelDefinition,
-        "ref" | "vref" | "Vref" | "autoref" | "pageref" | "cref" | "cref*" | "Cref" | "Cref*"
-        | "namecref" | "nameCref" | "lcnamecref" | "namecrefs" | "nameCrefs" | "lcnamecrefs"
-        | "labelcref" | "labelcpageref" | "eqref" => CommandName::LabelReference,
         "crefrange" | "crefrange*" | "Crefrange" | "Crefrange*" => CommandName::LabelReferenceRange,
         "newlabel" => CommandName::LabelNumber,
         "newcommand"
@@ -81,6 +78,7 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "fi" => CommandName::EndBlockComment,
         "verb" => CommandName::VerbatimBlock,
         _ if config.citation_commands.contains(name) => CommandName::Citation,
+        _ if config.label_reference_commands.contains(name) => CommandName::LabelReference,
         _ => CommandName::Generic,
     }
 }

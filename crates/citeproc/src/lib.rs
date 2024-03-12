@@ -2,16 +2,17 @@ mod driver;
 mod entry;
 mod output;
 
+use base_db::semantics::bib::Semantics;
 use syntax::bibtex;
 use unicode_normalization::UnicodeNormalization;
 
 use self::{driver::Driver, output::Inline};
 
 #[must_use]
-pub fn render(entry: &bibtex::Entry) -> Option<String> {
+pub fn render(entry: &bibtex::Entry, semantics: &Semantics) -> Option<String> {
     let mut output = String::new();
     let mut driver = Driver::default();
-    driver.process(entry);
+    driver.process(entry, semantics);
     driver.finish().for_each(|(inline, punct)| {
         let text = match inline {
             Inline::Regular(text) => text,

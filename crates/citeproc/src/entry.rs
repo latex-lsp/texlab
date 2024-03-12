@@ -3,7 +3,9 @@ use bibtex_utils::field::{
     date::{DateField, DateFieldData},
     number::{NumberField, NumberFieldData},
     text::{TextField, TextFieldData},
+    FieldParseCache,
 };
+use base_db::semantics::bib::Semantics;
 use rustc_hash::FxHashMap;
 use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};
 
@@ -103,8 +105,8 @@ pub struct EntryData {
     pub number: FxHashMap<NumberField, NumberFieldData>,
 }
 
-impl From<&Entry> for EntryData {
-    fn from(entry: &Entry) -> Self {
+impl EntryData {
+    pub fn from_entry(entry: &Entry, semantics: &Semantics) -> Self {
         let mut data = EntryData {
             kind: entry.type_token().map_or(EntryKind::Unknown, |token| {
                 EntryKind::parse(&token.text()[1..])
@@ -113,7 +115,7 @@ impl From<&Entry> for EntryData {
         };
 
         for field in entry.fields() {
-            let _ = data.parse_field(&field);
+            let _ = data.parse_field(&field, &semantics.expanded_defs);
         }
 
         data
@@ -121,40 +123,40 @@ impl From<&Entry> for EntryData {
 }
 
 impl EntryData {
-    fn parse_field(&mut self, field: &Field) -> Option<()> {
+    fn parse_field(&mut self, field: &Field, expanded_defs: &FieldParseCache) -> Option<()> {
         let name = field.name_token()?;
         let name = name.text();
         let value = field.value()?;
-        self.parse_author_field(name, &value)
-            .or_else(|| self.parse_date_field(name, &value))
-            .or_else(|| self.parse_number_field(name, &value))
-            .or_else(|| self.parse_text_field(name, &value))
+        self.parse_author_field(name, &value, expanded_defs)
+            .or_else(|| self.parse_date_field(name, &value, expanded_defs))
+            .or_else(|| self.parse_number_field(name, &value, expanded_defs))
+            .or_else(|| self.parse_text_field(name, &value, expanded_defs))
     }
 
-    fn parse_author_field(&mut self, name: &str, value: &Value) -> Option<()> {
+    fn parse_author_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
         let name = AuthorField::parse(name)?;
-        let data = AuthorFieldData::parse(value)?;
+        let data = AuthorFieldData::parse(value, expanded_defs)?;
         self.author.insert(name, data);
         Some(())
     }
 
-    fn parse_date_field(&mut self, name: &str, value: &Value) -> Option<()> {
+    fn parse_date_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
         let name = DateField::parse(name)?;
-        let data = DateFieldData::parse(value)?;
+        let data = DateFieldData::parse(value, expanded_defs)?;
         self.date.insert(name, data);
         Some(())
     }
 
-    fn parse_number_field(&mut self, name: &str, value: &Value) -> Option<()> {
+    fn parse_number_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
         let name = NumberField::parse(name)?;
-        let data = NumberFieldData::parse(value)?;
+        let data = NumberFieldData::parse(value, expanded_defs)?;
         self.number.insert(name, data);
         Some(())
     }
 
-    fn parse_text_field(&mut self, name: &str, value: &Value) -> Option<()> {
+    fn parse_text_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
         let name = TextField::parse(name).unwrap_or(TextField::Unknown);
-        let data = TextFieldData::parse(value)?;
+        let data = TextFieldData::parse(value, expanded_defs)?;
         self.text.insert(name, data);
         Some(())
     }

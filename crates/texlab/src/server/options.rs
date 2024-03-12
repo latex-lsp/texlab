@@ -128,6 +128,7 @@ pub struct ExperimentalOptions {
     pub enum_environments: Vec<String>,
     pub verbatim_environments: Vec<String>,
     pub citation_commands: Vec<String>,
+    pub label_reference_commands: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
@@ -281,6 +282,11 @@ impl From<Options> for Config {
             .syntax
             .citation_commands
             .extend(value.experimental.citation_commands);
+
+        config
+            .syntax
+            .label_reference_commands
+            .extend(value.experimental.label_reference_commands);
 
         config
     }
