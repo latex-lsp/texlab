@@ -13,12 +13,13 @@ pub(super) fn find_links<'a>(
         .next()
         .unwrap_or(&document);
 
-    let graph = deps::Graph::new(params.workspace, parent);
+    let graph = &params.workspace.graphs()[&parent.uri];
 
     for edge in &graph.edges {
-        if edge.source == document {
+        if edge.source == document.uri {
             if let EdgeData::DirectLink(data) = &edge.data {
-                results.push(DocumentLocation::new(edge.target, data.link.path.range));
+                let target = params.workspace.lookup(&edge.target).unwrap();
+                results.push(DocumentLocation::new(target, data.link.path.range));
             }
         }
     }

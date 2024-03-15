@@ -14,22 +14,22 @@ use super::ProjectRoot;
 pub(crate) static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct Edge<'a> {
-    pub source: &'a Document,
-    pub target: &'a Document,
-    pub data: EdgeData<'a>,
+pub struct Edge {
+    pub source: Url,
+    pub target: Url,
+    pub data: EdgeData,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum EdgeData<'a> {
-    DirectLink(DirectLinkData<'a>),
+pub enum EdgeData {
+    DirectLink(DirectLinkData),
     AdditionalFiles,
     Artifact,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct DirectLinkData<'a> {
-    pub link: &'a semantics::tex::Link,
+pub struct DirectLinkData {
+    pub link: semantics::tex::Link,
     pub new_root: Option<ProjectRoot>,
 }
 
@@ -40,20 +40,18 @@ struct Start<'a, 'b> {
 }
 
 #[derive(Debug)]
-pub struct Graph<'a> {
-    pub workspace: &'a Workspace,
+pub struct Graph {
     pub missing: Vec<Url>,
-    pub edges: Vec<Edge<'a>>,
-    pub start: &'a Document,
+    pub edges: Vec<Edge>,
+    pub start: Url,
 }
 
-impl<'a> Graph<'a> {
-    pub fn new(workspace: &'a Workspace, start: &'a Document) -> Self {
+impl Graph {
+    pub fn new(workspace: &Workspace, start: &Document) -> Self {
         let mut graph = Self {
-            workspace,
             missing: Vec::new(),
             edges: Vec::new(),
-            start,
+            start: start.uri.clone(),
         };
 
         let root = ProjectRoot::walk_and_find(workspace, &start.dir);
@@ -64,13 +62,16 @@ impl<'a> Graph<'a> {
         while let Some((source, root)) = stack.pop() {
             let index = graph.edges.len();
 
-            graph.process(Start {
-                source,
-                root: &root,
-            });
+            graph.process(
+                workspace,
+                Start {
+                    source,
+                    root: &root,
+                },
+            );
 
             for edge in &graph.edges[index..] {
-                if visited.insert(&edge.target.uri) {
+                if visited.insert(edge.target.clone()) {
                     let new_root = match &edge.data {
                         EdgeData::DirectLink(data) => data.new_root.clone(),
                         _ => None,
@@ -78,7 +79,7 @@ impl<'a> Graph<'a> {
 
                     let new_root = new_root.map_or_else(|| Rc::clone(&root), Rc::new);
 
-                    stack.push((edge.target, new_root));
+                    stack.push((workspace.lookup(&edge.target).unwrap(), new_root));
                 }
             }
         }
@@ -86,25 +87,29 @@ impl<'a> Graph<'a> {
         graph
     }
 
-    pub fn preorder(&self) -> impl DoubleEndedIterator<Item = &'a Document> + '_ {
-        std::iter::once(self.start)
-            .chain(self.edges.iter().map(|group| group.target))
-            .unique_by(|document| &document.uri)
+    pub fn preorder<'a: 'b, 'b>(
+        &'b self,
+        workspace: &'a Workspace,
+    ) -> impl DoubleEndedIterator<Item = &'a Document> + '_ {
+        std::iter::once(&self.start)
+            .chain(self.edges.iter().map(|group| &group.target))
+            .unique()
+            .filter_map(|uri| workspace.lookup(uri))
     }
 
-    fn process(&mut self, start: Start<'a, '_>) {
-        self.add_direct_links(start);
-        self.add_artifacts(start);
-        self.add_additional_files(start);
+    fn process(&mut self, workspace: &Workspace, start: Start) {
+        self.add_direct_links(workspace, start);
+        self.add_artifacts(workspace, start);
+        self.add_additional_files(workspace, start);
     }
 
-    fn add_additional_files(&mut self, start: Start<'a, '_>) {
+    fn add_additional_files(&mut self, workspace: &Workspace, start: Start) {
         for uri in &start.root.additional_files {
-            match self.workspace.lookup(uri) {
+            match workspace.lookup(uri) {
                 Some(target) => {
                     self.edges.push(Edge {
-                        source: start.source,
-                        target,
+                        source: start.source.uri.clone(),
+                        target: target.uri.clone(),
                         data: EdgeData::AdditionalFiles,
                     });
                 }
@@ -115,17 +120,22 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn add_direct_links(&mut self, start: Start<'a, '_>) -> Option<()> {
+    fn add_direct_links(&mut self, workspace: &Workspace, start: Start) -> Option<()> {
         let data = start.source.data.as_tex()?;
 
         for link in &data.semantics.links {
-            self.add_direct_link(start, link);
+            self.add_direct_link(workspace, start, link);
         }
 
         Some(())
     }
 
-    fn add_direct_link(&mut self, start: Start<'a, '_>, link: &'a semantics::tex::Link) {
+    fn add_direct_link(
+        &mut self,
+        workspace: &Workspace,
+        start: Start,
+        link: &semantics::tex::Link,
+    ) {
         let home_dir = HOME_DIR.as_deref();
 
         let stem = &link.path.text;
@@ -136,7 +146,7 @@ impl<'a> Graph<'a> {
             .map(|ext| format!("{stem}.{ext}"))
             .for_each(|name| file_names.push(name));
 
-        let file_name_db = &self.workspace.distro().file_name_db;
+        let file_name_db = &workspace.distro().file_name_db;
         let distro_files = file_names
             .iter()
             .filter_map(|name| file_name_db.get(name))
@@ -151,18 +161,23 @@ impl<'a> Graph<'a> {
             .flat_map(|file_name| start.root.src_dir.join(file_name))
             .chain(distro_files)
         {
-            match self.workspace.lookup(&target_uri) {
+            match workspace.lookup(&target_uri) {
                 Some(target) => {
                     let new_root = link
                         .base_dir
                         .as_deref()
                         .and_then(|path| start.root.src_dir.join(path).ok())
-                        .map(|dir| ProjectRoot::walk_and_find(self.workspace, &dir));
+                        .map(|dir| ProjectRoot::walk_and_find(workspace, &dir));
+
+                    let link_data = DirectLinkData {
+                        link: link.clone(),
+                        new_root,
+                    };
 
                     self.edges.push(Edge {
-                        source: start.source,
-                        target,
-                        data: EdgeData::DirectLink(DirectLinkData { link, new_root }),
+                        source: start.source.uri.clone(),
+                        target: target.uri.clone(),
+                        data: EdgeData::DirectLink(link_data),
                     });
 
                     break;
@@ -174,7 +189,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn add_artifacts(&mut self, start: Start<'a, '_>) {
+    fn add_artifacts(&mut self, workspace: &Workspace, start: Start) {
         if start.source.language != Language::Tex {
             return;
         }
@@ -183,25 +198,33 @@ impl<'a> Graph<'a> {
         let relative_path = root.compile_dir.make_relative(&start.source.uri).unwrap();
 
         self.add_artifact(
+            workspace,
             start.source,
             &root.aux_dir.join(&relative_path).unwrap(),
             "aux",
         );
 
-        self.add_artifact(start.source, &root.aux_dir, "aux");
-        self.add_artifact(start.source, &root.compile_dir, "aux");
+        self.add_artifact(workspace, start.source, &root.aux_dir, "aux");
+        self.add_artifact(workspace, start.source, &root.compile_dir, "aux");
 
         self.add_artifact(
+            workspace,
             start.source,
             &root.log_dir.join(&relative_path).unwrap(),
             "log",
         );
 
-        self.add_artifact(start.source, &root.log_dir, "log");
-        self.add_artifact(start.source, &root.compile_dir, "log");
+        self.add_artifact(workspace, start.source, &root.log_dir, "log");
+        self.add_artifact(workspace, start.source, &root.compile_dir, "log");
     }
 
-    fn add_artifact(&mut self, source: &'a Document, dir: &Url, extension: &str) {
+    fn add_artifact(
+        &mut self,
+        workspace: &Workspace,
+        source: &Document,
+        dir: &Url,
+        extension: &str,
+    ) {
         let mut path = PathBuf::from(
             percent_decode_str(source.uri.path())
                 .decode_utf8_lossy()
@@ -217,11 +240,11 @@ impl<'a> Graph<'a> {
             return;
         };
 
-        match self.workspace.lookup(&target_uri) {
+        match workspace.lookup(&target_uri) {
             Some(target) => {
                 self.edges.push(Edge {
-                    source,
-                    target,
+                    source: source.uri.clone(),
+                    target: target.uri.clone(),
                     data: EdgeData::Artifact,
                 });
             }

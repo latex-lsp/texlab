@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 
 use crate::Workspace;
 
-use super::{graph, ProjectRoot};
+use super::ProjectRoot;
 
 pub fn watch(
     workspace: &mut Workspace,
@@ -96,9 +96,9 @@ fn discover_parents(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pat
 
 fn discover_children(workspace: &mut Workspace, checked_paths: &mut FxHashSet<PathBuf>) -> bool {
     let files = workspace
-        .iter()
-        .map(|start| graph::Graph::new(workspace, start))
-        .flat_map(|graph| graph.missing)
+        .graphs()
+        .values()
+        .flat_map(|graph| graph.missing.iter())
         .filter(|uri| uri.scheme() == "file")
         .flat_map(|uri| uri.to_file_path())
         .collect::<FxHashSet<_>>();

@@ -6,10 +6,10 @@ use std::{
 use distro::{Distro, Language};
 use line_index::LineCol;
 use rowan::{TextLen, TextRange};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
-use crate::{Config, Document, DocumentParams, Owner};
+use crate::{deps, Config, Document, DocumentParams, Owner};
 
 #[derive(Debug, Default)]
 pub struct Workspace {
@@ -17,6 +17,7 @@ pub struct Workspace {
     config: Config,
     distro: Distro,
     folders: Vec<PathBuf>,
+    graphs: FxHashMap<Url, deps::Graph>,
 }
 
 impl Workspace {
@@ -45,6 +46,10 @@ impl Workspace {
         &self.distro
     }
 
+    pub fn graphs(&self) -> &FxHashMap<Url, deps::Graph> {
+        &self.graphs
+    }
+
     pub fn open(
         &mut self,
         uri: Url,
@@ -63,6 +68,11 @@ impl Workspace {
             cursor,
             config: &self.config,
         }));
+
+        self.graphs = self
+            .iter()
+            .map(|start| (start.uri.clone(), deps::Graph::new(self, start)))
+            .collect();
     }
 
     pub fn load(&mut self, path: &Path, language: Language) -> std::io::Result<()> {
