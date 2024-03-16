@@ -101,6 +101,7 @@ impl<'a> SymbolBuilder<'a> {
         let name = enum_item
             .label()
             .and_then(|label| label.content_text())
+            .filter(|text| !text.is_empty())
             .unwrap_or_else(|| "Item".into());
 
         let symbol = match self.find_label(enum_item.syntax()) {
