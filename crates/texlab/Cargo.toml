@@ -43,7 +43,7 @@ hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
 line-index = { path = "../line-index" }
 links = { path = "../links" }
-log = "0.4.19"
+log = "0.4.21"
 lsp-server = "0.7.6"
 lsp-types = "0.95.0"
 notify = "6.1.1"
