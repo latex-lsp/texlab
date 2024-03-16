@@ -34,14 +34,20 @@ impl Manager {
     }
 
     /// Returns all filtered diagnostics for the given workspace.
-    pub fn get(&self, workspace: &Workspace) -> MultiMap<Url, Diagnostic> {
-        let mut results = MultiMap::default();
+    pub fn get(&self, workspace: &Workspace) -> FxHashMap<Url, Vec<Diagnostic>> {
+        let mut results: FxHashMap<Url, Vec<Diagnostic>> = FxHashMap::default();
         for (uri, diagnostics) in &self.grammar {
-            results.insert_many_from_slice(uri.clone(), diagnostics);
+            results
+                .entry(uri.clone())
+                .or_default()
+                .extend(diagnostics.iter().cloned());
         }
 
         for (uri, diagnostics) in self.build_log.values().flatten() {
-            results.insert_many_from_slice(uri.clone(), diagnostics);
+            results
+                .entry(uri.clone())
+                .or_default()
+                .extend(diagnostics.iter().cloned());
         }
 
         for (uri, diagnostics) in &self.chktex {
@@ -49,7 +55,10 @@ impl Manager {
                 .lookup(uri)
                 .map_or(false, |document| document.owner == Owner::Client)
             {
-                results.insert_many_from_slice(uri.clone(), diagnostics);
+                results
+                    .entry(uri.clone())
+                    .or_default()
+                    .extend(diagnostics.iter().cloned());
             }
         }
 
