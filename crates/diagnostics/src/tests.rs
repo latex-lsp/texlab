@@ -11,7 +11,7 @@ fn check(input: &str, expect: Expect) {
 
     let results = manager.get(&fixture.workspace);
     let results = results
-        .iter_all()
+        .iter()
         .filter(|(_, diags)| !diags.is_empty())
         .sorted_by(|(uri1, _), (uri2, _)| uri1.cmp(&uri2))
         .map(|(uri, diags)| (uri.as_str(), diags))

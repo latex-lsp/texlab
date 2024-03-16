@@ -98,14 +98,14 @@ jobs:
   ctan:
     name: CTAN
     needs: [github]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Tectonic workaround
         run: |
           sudo add-apt-repository universe
-          sudo apt install libfuse2
+          sudo apt install libfuse2 libssl3
       - name: Install Tectonic
         uses: wtfjoke/setup-tectonic@v3
         with:
