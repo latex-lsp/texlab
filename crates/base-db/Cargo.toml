@@ -12,7 +12,7 @@ dirs = "5.0.1"
 distro = { path = "../distro" }
 itertools = "0.12.0"
 line-index = { path = "../line-index" }
-log = "0.4.20"
+log = "0.4.21"
 notify = "6.0.1"
 once_cell = "1.19.0"
 parser = { path = "../parser" }
