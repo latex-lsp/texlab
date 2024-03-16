@@ -4,15 +4,14 @@ use base_db::{
     DocumentData, Workspace,
 };
 use itertools::Itertools;
-use multimap::MultiMap;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
 use crate::types::{Diagnostic, TexError};
 
 pub fn detect_undefined_and_unused_labels(
     workspace: &Workspace,
-    results: &mut MultiMap<Url, Diagnostic>,
+    results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) {
     let graphs: Vec<_> = workspace
         .iter()
@@ -45,18 +44,27 @@ pub fn detect_undefined_and_unused_labels(
         for label in &data.semantics.labels {
             if label.kind != LabelKind::Definition && !label_defs.contains(&label.name.text) {
                 let diagnostic = Diagnostic::Tex(label.name.range, TexError::UndefinedLabel);
-                results.insert(document.uri.clone(), diagnostic);
+                results
+                    .entry(document.uri.clone())
+                    .or_default()
+                    .push(diagnostic);
             }
 
             if label.kind == LabelKind::Definition && !label_refs.contains(&label.name.text) {
                 let diagnostic = Diagnostic::Tex(label.name.range, TexError::UnusedLabel);
-                results.insert(document.uri.clone(), diagnostic);
+                results
+                    .entry(document.uri.clone())
+                    .or_default()
+                    .push(diagnostic);
             }
         }
     }
 }
 
-pub fn detect_duplicate_labels(workspace: &Workspace, results: &mut MultiMap<Url, Diagnostic>) {
+pub fn detect_duplicate_labels(
+    workspace: &Workspace,
+    results: &mut FxHashMap<Url, Vec<Diagnostic>>,
+) {
     for conflict in queries::Conflict::find_all::<Label>(workspace) {
         let others = conflict
             .rest
@@ -65,6 +73,9 @@ pub fn detect_duplicate_labels(workspace: &Workspace, results: &mut MultiMap<Url
             .collect();
 
         let diagnostic = Diagnostic::Tex(conflict.main.range, TexError::DuplicateLabel(others));
-        results.insert(conflict.main.document.uri.clone(), diagnostic);
+        results
+            .entry(conflict.main.document.uri.clone())
+            .or_default()
+            .push(diagnostic);
     }
 }

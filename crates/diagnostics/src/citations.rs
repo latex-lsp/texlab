@@ -3,8 +3,7 @@ use base_db::{
     util::queries::{self, Object},
     Document, Project, Workspace,
 };
-use multimap::MultiMap;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
 use crate::types::{BibError, Diagnostic, TexError};
@@ -14,7 +13,7 @@ const MAX_UNUSED_ENTRIES: usize = 1000;
 pub fn detect_undefined_citations<'a>(
     project: &Project<'a>,
     document: &'a Document,
-    results: &mut MultiMap<Url, Diagnostic>,
+    results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) -> Option<()> {
     let data = document.data.as_tex()?;
 
@@ -26,7 +25,10 @@ pub fn detect_undefined_citations<'a>(
         let name = citation.name_text();
         if name != "*" && !entries.contains(name) {
             let diagnostic = Diagnostic::Tex(citation.name.range, TexError::UndefinedCitation);
-            results.insert(document.uri.clone(), diagnostic);
+            results
+                .entry(document.uri.clone())
+                .or_default()
+                .push(diagnostic);
         }
     }
 
@@ -36,7 +38,7 @@ pub fn detect_undefined_citations<'a>(
 pub fn detect_unused_entries<'a>(
     project: &Project<'a>,
     document: &'a Document,
-    results: &mut MultiMap<Url, Diagnostic>,
+    results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) -> Option<()> {
     let data = document.data.as_bib()?;
 
@@ -52,7 +54,10 @@ pub fn detect_unused_entries<'a>(
     for entry in &data.semantics.entries {
         if !citations.contains(entry.name.text.as_str()) {
             let diagnostic = Diagnostic::Bib(entry.name.range, BibError::UnusedEntry);
-            results.insert(document.uri.clone(), diagnostic);
+            results
+                .entry(document.uri.clone())
+                .or_default()
+                .push(diagnostic);
         }
     }
 
@@ -61,7 +66,7 @@ pub fn detect_unused_entries<'a>(
 
 pub fn detect_duplicate_entries<'a>(
     workspace: &'a Workspace,
-    results: &mut MultiMap<Url, Diagnostic>,
+    results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) {
     for conflict in queries::Conflict::find_all::<Entry>(workspace) {
         let others = conflict
@@ -71,6 +76,9 @@ pub fn detect_duplicate_entries<'a>(
             .collect();
 
         let diagnostic = Diagnostic::Bib(conflict.main.range, BibError::DuplicateEntry(others));
-        results.insert(conflict.main.document.uri.clone(), diagnostic);
+        results
+            .entry(conflict.main.document.uri.clone())
+            .or_default()
+            .push(diagnostic);
     }
 }
