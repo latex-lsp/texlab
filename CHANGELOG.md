@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix clearing stale diagnostics reported by the server ([#1042](https://github.com/latex-lsp/texlab/issues/1042))
+- Speed up reading bibliographies with many string definitions ([#1039](https://github.com/latex-lsp/texlab/pull/1039))
 
 ## [5.13.0] - 2024-03-10
 
