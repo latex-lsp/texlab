@@ -171,7 +171,8 @@ pub fn complete<'a>(params: &'a CompletionParams<'a>) -> CompletionResult<'a> {
     providers::complete_citations(params, &mut builder);
     providers::complete_acronyms(params, &mut builder);
     providers::complete_glossaries(params, &mut builder);
-    providers::complete_labels(params, &mut builder);
+    providers::complete_label_references(params, &mut builder);
+    providers::complete_label_definitions(params, &mut builder);
     providers::complete_colors(params, &mut builder);
     providers::complete_color_models(params, &mut builder);
     providers::complete_includes(params, &mut builder);

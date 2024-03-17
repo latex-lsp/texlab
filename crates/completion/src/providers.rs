@@ -9,7 +9,8 @@ mod field;
 mod glossary;
 mod import;
 mod include;
-mod label;
+mod label_def;
+mod label_ref;
 mod tikz_library;
 
 pub use argument::complete_arguments;
@@ -23,5 +24,6 @@ pub use field::complete_fields;
 pub use glossary::{complete_acronyms, complete_glossaries};
 pub use import::complete_imports;
 pub use include::complete_includes;
-pub use label::complete_labels;
+pub use label_def::complete_label_definitions;
+pub use label_ref::complete_label_references;
 pub use tikz_library::complete_tikz_libraries;

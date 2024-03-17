@@ -1613,6 +1613,31 @@ Lorem ipsum dolor sit amet.
 }
 
 #[test]
+fn label_undefined() {
+    check(
+        r#"
+%! foo.tex
+\label{f}
+        |
+       ^
+\ref{foo}"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
 fn theorem_begin() {
     check(
         r#"
