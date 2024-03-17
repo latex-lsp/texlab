@@ -11,7 +11,7 @@ use crate::{
     CompletionItem, CompletionItemData, CompletionParams,
 };
 
-pub fn complete_labels<'a>(
+pub fn complete_label_references<'a>(
     params: &'a CompletionParams<'a>,
     builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
