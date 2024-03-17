@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use base_db::{semantics::Span, util::FloatKind, Config, Project};
+use base_db::{deps::Project, semantics::Span, util::FloatKind, Config};
 use rowan::ast::AstNode;
 use syntax::latex::{self, HasBrack, HasCurly, LatexLanguage};
 use titlecase::titlecase;

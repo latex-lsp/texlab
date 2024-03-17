@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use base_db::{DocumentData, FeatureParams};
+use base_db::{
+    deps::{self, ProjectRoot},
+    DocumentData, FeatureParams,
+};
 use rowan::{ast::AstNode, TextLen, TextRange};
 use syntax::latex;
 
@@ -112,13 +115,13 @@ fn current_dir(
     graphics_path: Option<&str>,
 ) -> Option<PathBuf> {
     let workspace = &params.workspace;
-    let parent = workspace
-        .parents(params.document)
+    let parent = deps::parents(&workspace, params.document)
         .iter()
         .next()
         .map_or(params.document, Clone::clone);
 
-    let path = workspace.current_dir(&parent.dir).to_file_path().ok()?;
+    let root = ProjectRoot::walk_and_find(workspace, &parent.dir);
+    let path = root.src_dir.to_file_path().ok()?;
 
     let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
 

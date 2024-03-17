@@ -13,11 +13,6 @@ pub fn detect_undefined_and_unused_labels(
     workspace: &Workspace,
     results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) {
-    let graphs: Vec<_> = workspace
-        .iter()
-        .map(|start| base_db::graph::Graph::new(workspace, start))
-        .collect();
-
     for document in workspace.iter() {
         let DocumentData::Tex(data) = &document.data else {
             continue;
@@ -25,10 +20,11 @@ pub fn detect_undefined_and_unused_labels(
 
         let mut label_refs = FxHashSet::default();
         let mut label_defs = FxHashSet::default();
-        let project = graphs
-            .iter()
-            .filter(|graph| graph.preorder().contains(&document))
-            .flat_map(|graph| graph.preorder());
+        let project = workspace
+            .graphs()
+            .values()
+            .filter(|graph| graph.preorder(workspace).contains(&document))
+            .flat_map(|graph| graph.preorder(workspace));
 
         for label in project
             .filter_map(|child| child.data.as_tex())

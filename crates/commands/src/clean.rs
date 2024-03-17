@@ -1,7 +1,7 @@
 use std::process::Stdio;
 
 use anyhow::Result;
-use base_db::{Document, Workspace};
+use base_db::{deps::ProjectRoot, Document, Workspace};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum CleanTarget {
@@ -21,7 +21,7 @@ impl CleanCommand {
             anyhow::bail!("document '{}' is not a local file", document.uri)
         };
 
-        let base_dir = workspace.current_dir(&document.dir);
+        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
 
         let flag = match target {
             CleanTarget::Auxiliary => "-c",
@@ -29,8 +29,8 @@ impl CleanCommand {
         };
 
         let out_dir = match target {
-            CleanTarget::Auxiliary => workspace.aux_dir(&base_dir),
-            CleanTarget::Artifacts => workspace.pdf_dir(&base_dir),
+            CleanTarget::Auxiliary => root.aux_dir,
+            CleanTarget::Artifacts => root.pdf_dir,
         };
 
         let out_dir_path = out_dir.to_file_path().unwrap();

@@ -1,4 +1,4 @@
-use base_db::{Document, Workspace};
+use base_db::{deps, Document, Workspace};
 use line_index::LineCol;
 use multimap::MultiMap;
 use rowan::{TextLen, TextRange, TextSize};
@@ -17,7 +17,7 @@ pub fn update(
 
     let data = log_document.data.as_log()?;
 
-    let parents = workspace.parents(log_document);
+    let parents = deps::parents(workspace, log_document);
     let root_document = parents.iter().next()?;
 
     let base_path = root_document

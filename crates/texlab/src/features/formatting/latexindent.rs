@@ -3,7 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use base_db::{Document, LatexIndentConfig, Workspace};
+use base_db::{deps::ProjectRoot, Document, LatexIndentConfig, Workspace};
 use distro::Language;
 use rowan::TextLen;
 use tempfile::tempdir;
@@ -16,7 +16,8 @@ pub fn format_with_latexindent(
 ) -> Option<Vec<lsp_types::TextEdit>> {
     let config = workspace.config();
     let target_dir = tempdir().ok()?;
-    let source_dir = workspace.current_dir(&document.dir).to_file_path().ok()?;
+    let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+    let source_dir = root.src_dir.to_file_path().ok()?;
 
     let target_file = target_dir
         .path()

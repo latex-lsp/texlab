@@ -1,7 +1,8 @@
 use base_db::{
+    deps::Project,
     semantics::{bib::Entry, tex::Citation},
     util::queries::{self, Object},
-    Document, Project, Workspace,
+    Document, Workspace,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
