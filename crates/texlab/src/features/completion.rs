@@ -88,6 +88,9 @@ impl<'a> ItemBuilder<'a> {
             CompletionItemData::Command(data) => {
                 self.convert_command(&mut result, range, data);
             }
+            CompletionItemData::CommandLikeDelimiter(left, right) => {
+                self.convert_command_like_delimiter(&mut result, range, left, right);
+            }
             CompletionItemData::BeginEnvironment => {
                 self.convert_begin_environment(&mut result, range);
             }
@@ -171,6 +174,27 @@ impl<'a> ItemBuilder<'a> {
             .and_then(|base64| self.inline_image(data.name, base64));
 
         result.text_edit = Some(lsp_types::TextEdit::new(range, data.name.into()).into());
+    }
+
+    fn convert_command_like_delimiter(
+        &self,
+        result: &mut lsp_types::CompletionItem,
+        range: lsp_types::Range,
+        left: &str,
+        right: &str,
+    ) {
+        if self.client_flags.completion_snippets {
+            result.kind = Some(Structure::Snippet.completion_kind());
+            let snippet = format!("{left}$0\\{right}");
+            result.text_edit = Some(lsp_types::TextEdit::new(range, snippet).into());
+            result.insert_text_format = Some(lsp_types::InsertTextFormat::SNIPPET);
+        } else {
+            result.kind = Some(Structure::Command.completion_kind());
+            result.text_edit = Some(lsp_types::TextEdit::new(range, left.into()).into());
+        }
+
+        result.label = left.into();
+        result.detail = Some(format_package_files(&[]));
     }
 
     fn convert_begin_environment(

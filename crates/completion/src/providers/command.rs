@@ -7,6 +7,8 @@ use crate::{
     CommandData, CompletionItem, CompletionItemData, CompletionParams,
 };
 
+static DELIMITERS: &[(&str, &str)] = &[("(", ")"), ("[", "]"), ("{", "\\}")];
+
 pub fn complete_commands<'a>(
     params: &'a CompletionParams<'a>,
     builder: &mut CompletionBuilder<'a>,
@@ -20,6 +22,7 @@ pub fn complete_commands<'a>(
     });
 
     proc.add_begin_snippet();
+    proc.add_delimiters();
     proc.add_library();
     proc.add_user();
     Some(())
@@ -37,6 +40,20 @@ impl<'a, 'b> Processor<'a, 'b> {
             .push(CompletionItem::new_simple(score, self.0.cursor.range, data));
 
         Some(())
+    }
+
+    pub fn add_delimiters(&mut self) {
+        for (left, right) in DELIMITERS {
+            let Some(score) = self.0.builder.matcher.score(&left, &self.0.cursor.text) else {
+                continue;
+            };
+
+            let data = CompletionItemData::CommandLikeDelimiter(left, right);
+            self.0
+                .builder
+                .items
+                .push(CompletionItem::new_simple(score, self.0.cursor.range, data));
+        }
     }
 
     pub fn add_library(&mut self) -> Option<()> {

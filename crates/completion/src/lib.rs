@@ -45,6 +45,7 @@ impl<'a> CompletionItem<'a> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum CompletionItemData<'a> {
     Command(CommandData<'a>),
+    CommandLikeDelimiter(&'a str, &'a str),
     BeginEnvironment,
     Citation(CitationData<'a>),
     Environment(EnvironmentData<'a>),
@@ -66,6 +67,7 @@ impl<'a> CompletionItemData<'a> {
     pub fn label<'b: 'a>(&'b self) -> &'a str {
         match self {
             Self::Command(data) => data.name,
+            Self::CommandLikeDelimiter(left, _) => left,
             Self::BeginEnvironment => "begin",
             Self::Citation(data) => &data.entry.name.text,
             Self::Environment(data) => data.name,
@@ -81,6 +83,30 @@ impl<'a> CompletionItemData<'a> {
             Self::EntryType(data) => data.0.name,
             Self::Field(data) => data.0.name,
             Self::TikzLibrary(name) => name,
+        }
+    }
+
+    /// Returns a number that can be used to sort the completion items further before resorting to the label.
+    /// This is useful for making snippets more visible.
+    pub fn sort_index(&self) -> u8 {
+        match self {
+            Self::Command(_) => 1,
+            Self::CommandLikeDelimiter(_, _) => 0,
+            Self::BeginEnvironment => 1,
+            Self::Citation(_) => 1,
+            Self::Environment(_) => 1,
+            Self::GlossaryEntry(_) => 1,
+            Self::Label(_) => 1,
+            Self::Color(_) => 1,
+            Self::ColorModel(_) => 1,
+            Self::File(_) => 1,
+            Self::Directory(_) => 1,
+            Self::Argument(_) => 1,
+            Self::Package(_) => 1,
+            Self::DocumentClass(_) => 1,
+            Self::EntryType(_) => 1,
+            Self::Field(_) => 1,
+            Self::TikzLibrary(_) => 1,
         }
     }
 }
