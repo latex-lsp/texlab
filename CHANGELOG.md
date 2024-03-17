@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Improve support for handling `Tectonic.toml` projects ([#1014](https://github.com/latex-lsp/texlab/issues/1014))
+- Cache results of project detection to improve performance
+
 ### Fixed
 
 - Don't return document symbol with empty name if `\item[]` is encountered ([#1040](https://github.com/latex-lsp/texlab/issues/1040))
