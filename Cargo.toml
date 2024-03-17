@@ -9,7 +9,7 @@ authors = [
     "Patrick Förster <patrick.foerster@outlook.de>",
 ]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.74"
 
 [profile.release]
 lto = "thin"
