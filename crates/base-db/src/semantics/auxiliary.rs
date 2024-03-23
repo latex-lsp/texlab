@@ -1,6 +1,6 @@
 use rowan::ast::AstNode;
 use rustc_hash::FxHashMap;
-use syntax::latex;
+use syntax::latex::{self, HasCurly};
 
 #[derive(Debug, Clone, Default)]
 pub struct Semantics {
@@ -20,20 +20,24 @@ impl Semantics {
         }
     }
 
-    fn process_label_number(&mut self, label_number: &latex::LabelNumber) {
-        let Some(name) = label_number
+    fn process_label_number(&mut self, label_number: &latex::LabelNumber) -> Option<()> {
+        let name = label_number
             .name()
             .and_then(|group| group.key())
-            .map(|key| key.to_string()) else { return };
+            .map(|key| key.to_string())?;
 
-        let Some(text) = label_number
-            .text()
-            .map(|node| node.syntax().descendants())
-            .into_iter()
-            .flatten()
-            .find(|node| node.kind() == latex::TEXT || node.kind() == latex::MIXED_GROUP)
-            .map(|node| node.text().to_string()) else { return };
+        let group = label_number.text()?;
+        let group = group
+            .syntax()
+            .children()
+            .filter_map(latex::CurlyGroup::cast)
+            .find_map(|group| {
+                latex::Text::cast(group.syntax().first_child()?)?;
+                Some(group)
+            })?;
 
+        let text = group.content_text()?.replace('{', "").replace('}', "");
         self.label_numbers.insert(name, text);
+        Some(())
     }
 }

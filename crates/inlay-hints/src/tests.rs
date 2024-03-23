@@ -94,7 +94,7 @@ fn test_label_definition() {
                     RenderedLabel {
                         range: 152..226,
                         number: Some(
-                            "fig:qux",
+                            "1",
                         ),
                         object: Float {
                             kind: Figure,
