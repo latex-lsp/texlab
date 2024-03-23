@@ -13,7 +13,7 @@ itertools = "0.12.0"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-unicode-normalization = "0.1.22"
+unicode-normalization = "0.1.23"
 
 [lib]
 doctest = false
