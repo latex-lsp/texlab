@@ -318,3 +318,37 @@ fn test_latex_label_theorem_child_file_mumber() {
         "#]],
     );
 }
+
+#[test]
+fn test_latex_label_ntheorem() {
+    check(
+        r#"
+%! main.tex
+\newtheorem{theorem}[theoremcounter]{Theorem}
+\begin{theorem}%
+\label{thm:test}
+\end{theorem}
+\ref{thm:test}
+        |
+     ^^^^^^^^
+
+%! main.aux
+\newlabel{thm:test}{{1.{1}}{1}}"#,
+        expect![[r#"
+            Some(
+                Label(
+                    RenderedLabel {
+                        range: 46..93,
+                        number: Some(
+                            "1.1",
+                        ),
+                        object: Theorem {
+                            kind: "Theorem",
+                            description: None,
+                        },
+                    },
+                ),
+            )
+        "#]],
+    );
+}

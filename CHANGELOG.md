@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Don't return document symbol with empty name if `\item[]` is encountered ([#1040](https://github.com/latex-lsp/texlab/issues/1040))
+- Fix extracting label numbers inside theorems defined by `ntheorem` package ([#1053](https://github.com/latex-lsp/texlab/issues/1053))
 
 ## [5.13.1] - 2024-03-16
 
