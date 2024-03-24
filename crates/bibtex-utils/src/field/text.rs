@@ -1,8 +1,8 @@
 use rowan::{ast::AstNode, NodeOrToken};
 
 use syntax::bibtex::{
-    Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasWord, Join,
-    Literal, QuoteGroup, SyntaxKind::*, SyntaxToken, Value,
+    Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasWord, Join, Literal,
+    QuoteGroup, SyntaxKind::*, SyntaxToken, Value,
 };
 
 use super::FieldParseCache;

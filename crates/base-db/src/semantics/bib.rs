@@ -1,8 +1,8 @@
 use bibtex_utils::field::text::TextFieldData;
 use itertools::Itertools;
 use rowan::{ast::AstNode, TextRange};
-use syntax::bibtex::{self, HasName, HasType, HasValue};
 use rustc_hash::FxHashMap;
+use syntax::bibtex::{self, HasName, HasType, HasValue};
 
 use crate::data::{BibtexEntryType, BibtexEntryTypeCategory};
 
@@ -33,9 +33,9 @@ impl Semantics {
             let category = BibtexEntryType::find(type_token.text())
                 .map_or(BibtexEntryTypeCategory::Misc, |ty| ty.category);
 
-            let field_values = entry
-                .fields()
-                .filter_map(|field| Some(TextFieldData::parse(&field.value()?, &self.expanded_defs)?.text));
+            let field_values = entry.fields().filter_map(|field| {
+                Some(TextFieldData::parse(&field.value()?, &self.expanded_defs)?.text)
+            });
 
             let keywords = [name.text().into(), type_token.text().into()]
                 .into_iter()

@@ -1,8 +1,8 @@
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexEntryType<'a> {
-   pub name: &'a str,
-   pub category: BibtexEntryTypeCategory,
-   pub documentation: Option<&'a str>,
+    pub name: &'a str,
+    pub category: BibtexEntryTypeCategory,
+    pub documentation: Option<&'a str>,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -18,22 +18,27 @@ pub enum BibtexEntryTypeCategory {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct BibtexFieldType<'a> {
-   pub name: &'a str,
-   pub documentation: &'a str,
+    pub name: &'a str,
+    pub documentation: &'a str,
 }
 
 impl<'a> BibtexEntryType<'a> {
     pub fn find(name: &str) -> Option<Self> {
-        BIBTEX_ENTRY_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name)).copied()
+        BIBTEX_ENTRY_TYPES
+            .iter()
+            .find(|ty| ty.name.eq_ignore_ascii_case(name))
+            .copied()
     }
 }
 
 impl<'a> BibtexFieldType<'a> {
     pub fn find(name: &str) -> Option<Self> {
-        BIBTEX_FIELD_TYPES.iter().find(|ty| ty.name.eq_ignore_ascii_case(name)).copied()
+        BIBTEX_FIELD_TYPES
+            .iter()
+            .find(|ty| ty.name.eq_ignore_ascii_case(name))
+            .copied()
     }
 }
-
 
 pub static BIBTEX_ENTRY_TYPES: &[BibtexEntryType<'static>] = &[
     BibtexEntryType {
@@ -887,5 +892,5 @@ pub static BIBTEX_FIELD_TYPES: &[BibtexFieldType<'static>] = &[
     BibtexFieldType {
         name: "school",
         documentation: "An alias for `institution`, provided for BibTeX compatibility. The `institution` field is used by traditional BibTeX for technical reports whereas the `school` field holds the institution associated with theses. The `biblatex` package employs the generic field name `institution` in both cases.",
-    }    
+    }
 ];

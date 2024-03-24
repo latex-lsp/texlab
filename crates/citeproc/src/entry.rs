@@ -1,3 +1,4 @@
+use base_db::semantics::bib::Semantics;
 use bibtex_utils::field::{
     author::{AuthorField, AuthorFieldData},
     date::{DateField, DateFieldData},
@@ -5,7 +6,6 @@ use bibtex_utils::field::{
     text::{TextField, TextFieldData},
     FieldParseCache,
 };
-use base_db::semantics::bib::Semantics;
 use rustc_hash::FxHashMap;
 use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};
 
@@ -133,28 +133,48 @@ impl EntryData {
             .or_else(|| self.parse_text_field(name, &value, expanded_defs))
     }
 
-    fn parse_author_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
+    fn parse_author_field(
+        &mut self,
+        name: &str,
+        value: &Value,
+        expanded_defs: &FieldParseCache,
+    ) -> Option<()> {
         let name = AuthorField::parse(name)?;
         let data = AuthorFieldData::parse(value, expanded_defs)?;
         self.author.insert(name, data);
         Some(())
     }
 
-    fn parse_date_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
+    fn parse_date_field(
+        &mut self,
+        name: &str,
+        value: &Value,
+        expanded_defs: &FieldParseCache,
+    ) -> Option<()> {
         let name = DateField::parse(name)?;
         let data = DateFieldData::parse(value, expanded_defs)?;
         self.date.insert(name, data);
         Some(())
     }
 
-    fn parse_number_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
+    fn parse_number_field(
+        &mut self,
+        name: &str,
+        value: &Value,
+        expanded_defs: &FieldParseCache,
+    ) -> Option<()> {
         let name = NumberField::parse(name)?;
         let data = NumberFieldData::parse(value, expanded_defs)?;
         self.number.insert(name, data);
         Some(())
     }
 
-    fn parse_text_field(&mut self, name: &str, value: &Value, expanded_defs: &FieldParseCache) -> Option<()> {
+    fn parse_text_field(
+        &mut self,
+        name: &str,
+        value: &Value,
+        expanded_defs: &FieldParseCache,
+    ) -> Option<()> {
         let name = TextField::parse(name).unwrap_or(TextField::Unknown);
         let data = TextFieldData::parse(value, expanded_defs)?;
         self.text.insert(name, data);
