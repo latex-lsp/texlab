@@ -34,8 +34,6 @@ crossbeam-channel = "0.5.12"
 definition = { path = "../definition" }
 diagnostics = { path = "../diagnostics" }
 distro = { path = "../distro" }
-encoding_rs = "0.8.33"
-encoding_rs_io = "0.1.7"
 fern = "0.6.2"
 folding = { path = "../folding" }
 highlights = { path = "../highlights" }
@@ -48,7 +46,6 @@ lsp-server = "0.7.6"
 lsp-types = "0.95.0"
 notify = "6.1.1"
 notify-debouncer-full = "0.3.1"
-once_cell = "1.19.0"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
 references = { path = "../references" }

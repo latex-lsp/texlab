@@ -7,9 +7,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-anyhow = "1.0.75"
 base-db = { path = "../base-db" }
-dirs = "5.0.1"
 encoding_rs = "0.8.33"
 encoding_rs_io = "0.1.7"
 itertools = "0.12.0"
@@ -17,7 +15,6 @@ line-index = { path = "../line-index" }
 log = "0.4.21"
 multimap = "0.10.0"
 once_cell = "1.19.0"
-parking_lot = "0.12.1"
 regex = "1.10.2"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"

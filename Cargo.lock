@@ -435,9 +435,7 @@ dependencies = [
 name = "diagnostics"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "base-db",
- "dirs",
  "encoding_rs",
  "encoding_rs_io",
  "expect-test",
@@ -446,7 +444,6 @@ dependencies = [
  "log",
  "multimap",
  "once_cell",
- "parking_lot",
  "regex",
  "rowan",
  "rustc-hash",
@@ -1501,8 +1498,6 @@ dependencies = [
  "definition",
  "diagnostics",
  "distro",
- "encoding_rs",
- "encoding_rs_io",
  "fern",
  "folding",
  "highlights",
@@ -1515,7 +1510,6 @@ dependencies = [
  "lsp-types",
  "notify",
  "notify-debouncer-full",
- "once_cell",
  "parking_lot",
  "parser",
  "references",
