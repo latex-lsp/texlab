@@ -1,4 +1,5 @@
 use rowan::ast::AstNode;
+use rowan::Direction;
 use rustc_hash::FxHashMap;
 use syntax::latex;
 
@@ -26,13 +27,27 @@ impl Semantics {
             .and_then(|group| group.key())
             .map(|key| key.to_string()) else { return };
 
-        let Some(text) = label_number
+        let Some(text_first_node) = label_number
             .text()
             .map(|node| node.syntax().descendants())
             .into_iter()
             .flatten()
             .find(|node| node.kind() == latex::TEXT || node.kind() == latex::MIXED_GROUP)
-            .map(|node| node.text().to_string()) else { return };
+        else
+        {
+            return
+        };
+
+        let text = text_first_node
+            .siblings(Direction::Next)
+            .into_iter()
+            .map(|node| node.descendants())
+            .into_iter()
+            .flatten()
+            .filter(|node| node.kind() == latex::TEXT)
+            .map(|node| node.text().to_string())
+            .collect::<Vec<_>>()
+            .join("");
 
         self.label_numbers.insert(name, text);
     }
