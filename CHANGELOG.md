@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve support for handling `Tectonic.toml` projects ([#1014](https://github.com/latex-lsp/texlab/issues/1014))
 - Cache results of project detection to improve performance
 - Triggering completion inside `\label{...}` will suggest undefined labels ([#1046](https://github.com/latex-lsp/texlab/issues/1046))
+- Add snippets for `\( ... \)`, `\[ ... \]` and `\{ ... \}` ([#1010](https://github.com/latex-lsp/texlab/issues/1010))
 
 ### Fixed
 

@@ -32,6 +32,7 @@ impl<'a> CompletionBuilder<'a> {
             b.preselect
                 .cmp(&a.preselect)
                 .then_with(|| b.score.cmp(&a.score))
+                .then_with(|| a.data.sort_index().cmp(&b.data.sort_index()))
                 .then_with(|| a.data.label().cmp(b.data.label()))
         });
 

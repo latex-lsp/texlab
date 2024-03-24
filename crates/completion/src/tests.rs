@@ -726,8 +726,20 @@ fn component_command_simple() {
 %! main.tex
 \
  |"#,
-        expect![[r##"
+        expect![[r#"
             [
+                CommandLikeDelimiter(
+                    "(",
+                    ")",
+                ),
+                CommandLikeDelimiter(
+                    "[",
+                    "]",
+                ),
+                CommandLikeDelimiter(
+                    "{",
+                    "\\}",
+                ),
                 Command(
                     CommandData {
                         name: "!",
@@ -740,26 +752,8 @@ fn component_command_simple() {
                         package: [],
                     },
                 ),
-                Command(
-                    CommandData {
-                        name: "#",
-                        package: [],
-                    },
-                ),
-                Command(
-                    CommandData {
-                        name: "$",
-                        package: [],
-                    },
-                ),
-                Command(
-                    CommandData {
-                        name: "%",
-                        package: [],
-                    },
-                ),
             ]
-        "##]],
+        "#]],
     );
 }
 
