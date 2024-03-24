@@ -2883,6 +2883,30 @@ fn test_label_definition_simple() {
 }
 
 #[test]
+fn test_label_definition_options() {
+    check(
+        r#"\label[foo]{bar}"#,
+        expect![[r#"
+        ROOT@0..16
+          PREAMBLE@0..16
+            LABEL_DEFINITION@0..16
+              COMMAND_NAME@0..6 "\\label"
+              BRACK_GROUP@6..11
+                L_BRACK@6..7 "["
+                TEXT@7..10
+                  WORD@7..10 "foo"
+                R_BRACK@10..11 "]"
+              CURLY_GROUP_WORD@11..16
+                L_CURLY@11..12 "{"
+                KEY@12..15
+                  WORD@12..15 "bar"
+                R_CURLY@15..16 "}"
+
+    "#]],
+    );
+}
+
+#[test]
 fn test_label_number() {
     check(
         r#"\newlabel{foo}{{1.1}}"#,
