@@ -2910,6 +2910,43 @@ fn test_label_number() {
 }
 
 #[test]
+fn test_label_number_ntheorem() {
+    check(
+        r#"\newlabel{foo}{{1.{1}}{1}}"#,
+        expect![[r#"
+        ROOT@0..26
+          PREAMBLE@0..26
+            LABEL_NUMBER@0..26
+              COMMAND_NAME@0..9 "\\newlabel"
+              CURLY_GROUP_WORD@9..14
+                L_CURLY@9..10 "{"
+                KEY@10..13
+                  WORD@10..13 "foo"
+                R_CURLY@13..14 "}"
+              CURLY_GROUP@14..26
+                L_CURLY@14..15 "{"
+                CURLY_GROUP@15..22
+                  L_CURLY@15..16 "{"
+                  TEXT@16..18
+                    WORD@16..18 "1."
+                  CURLY_GROUP@18..21
+                    L_CURLY@18..19 "{"
+                    TEXT@19..20
+                      WORD@19..20 "1"
+                    R_CURLY@20..21 "}"
+                  R_CURLY@21..22 "}"
+                CURLY_GROUP@22..25
+                  L_CURLY@22..23 "{"
+                  TEXT@23..24
+                    WORD@23..24 "1"
+                  R_CURLY@24..25 "}"
+                R_CURLY@25..26 "}"
+
+    "#]],
+    );
+}
+
+#[test]
 fn test_label_reference_equation() {
     check(
         r#"\eqref{foo}"#,
