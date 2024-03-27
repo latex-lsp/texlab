@@ -2,6 +2,8 @@ use url::Url;
 
 use crate::{DocumentData, Workspace};
 
+use super::graph::HOME_DIR;
+
 #[derive(PartialEq, Eq, Clone, Hash)]
 pub struct ProjectRoot {
     pub compile_dir: Url,
@@ -14,6 +16,10 @@ pub struct ProjectRoot {
 
 impl ProjectRoot {
     pub fn walk_and_find(workspace: &Workspace, dir: &Url) -> Self {
+        let home_dir = HOME_DIR
+            .as_deref()
+            .and_then(|path| Url::from_directory_path(path).ok());
+
         let mut current = dir.clone();
         loop {
             let root = Self::from_rootfile(workspace, &current)
@@ -28,7 +34,7 @@ impl ProjectRoot {
                 break Self::from_config(workspace, &dir);
             };
 
-            if current == parent {
+            if current == parent || Some(&parent) == home_dir.as_ref() {
                 break Self::from_config(workspace, &dir);
             }
 

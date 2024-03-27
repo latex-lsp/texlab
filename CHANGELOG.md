@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix parsing `\label` with options (for example, when using `cleverref`) ([#1056](https://github.com/latex-lsp/texlab/issues/1056))
+- Fix detecting project root if the home directory contains a `.latexmkrc` file ([#1061](https://github.com/latex-lsp/texlab/issues/1061))
 
 ## [5.14.0] - 2024-03-24
 
