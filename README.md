@@ -1,5 +1,4 @@
 [![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
-[![Coverage](https://codecov.io/gh/latex-lsp/texlab/branch/master/graph/badge.svg)](https://codecov.io/gh/latex-lsp/texlab)
 [![Wiki](https://img.shields.io/badge/docs-Wiki-success)](https://github.com/latex-lsp/texlab/wiki)
 
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
