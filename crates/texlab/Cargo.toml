@@ -49,7 +49,7 @@ notify-debouncer-full = "0.3.1"
 parking_lot = "0.12.1"
 parser = { path = "../parser" }
 references = { path = "../references" }
-regex = "1.10.2"
+regex = "1.10.4"
 rename = { path = "../rename" }
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
