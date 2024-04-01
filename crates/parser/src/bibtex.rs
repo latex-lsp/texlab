@@ -325,7 +325,7 @@ enum ValueToken {
     #[token("\"")]
     Quote,
 
-    #[regex(r"\d+", priority = 2)]
+    #[regex(r"\d+", priority = 3)]
     Integer,
 
     #[regex(r#"[^\s"\{\},#]+"#)]
@@ -349,7 +349,7 @@ enum ContentToken {
     #[token("\"")]
     Quote,
 
-    #[regex(r"\d+", priority = 2)]
+    #[regex(r"\d+", priority = 3)]
     Integer,
 
     #[token(r#"~"#)]
