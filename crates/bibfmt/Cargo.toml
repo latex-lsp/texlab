@@ -15,5 +15,5 @@ line-index = { path = "../line-index" }
 doctest = false
 
 [dev-dependencies]
-expect-test = "1.4.1"
+expect-test = "1.5.0"
 parser = { path = "../parser" }
