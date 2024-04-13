@@ -1,6 +1,6 @@
 use url::Url;
 
-use crate::{DocumentData, Workspace};
+use crate::{util, DocumentData, Workspace};
 
 use super::graph::HOME_DIR;
 
@@ -84,13 +84,13 @@ impl ProjectRoot {
         let aux_dir = rcfile
             .aux_dir
             .as_ref()
-            .and_then(|path| append_dir(dir, path).ok())
+            .and_then(|path| append_dir(dir, path, workspace).ok())
             .unwrap_or_else(|| dir.clone());
 
         let out_dir = rcfile
             .out_dir
             .as_ref()
-            .and_then(|path| append_dir(dir, path).ok())
+            .and_then(|path| append_dir(dir, path, workspace).ok())
             .unwrap_or_else(|| dir.clone());
 
         let log_dir = out_dir.clone();
@@ -124,9 +124,12 @@ impl ProjectRoot {
         let compile_dir = dir.clone();
         let src_dir = dir.clone();
         let config = workspace.config();
-        let aux_dir = append_dir(dir, &config.build.aux_dir).unwrap_or_else(|_| dir.clone());
-        let log_dir = append_dir(dir, &config.build.log_dir).unwrap_or_else(|_| dir.clone());
-        let pdf_dir = append_dir(dir, &config.build.pdf_dir).unwrap_or_else(|_| dir.clone());
+        let aux_dir =
+            append_dir(dir, &config.build.aux_dir, workspace).unwrap_or_else(|_| dir.clone());
+        let log_dir =
+            append_dir(dir, &config.build.log_dir, workspace).unwrap_or_else(|_| dir.clone());
+        let pdf_dir =
+            append_dir(dir, &config.build.pdf_dir, workspace).unwrap_or_else(|_| dir.clone());
         let additional_files = vec![];
 
         Self {
@@ -140,13 +143,13 @@ impl ProjectRoot {
     }
 }
 
-fn append_dir(dir: &Url, path: &str) -> Result<Url, url::ParseError> {
+fn append_dir(dir: &Url, path: &str, workspace: &Workspace) -> Result<Url, url::ParseError> {
     let mut path = String::from(path);
     if !path.ends_with('/') {
         path.push('/');
     }
 
-    dir.join(&path)
+    util::expand_relative_path(&path, dir, workspace.folders())
 }
 
 impl std::fmt::Debug for ProjectRoot {

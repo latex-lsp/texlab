@@ -1,11 +1,11 @@
 use std::{
-    fs,
+    fs::{self},
     path::{Path, PathBuf},
 };
 
 use base_db::{
     deps::{self, ProjectRoot},
-    DocumentData, FeatureParams,
+    util, DocumentData, FeatureParams,
 };
 use rowan::{ast::AstNode, TextLen, TextRange};
 use syntax::latex;
@@ -121,10 +121,8 @@ fn current_dir(
         .map_or(params.document, Clone::clone);
 
     let root = ProjectRoot::walk_and_find(workspace, &parent.dir);
-    let path = root.src_dir.to_file_path().ok()?;
 
-    let mut path = PathBuf::from(path.to_str()?.replace('\\', "/"));
-
+    let mut path = PathBuf::new();
     if let Some(graphics_path) = graphics_path {
         path.push(graphics_path);
     }
@@ -136,7 +134,10 @@ fn current_dir(
         }
     }
 
-    Some(path)
+    let current_dir =
+        util::expand_relative_path(path.to_str()?, &root.src_dir, workspace.folders()).ok()?;
+
+    current_dir.to_file_path().ok()
 }
 
 fn is_included(file: &Path, allowed_extensions: &[&str]) -> bool {
