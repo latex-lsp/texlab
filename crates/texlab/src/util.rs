@@ -22,7 +22,7 @@ pub fn normalize_uri(uri: &mut lsp_types::Url) {
 }
 
 fn fix_drive_letter(text: &str) -> Option<String> {
-    if !text.is_ascii() {
+    if !text.is_ascii() || text.len() == 0 {
         return None;
     }
 
