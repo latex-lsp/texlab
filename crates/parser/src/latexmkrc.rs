@@ -37,7 +37,15 @@ fn extract_dirs(lines: Lines) -> Option<(String, String)> {
         .split(",");
 
     let aux_dir = it.next()?.trim().strip_prefix('\'')?.strip_suffix('\'')?;
+
+    it.next(); // Skip the old 'outdir' option.
+
     let out_dir = it.next()?.trim().strip_prefix('\'')?.strip_suffix('\'')?;
+
+    // Ensure there's no more data
+    if it.next().is_some() {
+        return None;
+    }
 
     Some((String::from(aux_dir), String::from(out_dir)))
 }
