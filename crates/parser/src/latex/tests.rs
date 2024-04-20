@@ -560,21 +560,21 @@ fn test_command_definition_no_argc() {
     check(
         r#"\newcommand{\foo}{foo}"#,
         expect![[r#"
-        ROOT@0..22
-          PREAMBLE@0..22
-            COMMAND_DEFINITION@0..22
-              COMMAND_NAME@0..11 "\\newcommand"
-              CURLY_GROUP_COMMAND@11..17
-                L_CURLY@11..12 "{"
-                COMMAND_NAME@12..16 "\\foo"
-                R_CURLY@16..17 "}"
-              CURLY_GROUP@17..22
-                L_CURLY@17..18 "{"
-                TEXT@18..21
-                  WORD@18..21 "foo"
-                R_CURLY@21..22 "}"
+            ROOT@0..22
+              PREAMBLE@0..22
+                NEW_COMMAND_DEFINITION@0..22
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  CURLY_GROUP_COMMAND@11..17
+                    L_CURLY@11..12 "{"
+                    COMMAND_NAME@12..16 "\\foo"
+                    R_CURLY@16..17 "}"
+                  CURLY_GROUP@17..22
+                    L_CURLY@17..18 "{"
+                    TEXT@18..21
+                      WORD@18..21 "foo"
+                    R_CURLY@21..22 "}"
 
-    "#]],
+        "#]],
     );
 }
 
@@ -583,16 +583,16 @@ fn test_command_definition_no_impl() {
     check(
         r#"\newcommand{\foo}"#,
         expect![[r#"
-        ROOT@0..17
-          PREAMBLE@0..17
-            COMMAND_DEFINITION@0..17
-              COMMAND_NAME@0..11 "\\newcommand"
-              CURLY_GROUP_COMMAND@11..17
-                L_CURLY@11..12 "{"
-                COMMAND_NAME@12..16 "\\foo"
-                R_CURLY@16..17 "}"
+            ROOT@0..17
+              PREAMBLE@0..17
+                NEW_COMMAND_DEFINITION@0..17
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  CURLY_GROUP_COMMAND@11..17
+                    L_CURLY@11..12 "{"
+                    COMMAND_NAME@12..16 "\\foo"
+                    R_CURLY@16..17 "}"
 
-    "#]],
+        "#]],
     );
 }
 
@@ -601,15 +601,15 @@ fn test_command_definition_no_impl_error() {
     check(
         r#"\newcommand{\foo"#,
         expect![[r#"
-        ROOT@0..16
-          PREAMBLE@0..16
-            COMMAND_DEFINITION@0..16
-              COMMAND_NAME@0..11 "\\newcommand"
-              CURLY_GROUP_COMMAND@11..16
-                L_CURLY@11..12 "{"
-                COMMAND_NAME@12..16 "\\foo"
+            ROOT@0..16
+              PREAMBLE@0..16
+                NEW_COMMAND_DEFINITION@0..16
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  CURLY_GROUP_COMMAND@11..16
+                    L_CURLY@11..12 "{"
+                    COMMAND_NAME@12..16 "\\foo"
 
-    "#]],
+        "#]],
     );
 }
 
@@ -618,31 +618,31 @@ fn test_command_definition_optional() {
     check(
         r#"\newcommand{\foo}[1][def]{#1}"#,
         expect![[r##"
-        ROOT@0..29
-          PREAMBLE@0..29
-            COMMAND_DEFINITION@0..29
-              COMMAND_NAME@0..11 "\\newcommand"
-              CURLY_GROUP_COMMAND@11..17
-                L_CURLY@11..12 "{"
-                COMMAND_NAME@12..16 "\\foo"
-                R_CURLY@16..17 "}"
-              BRACK_GROUP_WORD@17..20
-                L_BRACK@17..18 "["
-                KEY@18..19
-                  WORD@18..19 "1"
-                R_BRACK@19..20 "]"
-              BRACK_GROUP@20..25
-                L_BRACK@20..21 "["
-                TEXT@21..24
-                  WORD@21..24 "def"
-                R_BRACK@24..25 "]"
-              CURLY_GROUP@25..29
-                L_CURLY@25..26 "{"
-                TEXT@26..28
-                  WORD@26..28 "#1"
-                R_CURLY@28..29 "}"
+            ROOT@0..29
+              PREAMBLE@0..29
+                NEW_COMMAND_DEFINITION@0..29
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  CURLY_GROUP_COMMAND@11..17
+                    L_CURLY@11..12 "{"
+                    COMMAND_NAME@12..16 "\\foo"
+                    R_CURLY@16..17 "}"
+                  BRACK_GROUP_WORD@17..20
+                    L_BRACK@17..18 "["
+                    KEY@18..19
+                      WORD@18..19 "1"
+                    R_BRACK@19..20 "]"
+                  BRACK_GROUP@20..25
+                    L_BRACK@20..21 "["
+                    TEXT@21..24
+                      WORD@21..24 "def"
+                    R_BRACK@24..25 "]"
+                  CURLY_GROUP@25..29
+                    L_CURLY@25..26 "{"
+                    TEXT@26..28
+                      WORD@26..28 "#1"
+                    R_CURLY@28..29 "}"
 
-    "##]],
+        "##]],
     );
 }
 
@@ -651,27 +651,27 @@ fn test_command_definition_simple() {
     check(
         r#"\newcommand[1]{\id}{#1}"#,
         expect![[r##"
-        ROOT@0..23
-          PREAMBLE@0..23
-            COMMAND_DEFINITION@0..19
-              COMMAND_NAME@0..11 "\\newcommand"
-              BRACK_GROUP_WORD@11..14
-                L_BRACK@11..12 "["
-                KEY@12..13
-                  WORD@12..13 "1"
-                R_BRACK@13..14 "]"
-              CURLY_GROUP@14..19
-                L_CURLY@14..15 "{"
-                GENERIC_COMMAND@15..18
-                  COMMAND_NAME@15..18 "\\id"
-                R_CURLY@18..19 "}"
-            CURLY_GROUP@19..23
-              L_CURLY@19..20 "{"
-              TEXT@20..22
-                WORD@20..22 "#1"
-              R_CURLY@22..23 "}"
+            ROOT@0..23
+              PREAMBLE@0..23
+                NEW_COMMAND_DEFINITION@0..19
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  BRACK_GROUP_WORD@11..14
+                    L_BRACK@11..12 "["
+                    KEY@12..13
+                      WORD@12..13 "1"
+                    R_BRACK@13..14 "]"
+                  CURLY_GROUP@14..19
+                    L_CURLY@14..15 "{"
+                    GENERIC_COMMAND@15..18
+                      COMMAND_NAME@15..18 "\\id"
+                    R_CURLY@18..19 "}"
+                CURLY_GROUP@19..23
+                  L_CURLY@19..20 "{"
+                  TEXT@20..22
+                    WORD@20..22 "#1"
+                  R_CURLY@22..23 "}"
 
-    "##]],
+        "##]],
     );
 }
 
@@ -682,7 +682,7 @@ fn test_command_definition_with_begin() {
         expect![[r#"
             ROOT@0..80
               PREAMBLE@0..80
-                COMMAND_DEFINITION@0..80
+                NEW_COMMAND_DEFINITION@0..80
                   COMMAND_NAME@0..11 "\\newcommand"
                   CURLY_GROUP_COMMAND@11..35
                     L_CURLY@11..12 "{"
@@ -2681,7 +2681,7 @@ fn test_issue_857() {
         expect![[r#"
             ROOT@0..55
               PREAMBLE@0..55
-                COMMAND_DEFINITION@0..11
+                NEW_COMMAND_DEFINITION@0..11
                   COMMAND_NAME@0..11 "\\newcommand"
                 GENERIC_COMMAND@11..17
                   COMMAND_NAME@11..14 "\\ö"
@@ -2689,7 +2689,7 @@ fn test_issue_857() {
                     L_CURLY@14..15 "{"
                     R_CURLY@15..16 "}"
                     LINE_BREAK@16..17 "\n"
-                COMMAND_DEFINITION@17..38
+                NEW_COMMAND_DEFINITION@17..38
                   COMMAND_NAME@17..28 "\\newcommand"
                   CURLY_GROUP_COMMAND@28..35
                     L_CURLY@28..29 "{"
@@ -2699,7 +2699,7 @@ fn test_issue_857() {
                     L_CURLY@35..36 "{"
                     R_CURLY@36..37 "}"
                     LINE_BREAK@37..38 "\n"
-                COMMAND_DEFINITION@38..49
+                NEW_COMMAND_DEFINITION@38..49
                   COMMAND_NAME@38..49 "\\newcommand"
                 GENERIC_COMMAND@49..55
                   COMMAND_NAME@49..53 "\\123"
