@@ -90,7 +90,7 @@ dependencies = [
  "bibtex-utils",
  "dirs",
  "distro",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "line-index",
  "log",
  "notify",
@@ -129,7 +129,7 @@ dependencies = [
  "chrono",
  "expect-test",
  "human_name",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "parser",
  "rowan",
  "rustc-hash",
@@ -222,7 +222,7 @@ dependencies = [
  "bibtex-utils",
  "expect-test",
  "isocountry",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "parser",
  "rowan",
  "rustc-hash",
@@ -288,7 +288,7 @@ dependencies = [
  "crossbeam-channel",
  "distro",
  "expect-test",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "libc",
  "log",
  "rowan",
@@ -323,7 +323,7 @@ name = "completion-data"
 version = "0.0.0"
 dependencies = [
  "flate2",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "once_cell",
  "rustc-hash",
  "serde",
@@ -425,7 +425,7 @@ name = "definition"
 version = "0.0.0"
 dependencies = [
  "base-db",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "rowan",
  "rustc-hash",
  "syntax",
@@ -440,7 +440,7 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "expect-test",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "line-index",
  "log",
  "multimap",
@@ -773,9 +773,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -1428,7 +1428,7 @@ dependencies = [
  "base-db",
  "distro",
  "expect-test",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "line-index",
  "regex",
  "rowan",
@@ -1453,7 +1453,7 @@ dependencies = [
 name = "syntax"
 version = "0.0.0"
 dependencies = [
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "rowan",
 ]
 
