@@ -581,9 +581,25 @@ impl TheoremDefinition {
     }
 }
 
-cst_node!(CommandDefinition, COMMAND_DEFINITION, MATH_OPERATOR);
+cst_node!(OldCommandDefinition, OLD_COMMAND_DEFINITION);
 
-impl CommandDefinition {
+impl OldCommandDefinition {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<SyntaxToken> {
+        self.syntax()
+            .children_with_tokens()
+            .skip(1)
+            .filter_map(|elem| elem.into_token())
+            .find(|token| token.kind() == COMMAND_NAME)
+    }
+}
+
+cst_node!(NewCommandDefinition, NEW_COMMAND_DEFINITION, MATH_OPERATOR);
+
+impl NewCommandDefinition {
     pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }

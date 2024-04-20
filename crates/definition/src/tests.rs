@@ -36,7 +36,21 @@ fn check(input: &str) {
 }
 
 #[test]
-fn test_command_definition() {
+fn test_old_command_definition() {
+    check(
+        r#"
+%! main.tex
+\def\foo{foo}
+    ^^^^
+^^^^^^^^
+\foo
+  |
+^^^^"#,
+    )
+}
+
+#[test]
+fn test_new_command_definition() {
     check(
         r#"
 %! main.tex

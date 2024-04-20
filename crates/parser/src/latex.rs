@@ -139,7 +139,8 @@ impl<'a> Parser<'a> {
                 CommandName::LabelReference => self.label_reference(),
                 CommandName::LabelReferenceRange => self.label_reference_range(),
                 CommandName::LabelNumber => self.label_number(),
-                CommandName::CommandDefinition => self.command_definition(),
+                CommandName::OldCommandDefinition => self.old_command_definition(),
+                CommandName::NewCommandDefinition => self.new_command_definition(),
                 CommandName::MathOperator => self.math_operator(),
                 CommandName::GlossaryEntryDefinition => self.glossary_entry_definition(),
                 CommandName::GlossaryEntryReference => self.glossary_entry_reference(),
@@ -907,8 +908,21 @@ impl<'a> Parser<'a> {
         self.builder.finish_node();
     }
 
-    fn command_definition(&mut self) {
-        self.builder.start_node(COMMAND_DEFINITION.into());
+    fn old_command_definition(&mut self) {
+        self.builder.start_node(OLD_COMMAND_DEFINITION.into());
+        self.eat();
+        self.trivia();
+
+        if let Some(Token::CommandName(_)) = self.lexer.peek() {
+            self.eat();
+            self.trivia();
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn new_command_definition(&mut self) {
+        self.builder.start_node(NEW_COMMAND_DEFINITION.into());
         self.eat();
         self.trivia();
 

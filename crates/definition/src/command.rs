@@ -1,5 +1,5 @@
 use base_db::DocumentData;
-use rowan::ast::AstNode;
+use rowan::{ast::AstNode, TextRange};
 use syntax::latex;
 
 use crate::DefinitionContext;
@@ -24,18 +24,16 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
         let results = data
             .root_node()
             .descendants()
-            .filter_map(latex::CommandDefinition::cast)
-            .filter(|def| {
-                def.name()
-                    .and_then(|name| name.command())
-                    .map_or(false, |node| node.text() == name.text())
+            .filter_map(|node| {
+                process_old_definition(node.clone()).or_else(|| process_new_definition(node))
             })
-            .filter_map(|def| {
+            .filter(|(_, command)| command.text() == name.text())
+            .filter_map(|(target_range, command)| {
                 Some(DefinitionResult {
                     origin_selection_range,
                     target: document,
-                    target_range: latex::small_range(&def),
-                    target_selection_range: def.name()?.command()?.text_range(),
+                    target_range,
+                    target_selection_range: command.text_range(),
                 })
             });
 
@@ -43,4 +41,16 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     }
 
     Some(())
+}
+
+fn process_old_definition(node: latex::SyntaxNode) -> Option<(TextRange, latex::SyntaxToken)> {
+    let node = latex::OldCommandDefinition::cast(node)?;
+    let name = node.name()?;
+    Some((latex::small_range(&node), name))
+}
+
+fn process_new_definition(node: latex::SyntaxNode) -> Option<(TextRange, latex::SyntaxToken)> {
+    let node = latex::NewCommandDefinition::cast(node)?;
+    let name = node.name()?.command()?;
+    Some((latex::small_range(&node), name))
 }
