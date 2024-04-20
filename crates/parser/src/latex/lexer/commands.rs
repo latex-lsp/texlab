@@ -32,12 +32,10 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "label" => CommandName::LabelDefinition,
         "crefrange" | "crefrange*" | "Crefrange" | "Crefrange*" => CommandName::LabelReferenceRange,
         "newlabel" => CommandName::LabelNumber,
-        "newcommand"
-        | "newcommand*"
-        | "renewcommand"
-        | "renewcommand*"
-        | "DeclareRobustCommand"
-        | "DeclareRobustCommand*" => CommandName::CommandDefinition,
+        "newcommand" | "newcommand*" | "renewcommand" | "renewcommand*"
+        | "DeclareRobustCommand" | "DeclareRobustCommand*"
+        | "NewDocumentCommand" | "RenewDocumentCommand" | "DeclareDocumentCommand"
+        | "NewCommandCopy" | "RenewCommandCopy" | "DeclareCommandCopy" => CommandName::CommandDefinition,
         "DeclareMathOperator" | "DeclareMathOperator*" => CommandName::MathOperator,
         "newglossaryentry" => CommandName::GlossaryEntryDefinition,
         "gls" | "Gls" | "GLS" | "glspl" | "Glspl" | "GLSpl" | "glsdisp" | "glslink" | "glstext"
