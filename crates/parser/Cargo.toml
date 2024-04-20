@@ -16,7 +16,7 @@ syntax = { path = "../syntax" }
 tempfile = "3.10.1"
 
 [dev-dependencies]
-expect-test = "1.4.1"
+expect-test = "1.5.0"
 
 [lib]
 doctest = false
