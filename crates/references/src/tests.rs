@@ -229,3 +229,34 @@ fn test_string_definition_include_decl() {
         true,
     );
 }
+
+#[test]
+fn test_new_command_definition() {
+    check(
+        r#"
+%! main.tex
+\foo
+  |
+ ^^^
+
+\newcommand{\foo}{foo}
+"#,
+        false,
+    );
+}
+
+#[test]
+fn test_new_command_definition_include_decl() {
+    check(
+        r#"
+%! main.tex
+\foo
+  |
+ ^^^
+
+\newcommand{\foo}{foo}
+             ^^^
+"#,
+        true,
+    );
+}

@@ -1,4 +1,4 @@
-use rowan::{ast::AstNode, TextLen, TextRange};
+use rowan::{ast::AstNode, TextRange};
 use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
 
@@ -26,10 +26,7 @@ impl Semantics {
                 }
                 latex::SyntaxElement::Token(token) => {
                     if token.kind() == latex::COMMAND_NAME {
-                        let range = token.text_range();
-                        let range = TextRange::new(range.start() + "\\".text_len(), range.end());
-                        let text = String::from(&token.text()[1..]);
-                        self.commands.push(Span { range, text });
+                        self.commands.push(Span::command(&token));
                     }
                 }
             };

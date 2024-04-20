@@ -1,3 +1,5 @@
+use rowan::{TextLen, TextRange};
+
 pub mod auxiliary;
 pub mod bib;
 pub mod tex;
@@ -18,6 +20,13 @@ impl Span {
             text: String::new(),
             range: rowan::TextRange::empty(offset),
         }
+    }
+
+    pub fn command<L: rowan::Language>(token: &rowan::SyntaxToken<L>) -> Self {
+        let range = token.text_range();
+        let range = TextRange::new(range.start() + "\\".text_len(), range.end());
+        let text = String::from(&token.text()[1..]);
+        Self::new(text, range)
     }
 }
 
