@@ -14,7 +14,7 @@ itertools = "0.12.0"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-titlecase = "2.2.1"
+titlecase = "3.0.0"
 unicode-normalization = "0.1.23"
 url = "2.5.0"
 
