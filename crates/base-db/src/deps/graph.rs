@@ -7,11 +7,11 @@ use percent_encoding::percent_decode_str;
 use rustc_hash::FxHashSet;
 use url::Url;
 
-use crate::{semantics, Document, Workspace};
+use crate::{semantics, util, Document, Workspace};
 
 use super::ProjectRoot;
 
-pub(crate) static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
+pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Edge {
@@ -158,7 +158,9 @@ impl Graph {
 
         for target_uri in file_names
             .iter()
-            .flat_map(|file_name| start.root.src_dir.join(file_name))
+            .flat_map(|file_name| {
+                util::expand_relative_path(&file_name, &start.root.src_dir, workspace.folders())
+            })
             .chain(distro_files)
         {
             match workspace.lookup(&target_uri) {

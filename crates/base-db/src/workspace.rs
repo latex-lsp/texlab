@@ -50,6 +50,10 @@ impl Workspace {
         &self.graphs
     }
 
+    pub fn folders(&self) -> &[PathBuf] {
+        &self.folders
+    }
+
     pub fn open(
         &mut self,
         uri: Url,
