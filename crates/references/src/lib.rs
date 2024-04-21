@@ -1,3 +1,4 @@
+mod command;
 mod entry;
 mod label;
 mod string_def;
@@ -39,6 +40,7 @@ pub fn find_all<'a>(params: &ReferenceParams<'a>) -> Vec<DocumentLocation<'a>> {
     entry::find_all(&mut context);
     label::find_all(&mut context);
     string_def::find_all(&mut context);
+    command::find_all(&mut context);
 
     context
         .results
