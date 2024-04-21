@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Avoid panicking when malformed URIs are sent to the server ([#1078](https://github.com/latex-lsp/texlab/issues/1078))
+- Don't report errors for citations with macro arguments ([#1080](https://github.com/latex-lsp/texlab/issues/1080))
 
 ## [5.14.1] - 2024-03-27
 

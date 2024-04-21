@@ -24,7 +24,7 @@ pub fn detect_undefined_citations<'a>(
 
     for citation in &data.semantics.citations {
         let name = citation.name_text();
-        if name != "*" && !entries.contains(name) {
+        if name != "*" && !entries.contains(name) && !name.contains("#") {
             let diagnostic = Diagnostic::Tex(citation.name.range, TexError::UndefinedCitation);
             results
                 .entry(document.uri.clone())
