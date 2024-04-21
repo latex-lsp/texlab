@@ -41,7 +41,12 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         | "DeclareRobustCommand*"
         | "NewDocumentCommand"
         | "RenewDocumentCommand"
+        | "ProvideDocumentCommand"
         | "DeclareDocumentCommand"
+        | "NewExpandableDocumentCommand"
+        | "RenewExpandableDocumentCommand"
+        | "ProvideExpandableDocumentCommand"
+        | "DeclareExpandableDocumentCommand"
         | "NewCommandCopy"
         | "RenewCommandCopy"
         | "DeclareCommandCopy" => CommandName::NewCommandDefinition,
@@ -77,9 +82,17 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "definecolor" => CommandName::ColorDefinition,
         "definecolorset" => CommandName::ColorSetDefinition,
         "usepgflibrary" | "usetikzlibrary" => CommandName::TikzLibraryImport,
-        "newenvironment" | "newenvironment*" | "renewenvironment" | "renewenvironment*" => {
-            CommandName::EnvironmentDefinition
-        }
+        "newenvironment"
+        | "newenvironment*"
+        | "renewenvironment"
+        | "renewenvironment*"
+        | "NewDocumentEnvironment"
+        | "RenewDocumentEnvironment"
+        | "ProvideDocumentEnvironment"
+        | "DeclareDocumentEnvironment"
+        | "NewEnvironmentCopy"
+        | "RenewEnvironmentCopy"
+        | "DeclareEnvironmentCopy" => CommandName::EnvironmentDefinition,
         "graphicspath" => CommandName::GraphicsPath,
         "iffalse" => CommandName::BeginBlockComment,
         "fi" => CommandName::EndBlockComment,
