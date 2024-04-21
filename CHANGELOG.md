@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Replace tilde (`~`), environment variables, `${userHome}`, `${workspaceFolder}` in options
-- Replace tidle (`~`) with home directory in `\include`-like commands
+- Replace tidle (`~`) and environment variables in `\include`-like commands
 - Add "Go To Definition" support for user-defined commands with `\def` and `\let` ([#1081](https://github.com/latex-lsp/texlab/issues/1081))
 - Add "Find all References" for commands ([#1082](https://github.com/latex-lsp/texlab/issues/1082))
+- Support more macros for defining commands ([#1083](https://github.com/latex-lsp/texlab/issues/1083))
+
+### Fixed
+
+- Avoid panicking when malformed URIs are sent to the server ([#1078](https://github.com/latex-lsp/texlab/issues/1078))
 
 ## [5.14.1] - 2024-03-27
 
