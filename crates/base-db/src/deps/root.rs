@@ -93,7 +93,7 @@ impl ProjectRoot {
             .and_then(|path| append_dir(dir, path, workspace).ok())
             .unwrap_or_else(|| dir.clone());
 
-        let log_dir = out_dir.clone();
+        let log_dir = aux_dir.clone();
         let pdf_dir = out_dir;
         let additional_files = vec![];
 

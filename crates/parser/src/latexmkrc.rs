@@ -1,25 +1,17 @@
+use std::str::Lines;
+
 use syntax::latexmkrc::LatexmkrcData;
-use tempfile::tempdir;
 
 pub fn parse_latexmkrc(_input: &str) -> std::io::Result<LatexmkrcData> {
-    let temp_dir = tempdir()?;
-    let non_existent_tex = temp_dir.path().join("NONEXISTENT.tex");
 
-    // Run `latexmk -dir-report $TMPDIR/NONEXISTENT.tex` to obtain out_dir
-    // and aux_dir values. We pass nonexistent file to prevent latexmk from
-    // building anything, since we need this invocation only to extract the
-    // -dir-report variables.
-    //
-    // In the future, latexmk plans to implement -dir-report-only option and we
-    // won't have to resort to this hack with NONEXISTENT.tex.
+    // Run `latexmk -dir-report-only` to obtain out_dir and aux_dir values.
     let output = std::process::Command::new("latexmk")
-        .arg("-dir-report")
-        .arg(non_existent_tex)
+        .arg("-dir-report-only")
         .output()?;
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
 
-    let (aux_dir, out_dir) = stderr.lines().find_map(extract_dirs).ok_or_else(|| {
+    let (aux_dir, out_dir) =  extract_dirs(stdout.lines()).ok_or_else(|| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "Normalized aux and out dir were not found in latexmk output",
@@ -34,14 +26,21 @@ pub fn parse_latexmkrc(_input: &str) -> std::io::Result<LatexmkrcData> {
 
 /// Extracts $aux_dir and $out_dir from lines of the form
 ///
-///   Latexmk: Normalized aux dir and out dir: '$aux_dir', '$out_dir'
-fn extract_dirs(line: &str) -> Option<(String, String)> {
-    let mut it = line
-        .strip_prefix("Latexmk: Normalized aux dir and out dir: ")?
-        .split(", ");
+///   Latexmk: Normalized aux dir and out dirs:
+///    '$aux_dir', '$out_dir', [...]
+fn extract_dirs(lines: Lines) -> Option<(String, String)> {
+    let mut it =
+        lines.skip_while(|line| {
+            !line.starts_with("Latexmk: Normalized aux dir and out dirs:")
+        })
+        .nth(1)?
+        .split(",");
 
-    let aux_dir = it.next()?.strip_prefix('\'')?.strip_suffix('\'')?;
-    let out_dir = it.next()?.strip_prefix('\'')?.strip_suffix('\'')?;
+    let aux_dir = it.next()?.trim().strip_prefix('\'')?.strip_suffix('\'')?;
+
+    it.next(); // Skip the old 'outdir' option.
+
+    let out_dir = it.next()?.trim().strip_prefix('\'')?.strip_suffix('\'')?;
 
     // Ensure there's no more data
     if it.next().is_some() {
