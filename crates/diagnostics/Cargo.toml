@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-encoding_rs = "0.8.33"
+encoding_rs = "0.8.34"
 encoding_rs_io = "0.1.7"
 itertools = "0.12.1"
 line-index = { path = "../line-index" }
