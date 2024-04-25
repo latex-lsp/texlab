@@ -2446,11 +2446,11 @@ fn test_issue_745() {
                 GENERIC_COMMAND@50..64
                   COMMAND_NAME@50..63 "\\ExplSyntaxOn"
                   LINE_BREAK@63..64 "\n"
-                GENERIC_COMMAND@64..223
+                ENVIRONMENT_DEFINITION@64..200
                   COMMAND_NAME@64..87 "\\NewDocumentEnvironment"
-                  CURLY_GROUP@87..96
+                  CURLY_GROUP_WORD@87..96
                     L_CURLY@87..88 "{"
-                    TEXT@88..95
+                    KEY@88..95
                       WORD@88..95 "exptblr"
                     R_CURLY@95..96 "}"
                   CURLY_GROUP@96..107
@@ -2515,21 +2515,21 @@ fn test_issue_745() {
                     R_CURLY@194..195 "}"
                     LINE_BREAK@195..196 "\n"
                     WHITESPACE@196..200 "    "
-                  CURLY_GROUP@200..223
-                    L_CURLY@200..201 "{"
-                    LINE_BREAK@201..202 "\n"
-                    WHITESPACE@202..206 "    "
-                    GENERIC_COMMAND@206..221
-                      COMMAND_NAME@206..210 "\\end"
-                      CURLY_GROUP@210..221
-                        L_CURLY@210..211 "{"
-                        TEXT@211..215
-                          WORD@211..215 "tblr"
-                        R_CURLY@215..216 "}"
-                        LINE_BREAK@216..217 "\n"
-                        WHITESPACE@217..221 "    "
-                    R_CURLY@221..222 "}"
-                    LINE_BREAK@222..223 "\n"
+                CURLY_GROUP@200..223
+                  L_CURLY@200..201 "{"
+                  LINE_BREAK@201..202 "\n"
+                  WHITESPACE@202..206 "    "
+                  GENERIC_COMMAND@206..221
+                    COMMAND_NAME@206..210 "\\end"
+                    CURLY_GROUP@210..221
+                      L_CURLY@210..211 "{"
+                      TEXT@211..215
+                        WORD@211..215 "tblr"
+                      R_CURLY@215..216 "}"
+                      LINE_BREAK@216..217 "\n"
+                      WHITESPACE@217..221 "    "
+                  R_CURLY@221..222 "}"
+                  LINE_BREAK@222..223 "\n"
                 GENERIC_COMMAND@223..239
                   COMMAND_NAME@223..237 "\\ExplSyntaxOff"
                   LINE_BREAK@237..239 "\n\n"
