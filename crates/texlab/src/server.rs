@@ -242,7 +242,7 @@ impl Server {
 
         for document in checked_paths
             .iter()
-            .filter_map(|path| workspace.lookup_path(path))
+            .filter_map(|path| workspace.lookup_file(path))
         {
             self.diagnostic_manager.update_syntax(&workspace, document);
         }
@@ -794,30 +794,50 @@ impl Server {
         let mut changed = false;
 
         let mut workspace = self.workspace.write();
+
         match event.kind {
             notify::EventKind::Remove(_) | notify::EventKind::Modify(ModifyKind::Name(_)) => {
-                for path in event.paths {
-                    if let Some(document) = workspace.lookup_path(&path) {
-                        if document.owner == Owner::Server {
-                            let uri = document.uri.clone();
-                            workspace.remove(&uri);
-                            changed = true;
-                        }
-                    }
+                let affected_uris = event
+                    .paths
+                    .iter()
+                    .flat_map(|file_or_dir| workspace.lookup_file_or_dir(file_or_dir))
+                    .filter(|doc| doc.owner == Owner::Server)
+                    .map(|doc| doc.uri.clone())
+                    .collect::<Vec<_>>();
+
+                for uri in affected_uris {
+                    workspace.remove(&uri);
+                    changed = true;
                 }
             }
             notify::EventKind::Create(_) | notify::EventKind::Modify(_) => {
-                for path in event.paths {
-                    if workspace
-                        .lookup_path(&path)
-                        .map_or(true, |document| document.owner == Owner::Server)
-                    {
-                        if let Some(language) = Language::from_path(&path) {
-                            changed |= workspace.load(&path, language).is_ok();
+                for file_or_dir in event.paths {
+                    let affected_paths = if file_or_dir.is_dir() {
+                        changed = true;
+                        workspace
+                            .lookup_file_or_dir(&file_or_dir)
+                            .filter_map(|doc| doc.path.clone())
+                            .collect::<Vec<_>>()
+                    } else {
+                        vec![file_or_dir]
+                    };
 
-                            if let Some(document) = workspace.lookup_path(&path) {
-                                self.diagnostic_manager.update_syntax(&workspace, document);
-                            }
+                    for path in affected_paths {
+                        if !workspace
+                            .lookup_file(&path)
+                            .map_or(true, |doc| doc.owner == Owner::Server)
+                        {
+                            continue;
+                        }
+
+                        let Some(language) = Language::from_path(&path) else {
+                            continue;
+                        };
+
+                        changed |= workspace.load(&path, language).is_ok();
+
+                        if let Some(document) = workspace.lookup_file(&path) {
+                            self.diagnostic_manager.update_syntax(&workspace, document);
                         }
                     }
                 }
@@ -825,9 +845,10 @@ impl Server {
             notify::EventKind::Any | notify::EventKind::Access(_) | notify::EventKind::Other => {}
         };
 
-        drop(workspace);
         if changed {
-            self.publish_diagnostics_with_delay();
+            self.diagnostic_manager.cleanup(&workspace);
+            drop(workspace);
+            self.update_workspace();
         }
     }
 
