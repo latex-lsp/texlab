@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::Result;
-use base_db::{deps, Config, Owner, Workspace};
+use base_db::{deps, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
@@ -319,7 +319,7 @@ impl Server {
 
     fn update_options(&mut self, options: Options) {
         let mut workspace = self.workspace.write();
-        workspace.set_config(Config::from(options));
+        workspace.set_config(from_proto::config(options));
         self.watcher.watch(&mut workspace);
     }
 
