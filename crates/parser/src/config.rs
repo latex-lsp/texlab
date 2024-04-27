@@ -7,6 +7,7 @@ pub struct SyntaxConfig {
     pub enum_environments: FxHashSet<String>,
     pub verbatim_environments: FxHashSet<String>,
     pub citation_commands: FxHashSet<String>,
+    pub label_definition_commands: FxHashSet<String>,
     pub label_reference_commands: FxHashSet<String>,
 }
 
@@ -32,6 +33,11 @@ impl Default for SyntaxConfig {
             .map(ToString::to_string)
             .collect();
 
+        let label_definition_commands = DEFAULT_LABEL_DEFINITION_COMMANDS
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+
         let label_reference_commands = DEFAULT_LABEL_REFERENCE_COMMANDS
             .iter()
             .map(ToString::to_string)
@@ -43,6 +49,7 @@ impl Default for SyntaxConfig {
             enum_environments,
             verbatim_environments,
             citation_commands,
+            label_definition_commands,
             label_reference_commands,
         }
     }
@@ -162,6 +169,8 @@ static DEFAULT_CITATION_COMMANDS: &[&str] = &[
     "citeA",
     "citeA*",
 ];
+
+static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label"];
 
 static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "ref",

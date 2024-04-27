@@ -29,7 +29,6 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "import" | "subimport" | "inputfrom" | "subinputfrom" | "subincludefrom" => {
             CommandName::Import
         }
-        "label" => CommandName::LabelDefinition,
         "crefrange" | "crefrange*" | "Crefrange" | "Crefrange*" => CommandName::LabelReferenceRange,
         "newlabel" => CommandName::LabelNumber,
         "def" | "let" => CommandName::OldCommandDefinition,
@@ -97,7 +96,9 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "iffalse" => CommandName::BeginBlockComment,
         "fi" => CommandName::EndBlockComment,
         "verb" => CommandName::VerbatimBlock,
+
         _ if config.citation_commands.contains(name) => CommandName::Citation,
+        _ if config.label_definition_commands.contains(name) => CommandName::LabelDefinition,
         _ if config.label_reference_commands.contains(name) => CommandName::LabelReference,
         _ => CommandName::Generic,
     }
