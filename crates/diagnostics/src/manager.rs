@@ -1,6 +1,6 @@
 use base_db::{deps::Project, util::filter_regex_patterns, Document, Owner, Workspace};
 use multimap::MultiMap;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
 use crate::types::Diagnostic;
@@ -31,6 +31,18 @@ impl Manager {
     /// Updates the ChkTeX diagnostics for the given document.
     pub fn update_chktex(&mut self, uri: Url, diagnostics: Vec<Diagnostic>) {
         self.chktex.insert(uri, diagnostics);
+    }
+
+    /// Removes stale diagnostics for documents that are no longer part of the workspace.
+    pub fn cleanup(&mut self, workspace: &Workspace) {
+        let uris = workspace
+            .iter()
+            .map(|doc| &doc.uri)
+            .collect::<FxHashSet<_>>();
+
+        self.grammar.retain(|uri, _| uris.contains(uri));
+        self.chktex.retain(|uri, _| uris.contains(uri));
+        self.build_log.retain(|uri, _| uris.contains(uri));
     }
 
     /// Returns all filtered diagnostics for the given workspace.

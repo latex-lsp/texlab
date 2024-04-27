@@ -84,7 +84,7 @@ fn discover_parents(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pat
                 continue;
             }
 
-            if workspace.lookup_path(&file).is_none() && file.exists() {
+            if workspace.lookup_file(&file).is_none() && file.exists() {
                 changed |= workspace.load(&file, lang).is_ok();
                 checked_paths.insert(file);
             }
@@ -107,7 +107,7 @@ fn discover_children(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pa
     for file in files {
         let language = Language::from_path(&file).unwrap_or(Language::Tex);
 
-        if workspace.lookup_path(&file).is_none() && file.exists() {
+        if workspace.lookup_file(&file).is_none() && file.exists() {
             changed |= workspace.load(&file, language).is_ok();
             checked_paths.insert(file);
         }

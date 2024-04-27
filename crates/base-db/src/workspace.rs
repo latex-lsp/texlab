@@ -29,9 +29,20 @@ impl Workspace {
         self.documents.get(key)
     }
 
-    pub fn lookup_path(&self, path: &Path) -> Option<&Document> {
+    pub fn lookup_file(&self, path: &Path) -> Option<&Document> {
         self.iter()
             .find(|document| document.path.as_deref() == Some(path))
+    }
+
+    pub fn lookup_file_or_dir<'a>(
+        &'a self,
+        file_or_dir: &'a Path,
+    ) -> impl Iterator<Item = &'a Document> + '_ {
+        self.iter().filter(move |doc| {
+            doc.path
+                .as_deref()
+                .map_or(false, |p| p.starts_with(file_or_dir))
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Document> + '_ {
@@ -94,7 +105,7 @@ impl Workspace {
             Owner::Server
         };
 
-        if let Some(document) = self.lookup_path(path) {
+        if let Some(document) = self.lookup_file(path) {
             if document.text == text {
                 return Ok(());
             }
@@ -177,6 +188,7 @@ impl Workspace {
     }
 
     pub fn remove(&mut self, uri: &Url) {
+        log::info!("Removing moved or deleted document: {uri}");
         self.documents.remove(uri);
     }
 
