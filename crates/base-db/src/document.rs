@@ -77,7 +77,12 @@ impl Document {
             }
             Language::Root => DocumentData::Root,
             Language::Latexmkrc => {
-                let data = parser::parse_latexmkrc(&text).unwrap_or_default();
+                let data = path
+                    .as_deref()
+                    .and_then(|path| path.parent())
+                    .and_then(|dir| parser::parse_latexmkrc(&text, dir).ok())
+                    .unwrap_or_default();
+
                 DocumentData::Latexmkrc(data)
             }
             Language::Tectonic => DocumentData::Tectonic,

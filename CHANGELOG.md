@@ -13,15 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([#1093](https://github.com/latex-lsp/texlab/issues/1093))
 - Extend list of commands treated as command definitions and environment definitions ([#1087](https://github.com/latex-lsp/texlab/pull/1087))
 
-### Changed
-
-- _BREAKING_: Extracting `$aux_dir` and `$out_dir` from `latexmkrc` requires now `latexmk >= v4.85`
-  ([#1079](https://github.com/latex-lsp/texlab/pull/1079))
-
 ### Fixed
 
 - Fix detection of log dir when using `latexmkrc` (use `$aux_dir` instead of `$out_dir`) ([#1079](https://github.com/latex-lsp/texlab/pull/1079))
 - Fix extracting `$aux_dir` and `$out_dir` from `latexmkrc` ([#1079](https://github.com/latex-lsp/texlab/pull/1079))
+- Add support for extracting `$aux_dir` and `$out_dir` from `latexmk >= v4.85` (([#1079](https://github.com/latex-lsp/texlab/pull/1079)))
 
 ## [5.15.0] - 2024-04-21
 
