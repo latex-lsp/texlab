@@ -74,6 +74,7 @@ impl ProjectRoot {
     }
 
     pub fn from_latexmkrc(workspace: &Workspace, dir: &Url) -> Option<Self> {
+        let config = workspace.config();
         let rcfile = workspace
             .iter()
             .filter(|document| document.dir == *dir)
@@ -81,20 +82,30 @@ impl ProjectRoot {
 
         let compile_dir = dir.clone();
         let src_dir = dir.clone();
-        let aux_dir = rcfile
+
+        let aux_dir_rc = rcfile
             .aux_dir
             .as_ref()
-            .and_then(|path| append_dir(dir, path, workspace).ok())
-            .unwrap_or_else(|| dir.clone());
+            .and_then(|path| append_dir(dir, path, workspace).ok());
 
-        let out_dir = rcfile
+        let out_dir_rc = rcfile
             .out_dir
             .as_ref()
-            .and_then(|path| append_dir(dir, path, workspace).ok())
+            .and_then(|path| append_dir(dir, path, workspace).ok());
+
+        let aux_dir = aux_dir_rc
+            .clone()
+            .or_else(|| append_dir(dir, &config.build.aux_dir, workspace).ok())
             .unwrap_or_else(|| dir.clone());
 
-        let log_dir = aux_dir.clone();
-        let pdf_dir = out_dir;
+        let log_dir = aux_dir_rc
+            .or_else(|| append_dir(dir, &config.build.log_dir, workspace).ok())
+            .unwrap_or_else(|| dir.clone());
+
+        let pdf_dir = out_dir_rc
+            .or_else(|| append_dir(dir, &config.build.pdf_dir, workspace).ok())
+            .unwrap_or_else(|| dir.clone());
+
         let additional_files = vec![];
 
         Some(Self {
