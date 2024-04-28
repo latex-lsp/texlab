@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for extracting `$aux_dir` and `$out_dir` from `latexmk >= v4.85` (([#1079](https://github.com/latex-lsp/texlab/pull/1079)))
 - Improve log file change detection under Windows
 - Cleanup diagnostics of deleted files
+- Let `\declaretheorem` accept a list of environment names instead of just a single name ([#1075](https://github.com/latex-lsp/texlab/issues/1075))
 
 ## [5.15.0] - 2024-04-21
 

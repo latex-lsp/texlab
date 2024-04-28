@@ -1,6 +1,7 @@
 use rowan::{ast::AstNode, TextRange};
 use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
+use titlecase::titlecase;
 
 use super::Span;
 
@@ -254,18 +255,15 @@ impl Semantics {
     }
 
     fn process_theorem_definition(&mut self, theorem_def: latex::TheoremDefinition) {
-        let Some(name) = theorem_def.name().and_then(|name| name.key()) else {
-            return;
-        };
+        for name in theorem_def.names() {
+            let name = Span::from(&name);
+            let heading = theorem_def
+                .heading()
+                .unwrap_or_else(|| titlecase(&name.text));
 
-        let Some(heading) = theorem_def.heading() else {
-            return;
-        };
-
-        self.theorem_definitions.push(TheoremDefinition {
-            name: Span::from(&name),
-            heading,
-        });
+            self.theorem_definitions
+                .push(TheoremDefinition { name, heading });
+        }
     }
 
     fn process_graphics_path(&mut self, graphics_path: latex::GraphicsPath) {

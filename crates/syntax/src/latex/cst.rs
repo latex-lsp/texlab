@@ -555,8 +555,19 @@ impl TheoremDefinition {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupWord> {
-        self.syntax().children().find_map(CurlyGroupWord::cast)
+    pub fn names(&self) -> impl Iterator<Item = Key> {
+        self.syntax()
+            .children()
+            .find_map(CurlyGroupWordList::cast)
+            .into_iter()
+            .flat_map(|group| group.keys())
+            .chain(
+                self.syntax()
+                    .children()
+                    .find_map(CurlyGroupWord::cast)
+                    .into_iter()
+                    .filter_map(|group| group.key()),
+            )
     }
 
     pub fn heading(&self) -> Option<String> {

@@ -3536,13 +3536,68 @@ fn test_theorem_definition_thmtools() {
                       TEXT@32..35
                         WORD@32..35 "bar"
                 R_BRACK@35..36 "]"
-              CURLY_GROUP_WORD@36..41
+              CURLY_GROUP_WORD_LIST@36..41
                 L_CURLY@36..37 "{"
                 KEY@37..40
                   WORD@37..40 "baz"
                 R_CURLY@40..41 "}"
 
     "#]],
+    );
+}
+
+#[test]
+fn test_theorem_definition_thmtools_multiple() {
+    check(
+        r#"\declaretheorem[sibling=table, style=thmbox]{definition, theorem, lemma, corollary, proposition}"#,
+        expect![[r#"
+            ROOT@0..96
+              PREAMBLE@0..96
+                THEOREM_DEFINITION_THMTOOLS@0..96
+                  COMMAND_NAME@0..15 "\\declaretheorem"
+                  BRACK_GROUP_KEY_VALUE@15..44
+                    L_BRACK@15..16 "["
+                    KEY_VALUE_BODY@16..43
+                      KEY_VALUE_PAIR@16..29
+                        KEY@16..23
+                          WORD@16..23 "sibling"
+                        EQUALITY_SIGN@23..24 "="
+                        VALUE@24..29
+                          TEXT@24..29
+                            WORD@24..29 "table"
+                      COMMA@29..30 ","
+                      WHITESPACE@30..31 " "
+                      KEY_VALUE_PAIR@31..43
+                        KEY@31..36
+                          WORD@31..36 "style"
+                        EQUALITY_SIGN@36..37 "="
+                        VALUE@37..43
+                          TEXT@37..43
+                            WORD@37..43 "thmbox"
+                    R_BRACK@43..44 "]"
+                  CURLY_GROUP_WORD_LIST@44..96
+                    L_CURLY@44..45 "{"
+                    KEY@45..55
+                      WORD@45..55 "definition"
+                    COMMA@55..56 ","
+                    WHITESPACE@56..57 " "
+                    KEY@57..64
+                      WORD@57..64 "theorem"
+                    COMMA@64..65 ","
+                    WHITESPACE@65..66 " "
+                    KEY@66..71
+                      WORD@66..71 "lemma"
+                    COMMA@71..72 ","
+                    WHITESPACE@72..73 " "
+                    KEY@73..82
+                      WORD@73..82 "corollary"
+                    COMMA@82..83 ","
+                    WHITESPACE@83..84 " "
+                    KEY@84..95
+                      WORD@84..95 "proposition"
+                    R_CURLY@95..96 "}"
+
+        "#]],
     );
 }
 
