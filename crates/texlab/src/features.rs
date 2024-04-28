@@ -5,6 +5,7 @@ pub mod formatting;
 pub mod highlight;
 pub mod hover;
 pub mod inlay_hint;
+pub mod inverse_search;
 pub mod link;
 pub mod reference;
 pub mod rename;

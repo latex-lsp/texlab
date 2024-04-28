@@ -28,8 +28,8 @@ use threadpool::ThreadPool;
 use crate::{
     client::LspClient,
     features::{
-        completion, definition, folding, formatting, highlight, hover, inlay_hint, link, reference,
-        rename, symbols,
+        completion, definition, folding, formatting, highlight, hover, inlay_hint, inverse_search,
+        link, reference, rename, symbols,
     },
     util::{from_proto, line_index_ext::LineIndexExt, normalize_uri, to_proto, ClientFlags},
 };
@@ -57,6 +57,7 @@ pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
     internal_rx: Receiver<InternalMessage>,
+    inverse_search_rx: Receiver<inverse_search::Request>,
     workspace: Arc<RwLock<Workspace>>,
     client: LspClient,
     client_flags: Arc<ClientFlags>,
@@ -97,10 +98,13 @@ impl Server {
 
         connection.initialize_finish(id, serde_json::to_value(result)?)?;
 
+        let (_, inverse_search_rx) = inverse_search::spawn_server()?;
+
         let server = Self {
             connection: Arc::new(connection),
             internal_tx,
             internal_rx,
+            inverse_search_rx,
             workspace: Arc::new(RwLock::new(workspace)),
             client,
             client_flags: Arc::new(from_proto::client_flags(
@@ -942,6 +946,27 @@ impl Server {
         Ok(results)
     }
 
+    fn inverse_search(&self, params: inverse_search::Request) -> Result<()> {
+        if !self.client_flags.show_document {
+            log::warn!("Inverse search request received although the client does not support window/showDocument: {params:?}");
+        }
+
+        let position = lsp_types::Position::new(params.line, 0);
+        let params = lsp_types::ShowDocumentParams {
+            uri: params.uri,
+            take_focus: Some(true),
+            external: Some(false),
+            selection: Some(lsp_types::Range::new(position, position)),
+        };
+
+        let client = self.client.clone();
+        self.pool.execute(move || {
+            let _ = client.send_request::<ShowDocument>(params);
+        });
+
+        Ok(())
+    }
+
     fn parse_command_params<T: DeserializeOwned>(
         &self,
         params: Vec<serde_json::Value>,
@@ -1060,6 +1085,9 @@ impl Server {
                             self.forward_search(None, uri, position)?;
                         }
                     };
+                }
+                recv(&self.inverse_search_rx) -> msg => {
+                    self.inverse_search(msg?)?;
                 }
             };
         }
