@@ -102,6 +102,7 @@ dependencies = [
  "rustc-hash",
  "shellexpand",
  "syntax",
+ "titlecase",
  "url",
 ]
 

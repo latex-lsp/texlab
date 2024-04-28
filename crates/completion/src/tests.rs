@@ -1677,6 +1677,52 @@ fn theorem_end() {
 }
 
 #[test]
+fn theorem_begin_multiple() {
+    check(
+        r#"
+%! main.tex
+\declaretheorem[sibling=table, style=thmbox]{def1, def2, def3, def4, def5}
+\begin{def
+        |
+       ^^^"#,
+        expect![[r#"
+            [
+                Environment(
+                    EnvironmentData {
+                        name: "def1",
+                        package: "<user>",
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "def2",
+                        package: "<user>",
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "def3",
+                        package: "<user>",
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "def4",
+                        package: "<user>",
+                    },
+                ),
+                Environment(
+                    EnvironmentData {
+                        name: "def5",
+                        package: "<user>",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
 fn tikz_library_open_brace() {
     check(
         r#"
