@@ -1,5 +1,5 @@
 mod client;
-pub mod features;
+pub(crate) mod features;
 mod server;
 pub(crate) mod util;
 

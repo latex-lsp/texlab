@@ -5,7 +5,7 @@ use clap::{ArgAction, Parser, Subcommand};
 use log::LevelFilter;
 use lsp_server::Connection;
 use lsp_types::Url;
-use texlab::{features::inverse_search, Server};
+use texlab::Server;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, Parser)]
@@ -71,12 +71,12 @@ fn main() -> Result<()> {
                 std::process::exit(-1);
             };
 
-            let request = inverse_search::Request {
-                uri,
-                line: opts.line,
-            };
+            let params = lsp_types::TextDocumentPositionParams::new(
+                lsp_types::TextDocumentIdentifier::new(uri),
+                lsp_types::Position::new(opts.line, 0),
+            );
 
-            if let Err(why) = inverse_search::send_request(request) {
+            if let Err(why) = ipc::send_request(params) {
                 eprintln!("Failed to send inverse search request to the main instance. Is the server running?");
                 eprintln!("Details: {why:?}");
                 std::process::exit(-1);

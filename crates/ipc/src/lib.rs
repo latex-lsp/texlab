@@ -1,35 +1,23 @@
-use std::{
-    io::{self, BufRead, BufReader, BufWriter},
-    thread::JoinHandle,
-};
+use std::io::{self, BufRead, BufReader, BufWriter};
 
-use anyhow::Result;
-use crossbeam_channel::Receiver;
 use interprocess::local_socket::{prelude::*, GenericNamespaced, ListenerOptions, Stream};
-use lsp_types::Url;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Request {
-    pub uri: Url,
-    pub line: u32,
-}
+use serde::{de::DeserializeOwned, Serialize};
 
 const SOCKET_NAME: &str = "texlab.sock";
 
-pub struct Client;
-
-pub fn send_request(request: Request) -> Result<()> {
-    let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>().unwrap();
+pub fn send_request<T: Serialize>(msg: T) -> io::Result<()> {
+    let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>()?;
     let conn = Stream::connect(name)?;
     let mut conn = BufWriter::new(conn);
-    let _ = serde_json::to_writer(&mut conn, &request);
+    serde_json::to_writer(&mut conn, &msg)?;
     Ok(())
 }
 
-pub fn spawn_server() -> Result<(JoinHandle<()>, Receiver<Request>)> {
-    let (tx, rx) = crossbeam_channel::unbounded();
-
+pub fn spawn_server<T, F>(mut event_handler: F) -> io::Result<()>
+where
+    T: DeserializeOwned,
+    F: FnMut(T) + Send + 'static,
+{
     if cfg!(unix) {
         let sock_file = std::env::temp_dir().join(format!("{SOCKET_NAME}.sock"));
         let _ = std::fs::remove_file(sock_file);
@@ -45,20 +33,24 @@ pub fn spawn_server() -> Result<(JoinHandle<()>, Receiver<Request>)> {
         x => x?,
     };
 
-    let join_handle = std::thread::spawn(move || {
+    std::thread::spawn(move || {
         for conn in listener.incoming().flatten() {
-            let _ = handle_request(conn, &tx);
+            let _ = handle_request(conn, &mut event_handler);
         }
     });
 
-    Ok((join_handle, rx))
+    Ok(())
 }
 
-fn handle_request(conn: Stream, tx: &crossbeam_channel::Sender<Request>) -> Result<()> {
+fn handle_request<T, F>(conn: Stream, event_handler: &mut F) -> io::Result<()>
+where
+    T: DeserializeOwned,
+    F: FnMut(T),
+{
     let mut conn = BufReader::new(conn);
     let mut line = String::new();
     conn.read_line(&mut line)?;
-    let request = serde_json::from_str(&line)?;
-    tx.send(request)?;
+    let msg = serde_json::from_str(&line)?;
+    event_handler(msg);
     Ok(())
 }
