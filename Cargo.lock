@@ -766,28 +766,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "interprocess"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d5f0e3c218e7a86a6712fd3adc84672304f9e839402b866685b9117a077c37f"
-dependencies = [
- "libc",
- "recvmsg",
- "widestring",
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "ipc"
 version = "0.0.0"
 dependencies = [
  "crossbeam-channel",
  "expect-test",
- "interprocess",
  "log",
  "parser",
  "serde",
  "serde_json",
+ "uds_windows",
 ]
 
 [[package]]
@@ -1276,12 +1264,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "recvmsg"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3edd4d5d42c92f0a659926464d4cce56b562761267ecf0f469d85b7de384175"
-
-[[package]]
 name = "redox_syscall"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1691,6 +1673,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "uds_windows"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89daebc3e6fd160ac4aa9fc8b3bf71e1f74fbf92367ae71fb83a037e8bf164b9"
+dependencies = [
+ "memoffset",
+ "tempfile",
+ "winapi",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1836,12 +1829,6 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "widestring"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7219d36b6eac893fa81e84ebe06485e7dcbb616177469b142df14f1f4deb1311"
 
 [[package]]
 name = "winapi"
