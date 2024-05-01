@@ -26,20 +26,20 @@ jobs:
         run: cargo test --all-features --no-run --locked
       - name: Test
         run: cargo test --all-features -- --nocapture --quiet
-    build_cross:
-      name: Build (${{ matrix.target }})
-      runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-        matrix:
-          target: [aarch64-unknown-linux-gnu, x86_64-unknown-linux-musl]
-      steps:
-        - uses: actions/checkout@v4
-        - uses: dtolnay/rust-toolchain@stable
-        - uses: Swatinem/rust-cache@v2
-        - run: cargo install cross
-        - name: Compile
-          run: cross build --target ${{ matrix.target }}
+  build_cross:
+    name: Build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [aarch64-unknown-linux-gnu, x86_64-unknown-linux-musl]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install cross
+      - name: Compile
+        run: cross build --target ${{ matrix.target }}
   msrv:
     name: MSRV
     runs-on: ubuntu-latest
