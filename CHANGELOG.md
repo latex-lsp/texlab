@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve log file change detection under Windows
 - Cleanup diagnostics of deleted files
 - Let `\declaretheorem` accept a list of environment names instead of just a single name ([#1075](https://github.com/latex-lsp/texlab/issues/1075))
+- Use configured directories if not set explicitly by `latexmkrc` file ([#1095](https://github.com/latex-lsp/texlab/issues/1095))
 
 ## [5.15.0] - 2024-04-21
 
