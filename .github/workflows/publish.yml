@@ -130,6 +130,6 @@ jobs:
           fields: |
             pkg: texlab
             version: ${{ github.event.release.tag_name }}
-            uploader: Eric Förster
-            email: eric.foerster@outlook.com
+            uploader: Patrick Förster
+            email: patrick.foerster@outlook.de
             update: 'true'

@@ -1,6 +1,5 @@
 [![CI](https://github.com/latex-lsp/texlab/workflows/CI/badge.svg)](https://github.com/latex-lsp/texlab/actions)
 [![Wiki](https://img.shields.io/badge/docs-Wiki-success)](https://github.com/latex-lsp/texlab/wiki)
-
 [![GitHub release](https://img.shields.io/github/release/latex-lsp/texlab?label=github)](https://github.com/latex-lsp/texlab/releases)
 [![CTAN](https://img.shields.io/ctan/v/texlab)](https://ctan.org/pkg/texlab)
 
@@ -80,3 +79,11 @@ in the project folder.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Maintainers
+
+- Patrick Förster (patrick.foerster@outlook.de)
+
+## License
+
+[GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/)
