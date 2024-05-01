@@ -99,6 +99,12 @@ pub fn client_flags(
         .and_then(|cap| cap.work_done_progress)
         .unwrap_or(false);
 
+    let show_document = capabilities
+        .window
+        .as_ref()
+        .and_then(|cap| cap.show_document.as_ref())
+        .map_or(false, |cap| cap.support);
+
     ClientFlags {
         hierarchical_document_symbols,
         completion_markdown,
@@ -111,6 +117,7 @@ pub fn client_flags(
         definition_link,
         folding_custom_kinds,
         progress,
+        show_document,
     }
 }
 

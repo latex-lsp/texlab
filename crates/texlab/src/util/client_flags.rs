@@ -37,4 +37,7 @@ pub struct ClientFlags {
 
     /// If `true`, the server can report progress using `WorkDoneProgress`.
     pub progress: bool,
+
+    /// If `true`, the server can let the client open a document using `window/showDocument`.
+    pub show_document: bool,
 }

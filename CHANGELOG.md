@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `texlab.experimental.labelDefinitionCommands` setting to customize the list of `\label`-like commands
   ([#1093](https://github.com/latex-lsp/texlab/issues/1093))
 - Extend list of commands treated as command definitions and environment definitions ([#1087](https://github.com/latex-lsp/texlab/pull/1087))
+- Allow the server to trigger the forward search in an editor-agnostic way:
+  Running `texlab inverse-search --input <FILE> --line <LINE>` will open the specified document in the editor if the client supports it
+  ([#1091](https://github.com/latex-lsp/texlab/issues/1091))
 
 ### Fixed
 

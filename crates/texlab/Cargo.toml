@@ -39,6 +39,7 @@ folding = { path = "../folding" }
 highlights = { path = "../highlights" }
 hover = { path = "../hover" }
 inlay-hints = { path = "../inlay-hints" }
+ipc = { path = "../ipc" }
 line-index = { path = "../line-index" }
 links = { path = "../links" }
 log = "0.4.21"

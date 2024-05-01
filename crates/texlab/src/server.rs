@@ -51,6 +51,7 @@ enum InternalMessage {
     Diagnostics,
     ChktexFinished(Url, Vec<diagnostics::Diagnostic>),
     ForwardSearch(Url, Option<Position>),
+    InverseSearch(TextDocumentPositionParams),
 }
 
 pub struct Server {
@@ -942,6 +943,27 @@ impl Server {
         Ok(results)
     }
 
+    fn inverse_search(&self, params: TextDocumentPositionParams) -> Result<()> {
+        if !self.client_flags.show_document {
+            log::warn!("Inverse search request received although the client does not support window/showDocument: {params:?}");
+        }
+
+        let position = lsp_types::Position::new(params.position.line, 0);
+        let params = lsp_types::ShowDocumentParams {
+            uri: params.text_document.uri,
+            take_focus: Some(true),
+            external: Some(false),
+            selection: Some(lsp_types::Range::new(position, position)),
+        };
+
+        let client = self.client.clone();
+        self.pool.execute(move || {
+            let _ = client.send_request::<ShowDocument>(params);
+        });
+
+        Ok(())
+    }
+
     fn parse_command_params<T: DeserializeOwned>(
         &self,
         params: Vec<serde_json::Value>,
@@ -953,6 +975,13 @@ impl Server {
         let value = params.into_iter().next().unwrap();
         let value = serde_json::from_value(value)?;
         Ok(value)
+    }
+
+    fn setup_ipc_server(&mut self) {
+        let sender = self.internal_tx.clone();
+        let _ = ipc::spawn_server(move |params: TextDocumentPositionParams| {
+            let _ = sender.send(InternalMessage::InverseSearch(params));
+        });
     }
 
     fn process_messages(&mut self) -> Result<()> {
@@ -1059,6 +1088,9 @@ impl Server {
                         InternalMessage::ForwardSearch(uri, position) => {
                             self.forward_search(None, uri, position)?;
                         }
+                        InternalMessage::InverseSearch(params) => {
+                            self.inverse_search(params)?;
+                        }
                     };
                 }
             };
@@ -1081,6 +1113,7 @@ impl Server {
 
         self.register_configuration();
         self.pull_options();
+        self.setup_ipc_server();
         self.process_messages()?;
         self.pool.join();
         Ok(())
