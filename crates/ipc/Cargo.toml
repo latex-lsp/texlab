@@ -8,10 +8,10 @@ rust-version.workspace = true
 
 [dependencies]
 crossbeam-channel = "0.5.12"
-interprocess = "2.0.0"
 serde = "1.0.199"
 serde_json = "1.0.116"
 log = "0.4.21"
+uds_windows = "1.1.0"
 
 [lib]
 doctest = false

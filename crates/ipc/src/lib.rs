@@ -1,14 +1,23 @@
-use std::io::{self, BufRead, BufReader, BufWriter};
+use std::{
+    io::{self, BufRead, BufReader, BufWriter, Read},
+    path::PathBuf,
+};
 
-use interprocess::local_socket::{prelude::*, GenericNamespaced, ListenerOptions, Stream};
 use serde::{de::DeserializeOwned, Serialize};
 
-const SOCKET_NAME: &str = "texlab.sock";
+#[cfg(unix)]
+use std::os::unix::net::{UnixListener, UnixStream};
+
+#[cfg(windows)]
+use uds_windows::{UnixListener, UnixStream};
+
+fn socket_path() -> PathBuf {
+    std::env::temp_dir().join("texlab.sock")
+}
 
 pub fn send_request<T: Serialize>(msg: T) -> io::Result<()> {
-    let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>()?;
-    let conn = Stream::connect(name)?;
-    let mut conn = BufWriter::new(conn);
+    let stream = UnixStream::connect(socket_path())?;
+    let mut conn = BufWriter::new(stream);
     serde_json::to_writer(&mut conn, &msg)?;
     Ok(())
 }
@@ -18,20 +27,9 @@ where
     T: DeserializeOwned,
     F: FnMut(T) + Send + 'static,
 {
-    if cfg!(unix) {
-        let sock_file = std::env::temp_dir().join(format!("{SOCKET_NAME}.sock"));
-        let _ = std::fs::remove_file(sock_file);
-    }
-
-    let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>()?;
-    let opts = ListenerOptions::new().name(name);
-    let listener = match opts.create_sync() {
-        Err(e) if e.kind() == io::ErrorKind::AddrInUse => {
-            log::warn!("Unable to open socket {SOCKET_NAME} because it is already in use.");
-            return Err(e.into());
-        }
-        x => x?,
-    };
+    let socket_path = socket_path();
+    let _ = std::fs::remove_file(&socket_path);
+    let listener = UnixListener::bind(socket_path)?;
 
     std::thread::spawn(move || {
         for conn in listener.incoming().flatten() {
@@ -42,7 +40,7 @@ where
     Ok(())
 }
 
-fn handle_request<T, F>(conn: Stream, event_handler: &mut F) -> io::Result<()>
+fn handle_request<T, F>(conn: impl Read, event_handler: &mut F) -> io::Result<()>
 where
     T: DeserializeOwned,
     F: FnMut(T),
