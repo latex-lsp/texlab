@@ -5,7 +5,6 @@ use regex::Regex;
 
 #[derive(Debug, Default)]
 pub struct Config {
-    pub root_dir: Option<String>,
     pub build: BuildConfig,
     pub diagnostics: DiagnosticsConfig,
     pub formatting: FormattingConfig,
