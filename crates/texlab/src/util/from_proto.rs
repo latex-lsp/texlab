@@ -361,7 +361,5 @@ pub fn config(value: Options) -> Config {
         .label_reference_commands
         .extend(value.experimental.label_reference_commands);
 
-    config.root_dir = value.root_directory;
-
     config
 }

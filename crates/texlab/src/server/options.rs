@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 #[serde(default)]
 pub struct Options {
-    pub root_directory: Option<String>,
     pub aux_directory: Option<String>,
     pub bibtex_formatter: BibtexFormatter,
     pub latex_formatter: LatexFormatter,
