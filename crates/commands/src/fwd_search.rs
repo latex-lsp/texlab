@@ -103,7 +103,7 @@ impl ForwardSearch {
             })
             .ok_or_else(|| ForwardSearchError::InvalidPath(document.uri.clone()))?;
 
-        let pdf_path = pdf_dir.join(&pdf_name);
+        let pdf_path = pdf_dir.join(pdf_name);
         let pdf_exists = pdf_path.exists();
 
         log::debug!("[FwdSearch] pdf_path={pdf_path:?}, pdf_exists={pdf_exists}");

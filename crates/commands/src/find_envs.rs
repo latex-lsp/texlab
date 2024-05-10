@@ -53,7 +53,7 @@ mod tests {
         let workspace = fixture.workspace;
         let document = workspace.iter().next().unwrap();
         let offset = fixture.documents[0].cursor.unwrap();
-        let results = find_environments(&document, offset);
+        let results = find_environments(document, offset);
         expect.assert_debug_eq(&results);
     }
 

@@ -21,7 +21,7 @@ pub fn complete_tikz_libraries<'a>(
     };
 
     for name in libraries {
-        if let Some(score) = builder.matcher.score(&name, &cursor.text) {
+        if let Some(score) = builder.matcher.score(name, &cursor.text) {
             let data = CompletionItemData::TikzLibrary(name);
             builder
                 .items

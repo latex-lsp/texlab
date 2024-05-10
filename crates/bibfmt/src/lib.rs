@@ -126,7 +126,7 @@ impl<'a> Formatter<'a> {
             }
             bibtex::FIELD => {
                 let field = bibtex::Field::cast(parent).unwrap();
-                self.output.push_str(&self.indent);
+                self.output.push_str(self.indent);
                 let name = field.name_token().unwrap();
                 self.output.push_str(name.text());
                 self.output.push_str(" = ");

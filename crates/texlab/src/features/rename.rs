@@ -18,5 +18,5 @@ pub fn rename_all(
     let new_name = &params.new_name;
     let params = from_proto::rename_params(workspace, params.text_document_position)?;
     let result = rename::rename(params);
-    Some(to_proto::workspace_edit(result, &new_name))
+    Some(to_proto::workspace_edit(result, new_name))
 }

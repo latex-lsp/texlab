@@ -23,9 +23,9 @@ struct RenameBuilder<'a> {
 }
 
 pub fn prepare_rename(params: &RenameParams) -> Option<TextRange> {
-    command::prepare_rename(&params)
-        .or_else(|| entry::prepare_rename(&params))
-        .or_else(|| label::prepare_rename(&params))
+    command::prepare_rename(params)
+        .or_else(|| entry::prepare_rename(params))
+        .or_else(|| label::prepare_rename(params))
         .map(|span| span.range)
 }
 

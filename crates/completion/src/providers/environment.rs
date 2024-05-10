@@ -48,7 +48,7 @@ impl<'a, 'b> Processor<'a, 'b> {
         for package in included_packages(&self.inner.params.feature) {
             let envs_with_score = package.environments.iter().filter_map(|env| {
                 let matcher = &self.inner.builder.matcher;
-                let score = matcher.score(&env, &self.inner.cursor.text)?;
+                let score = matcher.score(env, &self.inner.cursor.text)?;
                 Some((*env, score))
             });
 
@@ -76,7 +76,7 @@ impl<'a, 'b> Processor<'a, 'b> {
         {
             let matcher = &self.inner.builder.matcher;
             let name = theorem.name.text.as_str();
-            if let Some(score) = matcher.score(&name, &self.inner.cursor.text) {
+            if let Some(score) = matcher.score(name, &self.inner.cursor.text) {
                 let data = CompletionItemData::Environment(EnvironmentData {
                     name,
                     package: None,

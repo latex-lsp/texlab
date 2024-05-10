@@ -14,7 +14,7 @@ pub fn complete_colors<'a>(
     latex::ColorReference::cast(group.syntax().parent()?)?;
 
     for name in COLORS {
-        if let Some(score) = builder.matcher.score(&name, &cursor.text) {
+        if let Some(score) = builder.matcher.score(name, &cursor.text) {
             let data = CompletionItemData::Color(name);
             builder
                 .items

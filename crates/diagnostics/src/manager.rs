@@ -98,7 +98,7 @@ impl Manager {
         for (_, diagnostics) in &mut results {
             diagnostics.retain(|diagnostic| {
                 filter_regex_patterns(
-                    &diagnostic.message(),
+                    diagnostic.message(),
                     &config.allowed_patterns,
                     &config.ignored_patterns,
                 )

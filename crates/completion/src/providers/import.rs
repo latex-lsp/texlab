@@ -29,13 +29,13 @@ pub fn complete_imports<'a>(
         file_names.insert(file_name);
         let stem = &file_name[0..file_name.len() - 4];
         if kind == latex::PACKAGE_INCLUDE {
-            if let Some(score) = builder.matcher.score(&stem, &cursor.text) {
+            if let Some(score) = builder.matcher.score(stem, &cursor.text) {
                 let data = CompletionItemData::Package(stem);
                 builder
                     .items
                     .push(CompletionItem::new_simple(score, cursor.range, data));
             }
-        } else if let Some(score) = builder.matcher.score(&stem, &cursor.text) {
+        } else if let Some(score) = builder.matcher.score(stem, &cursor.text) {
             let data = CompletionItemData::DocumentClass(stem);
             builder
                 .items
@@ -51,13 +51,13 @@ pub fn complete_imports<'a>(
     {
         let stem = &file_name[0..file_name.len() - 4];
         if kind == latex::PACKAGE_INCLUDE {
-            if let Some(score) = builder.matcher.score(&stem, &cursor.text) {
+            if let Some(score) = builder.matcher.score(stem, &cursor.text) {
                 let data = CompletionItemData::Package(stem);
                 builder
                     .items
                     .push(CompletionItem::new_simple(score, cursor.range, data));
             }
-        } else if let Some(score) = builder.matcher.score(&stem, &cursor.text) {
+        } else if let Some(score) = builder.matcher.score(stem, &cursor.text) {
             let data = CompletionItemData::DocumentClass(stem);
             builder
                 .items
