@@ -89,13 +89,9 @@ impl Manager {
 
         let config = &workspace.config().diagnostics;
 
-        results.retain(|uri, _| {
-            workspace
-                .lookup(uri)
-                .map_or(false, |document| Self::is_relevant(document))
-        });
+        results.retain(|uri, _| workspace.lookup(uri).map_or(false, Self::is_relevant));
 
-        for (_, diagnostics) in &mut results {
+        for diagnostics in results.values_mut() {
             diagnostics.retain(|diagnostic| {
                 filter_regex_patterns(
                     diagnostic.message(),

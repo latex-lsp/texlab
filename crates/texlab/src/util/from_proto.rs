@@ -121,20 +121,17 @@ pub fn client_flags(
     }
 }
 
-pub fn rename_params<'a>(
-    workspace: &'a Workspace,
+pub fn rename_params(
+    workspace: &Workspace,
     params: lsp_types::TextDocumentPositionParams,
-) -> Option<RenameParams<'a>> {
+) -> Option<RenameParams> {
     let (feature, offset) =
         feature_params_offset(workspace, params.text_document, params.position)?;
 
     Some(RenameParams { feature, offset })
 }
 
-pub fn hover_params<'a>(
-    workspace: &'a Workspace,
-    params: lsp_types::HoverParams,
-) -> Option<HoverParams<'a>> {
+pub fn hover_params(workspace: &Workspace, params: lsp_types::HoverParams) -> Option<HoverParams> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position_params.text_document,
@@ -144,8 +141,8 @@ pub fn hover_params<'a>(
     Some(HoverParams { feature, offset })
 }
 
-pub fn inlay_hint_params<'a>(
-    workspace: &'a Workspace,
+pub fn inlay_hint_params(
+    workspace: &Workspace,
     params: lsp_types::InlayHintParams,
 ) -> Option<InlayHintParams> {
     let feature = feature_params(workspace, params.text_document)?;
@@ -153,10 +150,10 @@ pub fn inlay_hint_params<'a>(
     Some(InlayHintParams { feature, range })
 }
 
-pub fn highlight_params<'a>(
-    workspace: &'a Workspace,
+pub fn highlight_params(
+    workspace: &Workspace,
     params: lsp_types::DocumentHighlightParams,
-) -> Option<HighlightParams<'a>> {
+) -> Option<HighlightParams<'_>> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position_params.text_document,
@@ -166,10 +163,10 @@ pub fn highlight_params<'a>(
     Some(HighlightParams { feature, offset })
 }
 
-pub fn definition_params<'a>(
-    workspace: &'a Workspace,
+pub fn definition_params(
+    workspace: &Workspace,
     params: lsp_types::GotoDefinitionParams,
-) -> Option<DefinitionParams<'a>> {
+) -> Option<DefinitionParams> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position_params.text_document,
@@ -179,10 +176,10 @@ pub fn definition_params<'a>(
     Some(DefinitionParams { feature, offset })
 }
 
-pub fn completion_params<'a>(
-    workspace: &'a Workspace,
+pub fn completion_params(
+    workspace: &Workspace,
     params: lsp_types::CompletionParams,
-) -> Option<CompletionParams<'a>> {
+) -> Option<CompletionParams> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position.text_document,
@@ -192,10 +189,10 @@ pub fn completion_params<'a>(
     Some(CompletionParams { feature, offset })
 }
 
-pub fn reference_params<'a>(
-    workspace: &'a Workspace,
+pub fn reference_params(
+    workspace: &Workspace,
     params: lsp_types::ReferenceParams,
-) -> Option<ReferenceParams<'a>> {
+) -> Option<ReferenceParams> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position.text_document,
@@ -210,19 +207,19 @@ pub fn reference_params<'a>(
     })
 }
 
-pub fn feature_params<'a>(
-    workspace: &'a Workspace,
+pub fn feature_params(
+    workspace: &Workspace,
     text_document: lsp_types::TextDocumentIdentifier,
-) -> Option<FeatureParams<'a>> {
+) -> Option<FeatureParams> {
     let document = workspace.lookup(&text_document.uri)?;
     Some(FeatureParams::new(workspace, document))
 }
 
-pub fn feature_params_offset<'a>(
-    workspace: &'a Workspace,
+pub fn feature_params_offset(
+    workspace: &Workspace,
     text_document: lsp_types::TextDocumentIdentifier,
     position: lsp_types::Position,
-) -> Option<(FeatureParams<'a>, TextSize)> {
+) -> Option<(FeatureParams, TextSize)> {
     let feature = feature_params(workspace, text_document)?;
     let offset = feature.document.line_index.offset_lsp(position)?;
     Some((feature, offset))
@@ -236,7 +233,6 @@ pub fn completion_resolve_info(item: &mut lsp_types::CompletionItem) -> Option<R
 
 pub fn config(value: Options) -> Config {
     let mut config = Config::default();
-    config.root_dir = value.root_directory;
 
     config.build.program = value.build.executable.unwrap_or(config.build.program);
     config.build.args = value.build.args.unwrap_or(config.build.args);
@@ -364,6 +360,8 @@ pub fn config(value: Options) -> Config {
         .syntax
         .label_reference_commands
         .extend(value.experimental.label_reference_commands);
+
+    config.root_dir = value.root_directory;
 
     config
 }

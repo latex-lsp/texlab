@@ -11,7 +11,7 @@ fn check(input: &str) {
         .locations()
         .filter(|location| location.document == origin_document)
         .find(|location| location.range.contains_inclusive(offset))
-        .map_or_else(|| TextRange::default(), |location| location.range);
+        .map_or_else(TextRange::default, |location| location.range);
 
     let mut expected = FxHashSet::default();
     for document in &fixture.documents {

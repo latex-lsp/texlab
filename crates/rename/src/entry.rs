@@ -30,7 +30,7 @@ pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
     }
 }
 
-pub(super) fn rename<'a>(builder: &mut RenameBuilder) -> Option<()> {
+pub(super) fn rename(builder: &mut RenameBuilder) -> Option<()> {
     let name = prepare_rename(&builder.params)?;
 
     let project = &builder.params.feature.project;

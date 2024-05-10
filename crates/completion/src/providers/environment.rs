@@ -21,7 +21,7 @@ pub fn complete_environments<'a>(
         .and_then(|env| env.begin())
         .and_then(|begin| begin.name())
         .and_then(|name| name.key())
-        .map_or_else(|| String::new(), |name| name.to_string());
+        .map_or_else(String::new, |name| name.to_string());
 
     let mut proc = Processor {
         inner: ProviderContext {

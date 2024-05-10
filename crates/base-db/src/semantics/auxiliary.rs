@@ -36,7 +36,7 @@ impl Semantics {
                 Some(group)
             })?;
 
-        let text = group.content_text()?.replace('{', "").replace('}', "");
+        let text = group.content_text()?.replace(['{', '}'], "");
         self.label_numbers.insert(name, text);
         Some(())
     }

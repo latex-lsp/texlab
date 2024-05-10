@@ -29,7 +29,7 @@ pub fn prepare_rename(params: &RenameParams) -> Option<TextRange> {
         .map(|span| span.range)
 }
 
-pub fn rename<'a>(params: RenameParams<'a>) -> RenameResult<'a> {
+pub fn rename(params: RenameParams) -> RenameResult {
     let result = RenameResult::default();
     let mut builder = RenameBuilder { params, result };
 
