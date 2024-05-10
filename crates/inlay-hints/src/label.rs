@@ -9,7 +9,6 @@ use crate::{InlayHint, InlayHintBuilder, InlayHintData};
 
 pub(super) fn find_hints(builder: &mut InlayHintBuilder) -> Option<()> {
     let definitions = base_db::semantics::tex::Label::find_all(&builder.params.feature.project)
-        .into_iter()
         .filter(|(_, label)| label.kind == LabelKind::Definition)
         .map(|(_, label)| (label.name_text(), label))
         .collect::<FxHashMap<_, _>>();

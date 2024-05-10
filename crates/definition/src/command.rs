@@ -28,13 +28,11 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
                 process_old_definition(node.clone()).or_else(|| process_new_definition(node))
             })
             .filter(|(_, command)| command.text() == name.text())
-            .filter_map(|(target_range, command)| {
-                Some(DefinitionResult {
-                    origin_selection_range,
-                    target: document,
-                    target_range,
-                    target_selection_range: command.text_range(),
-                })
+            .map(|(target_range, command)| DefinitionResult {
+                origin_selection_range,
+                target: document,
+                target_range,
+                target_selection_range: command.text_range(),
             });
 
         context.results.extend(results);

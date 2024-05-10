@@ -33,10 +33,10 @@ pub struct BuildResult {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum BuildStatus {
-    SUCCESS = 0,
-    ERROR = 1,
-    FAILURE = 2,
-    CANCELLED = 3,
+    Success = 0,
+    Error = 1,
+    Failure = 2,
+    Cancelled = 3,
 }
 
 pub struct ForwardSearchRequest;
@@ -52,21 +52,21 @@ impl lsp_types::request::Request for ForwardSearchRequest {
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize_repr, Deserialize_repr)]
 #[repr(i32)]
 pub enum ForwardSearchStatus {
-    SUCCESS = 0,
-    ERROR = 1,
-    FAILURE = 2,
-    UNCONFIGURED = 3,
+    Success = 0,
+    Error = 1,
+    Failure = 2,
+    Unconfigured = 3,
 }
 
 impl From<ForwardSearchError> for ForwardSearchStatus {
     fn from(why: ForwardSearchError) -> Self {
         match why {
-            ForwardSearchError::Unconfigured => ForwardSearchStatus::UNCONFIGURED,
-            ForwardSearchError::NotLocal(_) => ForwardSearchStatus::FAILURE,
-            ForwardSearchError::InvalidPath(_) => ForwardSearchStatus::ERROR,
-            ForwardSearchError::TexNotFound(_) => ForwardSearchStatus::FAILURE,
-            ForwardSearchError::PdfNotFound(_) => ForwardSearchStatus::ERROR,
-            ForwardSearchError::LaunchViewer(_) => ForwardSearchStatus::ERROR,
+            ForwardSearchError::Unconfigured => ForwardSearchStatus::Unconfigured,
+            ForwardSearchError::NotLocal(_) => ForwardSearchStatus::Failure,
+            ForwardSearchError::InvalidPath(_) => ForwardSearchStatus::Error,
+            ForwardSearchError::TexNotFound(_) => ForwardSearchStatus::Failure,
+            ForwardSearchError::PdfNotFound(_) => ForwardSearchStatus::Error,
+            ForwardSearchError::LaunchViewer(_) => ForwardSearchStatus::Error,
         }
     }
 }

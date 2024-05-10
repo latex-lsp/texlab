@@ -11,7 +11,7 @@ pub struct Options {
 impl Options {
     fn indent(&self) -> String {
         if self.insert_spaces {
-            std::iter::repeat(' ').take(self.tab_size).collect()
+            " ".repeat(self.tab_size)
         } else {
             String::from("\t")
         }
@@ -160,7 +160,7 @@ impl<'a> Formatter<'a> {
                     if length + current_length + space_length > self.options.line_length {
                         self.output.push('\n');
                         self.output.push_str(self.indent.as_ref());
-                        for _ in 0..=align - self.options.tab_size as usize {
+                        for _ in 0..=align - self.options.tab_size {
                             self.output.push(' ');
                         }
                         length = align;

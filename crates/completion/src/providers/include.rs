@@ -19,9 +19,7 @@ pub fn complete_includes<'a>(
     params: &'a CompletionParams<'a>,
     builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
-    if params.feature.document.path.is_none() {
-        return None;
-    }
+    params.feature.document.path.as_ref()?;
 
     let (cursor, group) = find_curly_group_word_list(params)?;
 

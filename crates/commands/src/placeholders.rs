@@ -45,6 +45,6 @@ mod tests {
             &[('f', "foo")],
         );
 
-        assert_eq!(output, vec!["foo".into(), "%f", "%f".into(), "foobar"]);
+        assert_eq!(output, vec!["foo", "%f", "%f", "foobar"]);
     }
 }

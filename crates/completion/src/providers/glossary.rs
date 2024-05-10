@@ -58,7 +58,7 @@ impl<'a, 'b> Processor<'a, 'b> {
             for name in data
                 .root_node()
                 .descendants()
-                .filter_map(|node| extract(node))
+                .filter_map(&extract)
                 .filter_map(|name| name.key())
                 .map(|name| name.to_string())
             {

@@ -36,7 +36,7 @@ pub fn parse_build_log(log: &str) -> BuildLog {
     let warnings = extract_matches(&log, &ranges, &WARNING_REGEX, BuildErrorLevel::Warning);
     let bad_boxes = extract_matches(&log, &ranges, &BAD_BOX_REGEX, BuildErrorLevel::Warning);
 
-    let errors = vec![tex_errors, warnings, bad_boxes].concat();
+    let errors = [tex_errors, warnings, bad_boxes].concat();
     BuildLog { errors }
 }
 

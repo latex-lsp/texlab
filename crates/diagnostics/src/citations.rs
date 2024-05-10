@@ -24,7 +24,7 @@ pub fn detect_undefined_citations<'a>(
 
     for citation in &data.semantics.citations {
         let name = citation.name_text();
-        if name != "*" && !entries.contains(name) && !name.contains("#") {
+        if name != "*" && !entries.contains(name) && !name.contains('#') {
             let diagnostic = Diagnostic::Tex(citation.name.range, TexError::UndefinedCitation);
             results
                 .entry(document.uri.clone())
@@ -65,8 +65,8 @@ pub fn detect_unused_entries<'a>(
     Some(())
 }
 
-pub fn detect_duplicate_entries<'a>(
-    workspace: &'a Workspace,
+pub fn detect_duplicate_entries(
+    workspace: &Workspace,
     results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) {
     for conflict in queries::Conflict::find_all::<Entry>(workspace) {

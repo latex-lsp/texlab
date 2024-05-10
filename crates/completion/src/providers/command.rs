@@ -68,7 +68,7 @@ impl<'a, 'b> Processor<'a, 'b> {
                 let data = CompletionItemData::Command(CommandData {
                     name: &command.name,
                     glyph: command.glyph.as_deref(),
-                    image: command.image.as_deref(),
+                    image: command.image,
                     package: Some(package),
                 });
 

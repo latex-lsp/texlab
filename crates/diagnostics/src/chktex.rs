@@ -74,7 +74,7 @@ impl Command {
                     .build(stdout),
             );
 
-            for line in reader.lines().flatten() {
+            for line in reader.lines().map_while(Result::ok) {
                 let captures = LINE_REGEX.captures(&line).unwrap();
                 let line = captures[1].parse::<u32>().unwrap() - 1;
                 let character = captures[2].parse::<u32>().unwrap() - 1;

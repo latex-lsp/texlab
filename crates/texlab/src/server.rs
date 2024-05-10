@@ -46,7 +46,7 @@ use self::{
 #[derive(Debug)]
 enum InternalMessage {
     SetDistro(Distro),
-    SetOptions(Options),
+    SetOptions(Box<Options>),
     FileEvent(Vec<DebouncedEvent>),
     Diagnostics,
     ChktexFinished(Url, Vec<diagnostics::Diagnostic>),
@@ -309,7 +309,9 @@ impl Server {
                         .parse_options(json.pop().expect("invalid configuration request"))
                         .unwrap();
 
-                    sender.send(InternalMessage::SetOptions(options)).unwrap();
+                    sender
+                        .send(InternalMessage::SetOptions(Box::new(options)))
+                        .unwrap();
                 }
                 Err(why) => {
                     log::error!("Retrieving configuration failed: {}", why);
@@ -700,19 +702,19 @@ impl Server {
 
                     let status = if pending_builds.lock().remove(&pid) {
                         if result?.success() {
-                            BuildStatus::SUCCESS
+                            BuildStatus::Success
                         } else {
-                            BuildStatus::ERROR
+                            BuildStatus::Error
                         }
                     } else {
-                        BuildStatus::CANCELLED
+                        BuildStatus::Cancelled
                     };
 
                     Ok(status)
                 })
                 .unwrap_or_else(|why| {
                     log::error!("Failed to compile document \"{uri}\": {why}");
-                    BuildStatus::FAILURE
+                    BuildStatus::Failure
                 });
 
             drop(progress_reporter);
@@ -723,7 +725,7 @@ impl Server {
                 let _ = client.send_response(lsp_server::Response::new_ok(id, result));
             }
 
-            if fwd_search_after && status != BuildStatus::CANCELLED {
+            if fwd_search_after && status != BuildStatus::Cancelled {
                 let _ = internal.send(InternalMessage::ForwardSearch(uri, params.position));
             }
         });
@@ -760,7 +762,7 @@ impl Server {
 
         self.pool.execute(move || {
             let status = match command.and_then(ForwardSearch::run) {
-                Ok(()) => ForwardSearchStatus::SUCCESS,
+                Ok(()) => ForwardSearchStatus::Success,
                 Err(why) => {
                     log::error!("Failed to execute forward search: {why}");
                     ForwardSearchStatus::from(why)
@@ -1071,7 +1073,7 @@ impl Server {
                             self.workspace.write().set_distro(distro);
                         }
                         InternalMessage::SetOptions(options) => {
-                            self.update_options(options);
+                            self.update_options(*options);
                         }
                         InternalMessage::FileEvent(events) => {
                             for event in events {

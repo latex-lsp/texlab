@@ -22,7 +22,7 @@ pub struct Edge {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum EdgeData {
-    DirectLink(DirectLinkData),
+    DirectLink(Box<DirectLinkData>),
     AdditionalFiles,
     Artifact,
 }
@@ -179,7 +179,7 @@ impl Graph {
                     self.edges.push(Edge {
                         source: start.source.uri.clone(),
                         target: target.uri.clone(),
-                        data: EdgeData::DirectLink(link_data),
+                        data: EdgeData::DirectLink(Box::new(link_data)),
                     });
 
                     break;

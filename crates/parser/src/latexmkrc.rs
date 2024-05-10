@@ -106,7 +106,7 @@ mod v484 {
         let mut it = lines
             .skip_while(|line| !line.starts_with("Latexmk: Normalized aux dir and out dirs:"))
             .nth(1)?
-            .split(",");
+            .split(',');
 
         let aux_dir = it.next()?.trim().strip_prefix('\'')?.strip_suffix('\'')?;
 
@@ -133,7 +133,7 @@ pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<Latexmkrc
         .as_ref()
         .and_then(|line| Some((line.find("Version")?, line)))
         .and_then(|(i, line)| line[i..].trim_end().strip_prefix("Version "))
-        .and_then(|text| versions::Versioning::new(text));
+        .and_then(versions::Versioning::new);
 
     let result = if version.map_or(false, |v| v >= versions::Versioning::new("4.84").unwrap()) {
         v484::parse_latexmkrc(input, src_dir)

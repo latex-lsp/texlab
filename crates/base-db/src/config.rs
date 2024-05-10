@@ -3,7 +3,7 @@ use std::time::Duration;
 use parser::SyntaxConfig;
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Config {
     pub root_dir: Option<String>,
     pub build: BuildConfig,
@@ -36,7 +36,7 @@ pub struct DiagnosticsConfig {
     pub delay: Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ChktexConfig {
     pub on_open: bool,
     pub on_save: bool,
@@ -65,13 +65,13 @@ pub enum Formatter {
     LatexIndent,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LatexIndentConfig {
     pub local: Option<String>,
     pub modify_line_breaks: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SymbolConfig {
     pub allowed_patterns: Vec<Regex>,
     pub ignored_patterns: Vec<Regex>,
@@ -94,22 +94,6 @@ pub enum MatchingAlgo {
     SkimIgnoreCase,
     Prefix,
     PrefixIgnoreCase,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            root_dir: None,
-            build: BuildConfig::default(),
-            diagnostics: DiagnosticsConfig::default(),
-            formatting: FormattingConfig::default(),
-            synctex: None,
-            symbols: SymbolConfig::default(),
-            syntax: SyntaxConfig::default(),
-            completion: CompletionConfig::default(),
-            inlay_hints: InlayHintConfig::default(),
-        }
-    }
 }
 
 impl Default for BuildConfig {
@@ -141,17 +125,6 @@ impl Default for DiagnosticsConfig {
     }
 }
 
-impl Default for ChktexConfig {
-    fn default() -> Self {
-        Self {
-            on_open: false,
-            on_save: false,
-            on_edit: false,
-            additional_args: Vec::new(),
-        }
-    }
-}
-
 impl Default for FormattingConfig {
     fn default() -> Self {
         Self {
@@ -159,24 +132,6 @@ impl Default for FormattingConfig {
             bib_formatter: Formatter::Server,
             line_length: 80,
             latex_indent: LatexIndentConfig::default(),
-        }
-    }
-}
-
-impl Default for LatexIndentConfig {
-    fn default() -> Self {
-        Self {
-            local: None,
-            modify_line_breaks: false,
-        }
-    }
-}
-
-impl Default for SymbolConfig {
-    fn default() -> Self {
-        Self {
-            allowed_patterns: Vec::new(),
-            ignored_patterns: Vec::new(),
         }
     }
 }
