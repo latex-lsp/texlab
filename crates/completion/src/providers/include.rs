@@ -115,7 +115,7 @@ fn current_dir(
     graphics_path: Option<&str>,
 ) -> Option<PathBuf> {
     let workspace = &params.workspace;
-    let parent = deps::parents(&workspace, params.document)
+    let parent = deps::parents(workspace, params.document)
         .iter()
         .next()
         .map_or(params.document, Clone::clone);

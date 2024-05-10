@@ -99,7 +99,7 @@ impl Workspace {
             Cow::Owned(text) => text,
         };
 
-        let owner = if self.distro.file_name_db.contains(&path) {
+        let owner = if self.distro.file_name_db.contains(path) {
             Owner::Distro
         } else {
             Owner::Server

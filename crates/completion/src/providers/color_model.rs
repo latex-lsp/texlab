@@ -14,7 +14,7 @@ pub fn complete_color_models<'a>(
     let cursor = check_color_definition(params).or_else(|| check_color_definition_set(params))?;
 
     for name in MODEL_NAMES {
-        if let Some(score) = builder.matcher.score(&name, &cursor.text) {
+        if let Some(score) = builder.matcher.score(name, &cursor.text) {
             let data = CompletionItemData::ColorModel(name);
             builder
                 .items

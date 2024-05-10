@@ -14,7 +14,7 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
         .name_text();
 
     let project = &context.params.feature.project;
-    for (document, label) in queries::objects_with_name::<tex::Label>(&project, name) {
+    for (document, label) in queries::objects_with_name::<tex::Label>(project, name) {
         let kind = match label.kind {
             tex::LabelKind::Definition => ReferenceKind::Definition,
             tex::LabelKind::Reference | tex::LabelKind::ReferenceRange => ReferenceKind::Reference,

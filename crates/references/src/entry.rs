@@ -30,14 +30,14 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
     };
 
     let project = &context.params.feature.project;
-    for (document, obj) in queries::objects_with_name::<tex::Citation>(&project, name) {
+    for (document, obj) in queries::objects_with_name::<tex::Citation>(project, name) {
         context.results.push(Reference {
             location: DocumentLocation::new(document, obj.name.range),
             kind: ReferenceKind::Reference,
         });
     }
 
-    for (document, obj) in queries::objects_with_name::<bib::Entry>(&project, name) {
+    for (document, obj) in queries::objects_with_name::<bib::Entry>(project, name) {
         context.results.push(Reference {
             location: DocumentLocation::new(document, obj.name.range),
             kind: ReferenceKind::Definition,

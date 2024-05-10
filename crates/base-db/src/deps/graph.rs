@@ -159,7 +159,7 @@ impl Graph {
         for target_uri in file_names
             .iter()
             .flat_map(|file_name| {
-                util::expand_relative_path(&file_name, &start.root.src_dir, workspace.folders())
+                util::expand_relative_path(file_name, &start.root.src_dir, workspace.folders())
             })
             .chain(distro_files)
         {

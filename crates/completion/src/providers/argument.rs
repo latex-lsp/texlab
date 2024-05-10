@@ -37,7 +37,7 @@ pub fn complete_arguments<'a>(
                 .filter(|(i, _)| *i == index)
             {
                 for arg in &param.0 {
-                    if let Some(score) = builder.matcher.score(&arg.name, &cursor.text) {
+                    if let Some(score) = builder.matcher.score(arg.name, &cursor.text) {
                         let data = CompletionItemData::Argument(ArgumentData(arg));
                         builder
                             .items

@@ -44,7 +44,7 @@ impl<'a, 'b> Processor<'a, 'b> {
 
     pub fn add_delimiters(&mut self) {
         for (left, right) in DELIMITERS {
-            let Some(score) = self.0.builder.matcher.score(&left, &self.0.cursor.text) else {
+            let Some(score) = self.0.builder.matcher.score(left, &self.0.cursor.text) else {
                 continue;
             };
 

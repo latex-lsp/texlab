@@ -6,14 +6,14 @@ fn check(input: &str, expect: Expect) {
     let mut manager = crate::Manager::default();
 
     for document in fixture.workspace.iter() {
-        manager.update_syntax(&fixture.workspace, &document);
+        manager.update_syntax(&fixture.workspace, document);
     }
 
     let results = manager.get(&fixture.workspace);
     let results = results
         .iter()
         .filter(|(_, diags)| !diags.is_empty())
-        .sorted_by(|(uri1, _), (uri2, _)| uri1.cmp(&uri2))
+        .sorted_by(|(uri1, _), (uri2, _)| uri1.cmp(uri2))
         .map(|(uri, diags)| (uri.as_str(), diags))
         .collect_vec();
 

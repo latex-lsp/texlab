@@ -31,11 +31,11 @@ impl ProjectRoot {
             }
 
             let Ok(parent) = current.join("..") else {
-                break Self::from_config(workspace, &dir);
+                break Self::from_config(workspace, dir);
             };
 
             if current == parent || Some(&parent) == home_dir.as_ref() {
-                break Self::from_config(workspace, &dir);
+                break Self::from_config(workspace, dir);
             }
 
             current = parent;
