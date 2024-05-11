@@ -47,7 +47,7 @@ lsp-server = "0.7.6"
 lsp-types = "0.95.1"
 notify = "6.1.1"
 notify-debouncer-full = "0.3.1"
-parking_lot = "0.12.1"
+parking_lot = "0.12.2"
 parser = { path = "../parser" }
 references = { path = "../references" }
 regex = "1.10.4"
