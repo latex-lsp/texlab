@@ -116,6 +116,11 @@ impl Semantics {
             return;
         };
 
+        let name = Span::from(&name);
+        if name.text.contains('#') {
+            return;
+        }
+
         let full_range = latex::small_range(&label);
         let mut objects = Vec::new();
         for node in label.syntax().ancestors() {
@@ -185,7 +190,7 @@ impl Semantics {
 
         self.labels.push(Label {
             kind: LabelKind::Definition,
-            name: Span::from(&name),
+            name,
             targets: objects,
             full_range,
         });
@@ -198,33 +203,42 @@ impl Semantics {
 
         let full_range = latex::small_range(&label);
         for name in name_list.keys() {
-            self.labels.push(Label {
-                kind: LabelKind::Reference,
-                name: Span::from(&name),
-                targets: Vec::new(),
-                full_range,
-            });
+            let name = Span::from(&name);
+            if !name.text.contains('#') {
+                self.labels.push(Label {
+                    kind: LabelKind::Reference,
+                    name,
+                    targets: Vec::new(),
+                    full_range,
+                });
+            }
         }
     }
 
     fn process_label_reference_range(&mut self, label: latex::LabelReferenceRange) {
         let full_range = latex::small_range(&label);
         if let Some(from) = label.from().and_then(|group| group.key()) {
-            self.labels.push(Label {
-                kind: LabelKind::ReferenceRange,
-                name: Span::from(&from),
-                targets: Vec::new(),
-                full_range,
-            });
+            let name = Span::from(&from);
+            if !name.text.contains('#') {
+                self.labels.push(Label {
+                    kind: LabelKind::ReferenceRange,
+                    name,
+                    targets: Vec::new(),
+                    full_range,
+                });
+            }
         }
 
         if let Some(to) = label.to().and_then(|group| group.key()) {
-            self.labels.push(Label {
-                kind: LabelKind::ReferenceRange,
-                name: Span::from(&to),
-                targets: Vec::new(),
-                full_range,
-            });
+            let name = Span::from(&to);
+            if !name.text.contains('#') {
+                self.labels.push(Label {
+                    kind: LabelKind::ReferenceRange,
+                    name,
+                    targets: Vec::new(),
+                    full_range,
+                });
+            }
         }
     }
 
@@ -232,10 +246,13 @@ impl Semantics {
         let full_range = latex::small_range(&citation);
         if let Some(list) = citation.key_list() {
             for key in list.keys() {
-                self.citations.push(Citation {
-                    name: Span::from(&key),
-                    full_range,
-                });
+                let name = Span::from(&key);
+                if !name.text.contains('#') {
+                    self.citations.push(Citation {
+                        name: Span::from(&key),
+                        full_range,
+                    });
+                }
             }
         }
     }

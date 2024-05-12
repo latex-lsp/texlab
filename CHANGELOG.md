@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove unused `texlab.rootDirectory` setting
 
+### Fixed
+
+- Don't treat `\label{}` and `\ref{}` with macro parameter as label commands ([#1119](https://github.com/latex-lsp/texlab/issues/1119))
+
 ## [5.16.0] - 2024-05-01
 
 ### Added
