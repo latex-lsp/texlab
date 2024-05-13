@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.83"
 base-db = { path = "../base-db" }
 bibfmt = { path = "../bibfmt" }
 citeproc = { path = "../citeproc" }
