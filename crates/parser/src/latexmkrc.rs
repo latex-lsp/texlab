@@ -28,9 +28,9 @@ mod v483 {
             .current_dir(temp_dir.path())
             .output()?;
 
-        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
 
-        let (aux_dir, out_dir) = stderr.lines().find_map(extract_dirs).ok_or_else(|| {
+        let (aux_dir, out_dir) = stdout.lines().find_map(extract_dirs).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Normalized aux and out dir were not found in latexmk output",
