@@ -7,7 +7,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.86"
 rustc-hash = "1.1.0"
 
 [lib]
