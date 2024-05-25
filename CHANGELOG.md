@@ -5,16 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Changed
-
-- Remove unused `texlab.rootDirectory` setting
+## [5.16.1] - 2024-05-25
 
 ### Fixed
 
 - Don't treat `\label{}` and `\ref{}` with macro parameter as label commands ([#1119](https://github.com/latex-lsp/texlab/issues/1119))
 - Fix parsing `latexmkrc` for `latexmk` versions older than `v4.8.4` ([#1128](https://github.com/latex-lsp/texlab/issues/1128))
+- Remove unused `texlab.rootDirectory` setting from documentation
 
 ## [5.16.0] - 2024-05-01
 
