@@ -17,7 +17,7 @@ log = "0.4.21"
 rowan = "0.15.15"
 rustc-hash = "1.1.0"
 syntax = { path = "../syntax" }
-thiserror = "1.0.59"
+thiserror = "1.0.61"
 url = "2.5.0"
 
 [dev-dependencies]
