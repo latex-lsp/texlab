@@ -1,5 +1,6 @@
-use regex::Regex;
 use serde::{Deserialize, Serialize};
+
+use regex::Regex;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -125,7 +126,9 @@ pub struct ExperimentalOptions {
     pub verbatim_environments: Vec<String>,
     pub citation_commands: Vec<String>,
     pub label_definition_commands: Vec<String>,
+    pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: Vec<String>,
+    pub label_reference_prefixes: Vec<(String, String)>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

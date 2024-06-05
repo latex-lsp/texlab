@@ -358,8 +358,18 @@ pub fn config(value: Options) -> Config {
 
     config
         .syntax
+        .label_definition_prefixes
+        .extend(value.experimental.label_definition_prefixes);
+
+    config
+        .syntax
         .label_reference_commands
         .extend(value.experimental.label_reference_commands);
+
+    config
+        .syntax
+        .label_reference_prefixes
+        .extend(value.experimental.label_reference_prefixes);
 
     config
 }
