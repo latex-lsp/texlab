@@ -170,7 +170,7 @@ static DEFAULT_CITATION_COMMANDS: &[&str] = &[
     "citeA*",
 ];
 
-static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label"];
+static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label", "zlabel"];
 
 static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "ref",
@@ -182,6 +182,10 @@ static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "cref*",
     "Cref",
     "Cref*",
+    "zcref",
+    "zcref*",
+    "zcpageref",
+    "zcpageref*",
     "namecref",
     "nameCref",
     "lcnamecref",
