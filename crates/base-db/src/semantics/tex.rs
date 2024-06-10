@@ -1,9 +1,26 @@
 use rowan::{ast::AstNode, TextRange};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use syntax::latex::{self, HasBrack, HasCurly};
 use titlecase::titlecase;
 
+use parser::SyntaxConfig;
+
 use super::Span;
+use crate::semantics::tex::latex::SyntaxToken;
+
+fn maybe_prepend_prefix(
+    map: &FxHashMap<String, String>,
+    command: &Option<SyntaxToken>,
+    name: &Span,
+) -> Span {
+    match command {
+        Some(x) => Span::new(
+            map.get(&x.text()[1..]).unwrap_or(&String::new()).to_owned() + &name.text,
+            name.range,
+        ),
+        None => name.clone(),
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct Semantics {
@@ -19,11 +36,11 @@ pub struct Semantics {
 }
 
 impl Semantics {
-    pub fn process_root(&mut self, root: &latex::SyntaxNode) {
+    pub fn process_root(&mut self, conf: &SyntaxConfig, root: &latex::SyntaxNode) {
         for node in root.descendants_with_tokens() {
             match node {
                 latex::SyntaxElement::Node(node) => {
-                    self.process_node(&node);
+                    self.process_node(conf, &node);
                 }
                 latex::SyntaxElement::Token(token) => {
                     if token.kind() == latex::COMMAND_NAME {
@@ -40,17 +57,17 @@ impl Semantics {
                 .any(|link| link.kind == LinkKind::Cls && link.path.text == "subfiles");
     }
 
-    fn process_node(&mut self, node: &latex::SyntaxNode) {
+    fn process_node(&mut self, conf: &SyntaxConfig, node: &latex::SyntaxNode) {
         if let Some(include) = latex::Include::cast(node.clone()) {
             self.process_include(include);
         } else if let Some(import) = latex::Import::cast(node.clone()) {
             self.process_import(import);
         } else if let Some(label) = latex::LabelDefinition::cast(node.clone()) {
-            self.process_label_definition(label);
+            self.process_label_definition(conf, label);
         } else if let Some(label) = latex::LabelReference::cast(node.clone()) {
-            self.process_label_reference(label);
+            self.process_label_reference(conf, label);
         } else if let Some(label) = latex::LabelReferenceRange::cast(node.clone()) {
-            self.process_label_reference_range(label);
+            self.process_label_reference_range(conf, label);
         } else if let Some(citation) = latex::Citation::cast(node.clone()) {
             self.process_citation(citation);
         } else if let Some(environment) = latex::Environment::cast(node.clone()) {
@@ -111,7 +128,7 @@ impl Semantics {
         });
     }
 
-    fn process_label_definition(&mut self, label: latex::LabelDefinition) {
+    fn process_label_definition(&mut self, conf: &SyntaxConfig, label: latex::LabelDefinition) {
         let Some(name) = label.name().and_then(|group| group.key()) else {
             return;
         };
@@ -190,13 +207,13 @@ impl Semantics {
 
         self.labels.push(Label {
             kind: LabelKind::Definition,
-            name,
+            name: maybe_prepend_prefix(&conf.label_definition_prefixes, &label.command(), &name),
             targets: objects,
             full_range,
         });
     }
 
-    fn process_label_reference(&mut self, label: latex::LabelReference) {
+    fn process_label_reference(&mut self, conf: &SyntaxConfig, label: latex::LabelReference) {
         let Some(name_list) = label.name_list() else {
             return;
         };
@@ -207,7 +224,11 @@ impl Semantics {
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::Reference,
-                    name,
+                    name: maybe_prepend_prefix(
+                        &conf.label_reference_prefixes,
+                        &label.command(),
+                        &name,
+                    ),
                     targets: Vec::new(),
                     full_range,
                 });
@@ -215,14 +236,22 @@ impl Semantics {
         }
     }
 
-    fn process_label_reference_range(&mut self, label: latex::LabelReferenceRange) {
+    fn process_label_reference_range(
+        &mut self,
+        conf: &SyntaxConfig,
+        label: latex::LabelReferenceRange,
+    ) {
         let full_range = latex::small_range(&label);
         if let Some(from) = label.from().and_then(|group| group.key()) {
             let name = Span::from(&from);
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::ReferenceRange,
-                    name,
+                    name: maybe_prepend_prefix(
+                        &conf.label_reference_prefixes,
+                        &label.command(),
+                        &name,
+                    ),
                     targets: Vec::new(),
                     full_range,
                 });
@@ -234,7 +263,11 @@ impl Semantics {
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::ReferenceRange,
-                    name,
+                    name: maybe_prepend_prefix(
+                        &conf.label_reference_prefixes,
+                        &label.command(),
+                        &name,
+                    ),
                     targets: Vec::new(),
                     full_range,
                 });

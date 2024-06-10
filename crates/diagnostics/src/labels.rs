@@ -13,8 +13,6 @@ pub fn detect_undefined_and_unused_labels(
     workspace: &Workspace,
     results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) {
-    let def_prefs = &workspace.config().syntax.label_definition_prefixes;
-    let ref_prefs = &workspace.config().syntax.label_reference_prefixes;
     for document in workspace.iter() {
         let DocumentData::Tex(data) = &document.data else {
             continue;
