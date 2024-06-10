@@ -2245,16 +2245,16 @@ fn test_custom_label_multiple_prefix_custom_ref() {
     config
         .label_definition_commands
         .extend(vec!["asm", "goal"].into_iter().map(String::from));
-    config
-        .label_reference_commands
-        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
     config.label_definition_prefixes.extend(
         vec![("asm", "asm:"), ("goal", "goal:")]
             .into_iter()
             .map(|(x, y)| (String::from(x), String::from(y))),
     );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
     config.label_reference_prefixes.extend(
-        vec![("asm", "asm:"), ("goal", "goal:")]
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
             .into_iter()
             .map(|(x, y)| (String::from(x), String::from(y))),
     );
@@ -2300,16 +2300,16 @@ fn test_custom_label_multiple_prefix_ref() {
     config
         .label_definition_commands
         .extend(vec!["asm", "goal"].into_iter().map(String::from));
-    config
-        .label_reference_commands
-        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
     config.label_definition_prefixes.extend(
         vec![("asm", "asm:"), ("goal", "goal:")]
             .into_iter()
             .map(|(x, y)| (String::from(x), String::from(y))),
     );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
     config.label_reference_prefixes.extend(
-        vec![("asm", "asm:"), ("goal", "goal:")]
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
             .into_iter()
             .map(|(x, y)| (String::from(x), String::from(y))),
     );
