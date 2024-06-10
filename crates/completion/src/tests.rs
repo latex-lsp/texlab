@@ -2151,6 +2151,9 @@ fn test_custom_label_prefix_ref() {
     config.label_definition_commands.insert("asm".to_string());
     config.label_reference_commands.insert("asmref".to_string());
     config
+        .label_definition_prefixes
+        .insert("asm".to_string(), "asm:".to_string());
+    config
         .label_reference_prefixes
         .insert("asm".to_string(), "asm:".to_string());
 
@@ -2174,20 +2177,20 @@ fn test_custom_label_prefix_ref() {
             [
                 Label(
                     LabelData {
-                        name: "baz",
-                        header: None,
-                        footer: None,
-                        object: None,
-                        keywords: "baz",
-                    },
-                ),
-                Label(
-                    LabelData {
                         name: "asm:foo",
                         header: None,
                         footer: None,
                         object: None,
                         keywords: "asm:foo",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "baz",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "baz",
                     },
                 ),
             ]
