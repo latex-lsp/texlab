@@ -334,6 +334,7 @@ dependencies = [
  "expect-test",
  "fuzzy-matcher",
  "line-index",
+ "parser",
  "rayon",
  "rowan",
  "rustc-hash",

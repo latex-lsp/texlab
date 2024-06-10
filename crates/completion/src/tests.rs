@@ -1,11 +1,18 @@
-use base_db::FeatureParams;
+use base_db::{Config, FeatureParams};
 use expect_test::{expect, Expect};
+use parser::SyntaxConfig;
 use rowan::TextRange;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::CompletionParams;
 
-fn check(input: &str, expect: Expect) {
-    let fixture = test_utils::fixture::Fixture::parse(input);
+fn check_with_syntax_config(config: SyntaxConfig, input: &str, expect: Expect) {
+    let mut fixture = test_utils::fixture::Fixture::parse(input);
+    fixture.workspace.set_config(Config {
+        syntax: config,
+        ..Config::default()
+    });
+    let fixture = fixture;
 
     let (offset, spec) = fixture
         .documents
@@ -35,6 +42,10 @@ fn check(input: &str, expect: Expect) {
         .collect::<Vec<_>>();
 
     expect.assert_debug_eq(&items);
+}
+
+fn check(input: &str, expect: Expect) {
+    check_with_syntax_config(SyntaxConfig::default(), input, expect)
 }
 
 #[test]
@@ -2128,6 +2139,106 @@ fn issue_885() {
                             },
                         ),
                         keywords: "section 2 Section (2)",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_prefix_ref() {
+    let mut config = SyntaxConfig::default();
+    config.label_definition_commands.insert("asm".to_string());
+    config.label_reference_commands.insert("asmref".to_string());
+    config
+        .label_reference_prefixes
+        .insert("asm".to_string(), "asm:".to_string());
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+\documentclass{article}
+\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
+\newcommand{\asmref}[1]{\ref{asm:#1}}
+\begin{document}
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+    \end{enumerate}
+
+    \ref{}
+         |
+\end{document}
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "baz",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "baz",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "asm:foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "asm:foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_prefix_custom_ref() {
+    let mut config = SyntaxConfig::default();
+    config.label_definition_commands.insert("asm".to_string());
+    config.label_reference_commands.insert("asmref".to_string());
+    config
+        .label_reference_prefixes
+        .insert("asm".to_string(), "asm:".to_string());
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+\documentclass{article}
+\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
+\newcommand{\asmref}[1]{\ref{asm:#1}}
+\begin{document}
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+    \end{enumerate}
+
+    \asmref{}
+            |
+\end{document}
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "baz",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "baz",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
                     },
                 ),
             ]
