@@ -2,7 +2,6 @@ use base_db::{Config, FeatureParams};
 use expect_test::{expect, Expect};
 use parser::SyntaxConfig;
 use rowan::TextRange;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::CompletionParams;
 
