@@ -2157,17 +2157,12 @@ fn test_custom_label_prefix_ref() {
         config,
         r#"
 %! main.tex
-\documentclass{article}
-\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
-\newcommand{\asmref}[1]{\ref{asm:#1}}
-\begin{document}
     \begin{enumerate}\label{baz}
         \asm{foo}{what}
     \end{enumerate}
 
     \ref{}
          |
-\end{document}
 % Comment"#,
         expect![[r#"
             [
@@ -2210,17 +2205,12 @@ fn test_custom_label_prefix_custom_ref() {
         config,
         r#"
 %! main.tex
-\documentclass{article}
-\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
-\newcommand{\asmref}[1]{\ref{asm:#1}}
-\begin{document}
     \begin{enumerate}\label{baz}
         \asm{foo}{what}
     \end{enumerate}
 
     \asmref{}
             |
-\end{document}
 % Comment"#,
         expect![[r#"
             [
@@ -2262,12 +2252,6 @@ fn test_custom_label_multiple_prefix_custom_ref() {
         config,
         r#"
 %! main.tex
-\documentclass{article}
-\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
-\newcommand{\asmref}[1]{\ref{asm:#1}}
-\newcommand{\goal}[2]{\item\label[goal]{goal:#1} {#2}}
-\newcommand{\goalref}[1]{\ref{goal:#1}}
-\begin{document}
     \begin{enumerate}\label{baz}
         \asm{foo}{what}
         \goal{foo}{what}
@@ -2275,7 +2259,6 @@ fn test_custom_label_multiple_prefix_custom_ref() {
 
     \goalref{}
              |
-\end{document}
 % Comment"#,
         expect![[r#"
             [
@@ -2317,12 +2300,6 @@ fn test_custom_label_multiple_prefix_ref() {
         config,
         r#"
 %! main.tex
-\documentclass{article}
-\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
-\newcommand{\asmref}[1]{\ref{asm:#1}}
-\newcommand{\goal}[2]{\item\label[goal]{goal:#1} {#2}}
-\newcommand{\goalref}[1]{\ref{goal:#1}}
-\begin{document}
     \begin{enumerate}\label{baz}
         \asm{foo}{what}
         \goal{foo}{what}
@@ -2330,7 +2307,6 @@ fn test_custom_label_multiple_prefix_ref() {
 
     \ref{}
          |
-\end{document}
 % Comment"#,
         expect![[r#"
             [

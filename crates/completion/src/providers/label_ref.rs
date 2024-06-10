@@ -48,6 +48,13 @@ pub fn complete_label_references<'a>(
             .iter()
             .filter(|label| label.kind == LabelKind::Definition)
         {
+            if ref_pref.map_or(false, |pref| !label.name.text.starts_with(pref)) {
+                continue;
+            }
+            eprintln!(
+                "ref_pref: {:?}    label.name.text: {:?}",
+                ref_pref, label.name.text
+            );
             let labeltext = trim_prefix(ref_pref, &label.name.text);
             match render_label(params.feature.workspace, &params.feature.project, label) {
                 Some(rendered_label) => {
