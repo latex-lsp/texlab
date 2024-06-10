@@ -2149,12 +2149,8 @@ fn issue_885() {
 fn test_custom_label_prefix_ref() {
     let mut config = SyntaxConfig::default();
     config.label_definition_commands.insert("asm".to_string());
-    config.label_reference_commands.insert("asmref".to_string());
     config
         .label_definition_prefixes
-        .insert("asm".to_string(), "asm:".to_string());
-    config
-        .label_reference_prefixes
         .insert("asm".to_string(), "asm:".to_string());
 
     check_with_syntax_config(
@@ -2202,10 +2198,13 @@ fn test_custom_label_prefix_ref() {
 fn test_custom_label_prefix_custom_ref() {
     let mut config = SyntaxConfig::default();
     config.label_definition_commands.insert("asm".to_string());
+    config
+        .label_definition_prefixes
+        .insert("asm".to_string(), "asm:".to_string());
     config.label_reference_commands.insert("asmref".to_string());
     config
         .label_reference_prefixes
-        .insert("asm".to_string(), "asm:".to_string());
+        .insert("asmref".to_string(), "asm:".to_string());
 
     check_with_syntax_config(
         config,
