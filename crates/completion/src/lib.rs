@@ -72,7 +72,7 @@ impl<'a> CompletionItemData<'a> {
             Self::Citation(data) => &data.entry.name.text,
             Self::Environment(data) => data.name,
             Self::GlossaryEntry(data) => &data.name,
-            Self::Label(data) => data.name,
+            Self::Label(data) => &data.name,
             Self::Color(name) => name,
             Self::ColorModel(name) => name,
             Self::File(name) => name,
@@ -165,7 +165,7 @@ pub struct GlossaryEntryData {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LabelData<'a> {
-    pub name: &'a str,
+    pub name: String,
     pub header: Option<String>,
     pub footer: Option<&'a str>,
     pub object: Option<RenderedObject<'a>>,
