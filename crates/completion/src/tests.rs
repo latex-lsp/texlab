@@ -2227,6 +2227,125 @@ fn test_custom_label_prefix_custom_ref() {
             [
                 Label(
                     LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_multiple_prefix_custom_ref() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config.label_reference_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+\documentclass{article}
+\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
+\newcommand{\asmref}[1]{\ref{asm:#1}}
+\newcommand{\goal}[2]{\item\label[goal]{goal:#1} {#2}}
+\newcommand{\goalref}[1]{\ref{goal:#1}}
+\begin{document}
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+        \goal{foo}{what}
+    \end{enumerate}
+
+    \goalref{}
+             |
+\end{document}
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_multiple_prefix_ref() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config.label_reference_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+\documentclass{article}
+\newcommand{\asm}[2]{\item\label[asm]{asm:#1} {#2}}
+\newcommand{\asmref}[1]{\ref{asm:#1}}
+\newcommand{\goal}[2]{\item\label[goal]{goal:#1} {#2}}
+\newcommand{\goalref}[1]{\ref{goal:#1}}
+\begin{document}
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+        \goal{foo}{what}
+    \end{enumerate}
+
+    \ref{}
+         |
+\end{document}
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "asm:foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "asm:foo",
+                    },
+                ),
+                Label(
+                    LabelData {
                         name: "baz",
                         header: None,
                         footer: None,
@@ -2236,11 +2355,11 @@ fn test_custom_label_prefix_custom_ref() {
                 ),
                 Label(
                     LabelData {
-                        name: "foo",
+                        name: "goal:foo",
                         header: None,
                         footer: None,
                         object: None,
-                        keywords: "foo",
+                        keywords: "goal:foo",
                     },
                 ),
             ]
