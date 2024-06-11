@@ -165,7 +165,7 @@ pub struct GlossaryEntryData {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct LabelData<'a> {
-    pub name: String,
+    pub name: &'a str,
     pub header: Option<String>,
     pub footer: Option<&'a str>,
     pub object: Option<RenderedObject<'a>>,

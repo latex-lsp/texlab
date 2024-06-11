@@ -296,7 +296,7 @@ impl<'a> ItemBuilder<'a> {
             None => Structure::Label,
         };
 
-        result.label = data.name.clone().into();
+        result.label = data.name.into();
         result.kind = Some(structure.completion_kind());
         result.detail = data.header;
         result.filter_text = Some(data.keywords);

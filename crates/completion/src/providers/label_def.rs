@@ -36,7 +36,7 @@ pub fn complete_label_definitions<'a>(
         };
 
         let data = crate::LabelData {
-            name: label.to_string(),
+            name: label,
             header: None,
             footer: None,
             object: None,

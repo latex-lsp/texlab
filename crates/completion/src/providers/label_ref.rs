@@ -11,13 +11,10 @@ use crate::{
     CompletionItem, CompletionItemData, CompletionParams,
 };
 
-fn trim_prefix(prefix: Option<&String>, text: &String) -> String {
-    if let Some(pref) = prefix {
-        if text.starts_with(pref) {
-            return text[pref.len()..].to_string();
-        }
-    }
-    text.clone()
+fn trim_prefix<'a>(prefix: Option<&'a str>, text: &'a str) -> &'a str {
+    prefix
+        .and_then(|pref| text.strip_prefix(pref))
+        .unwrap_or(text)
 }
 
 pub fn complete_label_references<'a>(
@@ -35,7 +32,8 @@ pub fn complete_label_references<'a>(
         .config()
         .syntax
         .label_reference_prefixes
-        .get(&command);
+        .get(&command)
+        .map(|x| x.as_str());
 
     for document in &params.feature.project.documents {
         let DocumentData::Tex(data) = &document.data else {
@@ -89,7 +87,7 @@ pub fn complete_label_references<'a>(
                             header: None,
                             footer: None,
                             object: None,
-                            keywords: labeltext,
+                            keywords: labeltext.to_string(),
                         });
 
                         builder
