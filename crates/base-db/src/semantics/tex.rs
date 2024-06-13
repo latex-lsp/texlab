@@ -207,6 +207,9 @@ impl Semantics {
 
         self.labels.push(Label {
             kind: LabelKind::Definition,
+            cmd: label
+                .command()
+                .map(|x| Span::new(x.text().to_string(), x.text_range())),
             name: maybe_prepend_prefix(&conf.label_definition_prefixes, &label.command(), &name),
             targets: objects,
             full_range,
@@ -224,6 +227,9 @@ impl Semantics {
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::Reference,
+                    cmd: label
+                        .command()
+                        .map(|x| Span::new(x.text().to_string(), x.text_range())),
                     name: maybe_prepend_prefix(
                         &conf.label_reference_prefixes,
                         &label.command(),
@@ -247,6 +253,9 @@ impl Semantics {
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::ReferenceRange,
+                    cmd: label
+                        .command()
+                        .map(|x| Span::new(x.text().to_string(), x.text_range())),
                     name: maybe_prepend_prefix(
                         &conf.label_reference_prefixes,
                         &label.command(),
@@ -263,6 +272,9 @@ impl Semantics {
             if !name.text.contains('#') {
                 self.labels.push(Label {
                     kind: LabelKind::ReferenceRange,
+                    cmd: label
+                        .command()
+                        .map(|x| Span::new(x.text().to_string(), x.text_range())),
                     name: maybe_prepend_prefix(
                         &conf.label_reference_prefixes,
                         &label.command(),
@@ -369,6 +381,7 @@ pub enum LabelKind {
 #[derive(Debug, Clone)]
 pub struct Label {
     pub kind: LabelKind,
+    pub cmd: Option<Span>,
     pub name: Span,
     pub targets: Vec<LabelTarget>,
     pub full_range: TextRange,

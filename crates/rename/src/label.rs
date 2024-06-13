@@ -17,6 +17,7 @@ pub(super) fn rename(builder: &mut RenameBuilder) -> Option<()> {
 
     let project = &builder.params.feature.project;
     for (document, label) in queries::objects_with_name::<tex::Label>(project, &name.text) {
+        eprintln!("want to rename {:?} into {:?}", label, name);
         let entry = builder.result.changes.entry(document);
         entry.or_default().push(label.name_range());
     }
