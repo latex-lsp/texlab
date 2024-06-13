@@ -17,11 +17,6 @@ pub struct RenameInformation {
     pub range: TextRange,
     pub prefix: Option<String>,
 }
-impl PartialEq for RenameInformation {
-    fn eq(&self, other: &Self) -> bool {
-        self.range == other.range
-    }
-}
 
 #[derive(Debug, Default)]
 pub struct RenameResult<'a> {
@@ -39,6 +34,11 @@ impl From<TextRange> for RenameInformation {
             range,
             prefix: None,
         }
+    }
+}
+impl PartialEq for RenameInformation {
+    fn eq(&self, other: &Self) -> bool {
+        self.range == other.range
     }
 }
 
