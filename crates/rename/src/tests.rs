@@ -98,3 +98,87 @@ fn test_label() {
 "#,
     )
 }
+
+#[test]
+fn test_custom_label_ref() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_reference_prefixes.extend(
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    check_with_syntax_config(
+        config,
+        r#"
+%! foo.tex
+\goal{foo}
+
+\asm{foo}\include{bar}\include{baz}
+     |
+     ^^^
+
+%! bar.tex
+\asmref{foo}
+        ^^^
+
+%! baz.tex
+\ref{foo}
+
+\ref{asm:foo}
+     ^^^^^^^
+"#,
+    )
+}
+
+#[test]
+fn test_custom_label_def() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_reference_prefixes.extend(
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    check_with_syntax_config(
+        config,
+        r#"
+%! foo.tex
+\goal{foo}
+
+\label{asm:foo}\include{bar}\include{baz}
+       |
+       ^^^^^^^
+
+%! bar.tex
+\asmref{foo}
+        ^^^
+
+%! baz.tex
+\ref{foo}
+
+\ref{asm:foo}
+     ^^^^^^^
+"#,
+    )
+}
