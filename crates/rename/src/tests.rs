@@ -1,9 +1,17 @@
 use rustc_hash::FxHashMap;
 
+use base_db::{Config, FeatureParams};
+use parser::SyntaxConfig;
+
 use crate::RenameParams;
 
-fn check(input: &str) {
-    let fixture = test_utils::fixture::Fixture::parse(input);
+fn check_with_syntax_config(config: SyntaxConfig, input: &str) {
+    let mut fixture = test_utils::fixture::Fixture::parse(input);
+    fixture.workspace.set_config(Config {
+        syntax: config,
+        ..Config::default()
+    });
+    let fixture = fixture;
 
     let mut expected = FxHashMap::default();
     for spec in &fixture.documents {
@@ -12,10 +20,13 @@ fn check(input: &str) {
             expected.insert(document, spec.ranges.clone());
         }
     }
-
     let (feature, offset) = fixture.make_params().unwrap();
     let actual = crate::rename(RenameParams { feature, offset });
     assert_eq!(actual.changes, expected);
+}
+
+fn check(input: &str) {
+    check_with_syntax_config(SyntaxConfig::default(), input)
 }
 
 #[test]

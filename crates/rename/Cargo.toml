@@ -14,6 +14,7 @@ syntax = { path = "../syntax" }
 
 [dev-dependencies]
 test-utils = { path = "../test-utils" }
+parser = { path = "../parser" }
 
 [lib]
 doctest = false
