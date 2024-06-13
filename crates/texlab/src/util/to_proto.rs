@@ -396,8 +396,15 @@ pub fn workspace_edit(result: RenameResult, new_name: &str) -> lsp_types::Worksp
         let mut edits = Vec::new();
         ranges
             .into_iter()
-            .filter_map(|range| document.line_index.line_col_lsp_range(range))
-            .for_each(|range| edits.push(lsp_types::TextEdit::new(range, new_name.into())));
+            .filter_map(|info| {
+                document.line_index.line_col_lsp_range(info.range).map(|i| {
+                    (
+                        i,
+                        info.prefix.map_or(new_name.into(), |p| p + new_name.into()),
+                    )
+                })
+            })
+            .for_each(|(range, new_name)| edits.push(lsp_types::TextEdit::new(range, new_name)));
 
         changes.insert(document.uri.clone(), edits);
     }

@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use base_db::{Config, FeatureParams};
 use parser::SyntaxConfig;
 
-use crate::RenameParams;
+use crate::{RenameInformation, RenameParams};
 
 fn check_with_syntax_config(config: SyntaxConfig, input: &str) {
     let mut fixture = test_utils::fixture::Fixture::parse(input);
@@ -13,11 +13,14 @@ fn check_with_syntax_config(config: SyntaxConfig, input: &str) {
     });
     let fixture = fixture;
 
-    let mut expected = FxHashMap::default();
+    let mut expected: FxHashMap<_, Vec<RenameInformation>> = FxHashMap::default();
     for spec in &fixture.documents {
         if !spec.ranges.is_empty() {
             let document = fixture.workspace.lookup(&spec.uri).unwrap();
-            expected.insert(document, spec.ranges.clone());
+            expected.insert(
+                document,
+                spec.ranges.iter().map(|r| r.clone().into()).collect(),
+            );
         }
     }
     let (feature, offset) = fixture.make_params().unwrap();
@@ -89,12 +92,12 @@ fn test_label() {
        |
        ^^^
 
+%! baz.tex
+\ref{foo}
+
 %! bar.tex
 \ref{foo}
      ^^^
-
-%! baz.tex
-\ref{foo}
 "#,
     )
 }
@@ -137,6 +140,7 @@ fn test_custom_label_ref() {
 
 \ref{asm:foo}
      ^^^^^^^
+
 "#,
     )
 }
