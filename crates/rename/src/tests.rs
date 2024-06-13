@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use base_db::{Config, FeatureParams};
+use base_db::Config;
 use parser::SyntaxConfig;
 
 use crate::{RenameInformation, RenameParams};
