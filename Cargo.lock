@@ -334,6 +334,7 @@ dependencies = [
  "expect-test",
  "fuzzy-matcher",
  "line-index",
+ "parser",
  "rayon",
  "rowan",
  "rustc-hash",
@@ -1337,6 +1338,7 @@ name = "rename"
 version = "0.0.0"
 dependencies = [
  "base-db",
+ "parser",
  "rowan",
  "rustc-hash",
  "syntax",

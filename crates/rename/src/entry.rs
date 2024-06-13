@@ -42,7 +42,7 @@ pub(super) fn rename(builder: &mut RenameBuilder) -> Option<()> {
 
     for (document, range) in citations.chain(entries) {
         let entry = builder.result.changes.entry(document);
-        entry.or_default().push(range);
+        entry.or_default().push(range.into());
     }
 
     Some(())

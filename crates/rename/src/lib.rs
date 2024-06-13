@@ -13,13 +13,33 @@ pub struct RenameParams<'a> {
 }
 
 #[derive(Debug, Default)]
+pub struct RenameInformation {
+    pub range: TextRange,
+    pub prefix: Option<String>,
+}
+
+#[derive(Debug, Default)]
 pub struct RenameResult<'a> {
-    pub changes: FxHashMap<&'a Document, Vec<TextRange>>,
+    pub changes: FxHashMap<&'a Document, Vec<RenameInformation>>,
 }
 
 struct RenameBuilder<'a> {
     params: RenameParams<'a>,
     result: RenameResult<'a>,
+}
+
+impl From<TextRange> for RenameInformation {
+    fn from(range: TextRange) -> Self {
+        RenameInformation {
+            range,
+            prefix: None,
+        }
+    }
+}
+impl PartialEq for RenameInformation {
+    fn eq(&self, other: &Self) -> bool {
+        self.range == other.range
+    }
 }
 
 pub fn prepare_rename(params: &RenameParams) -> Option<TextRange> {

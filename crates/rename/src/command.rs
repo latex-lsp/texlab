@@ -35,7 +35,10 @@ pub(super) fn rename(builder: &mut RenameBuilder) -> Option<()> {
             }
         }
 
-        builder.result.changes.insert(*document, edits);
+        builder
+            .result
+            .changes
+            .insert(*document, edits.iter().map(|&x| x.into()).collect());
     }
 
     Some(())

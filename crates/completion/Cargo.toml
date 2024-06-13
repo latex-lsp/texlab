@@ -22,6 +22,7 @@ criterion = "0.5.1"
 distro = { path = "../distro" }
 expect-test = "1.5.0"
 test-utils = { path = "../test-utils" }
+parser = { path = "../parser" }
 
 [lib]
 doctest = false

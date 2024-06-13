@@ -56,7 +56,10 @@ impl Document {
             Language::Tex => {
                 let green = parser::parse_latex(&text, &params.config.syntax);
                 let mut semantics = semantics::tex::Semantics::default();
-                semantics.process_root(&latex::SyntaxNode::new_root(green.clone()));
+                semantics.process_root(
+                    &params.config.syntax,
+                    &latex::SyntaxNode::new_root(green.clone()),
+                );
                 DocumentData::Tex(TexDocumentData { green, semantics })
             }
             Language::Bib => {

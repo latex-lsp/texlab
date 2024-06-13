@@ -1,11 +1,17 @@
-use base_db::FeatureParams;
+use base_db::{Config, FeatureParams};
 use expect_test::{expect, Expect};
+use parser::SyntaxConfig;
 use rowan::TextRange;
 
 use crate::CompletionParams;
 
-fn check(input: &str, expect: Expect) {
-    let fixture = test_utils::fixture::Fixture::parse(input);
+fn check_with_syntax_config(config: SyntaxConfig, input: &str, expect: Expect) {
+    let mut fixture = test_utils::fixture::Fixture::parse(input);
+    fixture.workspace.set_config(Config {
+        syntax: config,
+        ..Config::default()
+    });
+    let fixture = fixture;
 
     let (offset, spec) = fixture
         .documents
@@ -35,6 +41,10 @@ fn check(input: &str, expect: Expect) {
         .collect::<Vec<_>>();
 
     expect.assert_debug_eq(&items);
+}
+
+fn check(input: &str, expect: Expect) {
+    check_with_syntax_config(SyntaxConfig::default(), input, expect)
 }
 
 #[test]
@@ -2128,6 +2138,203 @@ fn issue_885() {
                             },
                         ),
                         keywords: "section 2 Section (2)",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_prefix_ref() {
+    let mut config = SyntaxConfig::default();
+    config.label_definition_commands.insert("asm".to_string());
+    config
+        .label_definition_prefixes
+        .push(("asm".to_string(), "asm:".to_string()));
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+    \end{enumerate}
+
+    \ref{}
+         |
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "asm:foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "asm:foo",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "baz",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "baz",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_prefix_custom_ref() {
+    let mut config = SyntaxConfig::default();
+    config.label_definition_commands.insert("asm".to_string());
+    config
+        .label_definition_prefixes
+        .push(("asm".to_string(), "asm:".to_string()));
+    config.label_reference_commands.insert("asmref".to_string());
+    config
+        .label_reference_prefixes
+        .push(("asmref".to_string(), "asm:".to_string()));
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+    \end{enumerate}
+
+    \asmref{}
+            |
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_multiple_prefix_custom_ref() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_reference_prefixes.extend(
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+        \goal{foo}{what}
+    \end{enumerate}
+
+    \goalref{}
+             |
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}
+
+#[test]
+fn test_custom_label_multiple_prefix_ref() {
+    let mut config = SyntaxConfig::default();
+    config
+        .label_definition_commands
+        .extend(vec!["asm", "goal"].into_iter().map(String::from));
+    config.label_definition_prefixes.extend(
+        vec![("asm", "asm:"), ("goal", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+    config
+        .label_reference_commands
+        .extend(vec!["asmref", "goalref"].into_iter().map(String::from));
+    config.label_reference_prefixes.extend(
+        vec![("asmref", "asm:"), ("goalref", "goal:")]
+            .into_iter()
+            .map(|(x, y)| (String::from(x), String::from(y))),
+    );
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+    \begin{enumerate}\label{baz}
+        \asm{foo}{what}
+        \goal{foo}{what}
+    \end{enumerate}
+
+    \ref{}
+         |
+% Comment"#,
+        expect![[r#"
+            [
+                Label(
+                    LabelData {
+                        name: "asm:foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "asm:foo",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "baz",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "baz",
+                    },
+                ),
+                Label(
+                    LabelData {
+                        name: "goal:foo",
+                        header: None,
+                        footer: None,
+                        object: None,
+                        keywords: "goal:foo",
                     },
                 ),
             ]

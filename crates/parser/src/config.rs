@@ -8,7 +8,9 @@ pub struct SyntaxConfig {
     pub verbatim_environments: FxHashSet<String>,
     pub citation_commands: FxHashSet<String>,
     pub label_definition_commands: FxHashSet<String>,
+    pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: FxHashSet<String>,
+    pub label_reference_prefixes: Vec<(String, String)>,
 }
 
 impl Default for SyntaxConfig {
@@ -38,9 +40,19 @@ impl Default for SyntaxConfig {
             .map(ToString::to_string)
             .collect();
 
+        let label_definition_prefixes = DEFAULT_LABEL_DEFINITION_PREFIXES
+            .iter()
+            .map(|(x, y)| (ToString::to_string(x), ToString::to_string(y)))
+            .collect();
+
         let label_reference_commands = DEFAULT_LABEL_REFERENCE_COMMANDS
             .iter()
             .map(ToString::to_string)
+            .collect();
+
+        let label_reference_prefixes = DEFAULT_LABEL_REFERENCE_PREFIXES
+            .iter()
+            .map(|(x, y)| (ToString::to_string(x), ToString::to_string(y)))
             .collect();
 
         Self {
@@ -50,7 +62,9 @@ impl Default for SyntaxConfig {
             verbatim_environments,
             citation_commands,
             label_definition_commands,
+            label_definition_prefixes,
             label_reference_commands,
+            label_reference_prefixes,
         }
     }
 }
@@ -172,6 +186,8 @@ static DEFAULT_CITATION_COMMANDS: &[&str] = &[
 
 static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label", "zlabel"];
 
+static DEFAULT_LABEL_DEFINITION_PREFIXES: &[(&str, &str)] = &[];
+
 static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "ref",
     "vref",
@@ -196,3 +212,5 @@ static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "labelcpageref",
     "eqref",
 ];
+
+static DEFAULT_LABEL_REFERENCE_PREFIXES: &[(&str, &str)] = &[];
