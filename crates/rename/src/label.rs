@@ -6,13 +6,6 @@ use rustc_hash::FxHashMap;
 
 use crate::{RenameBuilder, RenameInformation, RenameParams};
 
-pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
-    let data = params.feature.document.data.as_tex()?;
-    let labels = &data.semantics.labels;
-    let label = queries::object_at_cursor(labels, params.offset, queries::SearchMode::Name)?;
-    Some(Span::new(label.object.name.text.clone(), label.range))
-}
-
 struct PrefixInformation<'a> {
     def_prefixes: &'a FxHashMap<String, String>,
     ref_prefixes: &'a FxHashMap<String, String>,
@@ -39,6 +32,14 @@ fn find_prefix_in_any(
     let project = &builder.params.feature.project;
     queries::objects_with_name::<tex::Label>(project, name)
         .find_map(|(_, label)| label_has_prefix(&pref_info, label))
+}
+
+pub(super) fn prepare_rename(params: &RenameParams) -> Option<Span> {
+    let data = params.feature.document.data.as_tex()?;
+    let labels = &data.semantics.labels;
+    let label = queries::object_at_cursor(labels, params.offset, queries::SearchMode::Name)?;
+
+    Some(Span::new(label.object.name.text.clone(), label.range))
 }
 
 pub(super) fn rename(builder: &mut RenameBuilder) -> Option<()> {
