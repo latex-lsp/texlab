@@ -2,26 +2,27 @@ use base_db::{
     semantics::{tex, Span},
     util::queries::{self, Object},
 };
-use rustc_hash::FxHashMap;
 
 use crate::{RenameBuilder, RenameInformation, RenameParams};
 
 struct PrefixInformation<'a> {
-    def_prefixes: &'a FxHashMap<String, String>,
-    ref_prefixes: &'a FxHashMap<String, String>,
+    def_prefixes: &'a Vec<(String, String)>,
+    ref_prefixes: &'a Vec<(String, String)>,
 }
 
 fn label_has_prefix(pref_info: &PrefixInformation, label: &tex::Label) -> Option<String> {
     match label.kind {
-        tex::LabelKind::Definition => pref_info
-            .def_prefixes
-            .get(&label.cmd.clone().unwrap_or(String::new()))
-            .cloned(),
-        _ => pref_info
-            .ref_prefixes
-            .get(&label.cmd.clone().unwrap_or(String::new()))
-            .cloned(),
+        tex::LabelKind::Definition => pref_info.def_prefixes.iter(),
+        _ => pref_info.ref_prefixes.iter(),
     }
+    .find_map(|(k, v)| {
+        if k == &label.cmd.clone().unwrap_or(String::new()) {
+            Some(v)
+        } else {
+            None
+        }
+    })
+    .cloned()
 }
 
 fn find_prefix_in_any(

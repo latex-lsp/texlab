@@ -1,4 +1,4 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 #[derive(Debug)]
 pub struct SyntaxConfig {
@@ -8,9 +8,9 @@ pub struct SyntaxConfig {
     pub verbatim_environments: FxHashSet<String>,
     pub citation_commands: FxHashSet<String>,
     pub label_definition_commands: FxHashSet<String>,
-    pub label_definition_prefixes: FxHashMap<String, String>,
+    pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: FxHashSet<String>,
-    pub label_reference_prefixes: FxHashMap<String, String>,
+    pub label_reference_prefixes: Vec<(String, String)>,
 }
 
 impl Default for SyntaxConfig {

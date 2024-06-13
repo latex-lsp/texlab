@@ -2151,7 +2151,7 @@ fn test_custom_label_prefix_ref() {
     config.label_definition_commands.insert("asm".to_string());
     config
         .label_definition_prefixes
-        .insert("asm".to_string(), "asm:".to_string());
+        .push(("asm".to_string(), "asm:".to_string()));
 
     check_with_syntax_config(
         config,
@@ -2195,11 +2195,11 @@ fn test_custom_label_prefix_custom_ref() {
     config.label_definition_commands.insert("asm".to_string());
     config
         .label_definition_prefixes
-        .insert("asm".to_string(), "asm:".to_string());
+        .push(("asm".to_string(), "asm:".to_string()));
     config.label_reference_commands.insert("asmref".to_string());
     config
         .label_reference_prefixes
-        .insert("asmref".to_string(), "asm:".to_string());
+        .push(("asmref".to_string(), "asm:".to_string()));
 
     check_with_syntax_config(
         config,

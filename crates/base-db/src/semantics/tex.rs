@@ -1,5 +1,5 @@
 use rowan::{ast::AstNode, TextRange};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
 use titlecase::titlecase;
 
@@ -9,13 +9,17 @@ use super::Span;
 use crate::semantics::tex::latex::SyntaxToken;
 
 fn maybe_prepend_prefix(
-    map: &FxHashMap<String, String>,
+    map: &Vec<(String, String)>,
     command: &Option<SyntaxToken>,
     name: &Span,
 ) -> Span {
     match command {
         Some(x) => Span::new(
-            map.get(&x.text()[1..]).unwrap_or(&String::new()).to_owned() + &name.text,
+            map.iter()
+                .find_map(|(k, v)| if k == &x.text()[1..] { Some(v) } else { None })
+                .unwrap_or(&String::new())
+                .to_owned()
+                + &name.text,
             name.range,
         ),
         None => name.clone(),

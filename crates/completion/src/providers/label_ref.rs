@@ -32,7 +32,8 @@ pub fn complete_label_references<'a>(
         .config()
         .syntax
         .label_reference_prefixes
-        .get(&command)
+        .iter()
+        .find_map(|(k, v)| if *k == command { Some(v) } else { None })
         .map(|x| x.as_str());
 
     for document in &params.feature.project.documents {
