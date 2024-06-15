@@ -56,15 +56,6 @@ pub fn client_flags(
 
     let completion_always_incomplete = info.map_or(false, |info| info.name == "Visual Studio Code");
 
-    let hover_markdown = capabilities
-        .text_document
-        .as_ref()
-        .and_then(|cap| cap.hover.as_ref())
-        .and_then(|cap| cap.content_format.as_ref())
-        .map_or(false, |formats| {
-            formats.contains(&lsp_types::MarkupKind::Markdown)
-        });
-
     let configuration_pull = capabilities
         .workspace
         .as_ref()
@@ -76,13 +67,6 @@ pub fn client_flags(
         .as_ref()
         .and_then(|cap| cap.did_change_configuration)
         .and_then(|cap| cap.dynamic_registration)
-        .unwrap_or(false);
-
-    let definition_link = capabilities
-        .text_document
-        .as_ref()
-        .and_then(|cap| cap.definition)
-        .and_then(|cap| cap.link_support)
         .unwrap_or(false);
 
     let folding_custom_kinds = capabilities
@@ -111,10 +95,8 @@ pub fn client_flags(
         completion_snippets,
         completion_kinds,
         completion_always_incomplete,
-        hover_markdown,
         configuration_pull,
         configuration_push,
-        definition_link,
         folding_custom_kinds,
         progress,
         show_document,
