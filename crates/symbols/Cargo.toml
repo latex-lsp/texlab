@@ -12,7 +12,7 @@ doctest = false
 [dependencies]
 base-db = { path = "../base-db" }
 distro = { path = "../distro" }
-itertools = "0.12.1"
+itertools = "0.13.0"
 line-index = { path = "../line-index" }
 rowan = "0.15.15"
 syntax = { path = "../syntax" }
