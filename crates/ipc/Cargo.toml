@@ -10,7 +10,7 @@ rust-version.workspace = true
 crossbeam-channel = "0.5.12"
 serde = "1.0.203"
 serde_json = "1.0.117"
-log = "0.4.21"
+log = "0.4.22"
 uds_windows = "1.1.0"
 
 [lib]
