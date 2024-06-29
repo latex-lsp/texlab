@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fix parsing commands with unicode characters inside BibTeX entries
+  ([#1147](https://github.com/latex-lsp/texlab/issues/1147))
+
 ## [5.17.0] - 2024-06-23
 
 ### Added
