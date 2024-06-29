@@ -7,7 +7,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-itertools = "0.12.1"
+itertools = "0.13.0"
 rowan = "0.15.15"
 
 [lib]
