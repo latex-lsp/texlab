@@ -1,5 +1,7 @@
 use logos::Logos;
 
+use crate::util::lex_command_name;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Logos)]
 pub enum Token {
     #[regex(r"[\r\n]+", priority = 2)]
@@ -44,53 +46,8 @@ pub enum Token {
     #[regex(r"\$\$?")]
     Dollar,
 
-    #[regex(r"\\", lex_command_name)]
+    #[regex(r"\\", |lexer| { lex_command_name(lexer); CommandName::Generic } )]
     CommandName(CommandName),
-}
-
-fn lex_command_name(lexer: &mut logos::Lexer<Token>) -> CommandName {
-    let input = &lexer.source()[lexer.span().end..];
-
-    let mut chars = input.chars().peekable();
-    let Some(c) = chars.next() else {
-        return CommandName::Generic;
-    };
-
-    if c.is_whitespace() {
-        return CommandName::Generic;
-    }
-
-    lexer.bump(c.len_utf8());
-    if !c.is_alphanumeric() && c != '@' {
-        return CommandName::Generic;
-    }
-
-    while let Some(c) = chars.next() {
-        match c {
-            '*' => {
-                lexer.bump(c.len_utf8());
-                break;
-            }
-            c if c.is_alphanumeric() => {
-                lexer.bump(c.len_utf8());
-            }
-            '_' => {
-                if !matches!(chars.peek(), Some(c) if c.is_alphanumeric()) {
-                    break;
-                }
-
-                lexer.bump(c.len_utf8());
-            }
-            '@' | ':' => {
-                lexer.bump(c.len_utf8());
-            }
-            _ => {
-                break;
-            }
-        }
-    }
-
-    CommandName::Generic
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

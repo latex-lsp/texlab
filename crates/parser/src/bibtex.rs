@@ -2,6 +2,8 @@ use logos::Logos;
 use rowan::{GreenNode, GreenNodeBuilder};
 use syntax::bibtex::SyntaxKind::{self, *};
 
+use crate::util::lex_command_name;
+
 pub fn parse_bibtex(input: &str) -> GreenNode {
     let mut ptr = TokenPtr {
         builder: GreenNodeBuilder::new(),
@@ -135,8 +137,8 @@ fn curly_group(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
             | ContentToken::Quote
             | ContentToken::Word => ptr.bump(),
             ContentToken::LCurly => ptr = curly_group(ptr),
-            ContentToken::AccentName => ptr = accent(ptr),
-            ContentToken::CommandName => ptr = command(ptr),
+            ContentToken::CommandName(CommandName::Accent) => ptr = accent(ptr),
+            ContentToken::CommandName(CommandName::Generic) => ptr = command(ptr),
         };
     }
 
@@ -160,8 +162,8 @@ fn quote_group(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
             | ContentToken::Integer
             | ContentToken::Word => ptr.bump(),
             ContentToken::LCurly => ptr = curly_group(ptr),
-            ContentToken::AccentName => ptr = accent(ptr),
-            ContentToken::CommandName => ptr = command(ptr),
+            ContentToken::CommandName(CommandName::Accent) => ptr = accent(ptr),
+            ContentToken::CommandName(CommandName::Generic) => ptr = command(ptr),
         };
     }
 
@@ -181,7 +183,7 @@ fn accent(mut ptr: TokenPtr<ContentToken>) -> TokenPtr<ContentToken> {
         ptr.expect(ContentToken::Whitespace);
     }
 
-    if ptr.at(ContentToken::Word) || ptr.at(ContentToken::CommandName) {
+    if ptr.at(ContentToken::Word) || ptr.at(ContentToken::CommandName(CommandName::Generic)) {
         ptr.bump();
     }
 
@@ -355,29 +357,27 @@ enum ContentToken {
     #[token(r#"~"#)]
     Nbsp,
 
-    #[token(r#"\`"#)]
-    #[token(r#"\'"#)]
-    #[token(r#"\^"#)]
-    #[token(r#"\""#)]
-    #[token(r#"\H"#)]
-    #[token(r#"\~"#)]
-    #[token(r#"\c"#)]
-    #[token(r#"\k"#)]
-    #[token(r#"\="#)]
-    #[token(r#"\b"#)]
-    #[token(r#"\."#)]
-    #[token(r#"\d"#)]
-    #[token(r#"\r"#)]
-    #[token(r#"\u"#)]
-    #[token(r#"\v"#)]
-    #[token(r#"\t"#)]
-    AccentName,
-
-    #[regex(r"\\([^\r\n]|[@a-zA-Z:_]+\*?)?")]
-    CommandName,
+    #[regex(r"\\", |lexer| { CommandName::from(lex_command_name(lexer)) })]
+    CommandName(CommandName),
 
     #[regex(r#"[^\s"\{\}\\~,]+"#)]
     Word,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum CommandName {
+    Generic,
+    Accent,
+}
+
+impl From<&str> for CommandName {
+    fn from(value: &str) -> Self {
+        match value {
+            "`" | "'" | "^" | "\"" | "H" | "~" | "c" | "k" | "=" | "b" | "." | "d" | "r" | "u"
+            | "v" | "t" => CommandName::Accent,
+            _ => CommandName::Generic,
+        }
+    }
 }
 
 impl From<RootToken> for SyntaxKind {
@@ -428,8 +428,8 @@ impl From<ContentToken> for SyntaxKind {
             ContentToken::Quote => QUOTE,
             ContentToken::Integer => INTEGER,
             ContentToken::Nbsp => NBSP,
-            ContentToken::AccentName => ACCENT_NAME,
-            ContentToken::CommandName => COMMAND_NAME,
+            ContentToken::CommandName(CommandName::Accent) => ACCENT_NAME,
+            ContentToken::CommandName(CommandName::Generic) => COMMAND_NAME,
             ContentToken::Word => WORD,
         }
     }

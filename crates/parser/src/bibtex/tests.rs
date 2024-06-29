@@ -3992,3 +3992,280 @@ fn test_rivest_1978() {
         "#]],
     );
 }
+
+#[test]
+fn test_cuesta_2002() {
+    check(
+        r#"@INPROCEEDINGS{Cuesta02,
+  author = {Cuesta, Carlos E. and de la Fuente, Pablo and Barrio-Sol\órzano, Manuel and Beato, Encarnaci\ón},
+  title = {{Coordination in a Reflective Architecture Description Language}},
+  booktitle = {{Proceedings of the 5th International Conference on Coordination Models and Languages (COORDINATION'02)}},
+  year = 2002,
+  editor = {Arbab, Fahrad and Talcott, Carolyn},
+  pages = {141--148},
+  address = {York, United Kingdom},
+  organization = {},
+  publisher = {Springer},
+  volume = {},
+  number = {},
+  series = {Lecture Notes in Computer Science 2315},
+  month = apr,
+  note = {}
+}"#,
+        expect![[r#"
+            ROOT@0..617
+              ENTRY@0..617
+                TYPE@0..14 "@INPROCEEDINGS"
+                L_DELIM@14..15 "{"
+                NAME@15..23 "Cuesta02"
+                COMMA@23..24 ","
+                WHITESPACE@24..27 "\n  "
+                FIELD@27..136
+                  NAME@27..33 "author"
+                  WHITESPACE@33..34 " "
+                  EQ@34..35 "="
+                  WHITESPACE@35..36 " "
+                  CURLY_GROUP@36..135
+                    L_CURLY@36..37 "{"
+                    WORD@37..43 "Cuesta"
+                    COMMA@43..44 ","
+                    WHITESPACE@44..45 " "
+                    WORD@45..51 "Carlos"
+                    WHITESPACE@51..52 " "
+                    WORD@52..54 "E."
+                    WHITESPACE@54..55 " "
+                    WORD@55..58 "and"
+                    WHITESPACE@58..59 " "
+                    WORD@59..61 "de"
+                    WHITESPACE@61..62 " "
+                    WORD@62..64 "la"
+                    WHITESPACE@64..65 " "
+                    WORD@65..71 "Fuente"
+                    COMMA@71..72 ","
+                    WHITESPACE@72..73 " "
+                    WORD@73..78 "Pablo"
+                    WHITESPACE@78..79 " "
+                    WORD@79..82 "and"
+                    WHITESPACE@82..83 " "
+                    WORD@83..93 "Barrio-Sol"
+                    COMMAND@93..101
+                      COMMAND_NAME@93..101 "\\órzano"
+                    COMMA@101..102 ","
+                    WHITESPACE@102..103 " "
+                    WORD@103..109 "Manuel"
+                    WHITESPACE@109..110 " "
+                    WORD@110..113 "and"
+                    WHITESPACE@113..114 " "
+                    WORD@114..119 "Beato"
+                    COMMA@119..120 ","
+                    WHITESPACE@120..121 " "
+                    WORD@121..130 "Encarnaci"
+                    COMMAND@130..134
+                      COMMAND_NAME@130..134 "\\ón"
+                    R_CURLY@134..135 "}"
+                  COMMA@135..136 ","
+                WHITESPACE@136..139 "\n  "
+                FIELD@139..214
+                  NAME@139..144 "title"
+                  WHITESPACE@144..145 " "
+                  EQ@145..146 "="
+                  WHITESPACE@146..147 " "
+                  CURLY_GROUP@147..213
+                    L_CURLY@147..148 "{"
+                    CURLY_GROUP@148..212
+                      L_CURLY@148..149 "{"
+                      WORD@149..161 "Coordination"
+                      WHITESPACE@161..162 " "
+                      WORD@162..164 "in"
+                      WHITESPACE@164..165 " "
+                      WORD@165..166 "a"
+                      WHITESPACE@166..167 " "
+                      WORD@167..177 "Reflective"
+                      WHITESPACE@177..178 " "
+                      WORD@178..190 "Architecture"
+                      WHITESPACE@190..191 " "
+                      WORD@191..202 "Description"
+                      WHITESPACE@202..203 " "
+                      WORD@203..211 "Language"
+                      R_CURLY@211..212 "}"
+                    R_CURLY@212..213 "}"
+                  COMMA@213..214 ","
+                WHITESPACE@214..217 "\n  "
+                FIELD@217..336
+                  NAME@217..226 "booktitle"
+                  WHITESPACE@226..227 " "
+                  EQ@227..228 "="
+                  WHITESPACE@228..229 " "
+                  CURLY_GROUP@229..335
+                    L_CURLY@229..230 "{"
+                    CURLY_GROUP@230..334
+                      L_CURLY@230..231 "{"
+                      WORD@231..242 "Proceedings"
+                      WHITESPACE@242..243 " "
+                      WORD@243..245 "of"
+                      WHITESPACE@245..246 " "
+                      WORD@246..249 "the"
+                      WHITESPACE@249..250 " "
+                      WORD@250..253 "5th"
+                      WHITESPACE@253..254 " "
+                      WORD@254..267 "International"
+                      WHITESPACE@267..268 " "
+                      WORD@268..278 "Conference"
+                      WHITESPACE@278..279 " "
+                      WORD@279..281 "on"
+                      WHITESPACE@281..282 " "
+                      WORD@282..294 "Coordination"
+                      WHITESPACE@294..295 " "
+                      WORD@295..301 "Models"
+                      WHITESPACE@301..302 " "
+                      WORD@302..305 "and"
+                      WHITESPACE@305..306 " "
+                      WORD@306..315 "Languages"
+                      WHITESPACE@315..316 " "
+                      WORD@316..333 "(COORDINATION'02)"
+                      R_CURLY@333..334 "}"
+                    R_CURLY@334..335 "}"
+                  COMMA@335..336 ","
+                WHITESPACE@336..339 "\n  "
+                FIELD@339..351
+                  NAME@339..343 "year"
+                  WHITESPACE@343..344 " "
+                  EQ@344..345 "="
+                  WHITESPACE@345..346 " "
+                  LITERAL@346..350
+                    INTEGER@346..350 "2002"
+                  COMMA@350..351 ","
+                WHITESPACE@351..354 "\n  "
+                FIELD@354..400
+                  NAME@354..360 "editor"
+                  WHITESPACE@360..361 " "
+                  EQ@361..362 "="
+                  WHITESPACE@362..363 " "
+                  CURLY_GROUP@363..399
+                    L_CURLY@363..364 "{"
+                    WORD@364..369 "Arbab"
+                    COMMA@369..370 ","
+                    WHITESPACE@370..371 " "
+                    WORD@371..377 "Fahrad"
+                    WHITESPACE@377..378 " "
+                    WORD@378..381 "and"
+                    WHITESPACE@381..382 " "
+                    WORD@382..389 "Talcott"
+                    COMMA@389..390 ","
+                    WHITESPACE@390..391 " "
+                    WORD@391..398 "Carolyn"
+                    R_CURLY@398..399 "}"
+                  COMMA@399..400 ","
+                WHITESPACE@400..403 "\n  "
+                FIELD@403..422
+                  NAME@403..408 "pages"
+                  WHITESPACE@408..409 " "
+                  EQ@409..410 "="
+                  WHITESPACE@410..411 " "
+                  CURLY_GROUP@411..421
+                    L_CURLY@411..412 "{"
+                    WORD@412..420 "141--148"
+                    R_CURLY@420..421 "}"
+                  COMMA@421..422 ","
+                WHITESPACE@422..425 "\n  "
+                FIELD@425..458
+                  NAME@425..432 "address"
+                  WHITESPACE@432..433 " "
+                  EQ@433..434 "="
+                  WHITESPACE@434..435 " "
+                  CURLY_GROUP@435..457
+                    L_CURLY@435..436 "{"
+                    WORD@436..440 "York"
+                    COMMA@440..441 ","
+                    WHITESPACE@441..442 " "
+                    WORD@442..448 "United"
+                    WHITESPACE@448..449 " "
+                    WORD@449..456 "Kingdom"
+                    R_CURLY@456..457 "}"
+                  COMMA@457..458 ","
+                WHITESPACE@458..461 "\n  "
+                FIELD@461..479
+                  NAME@461..473 "organization"
+                  WHITESPACE@473..474 " "
+                  EQ@474..475 "="
+                  WHITESPACE@475..476 " "
+                  CURLY_GROUP@476..478
+                    L_CURLY@476..477 "{"
+                    R_CURLY@477..478 "}"
+                  COMMA@478..479 ","
+                WHITESPACE@479..482 "\n  "
+                FIELD@482..505
+                  NAME@482..491 "publisher"
+                  WHITESPACE@491..492 " "
+                  EQ@492..493 "="
+                  WHITESPACE@493..494 " "
+                  CURLY_GROUP@494..504
+                    L_CURLY@494..495 "{"
+                    WORD@495..503 "Springer"
+                    R_CURLY@503..504 "}"
+                  COMMA@504..505 ","
+                WHITESPACE@505..508 "\n  "
+                FIELD@508..520
+                  NAME@508..514 "volume"
+                  WHITESPACE@514..515 " "
+                  EQ@515..516 "="
+                  WHITESPACE@516..517 " "
+                  CURLY_GROUP@517..519
+                    L_CURLY@517..518 "{"
+                    R_CURLY@518..519 "}"
+                  COMMA@519..520 ","
+                WHITESPACE@520..523 "\n  "
+                FIELD@523..535
+                  NAME@523..529 "number"
+                  WHITESPACE@529..530 " "
+                  EQ@530..531 "="
+                  WHITESPACE@531..532 " "
+                  CURLY_GROUP@532..534
+                    L_CURLY@532..533 "{"
+                    R_CURLY@533..534 "}"
+                  COMMA@534..535 ","
+                WHITESPACE@535..538 "\n  "
+                FIELD@538..588
+                  NAME@538..544 "series"
+                  WHITESPACE@544..545 " "
+                  EQ@545..546 "="
+                  WHITESPACE@546..547 " "
+                  CURLY_GROUP@547..587
+                    L_CURLY@547..548 "{"
+                    WORD@548..555 "Lecture"
+                    WHITESPACE@555..556 " "
+                    WORD@556..561 "Notes"
+                    WHITESPACE@561..562 " "
+                    WORD@562..564 "in"
+                    WHITESPACE@564..565 " "
+                    WORD@565..573 "Computer"
+                    WHITESPACE@573..574 " "
+                    WORD@574..581 "Science"
+                    WHITESPACE@581..582 " "
+                    INTEGER@582..586 "2315"
+                    R_CURLY@586..587 "}"
+                  COMMA@587..588 ","
+                WHITESPACE@588..591 "\n  "
+                FIELD@591..603
+                  NAME@591..596 "month"
+                  WHITESPACE@596..597 " "
+                  EQ@597..598 "="
+                  WHITESPACE@598..599 " "
+                  LITERAL@599..602
+                    NAME@599..602 "apr"
+                  COMMA@602..603 ","
+                WHITESPACE@603..606 "\n  "
+                FIELD@606..616
+                  NAME@606..610 "note"
+                  WHITESPACE@610..611 " "
+                  EQ@611..612 "="
+                  WHITESPACE@612..613 " "
+                  CURLY_GROUP@613..615
+                    L_CURLY@613..614 "{"
+                    R_CURLY@614..615 "}"
+                  WHITESPACE@615..616 "\n"
+                R_DELIM@616..617 "}"
+
+        "#]],
+    )
+}
