@@ -17,7 +17,7 @@ line-index = { path = "../line-index" }
 rowan = "0.15.15"
 syntax = { path = "../syntax" }
 titlecase = "3.0.0"
-url = "2.5.0"
+url = "2.5.2"
 
 [dev-dependencies]
 regex = "1.10.4"
