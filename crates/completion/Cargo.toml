@@ -13,7 +13,7 @@ fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
 line-index = { path = "../line-index" }
 rayon = "1.10.0"
 rowan = "0.15.15"
-rustc-hash = "1.1.0"
+rustc-hash = "2.0.0"
 syntax = { path = "../syntax" }
 url = "2.5.0"
 
