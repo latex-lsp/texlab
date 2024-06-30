@@ -11,7 +11,7 @@ chrono = { version = "0.4.38", default-features = false, features = ["std"] }
 human_name = "2.0.3"
 itertools = "0.13.0"
 rowan = "0.15.15"
-rustc-hash = "1.1.0"
+rustc-hash = "2.0.0"
 syntax = { path = "../syntax" }
 unicode-normalization = "0.1.23"
 
