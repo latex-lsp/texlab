@@ -23,6 +23,7 @@ pub fn document_symbols(workspace: &Workspace, document: &Document) -> Vec<Symbo
         | DocumentData::Log(_)
         | DocumentData::Root
         | DocumentData::Latexmkrc(_)
+        | DocumentData::FileList(_)
         | DocumentData::Tectonic => Vec::new(),
     };
 

@@ -1532,6 +1532,7 @@ version = "0.0.0"
 dependencies = [
  "itertools 0.13.0",
  "rowan",
+ "rustc-hash",
 ]
 
 [[package]]
