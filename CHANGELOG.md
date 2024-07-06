@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix parsing commands with unicode characters inside BibTeX entries
   ([#1147](https://github.com/latex-lsp/texlab/issues/1147))
 - Improve detection of included files when non-ASCII characters are used ([#923](https://github.com/latex-lsp/texlab/issues/923))
+- Fix resolving includes starting from files included using `\subimport` ([#1145](https://github.com/latex-lsp/texlab/issues/1145))
 
 ## [5.17.0] - 2024-06-23
 

@@ -169,7 +169,7 @@ impl Graph {
                         .base_dir
                         .as_deref()
                         .and_then(|path| start.root.src_dir.join(path).ok())
-                        .map(|dir| ProjectRoot::walk_and_find(workspace, &dir));
+                        .map(|dir| ProjectRoot::from_config(workspace, &dir));
 
                     let link_data = DirectLinkData {
                         link: link.clone(),
