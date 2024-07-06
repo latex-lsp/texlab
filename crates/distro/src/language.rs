@@ -9,6 +9,7 @@ pub enum Language {
     Root,
     Latexmkrc,
     Tectonic,
+    FileList,
 }
 
 impl Language {
@@ -32,6 +33,7 @@ impl Language {
             "bib" | "bibtex" => Some(Self::Bib),
             "aux" => Some(Self::Aux),
             "log" => Some(Self::Log),
+            "fls" => Some(Self::FileList),
             _ => None,
         }
     }

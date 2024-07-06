@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Parse `.fls` files to make the project detection more reliable ([#1145](https://github.com/latex-lsp/texlab/issues/1145))
+
 ### Fixed
 
 - Fix parsing commands with unicode characters inside BibTeX entries

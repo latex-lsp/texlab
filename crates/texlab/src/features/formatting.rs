@@ -27,6 +27,7 @@ pub fn format_source_code(
         | Language::Log
         | Language::Root
         | Language::Latexmkrc
-        | Language::Tectonic => None,
+        | Language::Tectonic
+        | Language::FileList => None,
     }
 }

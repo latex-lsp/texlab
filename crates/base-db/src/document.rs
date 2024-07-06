@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use distro::Language;
 use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
-use syntax::{bibtex, latex, latexmkrc::LatexmkrcData, BuildError};
+use syntax::{bibtex, file_list::FileList, latex, latexmkrc::LatexmkrcData, BuildError};
 use url::Url;
 
 use crate::{semantics, Config};
@@ -89,6 +89,7 @@ impl Document {
                 DocumentData::Latexmkrc(data)
             }
             Language::Tectonic => DocumentData::Tectonic,
+            Language::FileList => DocumentData::FileList(parser::parse_file_list(&text)),
         };
 
         Self {
@@ -146,6 +147,7 @@ pub enum DocumentData {
     Root,
     Latexmkrc(LatexmkrcData),
     Tectonic,
+    FileList(FileList),
 }
 
 impl DocumentData {
@@ -183,6 +185,14 @@ impl DocumentData {
 
     pub fn as_latexmkrc(&self) -> Option<&LatexmkrcData> {
         if let DocumentData::Latexmkrc(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_file_list(&self) -> Option<&FileList> {
+        if let DocumentData::FileList(data) = self {
             Some(data)
         } else {
             None

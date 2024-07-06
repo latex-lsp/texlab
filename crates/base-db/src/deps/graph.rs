@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, path::PathBuf, rc::Rc};
+use std::{ffi::OsStr, path::PathBuf, rc::Rc, sync::Arc};
 
 use distro::Language;
 use itertools::Itertools;
@@ -23,6 +23,7 @@ pub struct Edge {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum EdgeData {
     DirectLink(Box<DirectLinkData>),
+    FileList(Arc<ProjectRoot>),
     AdditionalFiles,
     Artifact,
 }
@@ -74,6 +75,7 @@ impl Graph {
                 if visited.insert(edge.target.clone()) {
                     let new_root = match &edge.data {
                         EdgeData::DirectLink(data) => data.new_root.clone(),
+                        EdgeData::FileList(root) => Some(root.as_ref().clone()),
                         _ => None,
                     };
 
@@ -101,6 +103,7 @@ impl Graph {
         self.add_direct_links(workspace, start);
         self.add_artifacts(workspace, start);
         self.add_additional_files(workspace, start);
+        self.add_file_list_links(workspace, start);
     }
 
     fn add_additional_files(&mut self, workspace: &Workspace, start: Start) {
@@ -118,6 +121,43 @@ impl Graph {
                 }
             }
         }
+    }
+
+    fn add_file_list_links(&mut self, workspace: &Workspace, start: Start) -> Option<()> {
+        let file_list = start.source.data.as_file_list()?;
+        let home_dir = HOME_DIR.as_deref();
+
+        let working_dir = file_list
+            .working_dir
+            .as_deref()
+            .and_then(|dir| Url::from_directory_path(dir).ok());
+
+        let working_dir = working_dir.as_ref().unwrap_or(&start.source.dir);
+        let new_root = Arc::new(ProjectRoot::from_config(workspace, working_dir));
+
+        for target_uri in file_list
+            .inputs
+            .iter()
+            .chain(file_list.outputs.iter())
+            .filter(|path| {
+                path.is_relative()
+                    || Language::from_path(&path) == Some(Language::Bib)
+                    || home_dir.map_or(false, |home_dir| path.starts_with(home_dir))
+            })
+            .filter_map(|path| working_dir.join(path.to_str()?).ok())
+        {
+            if workspace.lookup(&target_uri).is_some() {
+                self.edges.push(Edge {
+                    source: start.source.uri.clone(),
+                    target: target_uri,
+                    data: EdgeData::FileList(Arc::clone(&new_root)),
+                });
+            } else {
+                self.missing.push(target_uri);
+            }
+        }
+
+        Some(())
     }
 
     fn add_direct_links(&mut self, workspace: &Workspace, start: Start) -> Option<()> {
@@ -197,27 +237,33 @@ impl Graph {
         }
 
         let root = start.root;
-        let relative_path = root.compile_dir.make_relative(&start.source.uri).unwrap();
+        self.add_artifact_group(workspace, start, &root.aux_dir, "aux");
+        self.add_artifact_group(workspace, start, &root.log_dir, "log");
+        self.add_artifact_group(workspace, start, &root.aux_dir, "fls");
+    }
+
+    fn add_artifact_group(
+        &mut self,
+        workspace: &Workspace,
+        start: Start,
+        dir: &Url,
+        extension: &str,
+    ) {
+        let relative_path = start
+            .root
+            .compile_dir
+            .make_relative(&start.source.uri)
+            .unwrap();
 
         self.add_artifact(
             workspace,
             start.source,
-            &root.aux_dir.join(&relative_path).unwrap(),
-            "aux",
+            &dir.join(&relative_path).unwrap(),
+            extension,
         );
 
-        self.add_artifact(workspace, start.source, &root.aux_dir, "aux");
-        self.add_artifact(workspace, start.source, &root.compile_dir, "aux");
-
-        self.add_artifact(
-            workspace,
-            start.source,
-            &root.log_dir.join(&relative_path).unwrap(),
-            "log",
-        );
-
-        self.add_artifact(workspace, start.source, &root.log_dir, "log");
-        self.add_artifact(workspace, start.source, &root.compile_dir, "log");
+        self.add_artifact(workspace, start.source, &dir, extension);
+        self.add_artifact(workspace, start.source, &start.root.compile_dir, extension);
     }
 
     fn add_artifact(

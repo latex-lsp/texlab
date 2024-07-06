@@ -1,4 +1,5 @@
 pub mod bibtex;
+pub mod file_list;
 pub mod latex;
 pub mod latexmkrc;
 

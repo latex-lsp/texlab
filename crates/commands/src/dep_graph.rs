@@ -48,6 +48,7 @@ pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
             base_db::deps::EdgeData::DirectLink(data) => &data.link.path.text,
             base_db::deps::EdgeData::AdditionalFiles => "<project>",
             base_db::deps::EdgeData::Artifact => "<artifact>",
+            base_db::deps::EdgeData::FileList(_) => "<fls>",
         };
 
         writeln!(&mut writer, "\t{source} -> {target} [label=\"{label}\"];")?;
