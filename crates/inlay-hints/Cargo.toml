@@ -9,7 +9,7 @@ rust-version.workspace = true
 [dependencies]
 base-db = { path = "../base-db" }
 rowan = "0.15.15"
-rustc-hash = "1.1.0"
+rustc-hash = "2.0.0"
 
 [dev-dependencies]
 test-utils = { path = "../test-utils" }
