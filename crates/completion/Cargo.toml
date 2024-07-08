@@ -15,7 +15,7 @@ rayon = "1.10.0"
 rowan = "0.15.15"
 rustc-hash = "2.0.0"
 syntax = { path = "../syntax" }
-url = "2.5.0"
+url = "2.5.2"
 
 [dev-dependencies]
 criterion = "0.5.1"

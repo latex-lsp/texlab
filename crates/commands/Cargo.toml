@@ -18,7 +18,7 @@ rowan = "0.15.15"
 rustc-hash = "2.0.0"
 syntax = { path = "../syntax" }
 thiserror = "1.0.61"
-url = "2.5.0"
+url = "2.5.2"
 
 [dev-dependencies]
 distro = { path = "../distro" }
