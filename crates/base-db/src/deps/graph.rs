@@ -103,7 +103,10 @@ impl Graph {
         self.add_direct_links(workspace, start);
         self.add_artifacts(workspace, start);
         self.add_additional_files(workspace, start);
-        self.add_file_list_links(workspace, start);
+
+        if workspace.config().syntax.use_file_list {
+            self.add_file_list_links(workspace, start);
+        }
     }
 
     fn add_additional_files(&mut self, workspace: &Workspace, start: Start) {
