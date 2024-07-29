@@ -26,7 +26,7 @@ anyhow = "1.0.86"
 base-db = { path = "../base-db" }
 bibfmt = { path = "../bibfmt" }
 citeproc = { path = "../citeproc" }
-clap = { version = "4.5.8", features = ["derive"] }
+clap = { version = "4.5.11", features = ["derive"] }
 commands = { path = "../commands" }
 completion = { path = "../completion" }
 completion-data = { path = "../completion-data" }
