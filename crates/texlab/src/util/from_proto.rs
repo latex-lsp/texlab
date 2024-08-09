@@ -313,6 +313,8 @@ pub fn config(value: Options) -> Config {
         CompletionMatcher::PrefixIgnoreCase => base_db::MatchingAlgo::PrefixIgnoreCase,
     };
 
+    config.syntax.use_file_list = value.build.use_file_list;
+
     config
         .syntax
         .math_environments
