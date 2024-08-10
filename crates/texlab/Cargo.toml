@@ -54,8 +54,8 @@ regex = "1.10.6"
 rename = { path = "../rename" }
 rowan = "0.15.15"
 rustc-hash = "2.0.0"
-serde = "1.0.204"
-serde_json = "1.0.122"
+serde.workspace = true
+serde_json.workspace = true
 serde_regex = "1.1.0"
 serde_repr = "0.1.19"
 symbols = { path = "../symbols" }

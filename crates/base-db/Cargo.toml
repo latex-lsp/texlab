@@ -22,7 +22,7 @@ rowan = "0.15.15"
 rustc-hash = "2.0.0"
 shellexpand = "3.1.0"
 syntax = { path = "../syntax" }
-titlecase = "3.3.0"
+titlecase.workspace = true
 url = "2.5.0"
 
 [lib]
