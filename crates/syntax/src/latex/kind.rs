@@ -4,7 +4,6 @@
 pub enum SyntaxKind {
     ERROR = 0,
 
-    LINE_BREAK,
     WHITESPACE,
     COMMENT,
     VERBATIM,
