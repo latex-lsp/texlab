@@ -24,24 +24,24 @@ Baz"#,
               PREAMBLE@0..48
                 TEXT@0..4
                   WORD@0..3 "Foo"
-                  LINE_BREAK@3..4 "\n"
+                  WHITESPACE@3..4 "\n"
                 BLOCK_COMMENT@4..22
                   COMMAND_NAME@4..12 "\\iffalse"
-                  LINE_BREAK@12..13 "\n"
+                  WHITESPACE@12..13 "\n"
                   WORD@13..18 "Test1"
-                  LINE_BREAK@18..19 "\n"
+                  WHITESPACE@18..19 "\n"
                   COMMAND_NAME@19..22 "\\fi"
-                LINE_BREAK@22..23 "\n"
+                WHITESPACE@22..23 "\n"
                 TEXT@23..27
                   WORD@23..26 "Bar"
-                  LINE_BREAK@26..27 "\n"
+                  WHITESPACE@26..27 "\n"
                 BLOCK_COMMENT@27..44
                   COMMAND_NAME@27..35 "\\iffalse"
-                  LINE_BREAK@35..36 "\n"
+                  WHITESPACE@35..36 "\n"
                   COMMAND_NAME@36..40 "\\fii"
-                  LINE_BREAK@40..41 "\n"
+                  WHITESPACE@40..41 "\n"
                   COMMAND_NAME@41..44 "\\fi"
-                LINE_BREAK@44..45 "\n"
+                WHITESPACE@44..45 "\n"
                 TEXT@45..48
                   WORD@45..48 "Baz"
 
@@ -776,7 +776,7 @@ fn test_environment_asymptote() {
                       KEY@7..10
                         WORD@7..10 "asy"
                       R_CURLY@10..11 "}"
-                      LINE_BREAK@11..12 "\n"
+                      WHITESPACE@11..12 "\n"
                       WHITESPACE@12..16 "    "
                   TEXT@16..22
                     WORD@16..22 "printf"
@@ -793,7 +793,7 @@ fn test_environment_asymptote() {
                     R_PAREN@38..39 ")"
                   TEXT@39..41
                     WORD@39..40 ";"
-                    LINE_BREAK@40..41 "\n"
+                    WHITESPACE@40..41 "\n"
                   END@41..50
                     COMMAND_NAME@41..45 "\\end"
                     CURLY_GROUP_WORD@45..50
@@ -1289,7 +1289,7 @@ fn test_acronym_package() {
                       WHITESPACE@26..27 " "
                       WORD@27..33 "Second"
                     R_CURLY@33..34 "}"
-                    LINE_BREAK@34..35 "\n"
+                    WHITESPACE@34..35 "\n"
 
         "#]],
     );
@@ -2384,7 +2384,7 @@ fn test_issue_568() {
                       WHITESPACE@15..16 " "
                       WORD@16..34 "scripts/test.ipynb"
                     R_CURLY@34..35 "}"
-                    LINE_BREAK@35..36 "\n"
+                    WHITESPACE@35..36 "\n"
                 LABEL_DEFINITION@36..51
                   COMMAND_NAME@36..42 "\\label"
                   CURLY_GROUP_WORD@42..51
@@ -2433,7 +2433,7 @@ fn test_issue_745() {
                     KEY@15..22
                       WORD@15..22 "article"
                     R_CURLY@22..23 "}"
-                    LINE_BREAK@23..24 "\n"
+                    WHITESPACE@23..24 "\n"
                 PACKAGE_INCLUDE@24..50
                   COMMAND_NAME@24..35 "\\usepackage"
                   CURLY_GROUP_WORD_LIST@35..50
@@ -2442,10 +2442,10 @@ fn test_issue_745() {
                       WORD@36..46 "tabularray"
                     R_CURLY@46..47 "}"
                     WHITESPACE@47..48 " "
-                    LINE_BREAK@48..50 "\n\n"
+                    WHITESPACE@48..50 "\n\n"
                 GENERIC_COMMAND@50..64
                   COMMAND_NAME@50..63 "\\ExplSyntaxOn"
-                  LINE_BREAK@63..64 "\n"
+                  WHITESPACE@63..64 "\n"
                 ENVIRONMENT_DEFINITION@64..200
                   COMMAND_NAME@64..87 "\\NewDocumentEnvironment"
                   CURLY_GROUP_WORD@87..96
@@ -2463,19 +2463,19 @@ fn test_issue_745() {
                     TEXT@100..101
                       WORD@100..101 "m"
                     R_CURLY@101..102 "}"
-                    LINE_BREAK@102..103 "\n"
+                    WHITESPACE@102..103 "\n"
                     WHITESPACE@103..107 "    "
                   CURLY_GROUP@107..200
                     L_CURLY@107..108 "{"
-                    LINE_BREAK@108..109 "\n"
+                    WHITESPACE@108..109 "\n"
                     WHITESPACE@109..113 "    "
                     GENERIC_COMMAND@113..194
                       COMMAND_NAME@113..119 "\\use:x"
-                      LINE_BREAK@119..120 "\n"
+                      WHITESPACE@119..120 "\n"
                       WHITESPACE@120..124 "    "
                       CURLY_GROUP@124..194
                         L_CURLY@124..125 "{"
-                        LINE_BREAK@125..126 "\n"
+                        WHITESPACE@125..126 "\n"
                         WHITESPACE@126..130 "    "
                         GENERIC_COMMAND@130..141
                           COMMAND_NAME@130..140 "\\exp_not:N"
@@ -2488,7 +2488,7 @@ fn test_issue_745() {
                               KEY@148..152
                                 WORD@148..152 "tblr"
                               R_CURLY@152..153 "}"
-                              LINE_BREAK@153..154 "\n"
+                              WHITESPACE@153..154 "\n"
                               WHITESPACE@154..158 "    "
                             BRACK_GROUP@158..179
                               L_BRACK@158..159 "["
@@ -2500,24 +2500,24 @@ fn test_issue_745() {
                                     WORD@170..172 "#1"
                                   R_CURLY@172..173 "}"
                               R_BRACK@173..174 "]"
-                              LINE_BREAK@174..175 "\n"
+                              WHITESPACE@174..175 "\n"
                               WHITESPACE@175..179 "    "
                           CURLY_GROUP@179..188
                             L_CURLY@179..180 "{"
                             TEXT@180..182
                               WORD@180..182 "#2"
                             R_CURLY@182..183 "}"
-                            LINE_BREAK@183..184 "\n"
+                            WHITESPACE@183..184 "\n"
                             WHITESPACE@184..188 "    "
                         R_CURLY@188..189 "}"
-                        LINE_BREAK@189..190 "\n"
+                        WHITESPACE@189..190 "\n"
                         WHITESPACE@190..194 "    "
                     R_CURLY@194..195 "}"
-                    LINE_BREAK@195..196 "\n"
+                    WHITESPACE@195..196 "\n"
                     WHITESPACE@196..200 "    "
                 CURLY_GROUP@200..223
                   L_CURLY@200..201 "{"
-                  LINE_BREAK@201..202 "\n"
+                  WHITESPACE@201..202 "\n"
                   WHITESPACE@202..206 "    "
                   GENERIC_COMMAND@206..221
                     COMMAND_NAME@206..210 "\\end"
@@ -2526,13 +2526,13 @@ fn test_issue_745() {
                       TEXT@211..215
                         WORD@211..215 "tblr"
                       R_CURLY@215..216 "}"
-                      LINE_BREAK@216..217 "\n"
+                      WHITESPACE@216..217 "\n"
                       WHITESPACE@217..221 "    "
                   R_CURLY@221..222 "}"
-                  LINE_BREAK@222..223 "\n"
+                  WHITESPACE@222..223 "\n"
                 GENERIC_COMMAND@223..239
                   COMMAND_NAME@223..237 "\\ExplSyntaxOff"
-                  LINE_BREAK@237..239 "\n\n"
+                  WHITESPACE@237..239 "\n\n"
                 ENVIRONMENT@239..271
                   BEGIN@239..257
                     COMMAND_NAME@239..245 "\\begin"
@@ -2541,7 +2541,7 @@ fn test_issue_745() {
                       KEY@246..254
                         WORD@246..254 "document"
                       R_CURLY@254..255 "}"
-                      LINE_BREAK@255..257 "\n\n"
+                      WHITESPACE@255..257 "\n\n"
                   END@257..271
                     COMMAND_NAME@257..261 "\\end"
                     CURLY_GROUP_WORD@261..271
@@ -2620,7 +2620,7 @@ This is an asdf undefined command
                     KEY@15..22
                       WORD@15..22 "minimal"
                     R_CURLY@22..23 "}"
-                    LINE_BREAK@23..24 "\n"
+                    WHITESPACE@23..24 "\n"
                 ENVIRONMENT@24..135
                   BEGIN@24..41
                     COMMAND_NAME@24..30 "\\begin"
@@ -2629,7 +2629,7 @@ This is an asdf undefined command
                       KEY@31..39
                         WORD@31..39 "document"
                       R_CURLY@39..40 "}"
-                      LINE_BREAK@40..41 "\n"
+                      WHITESPACE@40..41 "\n"
                   TEXT@41..75
                     WORD@41..45 "This"
                     WHITESPACE@45..46 " "
@@ -2642,24 +2642,24 @@ This is an asdf undefined command
                     WORD@57..66 "undefined"
                     WHITESPACE@66..67 " "
                     WORD@67..74 "command"
-                    LINE_BREAK@74..75 "\n"
+                    WHITESPACE@74..75 "\n"
                   BLOCK_COMMENT@75..120
                     COMMAND_NAME@75..83 "\\iffalse"
-                    LINE_BREAK@83..84 "\n"
+                    WHITESPACE@83..84 "\n"
                     WHITESPACE@84..86 "  "
                     BLOCK_COMMENT@86..97
                       COMMAND_NAME@86..94 "\\iffalse"
                       COMMAND_NAME@94..97 "\\fi"
-                    LINE_BREAK@97..98 "\n"
+                    WHITESPACE@97..98 "\n"
                     WHITESPACE@98..100 "  "
                     COMMAND_NAME@100..104 "\\end"
                     L_CURLY@104..105 "{"
                     WORD@105..114 "enumerate"
                     R_CURLY@114..115 "}"
                     WHITESPACE@115..116 " "
-                    LINE_BREAK@116..117 "\n"
+                    WHITESPACE@116..117 "\n"
                     COMMAND_NAME@117..120 "\\fi"
-                  LINE_BREAK@120..121 "\n"
+                  WHITESPACE@120..121 "\n"
                   END@121..135
                     COMMAND_NAME@121..125 "\\end"
                     CURLY_GROUP_WORD@125..135
@@ -2688,7 +2688,7 @@ fn test_issue_857() {
                   CURLY_GROUP@14..17
                     L_CURLY@14..15 "{"
                     R_CURLY@15..16 "}"
-                    LINE_BREAK@16..17 "\n"
+                    WHITESPACE@16..17 "\n"
                 NEW_COMMAND_DEFINITION@17..38
                   COMMAND_NAME@17..28 "\\newcommand"
                   CURLY_GROUP_COMMAND@28..35
@@ -2698,7 +2698,7 @@ fn test_issue_857() {
                   CURLY_GROUP@35..38
                     L_CURLY@35..36 "{"
                     R_CURLY@36..37 "}"
-                    LINE_BREAK@37..38 "\n"
+                    WHITESPACE@37..38 "\n"
                 NEW_COMMAND_DEFINITION@38..49
                   COMMAND_NAME@38..49 "\\newcommand"
                 GENERIC_COMMAND@49..55
@@ -2768,31 +2768,31 @@ fn test_issue_919() {
                     KEY@15..22
                       WORD@15..22 "article"
                     R_CURLY@22..23 "}"
-                    LINE_BREAK@23..25 "\n\n"
+                    WHITESPACE@23..25 "\n\n"
                 PACKAGE_INCLUDE@25..173
                   COMMAND_NAME@25..36 "\\usepackage"
                   CURLY_GROUP_WORD_LIST@36..173
                     L_CURLY@36..37 "{"
-                    LINE_BREAK@37..38 "\n"
+                    WHITESPACE@37..38 "\n"
                     WHITESPACE@38..42 "    "
                     KEY@42..48
                       WORD@42..48 "lipsum"
                     COMMA@48..49 ","
                     WHITESPACE@49..50 " "
                     COMMENT@50..70 "% provides blindtext"
-                    LINE_BREAK@70..71 "\n"
+                    WHITESPACE@70..71 "\n"
                     WHITESPACE@71..75 "    "
                     KEY@75..83
                       WORD@75..83 "booktabs"
                     COMMA@83..84 ","
                     WHITESPACE@84..85 " "
                     COMMENT@85..110 "% better rules for ta ..."
-                    LINE_BREAK@110..111 "\n"
+                    WHITESPACE@110..111 "\n"
                     WHITESPACE@111..115 "    "
                     COMMENT@115..169 "%xcolor % easily defi ..."
-                    LINE_BREAK@169..170 "\n"
+                    WHITESPACE@169..170 "\n"
                     R_CURLY@170..171 "}"
-                    LINE_BREAK@171..173 "\n\n"
+                    WHITESPACE@171..173 "\n\n"
                 ENVIRONMENT@173..217
                   BEGIN@173..194
                     COMMAND_NAME@173..179 "\\begin"
@@ -2801,11 +2801,11 @@ fn test_issue_919() {
                       KEY@180..188
                         WORD@180..188 "document"
                       R_CURLY@188..189 "}"
-                      LINE_BREAK@189..190 "\n"
+                      WHITESPACE@189..190 "\n"
                       WHITESPACE@190..194 "    "
                   GENERIC_COMMAND@194..202
                     COMMAND_NAME@194..201 "\\lipsum"
-                    LINE_BREAK@201..202 "\n"
+                    WHITESPACE@201..202 "\n"
                   END@202..217
                     COMMAND_NAME@202..206 "\\end"
                     CURLY_GROUP_WORD@206..217
@@ -2813,7 +2813,7 @@ fn test_issue_919() {
                       KEY@207..215
                         WORD@207..215 "document"
                       R_CURLY@215..216 "}"
-                      LINE_BREAK@216..217 "\n"
+                      WHITESPACE@216..217 "\n"
 
         "#]],
     );
@@ -2853,7 +2853,7 @@ world}"#,
                     L_CURLY@6..7 "{"
                     KEY@7..13
                       WORD@7..12 "hello"
-                      LINE_BREAK@12..13 "\n"
+                      WHITESPACE@12..13 "\n"
                 TEXT@13..18
                   WORD@13..18 "world"
                 ERROR@18..19
@@ -3150,12 +3150,12 @@ Section 2"#,
                       WHITESPACE@16..17 " "
                       WORD@17..18 "1"
                     R_CURLY@18..19 "}"
-                    LINE_BREAK@19..20 "\n"
+                    WHITESPACE@19..20 "\n"
                   TEXT@20..31
                     WORD@20..27 "Section"
                     WHITESPACE@27..28 " "
                     WORD@28..29 "1"
-                    LINE_BREAK@29..31 "\n\n"
+                    WHITESPACE@29..31 "\n\n"
                   PARAGRAPH@31..68
                     COMMAND_NAME@31..41 "\\paragraph"
                     CURLY_GROUP@41..55
@@ -3165,12 +3165,12 @@ Section 2"#,
                         WHITESPACE@51..52 " "
                         WORD@52..53 "1"
                       R_CURLY@53..54 "}"
-                      LINE_BREAK@54..55 "\n"
+                      WHITESPACE@54..55 "\n"
                     TEXT@55..68
                       WORD@55..64 "Paragraph"
                       WHITESPACE@64..65 " "
                       WORD@65..66 "1"
-                      LINE_BREAK@66..68 "\n\n"
+                      WHITESPACE@66..68 "\n\n"
                   PARAGRAPH@68..105
                     COMMAND_NAME@68..78 "\\paragraph"
                     CURLY_GROUP@78..92
@@ -3180,12 +3180,12 @@ Section 2"#,
                         WHITESPACE@88..89 " "
                         WORD@89..90 "2"
                       R_CURLY@90..91 "}"
-                      LINE_BREAK@91..92 "\n"
+                      WHITESPACE@91..92 "\n"
                     TEXT@92..105
                       WORD@92..101 "Paragraph"
                       WHITESPACE@101..102 " "
                       WORD@102..103 "2"
-                      LINE_BREAK@103..105 "\n\n"
+                      WHITESPACE@103..105 "\n\n"
                 SECTION@105..134
                   COMMAND_NAME@105..113 "\\section"
                   CURLY_GROUP@113..125
@@ -3195,7 +3195,7 @@ Section 2"#,
                       WHITESPACE@121..122 " "
                       WORD@122..123 "2"
                     R_CURLY@123..124 "}"
-                    LINE_BREAK@124..125 "\n"
+                    WHITESPACE@124..125 "\n"
                   TEXT@125..134
                     WORD@125..132 "Section"
                     WHITESPACE@132..133 " "

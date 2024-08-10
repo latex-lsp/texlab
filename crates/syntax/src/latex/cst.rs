@@ -12,7 +12,7 @@ pub fn small_range(node: &dyn AstNode<Language = LatexLanguage>) -> TextRange {
     let start = full_range.start();
     let mut token = node.syntax().last_token();
     while let Some(current) = token {
-        if !matches!(current.kind(), LINE_BREAK | WHITESPACE | COMMENT) {
+        if !matches!(current.kind(), WHITESPACE | COMMENT) {
             return TextRange::new(start, current.text_range().end());
         }
         token = current.prev_token();
@@ -233,7 +233,7 @@ impl Key {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
-            .filter(|node| !matches!(node.kind(), WHITESPACE | LINE_BREAK | COMMENT))
+            .filter(|node| !matches!(node.kind(), WHITESPACE | COMMENT))
     }
 }
 
@@ -258,7 +258,7 @@ impl ToString for Key {
             .children_with_tokens()
             .filter_map(|node| node.into_token())
         {
-            if matches!(token.kind(), WHITESPACE | LINE_BREAK | COMMENT) {
+            if matches!(token.kind(), WHITESPACE | COMMENT) {
                 buf.push(' ');
             } else {
                 buf.push_str(token.text());

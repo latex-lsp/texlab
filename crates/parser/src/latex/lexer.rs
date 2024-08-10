@@ -27,7 +27,7 @@ impl<'a> Lexer<'a> {
     pub fn eat(&mut self) -> Option<(SyntaxKind, &'a str)> {
         let (kind, text) = self.tokens.pop()?;
         let kind = match kind {
-            Token::LineBreak => SyntaxKind::LINE_BREAK,
+            Token::LineBreak => SyntaxKind::WHITESPACE,
             Token::Whitespace => SyntaxKind::WHITESPACE,
             Token::LineComment => SyntaxKind::COMMENT,
             Token::LCurly => SyntaxKind::L_CURLY,
