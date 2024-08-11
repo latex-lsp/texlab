@@ -12,14 +12,14 @@ doctest = false
 [dependencies]
 base-db = { path = "../base-db" }
 distro = { path = "../distro" }
-itertools = "0.13.0"
+itertools.workspace = true
 line-index = { path = "../line-index" }
-rowan = "0.15.15"
+rowan.workspace = true
 syntax = { path = "../syntax" }
-titlecase = "3.3.0"
-url = "2.5.0"
+titlecase.workspace = true
+url.workspace = true
 
 [dev-dependencies]
-regex = "1.10.6"
+regex.workspace = true
 test-utils = { path = "../test-utils" }
-expect-test = "1.5.0"
+expect-test.workspace = true

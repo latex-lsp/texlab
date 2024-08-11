@@ -7,22 +7,22 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow.workspace = true
 base-db = { path = "../base-db" }
 bstr = "1.10.0"
-crossbeam-channel = "0.5.13"
-itertools = "0.13.0"
+crossbeam-channel.workspace = true
+itertools.workspace = true
 libc = "0.2.155"
-log = "0.4.22"
-rowan = "0.15.15"
-rustc-hash = "2.0.0"
+log.workspace = true
+rowan.workspace = true
+rustc-hash.workspace = true
 syntax = { path = "../syntax" }
 thiserror = "1.0.63"
-url = "2.5.0"
+url.workspace = true
 
 [dev-dependencies]
 distro = { path = "../distro" }
-expect-test = "1.5.0"
+expect-test.workspace = true
 test-utils = { path = "../test-utils" }
 
 [lib]

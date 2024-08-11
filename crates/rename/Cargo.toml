@@ -8,8 +8,8 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-rowan = "0.15.15"
-rustc-hash = "2.0.0"
+rowan.workspace = true
+rustc-hash.workspace = true
 syntax = { path = "../syntax" }
 
 [dev-dependencies]

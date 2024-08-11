@@ -1,7 +1,7 @@
 [package]
 name = "texlab"
 description = "LaTeX Language Server"
-version = "5.19.0"
+version.workspace = true
 license.workspace = true
 readme = "README.md"
 authors.workspace = true
@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow.workspace = true
 base-db = { path = "../base-db" }
 bibfmt = { path = "../bibfmt" }
 citeproc = { path = "../citeproc" }
@@ -30,7 +30,7 @@ clap = { version = "4.5.13", features = ["derive"] }
 commands = { path = "../commands" }
 completion = { path = "../completion" }
 completion-data = { path = "../completion-data" }
-crossbeam-channel = "0.5.13"
+crossbeam-channel.workspace = true
 definition = { path = "../definition" }
 diagnostics = { path = "../diagnostics" }
 distro = { path = "../distro" }
@@ -42,29 +42,29 @@ inlay-hints = { path = "../inlay-hints" }
 ipc = { path = "../ipc" }
 line-index = { path = "../line-index" }
 links = { path = "../links" }
-log = "0.4.22"
+log.workspace = true
 lsp-server = "0.7.6"
 lsp-types = "0.95.1"
-notify = "6.1.1"
+notify.workspace = true
 notify-debouncer-full = "0.3.1"
 parking_lot = "0.12.3"
 parser = { path = "../parser" }
 references = { path = "../references" }
-regex = "1.10.6"
+regex.workspace = true
 rename = { path = "../rename" }
-rowan = "0.15.15"
-rustc-hash = "2.0.0"
-serde = "1.0.204"
-serde_json = "1.0.122"
+rowan.workspace = true
+rustc-hash.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 serde_regex = "1.1.0"
 serde_repr = "0.1.19"
 symbols = { path = "../symbols" }
 syntax = { path = "../syntax" }
-tempfile = "3.10.1"
+tempfile.workspace = true
 threadpool = "1.8.1"
 
 [dev-dependencies]
-criterion = { version = "0.5.1" }
+criterion.workspace = true
 
 [[bench]]
 name = "bench_main"

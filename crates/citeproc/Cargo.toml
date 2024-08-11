@@ -10,17 +10,17 @@ rust-version.workspace = true
 bibtex-utils = { path = "../bibtex-utils" }
 base-db = { path = "../base-db" }
 isocountry = "0.3.2"
-itertools = "0.13.0"
-rowan = "0.15.15"
-rustc-hash = "2.0.0"
+itertools.workspace = true
+rowan.workspace = true
+rustc-hash.workspace = true
 syntax = { path = "../syntax" }
-titlecase = "3.3.0"
-unicode-normalization = "0.1.23"
-url = "2.5.0"
+titlecase.workspace = true
+unicode-normalization.workspace = true
+url.workspace = true
 
 [lib]
 doctest = false
 
 [dev-dependencies]
-expect-test = "1.5.0"
+expect-test.workspace = true
 parser = { path = "../parser" }
