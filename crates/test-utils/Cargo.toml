@@ -10,7 +10,7 @@ rust-version.workspace = true
 base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 line-index = { path = "../line-index" }
-rowan = "0.15.15"
+rowan.workspace = true
 url = "2.5.0"
 
 [lib]

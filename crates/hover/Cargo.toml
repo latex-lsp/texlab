@@ -11,7 +11,7 @@ base-db = { path = "../base-db" }
 bibtex-utils = { path = "../bibtex-utils" }
 citeproc = { path = "../citeproc" }
 completion-data = { path = "../completion-data" }
-rowan = "0.15.15"
+rowan.workspace = true
 syntax = { path = "../syntax" }
 
 [dev-dependencies]

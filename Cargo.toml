@@ -12,6 +12,7 @@ edition = "2021"
 rust-version = "1.75"
 
 [workspace.dependencies]
+rowan = "0.15.15"
 serde = { version = "1.0.205", features = ["derive"] }
 serde_json = "1.0.122"
 titlecase = "3.3.0"

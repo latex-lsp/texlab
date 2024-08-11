@@ -14,7 +14,7 @@ base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 itertools = "0.13.0"
 line-index = { path = "../line-index" }
-rowan = "0.15.15"
+rowan.workspace = true
 syntax = { path = "../syntax" }
 titlecase.workspace = true
 url = "2.5.0"

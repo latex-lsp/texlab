@@ -14,7 +14,7 @@ crossbeam-channel = "0.5.13"
 itertools = "0.13.0"
 libc = "0.2.155"
 log = "0.4.22"
-rowan = "0.15.15"
+rowan.workspace = true
 rustc-hash = "2.0.0"
 syntax = { path = "../syntax" }
 thiserror = "1.0.63"
