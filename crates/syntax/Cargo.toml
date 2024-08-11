@@ -7,9 +7,9 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-itertools = "0.13.0"
+itertools.workspace = true
 rowan.workspace = true
-rustc-hash = "2.0.0"
+rustc-hash.workspace = true
 
 [lib]
 doctest = false

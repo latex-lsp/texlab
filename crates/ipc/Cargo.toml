@@ -7,15 +7,15 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-crossbeam-channel = "0.5.13"
+crossbeam-channel.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-log = "0.4.22"
+log.workspace = true
 uds_windows = "1.1.0"
 
 [lib]
 doctest = false
 
 [dev-dependencies]
-expect-test = "1.5.0"
+expect-test.workspace = true
 parser = { path = "../parser" }

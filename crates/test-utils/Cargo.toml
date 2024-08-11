@@ -11,7 +11,7 @@ base-db = { path = "../base-db" }
 distro = { path = "../distro" }
 line-index = { path = "../line-index" }
 rowan.workspace = true
-url = "2.5.0"
+url.workspace = true
 
 [lib]
 doctest = false

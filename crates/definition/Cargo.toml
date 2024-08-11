@@ -9,11 +9,11 @@ rust-version.workspace = true
 [dependencies]
 base-db = { path = "../base-db" }
 rowan.workspace = true
-rustc-hash = "2.0.0"
+rustc-hash.workspace = true
 syntax = { path = "../syntax" }
 
 [dev-dependencies]
-itertools = "0.13.0"
+itertools.workspace = true
 test-utils = { path = "../test-utils" }
 
 [lib]

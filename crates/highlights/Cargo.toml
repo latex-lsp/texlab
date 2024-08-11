@@ -11,7 +11,7 @@ base-db = { path = "../base-db" }
 rowan.workspace = true
 
 [dev-dependencies]
-expect-test = "1.5.0"
+expect-test.workspace = true
 test-utils = { path = "../test-utils" }
 
 [lib]
