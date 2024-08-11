@@ -32,7 +32,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [aarch64-unknown-linux-gnu, x86_64-unknown-linux-musl]
+        target:
+          # TODO: Re-add once the GitHub environment is fixed
+          # - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
