@@ -16,7 +16,7 @@ rowan.workspace = true
 rustc-hash.workspace = true
 syntax = { path = "../syntax" }
 tempfile.workspace = true
-versions = "6.3.1"
+versions = "6.3.2"
 
 [dev-dependencies]
 expect-test.workspace = true
