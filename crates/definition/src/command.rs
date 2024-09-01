@@ -27,7 +27,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
             .filter_map(|node| {
                 process_old_definition(node.clone()).or_else(|| process_new_definition(node))
             })
-            .filter(|(_, command)| command.text() == name.text())
+            .filter(|(_, command)| command.text() == name.text().trim_end_matches("*"))
             .map(|(target_range, command)| DefinitionResult {
                 origin_selection_range,
                 target: document,
