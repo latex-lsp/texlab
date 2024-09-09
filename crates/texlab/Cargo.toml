@@ -43,7 +43,7 @@ ipc = { path = "../ipc" }
 line-index = { path = "../line-index" }
 links = { path = "../links" }
 log.workspace = true
-lsp-server = "0.7.6"
+lsp-server = "0.7.7"
 lsp-types = "0.95.1"
 notify.workspace = true
 notify-debouncer-full = "0.3.1"
