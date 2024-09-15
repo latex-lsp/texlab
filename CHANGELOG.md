@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `texlab.inlayHints.maxLength` setting to allow limiting inlay hint text length ([#1212](https://github.com/latex-lsp/texlab/issues/1212))
+- Allow suppressing diagnostics using `% texlab: ignore` magic comments ([#1211](https://github.com/latex-lsp/texlab/pull/1211))
 
 ### Fixed
 
