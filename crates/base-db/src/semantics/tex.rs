@@ -37,6 +37,7 @@ pub struct Semantics {
     pub graphics_paths: FxHashSet<String>,
     pub can_be_root: bool,
     pub can_be_compiled: bool,
+    pub diagnostic_suppressions: Vec<TextRange>,
 }
 
 impl Semantics {
@@ -46,11 +47,15 @@ impl Semantics {
                 latex::SyntaxElement::Node(node) => {
                     self.process_node(conf, &node);
                 }
-                latex::SyntaxElement::Token(token) => {
-                    if token.kind() == latex::COMMAND_NAME {
+                latex::SyntaxElement::Token(token) => match token.kind() {
+                    latex::COMMAND_NAME => {
                         self.commands.push(Span::command(&token));
                     }
-                }
+                    latex::COMMENT if token.text().contains("texlab: ignore") => {
+                        self.diagnostic_suppressions.push(token.text_range());
+                    }
+                    _ => {}
+                },
             };
         }
 

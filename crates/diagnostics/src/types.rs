@@ -1,9 +1,9 @@
-use line_index::LineCol;
+use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
 use syntax::BuildError;
 use url::Url;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum TexError {
     UnexpectedRCurly,
     ExpectingRCurly,
@@ -14,7 +14,28 @@ pub enum TexError {
     DuplicateLabel(Vec<(Url, TextRange)>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+impl std::fmt::Debug for TexError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnexpectedRCurly => write!(f, "UnexpectedRCurly"),
+            Self::ExpectingRCurly => write!(f, "ExpectingRCurly"),
+            Self::MismatchedEnvironment => write!(f, "MismatchedEnvironment"),
+            Self::UnusedLabel => write!(f, "UnusedLabel"),
+            Self::UndefinedLabel => write!(f, "UndefinedLabel"),
+            Self::UndefinedCitation => write!(f, "UndefinedCitation"),
+            Self::DuplicateLabel(locations) => {
+                let mut t = f.debug_tuple("DuplicateLabel");
+                for (uri, range) in locations {
+                    t.field(&(uri.as_str(), range));
+                }
+
+                t.finish()
+            }
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
 pub enum BibError {
     ExpectingLCurly,
     ExpectingKey,
@@ -23,6 +44,27 @@ pub enum BibError {
     ExpectingFieldValue,
     UnusedEntry,
     DuplicateEntry(Vec<(Url, TextRange)>),
+}
+
+impl std::fmt::Debug for BibError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ExpectingLCurly => write!(f, "ExpectingLCurly"),
+            Self::ExpectingKey => write!(f, "ExpectingKey"),
+            Self::ExpectingRCurly => write!(f, "ExpectingRCurly"),
+            Self::ExpectingEq => write!(f, "ExpectingEq"),
+            Self::ExpectingFieldValue => write!(f, "ExpectingFieldValue"),
+            Self::UnusedEntry => write!(f, "UnusedEntry"),
+            Self::DuplicateEntry(locations) => {
+                let mut t = f.debug_tuple("DuplicateEntry");
+                for (uri, range) in locations {
+                    t.field(&(uri.as_str(), range));
+                }
+
+                t.finish()
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -72,6 +114,44 @@ impl Diagnostic {
             },
             Diagnostic::Build(_, error) => &error.message,
             Diagnostic::Chktex(error) => &error.message,
+        }
+    }
+
+    pub fn range(&self, line_index: &LineIndex) -> Option<TextRange> {
+        Some(match self {
+            Diagnostic::Tex(range, _) => *range,
+            Diagnostic::Bib(range, _) => *range,
+            Diagnostic::Build(range, _) => *range,
+            Diagnostic::Chktex(error) => {
+                let start = line_index.offset(error.start)?;
+                let end = line_index.offset(error.end)?;
+                TextRange::new(start, end)
+            }
+        })
+    }
+
+    pub fn additional_locations_mut(&mut self) -> Option<&mut Vec<(Url, TextRange)>> {
+        match self {
+            Diagnostic::Tex(_, err) => match err {
+                TexError::UnexpectedRCurly
+                | TexError::ExpectingRCurly
+                | TexError::MismatchedEnvironment
+                | TexError::UnusedLabel
+                | TexError::UndefinedLabel
+                | TexError::UndefinedCitation => None,
+                TexError::DuplicateLabel(locations) => Some(locations),
+            },
+            Diagnostic::Bib(_, err) => match err {
+                BibError::ExpectingLCurly
+                | BibError::ExpectingKey
+                | BibError::ExpectingRCurly
+                | BibError::ExpectingEq
+                | BibError::ExpectingFieldValue
+                | BibError::UnusedEntry => None,
+                BibError::DuplicateEntry(locations) => Some(locations),
+            },
+            Diagnostic::Chktex(_) => None,
+            Diagnostic::Build(_, _) => None,
         }
     }
 }
