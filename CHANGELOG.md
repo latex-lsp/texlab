@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `texlab.inlayHints.maxLength` setting to allow limiting inlay hint text length ([#1212](https://github.com/latex-lsp/texlab/issues/1212))
+
 ### Fixed
 
 - Fix enabling `texlab.build.useFileList` setting
