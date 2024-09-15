@@ -104,6 +104,7 @@ pub struct DiagnosticsOptions {
 pub struct InlayHintOptions {
     pub label_definitions: Option<bool>,
     pub label_references: Option<bool>,
+    pub max_length: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

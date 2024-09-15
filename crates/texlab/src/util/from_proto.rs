@@ -305,6 +305,7 @@ pub fn config(value: Options) -> Config {
 
     config.inlay_hints.label_definitions = value.inlay_hints.label_definitions.unwrap_or(true);
     config.inlay_hints.label_references = value.inlay_hints.label_references.unwrap_or(true);
+    config.inlay_hints.max_length = value.inlay_hints.max_length;
 
     config.completion.matcher = match value.completion.matcher {
         CompletionMatcher::Fuzzy => base_db::MatchingAlgo::Skim,

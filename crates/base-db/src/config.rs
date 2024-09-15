@@ -80,6 +80,7 @@ pub struct SymbolConfig {
 pub struct InlayHintConfig {
     pub label_definitions: bool,
     pub label_references: bool,
+    pub max_length: Option<usize>,
 }
 
 #[derive(Debug)]
@@ -140,6 +141,7 @@ impl Default for InlayHintConfig {
         Self {
             label_definitions: true,
             label_references: true,
+            max_length: None,
         }
     }
 }

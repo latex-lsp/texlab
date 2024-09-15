@@ -191,13 +191,25 @@ pub fn diagnostic(
     })
 }
 
-pub fn inlay_hint(hint: InlayHint, line_index: &LineIndex) -> Option<lsp_types::InlayHint> {
+pub fn inlay_hint(
+    hint: InlayHint,
+    line_index: &LineIndex,
+    max_length: Option<usize>,
+) -> Option<lsp_types::InlayHint> {
     let position = line_index.line_col_lsp(hint.offset)?;
+    let trim_text = |text: &mut String| match max_length {
+        Some(max_length) if text.len() > max_length => {
+            text.truncate(max_length);
+            text.push('…');
+        }
+        _ => {}
+    };
+
     Some(match hint.data {
         InlayHintData::LabelDefinition(label) => {
             let number = label.number?;
 
-            let text = match &label.object {
+            let mut text = match &label.object {
                 RenderedObject::Section { prefix, .. } => {
                     format!("{} {}", prefix, number)
                 }
@@ -211,9 +223,11 @@ pub fn inlay_hint(hint: InlayHint, line_index: &LineIndex) -> Option<lsp_types::
                 RenderedObject::EnumItem => format!("Item {}", number),
             };
 
+            trim_text(&mut text);
+
             lsp_types::InlayHint {
                 position,
-                label: lsp_types::InlayHintLabel::String(format!(" {text} ")),
+                label: lsp_types::InlayHintLabel::String(format!(" {text} ",)),
                 kind: None,
                 text_edits: None,
                 tooltip: None,
@@ -223,7 +237,8 @@ pub fn inlay_hint(hint: InlayHint, line_index: &LineIndex) -> Option<lsp_types::
             }
         }
         InlayHintData::LabelReference(label) => {
-            let text = label.reference();
+            let mut text = label.reference();
+            trim_text(&mut text);
 
             lsp_types::InlayHint {
                 position,
