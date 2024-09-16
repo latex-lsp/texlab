@@ -12,37 +12,58 @@ env:
   RUSTFLAGS: "-D warnings"
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            test: true
+
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            test: true
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            test: true
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            test: true
+
+          - os: ubuntu-20.04
+            target: aarch64-unknown-linux-gnu
+            install: sudo apt-get install -y gcc-aarch64-linux-gnu
+
+          - os: ubuntu-20.04
+            target: armv7-unknown-linux-gnueabihf
+            install: sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
+      - name: Install cross-compilation dependencies
+        run: ${{ matrix.install }}
+        if: ${{ matrix.install }}
       - name: Compile
-        run: cargo test --all-features --no-run --locked
+        run: cargo test --target ${{ matrix.target }} --all-features --no-run --locked
       - name: Test
-        run: cargo test --all-features -- --nocapture --quiet
-  build_cross:
-    name: Build (${{ matrix.target }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          # TODO: Re-add once the GitHub environment is fixed
-          # - aarch64-unknown-linux-gnu
-          - x86_64-unknown-linux-musl
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo install cross
-      - name: Compile
-        run: cross build --target ${{ matrix.target }}
+        run: cargo test --target ${{ matrix.target }} --all-features -- --nocapture --quiet
+        if: ${{ matrix.test }}
   msrv:
     name: MSRV
     runs-on: ubuntu-latest
