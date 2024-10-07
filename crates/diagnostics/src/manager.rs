@@ -1,5 +1,8 @@
-use base_db::{deps::Project, util::filter_regex_patterns, Document, Owner, Workspace};
+use base_db::{
+    deps::Project, util::filter_regex_patterns, Document, DocumentData, Owner, Workspace,
+};
 use multimap::MultiMap;
+use rowan::TextRange;
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
@@ -16,7 +19,7 @@ pub struct Manager {
 impl Manager {
     /// Updates the syntax-based diagnostics for the given document.
     pub fn update_syntax(&mut self, workspace: &Workspace, document: &Document) {
-        if !Self::is_relevant(document) {
+        if !Self::is_relevant_document(document) {
             return;
         }
 
@@ -76,7 +79,7 @@ impl Manager {
 
         for document in workspace
             .iter()
-            .filter(|document| Self::is_relevant(document))
+            .filter(|document| Self::is_relevant_document(document))
         {
             let project = Project::from_child(workspace, document);
             super::citations::detect_undefined_citations(&project, document, &mut results);
@@ -87,28 +90,78 @@ impl Manager {
         super::labels::detect_duplicate_labels(workspace, &mut results);
         super::labels::detect_undefined_and_unused_labels(workspace, &mut results);
 
-        let config = &workspace.config().diagnostics;
+        results.retain(|uri, _| {
+            workspace
+                .lookup(uri)
+                .map_or(false, Self::is_relevant_document)
+        });
 
-        results.retain(|uri, _| workspace.lookup(uri).map_or(false, Self::is_relevant));
-
-        for diagnostics in results.values_mut() {
-            diagnostics.retain(|diagnostic| {
-                filter_regex_patterns(
-                    diagnostic.message(),
-                    &config.allowed_patterns,
-                    &config.ignored_patterns,
-                )
-            });
+        for (uri, diagnostics) in results.iter_mut() {
+            diagnostics
+                .retain_mut(|diagnostic| Self::filter_diagnostic(workspace, uri, diagnostic));
         }
 
         results
     }
 
-    fn is_relevant(document: &Document) -> bool {
+    fn is_relevant_document(document: &Document) -> bool {
         match document.owner {
             Owner::Client => true,
             Owner::Server => true,
             Owner::Distro => false,
         }
+    }
+
+    fn filter_diagnostic(workspace: &Workspace, uri: &Url, diagnostic: &mut Diagnostic) -> bool {
+        let config = &workspace.config().diagnostics;
+
+        if !filter_regex_patterns(
+            diagnostic.message(),
+            &config.allowed_patterns,
+            &config.ignored_patterns,
+        ) {
+            return false;
+        }
+
+        let Some(document) = workspace.lookup(uri) else {
+            return false;
+        };
+
+        let Some(primary_range) = diagnostic.range(&document.line_index) else {
+            return false;
+        };
+
+        if Self::is_ignored(workspace, &document.uri, &primary_range) {
+            return false;
+        }
+
+        let Some(additional_locations) = diagnostic.additional_locations_mut() else {
+            return true;
+        };
+
+        additional_locations.retain(|(uri, range)| !Self::is_ignored(workspace, uri, range));
+        if additional_locations.is_empty() {
+            return false;
+        }
+
+        true
+    }
+
+    fn is_ignored(workspace: &Workspace, uri: &Url, diag_range: &TextRange) -> bool {
+        let Some(document) = workspace.lookup(uri) else {
+            return false;
+        };
+
+        let DocumentData::Tex(data) = &document.data else {
+            return false;
+        };
+
+        let diag_line_col = document.line_index.line_col(diag_range.start());
+
+        data.semantics
+            .diagnostic_suppressions
+            .iter()
+            .map(|r| document.line_index.line_col(r.start()))
+            .any(|r| r.line == diag_line_col.line || r.line + 1 == diag_line_col.line)
     }
 }

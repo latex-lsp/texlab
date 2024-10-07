@@ -284,6 +284,33 @@ fn test_citation_undefined() {
 }
 
 #[test]
+fn test_citation_undefined_ignore() {
+    check(
+        r#"
+%! main.tex
+% texlab: ignore
+\cite{foo} 
+"#,
+        expect![[r#"
+            []
+        "#]],
+    )
+}
+
+#[test]
+fn test_citation_undefined_ignore_single_line() {
+    check(
+        r#"
+%! main.tex
+\cite{foo} % texlab: ignore
+"#,
+        expect![[r#"
+            []
+        "#]],
+    )
+}
+
+#[test]
 fn test_citation_unused() {
     check(
         r#"
@@ -299,6 +326,49 @@ fn test_citation_unused() {
                         Bib(
                             9..12,
                             UnusedEntry,
+                        ),
+                    ],
+                ),
+            ]
+        "#]],
+    )
+}
+
+#[test]
+fn test_label_duplicate() {
+    check(
+        r#"
+%! main.tex
+\label{foo}
+       ^^^
+\label{foo}
+       ^^^
+\label{foo} % texlab: ignore
+
+\ref{foo}
+"#,
+        expect![[r#"
+            [
+                (
+                    "file:///texlab/main.tex",
+                    [
+                        Tex(
+                            7..10,
+                            DuplicateLabel(
+                                (
+                                    "file:///texlab/main.tex",
+                                    19..22,
+                                ),
+                            ),
+                        ),
+                        Tex(
+                            19..22,
+                            DuplicateLabel(
+                                (
+                                    "file:///texlab/main.tex",
+                                    7..10,
+                                ),
+                            ),
                         ),
                     ],
                 ),
