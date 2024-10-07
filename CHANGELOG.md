@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix enabling `texlab.build.useFileList` setting
+- Make "Goto Definition" work correctly with starred commands ([#1197](https://github.com/latex-lsp/texlab/issues/1197))
 
 ## [5.19.0] - 2024-07-08
 
