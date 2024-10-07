@@ -29,7 +29,7 @@ serde_json = "1.0.128"
 tempfile = "3.13.0"
 titlecase = "3.3.0"
 unicode-normalization = "0.1.24"
-url = "2.5.0"
+url = "2.5.2"
 
 [profile.release]
 lto = "thin"
