@@ -32,7 +32,9 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
                 .collect();
 
             for command in &data.semantics.commands {
-                if command.text == token.text()[1..] {
+                let command_text = command.text.trim_end_matches('*');
+                let token_text = token.text()[1..].trim_end_matches('*');
+                if command_text == token_text {
                     let kind = if defs.contains(command) {
                         ReferenceKind::Definition
                     } else {
