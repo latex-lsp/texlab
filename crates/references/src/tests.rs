@@ -260,3 +260,43 @@ fn test_new_command_definition_include_decl() {
         true,
     );
 }
+
+#[test]
+fn test_new_command_definition_starred() {
+    check(
+        r#"
+%! main.tex
+\foo
+ ^^^
+\foo*
+  |
+ ^^^^
+
+\NewDocumentCommand{\foo}{s m}{%
+    \IfBooleanTF{#1}{\textbf{#2}}{#2}%
+}
+"#,
+        false,
+    );
+}
+
+#[test]
+fn test_new_command_definition_starred_include_decl() {
+    check(
+        r#"
+%! main.tex
+\foo
+ ^^^
+\foo*
+  |
+ ^^^^
+
+\NewDocumentCommand{\foo}{s m}{%
+                     ^^^
+    \IfBooleanTF{#1}{\textbf{#2}}{#2}%
+}
+
+"#,
+        true,
+    );
+}
