@@ -10,6 +10,8 @@ env:
   CI: 1
   RUST_BACKTRACE: short
   RUSTFLAGS: "-D warnings"
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "aarch64-linux-gnu-gcc"
+  CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER: "arm-linux-gnueabihf-gcc"
 jobs:
   build:
     name: Build (${{ matrix.target }})
@@ -42,11 +44,9 @@ jobs:
 
           - os: ubuntu-20.04
             target: aarch64-unknown-linux-gnu
-            install: sudo apt-get install -y gcc-aarch64-linux-gnu
 
           - os: ubuntu-20.04
             target: armv7-unknown-linux-gnueabihf
-            install: sudo apt-get install -y gcc-arm-linux-gnueabihf
 
           - os: ubuntu-20.04
             target: x86_64-unknown-linux-musl
@@ -57,8 +57,8 @@ jobs:
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
       - name: Install cross-compilation dependencies
-        run: ${{ matrix.install }}
-        if: ${{ matrix.install }}
+        run: sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
       - name: Compile
         run: cargo test --target ${{ matrix.target }} --all-features --no-run --locked
       - name: Test
