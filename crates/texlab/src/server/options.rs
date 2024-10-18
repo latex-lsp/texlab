@@ -56,6 +56,7 @@ impl Default for LatexFormatter {
 pub struct LatexindentOptions {
     pub local: Option<String>,
     pub modify_line_breaks: bool,
+    pub replacement: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

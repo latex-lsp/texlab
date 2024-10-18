@@ -282,6 +282,7 @@ pub fn config(value: Options) -> Config {
 
     config.formatting.latex_indent.local = value.latexindent.local;
     config.formatting.latex_indent.modify_line_breaks = value.latexindent.modify_line_breaks;
+    config.formatting.latex_indent.replacement = value.latexindent.replacement;
 
     config.synctex = value
         .forward_search

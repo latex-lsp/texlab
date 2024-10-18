@@ -68,6 +68,7 @@ pub enum Formatter {
 pub struct LatexIndentConfig {
     pub local: Option<String>,
     pub modify_line_breaks: bool,
+    pub replacement: Option<String>,
 }
 
 #[derive(Debug, Default)]
