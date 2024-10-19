@@ -16,7 +16,7 @@ pub fn format_with_latexindent(
 ) -> Option<Vec<lsp_types::TextEdit>> {
     let config = workspace.config();
     let target_dir = tempdir().ok()?;
-    let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+    let root = ProjectRoot::walk_and_find(workspace, document.dir.as_ref()?);
     let source_dir = root.src_dir.to_file_path().ok()?;
 
     let target_file = target_dir
