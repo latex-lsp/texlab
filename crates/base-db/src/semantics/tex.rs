@@ -50,9 +50,6 @@ impl Semantics {
                 }
                 latex::SyntaxElement::Token(token) => match token.kind() {
                     latex::COMMAND_NAME => {
-                            //if Span::command(&token).text == "bibitem" {
-                                //self.bibitems.push(Span::bibitem(&token));
-                            //}
                             self.commands.push(Span::command(&token));
                     }
                     latex::COMMENT if token.text().contains("texlab: ignore") => {
