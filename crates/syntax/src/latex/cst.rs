@@ -750,3 +750,15 @@ impl GraphicsPath {
         self.syntax().descendants().filter_map(CurlyGroupWord::cast)
     }
 }
+
+cst_node!(BibItem, BIBITEM);
+
+impl BibItem {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn name(&self) -> Option<CurlyGroupWord> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
+}

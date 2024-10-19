@@ -158,6 +158,7 @@ impl<'a> Parser<'a> {
                 CommandName::EndBlockComment => self.generic_command(),
                 CommandName::VerbatimBlock => self.verbatim_block(),
                 CommandName::GraphicsPath => self.graphics_path(),
+                CommandName::BibItem => self.bibitem(),
             },
         }
     }
@@ -1234,6 +1235,18 @@ impl<'a> Parser<'a> {
                 }
             }
         }
+    }
+
+    fn bibitem(&mut self) {
+        self.builder.start_node(BIBITEM.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group_word();
+        }
+
+        self.builder.finish_node();
     }
 }
 
