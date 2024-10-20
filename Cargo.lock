@@ -714,9 +714,9 @@ dependencies = [
 
 [[package]]
 name = "human_name"
-version = "2.0.3"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d40d3a11bc31949eb1d5070deb0cbb481bbd17d9423ecd3afdb3db5d81499b9"
+checksum = "fbd70ad9620f3a33a270cedfa47114c9566660c28ff8d0b3772b5c8dc1dac085"
 dependencies = [
  "compact_str",
  "crossbeam-utils",
