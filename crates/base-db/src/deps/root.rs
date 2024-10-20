@@ -45,7 +45,7 @@ impl ProjectRoot {
     pub fn from_tectonic(workspace: &Workspace, dir: &Url) -> Option<Self> {
         let exists = workspace
             .iter()
-            .filter(|document| document.dir == *dir)
+            .filter(|document| document.dir.as_ref() == Some(dir))
             .any(|document| matches!(document.data, DocumentData::Tectonic));
 
         if !exists {
@@ -77,7 +77,7 @@ impl ProjectRoot {
         let config = workspace.config();
         let rcfile = workspace
             .iter()
-            .filter(|document| document.dir == *dir)
+            .filter(|document| document.dir.as_ref() == Some(dir))
             .find_map(|document| document.data.as_latexmkrc())?;
 
         let compile_dir = dir.clone();
@@ -121,7 +121,7 @@ impl ProjectRoot {
     pub fn from_rootfile(workspace: &Workspace, dir: &Url) -> Option<Self> {
         let exists = workspace
             .iter()
-            .filter(|document| document.dir == *dir)
+            .filter(|document| document.dir.as_ref() == Some(dir))
             .any(|document| matches!(document.data, DocumentData::Root));
 
         if !exists {

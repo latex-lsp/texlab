@@ -21,7 +21,11 @@ impl CleanCommand {
             anyhow::bail!("document '{}' is not a local file", document.uri)
         };
 
-        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+        let Some(document_dir) = &document.dir else {
+            anyhow::bail!("document '{}' is not a local file", document.uri)
+        };
+
+        let root = ProjectRoot::walk_and_find(workspace, document_dir);
 
         let flag = match target {
             CleanTarget::Auxiliary => "-c",

@@ -118,7 +118,7 @@ fn current_dir(
         .next()
         .map_or(params.document, Clone::clone);
 
-    let root = ProjectRoot::walk_and_find(workspace, &parent.dir);
+    let root = ProjectRoot::walk_and_find(workspace, parent.dir.as_ref()?);
 
     let mut path = PathBuf::new();
     if let Some(graphics_path) = graphics_path {

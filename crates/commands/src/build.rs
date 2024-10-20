@@ -47,6 +47,10 @@ impl BuildCommand {
             .next()
             .unwrap_or(document);
 
+        let Some(document_dir) = &document.dir else {
+            return Err(BuildError::NotLocal(document.uri.clone()));
+        };
+
         let Some(path) = document.path.as_deref().and_then(Path::to_str) else {
             return Err(BuildError::NotLocal(document.uri.clone()));
         };
@@ -55,7 +59,7 @@ impl BuildCommand {
         let program = config.program.clone();
         let args = replace_placeholders(&config.args, &[('f', path)]);
 
-        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+        let root = ProjectRoot::walk_and_find(workspace, document_dir);
 
         let Ok(working_dir) = root.compile_dir.to_file_path() else {
             return Err(BuildError::NotLocal(document.uri.clone()));

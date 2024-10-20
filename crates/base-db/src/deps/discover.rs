@@ -15,7 +15,7 @@ pub fn watch(
 ) {
     let roots = workspace
         .iter()
-        .map(|document| &document.dir)
+        .filter_map(|document| document.dir.as_ref())
         .filter(|dir| dir.scheme() == "file")
         .unique()
         .map(|dir| ProjectRoot::walk_and_find(workspace, dir));

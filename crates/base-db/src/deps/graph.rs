@@ -55,7 +55,11 @@ impl Graph {
             start: start.uri.clone(),
         };
 
-        let root = ProjectRoot::walk_and_find(workspace, &start.dir);
+        let Some(start_dir) = &start.dir else {
+            return graph;
+        };
+
+        let root = ProjectRoot::walk_and_find(workspace, start_dir);
 
         let mut stack = vec![(start, Rc::new(root))];
         let mut visited = FxHashSet::default();
@@ -135,7 +139,7 @@ impl Graph {
             .as_deref()
             .and_then(|dir| Url::from_directory_path(dir).ok());
 
-        let working_dir = working_dir.as_ref().unwrap_or(&start.source.dir);
+        let working_dir = working_dir.as_ref().or(start.source.dir.as_ref())?;
         let new_root = Arc::new(ProjectRoot::from_config(workspace, working_dir));
 
         for target_uri in file_list
