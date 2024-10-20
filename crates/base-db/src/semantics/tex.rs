@@ -38,6 +38,7 @@ pub struct Semantics {
     pub can_be_root: bool,
     pub can_be_compiled: bool,
     pub diagnostic_suppressions: Vec<TextRange>,
+    pub bibitems: FxHashSet<Span>,
 }
 
 impl Semantics {
@@ -49,7 +50,7 @@ impl Semantics {
                 }
                 latex::SyntaxElement::Token(token) => match token.kind() {
                     latex::COMMAND_NAME => {
-                        self.commands.push(Span::command(&token));
+                            self.commands.push(Span::command(&token));
                     }
                     latex::COMMENT if token.text().contains("texlab: ignore") => {
                         self.diagnostic_suppressions.push(token.text_range());
@@ -85,6 +86,8 @@ impl Semantics {
             self.process_theorem_definition(theorem_def);
         } else if let Some(graphics_path) = latex::GraphicsPath::cast(node.clone()) {
             self.process_graphics_path(graphics_path);
+        } else if let Some(bibitem) = latex::BibItem::cast(node.clone()) {
+            self.process_bibitem(bibitem);
         }
     }
 
@@ -332,6 +335,16 @@ impl Semantics {
     fn process_graphics_path(&mut self, graphics_path: latex::GraphicsPath) {
         for path in graphics_path.path_list().filter_map(|path| path.key()) {
             self.graphics_paths.insert(path.to_string());
+        }
+    }
+
+    fn process_bibitem(&mut self, bibitem: latex::BibItem) {
+        if let Some(name) = bibitem.name() {
+            if let Some(key) = name.key() {
+                self.bibitems.insert(
+                    Span::from(&key)
+                );
+            }
         }
     }
 }

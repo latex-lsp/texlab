@@ -82,6 +82,7 @@ pub enum SyntaxKind {
     ENVIRONMENT_DEFINITION,
     GRAPHICS_PATH,
     BLOCK_COMMENT,
+    BIBITEM,
     ROOT,
 }
 
