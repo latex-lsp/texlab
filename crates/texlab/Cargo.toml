@@ -34,7 +34,7 @@ crossbeam-channel.workspace = true
 definition = { path = "../definition" }
 diagnostics = { path = "../diagnostics" }
 distro = { path = "../distro" }
-fern = "0.6.2"
+fern = "0.7.0"
 folding = { path = "../folding" }
 highlights = { path = "../highlights" }
 hover = { path = "../hover" }
