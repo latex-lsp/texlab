@@ -25,7 +25,7 @@ regex = "1.11.0"
 rowan = "0.15.16"
 rustc-hash = "2.0.0"
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+serde_json = "1.0.132"
 tempfile = "3.13.0"
 titlecase = "3.3.0"
 unicode-normalization = "0.1.24"
