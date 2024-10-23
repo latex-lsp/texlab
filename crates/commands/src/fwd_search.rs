@@ -84,7 +84,11 @@ impl ForwardSearch {
     }
 
     fn find_pdf(workspace: &Workspace, document: &Document) -> Result<PathBuf, ForwardSearchError> {
-        let root = ProjectRoot::walk_and_find(workspace, &document.dir);
+        let Some(document_dir) = &document.dir else {
+            return Err(ForwardSearchError::NotLocal(document.uri.clone()));
+        };
+
+        let root = ProjectRoot::walk_and_find(workspace, document_dir);
 
         log::debug!("[FwdSearch] root={root:#?}");
 

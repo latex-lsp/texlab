@@ -36,7 +36,7 @@ impl Command {
             return None;
         }
 
-        let root = ProjectRoot::walk_and_find(workspace, &parent.dir);
+        let root = ProjectRoot::walk_and_find(workspace, parent.dir.as_ref()?);
 
         let working_dir = root.src_dir.to_file_path().ok()?;
         log::debug!("Calling ChkTeX from directory: {}", working_dir.display());

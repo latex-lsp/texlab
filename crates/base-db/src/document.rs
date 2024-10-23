@@ -28,7 +28,7 @@ pub struct DocumentParams<'a> {
 #[derive(Clone)]
 pub struct Document {
     pub uri: Url,
-    pub dir: Url,
+    pub dir: Option<Url>,
     pub path: Option<PathBuf>,
     pub text: String,
     pub line_index: LineIndex,
@@ -42,7 +42,7 @@ impl Document {
     pub fn parse(params: DocumentParams) -> Self {
         let DocumentParams { uri, text, .. } = params;
 
-        let dir = uri.join(".").unwrap();
+        let dir = uri.join(".").ok();
 
         let path = if uri.scheme() == "file" {
             uri.to_file_path().ok()
