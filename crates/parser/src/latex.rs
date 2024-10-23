@@ -863,7 +863,20 @@ impl<'a> Parser<'a> {
         }
 
         if self.lexer.peek() == Some(Token::LCurly) {
-            self.curly_group_word();
+            self.builder.start_node(CURLY_GROUP_WORD.into());
+            self.eat();
+            self.trivia();
+
+            if self.peek() == Some(Token::Word) || self.peek() == Some(Token::Pipe) {
+                self.key();
+            }
+
+            if let Some(Token::CommandName(_)) = self.peek() {
+                self.content(ParserContext::default());
+            }
+
+            self.expect(Token::RCurly);
+            self.builder.finish_node();
         }
 
         self.builder.finish_node();
