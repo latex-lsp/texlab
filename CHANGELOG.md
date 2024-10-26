@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support starred variants in "Go to References" ([#1234](https://github.com/latex-lsp/texlab/issues/1234))
+- Add `texlab.latexindent.replacement` setting to allow passing a replacement flag to `latexindent` ([#1222](https://github.com/latex-lsp/texlab/issues/1222))
+- Don't require a label to show section numbers for document symbols ([#910](https://github.com/latex-lsp/texlab/issues/910))
+
 ### Fixed
 
 - Fix opening `untitled` documents ([#1242](https://github.com/latex-lsp/texlab/issues/1242))
+- Handle `\bibitem` when checking for undefined references ([#1171](https://github.com/latex-lsp/texlab/issues/1171))
+- Fix false-positive syntax error when using a command inside a `\label` ([#879](https://github.com/latex-lsp/texlab/issues/879))
 
 ## [5.20.0] - 2024-10-08
 
