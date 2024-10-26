@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support starred variants in "Go to References" ([#1234](https://github.com/latex-lsp/texlab/issues/1234))
 - Add `texlab.latexindent.replacement` setting to allow passing a replacement flag to `latexindent` ([#1222](https://github.com/latex-lsp/texlab/issues/1222))
 - Don't require a label to show section numbers for document symbols ([#910](https://github.com/latex-lsp/texlab/issues/910))
+- Support navigating to files that are part of the `TEXINPUTS` similar to `BIBINPUTS` ([#1228](https://github.com/latex-lsp/texlab/discussions/1228))
 
 ### Fixed
 

@@ -4,7 +4,10 @@ mod language;
 mod miktex;
 mod texlive;
 
-use std::process::{Command, Stdio};
+use std::{
+    env,
+    process::{Command, Stdio},
+};
 
 use anyhow::Result;
 
@@ -70,8 +73,14 @@ impl Distro {
             DistroKind::Tectonic | DistroKind::Unknown => FileNameDB::default(),
         };
 
-        if let Some(bibinputs) = std::env::var_os("BIBINPUTS") {
-            for dir in std::env::split_paths(&bibinputs) {
+        Self::read_env_dir(&mut file_name_db, "TEXINPUTS");
+        Self::read_env_dir(&mut file_name_db, "BIBINPUTS");
+        Ok(Self { kind, file_name_db })
+    }
+
+    fn read_env_dir(file_name_db: &mut FileNameDB, env_var: &str) {
+        if let Some(paths) = env::var_os(env_var) {
+            for dir in env::split_paths(&paths) {
                 if let Ok(entries) = std::fs::read_dir(dir) {
                     for file in entries
                         .flatten()
@@ -83,7 +92,5 @@ impl Distro {
                 }
             }
         }
-
-        Ok(Self { kind, file_name_db })
     }
 }
