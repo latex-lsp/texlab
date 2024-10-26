@@ -67,16 +67,14 @@ impl<'a> SymbolBuilder<'a> {
         let group_text = group.content_text()?;
         let kind = SymbolKind::Section;
 
-        let symbol = match self.find_label(section.syntax()) {
-            Some(label) => {
-                let name = match self.find_label_number(&label.text) {
-                    Some(number) => format!("{number} {group_text}"),
-                    None => group_text,
-                };
+        let name = match self.find_section_number(&group_text) {
+            Some(number) => format!("{number} {group_text}"),
+            None => group_text,
+        };
 
-                Symbol::new_label(name, kind, range, label)
-            }
-            None => Symbol::new_simple(group_text, kind, range, range),
+        let symbol = match self.find_label(section.syntax()) {
+            Some(label) => Symbol::new_label(name, kind, range, label),
+            None => Symbol::new_simple(name, kind, range, range)
         };
 
         Some(symbol)
@@ -245,6 +243,15 @@ impl<'a> SymbolBuilder<'a> {
         let range = latex::small_range(&label);
         let text = label.name()?.key()?.to_string();
         Some(Span { text, range })
+    }
+
+    fn find_section_number(&self, name: &str) -> Option<&str> {
+        self.project
+            .documents
+            .iter()
+            .filter_map(|document| document.data.as_aux())
+            .find_map(|data| data.semantics.section_numbers.get(name))
+            .map(String::as_str)
     }
 
     fn find_label_number(&self, name: &str) -> Option<&str> {
