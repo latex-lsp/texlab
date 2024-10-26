@@ -48,20 +48,29 @@ impl Semantics {
     fn process_toc_line(&mut self, toc_line: &latex::TocContentsLine) -> Option<()> {
         let unit = toc_line.unit().and_then(|u| u.content_text())?.to_string();
 
-        if ["section", "subsection"].contains(&unit.as_str()) {
+        if [
+            "part",
+            "chapter",
+            "section",
+            "subsection",
+            "subsubsection",
+            "paragraph",
+            "subparagraph",
+        ]
+        .contains(&unit.as_str())
+        {
             let line = toc_line.line()?;
-            let name = line
-                .syntax()
-                .children()
-                .find_map(|child| { latex::Text::cast(child.clone())?; Some(child)})?;
+            let name = line.syntax().children().find_map(|child| {
+                latex::Text::cast(child.clone())?;
+                Some(child)
+            })?;
             let name = name.to_string();
 
             let num_line = line
                 .syntax()
                 .children()
                 .find_map(|child| latex::TocNumberLine::cast(child.clone()))?;
-            let number = num_line
-                .number()?;
+            let number = num_line.number()?;
             let number = number.content_text()?.replace(['{', '}'], "");
             self.section_numbers.insert(name, number);
         }
