@@ -159,6 +159,8 @@ impl<'a> Parser<'a> {
                 CommandName::VerbatimBlock => self.verbatim_block(),
                 CommandName::GraphicsPath => self.graphics_path(),
                 CommandName::BibItem => self.bibitem(),
+                CommandName::TocContentsLine => self.toc_contents_line(),
+                CommandName::TocNumberLine => self.toc_number_line(),
             },
         }
     }
@@ -1257,6 +1259,38 @@ impl<'a> Parser<'a> {
 
         if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn toc_contents_line(&mut self) {
+        self.builder.start_node(TOC_CONTENTS_LINE.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group();
+        }
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group();
+        }
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group();
+        }
+
+        self.builder.finish_node();
+    }
+
+    fn toc_number_line(&mut self) {
+        self.builder.start_node(TOC_NUMBER_LINE.into());
+        self.eat();
+        self.trivia();
+
+        if self.lexer.peek() == Some(Token::LCurly) {
+            self.curly_group();
         }
 
         self.builder.finish_node();

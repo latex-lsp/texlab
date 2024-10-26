@@ -97,6 +97,8 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "fi" => CommandName::EndBlockComment,
         "verb" => CommandName::VerbatimBlock,
         "bibitem" => CommandName::BibItem,
+        "contentsline" => CommandName::TocContentsLine,
+        "numberline" => CommandName::TocNumberLine,
 
         _ if config.citation_commands.contains(name) => CommandName::Citation,
         _ if config.label_definition_commands.contains(name) => CommandName::LabelDefinition,

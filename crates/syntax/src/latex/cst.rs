@@ -762,3 +762,31 @@ impl BibItem {
         self.syntax().children().find_map(CurlyGroupWord::cast)
     }
 }
+
+cst_node!(TocContentsLine, TOC_CONTENTS_LINE);
+
+impl TocContentsLine {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn unit(&self) -> Option<CurlyGroup> {
+        self.syntax().children().find_map(CurlyGroup::cast)
+    }
+
+    pub fn line(&self) -> Option<CurlyGroup> {
+        self.syntax().children().filter_map(CurlyGroup::cast).nth(1)
+    }
+}
+
+cst_node!(TocNumberLine, TOC_NUMBER_LINE);
+
+impl TocNumberLine {
+    pub fn command(&self) -> Option<SyntaxToken> {
+        self.syntax().first_token()
+    }
+
+    pub fn number(&self) -> Option<CurlyGroup> {
+        self.syntax().children().find_map(CurlyGroup::cast)
+    }
+}

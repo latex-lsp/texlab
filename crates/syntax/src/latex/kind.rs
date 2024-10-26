@@ -83,6 +83,8 @@ pub enum SyntaxKind {
     GRAPHICS_PATH,
     BLOCK_COMMENT,
     BIBITEM,
+    TOC_CONTENTS_LINE,
+    TOC_NUMBER_LINE,
     ROOT,
 }
 

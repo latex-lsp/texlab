@@ -96,6 +96,8 @@ pub enum CommandName {
     EndBlockComment,
     VerbatimBlock,
     BibItem,
+    TocContentsLine,
+    TocNumberLine,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

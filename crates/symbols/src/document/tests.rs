@@ -281,44 +281,44 @@ fn test_section() {
     check(
         &fixture,
         expect![[r#"
-        [
-            Symbol {
-                name: "Foo",
-                kind: Section,
-                label: None,
-                full_range: 43..56,
-                selection_range: 43..56,
-                children: [],
-            },
-            Symbol {
-                name: "2 Bar",
-                kind: Section,
-                label: Some(
-                    Span(
-                        "sec:bar",
-                        71..86,
-                    ),
-                ),
-                full_range: 58..119,
-                selection_range: 71..86,
-                children: [
-                    Symbol {
-                        name: "Baz",
-                        kind: Section,
-                        label: Some(
-                            Span(
-                                "sec:baz",
-                                104..119,
-                            ),
+            [
+                Symbol {
+                    name: "1 Foo",
+                    kind: Section,
+                    label: None,
+                    full_range: 43..56,
+                    selection_range: 43..56,
+                    children: [],
+                },
+                Symbol {
+                    name: "2 Bar",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:bar",
+                            71..86,
                         ),
-                        full_range: 88..119,
-                        selection_range: 104..119,
-                        children: [],
-                    },
-                ],
-            },
-        ]
-    "#]],
+                    ),
+                    full_range: 58..119,
+                    selection_range: 71..86,
+                    children: [
+                        Symbol {
+                            name: "Baz",
+                            kind: Section,
+                            label: Some(
+                                Span(
+                                    "sec:baz",
+                                    104..119,
+                                ),
+                            ),
+                            full_range: 88..119,
+                            selection_range: 104..119,
+                            children: [],
+                        },
+                    ],
+                },
+            ]
+        "#]],
     );
 }
 
