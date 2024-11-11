@@ -1,9 +1,10 @@
 use base_db::{semantics::Span, DocumentData};
+use completion_data::included_packages;
 use rowan::{TextRange, TextSize};
 use syntax::{bibtex, latex};
 
 use crate::{
-    util::{included_packages, CompletionBuilder, ProviderContext},
+    util::{CompletionBuilder, ProviderContext},
     CommandData, CompletionItem, CompletionItemData, CompletionParams,
 };
 

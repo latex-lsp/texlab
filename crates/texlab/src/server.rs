@@ -547,8 +547,9 @@ impl Server {
     fn hover(&mut self, id: RequestId, mut params: HoverParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position_params.text_document.uri);
         let uri_and_pos = &params.text_document_position_params;
+        let client_flags = Arc::clone(&self.client_flags);
         self.update_cursor(&uri_and_pos.text_document.uri, uri_and_pos.position);
-        self.run_query(id, move |db| hover::find(db, params));
+        self.run_query(id, move |db| hover::find(db, params, &client_flags));
         Ok(())
     }
 

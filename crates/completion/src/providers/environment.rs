@@ -1,9 +1,10 @@
 use base_db::semantics::Span;
+use completion_data::included_packages;
 use rowan::ast::AstNode;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word, included_packages, CompletionBuilder, ProviderContext},
+    util::{find_curly_group_word, CompletionBuilder, ProviderContext},
     CompletionItem, CompletionItemData, CompletionParams, EnvironmentData,
 };
 
