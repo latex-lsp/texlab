@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Allow hovering over symbol-like commands (e. g. `\pi`) to show a unicode preview
+  or a preview image if the client supports it ([#1261](https://github.com/latex-lsp/texlab/issues/1261))
+
 ## [5.21.0] - 2024-10-26
 
 ### Added

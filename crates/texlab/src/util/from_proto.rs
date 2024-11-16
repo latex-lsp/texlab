@@ -38,6 +38,16 @@ pub fn client_flags(
             formats.contains(&lsp_types::MarkupKind::Markdown)
         });
 
+    let hover_markdown = capabilities
+        .text_document
+        .as_ref()
+        .and_then(|cap| cap.hover.as_ref())
+        .and_then(|cap| cap.content_format.as_ref())
+        .map_or(false, |cap| {
+            // Use the preferred format of the editor instead of just markdown (if available).
+            cap.first() == Some(&lsp_types::MarkupKind::Markdown)
+        });
+
     let completion_snippets = capabilities
         .text_document
         .as_ref()
@@ -92,6 +102,7 @@ pub fn client_flags(
     ClientFlags {
         hierarchical_document_symbols,
         completion_markdown,
+        hover_markdown,
         completion_snippets,
         completion_kinds,
         completion_always_incomplete,

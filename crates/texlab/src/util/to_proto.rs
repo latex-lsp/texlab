@@ -446,7 +446,33 @@ pub fn document_highlight(
     Some(lsp_types::DocumentHighlight { range, kind })
 }
 
-pub fn hover(hover: Hover, line_index: &LineIndex) -> Option<lsp_types::Hover> {
+pub fn hover(
+    hover: Hover,
+    line_index: &LineIndex,
+    client_flags: &ClientFlags,
+) -> Option<lsp_types::Hover> {
+    fn inline_image(
+        command: &completion_data::Command,
+
+        client_flags: &ClientFlags,
+    ) -> Option<lsp_types::MarkupContent> {
+        let name = &command.name;
+        command
+            .image
+            .map(|base64| format!("![{name}](data:image/png;base64,{base64}|width=48,height=48)"))
+            .filter(|_| client_flags.hover_markdown)
+            .map(|value| lsp_types::MarkupContent {
+                kind: lsp_types::MarkupKind::Markdown,
+                value,
+            })
+            .or_else(|| {
+                Some(lsp_types::MarkupContent {
+                    kind: lsp_types::MarkupKind::PlainText,
+                    value: command.glyph.as_deref()?.into(),
+                })
+            })
+    }
+
     let contents = match hover.data {
         HoverData::Citation(text) => lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
@@ -456,6 +482,7 @@ pub fn hover(hover: Hover, line_index: &LineIndex) -> Option<lsp_types::Hover> {
             kind: lsp_types::MarkupKind::PlainText,
             value: description.into(),
         },
+        HoverData::Command(command) => inline_image(command, client_flags)?,
         HoverData::EntryType(type_) => lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
             value: type_.documentation?.into(),

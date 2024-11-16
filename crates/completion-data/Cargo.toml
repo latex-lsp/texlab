@@ -7,6 +7,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+base-db = { path = "../base-db" }
 flate2 = "1.0.34"
 itertools.workspace = true
 once_cell.workspace = true

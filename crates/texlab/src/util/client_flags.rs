@@ -9,6 +9,10 @@ pub struct ClientFlags {
     /// This is used to include images via base64 encoding.
     pub completion_markdown: bool,
 
+    /// If `true`, the server can include markdown in hover results.
+    /// This is used to include images via base64 encoding.
+    pub hover_markdown: bool,
+
     /// If `true`, the server can include snippets like `\begin{...}` in completion items.
     pub completion_snippets: bool,
 

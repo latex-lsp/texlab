@@ -347,6 +347,7 @@ dependencies = [
 name = "completion-data"
 version = "0.0.0"
 dependencies = [
+ "base-db",
  "flate2",
  "itertools 0.13.0",
  "once_cell",
