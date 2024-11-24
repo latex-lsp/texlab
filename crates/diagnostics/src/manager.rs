@@ -11,6 +11,7 @@ use crate::types::Diagnostic;
 /// Manages all diagnostics for a workspace.
 #[derive(Debug, Default)]
 pub struct Manager {
+    imports: FxHashMap<Url, Vec<Diagnostic>>,
     grammar: MultiMap<Url, Diagnostic>,
     chktex: FxHashMap<Url, Vec<Diagnostic>>,
     build_log: FxHashMap<Url, MultiMap<Url, Diagnostic>>,
@@ -30,6 +31,11 @@ impl Manager {
         self.build_log.remove(&document.uri);
         super::build_log::update(workspace, document, &mut self.build_log);
     }
+
+    /// Updates the import diagnostics for the given document.
+    //pub fn update_imports(&mut self, workspace: &Workspace, document: &Document) {
+        //super::imports::update(document, workspace.config(), &mut self.imports);
+    //}
 
     /// Updates the ChkTeX diagnostics for the given document.
     pub fn update_chktex(&mut self, uri: Url, diagnostics: Vec<Diagnostic>) {
@@ -89,6 +95,7 @@ impl Manager {
         super::citations::detect_duplicate_entries(workspace, &mut results);
         super::labels::detect_duplicate_labels(workspace, &mut results);
         super::labels::detect_undefined_and_unused_labels(workspace, &mut results);
+        super::imports::detect_duplicate_imports(workspace, &mut results);
 
         results.retain(|uri, _| {
             workspace
