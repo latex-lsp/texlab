@@ -113,14 +113,7 @@ impl Semantics {
 
         for path in list.keys() {
             let kind = match include.syntax().kind() {
-                latex::PACKAGE_INCLUDE => {
-                    if path.to_string().contains(".sty") {
-                        LinkKind::Sty
-                    }
-                    else {
-                        LinkKind::Pkg
-                    }
-                }
+                latex::PACKAGE_INCLUDE => LinkKind::Sty,
                 latex::CLASS_INCLUDE => LinkKind::Cls,
                 latex::LATEX_INCLUDE => LinkKind::Tex,
                 latex::BIBLATEX_INCLUDE => LinkKind::Bib,
@@ -374,7 +367,6 @@ impl Semantics {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum LinkKind {
-    Pkg,
     Sty,
     Cls,
     Tex,
@@ -384,7 +376,6 @@ pub enum LinkKind {
 impl LinkKind {
     pub fn extensions(self) -> &'static [&'static str] {
         match self {
-            Self::Pkg => &[""],
             Self::Sty => &["sty"],
             Self::Cls => &["cls"],
             Self::Tex => &["tex"],
@@ -404,7 +395,6 @@ pub struct Link {
 impl Link {
     pub fn package_name(&self) -> Option<String> {
         match self.kind {
-            LinkKind::Pkg => Some(self.path.text.clone()),
             LinkKind::Sty => Some(format!("{}.sty", self.path.text)),
             LinkKind::Cls => Some(format!("{}.cls", self.path.text)),
             _ => None,
