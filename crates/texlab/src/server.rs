@@ -174,6 +174,7 @@ impl Server {
                 ..Default::default()
             }),
             inlay_hint_provider: Some(OneOf::Left(true)),
+            code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
             ..ServerCapabilities::default()
         }
     }
