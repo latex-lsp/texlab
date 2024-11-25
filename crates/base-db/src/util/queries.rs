@@ -217,7 +217,6 @@ impl<'a> Conflict<'a> {
 
         let mut conflicts = Vec::new();
         for group in groups.into_values().filter(|group| group.len() > 1) {
-            log::debug!("group: {:?}", group);
             for (i, main) in group
                 .iter()
                 .enumerate()
