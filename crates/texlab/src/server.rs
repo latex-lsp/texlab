@@ -192,6 +192,7 @@ impl Server {
                 ]
                 .into_iter(),
             ))),
+            code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
             ..ServerCapabilities::default()
         }
     }
