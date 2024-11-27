@@ -10,6 +10,7 @@ use std::{
     time::Duration,
 };
 
+use crate::action;
 use anyhow::Result;
 use base_db::{deps, Owner, Workspace};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
@@ -782,9 +783,14 @@ impl Server {
         Ok(())
     }
 
-    fn code_actions(&self, id: RequestId, _params: CodeActionParams) -> Result<()> {
+    fn code_actions(&self, id: RequestId, params: CodeActionParams) -> Result<()> {
+        let workspace = self.workspace.read();
+        let diagnostics = self.diagnostic_manager.get(&workspace);
+
+        let actions = action::remove_duplicate_imports(diagnostics, params, workspace);
+
         self.client
-            .send_response(lsp_server::Response::new_ok(id, Vec::<CodeAction>::new()))?;
+            .send_response(lsp_server::Response::new_ok(id, actions))?;
         Ok(())
     }
 
