@@ -38,15 +38,17 @@ pub fn remove_duplicate_imports(
     if let Some(diag) = cursor_diag {
         let package_name = get_package_name(&workspace, &params, diag);
 
-        let filtered_diagnostics: Vec<_> = diagnostics.clone()
+        let filtered_diagnostics: Vec<_> = diagnostics
+            .clone()
             .into_iter()
             .filter(|diag| get_package_name(&workspace, &params, diag) == package_name)
             .collect();
 
-        let import_diags: Vec<lsp_types::Diagnostic> = filtered_diagnostics.clone()
-        .iter()
-        .map(|diag| to_proto::diagnostic(&workspace, document, diag).unwrap())
-        .collect();
+        let import_diags: Vec<lsp_types::Diagnostic> = filtered_diagnostics
+            .clone()
+            .iter()
+            .map(|diag| to_proto::diagnostic(&workspace, document, diag).unwrap())
+            .collect();
 
         for diag in filtered_diagnostics {
             let line_index = &workspace
@@ -104,42 +106,32 @@ pub fn remove_duplicate_imports(
             }
         })
         .collect::<Vec<_>>();
-        
-    let mut all_diags_edit = Vec::new();
 
+    let mut all_diags_edit = Vec::new();
 
     for diag in all_diags {
         all_diags_edit.push(TextEdit {
             range: get_line_range(&workspace, &params, diag),
             new_text: "".to_string(),
         });
-        
-    }    
-    
+    }
+
     if all_diags_edit.is_empty() {
         return actions;
     }
 
-    let import_diags: Vec<lsp_types::Diagnostic> = diagnostics.clone()
+    let import_diags: Vec<lsp_types::Diagnostic> = diagnostics
+        .clone()
         .iter()
         .map(|diag| to_proto::diagnostic(&workspace, document, diag).unwrap())
         .collect();
-
-
 
     actions.push(CodeAction {
         title: "Remove all duplicate package.".to_string(),
         kind: Some(CodeActionKind::QUICKFIX),
         diagnostics: Some(import_diags.clone()),
         edit: Some(WorkspaceEdit {
-            changes: Some(
-                vec![(
-                    url.clone(),
-                    all_diags_edit,
-                )]
-                .into_iter()
-                .collect(),
-            ),
+            changes: Some(vec![(url.clone(), all_diags_edit)].into_iter().collect()),
             document_changes: None,
             change_annotations: None,
         }),
