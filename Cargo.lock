@@ -99,7 +99,7 @@ dependencies = [
  "percent-encoding",
  "regex",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "shellexpand",
  "syntax",
  "titlecase",
@@ -133,7 +133,7 @@ dependencies = [
  "itertools 0.13.0",
  "parser",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "unicode-normalization",
 ]
@@ -235,7 +235,7 @@ dependencies = [
  "itertools 0.13.0",
  "parser",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "titlecase",
  "unicode-normalization",
@@ -302,7 +302,7 @@ dependencies = [
  "libc",
  "log",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
  "thiserror 2.0.3",
@@ -337,7 +337,7 @@ dependencies = [
  "parser",
  "rayon",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
  "url",
@@ -351,7 +351,7 @@ dependencies = [
  "flate2",
  "itertools 0.13.0",
  "once_cell",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "serde",
  "serde_json",
 ]
@@ -453,7 +453,7 @@ dependencies = [
  "base-db",
  "itertools 0.13.0",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
 ]
@@ -473,7 +473,7 @@ dependencies = [
  "once_cell",
  "regex",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
  "url",
@@ -511,7 +511,7 @@ name = "distro"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
 ]
 
 [[package]]
@@ -749,7 +749,7 @@ dependencies = [
  "base-db",
  "expect-test",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "test-utils",
 ]
 
@@ -876,7 +876,7 @@ checksum = "09d6582e104315a817dff97f75133544b2e094ee22447d2acf4a74e189ba06fc"
 name = "line-index"
 version = "0.0.0"
 dependencies = [
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "text-size",
 ]
 
@@ -1134,7 +1134,7 @@ dependencies = [
  "pathdiff",
  "regex",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "tempfile",
  "versions",
@@ -1306,7 +1306,7 @@ version = "0.0.0"
 dependencies = [
  "base-db",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
 ]
@@ -1347,7 +1347,7 @@ dependencies = [
  "base-db",
  "parser",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
 ]
@@ -1372,9 +1372,9 @@ checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc-hash"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
+checksum = "c7fb8039b3032c191086b10f11f319a6e99e1e82889c5cc6046f515c9db1d497"
 
 [[package]]
 name = "rustix"
@@ -1536,7 +1536,7 @@ version = "0.0.0"
 dependencies = [
  "itertools 0.13.0",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
 ]
 
 [[package]]
@@ -1599,7 +1599,7 @@ dependencies = [
  "regex",
  "rename",
  "rowan",
- "rustc-hash 2.0.0",
+ "rustc-hash 2.1.0",
  "serde",
  "serde_json",
  "serde_regex",
