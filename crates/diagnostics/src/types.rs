@@ -35,6 +35,12 @@ impl std::fmt::Debug for TexError {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum ImportError {
+    OrderingConflict,
+    DuplicateImport(Vec<(Url, TextRange)>),
+}
+
 #[derive(PartialEq, Eq, Clone)]
 pub enum BibError {
     ExpectingLCurly,
@@ -89,6 +95,7 @@ pub enum Diagnostic {
     Bib(TextRange, BibError),
     Build(TextRange, BuildError),
     Chktex(ChktexError),
+    Import(TextRange, ImportError)
 }
 
 impl Diagnostic {
@@ -114,6 +121,10 @@ impl Diagnostic {
             },
             Diagnostic::Build(_, error) => &error.message,
             Diagnostic::Chktex(error) => &error.message,
+            Diagnostic::Import(_, error) => match error {
+                ImportError::OrderingConflict => todo!(),
+                ImportError::DuplicateImport(_) => "Duplicate Package imported.",
+            }
         }
     }
 
@@ -127,6 +138,7 @@ impl Diagnostic {
                 let end = line_index.offset(error.end)?;
                 TextRange::new(start, end)
             }
+            Diagnostic::Import(range, _) => *range,
         })
     }
 
@@ -152,6 +164,7 @@ impl Diagnostic {
             },
             Diagnostic::Chktex(_) => None,
             Diagnostic::Build(_, _) => None,
+            Diagnostic::Import(_, _) => None,
         }
     }
 }

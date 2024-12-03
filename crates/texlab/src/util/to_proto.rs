@@ -4,7 +4,7 @@ use base_db::{
     data::BibtexEntryTypeCategory, util::RenderedObject, Document, DocumentLocation, Workspace,
 };
 use definition::DefinitionResult;
-use diagnostics::{BibError, ChktexSeverity, Diagnostic, TexError};
+use diagnostics::{BibError, ChktexSeverity, Diagnostic, ImportError, TexError};
 use folding::{FoldingRange, FoldingRangeKind};
 use highlights::{Highlight, HighlightKind};
 use hover::{Hover, HoverData};
@@ -23,9 +23,10 @@ pub fn diagnostic(
     diagnostic: &Diagnostic,
 ) -> Option<lsp_types::Diagnostic> {
     let range = match diagnostic {
-        Diagnostic::Tex(range, _) | Diagnostic::Bib(range, _) | Diagnostic::Build(range, _) => {
-            document.line_index.line_col_lsp_range(*range)?
-        }
+        Diagnostic::Tex(range, _)
+        | Diagnostic::Bib(range, _)
+        | Diagnostic::Build(range, _)
+        | Diagnostic::Import(range, _) => document.line_index.line_col_lsp_range(*range)?,
         Diagnostic::Chktex(range) => {
             let start = lsp_types::Position::new(range.start.line, range.start.col);
             let end = lsp_types::Position::new(range.end.line, range.end.col);
@@ -61,6 +62,10 @@ pub fn diagnostic(
             ChktexSeverity::Warning => lsp_types::DiagnosticSeverity::WARNING,
             ChktexSeverity::Error => lsp_types::DiagnosticSeverity::ERROR,
         },
+        Diagnostic::Import(_, error) => match error {
+            ImportError::OrderingConflict => lsp_types::DiagnosticSeverity::WARNING,
+            ImportError::DuplicateImport(_) => lsp_types::DiagnosticSeverity::ERROR,
+        },
     };
 
     let code: Option<NumberOrString> = match &diagnostic {
@@ -84,10 +89,14 @@ pub fn diagnostic(
         },
         Diagnostic::Build(_, _) => None,
         Diagnostic::Chktex(error) => Some(NumberOrString::String(error.code.clone())),
+        Diagnostic::Import(_, error) => match error {
+            ImportError::OrderingConflict => todo!(),
+            ImportError::DuplicateImport(_) => Some(NumberOrString::Number(15)),
+        },
     };
 
     let source = match &diagnostic {
-        Diagnostic::Tex(_, _) | Diagnostic::Bib(_, _) => "texlab",
+        Diagnostic::Tex(_, _) | Diagnostic::Bib(_, _) | Diagnostic::Import(_, _) => "texlab",
         Diagnostic::Build(_, _) => "latex",
         Diagnostic::Chktex(_) => "ChkTeX",
     };
@@ -113,6 +122,10 @@ pub fn diagnostic(
         },
         Diagnostic::Build(_, error) => &error.message,
         Diagnostic::Chktex(error) => &error.message,
+        Diagnostic::Import(_, error) => match error {
+            ImportError::OrderingConflict => "Possible Conflict in Package Ordering.",
+            ImportError::DuplicateImport(_) => "Duplicate Package."
+        }
     });
 
     let tags = match &diagnostic {
@@ -136,6 +149,10 @@ pub fn diagnostic(
         },
         Diagnostic::Build(_, _) => None,
         Diagnostic::Chktex(_) => None,
+        Diagnostic::Import(_, error) => match error {
+            ImportError::DuplicateImport(_) => Some(vec![lsp_types::DiagnosticTag::UNNECESSARY]),
+            _ => None,
+        },
     };
 
     fn make_conflict_info(
@@ -179,6 +196,10 @@ pub fn diagnostic(
         },
         Diagnostic::Build(_, _) => None,
         Diagnostic::Chktex(_) => None,
+        Diagnostic::Import(_, error) => match error {
+            ImportError::OrderingConflict => None,
+            ImportError::DuplicateImport(others) => make_conflict_info(workspace, others, "package"),
+        }
     };
 
     Some(lsp_types::Diagnostic {
