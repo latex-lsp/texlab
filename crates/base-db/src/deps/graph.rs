@@ -96,7 +96,7 @@ impl Graph {
     pub fn preorder<'a: 'b, 'b>(
         &'b self,
         workspace: &'a Workspace,
-    ) -> impl DoubleEndedIterator<Item = &'a Document> + '_ {
+    ) -> impl DoubleEndedIterator<Item = &'a Document> + 'b {
         std::iter::once(&self.start)
             .chain(self.edges.iter().map(|group| &group.target))
             .unique()

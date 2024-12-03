@@ -37,7 +37,7 @@ impl Workspace {
     pub fn lookup_file_or_dir<'a>(
         &'a self,
         file_or_dir: &'a Path,
-    ) -> impl Iterator<Item = &'a Document> + '_ {
+    ) -> impl Iterator<Item = &'a Document> + 'a {
         self.iter().filter(move |doc| {
             doc.path
                 .as_deref()
