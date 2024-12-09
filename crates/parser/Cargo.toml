@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 log.workspace = true
-logos = "0.14.2"
+logos = "0.15.0"
 once_cell.workspace = true
 pathdiff = "0.2.3"
 regex.workspace = true
