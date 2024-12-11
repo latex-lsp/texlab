@@ -3690,3 +3690,74 @@ fn test_label_brackets_unbalanced() {
     "#]],
     );
 }
+
+#[test]
+fn test_href_with_space() {
+    check(
+        r#"\href{https://www.test.com/url%20%with%20space}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+              PREAMBLE@0..59
+                GENERIC_COMMAND@0..59
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..47
+                    L_CURLY@5..6 "{"
+                    HREF@6..46 "https://www.test.com/ ..."
+                    R_CURLY@46..47 "}"
+                  CURLY_GROUP@47..59
+                    L_CURLY@47..48 "{"
+                    TEXT@48..58
+                      WORD@48..49 "A"
+                      WHITESPACE@49..50 " "
+                      WORD@50..54 "test"
+                      WHITESPACE@54..55 " "
+                      WORD@55..58 "URL"
+                    R_CURLY@58..59 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_() {
+    check(
+        r#"\href{}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_case2() {
+    check(
+        r#"\href{}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_case3() {
+    check(
+        r#"\href{}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_case4() {
+    check(
+        r#"\href{}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+
+        "#]],
+    );
+}
