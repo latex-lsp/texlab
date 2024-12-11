@@ -40,6 +40,7 @@ impl<'a> Lexer<'a> {
             Token::Eq => SyntaxKind::EQUALITY_SIGN,
             Token::Pipe => SyntaxKind::WORD,
             Token::Word => SyntaxKind::WORD,
+            Token::Href => SyntaxKind::HREF,
             Token::Dollar => SyntaxKind::DOLLAR,
             Token::CommandName(_) => SyntaxKind::COMMAND_NAME,
         };

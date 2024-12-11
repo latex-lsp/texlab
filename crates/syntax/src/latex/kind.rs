@@ -16,6 +16,7 @@ pub enum SyntaxKind {
     COMMA,
     EQUALITY_SIGN,
     WORD,
+    HREF,
     DOLLAR,
     COMMAND_NAME,
 
