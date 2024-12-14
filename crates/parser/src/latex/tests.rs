@@ -3719,44 +3719,511 @@ fn test_href_with_space() {
 }
 
 #[test]
-fn test_href_() {
+fn test_href_lone_space() {
     check(
-        r#"\href{}{A test URL}"#,
+        r#"\href{http://example.com/%20}{A test URL}"#,
         expect![[r#"
-            ROOT@0..59
+            ROOT@0..41
+              PREAMBLE@0..41
+                GENERIC_COMMAND@0..41
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..29
+                    L_CURLY@5..6 "{"
+                    HREF@6..28 "http://example.com/%20"
+                    R_CURLY@28..29 "}"
+                  CURLY_GROUP@29..41
+                    L_CURLY@29..30 "{"
+                    TEXT@30..40
+                      WORD@30..31 "A"
+                      WHITESPACE@31..32 " "
+                      WORD@32..36 "test"
+                      WHITESPACE@36..37 " "
+                      WORD@37..40 "URL"
+                    R_CURLY@40..41 "}"
 
         "#]],
     );
 }
 
 #[test]
-fn test_href_case2() {
+fn test_href_with_variables() {
     check(
-        r#"\href{}{A test URL}"#,
+        r#"\href{https://example.com/path/to/resource?param=100%25complete}{A test URL}"#,
         expect![[r#"
-            ROOT@0..59
+            ROOT@0..76
+              PREAMBLE@0..76
+                GENERIC_COMMAND@0..76
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..64
+                    L_CURLY@5..6 "{"
+                    HREF@6..63 "https://example.com/p ..."
+                    R_CURLY@63..64 "}"
+                  CURLY_GROUP@64..76
+                    L_CURLY@64..65 "{"
+                    TEXT@65..75
+                      WORD@65..66 "A"
+                      WHITESPACE@66..67 " "
+                      WORD@67..71 "test"
+                      WHITESPACE@71..72 " "
+                      WORD@72..75 "URL"
+                    R_CURLY@75..76 "}"
 
         "#]],
     );
 }
 
 #[test]
-fn test_href_case3() {
+fn test_href_ftp_filename() {
     check(
-        r#"\href{}{A test URL}"#,
+        r#"\href{ftp://ftp.example.com/%file.txt}{A test URL}"#,
         expect![[r#"
-            ROOT@0..59
+            ROOT@0..50
+              PREAMBLE@0..50
+                GENERIC_COMMAND@0..50
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..38
+                    L_CURLY@5..6 "{"
+                    HREF@6..37 "ftp://ftp.example.com ..."
+                    R_CURLY@37..38 "}"
+                  CURLY_GROUP@38..50
+                    L_CURLY@38..39 "{"
+                    TEXT@39..49
+                      WORD@39..40 "A"
+                      WHITESPACE@40..41 " "
+                      WORD@41..45 "test"
+                      WHITESPACE@45..46 " "
+                      WORD@46..49 "URL"
+                    R_CURLY@49..50 "}"
 
         "#]],
     );
 }
 
 #[test]
-fn test_href_case4() {
+fn test_href_ampersand() {
     check(
-        r#"\href{}{A test URL}"#,
+        r#"\href{https://www.example.com/search?q=cats%26dogs}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..63
+              PREAMBLE@0..63
+                GENERIC_COMMAND@0..63
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..51
+                    L_CURLY@5..6 "{"
+                    HREF@6..50 "https://www.example.c ..."
+                    R_CURLY@50..51 "}"
+                  CURLY_GROUP@51..63
+                    L_CURLY@51..52 "{"
+                    TEXT@52..62
+                      WORD@52..53 "A"
+                      WHITESPACE@53..54 " "
+                      WORD@54..58 "test"
+                      WHITESPACE@58..59 " "
+                      WORD@59..62 "URL"
+                    R_CURLY@62..63 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_top_anchor() {
+    check(
+        r#"\href{http://example.com/#%top-anchor}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..50
+              PREAMBLE@0..50
+                GENERIC_COMMAND@0..50
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..38
+                    L_CURLY@5..6 "{"
+                    HREF@6..37 "http://example.com/#% ..."
+                    R_CURLY@37..38 "}"
+                  CURLY_GROUP@38..50
+                    L_CURLY@38..39 "{"
+                    TEXT@39..49
+                      WORD@39..40 "A"
+                      WHITESPACE@40..41 " "
+                      WORD@41..45 "test"
+                      WHITESPACE@45..46 " "
+                      WORD@46..49 "URL"
+                    R_CURLY@49..50 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_numeric_percentage() {
+    check(
+        r#"\href{https://example.com?query=100%&ref=bookmark}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..62
+              PREAMBLE@0..62
+                GENERIC_COMMAND@0..62
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..50
+                    L_CURLY@5..6 "{"
+                    HREF@6..49 "https://example.com?q ..."
+                    R_CURLY@49..50 "}"
+                  CURLY_GROUP@50..62
+                    L_CURLY@50..51 "{"
+                    TEXT@51..61
+                      WORD@51..52 "A"
+                      WHITESPACE@52..53 " "
+                      WORD@53..57 "test"
+                      WHITESPACE@57..58 " "
+                      WORD@58..61 "URL"
+                    R_CURLY@61..62 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_nonstandard_char() {
+    check(
+        r#"\href{https://example.com/%E2%9C%93}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..48
+              PREAMBLE@0..48
+                GENERIC_COMMAND@0..48
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..36
+                    L_CURLY@5..6 "{"
+                    HREF@6..35 "https://example.com/% ..."
+                    R_CURLY@35..36 "}"
+                  CURLY_GROUP@36..48
+                    L_CURLY@36..37 "{"
+                    TEXT@37..47
+                      WORD@37..38 "A"
+                      WHITESPACE@38..39 " "
+                      WORD@39..43 "test"
+                      WHITESPACE@43..44 " "
+                      WORD@44..47 "URL"
+                    R_CURLY@47..48 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_nested() {
+    check(
+        r#"\href{http://example.com/%25nested%2525}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..52
+              PREAMBLE@0..52
+                GENERIC_COMMAND@0..52
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..40
+                    L_CURLY@5..6 "{"
+                    HREF@6..39 "http://example.com/%2 ..."
+                    R_CURLY@39..40 "}"
+                  CURLY_GROUP@40..52
+                    L_CURLY@40..41 "{"
+                    TEXT@41..51
+                      WORD@41..42 "A"
+                      WHITESPACE@42..43 " "
+                      WORD@43..47 "test"
+                      WHITESPACE@47..48 " "
+                      WORD@48..51 "URL"
+                    R_CURLY@51..52 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_percent_in_path() {
+    check(
+        r#"\href{http://example.com/path/%name%}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..49
+              PREAMBLE@0..49
+                GENERIC_COMMAND@0..49
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..37
+                    L_CURLY@5..6 "{"
+                    HREF@6..36 "http://example.com/pa ..."
+                    R_CURLY@36..37 "}"
+                  CURLY_GROUP@37..49
+                    L_CURLY@37..38 "{"
+                    TEXT@38..48
+                      WORD@38..39 "A"
+                      WHITESPACE@39..40 " "
+                      WORD@40..44 "test"
+                      WHITESPACE@44..45 " "
+                      WORD@45..48 "URL"
+                    R_CURLY@48..49 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_multiple_percent_encoding() {
+    check(
+        r#"\href{https://example.com/special/%A3%24values}{A test URL}"#,
         expect![[r#"
             ROOT@0..59
+              PREAMBLE@0..59
+                GENERIC_COMMAND@0..59
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..47
+                    L_CURLY@5..6 "{"
+                    HREF@6..46 "https://example.com/s ..."
+                    R_CURLY@46..47 "}"
+                  CURLY_GROUP@47..59
+                    L_CURLY@47..48 "{"
+                    TEXT@48..58
+                      WORD@48..49 "A"
+                      WHITESPACE@49..50 " "
+                      WORD@50..54 "test"
+                      WHITESPACE@54..55 " "
+                      WORD@55..58 "URL"
+                    R_CURLY@58..59 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_nested_percent_and_space() {
+    check(
+        r#"\href{https://example.com/query?var1=%25var2=%20end}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..64
+              PREAMBLE@0..64
+                GENERIC_COMMAND@0..64
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..52
+                    L_CURLY@5..6 "{"
+                    HREF@6..51 "https://example.com/q ..."
+                    R_CURLY@51..52 "}"
+                  CURLY_GROUP@52..64
+                    L_CURLY@52..53 "{"
+                    TEXT@53..63
+                      WORD@53..54 "A"
+                      WHITESPACE@54..55 " "
+                      WORD@55..59 "test"
+                      WHITESPACE@59..60 " "
+                      WORD@60..63 "URL"
+                    R_CURLY@63..64 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_triple_percent_encoding() {
+    check(
+        r#"\href{https://example.com/%2520%2520%2520}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..54
+              PREAMBLE@0..54
+                GENERIC_COMMAND@0..54
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..42
+                    L_CURLY@5..6 "{"
+                    HREF@6..41 "https://example.com/% ..."
+                    R_CURLY@41..42 "}"
+                  CURLY_GROUP@42..54
+                    L_CURLY@42..43 "{"
+                    TEXT@43..53
+                      WORD@43..44 "A"
+                      WHITESPACE@44..45 " "
+                      WORD@45..49 "test"
+                      WHITESPACE@49..50 " "
+                      WORD@50..53 "URL"
+                    R_CURLY@53..54 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_with_percent_character() {
+    check(
+        r#"\href{http://example.com/%}{Example with Percent}"#,
+        expect![[r#"
+            ROOT@0..49
+              PREAMBLE@0..49
+                GENERIC_COMMAND@0..49
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..27
+                    L_CURLY@5..6 "{"
+                    HREF@6..26 "http://example.com/%"
+                    R_CURLY@26..27 "}"
+                  CURLY_GROUP@27..49
+                    L_CURLY@27..28 "{"
+                    TEXT@28..48
+                      WORD@28..35 "Example"
+                      WHITESPACE@35..36 " "
+                      WORD@36..40 "with"
+                      WHITESPACE@40..41 " "
+                      WORD@41..48 "Percent"
+                    R_CURLY@48..49 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_href_with_percent_encoded_query() {
+    check(
+        r#"\href{https://example.com/search?q=%25complete}{Search Query}"#,
+        expect![[r#"
+            ROOT@0..61
+              PREAMBLE@0..61
+                GENERIC_COMMAND@0..61
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..47
+                    L_CURLY@5..6 "{"
+                    HREF@6..46 "https://example.com/s ..."
+                    R_CURLY@46..47 "}"
+                  CURLY_GROUP@47..61
+                    L_CURLY@47..48 "{"
+                    TEXT@48..60
+                      WORD@48..54 "Search"
+                      WHITESPACE@54..55 " "
+                      WORD@55..60 "Query"
+                    R_CURLY@60..61 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_double_percent_signs() {
+    check(
+        r#"\href{https://example.com/path/%%encoded%%}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..55
+              PREAMBLE@0..55
+                GENERIC_COMMAND@0..55
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..43
+                    L_CURLY@5..6 "{"
+                    HREF@6..42 "https://example.com/p ..."
+                    R_CURLY@42..43 "}"
+                  CURLY_GROUP@43..55
+                    L_CURLY@43..44 "{"
+                    TEXT@44..54
+                      WORD@44..45 "A"
+                      WHITESPACE@45..46 " "
+                      WORD@46..50 "test"
+                      WHITESPACE@50..51 " "
+                      WORD@51..54 "URL"
+                    R_CURLY@54..55 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_deep_nested_percent_encoding() {
+    check(
+        r#"\href{http://example.com/%%252525}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..46
+              PREAMBLE@0..46
+                GENERIC_COMMAND@0..46
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..34
+                    L_CURLY@5..6 "{"
+                    HREF@6..33 "http://example.com/%% ..."
+                    R_CURLY@33..34 "}"
+                  CURLY_GROUP@34..46
+                    L_CURLY@34..35 "{"
+                    TEXT@35..45
+                      WORD@35..36 "A"
+                      WHITESPACE@36..37 " "
+                      WORD@37..41 "test"
+                      WHITESPACE@41..42 " "
+                      WORD@42..45 "URL"
+                    R_CURLY@45..46 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_spaces_in_percent_encoding() {
+    check(
+        r#"\href{https://example.com/file%20name%20with%20spaces}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..66
+              PREAMBLE@0..66
+                GENERIC_COMMAND@0..66
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..54
+                    L_CURLY@5..6 "{"
+                    HREF@6..53 "https://example.com/f ..."
+                    R_CURLY@53..54 "}"
+                  CURLY_GROUP@54..66
+                    L_CURLY@54..55 "{"
+                    TEXT@55..65
+                      WORD@55..56 "A"
+                      WHITESPACE@56..57 " "
+                      WORD@57..61 "test"
+                      WHITESPACE@61..62 " "
+                      WORD@62..65 "URL"
+                    R_CURLY@65..66 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_percent_and_path_structure() {
+    check(
+        r#"\href{http://example.com/%/path/to/%/something}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..59
+              PREAMBLE@0..59
+                GENERIC_COMMAND@0..59
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..47
+                    L_CURLY@5..6 "{"
+                    HREF@6..46 "http://example.com/%/ ..."
+                    R_CURLY@46..47 "}"
+                  CURLY_GROUP@47..59
+                    L_CURLY@47..48 "{"
+                    TEXT@48..58
+                      WORD@48..49 "A"
+                      WHITESPACE@49..50 " "
+                      WORD@50..54 "test"
+                      WHITESPACE@54..55 " "
+                      WORD@55..58 "URL"
+                    R_CURLY@58..59 "}"
+
+        "#]],
+    );
+}
+
+#[test]
+fn test_url_with_parentheses_and_percent_encoding() {
+    check(
+        r#"\href{https://example.com/query?file=report%20%28draft%29%20v1}{A test URL}"#,
+        expect![[r#"
+            ROOT@0..75
+              PREAMBLE@0..75
+                GENERIC_COMMAND@0..75
+                  COMMAND_NAME@0..5 "\\href"
+                  CURLY_GROUP@5..63
+                    L_CURLY@5..6 "{"
+                    HREF@6..62 "https://example.com/q ..."
+                    R_CURLY@62..63 "}"
+                  CURLY_GROUP@63..75
+                    L_CURLY@63..64 "{"
+                    TEXT@64..74
+                      WORD@64..65 "A"
+                      WHITESPACE@65..66 " "
+                      WORD@66..70 "test"
+                      WHITESPACE@70..71 " "
+                      WORD@71..74 "URL"
+                    R_CURLY@74..75 "}"
 
         "#]],
     );
