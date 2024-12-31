@@ -80,14 +80,16 @@ impl BuildCommand {
             self.working_dir.display()
         );
 
-        let mut process = self.spawn_internal()?;
+        let mut process = self.spawn_internal().map_err(|err| {
+            BuildError::from(std::io::Error::other(format!("{}: {}", self.program, err)))
+        })?;
         track_output(process.stderr.take().unwrap(), sender.clone());
         track_output(process.stdout.take().unwrap(), sender);
         Ok(process)
     }
 
     #[cfg(windows)]
-    fn spawn_internal(&self) -> Result<Child, BuildError> {
+    fn spawn_internal(&self) -> std::io::Result<Child> {
         std::process::Command::new(&self.program)
             .args(self.args.clone())
             .stdin(Stdio::null())
@@ -95,11 +97,10 @@ impl BuildCommand {
             .stderr(Stdio::piped())
             .current_dir(&self.working_dir)
             .spawn()
-            .map_err(Into::into)
     }
 
     #[cfg(unix)]
-    fn spawn_internal(&self) -> Result<Child, BuildError> {
+    fn spawn_internal(&self) -> std::io::Result<Child> {
         use std::os::unix::process::CommandExt;
         std::process::Command::new(&self.program)
             .args(self.args.clone())
@@ -109,7 +110,6 @@ impl BuildCommand {
             .current_dir(&self.working_dir)
             .process_group(0)
             .spawn()
-            .map_err(Into::into)
     }
 
     #[cfg(windows)]
