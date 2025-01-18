@@ -389,4 +389,9 @@ pub fn config(value: Options) -> Config {
         .extend(value.experimental.label_reference_prefixes);
 
     config
+        .syntax
+        .label_reference_range_commands
+        .extend(value.experimental.label_reference_range_commands);
+
+    config
 }

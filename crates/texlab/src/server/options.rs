@@ -142,6 +142,7 @@ pub struct ExperimentalOptions {
     pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: Vec<String>,
     pub label_reference_prefixes: Vec<(String, String)>,
+    pub label_reference_range_commands: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
