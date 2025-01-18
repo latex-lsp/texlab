@@ -9,7 +9,7 @@ rust-version.workspace = true
 [dependencies]
 anyhow.workspace = true
 base-db = { path = "../base-db" }
-bstr = "1.11.0"
+bstr = "1.11.3"
 crossbeam-channel.workspace = true
 itertools.workspace = true
 libc = "0.2.167"
