@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use base_db::{Config, FeatureParams, Formatter, SynctexConfig, Workspace};
+use base_db::{
+    Config, FeatureParams, Formatter, SymbolEnvironmentConfig, SynctexConfig, Workspace,
+};
 use completion::CompletionParams;
 use definition::DefinitionParams;
 use highlights::HighlightParams;
@@ -9,6 +11,7 @@ use inlay_hints::InlayHintParams;
 use references::ReferenceParams;
 use rename::RenameParams;
 use rowan::TextSize;
+use titlecase::titlecase;
 
 use crate::{
     features::completion::ResolveInfo,
@@ -313,6 +316,23 @@ pub fn config(value: Options) -> Config {
         .ignored_patterns
         .into_iter()
         .map(|pattern| pattern.0)
+        .collect();
+
+    config.symbols.custom_environments = value
+        .symbols
+        .custom_environments
+        .into_iter()
+        .map(|env| {
+            let display_name = env.display_name.unwrap_or_else(|| titlecase(&env.name));
+            let label = env.label.unwrap_or_default();
+
+            let config = SymbolEnvironmentConfig {
+                display_name,
+                label,
+            };
+
+            (env.name, config)
+        })
         .collect();
 
     config.inlay_hints.label_definitions = value.inlay_hints.label_definitions.unwrap_or(true);

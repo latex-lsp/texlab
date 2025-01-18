@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use parser::SyntaxConfig;
 use regex::Regex;
+use rustc_hash::FxHashMap;
 
 #[derive(Debug, Default)]
 pub struct Config {
@@ -75,6 +76,13 @@ pub struct LatexIndentConfig {
 pub struct SymbolConfig {
     pub allowed_patterns: Vec<Regex>,
     pub ignored_patterns: Vec<Regex>,
+    pub custom_environments: FxHashMap<String, SymbolEnvironmentConfig>,
+}
+
+#[derive(Debug, Default)]
+pub struct SymbolEnvironmentConfig {
+    pub display_name: String,
+    pub label: bool,
 }
 
 #[derive(Debug)]

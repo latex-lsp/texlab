@@ -18,7 +18,10 @@ pub fn detect_undefined_citations<'a>(
 ) -> Option<()> {
     let data = document.data.as_tex()?;
 
-    let bibitems: FxHashSet<&str> = data.semantics.bibitems.iter()
+    let bibitems: FxHashSet<&str> = data
+        .semantics
+        .bibitems
+        .iter()
         .map(|bib| bib.text.as_str())
         .collect();
 
@@ -45,13 +48,11 @@ pub fn detect_unused_entries<'a>(
     document: &'a Document,
     results: &mut FxHashMap<Url, Vec<Diagnostic>>,
 ) -> Option<()> {
-
     let citations: FxHashSet<&str> = Citation::find_all(project)
         .map(|(_, citation)| citation.name_text())
         .collect();
 
-    if let Some(data) = document.data.as_bib()
-    {
+    if let Some(data) = document.data.as_bib() {
         // If this is a huge bibliography, then don't bother checking for unused entries.
         if data.semantics.entries.len() > MAX_UNUSED_ENTRIES {
             return None;
@@ -68,7 +69,7 @@ pub fn detect_unused_entries<'a>(
         }
     };
 
-    if let Some(tex_data) = document.data.as_tex(){
+    if let Some(tex_data) = document.data.as_tex() {
         for bibitem in &tex_data.semantics.bibitems {
             if !citations.contains(bibitem.text.as_str()) {
                 let diagnostic = Diagnostic::Bib(bibitem.range, BibError::UnusedEntry);

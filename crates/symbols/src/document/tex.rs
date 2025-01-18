@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use base_db::{deps::Project, semantics::Span, util::FloatKind, Config};
+use base_db::{deps::Project, semantics::Span, util::FloatKind, Config, SymbolEnvironmentConfig};
 use rowan::ast::AstNode;
 use syntax::latex::{self, HasBrack, HasCurly, LatexLanguage};
 use titlecase::titlecase;
@@ -28,7 +28,9 @@ impl<'a> SymbolBuilder<'a> {
         } else if let Some(environment) = latex::Environment::cast(node.clone()) {
             environment.begin().and_then(|begin| {
                 let name = begin.name()?.key()?.to_string();
-                if self.config.syntax.math_environments.contains(&name) {
+                if let Some(config) = self.config.symbols.custom_environments.get(&name) {
+                    self.visit_environment(&environment, SymbolKind::Environment, config)
+                } else if self.config.syntax.math_environments.contains(&name) {
                     self.visit_equation(&environment)
                 } else if self.config.syntax.enum_environments.contains(&name) {
                     self.visit_enumeration(&environment, &name)
@@ -74,7 +76,7 @@ impl<'a> SymbolBuilder<'a> {
 
         let symbol = match self.find_label(section.syntax()) {
             Some(label) => Symbol::new_label(name, kind, range, label),
-            None => Symbol::new_simple(name, kind, range, range)
+            None => Symbol::new_simple(name, kind, range, range),
         };
 
         Some(symbol)
@@ -201,23 +203,14 @@ impl<'a> SymbolBuilder<'a> {
         environment: &latex::Environment,
         environment_name: &str,
     ) -> Option<Symbol> {
-        let range = latex::small_range(environment);
-
-        let kind = SymbolKind::Enumeration;
-        let name = titlecase(environment_name);
-        let symbol = match self.find_label(environment.syntax()) {
-            Some(label) => {
-                let name = match self.find_label_number(&label.text) {
-                    Some(number) => format!("{name} {number}"),
-                    None => name,
-                };
-
-                Symbol::new_label(name, kind, range, label)
-            }
-            None => Symbol::new_simple(name, kind, range, range),
+        let display_name = titlecase(environment_name);
+        let label = true;
+        let config = SymbolEnvironmentConfig {
+            display_name,
+            label,
         };
 
-        Some(symbol)
+        self.visit_environment(environment, SymbolKind::Enumeration, &config)
     }
 
     fn visit_equation(&self, node: &dyn AstNode<Language = LatexLanguage>) -> Option<Symbol> {
@@ -233,6 +226,35 @@ impl<'a> SymbolBuilder<'a> {
                 Symbol::new_label(name, kind, range, label)
             }
             None => Symbol::new_simple("Equation".into(), kind, range, range),
+        };
+
+        Some(symbol)
+    }
+
+    fn visit_environment(
+        &self,
+        environment: &latex::Environment,
+        kind: SymbolKind,
+        config: &SymbolEnvironmentConfig,
+    ) -> Option<Symbol> {
+        let range = latex::small_range(environment);
+
+        let name = config.display_name.to_string();
+
+        let symbol = if config.label {
+            match self.find_label(environment.syntax()) {
+                Some(label) => {
+                    let name = match self.find_label_number(&label.text) {
+                        Some(number) => format!("{name} {number}"),
+                        None => name,
+                    };
+
+                    Symbol::new_label(name, kind, range, label)
+                }
+                None => Symbol::new_simple(name, kind, range, range),
+            }
+        } else {
+            Symbol::new_simple(name, kind, range, range)
         };
 
         Some(symbol)
