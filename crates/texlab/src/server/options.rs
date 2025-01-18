@@ -114,6 +114,16 @@ pub struct InlayHintOptions {
 pub struct SymbolOptions {
     pub allowed_patterns: Vec<RegexPattern>,
     pub ignored_patterns: Vec<RegexPattern>,
+    pub custom_environments: Vec<SymbolEnvironmentOptions>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct SymbolEnvironmentOptions {
+    pub name: String,
+    pub display_name: Option<String>,
+    pub label: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

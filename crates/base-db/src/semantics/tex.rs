@@ -50,7 +50,7 @@ impl Semantics {
                 }
                 latex::SyntaxElement::Token(token) => match token.kind() {
                     latex::COMMAND_NAME => {
-                            self.commands.push(Span::command(&token));
+                        self.commands.push(Span::command(&token));
                     }
                     latex::COMMENT if token.text().contains("texlab: ignore") => {
                         self.diagnostic_suppressions.push(token.text_range());
@@ -341,9 +341,7 @@ impl Semantics {
     fn process_bibitem(&mut self, bibitem: latex::BibItem) {
         if let Some(name) = bibitem.name() {
             if let Some(key) = name.key() {
-                self.bibitems.insert(
-                    Span::from(&key)
-                );
+                self.bibitems.insert(Span::from(&key));
             }
         }
     }

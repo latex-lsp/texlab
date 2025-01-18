@@ -74,10 +74,10 @@ fn build_arguments(config: &LatexIndentConfig, target_file: &Path) -> Vec<String
 
     match &config.replacement {
         Some(replacement_flag) => {
-            if ["-r", "-rv", "-rr"].contains(& replacement_flag.as_str()) {
+            if ["-r", "-rv", "-rr"].contains(&replacement_flag.as_str()) {
                 args.push(replacement_flag.clone());
             }
-        },
+        }
         None => {}
     }
 

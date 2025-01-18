@@ -1,6 +1,7 @@
-use base_db::{Config, SymbolConfig};
+use base_db::{Config, SymbolConfig, SymbolEnvironmentConfig};
 use expect_test::{expect, Expect};
 use regex::Regex;
+use rustc_hash::FxHashMap;
 use test_utils::fixture::Fixture;
 
 use crate::document_symbols;
@@ -534,6 +535,7 @@ fn test_allowed_patterns() {
                 Regex::new("Enumerate").unwrap(),
             ],
             ignored_patterns: Vec::new(),
+            custom_environments: FxHashMap::default(),
         },
         ..Config::default()
     });
@@ -600,6 +602,7 @@ fn test_ignored_patterns() {
                 Regex::new("Enumerate").unwrap(),
             ],
             allowed_patterns: Vec::new(),
+            custom_environments: FxHashMap::default(),
         },
         ..Config::default()
     });
@@ -620,6 +623,73 @@ fn test_ignored_patterns() {
                 full_range: 43..96,
                 selection_range: 59..73,
                 children: [],
+            },
+        ]
+    "#]],
+    );
+}
+
+#[test]
+fn test_custom_environments() {
+    let mut fixture = Fixture::parse(
+        r#"
+%! main.tex
+\documentclass{article}
+
+\begin{document}
+
+\begin{foo}
+\begin{equation}\label{eq:foo}
+    Foo
+\end{equation}
+\end{foo}
+
+\end{document}"#,
+    );
+
+    fixture.workspace.set_config(Config {
+        symbols: SymbolConfig {
+            ignored_patterns: vec![
+                Regex::new("Item").unwrap(),
+                Regex::new("Enumerate").unwrap(),
+            ],
+            allowed_patterns: Vec::new(),
+            custom_environments: FxHashMap::from_iter([(
+                "foo".into(),
+                SymbolEnvironmentConfig {
+                    display_name: "Foo".into(),
+                    label: false,
+                },
+            )]),
+        },
+        ..Config::default()
+    });
+
+    check(
+        &fixture,
+        expect![[r#"
+        [
+            Symbol {
+                name: "Foo",
+                kind: Environment,
+                label: None,
+                full_range: 43..118,
+                selection_range: 43..118,
+                children: [
+                    Symbol {
+                        name: "Equation",
+                        kind: Equation,
+                        label: Some(
+                            Span(
+                                "eq:foo",
+                                71..85,
+                            ),
+                        ),
+                        full_range: 55..108,
+                        selection_range: 71..85,
+                        children: [],
+                    },
+                ],
             },
         ]
     "#]],

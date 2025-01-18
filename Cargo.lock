@@ -1513,6 +1513,7 @@ dependencies = [
  "line-index",
  "regex",
  "rowan",
+ "rustc-hash 2.1.0",
  "syntax",
  "test-utils",
  "titlecase",
@@ -1608,6 +1609,7 @@ dependencies = [
  "syntax",
  "tempfile",
  "threadpool",
+ "titlecase",
 ]
 
 [[package]]

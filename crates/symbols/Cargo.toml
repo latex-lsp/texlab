@@ -20,6 +20,7 @@ titlecase.workspace = true
 url.workspace = true
 
 [dev-dependencies]
-regex.workspace = true
-test-utils = { path = "../test-utils" }
 expect-test.workspace = true
+regex.workspace = true
+rustc-hash.workspace = true
+test-utils = { path = "../test-utils" }

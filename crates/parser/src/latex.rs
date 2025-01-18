@@ -1296,7 +1296,6 @@ impl<'a> Parser<'a> {
 
         self.builder.finish_node();
     }
-
 }
 
 pub fn parse_latex(text: &str, config: &SyntaxConfig) -> GreenNode {

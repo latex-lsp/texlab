@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allow hovering over symbol-like commands (e. g. `\pi`) to show a unicode preview
   or a preview image if the client supports it ([#1261](https://github.com/latex-lsp/texlab/issues/1261))
+- Add `texlab.symbols.customEnvironments` setting for specifying additional environments that will be included in the document symbols
+  ([#1292](https://github.com/latex-lsp/texlab/issues/1292))
 
 ## [5.21.0] - 2024-10-26
 

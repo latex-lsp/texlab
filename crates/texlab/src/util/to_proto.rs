@@ -380,6 +380,7 @@ pub fn symbol_kind(value: symbols::SymbolKind) -> lsp_types::SymbolKind {
             BibtexEntryTypeCategory::Collection => lsp_types::SymbolKind::TYPE_PARAMETER,
         },
         symbols::SymbolKind::Field => lsp_types::SymbolKind::FIELD,
+        symbols::SymbolKind::Environment => lsp_types::SymbolKind::FUNCTION,
     }
 }
 

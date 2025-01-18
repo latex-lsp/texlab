@@ -14,6 +14,7 @@ pub enum SymbolKind {
     Equation,
     Entry(BibtexEntryTypeCategory),
     Field,
+    Environment,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -70,6 +71,7 @@ impl Symbol {
             }
             SymbolKind::Entry(_) => vec![&self.name, "bibtex", "entry"],
             SymbolKind::Field => vec![&self.name, "bibtex", "field"],
+            SymbolKind::Environment => vec![&self.name, "latex", "environment"],
         }
     }
 
