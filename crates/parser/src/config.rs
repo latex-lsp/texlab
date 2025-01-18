@@ -12,6 +12,7 @@ pub struct SyntaxConfig {
     pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: FxHashSet<String>,
     pub label_reference_prefixes: Vec<(String, String)>,
+    pub label_reference_range_commands: FxHashSet<String>,
 }
 
 impl Default for SyntaxConfig {
@@ -56,6 +57,11 @@ impl Default for SyntaxConfig {
             .map(|(x, y)| (ToString::to_string(x), ToString::to_string(y)))
             .collect();
 
+        let label_reference_range_commands = DEFAULT_LABEL_REFERENCE_RANGE_COMMANDS
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+
         Self {
             follow_package_links: false,
             use_file_list: false,
@@ -67,6 +73,7 @@ impl Default for SyntaxConfig {
             label_definition_prefixes,
             label_reference_commands,
             label_reference_prefixes,
+            label_reference_range_commands,
         }
     }
 }
@@ -216,3 +223,14 @@ static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
 ];
 
 static DEFAULT_LABEL_REFERENCE_PREFIXES: &[(&str, &str)] = &[];
+
+static DEFAULT_LABEL_REFERENCE_RANGE_COMMANDS: &[&str] = &[
+    "crefrange",
+    "crefrange*",
+    "Crefrange",
+    "Crefrange*",
+    "vrefrange",
+    "vrefrange*",
+    "vpagerefrange",
+    "vpagerefrange*",
+];
