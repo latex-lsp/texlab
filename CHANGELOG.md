@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ([#1292](https://github.com/latex-lsp/texlab/issues/1292))
 - Add `texlab.experimental.labelReferenceRangeCommands` setting ([#1210](https://github.com/latex-lsp/texlab/issues/1210))
 
+### Fixed
+
+- Fix parsing links with URL encoding ([#1279](https://github.com/latex-lsp/texlab/issues/1279))
+- Improve error message when `texlab.build.executable` does not exist ([#1303](https://github.com/latex-lsp/texlab/issues/1303))
+
 ## [5.21.0] - 2024-10-26
 
 ### Added
