@@ -1,10 +1,14 @@
 mod bibtex_internal;
 mod latexindent;
+mod texfmt;
 
 use base_db::{Formatter, Workspace};
 use distro::Language;
 
-use self::{bibtex_internal::format_bibtex_internal, latexindent::format_with_latexindent};
+use self::{
+    bibtex_internal::format_bibtex_internal, latexindent::format_with_latexindent,
+    texfmt::format_with_texfmt,
+};
 
 pub fn format_source_code(
     workspace: &Workspace,
@@ -17,11 +21,13 @@ pub fn format_source_code(
             Formatter::Null => None,
             Formatter::Server => None,
             Formatter::LatexIndent => format_with_latexindent(workspace, document),
+            Formatter::TexFmt => format_with_texfmt(document),
         },
         Language::Bib => match workspace.config().formatting.bib_formatter {
             Formatter::Null => None,
             Formatter::Server => format_bibtex_internal(workspace, document, options),
             Formatter::LatexIndent => format_with_latexindent(workspace, document),
+            Formatter::TexFmt => format_with_texfmt(document),
         },
         Language::Aux
         | Language::Log

@@ -281,12 +281,14 @@ pub fn config(value: Options) -> Config {
         LatexFormatter::None => Formatter::Null,
         LatexFormatter::Texlab => Formatter::Server,
         LatexFormatter::Latexindent => Formatter::LatexIndent,
+        LatexFormatter::TexFmt => Formatter::TexFmt,
     };
 
     config.formatting.bib_formatter = match value.bibtex_formatter {
         BibtexFormatter::None => Formatter::Null,
         BibtexFormatter::Texlab => Formatter::Server,
         BibtexFormatter::Latexindent => Formatter::LatexIndent,
+        BibtexFormatter::TexFmt => Formatter::TexFmt,
     };
 
     config.formatting.line_length =

@@ -63,6 +63,7 @@ pub enum Formatter {
     Null,
     Server,
     LatexIndent,
+    TexFmt,
 }
 
 #[derive(Debug, Default)]
