@@ -13,6 +13,7 @@ distro = { path = "../distro" }
 itertools.workspace = true
 line-index = { path = "../line-index" }
 log.workspace = true
+notify-debouncer-full.workspace = true
 notify.workspace = true
 once_cell.workspace = true
 parser = { path = "../parser" }
