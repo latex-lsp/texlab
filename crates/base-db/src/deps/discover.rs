@@ -8,11 +8,14 @@ use crate::Workspace;
 
 use super::ProjectRoot;
 
-pub fn watch(
+pub fn watch<T, C>(
     workspace: &mut Workspace,
-    watcher: &mut dyn notify::Watcher,
+    watcher: &mut notify_debouncer_full::Debouncer<T, C>,
     watched_dirs: &mut FxHashSet<PathBuf>,
-) {
+) where
+    T: notify::Watcher,
+    C: notify_debouncer_full::FileIdCache,
+{
     let roots = workspace
         .iter()
         .filter_map(|document| document.dir.as_ref())
