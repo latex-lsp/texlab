@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `texlab.symbols.customEnvironments` setting for specifying additional environments that will be included in the document symbols
   ([#1292](https://github.com/latex-lsp/texlab/issues/1292))
 - Add `texlab.experimental.labelReferenceRangeCommands` setting ([#1210](https://github.com/latex-lsp/texlab/issues/1210))
+- Add `tex-fmt` as a formatter for `latex` and `bibtex` ([#1320](https://github.com/latex-lsp/texlab/issues/1320))
 
 ### Fixed
 

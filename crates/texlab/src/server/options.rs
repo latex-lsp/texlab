@@ -28,6 +28,7 @@ pub enum BibtexFormatter {
     None,
     Texlab,
     Latexindent,
+    TexFmt,
 }
 
 impl Default for BibtexFormatter {
@@ -42,6 +43,7 @@ pub enum LatexFormatter {
     None,
     Texlab,
     Latexindent,
+    TexFmt,
 }
 
 impl Default for LatexFormatter {
