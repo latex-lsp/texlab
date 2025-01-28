@@ -131,7 +131,7 @@ impl Manager {
             return false;
         };
 
-        if Self::is_ignored(workspace, &document.uri, &primary_range) {
+        if Self::is_ignored(workspace, &document.uri, &primary_range, false) {
             return false;
         }
 
@@ -139,7 +139,7 @@ impl Manager {
             return true;
         };
 
-        additional_locations.retain(|(uri, range)| !Self::is_ignored(workspace, uri, range));
+        additional_locations.retain(|(uri, range)| !Self::is_ignored(workspace, uri, range, false));
         if additional_locations.is_empty() {
             return false;
         }
@@ -147,7 +147,12 @@ impl Manager {
         true
     }
 
-    fn is_ignored(workspace: &Workspace, uri: &Url, diag_range: &TextRange) -> bool {
+    fn is_ignored(
+        workspace: &Workspace,
+        uri: &Url,
+        diag_range: &TextRange,
+        is_suppressed: bool,
+    ) -> bool {
         let Some(document) = workspace.lookup(uri) else {
             return false;
         };
@@ -158,10 +163,24 @@ impl Manager {
 
         let diag_line_col = document.line_index.line_col(diag_range.start());
 
-        data.semantics
+        let is_suppressed_by_ignore = data
+            .semantics
             .diagnostic_suppressions
             .iter()
             .map(|r| document.line_index.line_col(r.start()))
-            .any(|r| r.line == diag_line_col.line || r.line + 1 == diag_line_col.line)
+            .any(|r| r.line == diag_line_col.line || r.line + 1 == diag_line_col.line);
+
+        let is_suppressed_by_warnings = data
+            .semantics
+            .warning_suppressions
+            .iter()
+            .map(|r| document.line_index.line_col(r.start()))
+            .any(|r| r.line <= diag_line_col.line && r.line + 1 >= diag_line_col.line);
+
+        if is_suppressed {
+            is_suppressed_by_warnings
+        } else {
+            is_suppressed_by_ignore || is_suppressed_by_warnings
+        }
     }
 }

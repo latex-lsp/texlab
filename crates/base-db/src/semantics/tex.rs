@@ -38,11 +38,14 @@ pub struct Semantics {
     pub can_be_root: bool,
     pub can_be_compiled: bool,
     pub diagnostic_suppressions: Vec<TextRange>,
+    pub warning_suppressions: Vec<TextRange>,
     pub bibitems: FxHashSet<Span>,
 }
 
 impl Semantics {
     pub fn process_root(&mut self, conf: &SyntaxConfig, root: &latex::SyntaxNode) {
+        let mut suppress_warnings = false;
+
         for node in root.descendants_with_tokens() {
             match node {
                 latex::SyntaxElement::Node(node) => {
@@ -52,8 +55,19 @@ impl Semantics {
                     latex::COMMAND_NAME => {
                         self.commands.push(Span::command(&token));
                     }
-                    latex::COMMENT if token.text().contains("texlab: ignore") => {
-                        self.diagnostic_suppressions.push(token.text_range());
+                    latex::COMMENT => {
+                        if token.text().contains("texlab: ignore") {
+                            self.diagnostic_suppressions.push(token.text_range());
+                        } else if token.text().contains("warnings: off") {
+                            suppress_warnings = true;
+                            self.warning_suppressions.push(token.text_range());
+                        } else if token.text().contains("warnings: on") {
+                            suppress_warnings = false;
+                            self.warning_suppressions.push(token.text_range());
+                        }
+                        if suppress_warnings {
+                            self.warning_suppressions.push(token.text_range());
+                        }
                     }
                     _ => {}
                 },
