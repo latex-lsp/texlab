@@ -176,7 +176,7 @@ impl Manager {
                 .any(|(start, end)| {
                     let start_line = document.line_index.line_col(start.start()).line;
                     let end_line = document.line_index.line_col(end.start()).line;
-                    diag_line_col.line > start_line && diag_line_col.line < end_line
+                    diag_line_col.line > start_line && diag_line_col.line <= end_line
                 });
 
         if is_in_suppression_range {
