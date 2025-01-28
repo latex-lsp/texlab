@@ -45,6 +45,7 @@ pub struct Semantics {
 impl Semantics {
     pub fn process_root(&mut self, conf: &SyntaxConfig, root: &latex::SyntaxNode) {
         let mut suppress_warnings = false;
+        let mut last_suppression_range: Option<TextRange> = None;
 
         for node in root.descendants_with_tokens() {
             match node {
@@ -60,18 +61,36 @@ impl Semantics {
                             self.diagnostic_suppressions.push(token.text_range());
                         } else if token.text().contains("warnings: off") {
                             suppress_warnings = true;
-                            self.warning_suppressions.push(token.text_range());
+                            last_suppression_range = Some(token.text_range());
                         } else if token.text().contains("warnings: on") {
+                            if let Some(start_range) = last_suppression_range {
+                                let end_range = token.text_range();
+                                let suppression_range =
+                                    TextRange::new(start_range.start(), end_range.end());
+                                self.warning_suppressions.push(suppression_range);
+                            }
                             suppress_warnings = false;
-                            self.warning_suppressions.push(token.text_range());
+                            last_suppression_range = None;
                         }
+
                         if suppress_warnings {
-                            self.warning_suppressions.push(token.text_range());
+                            if let Some(last_range) = last_suppression_range {
+                                let suppression_range =
+                                    TextRange::new(last_range.start(), token.text_range().end());
+                                self.warning_suppressions.push(suppression_range);
+                                last_suppression_range = Some(suppression_range);
+                            }
                         }
                     }
                     _ => {}
                 },
             };
+        }
+
+        if let Some(start_range) = last_suppression_range {
+            let end_range = root.text_range();
+            let suppression_range = TextRange::new(start_range.start(), end_range.end());
+            self.warning_suppressions.push(suppression_range);
         }
 
         self.can_be_root = self.can_be_compiled
