@@ -157,6 +157,7 @@ impl Manager {
         };
 
         let diag_line_col = document.line_index.line_col(diag_range.start());
+        let diag_offset = diag_range.start();
 
         let is_single_line_suppressed = data
             .semantics
@@ -176,7 +177,8 @@ impl Manager {
                 .any(|(start, end)| {
                     let start_line = document.line_index.line_col(start.start()).line;
                     let end_line = document.line_index.line_col(end.start()).line;
-                    diag_line_col.line > start_line && diag_line_col.line <= end_line
+                    let end_offset = end.end();
+                    diag_line_col.line > start_line && diag_offset <= end_offset
                 });
 
         if is_in_suppression_range {
