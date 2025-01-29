@@ -940,6 +940,7 @@ name = "ipc"
 version = "0.0.0"
 dependencies = [
  "crossbeam-channel",
+ "dirs 6.0.0",
  "expect-test",
  "log",
  "parser",
