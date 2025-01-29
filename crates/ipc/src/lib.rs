@@ -12,7 +12,9 @@ use std::os::unix::net::{UnixListener, UnixStream};
 use uds_windows::{UnixListener, UnixStream};
 
 fn socket_path() -> PathBuf {
-    std::env::temp_dir().join("texlab.sock")
+    dirs::runtime_dir()
+        .unwrap_or(std::env::temp_dir())
+        .join("texlab.sock")
 }
 
 pub fn send_request<T: Serialize>(msg: T) -> io::Result<()> {
