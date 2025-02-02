@@ -157,11 +157,33 @@ impl Manager {
         };
 
         let diag_line_col = document.line_index.line_col(diag_range.start());
+        let diag_offset = diag_range.start();
 
-        data.semantics
+        let is_single_line_suppressed = data
+            .semantics
             .diagnostic_suppressions
             .iter()
             .map(|r| document.line_index.line_col(r.start()))
-            .any(|r| r.line == diag_line_col.line || r.line + 1 == diag_line_col.line)
+            .any(|r| r.line == diag_line_col.line || r.line + 1 == diag_line_col.line);
+
+        if is_single_line_suppressed {
+            return true;
+        }
+
+        let is_in_suppression_range =
+            data.semantics
+                .warning_suppression_ranges
+                .iter()
+                .any(|(start, end)| {
+                    let start_line = document.line_index.line_col(start.start()).line;
+                    let end_offset = end.end();
+                    diag_line_col.line > start_line && diag_offset <= end_offset
+                });
+
+        if is_in_suppression_range {
+            return true;
+        }
+
+        false
     }
 }

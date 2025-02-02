@@ -38,6 +38,7 @@ pub struct Semantics {
     pub can_be_root: bool,
     pub can_be_compiled: bool,
     pub diagnostic_suppressions: Vec<TextRange>,
+    pub warning_suppression_ranges: Vec<(TextRange, TextRange)>,
     pub bibitems: FxHashSet<Span>,
 }
 
@@ -54,6 +55,20 @@ impl Semantics {
                     }
                     latex::COMMENT if token.text().contains("texlab: ignore") => {
                         self.diagnostic_suppressions.push(token.text_range());
+                    }
+                    latex::COMMENT if token.text().contains("texlab: warnings off") => {
+                        let start_range = token.text_range();
+                        let mut current = token.clone();
+                        while let Some(next) = current.next_token() {
+                            current = next;
+                            if current.kind() == latex::COMMENT
+                                && current.text().contains("texlab: warnings on")
+                            {
+                                self.warning_suppression_ranges
+                                    .push((start_range, current.text_range()));
+                                break;
+                            }
+                        }
                     }
                     _ => {}
                 },
