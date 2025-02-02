@@ -176,7 +176,6 @@ impl Manager {
                 .iter()
                 .any(|(start, end)| {
                     let start_line = document.line_index.line_col(start.start()).line;
-                    let end_line = document.line_index.line_col(end.start()).line;
                     let end_offset = end.end();
                     diag_line_col.line > start_line && diag_offset <= end_offset
                 });
