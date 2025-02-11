@@ -23,6 +23,7 @@ use notify_debouncer_full::{DebouncedEvent, Debouncer, RecommendedCache};
 use parking_lot::{Mutex, RwLock};
 use rustc_hash::FxHashSet;
 use serde::{de::DeserializeOwned, Serialize};
+use serde_json::{Map, Value};
 use threadpool::ThreadPool;
 
 use crate::{
@@ -174,6 +175,13 @@ impl Server {
                 ..Default::default()
             }),
             inlay_hint_provider: Some(OneOf::Left(true)),
+            experimental: Some(Value::Object(Map::from_iter(
+                [
+                    ("textDocumentBuild".to_string(), Value::Bool(true)),
+                    ("textDocumentForwardSearch".to_string(), Value::Bool(true)),
+                ]
+                .into_iter(),
+            ))),
             ..ServerCapabilities::default()
         }
     }
