@@ -36,19 +36,19 @@ jobs:
             target: aarch64-apple-darwin
             archive: texlab-aarch64-macos.tar.gz
 
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             archive: texlab-x86_64-linux.tar.gz
 
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
             archive: texlab-aarch64-linux.tar.gz
 
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             target: armv7-unknown-linux-gnueabihf
             archive: texlab-armv7hf-linux.tar.gz
 
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-musl
             archive: texlab-x86_64-alpine.tar.gz
     steps:
@@ -58,7 +58,7 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Install cross-compilation dependencies
         run: sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
       - name: Compile
         run: cargo build --target ${{ matrix.target }} --all-features --release --locked
       - name: Compress (Windows)
