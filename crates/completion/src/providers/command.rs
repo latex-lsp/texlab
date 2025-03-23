@@ -138,6 +138,10 @@ fn find_command_name_ast<L: rowan::Language>(
     kind: L::Kind,
     offset: TextSize,
 ) -> Option<Span> {
+    // `token_at_offset` will panic if offset is not within the range of `root`.
+    if !root.text_range().contains(offset) {
+        return None;
+    }
     let token = root
         .token_at_offset(offset)
         .filter(|token| token.text_range().start() != offset)
