@@ -26,7 +26,7 @@ anyhow.workspace = true
 base-db = { path = "../base-db" }
 bibfmt = { path = "../bibfmt" }
 citeproc = { path = "../citeproc" }
-clap = { version = "4.5.27", features = ["derive"] }
+clap = { version = "4.5.34", features = ["derive"] }
 commands = { path = "../commands" }
 completion = { path = "../completion" }
 completion-data = { path = "../completion-data" }
