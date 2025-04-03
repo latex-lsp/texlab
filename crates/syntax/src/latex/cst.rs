@@ -209,7 +209,7 @@ impl HasCurly for CurlyGroupWordList {}
 
 impl CurlyGroupWordList {
     pub fn keys(&self) -> impl Iterator<Item = Key> {
-        self.syntax().children().filter_map(Key::cast)
+        self.syntax().descendants().filter_map(Key::cast)
     }
 }
 
