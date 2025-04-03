@@ -4228,3 +4228,29 @@ fn test_url_with_parentheses_and_percent_encoding() {
         "#]],
     );
 }
+
+#[test]
+fn test_double_bracket_curly_group_word_list() {
+    check(
+        r#"Some text.~\eqref{{eq:test}}"#,
+        expect![[r#"
+            ROOT@0..28
+              PREAMBLE@0..28
+                TEXT@0..11
+                  WORD@0..4 "Some"
+                  WHITESPACE@4..5 " "
+                  WORD@5..11 "text.~"
+                LABEL_REFERENCE@11..28
+                  COMMAND_NAME@11..17 "\\eqref"
+                  CURLY_GROUP_WORD_LIST@17..28
+                    L_CURLY@17..18 "{"
+                    CURLY_GROUP_WORD_LIST@18..27
+                      L_CURLY@18..19 "{"
+                      KEY@19..26
+                        WORD@19..26 "eq:test"
+                      R_CURLY@26..27 "}"
+                    R_CURLY@27..28 "}"
+
+        "#]],
+    );
+}
