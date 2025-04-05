@@ -45,9 +45,17 @@ struct InverseSearchOpts {
     #[clap(short, long, name = "FILE", value_parser)]
     input: PathBuf,
 
-    /// The zero-based line number of the document to jump to.
+    /// The zero-based line number of the document to jump to (alias for --line0).
     #[clap(short, long)]
-    line: u32,
+    line: Option<u32>,
+
+    /// The zero-based line number of the document to jump to.
+    #[clap(long)]
+    line0: Option<u32>,
+
+    /// The one-based line number of the document to jump to.
+    #[clap(long)]
+    line1: Option<u32>,
 }
 
 fn main() -> Result<()> {
@@ -71,9 +79,22 @@ fn main() -> Result<()> {
                 std::process::exit(-1);
             };
 
+            let Some(line) = opts
+                .line
+                .or_else(|| opts.line0)
+                .or_else(|| opts.line1.and_then(|l| l.checked_sub(1)))
+            else {
+                if opts.line1.is_some() {
+                    eprintln!("--line1 must be a positive integer.");
+                } else {
+                    eprintln!("Either --line, --line0 or --line1 must be specified.");
+                }
+                std::process::exit(-1);
+            };
+
             let params = lsp_types::TextDocumentPositionParams::new(
                 lsp_types::TextDocumentIdentifier::new(uri),
-                lsp_types::Position::new(opts.line, 0),
+                lsp_types::Position::new(line, 0),
             );
 
             if let Err(why) = ipc::send_request(params) {
