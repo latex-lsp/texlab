@@ -267,12 +267,15 @@ impl<'a> Parser<'a> {
                         | Token::Word
                         | Token::Pipe
                         | Token::Comma
+                        | Token::LCurly
                 )
             })
             .is_some()
         {
             if self.peek() == Some(Token::Word) {
                 self.key();
+            } else if self.peek() == Some(Token::LCurly) {
+                self.curly_group_word_list();
             } else {
                 self.eat();
             }
