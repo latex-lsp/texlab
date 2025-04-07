@@ -13,14 +13,14 @@ use super::ProjectRoot;
 
 pub static HOME_DIR: Lazy<Option<PathBuf>> = Lazy::new(dirs::home_dir);
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub struct Edge {
     pub source: Url,
     pub target: Url,
     pub data: EdgeData,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub enum EdgeData {
     DirectLink(Box<DirectLinkData>),
     FileList(Arc<ProjectRoot>),
@@ -28,7 +28,7 @@ pub enum EdgeData {
     Artifact,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub struct DirectLinkData {
     pub link: semantics::tex::Link,
     pub new_root: Option<ProjectRoot>,
@@ -196,7 +196,11 @@ impl Graph {
         let file_name_db = &workspace.distro().file_name_db;
         let distro_files = file_names
             .iter()
-            .filter_map(|name| file_name_db.get(name))
+            .filter_map(|name| {
+                file_name_db
+                    .get(name)
+                    .or_else(|| start.root.file_name_db.get(name))
+            })
             .filter(|path| {
                 home_dir.map_or(false, |dir| path.starts_with(dir))
                     || Language::from_path(path) == Some(Language::Bib)

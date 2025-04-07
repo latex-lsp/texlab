@@ -41,7 +41,7 @@ impl Borrow<str> for DistroFile {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct FileNameDB {
     files: FxHashSet<DistroFile>,
 }
@@ -85,5 +85,17 @@ impl FileNameDB {
             .collect();
 
         Ok(Self { files })
+    }
+
+    pub fn read_dir(&mut self, dir: impl AsRef<Path>) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for file in entries
+                .flatten()
+                .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
+                .map(|entry| entry.path())
+            {
+                self.insert(file);
+            }
+        }
     }
 }
