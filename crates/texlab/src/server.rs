@@ -1110,16 +1110,17 @@ impl Server {
 
     pub fn run(mut self, options: StartupOptions) -> Result<()> {
         if !options.skip_distro {
-            let sender = self.internal_tx.clone();
-            self.pool.execute(move || {
+            //let sender = self.internal_tx.clone();
+            //self.pool.execute(move || {
                 let distro = Distro::detect().unwrap_or_else(|why| {
                     log::warn!("Unable to load distro files: {}", why);
                     Distro::default()
                 });
 
                 log::info!("Detected distribution: {:?}", distro.kind);
-                sender.send(InternalMessage::SetDistro(distro)).unwrap();
-            });
+                self.workspace.write().set_distro(distro);
+                //sender.send(InternalMessage::SetDistro(distro)).unwrap();
+            //});
         }
 
         self.register_configuration();
