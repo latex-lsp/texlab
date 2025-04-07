@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use anyhow::Result;
-use base_db::Workspace;
+use base_db::{deps::Edge, Workspace};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
@@ -40,20 +40,24 @@ pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
         .graphs()
         .values()
         .flat_map(|graph| &graph.edges)
-        .unique()
+        .unique_by(|edge| (&edge.source, &edge.target, edge_label(&edge)))
     {
         let source = &documents[&edge.source];
         let target = &documents[&edge.target];
-        let label = match &edge.data {
-            base_db::deps::EdgeData::DirectLink(data) => &data.link.path.text,
-            base_db::deps::EdgeData::AdditionalFiles => "<project>",
-            base_db::deps::EdgeData::Artifact => "<artifact>",
-            base_db::deps::EdgeData::FileList(_) => "<fls>",
-        };
+        let label = edge_label(edge);
 
         writeln!(&mut writer, "\t{source} -> {target} [label=\"{label}\"];")?;
     }
 
     writeln!(&mut writer, "}}")?;
     Ok(String::from_utf8(writer)?)
+}
+
+fn edge_label(edge: &Edge) -> &str {
+    match &edge.data {
+        base_db::deps::EdgeData::DirectLink(data) => &data.link.path.text,
+        base_db::deps::EdgeData::AdditionalFiles => "<project>",
+        base_db::deps::EdgeData::Artifact => "<artifact>",
+        base_db::deps::EdgeData::FileList(_) => "<fls>",
+    }
 }
