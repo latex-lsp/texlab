@@ -12,19 +12,10 @@ mod v483 {
 
     pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<LatexmkrcData> {
         let temp_dir = tempdir()?;
-        let non_existent_tex = temp_dir.path().join("NONEXISTENT.tex");
         std::fs::write(temp_dir.path().join(".latexmkrc"), input)?;
 
-        // Run `latexmk -dir-report $TMPDIR/NONEXISTENT.tex` to obtain out_dir
-        // and aux_dir values. We pass nonexistent file to prevent latexmk from
-        // building anything, since we need this invocation only to extract the
-        // -dir-report variables.
-        //
-        // In later versions, latexmk provides the -dir-report-only option and we
-        // won't have to resort to this hack with NONEXISTENT.tex.
         let output = std::process::Command::new("latexmk")
-            .arg("-dir-report")
-            .arg(non_existent_tex)
+            .arg("-dir-report-only")
             .current_dir(temp_dir.path())
             .output()?;
 
