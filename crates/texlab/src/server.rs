@@ -1132,6 +1132,7 @@ impl Server {
 
                 log::info!("Detected distribution: {:?}", distro.kind);
                 sender.send(InternalMessage::SetDistro(distro)).unwrap();
+
                 drop(progress_reporter);
             });
         }
