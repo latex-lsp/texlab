@@ -24,6 +24,7 @@ impl Drop for ProgressReporter {
 }
 
 impl ProgressReporter {
+    //pub fn new_build_progress(client: LspClient, token: i32, uri: &Url) -> Self {
     pub fn new(client: LspClient, token: i32, uri: &Url) -> Self {
         let _ = client.send_request::<WorkDoneProgressCreate>(WorkDoneProgressCreateParams {
             token: NumberOrString::Number(token),
@@ -34,6 +35,24 @@ impl ProgressReporter {
             value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(WorkDoneProgressBegin {
                 title: "Building".into(),
                 message: Some(String::from(uri.as_str())),
+                cancellable: Some(false),
+                percentage: None,
+            })),
+        });
+
+        Self { client, token }
+    }
+
+    pub fn new_inputs_progress(client: LspClient, token: i32) -> Self {
+        let _ = client.send_request::<WorkDoneProgressCreate>(WorkDoneProgressCreateParams {
+            token: NumberOrString::Number(token),
+        });
+
+        let _ = client.send_notification::<Progress>(ProgressParams {
+            token: NumberOrString::Number(token),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(WorkDoneProgressBegin {
+                title: "Parsing Dependencies.".into(),
+                message: None,
                 cancellable: Some(false),
                 percentage: None,
             })),
