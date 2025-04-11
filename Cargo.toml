@@ -15,7 +15,7 @@ rust-version = "1.80"
 [workspace.dependencies]
 anyhow = "1.0.97"
 criterion = "0.5.1"
-crossbeam-channel = "0.5.14"
+crossbeam-channel = "0.5.15"
 dirs = "6.0.0"
 expect-test = "1.5.1"
 itertools = "0.13.0"
