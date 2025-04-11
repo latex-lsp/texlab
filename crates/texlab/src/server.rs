@@ -1080,6 +1080,7 @@ impl Server {
                     match msg? {
                         InternalMessage::SetDistro(distro) => {
                             self.workspace.write().set_distro(distro);
+                            self.update_workspace();
                         }
                         InternalMessage::SetOptions(options) => {
                             self.update_options(*options);
@@ -1109,9 +1110,21 @@ impl Server {
     }
 
     pub fn run(mut self, options: StartupOptions) -> Result<()> {
+        static NEXT_TOKEN: AtomicI32 = AtomicI32::new(1);
         if !options.skip_distro {
             let sender = self.internal_tx.clone();
+            let progress = self.client_flags.progress;
+            let client = self.client.clone();
+
             self.pool.execute(move || {
+
+                let progress_reporter = if progress {
+                    let token = NEXT_TOKEN.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    Some(ProgressReporter::new_inputs_progress(client.clone(), token))
+                } else {
+                    None
+                };
+
                 let distro = Distro::detect().unwrap_or_else(|why| {
                     log::warn!("Unable to load distro files: {}", why);
                     Distro::default()
@@ -1119,6 +1132,8 @@ impl Server {
 
                 log::info!("Detected distribution: {:?}", distro.kind);
                 sender.send(InternalMessage::SetDistro(distro)).unwrap();
+
+                drop(progress_reporter);
             });
         }
 
