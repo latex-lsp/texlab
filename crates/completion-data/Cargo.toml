@@ -8,7 +8,7 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-flate2 = "1.0.35"
+flate2 = "1.1.1"
 itertools.workspace = true
 once_cell.workspace = true
 rustc-hash.workspace = true
