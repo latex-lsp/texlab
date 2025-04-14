@@ -13,7 +13,7 @@ edition = "2021"
 rust-version = "1.80"
 
 [workspace.dependencies]
-anyhow = "1.0.97"
+anyhow = "1.0.98"
 criterion = "0.5.1"
 crossbeam-channel = "0.5.15"
 dirs = "6.0.0"
