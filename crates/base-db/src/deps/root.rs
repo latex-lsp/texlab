@@ -1,10 +1,13 @@
+use std::sync::Arc;
+
+use distro::FileNameDB;
 use url::Url;
 
 use crate::{util, DocumentData, Workspace};
 
 use super::graph::HOME_DIR;
 
-#[derive(PartialEq, Eq, Clone, Hash)]
+#[derive(Clone)]
 pub struct ProjectRoot {
     pub compile_dir: Url,
     pub src_dir: Url,
@@ -12,6 +15,7 @@ pub struct ProjectRoot {
     pub log_dir: Url,
     pub pdf_dir: Url,
     pub additional_files: Vec<Url>,
+    pub file_name_db: Arc<FileNameDB>,
 }
 
 impl ProjectRoot {
@@ -70,6 +74,7 @@ impl ProjectRoot {
             log_dir,
             pdf_dir,
             additional_files,
+            file_name_db: Default::default(),
         })
     }
 
@@ -108,6 +113,8 @@ impl ProjectRoot {
 
         let additional_files = vec![];
 
+        let file_name_db = Arc::clone(&rcfile.file_name_db);
+
         Some(Self {
             compile_dir,
             src_dir,
@@ -115,6 +122,7 @@ impl ProjectRoot {
             log_dir,
             pdf_dir,
             additional_files,
+            file_name_db,
         })
     }
 
@@ -150,6 +158,7 @@ impl ProjectRoot {
             log_dir,
             pdf_dir,
             additional_files,
+            file_name_db: Default::default(),
         }
     }
 }
@@ -172,6 +181,7 @@ impl std::fmt::Debug for ProjectRoot {
             .field("log_dir", &self.log_dir.as_str())
             .field("pdf_dir", &self.pdf_dir.as_str())
             .field("additional_files", &self.additional_files)
+            .field("file_name_db", &"...")
             .finish()
     }
 }
