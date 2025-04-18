@@ -1325,6 +1325,7 @@ dependencies = [
 name = "parser"
 version = "0.0.0"
 dependencies = [
+ "distro",
  "expect-test",
  "log",
  "logos",
@@ -1333,6 +1334,7 @@ dependencies = [
  "regex",
  "rowan",
  "rustc-hash 2.1.0",
+ "shellexpand",
  "syntax",
  "tempfile",
  "versions",
@@ -1782,6 +1784,7 @@ dependencies = [
 name = "syntax"
 version = "0.0.0"
 dependencies = [
+ "distro",
  "itertools 0.13.0",
  "rowan",
  "rustc-hash 2.1.0",

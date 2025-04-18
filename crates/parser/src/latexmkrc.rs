@@ -1,19 +1,25 @@
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
+use distro::FileNameDB;
 use syntax::latexmkrc::LatexmkrcData;
 
 mod v483 {
-    use std::path::Path;
+    use std::{path::Path, sync::Arc};
 
     use syntax::latexmkrc::LatexmkrcData;
     use tempfile::tempdir;
 
     use crate::latexmkrc::change_root;
 
+    use super::{append_texinputs, parse_texinputs};
+
     pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<LatexmkrcData> {
         let temp_dir = tempdir()?;
         let non_existent_tex = temp_dir.path().join("NONEXISTENT.tex");
-        std::fs::write(temp_dir.path().join(".latexmkrc"), input)?;
+        std::fs::write(temp_dir.path().join(".latexmkrc"), &append_texinputs(input))?;
 
         // Run `latexmk -dir-report $TMPDIR/NONEXISTENT.tex` to obtain out_dir
         // and aux_dir values. We pass nonexistent file to prevent latexmk from
@@ -30,7 +36,9 @@ mod v483 {
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 
-        let (aux_dir, out_dir) = stdout.lines().find_map(extract_dirs).ok_or_else(|| {
+        let (file_name_db, mut lines) = parse_texinputs(&stdout, src_dir, temp_dir.path());
+
+        let (aux_dir, out_dir) = lines.find_map(extract_dirs).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Normalized aux and out dir were not found in latexmk output",
@@ -39,7 +47,12 @@ mod v483 {
 
         let aux_dir = change_root(src_dir, temp_dir.path(), &aux_dir);
         let out_dir = change_root(src_dir, temp_dir.path(), &out_dir);
-        Ok(LatexmkrcData { aux_dir, out_dir })
+
+        Ok(LatexmkrcData {
+            aux_dir,
+            out_dir,
+            file_name_db: Arc::new(file_name_db),
+        })
     }
 
     /// Extracts $aux_dir and $out_dir from lines of the form
@@ -63,16 +76,16 @@ mod v483 {
 }
 
 mod v484 {
-    use std::{path::Path, str::Lines};
+    use std::{path::Path, str::Lines, sync::Arc};
 
     use syntax::latexmkrc::LatexmkrcData;
     use tempfile::tempdir;
 
-    use super::change_root;
+    use super::{append_texinputs, change_root, parse_texinputs};
 
     pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<LatexmkrcData> {
         let temp_dir = tempdir()?;
-        std::fs::write(temp_dir.path().join(".latexmkrc"), input)?;
+        std::fs::write(temp_dir.path().join(".latexmkrc"), &append_texinputs(input))?;
 
         // Create an empty dummy TeX file to let latexmk continue
         std::fs::write(temp_dir.path().join("dummy.tex"), "")?;
@@ -85,7 +98,9 @@ mod v484 {
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 
-        let (aux_dir, out_dir) = extract_dirs(stdout.lines()).ok_or_else(|| {
+        let (file_name_db, lines) = parse_texinputs(&stdout, src_dir, temp_dir.path());
+
+        let (aux_dir, out_dir) = extract_dirs(lines).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "Normalized aux and out dir were not found in latexmk output",
@@ -95,7 +110,11 @@ mod v484 {
         let aux_dir = change_root(src_dir, temp_dir.path(), &aux_dir);
         let out_dir = change_root(src_dir, temp_dir.path(), &out_dir);
 
-        Ok(LatexmkrcData { aux_dir, out_dir })
+        Ok(LatexmkrcData {
+            aux_dir,
+            out_dir,
+            file_name_db: Arc::new(file_name_db),
+        })
     }
 
     /// Extracts $aux_dir and $out_dir from lines of the form
@@ -145,7 +164,7 @@ pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<Latexmkrc
     result
 }
 
-fn change_root(src_dir: &Path, tmp_dir: &Path, out_dir: &str) -> Option<String> {
+fn change_root(src_dir: &Path, tmp_dir: &Path, out_dir: impl AsRef<Path>) -> Option<String> {
     let out_dir = tmp_dir.join(out_dir);
     let relative_to_tmp = pathdiff::diff_paths(out_dir, tmp_dir)?;
     let relative_to_src = pathdiff::diff_paths(src_dir.join(relative_to_tmp), src_dir)?;
@@ -154,4 +173,46 @@ fn change_root(src_dir: &Path, tmp_dir: &Path, out_dir: &str) -> Option<String> 
     }
 
     Some(relative_to_src.to_str()?.to_string())
+}
+
+fn append_texinputs(latexmkrc: &str) -> String {
+    let mut output = String::new();
+    output.push_str(latexmkrc);
+    output.push('\n');
+    output.push_str(r#"print "TEXINPUTS=" . $ENV{'TEXINPUTS'} . "\n";"#);
+    output.push_str(r#"print "BIBINPUTS=" . $ENV{'BIBINPUTS'} . "\n";"#);
+    output
+}
+
+fn parse_texinputs<'a>(
+    stdout: &'a str,
+    src_dir: &Path,
+    tmp_dir: &Path,
+) -> (FileNameDB, std::str::Lines<'a>) {
+    let mut paths = Vec::new();
+    let mut file_name_db = FileNameDB::default();
+
+    let mut lines = stdout.lines();
+    while let Some(line) = lines.next() {
+        if let Some(inputs) = line.strip_prefix("TEXINPUTS=") {
+            paths.extend(env::split_paths(inputs));
+        } else if let Some(inputs) = line.strip_prefix("BIBINPUTS=") {
+            paths.extend(env::split_paths(inputs));
+            break;
+        }
+    }
+
+    for path in paths
+        .into_iter()
+        .filter_map(|path| change_root(src_dir, tmp_dir, path))
+        .map(|path| src_dir.join(shellexpand::tilde(&path).as_ref()))
+    {
+        eprintln!("Adding path: {path:?}");
+
+        file_name_db.read_dir(path);
+    }
+
+    eprintln!("File name db: {file_name_db:?}");
+
+    (file_name_db, lines)
 }
