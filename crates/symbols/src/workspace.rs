@@ -26,7 +26,7 @@ pub fn workspace_symbols<'a>(workspace: &'a Workspace, query: &str) -> Vec<Symbo
             let keywords = symbol.keywords();
             if query.is_empty()
                 || itertools::iproduct!(keywords.iter(), query.iter())
-                    .any(|(keyword, query)| keyword.eq_ignore_ascii_case(query))
+                    .any(|(keyword, query)| keyword.to_lowercase().contains(&query.to_lowercase()))
             {
                 results.push(SymbolLocation { document, symbol });
             }
