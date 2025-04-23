@@ -42,6 +42,8 @@ static FIXTURE: &str = r#"
     Qux
 \end{lemma}
 
+\section{Foo bar}\label{sec:foobar}
+
 \end{document}
 
 %! main.aux
@@ -62,6 +64,8 @@ static FIXTURE: &str = r#"
 \@writefile{toc}{\contentsline {section}{\numberline {4}Qux}{1}\protected@file@percent }
 \newlabel{sec:qux}{{4}{1}}
 \newlabel{thm:qux}{{1}{1}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Foo bar}{1}{}\protected@file@percent }
+\newlabel{sec:foobar}{{5}{1}{}{section.5}{}}
 
 %! main.bib
 @article{foo,}
@@ -149,6 +153,24 @@ fn test_filter_type_section() {
                     ),
                     full_range: 447..557,
                     selection_range: 460..475,
+                    children: [],
+                },
+            },
+            SymbolLocation {
+                document: Document(
+                    "file:///texlab/main.tex",
+                ),
+                symbol: Symbol {
+                    name: "5 Foo bar",
+                    kind: Section,
+                    label: Some(
+                        Span(
+                            "sec:foobar",
+                            576..594,
+                        ),
+                    ),
+                    full_range: 559..594,
+                    selection_range: 576..594,
                     children: [],
                 },
             },
@@ -337,4 +359,66 @@ fn test_filter_bibtex() {
         ]
     "#]],
     );
+}
+
+#[test]
+fn test_name() {
+    check(
+        "fo",
+        expect![[r#"
+            [
+                SymbolLocation {
+                    document: Document(
+                        "file:///texlab/main.tex",
+                    ),
+                    symbol: Symbol {
+                        name: "1 Foo",
+                        kind: Section,
+                        label: Some(
+                            Span(
+                                "sec:foo",
+                                118..133,
+                            ),
+                        ),
+                        full_range: 105..188,
+                        selection_range: 118..133,
+                        children: [],
+                    },
+                },
+                SymbolLocation {
+                    document: Document(
+                        "file:///texlab/main.tex",
+                    ),
+                    symbol: Symbol {
+                        name: "5 Foo bar",
+                        kind: Section,
+                        label: Some(
+                            Span(
+                                "sec:foobar",
+                                576..594,
+                            ),
+                        ),
+                        full_range: 559..594,
+                        selection_range: 576..594,
+                        children: [],
+                    },
+                },
+                SymbolLocation {
+                    document: Document(
+                        "file:///texlab/main.bib",
+                    ),
+                    symbol: Symbol {
+                        name: "foo",
+                        kind: Entry(
+                            Article,
+                        ),
+                        label: None,
+                        full_range: 0..14,
+                        selection_range: 9..12,
+                        children: [],
+                    },
+                },
+            ]
+        "#]],
+    )
 }
