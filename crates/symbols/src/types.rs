@@ -56,23 +56,24 @@ impl Symbol {
     }
 
     pub fn keywords(&self) -> Vec<&str> {
-        match self.kind {
-            SymbolKind::Section => vec![&self.name, "latex", "section"],
-            SymbolKind::Figure => vec![&self.name, "latex", "float", "figure"],
-            SymbolKind::Algorithm => vec![&self.name, "latex", "float", "algorithm"],
-            SymbolKind::Table => vec![&self.name, "latex", "float", "table"],
-            SymbolKind::Listing => vec![&self.name, "latex", "float", "listing"],
-            SymbolKind::Enumeration => vec![&self.name, "latex", "enumeration"],
-            SymbolKind::EnumerationItem => vec![&self.name, "latex", "enumeration", "item"],
-            SymbolKind::Theorem => vec![&self.name, "latex", "math"],
-            SymbolKind::Equation => vec![&self.name, "latex", "math", "equation"],
-            SymbolKind::Entry(BibtexEntryTypeCategory::String) => {
-                vec![&self.name, "bibtex", "string"]
-            }
-            SymbolKind::Entry(_) => vec![&self.name, "bibtex", "entry"],
-            SymbolKind::Field => vec![&self.name, "bibtex", "field"],
-            SymbolKind::Environment => vec![&self.name, "latex", "environment"],
-        }
+        let name = self.name.split_whitespace();
+        let tags = match self.kind {
+            SymbolKind::Section => vec!["latex", "section"],
+            SymbolKind::Figure => vec!["latex", "float", "figure"],
+            SymbolKind::Algorithm => vec!["latex", "float", "algorithm"],
+            SymbolKind::Table => vec!["latex", "float", "table"],
+            SymbolKind::Listing => vec!["latex", "float", "listing"],
+            SymbolKind::Enumeration => vec!["latex", "enumeration"],
+            SymbolKind::EnumerationItem => vec!["latex", "enumeration", "item"],
+            SymbolKind::Theorem => vec!["latex", "math"],
+            SymbolKind::Equation => vec!["latex", "math", "equation"],
+            SymbolKind::Entry(BibtexEntryTypeCategory::String) => vec!["bibtex", "string"],
+            SymbolKind::Entry(_) => vec!["bibtex", "entry"],
+            SymbolKind::Field => vec!["bibtex", "field"],
+            SymbolKind::Environment => vec!["latex", "environment"],
+        };
+
+        name.chain(tags).collect()
     }
 
     pub fn flatten(mut self, buffer: &mut Vec<Self>) {
