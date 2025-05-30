@@ -30,7 +30,7 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
             CommandName::Import
         }
         "newlabel" => CommandName::LabelNumber,
-        "def" | "let" => CommandName::OldCommandDefinition,
+        "def" | "gdef" | "edef" | "xdef" | "let" | "glet" => CommandName::OldCommandDefinition,
         "newcommand"
         | "newcommand*"
         | "renewcommand"
