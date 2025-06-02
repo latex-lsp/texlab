@@ -196,6 +196,11 @@ fn test_float() {
     \caption{Baz}
 \end{figure}
 
+\begin{figure*}
+    Baz
+    \caption{Baz2}
+\end{figure*}
+
 \begin{figure}
     Qux
 \end{figure}
@@ -247,6 +252,14 @@ fn test_float() {
                 label: None,
                 full_range: 183..236,
                 selection_range: 183..236,
+                children: [],
+            },
+            Symbol {
+                name: "Figure: Baz2",
+                kind: Figure,
+                label: None,
+                full_range: 238..294,
+                selection_range: 238..294,
                 children: [],
             },
         ]
