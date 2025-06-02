@@ -34,10 +34,10 @@ impl FromStr for FloatKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "figure" | "subfigure" => Ok(Self::Figure),
-            "table" | "subtable" => Ok(Self::Table),
-            "listing" | "lstlisting" => Ok(Self::Listing),
-            "algorithm" => Ok(Self::Algorithm),
+            "figure" | "figure*" | "subfigure" => Ok(Self::Figure),
+            "table" | "table*" | "subtable" => Ok(Self::Table),
+            "listing" | "listing*" | "lstlisting" | "lstlisting*" => Ok(Self::Listing),
+            "algorithm" | "algorithm*" => Ok(Self::Algorithm),
             _ => Err(()),
         }
     }
