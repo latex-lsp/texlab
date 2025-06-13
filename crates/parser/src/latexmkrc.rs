@@ -104,7 +104,10 @@ mod v484 {
     ///    '$aux_dir', '$out_dir', [...]
     fn extract_dirs(lines: Lines) -> Option<(String, String)> {
         let mut it = lines
-            .skip_while(|line| !line.starts_with("Latexmk: Normalized aux dir and out dirs:"))
+            .skip_while(|line| {
+                !(line.starts_with("Latexmk: Normalized aux dir and out dirs:")
+                    || line.starts_with("Latexmk: Normalized aux dir, out dir, out2 dir:"))
+            })
             .nth(1)?
             .split(',');
 
