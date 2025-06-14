@@ -13,7 +13,7 @@ encoding_rs_io = "0.1.7"
 itertools.workspace = true
 line-index = { path = "../line-index" }
 log.workspace = true
-multimap = "0.10.0"
+multimap = "0.10.1"
 once_cell.workspace = true
 regex.workspace = true
 rowan.workspace = true
