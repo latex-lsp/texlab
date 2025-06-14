@@ -24,9 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate diagnostics after loading the TeX distribution ([#1376](https://github.com/latex-lsp/texlab/issues/1376))
 - Improve handling of nested curly braces in command parsing ([#1360](https://github.com/latex-lsp/texlab/issues/1360))
 - Don't panic if the server receives a completion request with an invalid position ([#1367](https://github.com/latex-lsp/texlab/pull/1367))
-
-### Fixed
-
 - Only return `LocationLink[]` in `textDocument/definition` if the client supports it ([#1399](https://github.com/latex-lsp/texlab/issues/1399))
 
 ## [5.22.1] - 2025-01-29
