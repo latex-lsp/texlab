@@ -80,16 +80,8 @@ impl Distro {
 
     fn read_env_dir(file_name_db: &mut FileNameDB, env_var: &str) {
         if let Some(paths) = env::var_os(env_var) {
-            for dir in env::split_paths(&paths) {
-                if let Ok(entries) = std::fs::read_dir(dir) {
-                    for file in entries
-                        .flatten()
-                        .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
-                        .map(|entry| entry.path())
-                    {
-                        file_name_db.insert(file);
-                    }
-                }
+            for dir in std::env::split_paths(&paths) {
+                file_name_db.read_dir(dir);
             }
         }
     }

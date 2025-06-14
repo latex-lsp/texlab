@@ -21,7 +21,7 @@ percent-encoding = "2.3.0"
 regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
-shellexpand = "3.1.0"
+shellexpand.workspace = true
 syntax = { path = "../syntax" }
 titlecase.workspace = true
 url.workspace = true
