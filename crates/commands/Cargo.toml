@@ -17,7 +17,7 @@ log.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
 syntax = { path = "../syntax" }
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 url.workspace = true
 
 [dev-dependencies]
