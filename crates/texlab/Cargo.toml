@@ -47,7 +47,7 @@ lsp-server = "0.7.8"
 lsp-types = "0.95.1"
 notify-debouncer-full.workspace = true
 notify.workspace = true
-parking_lot = "0.12.3"
+parking_lot = "0.12.4"
 parser = { path = "../parser" }
 references = { path = "../references" }
 regex.workspace = true
