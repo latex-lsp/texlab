@@ -12,7 +12,7 @@ base-db = { path = "../base-db" }
 bstr = "1.12.0"
 crossbeam-channel.workspace = true
 itertools.workspace = true
-libc = "0.2.171"
+libc = "0.2.173"
 log.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
