@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `--line0`, `--line1` arguments to the `texlab inverse-search` command ([#1365](https://github.com/latex-lsp/texlab/issues/1365))
 
+### Fixed
+
+- Only return `LocationLink[]` in `textDocument/definition` if the client supports it ([#1399](https://github.com/latex-lsp/texlab/issues/1399))
+
 ## [5.22.1] - 2025-01-29
 
 ### Security

@@ -102,6 +102,13 @@ pub fn client_flags(
         .and_then(|cap| cap.show_document.as_ref())
         .map_or(false, |cap| cap.support);
 
+    let location_link_support = capabilities
+        .text_document
+        .as_ref()
+        .and_then(|cap| cap.definition.as_ref())
+        .and_then(|cap| cap.link_support)
+        .unwrap_or(false);
+
     ClientFlags {
         hierarchical_document_symbols,
         completion_markdown,
@@ -114,6 +121,7 @@ pub fn client_flags(
         folding_custom_kinds,
         progress,
         show_document,
+        location_link_support,
     }
 }
 
