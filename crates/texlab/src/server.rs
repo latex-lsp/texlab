@@ -563,7 +563,10 @@ impl Server {
 
     fn goto_definition(&self, id: RequestId, mut params: GotoDefinitionParams) -> Result<()> {
         normalize_uri(&mut params.text_document_position_params.text_document.uri);
-        self.run_query(id, move |db| definition::goto_definition(db, params));
+        let client_flags = Arc::clone(&self.client_flags);
+        self.run_query(id, move |db| {
+            definition::goto_definition(db, params, &client_flags)
+        });
         Ok(())
     }
 
@@ -1117,7 +1120,6 @@ impl Server {
             let client = self.client.clone();
 
             self.pool.execute(move || {
-
                 let progress_reporter = if progress {
                     let token = NEXT_TOKEN.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                     Some(ProgressReporter::new_inputs_progress(client.clone(), token))

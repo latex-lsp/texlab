@@ -38,4 +38,7 @@ pub struct ClientFlags {
 
     /// If `true`, the server can let the client open a document using `window/showDocument`.
     pub show_document: bool,
+
+    /// If `true`, the server can return `LocationLink` instead of `Location`.
+    pub location_link_support: bool,
 }
