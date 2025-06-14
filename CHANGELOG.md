@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `--line0`, `--line1` arguments to the `texlab inverse-search` command ([#1365](https://github.com/latex-lsp/texlab/issues/1365))
+- Extract the context provided by latexmkrc to infer additions to TEXINPUTS and BIBINPUTS ([#1369](https://github.com/latex-lsp/texlab/issues/1369))
+- Add support for `latexmk v4.86` ([#1410](https://github.com/latex-lsp/texlab/pull/1410))
+- Recognize wide float environment in label parsing ([#1404](https://github.com/latex-lsp/texlab/pull/1404))
+- Treat `\gdef`, `\edef`, `\xdef` and `\glet` as command definitions ([#1402](https://github.com/latex-lsp/texlab/pull/1402))
+- Add support for multi-word filtering in workspace symbols ([#1396](https://github.com/latex-lsp/texlab/pull/1396))
+- Add support for matching incomplete keywords in workspace symbol filtering ([#1396](https://github.com/latex-lsp/texlab/pull/1396))
+- Add an experimental capability for `textDocument/build` and `textDocument/forwardSearch` ([#1328](https://github.com/latex-lsp/texlab/issues/1328))
+- Allow disabling warnings using `% texlab: warnings off` and `% texlab: warnings on` ([#1327](https://github.com/latex-lsp/texlab/issues/1327))
+
+### Fixed
+
+- Regenerate diagnostics after loading the TeX distribution ([#1376](https://github.com/latex-lsp/texlab/issues/1376))
+- Improve handling of nested curly braces in command parsing ([#1360](https://github.com/latex-lsp/texlab/issues/1360))
+- Don't panic if the server receives a completion request with an invalid position ([#1367](https://github.com/latex-lsp/texlab/pull/1367))
 
 ## [5.22.1] - 2025-01-29
 
