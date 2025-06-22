@@ -615,8 +615,20 @@ impl NewCommandDefinition {
         self.syntax().first_token()
     }
 
-    pub fn name(&self) -> Option<CurlyGroupCommand> {
-        self.syntax().children().find_map(CurlyGroupCommand::cast)
+    pub fn name(&self) -> Option<SyntaxToken> {
+        let token = self
+            .syntax()
+            .children_with_tokens()
+            .skip(1)
+            .filter_map(|elem| elem.into_token())
+            .find(|token| token.kind() == COMMAND_NAME);
+
+        token.or_else(|| {
+            self.syntax()
+                .children()
+                .find_map(CurlyGroupCommand::cast)
+                .and_then(|x| x.command())
+        })
     }
 
     pub fn implementation(&self) -> Option<CurlyGroup> {

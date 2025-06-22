@@ -49,6 +49,6 @@ fn process_old_definition(node: latex::SyntaxNode) -> Option<(TextRange, latex::
 
 fn process_new_definition(node: latex::SyntaxNode) -> Option<(TextRange, latex::SyntaxToken)> {
     let node = latex::NewCommandDefinition::cast(node)?;
-    let name = node.name()?.command()?;
+    let name = node.name()?;
     Some((latex::small_range(&node), name))
 }
