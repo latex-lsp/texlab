@@ -64,6 +64,20 @@ fn test_new_command_definition() {
 }
 
 #[test]
+fn test_new_command_definition_without_curly() {
+    check(
+        r#"
+%! main.tex
+\newcommand\foo{foo}
+           ^^^^
+^^^^^^^^^^^^^^^^^^^^
+\foo
+  |
+^^^^"#,
+    )
+}
+
+#[test]
 fn test_document() {
     check(
         r#"

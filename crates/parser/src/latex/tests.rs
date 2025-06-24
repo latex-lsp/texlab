@@ -719,6 +719,26 @@ fn test_command_definition_with_begin() {
 }
 
 #[test]
+fn test_command_definition_without_curly() {
+    check(
+        r#"\newcommand\foo{bar}"#,
+        expect![[r#"
+            ROOT@0..20
+              PREAMBLE@0..20
+                NEW_COMMAND_DEFINITION@0..20
+                  COMMAND_NAME@0..11 "\\newcommand"
+                  COMMAND_NAME@11..15 "\\foo"
+                  CURLY_GROUP@15..20
+                    L_CURLY@15..16 "{"
+                    TEXT@16..19
+                      WORD@16..19 "bar"
+                    R_CURLY@19..20 "}"
+
+        "#]],
+    );
+}
+
+#[test]
 fn test_math_operator_no_impl() {
     check(
         r#"\DeclareMathOperator{\foo}"#,
@@ -2681,9 +2701,8 @@ fn test_issue_857() {
         expect![[r#"
             ROOT@0..55
               PREAMBLE@0..55
-                NEW_COMMAND_DEFINITION@0..11
+                NEW_COMMAND_DEFINITION@0..17
                   COMMAND_NAME@0..11 "\\newcommand"
-                GENERIC_COMMAND@11..17
                   COMMAND_NAME@11..14 "\\ö"
                   CURLY_GROUP@14..17
                     L_CURLY@14..15 "{"
@@ -2699,9 +2718,8 @@ fn test_issue_857() {
                     L_CURLY@35..36 "{"
                     R_CURLY@36..37 "}"
                     WHITESPACE@37..38 "\n"
-                NEW_COMMAND_DEFINITION@38..49
+                NEW_COMMAND_DEFINITION@38..55
                   COMMAND_NAME@38..49 "\\newcommand"
-                GENERIC_COMMAND@49..55
                   COMMAND_NAME@49..53 "\\123"
                   CURLY_GROUP@53..55
                     L_CURLY@53..54 "{"

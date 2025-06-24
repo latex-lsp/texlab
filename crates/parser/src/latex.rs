@@ -946,7 +946,11 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
-        if self.lexer.peek() == Some(Token::LCurly) {
+        let token = self.lexer.peek();
+        if matches!(token, Some(Token::CommandName(_))) {
+            self.eat();
+            self.trivia();
+        } else if token == Some(Token::LCurly) {
             self.curly_group_command();
         }
 

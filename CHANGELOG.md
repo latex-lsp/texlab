@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Make sort order of workspace symbols deterministic ([#1421](https://github.com/latex-lsp/texlab/issues/1421))
+- Parse command definitions without curly braces correctly, e. g. `\newcommand\foo{bar}` ([#1409](https://github.com/latex-lsp/texlab/issues/1409))
 
 ## [5.23.0] - 2025-06-14
 

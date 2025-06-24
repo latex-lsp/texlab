@@ -23,9 +23,7 @@ pub(super) fn find_all(context: &mut ReferenceContext) -> Option<()> {
                     latex::OldCommandDefinition::cast(node.clone())
                         .and_then(|node| node.name())
                         .or_else(|| {
-                            latex::NewCommandDefinition::cast(node)
-                                .and_then(|node| node.name())
-                                .and_then(|group| group.command())
+                            latex::NewCommandDefinition::cast(node).and_then(|node| node.name())
                         })
                         .map(|name| Span::command(&name))
                 })
