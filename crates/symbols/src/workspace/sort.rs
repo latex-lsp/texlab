@@ -18,13 +18,18 @@ impl<'a> ProjectOrdering<'a> {
 
 impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
     fn from(workspace: &'a Workspace) -> Self {
-        let inner = workspace
-            .iter()
+        let sorted_documents = || {
+            workspace
+                .iter()
+                .sorted_by_key(|document| document.uri.as_str())
+        };
+
+        let inner = sorted_documents()
             .filter(|document| {
                 let data = document.data.as_tex();
                 data.map_or(false, |data| data.semantics.can_be_root)
             })
-            .chain(workspace.iter())
+            .chain(sorted_documents())
             .flat_map(|document| {
                 let graph = &workspace.graphs()[&document.uri];
                 graph.preorder(workspace).rev().collect_vec()
@@ -32,6 +37,7 @@ impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
             .unique()
             .collect_vec();
 
+        eprintln!("{}", inner.iter().map(|doc| doc.uri.to_string()).join(", "));
         Self { inner }
     }
 }
@@ -70,7 +76,8 @@ mod tests {
 
         workspace.open(
             c.clone(),
-            r#"\documentclass{article}\include{b}\include{a}"#.to_string(),
+            r#"\documentclass{article}\begin{document}\include{b}\include{a}\end{document}"#
+                .to_string(),
             Language::Tex,
             Owner::Client,
             LineCol { line: 0, col: 0 },
