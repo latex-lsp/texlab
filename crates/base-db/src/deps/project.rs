@@ -28,7 +28,7 @@ pub fn parents<'a>(workspace: &'a Workspace, child: &'a Document) -> FxHashSet<&
             document
                 .data
                 .as_tex()
-                .map_or(false, |data| data.semantics.can_be_root)
+                .is_some_and(|data| data.semantics.can_be_root)
         })
         .filter(|parent| {
             let graph = &workspace.graphs()[&parent.uri];

@@ -72,13 +72,10 @@ fn build_arguments(config: &LatexIndentConfig, target_file: &Path) -> Vec<String
         args.push("--modifylinebreaks".to_string());
     }
 
-    match &config.replacement {
-        Some(replacement_flag) => {
-            if ["-r", "-rv", "-rr"].contains(&replacement_flag.as_str()) {
-                args.push(replacement_flag.clone());
-            }
+    if let Some(replacement_flag) = &config.replacement {
+        if ["-r", "-rv", "-rr"].contains(&replacement_flag.as_str()) {
+            args.push(replacement_flag.clone());
         }
-        None => {}
     }
 
     args.push(target_file.display().to_string());

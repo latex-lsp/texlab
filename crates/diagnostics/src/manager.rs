@@ -68,7 +68,7 @@ impl Manager {
         for (uri, diagnostics) in &self.chktex {
             if workspace
                 .lookup(uri)
-                .map_or(false, |document| document.owner == Owner::Client)
+                .is_some_and(|document| document.owner == Owner::Client)
             {
                 results
                     .entry(uri.clone())
@@ -93,7 +93,7 @@ impl Manager {
         results.retain(|uri, _| {
             workspace
                 .lookup(uri)
-                .map_or(false, Self::is_relevant_document)
+                .is_some_and(Self::is_relevant_document)
         });
 
         for (uri, diagnostics) in results.iter_mut() {

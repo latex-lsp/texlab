@@ -197,11 +197,8 @@ impl Root {
     }
 
     pub fn find_entry(&self, name: &str) -> Option<Entry> {
-        self.entries().find(|entry| {
-            entry
-                .name_token()
-                .map_or(false, |token| token.text() == name)
-        })
+        self.entries()
+            .find(|entry| entry.name_token().is_some_and(|token| token.text() == name))
     }
 }
 

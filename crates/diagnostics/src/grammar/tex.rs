@@ -50,7 +50,7 @@ impl<'a> Analyzer<'a> {
                             .begin()
                             .and_then(|begin| begin.name())
                             .and_then(|name| name.key())
-                            .map_or(false, |name| verbatim_envs.contains(&name.to_string()))
+                            .is_some_and(|name| verbatim_envs.contains(&name.to_string()))
                         {
                             traversal.skip_subtree();
                             continue;

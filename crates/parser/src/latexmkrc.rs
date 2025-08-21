@@ -157,7 +157,7 @@ pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<Latexmkrc
         .and_then(|(i, line)| line[i..].trim_end().strip_prefix("Version "))
         .and_then(versions::Versioning::new);
 
-    let result = if version.map_or(false, |v| v >= versions::Versioning::new("4.84").unwrap()) {
+    let result = if version.is_some_and(|v| v >= versions::Versioning::new("4.84").unwrap()) {
         v484::parse_latexmkrc(input, src_dir)
     } else {
         v483::parse_latexmkrc(input, src_dir)

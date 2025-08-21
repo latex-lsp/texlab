@@ -19,13 +19,13 @@ pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
         let shape = if document
             .data
             .as_tex()
-            .map_or(false, |data| data.semantics.can_be_root)
+            .is_some_and(|data| data.semantics.can_be_root)
         {
             "tripleoctagon"
         } else if document
             .data
             .as_tex()
-            .map_or(false, |data| data.semantics.can_be_compiled)
+            .is_some_and(|data| data.semantics.can_be_compiled)
         {
             "doubleoctagon"
         } else {

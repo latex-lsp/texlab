@@ -73,7 +73,7 @@ fn discover_parents(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pat
 
         for file in entries
             .flatten()
-            .filter(|entry| entry.file_type().map_or(false, |type_| type_.is_file()))
+            .filter(|entry| entry.file_type().is_ok_and(|type_| type_.is_file()))
             .map(|entry| entry.path())
         {
             let Some(lang) = Language::from_path(&file) else {

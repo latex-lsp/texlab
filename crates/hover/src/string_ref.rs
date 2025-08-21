@@ -19,7 +19,7 @@ pub(super) fn find_hover<'a>(params: &HoverParams<'a>) -> Option<Hover<'a>> {
     for string in root.strings() {
         if !string
             .name_token()
-            .map_or(false, |token| token.text() == name.text())
+            .is_some_and(|token| token.text() == name.text())
         {
             continue;
         }

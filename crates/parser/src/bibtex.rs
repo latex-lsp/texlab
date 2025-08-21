@@ -231,7 +231,7 @@ where
 
     #[must_use]
     pub fn at(&mut self, kind: T) -> bool {
-        self.peek().map_or(false, |(k, _)| k == kind)
+        self.peek().is_some_and(|(k, _)| k == kind)
     }
 
     #[must_use]

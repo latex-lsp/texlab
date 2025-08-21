@@ -580,7 +580,7 @@ impl TheoremDefinition {
 
             options
                 .pairs()
-                .find(|pair| pair.key().map_or(false, |key| key.to_string() == "name"))
+                .find(|pair| pair.key().is_some_and(|key| key.to_string() == "name"))
                 .and_then(|pair| pair.value())
                 .and_then(|name| name.text())
         } else {
