@@ -382,6 +382,7 @@ pub fn symbol_kind(value: symbols::SymbolKind) -> lsp_types::SymbolKind {
         },
         symbols::SymbolKind::Field => lsp_types::SymbolKind::FIELD,
         symbols::SymbolKind::Environment => lsp_types::SymbolKind::FUNCTION,
+        symbols::SymbolKind::CommandDefinition => lsp_types::SymbolKind::KEY,
     }
 }
 

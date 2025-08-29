@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use base_db::{deps::Project, semantics::Span, util::FloatKind, Config, SymbolEnvironmentConfig};
-use rowan::ast::AstNode;
+use base_db::{Config, SymbolEnvironmentConfig, deps::Project, semantics::Span, util::FloatKind};
+use rowan::{TextRange, ast::AstNode};
 use syntax::latex::{self, HasBrack, HasCurly, LatexLanguage};
 use titlecase::titlecase;
 
@@ -25,6 +25,10 @@ impl<'a> SymbolBuilder<'a> {
             self.visit_enum_item(&enum_item)
         } else if let Some(equation) = latex::Equation::cast(node.clone()) {
             self.visit_equation(&equation)
+        } else if let Some(command_def) = latex::OldCommandDefinition::cast(node.clone()) {
+            self.visit_old_command_definition(&command_def)
+        } else if let Some(command_def) = latex::NewCommandDefinition::cast(node.clone()) {
+            self.visit_new_command_definition(&command_def)
         } else if let Some(environment) = latex::Environment::cast(node.clone()) {
             environment.begin().and_then(|begin| {
                 let name = begin.name()?.key()?.to_string();
@@ -116,6 +120,35 @@ impl<'a> SymbolBuilder<'a> {
         };
 
         Some(symbol)
+    }
+
+    fn visit_old_command_definition(
+        &self,
+        command_def: &latex::OldCommandDefinition,
+    ) -> Option<Symbol> {
+        let full_range = latex::small_range(command_def);
+        let name = command_def.name()?;
+        Some(Self::make_command_definition_symbol(full_range, &name))
+    }
+
+    fn visit_new_command_definition(
+        &self,
+        command_def: &latex::NewCommandDefinition,
+    ) -> Option<Symbol> {
+        let full_range = latex::small_range(command_def);
+        let name = command_def.name()?;
+        Some(Self::make_command_definition_symbol(full_range, &name))
+    }
+
+    fn make_command_definition_symbol(full_range: TextRange, name: &latex::SyntaxToken) -> Symbol {
+        let selection_range = name.text_range();
+
+        Symbol::new_simple(
+            format!("define {}", name.text()),
+            SymbolKind::CommandDefinition,
+            full_range,
+            selection_range,
+        )
     }
 
     fn visit_theorem(&self, environment: &latex::Environment, name: &str) -> Option<Symbol> {

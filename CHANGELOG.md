@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `texlab.hover.symbols` setting to allow turning off image preview for symbol-like commands ([#1420](https://github.com/latex-lsp/texlab/issues/1420))
+- Add command definitions to document and workspace symbols ([#1440](https://github.com/latex-lsp/texlab/issues/1440))
 
 ## [5.23.1] - 2025-06-24
 

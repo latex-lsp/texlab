@@ -1,4 +1,4 @@
-use base_db::{data::BibtexEntryTypeCategory, semantics::Span, Document};
+use base_db::{Document, data::BibtexEntryTypeCategory, semantics::Span};
 use rowan::TextRange;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -15,6 +15,7 @@ pub enum SymbolKind {
     Entry(BibtexEntryTypeCategory),
     Field,
     Environment,
+    CommandDefinition,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -71,6 +72,7 @@ impl Symbol {
             SymbolKind::Entry(_) => vec!["bibtex", "entry"],
             SymbolKind::Field => vec!["bibtex", "field"],
             SymbolKind::Environment => vec!["latex", "environment"],
+            SymbolKind::CommandDefinition => vec!["latex", "command", "definition", "define"],
         };
 
         name.chain(tags).collect()
