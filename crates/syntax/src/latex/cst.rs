@@ -57,7 +57,7 @@ macro_rules! cst_node {
 cst_node!(Text, TEXT);
 
 impl Text {
-    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> + use<> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -208,7 +208,7 @@ cst_node!(CurlyGroupWordList, CURLY_GROUP_WORD_LIST);
 impl HasCurly for CurlyGroupWordList {}
 
 impl CurlyGroupWordList {
-    pub fn keys(&self) -> impl Iterator<Item = Key> {
+    pub fn keys(&self) -> impl Iterator<Item = Key> + use<> {
         self.syntax().descendants().filter_map(Key::cast)
     }
 }
@@ -229,7 +229,7 @@ impl CurlyGroupCommand {
 cst_node!(Key, KEY);
 
 impl Key {
-    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> {
+    pub fn words(&self) -> impl Iterator<Item = SyntaxToken> + use<> {
         self.syntax()
             .children_with_tokens()
             .filter_map(|node| node.into_token())
@@ -296,7 +296,7 @@ impl KeyValuePair {
 cst_node!(KeyValueBody, KEY_VALUE_BODY);
 
 impl KeyValueBody {
-    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair> {
+    pub fn pairs(&self) -> impl Iterator<Item = KeyValuePair> + use<> {
         self.syntax().children().filter_map(KeyValuePair::cast)
     }
 }
@@ -555,7 +555,7 @@ impl TheoremDefinition {
         self.syntax().first_token()
     }
 
-    pub fn names(&self) -> impl Iterator<Item = Key> {
+    pub fn names(&self) -> impl Iterator<Item = Key> + use<> {
         self.syntax()
             .children()
             .find_map(CurlyGroupWordList::cast)
@@ -758,7 +758,7 @@ impl GraphicsPath {
         self.syntax().first_token()
     }
 
-    pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord> {
+    pub fn path_list(&self) -> impl Iterator<Item = CurlyGroupWord> + use<> {
         self.syntax().descendants().filter_map(CurlyGroupWord::cast)
     }
 }

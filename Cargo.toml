@@ -9,7 +9,7 @@ authors = [
     "Eric Förster <eric.foerster@outlook.com>",
     "Patrick Förster <patrick.foerster@outlook.de>",
 ]
-edition = "2021"
+edition = "2024"
 rust-version = "1.89"
 
 [workspace.dependencies]
