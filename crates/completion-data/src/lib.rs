@@ -82,23 +82,23 @@ pub struct Metadata<'a> {
 }
 
 impl<'a> Database<'a> {
-    pub fn iter(&self) -> impl Iterator<Item = &Package> + '_ {
+    pub fn iter(&'_ self) -> impl Iterator<Item = &'_ Package<'_>> + '_ {
         self.packages.iter()
     }
 
-    pub fn find(&self, name: &str) -> Option<&Package> {
+    pub fn find(&'_ self, name: &str) -> Option<&'_ Package<'_>> {
         self.lookup_packages
             .get(name)
             .map(|index| &self.packages[*index])
     }
 
-    pub fn meta(&self, name: &str) -> Option<&Metadata> {
+    pub fn meta(&'_ self, name: &str) -> Option<&'_ Metadata<'_>> {
         self.lookup_metadata
             .get(name)
             .map(|index| &self.metadata[*index])
     }
 
-    pub fn kernel(&self) -> &Package {
+    pub fn kernel(&'_ self) -> &'a Package<'_> {
         &self.packages[self.lookup_kernel]
     }
 }

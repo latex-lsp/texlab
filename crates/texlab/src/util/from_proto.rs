@@ -126,16 +126,19 @@ pub fn client_flags(
 }
 
 pub fn rename_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     params: lsp_types::TextDocumentPositionParams,
-) -> Option<RenameParams> {
+) -> Option<RenameParams<'_>> {
     let (feature, offset) =
         feature_params_offset(workspace, params.text_document, params.position)?;
 
     Some(RenameParams { feature, offset })
 }
 
-pub fn hover_params(workspace: &Workspace, params: lsp_types::HoverParams) -> Option<HoverParams> {
+pub fn hover_params(
+    workspace: &'_ Workspace,
+    params: lsp_types::HoverParams,
+) -> Option<HoverParams<'_>> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position_params.text_document,
@@ -146,9 +149,9 @@ pub fn hover_params(workspace: &Workspace, params: lsp_types::HoverParams) -> Op
 }
 
 pub fn inlay_hint_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     params: lsp_types::InlayHintParams,
-) -> Option<InlayHintParams> {
+) -> Option<InlayHintParams<'_>> {
     let feature = feature_params(workspace, params.text_document)?;
     let range = feature.document.line_index.offset_lsp_range(params.range)?;
     Some(InlayHintParams { feature, range })
@@ -168,9 +171,9 @@ pub fn highlight_params(
 }
 
 pub fn definition_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     params: lsp_types::GotoDefinitionParams,
-) -> Option<DefinitionParams> {
+) -> Option<DefinitionParams<'_>> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position_params.text_document,
@@ -181,9 +184,9 @@ pub fn definition_params(
 }
 
 pub fn completion_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     params: lsp_types::CompletionParams,
-) -> Option<CompletionParams> {
+) -> Option<CompletionParams<'_>> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position.text_document,
@@ -194,9 +197,9 @@ pub fn completion_params(
 }
 
 pub fn reference_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     params: lsp_types::ReferenceParams,
-) -> Option<ReferenceParams> {
+) -> Option<ReferenceParams<'_>> {
     let (feature, offset) = feature_params_offset(
         workspace,
         params.text_document_position.text_document,
@@ -212,18 +215,18 @@ pub fn reference_params(
 }
 
 pub fn feature_params(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     text_document: lsp_types::TextDocumentIdentifier,
-) -> Option<FeatureParams> {
+) -> Option<FeatureParams<'_>> {
     let document = workspace.lookup(&text_document.uri)?;
     Some(FeatureParams::new(workspace, document))
 }
 
 pub fn feature_params_offset(
-    workspace: &Workspace,
+    workspace: &'_ Workspace,
     text_document: lsp_types::TextDocumentIdentifier,
     position: lsp_types::Position,
-) -> Option<(FeatureParams, TextSize)> {
+) -> Option<(FeatureParams<'_>, TextSize)> {
     let feature = feature_params(workspace, text_document)?;
     let offset = feature.document.line_index.offset_lsp(position)?;
     Some((feature, offset))
