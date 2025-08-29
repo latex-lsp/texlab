@@ -91,7 +91,7 @@ impl FileNameDB {
         if let Ok(entries) = std::fs::read_dir(dir) {
             for file in entries
                 .flatten()
-                .filter(|entry| entry.file_type().map_or(false, |ty| ty.is_file()))
+                .filter(|entry| entry.file_type().is_ok_and(|ty| ty.is_file()))
                 .map(|entry| entry.path())
             {
                 self.insert(file);

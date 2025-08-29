@@ -149,7 +149,7 @@ impl Graph {
             .filter(|path| {
                 path.is_relative()
                     || Language::from_path(&path) == Some(Language::Bib)
-                    || home_dir.map_or(false, |home_dir| path.starts_with(home_dir))
+                    || home_dir.is_some_and(|home_dir| path.starts_with(home_dir))
             })
             .filter_map(|path| working_dir.join(path.to_str()?).ok())
         {
@@ -202,7 +202,7 @@ impl Graph {
                     .or_else(|| start.root.file_name_db.get(name))
             })
             .filter(|path| {
-                home_dir.map_or(false, |dir| path.starts_with(dir))
+                home_dir.is_some_and(|dir| path.starts_with(dir))
                     || Language::from_path(path) == Some(Language::Bib)
             })
             .flat_map(Url::from_file_path);

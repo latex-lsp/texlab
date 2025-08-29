@@ -37,16 +37,14 @@ pub fn client_flags(
         .and_then(|cap| cap.completion.as_ref())
         .and_then(|cap| cap.completion_item.as_ref())
         .and_then(|cap| cap.documentation_format.as_ref())
-        .map_or(false, |formats| {
-            formats.contains(&lsp_types::MarkupKind::Markdown)
-        });
+        .is_some_and(|formats| formats.contains(&lsp_types::MarkupKind::Markdown));
 
     let hover_markdown = capabilities
         .text_document
         .as_ref()
         .and_then(|cap| cap.hover.as_ref())
         .and_then(|cap| cap.content_format.as_ref())
-        .map_or(false, |cap| {
+        .is_some_and(|cap| {
             // Use the preferred format of the editor instead of just markdown (if available).
             cap.first() == Some(&lsp_types::MarkupKind::Markdown)
         });
@@ -67,7 +65,7 @@ pub fn client_flags(
         .and_then(|cap| cap.value_set.clone())
         .unwrap_or_default();
 
-    let completion_always_incomplete = info.map_or(false, |info| info.name == "Visual Studio Code");
+    let completion_always_incomplete = info.is_some_and(|info| info.name == "Visual Studio Code");
 
     let configuration_pull = capabilities
         .workspace
@@ -100,7 +98,7 @@ pub fn client_flags(
         .window
         .as_ref()
         .and_then(|cap| cap.show_document.as_ref())
-        .map_or(false, |cap| cap.support);
+        .is_some_and(|cap| cap.support);
 
     let location_link_support = capabilities
         .text_document

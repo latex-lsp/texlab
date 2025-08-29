@@ -56,7 +56,7 @@ pub fn find_curly_group_word_list(
             let range = if group
                 .syntax()
                 .last_token()
-                .map_or(false, |tok| tok.kind() != latex::R_CURLY)
+                .is_some_and(|tok| tok.kind() != latex::R_CURLY)
             {
                 TextRange::new(latex::small_range(&key).start(), token.text_range().end())
             } else {

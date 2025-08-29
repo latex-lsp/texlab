@@ -41,7 +41,7 @@ impl Workspace {
         self.iter().filter(move |doc| {
             doc.path
                 .as_deref()
-                .map_or(false, |p| p.starts_with(file_or_dir))
+                .is_some_and(|p| p.starts_with(file_or_dir))
         })
     }
 

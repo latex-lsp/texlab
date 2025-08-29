@@ -79,7 +79,7 @@ impl<'a> Parser<'a> {
     }
 
     fn trivia(&mut self) {
-        while self.peek().map_or(false, |kind| {
+        while self.peek().is_some_and(|kind| {
             matches!(
                 kind,
                 Token::LineBreak | Token::Whitespace | Token::LineComment
@@ -301,7 +301,7 @@ impl<'a> Parser<'a> {
     fn brack_group(&mut self) {
         self.builder.start_node(BRACK_GROUP.into());
         self.eat();
-        while self.peek().map_or(false, |kind| {
+        while self.peek().is_some_and(|kind| {
             !matches!(
                 kind,
                 Token::RCurly
@@ -340,7 +340,7 @@ impl<'a> Parser<'a> {
         self.builder.start_node(MIXED_GROUP.into());
         self.eat();
         self.trivia();
-        while self.peek().map_or(false, |kind| {
+        while self.peek().is_some_and(|kind| {
             !matches!(
                 kind,
                 Token::RCurly

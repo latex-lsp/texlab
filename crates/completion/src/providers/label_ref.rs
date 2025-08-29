@@ -47,7 +47,7 @@ pub fn complete_label_references<'a>(
             .iter()
             .filter(|label| label.kind == LabelKind::Definition)
         {
-            if ref_pref.map_or(false, |pref| !label.name.text.starts_with(pref)) {
+            if ref_pref.is_some_and(|pref| !label.name.text.starts_with(pref)) {
                 continue;
             }
             let labeltext = trim_prefix(ref_pref, &label.name.text);
