@@ -188,11 +188,11 @@ pub trait HasValue: AstNode<Language = BibtexLanguage> {
 cst_node!(name: Root, kinds: [ROOT], traits: []);
 
 impl Root {
-    pub fn strings(&self) -> impl Iterator<Item = StringDef> {
+    pub fn strings(&self) -> impl Iterator<Item = StringDef> + use<> {
         self.syntax().children().filter_map(StringDef::cast)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = Entry> {
+    pub fn entries(&self) -> impl Iterator<Item = Entry> + use<> {
         self.syntax().children().filter_map(Entry::cast)
     }
 
@@ -209,7 +209,7 @@ cst_node!(name: StringDef, kinds: [STRING], traits: [HasType, HasDelims, HasName
 cst_node!(name: Entry, kinds: [ENTRY], traits: [HasType, HasDelims, HasName, HasComma]);
 
 impl Entry {
-    pub fn fields(&self) -> impl Iterator<Item = Field> {
+    pub fn fields(&self) -> impl Iterator<Item = Field> + use<> {
         self.syntax().children().filter_map(Field::cast)
     }
 }
