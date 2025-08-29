@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use base_db::{
-    data::BibtexEntryTypeCategory, util::RenderedObject, Document, DocumentLocation, Workspace,
+    Config, Document, DocumentLocation, HoverSymbolConfig, Workspace,
+    data::BibtexEntryTypeCategory, util::RenderedObject,
 };
 use definition::DefinitionResult;
 use diagnostics::{BibError, ChktexSeverity, Diagnostic, TexError};
@@ -15,7 +16,7 @@ use rename::RenameResult;
 use rowan::TextRange;
 use syntax::BuildErrorLevel;
 
-use super::{line_index_ext::LineIndexExt, ClientFlags};
+use super::{ClientFlags, line_index_ext::LineIndexExt};
 
 pub fn diagnostic(
     workspace: &Workspace,
@@ -451,26 +452,37 @@ pub fn hover(
     hover: Hover,
     line_index: &LineIndex,
     client_flags: &ClientFlags,
+    config: &Config,
 ) -> Option<lsp_types::Hover> {
     fn inline_image(
         command: &completion_data::Command,
-
         client_flags: &ClientFlags,
+        config: &Config,
     ) -> Option<lsp_types::MarkupContent> {
         let name = &command.name;
         command
             .image
             .map(|base64| format!("![{name}](data:image/png;base64,{base64}|width=48,height=48)"))
             .filter(|_| client_flags.hover_markdown)
-            .map(|value| lsp_types::MarkupContent {
-                kind: lsp_types::MarkupKind::Markdown,
-                value,
+            .and_then(|value| {
+                if config.hover.symbols == HoverSymbolConfig::Image {
+                    Some(lsp_types::MarkupContent {
+                        kind: lsp_types::MarkupKind::Markdown,
+                        value,
+                    })
+                } else {
+                    None
+                }
             })
             .or_else(|| {
-                Some(lsp_types::MarkupContent {
-                    kind: lsp_types::MarkupKind::PlainText,
-                    value: command.glyph.as_deref()?.into(),
-                })
+                if config.hover.symbols == HoverSymbolConfig::Glyph {
+                    Some(lsp_types::MarkupContent {
+                        kind: lsp_types::MarkupKind::PlainText,
+                        value: command.glyph.as_deref()?.into(),
+                    })
+                } else {
+                    None
+                }
             })
     }
 
@@ -483,7 +495,7 @@ pub fn hover(
             kind: lsp_types::MarkupKind::PlainText,
             value: description.into(),
         },
-        HoverData::Command(command) => inline_image(command, client_flags)?,
+        HoverData::Command(command) => inline_image(command, client_flags, config)?,
         HoverData::EntryType(type_) => lsp_types::MarkupContent {
             kind: lsp_types::MarkupKind::Markdown,
             value: type_.documentation?.into(),

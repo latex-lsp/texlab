@@ -15,10 +15,12 @@ use titlecase::titlecase;
 
 use crate::{
     features::completion::ResolveInfo,
-    server::options::{BibtexFormatter, CompletionMatcher, LatexFormatter, Options},
+    server::options::{
+        BibtexFormatter, CompletionMatcher, HoverSymbolOptions, LatexFormatter, Options,
+    },
 };
 
-use super::{line_index_ext::LineIndexExt, ClientFlags};
+use super::{ClientFlags, line_index_ext::LineIndexExt};
 
 pub fn client_flags(
     capabilities: lsp_types::ClientCapabilities,
@@ -300,10 +302,9 @@ pub fn config(value: Options) -> Config {
         BibtexFormatter::TexFmt => Formatter::TexFmt,
     };
 
-    config.formatting.line_length =
-        value
-            .formatter_line_length
-            .map_or(80, |len| if len < 0 { usize::MAX } else { len as usize });
+    config.formatting.line_length = value
+        .formatter_line_length
+        .map_or(80, |len| if len < 0 { usize::MAX } else { len as usize });
 
     config.formatting.latex_indent.local = value.latexindent.local;
     config.formatting.latex_indent.modify_line_breaks = value.latexindent.modify_line_breaks;
@@ -345,6 +346,13 @@ pub fn config(value: Options) -> Config {
             (env.name, config)
         })
         .collect();
+
+    config.hover.symbols = match value.hover.symbols {
+        Some(HoverSymbolOptions::None) => base_db::HoverSymbolConfig::None,
+        Some(HoverSymbolOptions::Glyph) => base_db::HoverSymbolConfig::Glyph,
+        Some(HoverSymbolOptions::Image) => base_db::HoverSymbolConfig::Image,
+        None => base_db::HoverSymbolConfig::Image,
+    };
 
     config.inlay_hints.label_definitions = value.inlay_hints.label_definitions.unwrap_or(true);
     config.inlay_hints.label_references = value.inlay_hints.label_references.unwrap_or(true);
