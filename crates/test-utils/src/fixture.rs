@@ -46,7 +46,7 @@ impl Fixture {
         }
     }
 
-    pub fn make_params(&self) -> Option<(FeatureParams, TextSize)> {
+    pub fn make_params(&'_ self) -> Option<(FeatureParams<'_>, TextSize)> {
         let spec = self
             .documents
             .iter()
@@ -59,7 +59,7 @@ impl Fixture {
         Some((params, cursor))
     }
 
-    pub fn locations(&self) -> impl Iterator<Item = DocumentLocation> {
+    pub fn locations(&'_ self) -> impl Iterator<Item = DocumentLocation<'_>> {
         self.documents.iter().flat_map(|spec| {
             let document = self.workspace.lookup(&spec.uri).unwrap();
             spec.ranges
