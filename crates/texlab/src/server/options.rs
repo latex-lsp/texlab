@@ -13,6 +13,7 @@ pub struct Options {
     pub diagnostics: DiagnosticsOptions,
     pub diagnostics_delay: Option<u64>,
     pub build: BuildOptions,
+    pub hover: HoverOptions,
     pub chktex: ChktexOptions,
     pub symbols: SymbolOptions,
     pub latexindent: LatexindentOptions,
@@ -74,6 +75,21 @@ pub struct BuildOptions {
     pub pdf_directory: Option<String>,
     pub filename: Option<String>,
     pub use_file_list: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct HoverOptions {
+    pub symbols: Option<HoverSymbolOptions>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum HoverSymbolOptions {
+    None,
+    Glyph,
+    Image,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]

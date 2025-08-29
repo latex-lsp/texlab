@@ -11,6 +11,7 @@ pub struct Config {
     pub formatting: FormattingConfig,
     pub synctex: Option<SynctexConfig>,
     pub symbols: SymbolConfig,
+    pub hover: HoverConfig,
     pub syntax: SyntaxConfig,
     pub completion: CompletionConfig,
     pub inlay_hints: InlayHintConfig,
@@ -87,6 +88,18 @@ pub struct SymbolEnvironmentConfig {
 }
 
 #[derive(Debug)]
+pub struct HoverConfig {
+    pub symbols: HoverSymbolConfig,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum HoverSymbolConfig {
+    None,
+    Glyph,
+    Image,
+}
+
+#[derive(Debug)]
 pub struct InlayHintConfig {
     pub label_definitions: bool,
     pub label_references: bool,
@@ -160,6 +173,14 @@ impl Default for CompletionConfig {
     fn default() -> Self {
         Self {
             matcher: MatchingAlgo::SkimIgnoreCase,
+        }
+    }
+}
+
+impl Default for HoverConfig {
+    fn default() -> Self {
+        Self {
+            symbols: HoverSymbolConfig::Image,
         }
     }
 }
