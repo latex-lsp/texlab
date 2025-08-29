@@ -1539,12 +1539,13 @@ dependencies = [
 
 [[package]]
 name = "rowan"
-version = "0.15.16"
+version = "0.15.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a542b0253fa46e632d27a1dc5cf7b930de4df8659dc6e720b647fc72147ae3d"
+checksum = "d4f1e4a001f863f41ea8d0e6a0c34b356d5b733db50dadab3efef640bafb779b"
 dependencies = [
  "countme",
  "hashbrown",
+ "memoffset",
  "rustc-hash 1.1.0",
  "text-size",
 ]
