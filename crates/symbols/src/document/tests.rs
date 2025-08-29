@@ -1,5 +1,5 @@
 use base_db::{Config, SymbolConfig, SymbolEnvironmentConfig};
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use regex::Regex;
 use rustc_hash::FxHashMap;
 use test_utils::fixture::Fixture;
@@ -706,5 +706,40 @@ fn test_custom_environments() {
             },
         ]
     "#]],
+    );
+}
+
+#[test]
+fn test_command_definition() {
+    let fixture = Fixture::parse(
+        r#"
+%! main.sty
+\newcommand{\foo}{foo}
+
+\let\bar\baz"#,
+    );
+
+    check(
+        &fixture,
+        expect![[r#"
+            [
+                Symbol {
+                    name: "define \\foo",
+                    kind: CommandDefinition,
+                    label: None,
+                    full_range: 0..22,
+                    selection_range: 12..16,
+                    children: [],
+                },
+                Symbol {
+                    name: "define \\bar",
+                    kind: CommandDefinition,
+                    label: None,
+                    full_range: 24..32,
+                    selection_range: 28..32,
+                    children: [],
+                },
+            ]
+        "#]],
     );
 }
