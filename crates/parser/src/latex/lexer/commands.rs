@@ -50,15 +50,6 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         | "DeclareCommandCopy" => CommandName::NewCommandDefinition,
         "DeclareMathOperator" | "DeclareMathOperator*" => CommandName::MathOperator,
         "newglossaryentry" => CommandName::GlossaryEntryDefinition,
-        "gls" | "Gls" | "GLS" | "glspl" | "Glspl" | "GLSpl" | "glsdisp" | "glslink" | "glstext"
-        | "Glstext" | "GLStext" | "glsfirst" | "Glsfirst" | "GLSfirst" | "glsplural"
-        | "Glsplural" | "GLSplural" | "glsfirstplural" | "Glsfirstplural" | "GLSfirstplural"
-        | "glsname" | "Glsname" | "GLSname" | "glssymbol" | "Glssymbol" | "glsdesc" | "Glsdesc"
-        | "GLSdesc" | "glsuseri" | "Glsuseri" | "GLSuseri" | "glsuserii" | "Glsuserii"
-        | "glsuseriii" | "glsuseriv" | "Glsuseriv" | "GLSuseriv" | "glsuserv" | "Glsuserv"
-        | "GLSuserv" | "glsuservi" | "Glsuservi" | "GLSuservi" => {
-            CommandName::GlossaryEntryReference
-        }
         "newacronym" | "newacro" | "acrodef" | "acro" | "newacroindefinite"
         | "acrodefindefinite" | "acroindefinite" | "acroplural" | "newacroplural"
         | "acrodefplural" => CommandName::AcronymDefinition,
@@ -100,6 +91,7 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "numberline" => CommandName::TocNumberLine,
 
         _ if config.citation_commands.contains(name) => CommandName::Citation,
+        _ if config.glossary_reference_commands.contains(name) => CommandName::GlossaryEntryReference,
         _ if config.label_definition_commands.contains(name) => CommandName::LabelDefinition,
         _ if config.label_reference_commands.contains(name) => CommandName::LabelReference,
         _ if config.label_reference_range_commands.contains(name) => {
