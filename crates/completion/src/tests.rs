@@ -2341,3 +2341,31 @@ fn test_custom_label_multiple_prefix_ref() {
         "#]],
     );
 }
+
+#[test]
+fn test_custom_glossary_reference_command() {
+    let mut config = SyntaxConfig::default();
+    config.glossary_reference_commands.insert("glsed".to_string());
+
+    check_with_syntax_config(
+        config,
+        r#"
+%! main.tex
+\newglossaryentry{foo}{
+  name={Foo Bar Baz},
+  description={The trio of default variable names.}
+}
+
+\glsed{}
+       |"#,
+        expect![[r#"
+            [
+                GlossaryEntry(
+                    GlossaryEntryData {
+                        name: "foo",
+                    },
+                ),
+            ]
+        "#]],
+    );
+}

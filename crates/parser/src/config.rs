@@ -8,6 +8,7 @@ pub struct SyntaxConfig {
     pub enum_environments: FxHashSet<String>,
     pub verbatim_environments: FxHashSet<String>,
     pub citation_commands: FxHashSet<String>,
+    pub glossary_reference_commands: FxHashSet<String>,
     pub label_definition_commands: FxHashSet<String>,
     pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: FxHashSet<String>,
@@ -33,6 +34,11 @@ impl Default for SyntaxConfig {
             .collect();
 
         let citation_commands = DEFAULT_CITATION_COMMANDS
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+
+        let glossary_reference_commands = DEFAULT_GLOSSARY_REFERENCE_COMMANDS
             .iter()
             .map(ToString::to_string)
             .collect();
@@ -69,6 +75,7 @@ impl Default for SyntaxConfig {
             enum_environments,
             verbatim_environments,
             citation_commands,
+            glossary_reference_commands,
             label_definition_commands,
             label_definition_prefixes,
             label_reference_commands,
@@ -191,6 +198,52 @@ static DEFAULT_CITATION_COMMANDS: &[&str] = &[
     "fnotecite",
     "citeA",
     "citeA*",
+];
+
+static DEFAULT_GLOSSARY_REFERENCE_COMMANDS: &[&str] = &[
+    "gls",
+    "Gls",
+    "GLS",
+    "glspl",
+    "Glspl",
+    "GLSpl",
+    "glsdisp",
+    "glslink",
+    "glstext",
+    "Glstext",
+    "GLStext",
+    "glsfirst",
+    "Glsfirst",
+    "GLSfirst",
+    "glsplural",
+    "Glsplural",
+    "GLSplural",
+    "glsfirstplural",
+    "Glsfirstplural",
+    "GLSfirstplural",
+    "glsname",
+    "Glsname",
+    "GLSname",
+    "glssymbol",
+    "Glssymbol",
+    "glsdesc",
+    "Glsdesc",
+    "GLSdesc",
+    "glsuseri",
+    "Glsuseri",
+    "GLSuseri",
+    "glsuserii",
+    "Glsuserii",
+    "glsuseriii",
+    "glsuseriv",
+    "Glsuseriv",
+    "GLSuseriv",
+    "glsuserv",
+    "Glsuserv",
+    "GLSuserv",
+    "glsuservi",
+    "Glsuservi",
+    "GLSuservi"
 ];
 
 static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label", "zlabel"];

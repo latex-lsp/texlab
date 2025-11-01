@@ -389,6 +389,11 @@ pub fn config(value: Options) -> Config {
 
     config
         .syntax
+        .glossary_reference_commands
+        .extend(value.experimental.glossary_reference_commands);
+
+    config
+        .syntax
         .label_definition_commands
         .extend(value.experimental.label_definition_commands);
 

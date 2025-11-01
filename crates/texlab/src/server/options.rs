@@ -156,6 +156,7 @@ pub struct ExperimentalOptions {
     pub enum_environments: Vec<String>,
     pub verbatim_environments: Vec<String>,
     pub citation_commands: Vec<String>,
+    pub glossary_reference_commands: Vec<String>,
     pub label_definition_commands: Vec<String>,
     pub label_definition_prefixes: Vec<(String, String)>,
     pub label_reference_commands: Vec<String>,
