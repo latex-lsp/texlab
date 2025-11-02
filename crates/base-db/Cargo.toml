@@ -17,7 +17,7 @@ notify-debouncer-full.workspace = true
 notify.workspace = true
 once_cell.workspace = true
 parser = { path = "../parser" }
-percent-encoding = "2.3.0"
+percent-encoding.workspace = true
 regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
