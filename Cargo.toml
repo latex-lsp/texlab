@@ -56,7 +56,7 @@ titlecase = "3.6.0"
 uds_windows = "1.1.0"
 unicode-normalization = "0.1.24"
 url = "2.5.4"
-versions = "6.3.2"
+versions = "7.0.0"
 
 [profile.release]
 lto = "thin"
