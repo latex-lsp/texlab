@@ -71,7 +71,7 @@ jobs:
         if: ${{ contains(matrix.os, 'ubuntu') }}
         run: ${{ format('tar -czvf {1} -C target/{0}/release texlab', matrix.target, matrix.archive) }}
       - name: Upload binary archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.target }}
           path: ${{ matrix.archive }}
