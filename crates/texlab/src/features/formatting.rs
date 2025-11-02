@@ -12,7 +12,7 @@ use self::{
 
 pub fn format_source_code(
     workspace: &Workspace,
-    uri: &lsp_types::Url,
+    uri: &url::Url,
     options: &lsp_types::FormattingOptions,
 ) -> Option<Vec<lsp_types::TextEdit>> {
     let document = workspace.lookup(uri)?;

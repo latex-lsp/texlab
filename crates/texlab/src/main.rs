@@ -4,8 +4,8 @@ use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use log::LevelFilter;
 use lsp_server::Connection;
-use lsp_types::Url;
 use texlab::Server;
+use url::Url;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, Parser)]
@@ -98,7 +98,9 @@ fn main() -> Result<()> {
             );
 
             if let Err(why) = ipc::send_request(params) {
-                eprintln!("Failed to send inverse search request to the main instance. Is the server running?");
+                eprintln!(
+                    "Failed to send inverse search request to the main instance. Is the server running?"
+                );
                 eprintln!("Details: {why:?}");
                 std::process::exit(-1);
             }

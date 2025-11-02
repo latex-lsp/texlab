@@ -1828,6 +1828,7 @@ dependencies = [
  "tempfile",
  "threadpool",
  "titlecase",
+ "url",
 ]
 
 [[package]]

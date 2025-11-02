@@ -1,11 +1,12 @@
-use base_db::{util::RenderedObject, MatchingAlgo, Workspace};
+use base_db::{MatchingAlgo, Workspace, util::RenderedObject};
 use completion::{ArgumentData, CompletionItem, CompletionItemData, EntryTypeData, FieldTypeData};
 use line_index::LineIndex;
 use rowan::ast::AstNode;
 use serde::{Deserialize, Serialize};
 use syntax::bibtex;
+use url::Url;
 
-use crate::util::{from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
+use crate::util::{ClientFlags, from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure};
 
 pub fn complete(
     workspace: &Workspace,
@@ -436,7 +437,7 @@ impl<'a> ItemBuilder<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ResolveInfo {
-    Citation { uri: lsp_types::Url, key: String },
+    Citation { uri: Url, key: String },
     Package,
     DocumentClass,
 }

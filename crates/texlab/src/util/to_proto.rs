@@ -141,7 +141,7 @@ pub fn diagnostic(
 
     fn make_conflict_info(
         workspace: &Workspace,
-        locations: &Vec<(lsp_types::Url, TextRange)>,
+        locations: &Vec<(url::Url, TextRange)>,
         object: &str,
     ) -> Option<Vec<lsp_types::DiagnosticRelatedInformation>> {
         let mut items = Vec::new();

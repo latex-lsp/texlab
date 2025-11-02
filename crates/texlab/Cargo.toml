@@ -63,6 +63,7 @@ syntax = { path = "../syntax" }
 tempfile.workspace = true
 threadpool = "1.8.1"
 titlecase.workspace = true
+url.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true

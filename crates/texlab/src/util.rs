@@ -6,7 +6,7 @@ pub mod to_proto;
 
 pub use self::client_flags::ClientFlags;
 
-pub fn normalize_uri(uri: &mut lsp_types::Url) {
+pub fn normalize_uri(uri: &mut url::Url) {
     if let Some(mut segments) = uri.path_segments() {
         if let Some(mut path) = segments.next().and_then(fix_drive_letter) {
             for segment in segments {
@@ -54,7 +54,7 @@ fn fix_drive_letter(text: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use lsp_types::Url;
+    use url::Url;
 
     use super::normalize_uri;
 
