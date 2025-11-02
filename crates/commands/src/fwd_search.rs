@@ -2,8 +2,8 @@ use std::{path::PathBuf, process::Stdio};
 
 use anyhow::Result;
 use base_db::{
-    deps::{self, ProjectRoot},
     Document, Workspace,
+    deps::{self, ProjectRoot},
 };
 use thiserror::Error;
 use url::Url;

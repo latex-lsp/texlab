@@ -1,4 +1,4 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use line_index::LineIndex;
 use syntax::bibtex;
 

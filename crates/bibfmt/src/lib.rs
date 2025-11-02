@@ -1,5 +1,5 @@
 use line_index::LineIndex;
-use rowan::{ast::AstNode, NodeOrToken};
+use rowan::{NodeOrToken, ast::AstNode};
 use syntax::bibtex::{self, HasName, HasType, HasValue};
 
 pub struct Options {

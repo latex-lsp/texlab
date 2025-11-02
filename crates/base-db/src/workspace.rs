@@ -9,7 +9,7 @@ use rowan::{TextLen, TextRange};
 use rustc_hash::{FxHashMap, FxHashSet};
 use url::Url;
 
-use crate::{deps, Config, Document, DocumentParams, Owner};
+use crate::{Config, Document, DocumentParams, Owner, deps};
 
 #[derive(Debug, Default)]
 pub struct Workspace {

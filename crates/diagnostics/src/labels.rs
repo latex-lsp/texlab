@@ -1,7 +1,7 @@
 use base_db::{
+    DocumentData, Workspace,
     semantics::tex::{Label, LabelKind},
     util::queries,
-    DocumentData, Workspace,
 };
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};

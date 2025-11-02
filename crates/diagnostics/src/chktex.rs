@@ -5,15 +5,15 @@ use std::{
 };
 
 use base_db::{
-    deps::{self, ProjectRoot},
     Document, Workspace,
+    deps::{self, ProjectRoot},
 };
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use line_index::LineCol;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{types::Diagnostic, ChktexError, ChktexSeverity};
+use crate::{ChktexError, ChktexSeverity, types::Diagnostic};
 
 #[derive(Debug)]
 pub struct Command {

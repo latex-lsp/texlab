@@ -243,7 +243,7 @@ static DEFAULT_GLOSSARY_REFERENCE_COMMANDS: &[&str] = &[
     "GLSuserv",
     "glsuservi",
     "Glsuservi",
-    "GLSuservi"
+    "GLSuservi",
 ];
 
 static DEFAULT_LABEL_DEFINITION_COMMANDS: &[&str] = &["label", "zlabel"];

@@ -1,9 +1,9 @@
 use base_db::semantics::Span;
-use rowan::{ast::AstNode, TokenAtOffset};
+use rowan::{TokenAtOffset, ast::AstNode};
 use syntax::bibtex::{self, HasName};
 
 use crate::{
-    util::CompletionBuilder, CompletionItem, CompletionItemData, CompletionParams, FieldTypeData,
+    CompletionItem, CompletionItemData, CompletionParams, FieldTypeData, util::CompletionBuilder,
 };
 
 pub fn complete_fields<'a>(

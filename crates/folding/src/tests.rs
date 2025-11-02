@@ -1,4 +1,4 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 
 fn check(input: &str, expect: Expect) {
     let fixture = test_utils::fixture::Fixture::parse(input);

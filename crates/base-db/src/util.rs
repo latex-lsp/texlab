@@ -5,6 +5,6 @@ mod regex_filter;
 
 pub use self::{
     expand::expand_relative_path,
-    label::{render_label, FloatKind, RenderedLabel, RenderedObject},
+    label::{FloatKind, RenderedLabel, RenderedObject, render_label},
     regex_filter::filter_regex_patterns,
 };

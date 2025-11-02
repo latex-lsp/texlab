@@ -1,6 +1,6 @@
 mod label;
 
-use base_db::{util::RenderedLabel, FeatureParams};
+use base_db::{FeatureParams, util::RenderedLabel};
 use rowan::{TextRange, TextSize};
 
 pub struct InlayHintParams<'a> {

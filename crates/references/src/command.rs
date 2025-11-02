@@ -1,4 +1,4 @@
-use base_db::{semantics::Span, DocumentLocation};
+use base_db::{DocumentLocation, semantics::Span};
 use rowan::ast::AstNode;
 use rustc_hash::FxHashSet;
 use syntax::latex;

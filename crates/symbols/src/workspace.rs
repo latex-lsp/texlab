@@ -4,7 +4,7 @@ use std::cmp::Reverse;
 
 use base_db::Workspace;
 
-use crate::{document_symbols, types::SymbolLocation, SymbolKind};
+use crate::{SymbolKind, document_symbols, types::SymbolLocation};
 
 use self::sort::ProjectOrdering;
 

@@ -1,10 +1,10 @@
 use base_db::semantics::bib::Semantics;
 use bibtex_utils::field::{
+    FieldParseCache,
     author::{AuthorField, AuthorFieldData},
     date::{DateField, DateFieldData},
     number::{NumberField, NumberFieldData},
     text::{TextField, TextFieldData},
-    FieldParseCache,
 };
 use rustc_hash::FxHashMap;
 use syntax::bibtex::{Entry, Field, HasName, HasType, HasValue, Value};

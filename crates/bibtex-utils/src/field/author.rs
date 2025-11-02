@@ -4,7 +4,7 @@ use human_name::Name;
 use itertools::Itertools;
 use syntax::bibtex::Value;
 
-use super::{text::TextFieldData, FieldParseCache};
+use super::{FieldParseCache, text::TextFieldData};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum AuthorField {

@@ -2,7 +2,7 @@ use base_db::semantics::Span;
 use syntax::bibtex;
 
 use crate::{
-    util::CompletionBuilder, CompletionItem, CompletionItemData, CompletionParams, EntryTypeData,
+    CompletionItem, CompletionItemData, CompletionParams, EntryTypeData, util::CompletionBuilder,
 };
 
 pub fn complete_entry_types<'a>(

@@ -1,6 +1,6 @@
 use base_db::{DocumentLocation, Workspace};
 
-use crate::util::{from_proto, to_proto, ClientFlags};
+use crate::util::{ClientFlags, from_proto, to_proto};
 
 pub fn goto_definition(
     workspace: &Workspace,

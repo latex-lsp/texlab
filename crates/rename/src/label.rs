@@ -1,5 +1,5 @@
 use base_db::{
-    semantics::{tex, Span},
+    semantics::{Span, tex},
     util::queries::{self, Object},
 };
 

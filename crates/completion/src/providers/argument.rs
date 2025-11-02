@@ -1,11 +1,11 @@
 use base_db::semantics::Span;
 use completion_data::included_packages;
-use rowan::{ast::AstNode, TokenAtOffset};
+use rowan::{TokenAtOffset, ast::AstNode};
 use syntax::latex;
 
 use crate::{
-    util::{is_inside_latex_curly, CompletionBuilder},
     ArgumentData, CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, is_inside_latex_curly},
 };
 
 pub fn complete_arguments<'a>(

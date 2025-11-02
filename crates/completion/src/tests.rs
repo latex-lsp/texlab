@@ -1,5 +1,5 @@
 use base_db::{Config, FeatureParams};
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use parser::SyntaxConfig;
 use rowan::TextRange;
 
@@ -2345,7 +2345,9 @@ fn test_custom_label_multiple_prefix_ref() {
 #[test]
 fn test_custom_glossary_reference_command() {
     let mut config = SyntaxConfig::default();
-    config.glossary_reference_commands.insert("glsed".to_string());
+    config
+        .glossary_reference_commands
+        .insert("glsed".to_string());
 
     check_with_syntax_config(
         config,

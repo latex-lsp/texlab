@@ -1,7 +1,7 @@
 use base_db::{
     semantics::{
-        tex::{Label, LabelKind},
         Span,
+        tex::{Label, LabelKind},
     },
     util::queries::Object,
 };
@@ -10,8 +10,8 @@ use rustc_hash::FxHashSet;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word, CompletionBuilder},
     CompletionParams,
+    util::{CompletionBuilder, find_curly_group_word},
 };
 
 pub fn complete_label_definitions<'a>(

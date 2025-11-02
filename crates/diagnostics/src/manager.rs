@@ -1,5 +1,5 @@
 use base_db::{
-    deps::Project, util::filter_regex_patterns, Document, DocumentData, Owner, Workspace,
+    Document, DocumentData, Owner, Workspace, deps::Project, util::filter_regex_patterns,
 };
 use multimap::MultiMap;
 use rowan::TextRange;

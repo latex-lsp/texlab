@@ -1,5 +1,5 @@
 use base_db::Document;
-use rowan::{ast::AstNode, TextRange, TextSize};
+use rowan::{TextRange, TextSize, ast::AstNode};
 use syntax::latex;
 
 #[derive(Debug)]

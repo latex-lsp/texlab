@@ -1,5 +1,5 @@
 use base_db::{Document, DocumentData};
-use rowan::{ast::AstNode, TextRange};
+use rowan::{TextRange, ast::AstNode};
 use syntax::{
     bibtex::{self, HasDelims, HasName},
     latex,

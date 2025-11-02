@@ -1,6 +1,6 @@
 use base_db::{BibDocumentData, Document};
 use multimap::MultiMap;
-use rowan::{ast::AstNode, TextRange};
+use rowan::{TextRange, ast::AstNode};
 use syntax::bibtex::{self, HasDelims, HasEq, HasName, HasType, HasValue};
 use url::Url;
 

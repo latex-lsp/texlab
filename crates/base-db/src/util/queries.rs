@@ -4,9 +4,9 @@ use rustc_hash::FxHashMap;
 use url::Url;
 
 use crate::{
+    Document, DocumentLocation, Workspace,
     deps::Project,
     semantics::{bib, tex},
-    Document, DocumentLocation, Workspace,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

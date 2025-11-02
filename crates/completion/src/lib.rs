@@ -2,10 +2,10 @@ mod providers;
 mod util;
 
 use base_db::{
+    Document, FeatureParams,
     data::{BibtexEntryType, BibtexFieldType},
     semantics::bib,
     util::RenderedObject,
-    Document, FeatureParams,
 };
 use rowan::{TextRange, TextSize};
 use util::CompletionBuilder;

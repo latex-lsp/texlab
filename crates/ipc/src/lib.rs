@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 #[cfg(unix)]
 use std::os::unix::net::{UnixListener, UnixStream};

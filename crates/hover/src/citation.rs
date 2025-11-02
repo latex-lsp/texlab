@@ -1,4 +1,4 @@
-use base_db::{util::queries, DocumentData};
+use base_db::{DocumentData, util::queries};
 use rowan::ast::AstNode;
 use syntax::bibtex;
 

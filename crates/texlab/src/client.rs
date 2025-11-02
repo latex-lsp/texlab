@@ -1,15 +1,15 @@
 use std::sync::{
-    atomic::{AtomicI32, Ordering},
     Arc,
+    atomic::{AtomicI32, Ordering},
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use crossbeam_channel::Sender;
 use lsp_server::{ErrorCode, Message, Request, RequestId, Response};
-use lsp_types::{notification::ShowMessage, MessageType, ShowMessageParams};
+use lsp_types::{MessageType, ShowMessageParams, notification::ShowMessage};
 use parking_lot::Mutex;
 use rustc_hash::FxHashMap;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::server::options::Options;
 
