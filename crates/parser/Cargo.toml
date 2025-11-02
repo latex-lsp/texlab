@@ -9,16 +9,16 @@ rust-version.workspace = true
 [dependencies]
 distro = { path = "../distro" }
 log.workspace = true
-logos = "0.15.0"
+logos.workspace = true
 once_cell.workspace = true
-pathdiff = "0.2.3"
+pathdiff.workspace = true
 regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
 shellexpand.workspace = true
 syntax = { path = "../syntax" }
 tempfile.workspace = true
-versions = "6.3.2"
+versions.workspace = true
 
 [dev-dependencies]
 expect-test.workspace = true

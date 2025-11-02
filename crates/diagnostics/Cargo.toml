@@ -8,12 +8,12 @@ rust-version.workspace = true
 
 [dependencies]
 base-db = { path = "../base-db" }
-encoding_rs = "0.8.35"
-encoding_rs_io = "0.1.7"
+encoding_rs.workspace = true
+encoding_rs_io.workspace = true
 itertools.workspace = true
 line-index = { path = "../line-index" }
 log.workspace = true
-multimap = "0.10.1"
+multimap.workspace = true
 once_cell.workspace = true
 regex.workspace = true
 rowan.workspace = true
