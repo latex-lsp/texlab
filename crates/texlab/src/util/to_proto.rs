@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use base_db::{
     Config, Document, DocumentLocation, HoverSymbolConfig, Workspace,
@@ -17,6 +17,10 @@ use rowan::TextRange;
 use syntax::BuildErrorLevel;
 
 use super::{ClientFlags, line_index_ext::LineIndexExt};
+
+pub fn uri(url: &url::Url) -> lsp_types::Uri {
+    lsp_types::Uri::from_str(url.as_str()).expect("valid URL")
+}
 
 pub fn diagnostic(
     workspace: &Workspace,
@@ -152,7 +156,7 @@ pub fn diagnostic(
                 .line_col_lsp_range(*range)?;
 
             let message = format!("conflicting {object} defined here");
-            let location = lsp_types::Location::new(uri.clone(), range);
+            let location = lsp_types::Location::new(self::uri(&uri), range);
             items.push(lsp_types::DiagnosticRelatedInformation { location, message });
         }
 
@@ -262,7 +266,7 @@ pub fn document_link(
     Some(lsp_types::DocumentLink {
         data: None,
         tooltip: None,
-        target: Some(link.document.uri.clone()),
+        target: Some(self::uri(&link.document.uri)),
         range: line_index.line_col_lsp_range(link.range)?,
     })
 }
@@ -300,7 +304,7 @@ pub fn location_link(
     let origin_selection_range = line_index.line_col_lsp_range(result.origin_selection_range);
 
     let target_line_index = &result.target.line_index;
-    let target_uri = result.target.uri.clone();
+    let target_uri = self::uri(&result.target.uri);
     let target_range = target_line_index.line_col_lsp_range(result.target_range)?;
     let target_selection_range =
         target_line_index.line_col_lsp_range(result.target_selection_range)?;
@@ -348,7 +352,7 @@ pub fn symbol_information(
         name: symbol.name,
         kind: symbol_kind(symbol.kind),
         deprecated: Some(false),
-        location: lsp_types::Location::new(document.uri.clone(), range),
+        location: lsp_types::Location::new(self::uri(&document.uri), range),
         tags: None,
         container_name: None,
     });
@@ -424,7 +428,7 @@ pub fn workspace_edit(result: RenameResult, new_name: &str) -> lsp_types::Worksp
             })
             .for_each(|(range, new_name)| edits.push(lsp_types::TextEdit::new(range, new_name)));
 
-        changes.insert(document.uri.clone(), edits);
+        changes.insert(self::uri(&document.uri), edits);
     }
 
     lsp_types::WorkspaceEdit::new(changes)
@@ -433,7 +437,7 @@ pub fn workspace_edit(result: RenameResult, new_name: &str) -> lsp_types::Worksp
 pub fn location(location: DocumentLocation) -> Option<lsp_types::Location> {
     let document = location.document;
     let range = document.line_index.line_col_lsp_range(location.range)?;
-    Some(lsp_types::Location::new(document.uri.clone(), range))
+    Some(lsp_types::Location::new(self::uri(&document.uri), range))
 }
 
 pub fn document_highlight(

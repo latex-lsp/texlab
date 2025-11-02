@@ -1,7 +1,7 @@
 use lsp_types::{
-    notification::Progress, request::WorkDoneProgressCreate, NumberOrString, ProgressParams,
-    ProgressParamsValue, Url, WorkDoneProgress, WorkDoneProgressBegin,
-    WorkDoneProgressCreateParams, WorkDoneProgressEnd,
+    NumberOrString, ProgressParams, ProgressParamsValue, WorkDoneProgress, WorkDoneProgressBegin,
+    WorkDoneProgressCreateParams, WorkDoneProgressEnd, notification::Progress,
+    request::WorkDoneProgressCreate,
 };
 
 use crate::LspClient;
@@ -24,8 +24,7 @@ impl Drop for ProgressReporter {
 }
 
 impl ProgressReporter {
-    //pub fn new_build_progress(client: LspClient, token: i32, uri: &Url) -> Self {
-    pub fn new(client: LspClient, token: i32, uri: &Url) -> Self {
+    pub fn new(client: LspClient, token: i32, uri: &lsp_types::Uri) -> Self {
         let _ = client.send_request::<WorkDoneProgressCreate>(WorkDoneProgressCreateParams {
             token: NumberOrString::Number(token),
         });

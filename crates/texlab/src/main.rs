@@ -1,4 +1,4 @@
-use std::{fs::OpenOptions, io, path::PathBuf};
+use std::{fs::OpenOptions, io, path::PathBuf, str::FromStr};
 
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
@@ -93,7 +93,9 @@ fn main() -> Result<()> {
             };
 
             let params = lsp_types::TextDocumentPositionParams::new(
-                lsp_types::TextDocumentIdentifier::new(uri),
+                lsp_types::TextDocumentIdentifier::new(
+                    lsp_types::Uri::from_str(uri.as_str()).unwrap(),
+                ),
                 lsp_types::Position::new(line, 0),
             );
 
