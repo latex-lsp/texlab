@@ -1,11 +1,13 @@
-use base_db::{util::RenderedObject, MatchingAlgo, Workspace};
+use base_db::{MatchingAlgo, Workspace, util::RenderedObject};
 use completion::{ArgumentData, CompletionItem, CompletionItemData, EntryTypeData, FieldTypeData};
 use line_index::LineIndex;
 use rowan::ast::AstNode;
 use serde::{Deserialize, Serialize};
 use syntax::bibtex;
 
-use crate::util::{from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure, ClientFlags};
+use crate::util::{
+    ClientFlags, from_proto, line_index_ext::LineIndexExt, lsp_enums::Structure, to_proto,
+};
 
 pub fn complete(
     workspace: &Workspace,
@@ -58,7 +60,7 @@ pub fn resolve(workspace: &Workspace, item: &mut lsp_types::CompletionItem) -> O
             ));
         }
         ResolveInfo::Citation { uri, key } => {
-            let data = workspace.lookup(&uri)?.data.as_bib()?;
+            let data = workspace.lookup(&from_proto::url(&uri))?.data.as_bib()?;
             let root = bibtex::Root::cast(data.root_node())?;
             let entry = root.find_entry(&key)?;
             let value = citeproc::render(&entry, &data.semantics)?;
@@ -229,7 +231,7 @@ impl<'a> ItemBuilder<'a> {
         let text_edit = lsp_types::TextEdit::new(range, data.entry.name.text.clone());
         result.text_edit = Some(text_edit.into());
         let resolve_info = serde_json::to_value(ResolveInfo::Citation {
-            uri: data.document.uri.clone(),
+            uri: to_proto::uri(&data.document.uri),
             key: data.entry.name.text.clone(),
         });
         result.data = Some(resolve_info.unwrap());
@@ -436,7 +438,7 @@ impl<'a> ItemBuilder<'a> {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ResolveInfo {
-    Citation { uri: lsp_types::Url, key: String },
+    Citation { uri: lsp_types::Uri, key: String },
     Package,
     DocumentClass,
 }

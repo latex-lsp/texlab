@@ -1,11 +1,11 @@
-use std::{fs::OpenOptions, io, path::PathBuf};
+use std::{fs::OpenOptions, io, path::PathBuf, str::FromStr};
 
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use log::LevelFilter;
 use lsp_server::Connection;
-use lsp_types::Url;
 use texlab::Server;
+use url::Url;
 
 /// An implementation of the Language Server Protocol for LaTeX
 #[derive(Debug, Parser)]
@@ -93,12 +93,16 @@ fn main() -> Result<()> {
             };
 
             let params = lsp_types::TextDocumentPositionParams::new(
-                lsp_types::TextDocumentIdentifier::new(uri),
+                lsp_types::TextDocumentIdentifier::new(
+                    lsp_types::Uri::from_str(uri.as_str()).unwrap(),
+                ),
                 lsp_types::Position::new(line, 0),
             );
 
             if let Err(why) = ipc::send_request(params) {
-                eprintln!("Failed to send inverse search request to the main instance. Is the server running?");
+                eprintln!(
+                    "Failed to send inverse search request to the main instance. Is the server running?"
+                );
                 eprintln!("Details: {why:?}");
                 std::process::exit(-1);
             }

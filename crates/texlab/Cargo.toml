@@ -44,7 +44,7 @@ line-index = { path = "../line-index" }
 links = { path = "../links" }
 log.workspace = true
 lsp-server = "0.7.9"
-lsp-types = "0.95.1"
+lsp-types = "0.97.0"
 notify-debouncer-full.workspace = true
 notify.workspace = true
 parking_lot = "0.12.4"
@@ -63,6 +63,7 @@ syntax = { path = "../syntax" }
 tempfile.workspace = true
 threadpool = "1.8.1"
 titlecase.workspace = true
+url.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true

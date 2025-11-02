@@ -18,9 +18,16 @@ use crate::{
     server::options::{
         BibtexFormatter, CompletionMatcher, HoverSymbolOptions, LatexFormatter, Options,
     },
+    util::normalize_uri,
 };
 
 use super::{ClientFlags, line_index_ext::LineIndexExt};
+
+pub fn url(uri: &lsp_types::Uri) -> url::Url {
+    let mut result = url::Url::parse(uri.as_str()).expect("valid URI");
+    normalize_uri(&mut result);
+    result
+}
 
 pub fn client_flags(
     capabilities: lsp_types::ClientCapabilities,
@@ -218,7 +225,7 @@ pub fn feature_params(
     workspace: &'_ Workspace,
     text_document: lsp_types::TextDocumentIdentifier,
 ) -> Option<FeatureParams<'_>> {
-    let document = workspace.lookup(&text_document.uri)?;
+    let document = workspace.lookup(&url(&text_document.uri))?;
     Some(FeatureParams::new(workspace, document))
 }
 

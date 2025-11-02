@@ -6,12 +6,12 @@ mod progress;
 use std::{
     collections::HashMap,
     path::PathBuf,
-    sync::{atomic::AtomicI32, Arc},
+    sync::{Arc, atomic::AtomicI32},
     time::Duration,
 };
 
 use anyhow::Result;
-use base_db::{deps, Owner, Workspace};
+use base_db::{Owner, Workspace, deps};
 use commands::{BuildCommand, CleanCommand, CleanTarget, ForwardSearch};
 use crossbeam_channel::{Receiver, Sender};
 use distro::{Distro, Language};
@@ -22,9 +22,10 @@ use notify::event::ModifyKind;
 use notify_debouncer_full::{DebouncedEvent, Debouncer, RecommendedCache};
 use parking_lot::{Mutex, RwLock};
 use rustc_hash::FxHashSet;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value};
 use threadpool::ThreadPool;
+use url::Url;
 
 use crate::{
     client::LspClient,
@@ -32,7 +33,7 @@ use crate::{
         completion, definition, folding, formatting, highlight, hover, inlay_hint, link, reference,
         rename, symbols,
     },
-    util::{from_proto, line_index_ext::LineIndexExt, normalize_uri, to_proto, ClientFlags},
+    util::{ClientFlags, from_proto, line_index_ext::LineIndexExt, normalize_uri, to_proto},
 };
 
 use self::{
@@ -83,8 +84,9 @@ impl Server {
             .workspace_folders
             .unwrap_or_default()
             .into_iter()
-            .filter(|folder| folder.uri.scheme() == "file")
-            .flat_map(|folder| folder.uri.to_file_path())
+            .map(|folder| from_proto::url(&folder.uri))
+            .filter(|folder| folder.scheme() == "file")
+            .flat_map(|folder| folder.to_file_path())
             .collect();
 
         workspace.set_folders(workspace_folders);
@@ -275,7 +277,7 @@ impl Server {
 
             let version = None;
             let params = PublishDiagnosticsParams {
-                uri,
+                uri: to_proto::uri(&uri),
                 diagnostics,
                 version,
             };
@@ -354,9 +356,7 @@ impl Server {
     }
 
     fn did_open(&mut self, params: DidOpenTextDocumentParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
-
+        let uri = from_proto::url(&params.text_document.uri);
         let language_id = &params.text_document.language_id;
         let language = Language::from_id(language_id).unwrap_or(Language::Tex);
         self.workspace.write().open(
@@ -382,8 +382,7 @@ impl Server {
     }
 
     fn did_change(&mut self, params: DidChangeTextDocumentParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
 
         let mut workspace = self.workspace.write();
 
@@ -427,11 +426,10 @@ impl Server {
     }
 
     fn did_save(&mut self, params: DidSaveTextDocumentParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
 
         if self.workspace.read().config().build.on_save {
-            let text_document = TextDocumentIdentifier::new(uri.clone());
+            let text_document = params.text_document;
             let params = BuildParams {
                 text_document,
                 position: None,
@@ -450,8 +448,7 @@ impl Server {
     }
 
     fn did_close(&mut self, params: DidCloseTextDocumentParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
         self.workspace.write().close(&uri);
         self.publish_diagnostics_with_delay();
         Ok(())
@@ -475,17 +472,14 @@ impl Server {
         Some(())
     }
 
-    fn document_link(&self, id: RequestId, mut params: DocumentLinkParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
+    fn document_link(&self, id: RequestId, params: DocumentLinkParams) -> Result<()> {
         self.run_query(id, move |workspace| {
             link::find_all(workspace, params).unwrap_or_default()
         });
         Ok(())
     }
 
-    fn document_symbols(&self, id: RequestId, mut params: DocumentSymbolParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
-
+    fn document_symbols(&self, id: RequestId, params: DocumentSymbolParams) -> Result<()> {
         let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |workspace| {
             symbols::document_symbols(workspace, params, &client_flags)
@@ -502,8 +496,7 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&self, id: RequestId, mut params: CompletionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
+    fn completion(&self, id: RequestId, params: CompletionParams) -> Result<()> {
         let position = params.text_document_position.position;
         let client_flags = Arc::clone(&self.client_flags);
         self.update_cursor(&params.text_document_position.text_document.uri, position);
@@ -514,7 +507,8 @@ impl Server {
         Ok(())
     }
 
-    fn update_cursor(&self, uri: &Url, position: Position) {
+    fn update_cursor(&self, uri: &lsp_types::Uri, position: Position) {
+        let uri = &from_proto::url(uri);
         self.workspace.write().set_cursor(
             uri,
             LineCol {
@@ -533,8 +527,7 @@ impl Server {
         Ok(())
     }
 
-    fn folding_range(&self, id: RequestId, mut params: FoldingRangeParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
+    fn folding_range(&self, id: RequestId, params: FoldingRangeParams) -> Result<()> {
         let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |db| {
             folding::find_all(db, params, &client_flags).unwrap_or_default()
@@ -543,8 +536,7 @@ impl Server {
         Ok(())
     }
 
-    fn references(&self, id: RequestId, mut params: ReferenceParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
+    fn references(&self, id: RequestId, params: ReferenceParams) -> Result<()> {
         self.run_query(id, move |db| {
             reference::find_all(db, params).unwrap_or_default()
         });
@@ -552,8 +544,7 @@ impl Server {
         Ok(())
     }
 
-    fn hover(&mut self, id: RequestId, mut params: HoverParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position_params.text_document.uri);
+    fn hover(&mut self, id: RequestId, params: HoverParams) -> Result<()> {
         let uri_and_pos = &params.text_document_position_params;
         let client_flags = Arc::clone(&self.client_flags);
         self.update_cursor(&uri_and_pos.text_document.uri, uri_and_pos.position);
@@ -561,8 +552,7 @@ impl Server {
         Ok(())
     }
 
-    fn goto_definition(&self, id: RequestId, mut params: GotoDefinitionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position_params.text_document.uri);
+    fn goto_definition(&self, id: RequestId, params: GotoDefinitionParams) -> Result<()> {
         let client_flags = Arc::clone(&self.client_flags);
         self.run_query(id, move |db| {
             definition::goto_definition(db, params, &client_flags)
@@ -570,20 +560,17 @@ impl Server {
         Ok(())
     }
 
-    fn prepare_rename(&self, id: RequestId, mut params: TextDocumentPositionParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
+    fn prepare_rename(&self, id: RequestId, params: TextDocumentPositionParams) -> Result<()> {
         self.run_query(id, move |db| rename::prepare_rename_all(db, params));
         Ok(())
     }
 
-    fn rename(&self, id: RequestId, mut params: RenameParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position.text_document.uri);
+    fn rename(&self, id: RequestId, params: RenameParams) -> Result<()> {
         self.run_query(id, move |db| rename::rename_all(db, params));
         Ok(())
     }
 
-    fn document_highlight(&self, id: RequestId, mut params: DocumentHighlightParams) -> Result<()> {
-        normalize_uri(&mut params.text_document_position_params.text_document.uri);
+    fn document_highlight(&self, id: RequestId, params: DocumentHighlightParams) -> Result<()> {
         self.run_query(id, move |db| {
             highlight::find_all(db, params).unwrap_or_default()
         });
@@ -592,8 +579,7 @@ impl Server {
     }
 
     fn formatting(&self, id: RequestId, params: DocumentFormattingParams) -> Result<()> {
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
         self.run_query(id, move |db| {
             formatting::format_source_code(db, &uri, &params.options)
         });
@@ -652,8 +638,7 @@ impl Server {
         Ok(())
     }
 
-    fn inlay_hints(&self, id: RequestId, mut params: InlayHintParams) -> Result<()> {
-        normalize_uri(&mut params.text_document.uri);
+    fn inlay_hints(&self, id: RequestId, params: InlayHintParams) -> Result<()> {
         self.run_query(id, move |db| {
             inlay_hint::find_all(db, params).unwrap_or_default()
         });
@@ -678,8 +663,7 @@ impl Server {
         static LOCK: Mutex<()> = Mutex::new(());
         static NEXT_TOKEN: AtomicI32 = AtomicI32::new(1);
 
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
 
         let workspace = self.workspace.read();
 
@@ -700,7 +684,11 @@ impl Server {
 
             let progress_reporter = if progress {
                 let token = NEXT_TOKEN.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                Some(ProgressReporter::new(client.clone(), token, &uri))
+                Some(ProgressReporter::new(
+                    client.clone(),
+                    token,
+                    &params.text_document.uri,
+                ))
             } else {
                 None
             };
@@ -873,10 +861,10 @@ impl Server {
         target: CleanTarget,
     ) -> Result<CleanCommand> {
         let workspace = self.workspace.read();
-        let mut params = self.parse_command_params::<TextDocumentIdentifier>(params.arguments)?;
-        normalize_uri(&mut params.uri);
-        let Some(document) = workspace.lookup(&params.uri) else {
-            anyhow::bail!("Document {} is not opened!", params.uri)
+        let params = self.parse_command_params::<TextDocumentIdentifier>(params.arguments)?;
+        let uri = from_proto::url(&params.uri);
+        let Some(document) = workspace.lookup(&uri) else {
+            anyhow::bail!("Document {uri} is not opened!")
         };
 
         CleanCommand::new(&workspace, document, target)
@@ -885,11 +873,10 @@ impl Server {
     fn change_environment(&self, params: ExecuteCommandParams) -> Result<ApplyWorkspaceEditParams> {
         let workspace = self.workspace.read();
         let params = self.parse_command_params::<RenameParams>(params.arguments)?;
-        let mut uri = params.text_document_position.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document_position.text_document.uri);
 
         let Some(document) = workspace.lookup(&uri) else {
-            anyhow::bail!("Document {} is not opened!", uri)
+            anyhow::bail!("Document {uri} is not opened!")
         };
 
         let line_index = &document.line_index;
@@ -907,7 +894,7 @@ impl Server {
 
         let mut changes = HashMap::new();
         changes.insert(
-            document.uri.clone(),
+            to_proto::uri(&document.uri),
             vec![
                 TextEdit::new(range1, params.new_name.clone()),
                 TextEdit::new(range2, params.new_name.clone()),
@@ -931,11 +918,10 @@ impl Server {
     fn find_environments(&self, params: ExecuteCommandParams) -> Result<Vec<EnvironmentLocation>> {
         let workspace = self.workspace.read();
         let params = self.parse_command_params::<TextDocumentPositionParams>(params.arguments)?;
-        let mut uri = params.text_document.uri;
-        normalize_uri(&mut uri);
+        let uri = from_proto::url(&params.text_document.uri);
 
         let Some(document) = workspace.lookup(&uri) else {
-            anyhow::bail!("Document {} is not opened!", uri)
+            anyhow::bail!("Document {uri} is not opened!")
         };
 
         let line_index = &document.line_index;
@@ -959,7 +945,9 @@ impl Server {
 
     fn inverse_search(&self, params: TextDocumentPositionParams) -> Result<()> {
         if !self.client_flags.show_document {
-            log::warn!("Inverse search request received although the client does not support window/showDocument: {params:?}");
+            log::warn!(
+                "Inverse search request received although the client does not support window/showDocument: {params:?}"
+            );
         }
 
         let position = lsp_types::Position::new(params.position.line, 0);
@@ -1036,7 +1024,7 @@ impl Server {
                                 .on::<Formatting, _>(|id, params| self.formatting(id, params))?
                                 .on::<BuildRequest, _>(|id, params| self.build(Some(id), params))?
                                 .on::<ForwardSearchRequest, _>(|id, params| {
-                                    self.forward_search(Some(id), params.text_document.uri, Some(params.position))
+                                    self.forward_search(Some(id), from_proto::url(&params.text_document.uri), Some(params.position))
                                 })?
                                 .on::<ExecuteCommand,_>(|id, params| self.execute_command(id, params))?
                                 .on::<SemanticTokensRangeRequest, _>(|id, params| {
