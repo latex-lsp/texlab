@@ -1,6 +1,6 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 
-use crate::{parse_latex, SyntaxConfig};
+use crate::{SyntaxConfig, parse_latex};
 
 fn check(input: &str, expect: Expect) {
     let root = syntax::latex::SyntaxNode::new_root(parse_latex(input, &SyntaxConfig::default()));

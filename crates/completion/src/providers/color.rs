@@ -2,8 +2,8 @@ use rowan::ast::AstNode;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word, CompletionBuilder},
     CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, find_curly_group_word},
 };
 
 pub fn complete_colors<'a>(

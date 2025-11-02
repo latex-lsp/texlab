@@ -1,14 +1,14 @@
 use base_db::{
-    semantics::{tex::LabelKind, Span},
-    util::{render_label, RenderedObject},
     DocumentData,
+    semantics::{Span, tex::LabelKind},
+    util::{RenderedObject, render_label},
 };
 use rowan::ast::AstNode;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word, find_curly_group_word_list, CompletionBuilder},
     CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, find_curly_group_word, find_curly_group_word_list},
 };
 
 fn trim_prefix<'a>(prefix: Option<&'a str>, text: &'a str) -> &'a str {

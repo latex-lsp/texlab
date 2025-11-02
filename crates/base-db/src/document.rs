@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use distro::Language;
 use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
-use syntax::{bibtex, file_list::FileList, latex, latexmkrc::LatexmkrcData, BuildError};
+use syntax::{BuildError, bibtex, file_list::FileList, latex, latexmkrc::LatexmkrcData};
 use url::Url;
 
-use crate::{semantics, Config};
+use crate::{Config, semantics};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Owner {

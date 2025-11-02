@@ -4,15 +4,16 @@ use std::{
 };
 
 use base_db::{
+    DocumentData, FeatureParams,
     deps::{self, ProjectRoot},
-    util, DocumentData, FeatureParams,
+    util,
 };
-use rowan::{ast::AstNode, TextLen, TextRange};
+use rowan::{TextLen, TextRange, ast::AstNode};
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word_list, CompletionBuilder},
     CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, find_curly_group_word_list},
 };
 
 pub fn complete_includes<'a>(

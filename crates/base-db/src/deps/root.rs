@@ -3,7 +3,7 @@ use std::sync::Arc;
 use distro::FileNameDB;
 use url::Url;
 
-use crate::{util, DocumentData, Workspace};
+use crate::{DocumentData, Workspace, util};
 
 use super::graph::HOME_DIR;
 

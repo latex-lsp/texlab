@@ -5,9 +5,9 @@ use rowan::TextRange;
 use self::RenderedObject::*;
 
 use crate::{
+    Workspace,
     deps::Project,
     semantics::tex::{Label, LabelObject},
-    Workspace,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

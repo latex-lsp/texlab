@@ -1,7 +1,7 @@
 mod bib;
 mod tex;
 
-use base_db::{deps::Project, util, Document, DocumentData, SymbolConfig, Workspace};
+use base_db::{Document, DocumentData, SymbolConfig, Workspace, deps::Project, util};
 
 use crate::Symbol;
 

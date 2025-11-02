@@ -1,4 +1,4 @@
-use rowan::{ast::AstNode, TextRange};
+use rowan::{TextRange, ast::AstNode};
 use rustc_hash::FxHashSet;
 use syntax::latex::{self, HasBrack, HasCurly};
 use titlecase::titlecase;

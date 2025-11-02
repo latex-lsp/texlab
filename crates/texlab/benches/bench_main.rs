@@ -1,5 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use parser::{parse_latex, SyntaxConfig};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use parser::{SyntaxConfig, parse_latex};
 
 const CODE: &str = include_str!("../../../texlab.tex");
 

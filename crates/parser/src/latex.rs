@@ -6,8 +6,8 @@ use syntax::latex::SyntaxKind::{self, *};
 use crate::SyntaxConfig;
 
 use self::lexer::{
-    types::{CommandName, ParagraphLevel, SectionLevel, Token},
     Lexer,
+    types::{CommandName, ParagraphLevel, SectionLevel, Token},
 };
 
 #[derive(Debug, Clone, Copy)]

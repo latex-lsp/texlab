@@ -1,7 +1,7 @@
 use base_db::{
-    semantics::{bib, tex, Span},
-    util::queries::{self},
     DocumentData,
+    semantics::{Span, bib, tex},
+    util::queries::{self},
 };
 
 use crate::{RenameBuilder, RenameParams};

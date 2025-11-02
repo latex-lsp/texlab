@@ -1,5 +1,5 @@
-use base_db::{semantics::Span, Document, DocumentData};
-use rowan::{ast::AstNode, TextRange, TextSize};
+use base_db::{Document, DocumentData, semantics::Span};
+use rowan::{TextRange, TextSize, ast::AstNode};
 use syntax::latex;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -43,7 +43,7 @@ pub fn find_environments(document: &Document, offset: TextSize) -> Vec<Environme
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::{Expect, expect};
     use test_utils::fixture::Fixture;
 
     use crate::find_environments;

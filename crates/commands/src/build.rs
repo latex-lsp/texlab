@@ -7,8 +7,8 @@ use std::{
 
 use anyhow::Result;
 use base_db::{
-    deps::{self, ProjectRoot},
     Workspace,
+    deps::{self, ProjectRoot},
 };
 use bstr::io::BufReadExt;
 use crossbeam_channel::Sender;

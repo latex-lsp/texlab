@@ -1,5 +1,5 @@
 use base_db::semantics::bib::Semantics;
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use parser::parse_bibtex;
 use rowan::ast::AstNode;
 use syntax::bibtex;

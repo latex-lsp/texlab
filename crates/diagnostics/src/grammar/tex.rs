@@ -1,6 +1,6 @@
 use base_db::{Config, Document, TexDocumentData};
 use multimap::MultiMap;
-use rowan::{ast::AstNode, NodeOrToken, TextRange};
+use rowan::{NodeOrToken, TextRange, ast::AstNode};
 use syntax::latex;
 use url::Url;
 

@@ -1,5 +1,5 @@
 use itertools::{EitherOrBoth, Itertools};
-use rowan::{ast::AstNode, TextRange};
+use rowan::{TextRange, ast::AstNode};
 
 use super::{
     LatexLanguage,

@@ -1,7 +1,7 @@
 use base_db::{
+    FeatureParams,
     semantics::tex::{Label, LabelKind},
     util::{queries::Object, render_label},
-    FeatureParams,
 };
 use rustc_hash::FxHashMap;
 

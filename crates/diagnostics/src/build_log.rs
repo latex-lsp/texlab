@@ -1,4 +1,4 @@
-use base_db::{deps, Document, Workspace};
+use base_db::{Document, Workspace, deps};
 use line_index::LineCol;
 use multimap::MultiMap;
 use rowan::{TextLen, TextRange, TextSize};

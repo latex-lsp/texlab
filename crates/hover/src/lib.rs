@@ -7,9 +7,9 @@ mod package;
 mod string_ref;
 
 use base_db::{
+    FeatureParams,
     data::{BibtexEntryType, BibtexFieldType},
     util::RenderedLabel,
-    FeatureParams,
 };
 use rowan::{TextRange, TextSize};
 

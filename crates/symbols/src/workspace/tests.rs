@@ -1,4 +1,4 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use test_utils::fixture::Fixture;
 
 use crate::workspace_symbols;

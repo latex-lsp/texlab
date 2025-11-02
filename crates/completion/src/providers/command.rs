@@ -1,11 +1,11 @@
-use base_db::{semantics::Span, DocumentData};
+use base_db::{DocumentData, semantics::Span};
 use completion_data::included_packages;
 use rowan::{TextRange, TextSize};
 use syntax::{bibtex, latex};
 
 use crate::{
-    util::{CompletionBuilder, ProviderContext},
     CommandData, CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, ProviderContext},
 };
 
 static DELIMITERS: &[(&str, &str)] = &[("(", ")"), ("[", "]"), ("{", "\\}")];

@@ -1,7 +1,7 @@
 use base_db::{
+    DocumentLocation,
     semantics::tex,
     util::queries::{self, Object},
-    DocumentLocation,
 };
 
 use crate::{Reference, ReferenceContext, ReferenceKind};

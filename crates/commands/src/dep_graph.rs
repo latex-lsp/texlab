@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use anyhow::Result;
-use base_db::{deps::Edge, Workspace};
+use base_db::{Workspace, deps::Edge};
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 

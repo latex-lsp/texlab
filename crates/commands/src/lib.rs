@@ -8,7 +8,7 @@ mod placeholders;
 
 pub use self::{
     build::{BuildCommand, BuildError},
-    change_env::{change_environment, ChangeEnvironmentResult},
+    change_env::{ChangeEnvironmentResult, change_environment},
     clean::{CleanCommand, CleanTarget},
     dep_graph::show_dependency_graph,
     find_envs::find_environments,

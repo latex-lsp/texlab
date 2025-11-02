@@ -2,7 +2,7 @@ use std::fmt;
 
 use syntax::bibtex::Value;
 
-use super::{text::TextFieldData, FieldParseCache};
+use super::{FieldParseCache, text::TextFieldData};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum NumberField {

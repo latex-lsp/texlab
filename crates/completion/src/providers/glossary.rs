@@ -3,8 +3,8 @@ use rowan::ast::AstNode;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word, CompletionBuilder, ProviderContext},
     CompletionItem, CompletionItemData, CompletionParams, GlossaryEntryData,
+    util::{CompletionBuilder, ProviderContext, find_curly_group_word},
 };
 
 pub fn complete_acronyms<'a>(

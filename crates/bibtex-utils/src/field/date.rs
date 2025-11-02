@@ -3,7 +3,7 @@ use std::{fmt, ops::Add, str::FromStr};
 use chrono::{Datelike, Month, NaiveDate};
 use syntax::bibtex::Value;
 
-use super::{text::TextFieldData, FieldParseCache};
+use super::{FieldParseCache, text::TextFieldData};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum DateField {

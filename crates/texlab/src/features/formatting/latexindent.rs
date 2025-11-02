@@ -3,7 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use base_db::{deps::ProjectRoot, Document, LatexIndentConfig, Workspace};
+use base_db::{Document, LatexIndentConfig, Workspace, deps::ProjectRoot};
 use distro::Language;
 use rowan::TextLen;
 use tempfile::tempdir;

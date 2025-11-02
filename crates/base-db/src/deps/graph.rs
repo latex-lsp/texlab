@@ -7,7 +7,7 @@ use percent_encoding::percent_decode_str;
 use rustc_hash::FxHashSet;
 use url::Url;
 
-use crate::{semantics, util, Document, Workspace};
+use crate::{Document, Workspace, semantics, util};
 
 use super::ProjectRoot;
 

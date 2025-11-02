@@ -1,6 +1,6 @@
 use base_db::{
-    deps::{self, EdgeData},
     DocumentLocation, FeatureParams,
+    deps::{self, EdgeData},
 };
 
 pub(super) fn find_links<'a>(

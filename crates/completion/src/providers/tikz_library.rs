@@ -2,8 +2,8 @@ use rowan::ast::AstNode;
 use syntax::latex;
 
 use crate::{
-    util::{find_curly_group_word_list, CompletionBuilder},
     CompletionItem, CompletionItemData, CompletionParams,
+    util::{CompletionBuilder, find_curly_group_word_list},
 };
 
 pub fn complete_tikz_libraries<'a>(

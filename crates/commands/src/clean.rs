@@ -1,7 +1,7 @@
 use std::process::Stdio;
 
 use anyhow::Result;
-use base_db::{deps::ProjectRoot, Document, Workspace};
+use base_db::{Document, Workspace, deps::ProjectRoot};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum CleanTarget {

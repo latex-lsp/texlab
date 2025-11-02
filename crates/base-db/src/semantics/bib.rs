@@ -1,6 +1,6 @@
 use bibtex_utils::field::text::TextFieldData;
 use itertools::Itertools;
-use rowan::{ast::AstNode, TextRange};
+use rowan::{TextRange, ast::AstNode};
 use rustc_hash::FxHashMap;
 use syntax::bibtex::{self, HasName, HasType, HasValue};
 

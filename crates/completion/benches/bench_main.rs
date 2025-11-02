@@ -1,6 +1,6 @@
 use base_db::{FeatureParams, Owner, Workspace};
 use completion::CompletionParams;
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use distro::Language;
 use line_index::LineCol;
 use rowan::TextSize;

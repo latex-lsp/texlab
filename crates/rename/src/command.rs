@@ -1,4 +1,4 @@
-use base_db::{semantics::Span, DocumentData};
+use base_db::{DocumentData, semantics::Span};
 use rowan::{TextRange, TextSize};
 use syntax::latex;
 

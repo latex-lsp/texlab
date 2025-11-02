@@ -1,5 +1,5 @@
 use base_db::semantics::Span;
-use rowan::{ast::AstNode, TextRange, TextSize};
+use rowan::{TextRange, TextSize, ast::AstNode};
 use syntax::latex;
 
 use crate::CompletionParams;

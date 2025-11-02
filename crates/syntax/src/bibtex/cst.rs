@@ -1,4 +1,4 @@
-use rowan::{ast::AstNode, NodeOrToken};
+use rowan::{NodeOrToken, ast::AstNode};
 
 use super::{
     BibtexLanguage,

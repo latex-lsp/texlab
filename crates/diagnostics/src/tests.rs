@@ -1,4 +1,4 @@
-use expect_test::{expect, Expect};
+use expect_test::{Expect, expect};
 use itertools::Itertools;
 
 fn check(input: &str, expect: Expect) {

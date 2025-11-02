@@ -1,4 +1,4 @@
-use rowan::{ast::AstNode, NodeOrToken};
+use rowan::{NodeOrToken, ast::AstNode};
 
 use syntax::bibtex::{
     Accent, Command, CurlyGroup, HasAccentName, HasCommandName, HasName, HasWord, Join, Literal,

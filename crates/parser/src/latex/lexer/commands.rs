@@ -26,9 +26,8 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "includesvg" => CommandName::SvgInclude,
         "includeinkscape" => CommandName::InkscapeInclude,
         "verbatiminput" | "VerbatimInput" => CommandName::VerbatimInclude,
-        "import" | "subimport" | "inputfrom" | "subinputfrom" | "includefrom" | "subincludefrom" => {
-            CommandName::Import
-        }
+        "import" | "subimport" | "inputfrom" | "subinputfrom" | "includefrom"
+        | "subincludefrom" => CommandName::Import,
         "newlabel" => CommandName::LabelNumber,
         "def" | "gdef" | "edef" | "xdef" | "let" | "glet" => CommandName::OldCommandDefinition,
         "newcommand"
@@ -91,7 +90,9 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "numberline" => CommandName::TocNumberLine,
 
         _ if config.citation_commands.contains(name) => CommandName::Citation,
-        _ if config.glossary_reference_commands.contains(name) => CommandName::GlossaryEntryReference,
+        _ if config.glossary_reference_commands.contains(name) => {
+            CommandName::GlossaryEntryReference
+        }
         _ if config.label_definition_commands.contains(name) => CommandName::LabelDefinition,
         _ if config.label_reference_commands.contains(name) => CommandName::LabelReference,
         _ if config.label_reference_range_commands.contains(name) => {
