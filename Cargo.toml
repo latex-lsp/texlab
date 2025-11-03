@@ -15,7 +15,7 @@ rust-version = "1.89"
 [workspace.dependencies]
 anyhow = "1.0.100"
 bstr = "1.12.1"
-chrono = { version = "0.4.41", default-features = false }
+chrono = { version = "0.4.42", default-features = false }
 clap = "4.5.51"
 criterion = "0.5.1"
 crossbeam-channel = "0.5.15"
