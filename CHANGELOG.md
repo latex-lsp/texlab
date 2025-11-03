@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.24.0] - 2025-11-03
 
 ### Added
 
 - Add `texlab.hover.symbols` setting to allow turning off image preview for symbol-like commands ([#1420](https://github.com/latex-lsp/texlab/issues/1420))
 - Add command definitions to document and workspace symbols ([#1440](https://github.com/latex-lsp/texlab/issues/1440))
+- Add `texlab.experimental.glossaryReferenceCommands` setting ([#1475](https://github.com/latex-lsp/texlab/pull/1475))
+
+### Fixed
+
+- Treat `\includefrom` as `\include`-like command ([#1465](https://github.com/latex-lsp/texlab/pull/1465))
 
 ## [5.23.1] - 2025-06-24
 
