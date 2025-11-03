@@ -57,7 +57,7 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       - name: Install cross-compilation dependencies
-        run: sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
         if: ${{ matrix.os == 'ubuntu-22.04' }}
       - name: Compile
         run: cargo build --target ${{ matrix.target }} --all-features --release --locked
