@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
       - name: Publish binaries
         run: |
           gh release upload ${{ github.ref_name }} $(find . -iname texlab*.zip) 
