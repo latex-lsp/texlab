@@ -192,6 +192,58 @@ fn test_caption_minimal_error() {
 }
 
 #[test]
+fn test_caption_beamer() {
+    check(
+        r#"\begin{frame}
+\frametitle{Lorem ipsum}
+Lorem ipsum dolor sit amet.
+\end{frame}"#,
+        expect![[r#"
+            ROOT@0..78
+              PREAMBLE@0..78
+                ENVIRONMENT@0..78
+                  BEGIN@0..14
+                    COMMAND_NAME@0..6 "\\begin"
+                    CURLY_GROUP_WORD@6..14
+                      L_CURLY@6..7 "{"
+                      KEY@7..12
+                        WORD@7..12 "frame"
+                      R_CURLY@12..13 "}"
+                      WHITESPACE@13..14 "\n"
+                  CAPTION@14..39
+                    COMMAND_NAME@14..25 "\\frametitle"
+                    CURLY_GROUP@25..39
+                      L_CURLY@25..26 "{"
+                      TEXT@26..37
+                        WORD@26..31 "Lorem"
+                        WHITESPACE@31..32 " "
+                        WORD@32..37 "ipsum"
+                      R_CURLY@37..38 "}"
+                      WHITESPACE@38..39 "\n"
+                  TEXT@39..67
+                    WORD@39..44 "Lorem"
+                    WHITESPACE@44..45 " "
+                    WORD@45..50 "ipsum"
+                    WHITESPACE@50..51 " "
+                    WORD@51..56 "dolor"
+                    WHITESPACE@56..57 " "
+                    WORD@57..60 "sit"
+                    WHITESPACE@60..61 " "
+                    WORD@61..66 "amet."
+                    WHITESPACE@66..67 "\n"
+                  END@67..78
+                    COMMAND_NAME@67..71 "\\end"
+                    CURLY_GROUP_WORD@71..78
+                      L_CURLY@71..72 "{"
+                      KEY@72..77
+                        WORD@72..77 "frame"
+                      R_CURLY@77..78 "}"
+
+        "#]],
+    );
+}
+
+#[test]
 fn test_citation_empty() {
     check(
         r#"\cite{}"#,

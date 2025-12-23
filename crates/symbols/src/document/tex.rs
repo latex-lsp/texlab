@@ -40,6 +40,8 @@ impl<'a> SymbolBuilder<'a> {
                     self.visit_enumeration(&environment, &name)
                 } else if let Ok(float_kind) = FloatKind::from_str(&name) {
                     self.visit_float(&environment, float_kind)
+                } else if name == "frame" {
+                    self.visit_beamer_frame(&environment)
                 } else {
                     self.visit_theorem(&environment, &name)
                 }
@@ -206,12 +208,7 @@ impl<'a> SymbolBuilder<'a> {
             FloatKind::Table => ("Table", SymbolKind::Table),
         };
 
-        let caption = environment
-            .syntax()
-            .children()
-            .filter_map(latex::Caption::cast)
-            .find_map(|node| node.long())
-            .and_then(|node| node.content_text())?;
+        let caption = find_caption(environment)?;
 
         let symbol = match self.find_label(environment.syntax()) {
             Some(label) => {
@@ -259,6 +256,29 @@ impl<'a> SymbolBuilder<'a> {
                 Symbol::new_label(name, kind, range, label)
             }
             None => Symbol::new_simple("Equation".into(), kind, range, range),
+        };
+
+        Some(symbol)
+    }
+
+    fn visit_beamer_frame(&self, environment: &latex::Environment) -> Option<Symbol> {
+        let range = latex::small_range(environment);
+
+        let caption = find_caption(environment)?;
+
+        let symbol = match self.find_label(environment.syntax()) {
+            Some(label) => {
+                let name = match self.find_label_number(&label.text) {
+                    Some(number) => format!("Frame {number}: {caption}"),
+                    None => format!("Frame: {caption}"),
+                };
+
+                Symbol::new_label(name, SymbolKind::BeamerFrame, range, label)
+            }
+            None => {
+                let name = format!("Frame: {caption}");
+                Symbol::new_simple(name, SymbolKind::BeamerFrame, range, range)
+            }
         };
 
         Some(symbol)
@@ -317,4 +337,15 @@ impl<'a> SymbolBuilder<'a> {
             .find_map(|data| data.semantics.label_numbers.get(name))
             .map(String::as_str)
     }
+}
+
+fn find_caption(environment: &latex::Environment) -> Option<String> {
+    let caption = environment
+        .syntax()
+        .children()
+        .filter_map(latex::Caption::cast)
+        .find_map(|node| node.long())
+        .and_then(|node| node.content_text())?;
+
+    Some(caption)
 }
