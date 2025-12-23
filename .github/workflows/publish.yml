@@ -52,7 +52,7 @@ jobs:
             target: x86_64-unknown-linux-musl
             archive: texlab-x86_64-alpine.tar.gz
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -80,7 +80,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v7
       - name: Publish binaries
         run: |
@@ -93,7 +93,7 @@ jobs:
     needs: [github]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Tectonic workaround
         run: |
