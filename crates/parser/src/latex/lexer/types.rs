@@ -43,7 +43,7 @@ pub enum Token {
     #[regex(r"[^\s\\%\{\},\$\[\]\(\)=\|]+")]
     Word,
 
-    #[regex(r"[a-zA-Z]+:\/\/[^{}]+")]
+    #[regex(r"[a-zA-Z]+:\/\/[^{}\r\n]+")]
     Href,
 
     #[regex(r"\$\$?")]
