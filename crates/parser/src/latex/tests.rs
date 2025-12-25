@@ -2858,6 +2858,81 @@ fn test_issue_931() {
 }
 
 #[test]
+fn test_issue_1488() {
+    check(
+        r#"\begin{itemize}
+\begin{listing}
+\begin{minted}{bash}
+http://example.com
+\end{minted}
+\end{listing}
+\end{itemize}"#,
+        expect![[r#"
+            ROOT@0..112
+              PREAMBLE@0..112
+                ENVIRONMENT@0..112
+                  BEGIN@0..16
+                    COMMAND_NAME@0..6 "\\begin"
+                    CURLY_GROUP_WORD@6..16
+                      L_CURLY@6..7 "{"
+                      KEY@7..14
+                        WORD@7..14 "itemize"
+                      R_CURLY@14..15 "}"
+                      WHITESPACE@15..16 "\n"
+                  ENVIRONMENT@16..99
+                    BEGIN@16..32
+                      COMMAND_NAME@16..22 "\\begin"
+                      CURLY_GROUP_WORD@22..32
+                        L_CURLY@22..23 "{"
+                        KEY@23..30
+                          WORD@23..30 "listing"
+                        R_CURLY@30..31 "}"
+                        WHITESPACE@31..32 "\n"
+                    ENVIRONMENT@32..85
+                      BEGIN@32..46
+                        COMMAND_NAME@32..38 "\\begin"
+                        CURLY_GROUP_WORD@38..46
+                          L_CURLY@38..39 "{"
+                          KEY@39..45
+                            WORD@39..45 "minted"
+                          R_CURLY@45..46 "}"
+                      CURLY_GROUP@46..53
+                        L_CURLY@46..47 "{"
+                        TEXT@47..51
+                          WORD@47..51 "bash"
+                        R_CURLY@51..52 "}"
+                        WHITESPACE@52..53 "\n"
+                      HREF@53..71 "http://example.com"
+                      WHITESPACE@71..72 "\n"
+                      END@72..85
+                        COMMAND_NAME@72..76 "\\end"
+                        CURLY_GROUP_WORD@76..85
+                          L_CURLY@76..77 "{"
+                          KEY@77..83
+                            WORD@77..83 "minted"
+                          R_CURLY@83..84 "}"
+                          WHITESPACE@84..85 "\n"
+                    END@85..99
+                      COMMAND_NAME@85..89 "\\end"
+                      CURLY_GROUP_WORD@89..99
+                        L_CURLY@89..90 "{"
+                        KEY@90..97
+                          WORD@90..97 "listing"
+                        R_CURLY@97..98 "}"
+                        WHITESPACE@98..99 "\n"
+                  END@99..112
+                    COMMAND_NAME@99..103 "\\end"
+                    CURLY_GROUP_WORD@103..112
+                      L_CURLY@103..104 "{"
+                      KEY@104..111
+                        WORD@104..111 "itemize"
+                      R_CURLY@111..112 "}"
+
+        "#]],
+    );
+}
+
+#[test]
 fn test_label_definition_line_break() {
     check(
         r#"\label{hello
