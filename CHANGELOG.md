@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Don't allow line breaks in URLs ([#1488](https://github.com/latex-lsp/texlab/issues/1488))
+- Pass configured line length to `tex-fmt` ([#1497](https://github.com/latex-lsp/texlab/issues/1497))
 
 ## [5.24.0] - 2025-11-03
 
