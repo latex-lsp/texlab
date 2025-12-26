@@ -21,13 +21,13 @@ pub fn format_source_code(
             Formatter::Null => None,
             Formatter::Server => None,
             Formatter::LatexIndent => format_with_latexindent(workspace, document),
-            Formatter::TexFmt => format_with_texfmt(document),
+            Formatter::TexFmt => format_with_texfmt(workspace, document),
         },
         Language::Bib => match workspace.config().formatting.bib_formatter {
             Formatter::Null => None,
             Formatter::Server => format_bibtex_internal(workspace, document, options),
             Formatter::LatexIndent => format_with_latexindent(workspace, document),
-            Formatter::TexFmt => format_with_texfmt(document),
+            Formatter::TexFmt => format_with_texfmt(workspace, document),
         },
         Language::Aux
         | Language::Log
