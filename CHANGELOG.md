@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add document symbols for beamer frames ([[#1498](https://github.com/latex-lsp/texlab/issues/1498)])
 
+### Fixed
+
+- Don't allow line breaks in URLs ([#1488](https://github.com/latex-lsp/texlab/issues/1488))
+
 ## [5.24.0] - 2025-11-03
 
 ### Added
