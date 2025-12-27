@@ -1,3 +1,5 @@
+use std::vec;
+
 use base_db::{Document, data::BibtexEntryTypeCategory, semantics::Span};
 use rowan::TextRange;
 
@@ -16,6 +18,7 @@ pub enum SymbolKind {
     Field,
     Environment,
     CommandDefinition,
+    BeamerFrame,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -73,6 +76,7 @@ impl Symbol {
             SymbolKind::Field => vec!["bibtex", "field"],
             SymbolKind::Environment => vec!["latex", "environment"],
             SymbolKind::CommandDefinition => vec!["latex", "command", "definition", "define"],
+            SymbolKind::BeamerFrame => vec!["latex", "beamer", "frame"],
         };
 
         name.chain(tags).collect()

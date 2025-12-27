@@ -28,7 +28,7 @@ mod v483 {
         //
         // In later versions, latexmk provides the -dir-report-only option and we
         // won't have to resort to this hack with NONEXISTENT.tex.
-        let output = std::process::Command::new("latexmk")
+        let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
             .arg("-dir-report")
             .arg(non_existent_tex)
             .current_dir(temp_dir.path())
@@ -91,7 +91,7 @@ mod v484 {
         std::fs::write(temp_dir.path().join("dummy.tex"), "")?;
 
         // Run `latexmk -dir-report-only` to obtain out_dir and aux_dir values.
-        let output = std::process::Command::new("latexmk")
+        let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
             .arg("-dir-report-only")
             .current_dir(temp_dir.path())
             .output()?;
@@ -146,7 +146,7 @@ mod v484 {
 }
 
 pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<LatexmkrcData> {
-    let output = std::process::Command::new("latexmk")
+    let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
         .arg("--version")
         .output()?;
 
@@ -156,6 +156,8 @@ pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<Latexmkrc
         .and_then(|line| Some((line.find("Version")?, line)))
         .and_then(|(i, line)| line[i..].trim_end().strip_prefix("Version "))
         .and_then(versions::Versioning::new);
+
+    log::debug!("Detected latexmk version: {version:?}");
 
     let result = if version.is_some_and(|v| v >= versions::Versioning::new("4.84").unwrap()) {
         v484::parse_latexmkrc(input, src_dir)

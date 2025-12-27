@@ -16,7 +16,7 @@ pub fn classify(name: &str, config: &SyntaxConfig) -> CommandName {
         "paragraph" | "paragraph*" => CommandName::Paragraph(ParagraphLevel::Paragraph),
         "subparagraph" | "subparagraph*" => CommandName::Paragraph(ParagraphLevel::Subparagraph),
         "item" => CommandName::EnumItem,
-        "caption" => CommandName::Caption,
+        "caption" | "frametitle" => CommandName::Caption,
         "usepackage" | "RequirePackage" => CommandName::PackageInclude,
         "documentclass" => CommandName::ClassInclude,
         "include" | "subfileinclude" | "input" | "subfile" => CommandName::LatexInclude,
