@@ -743,3 +743,43 @@ fn test_command_definition() {
         "#]],
     );
 }
+
+#[test]
+fn test_beamer_frame() {
+    let fixture = Fixture::parse(
+        r#"%! main.tex
+\documentclass{beamer}
+\begin{frame}
+\frametitle{Frame 1}
+Frame 1 content.
+\end{frame}
+\begin{frame}
+\frametitle{Frame 2}
+Frame 2 content.
+\end{frame}"#,
+    );
+
+    check(
+        &fixture,
+        expect![[r#"
+            [
+                Symbol {
+                    name: "Frame: Frame 1",
+                    kind: BeamerFrame,
+                    label: None,
+                    full_range: 23..86,
+                    selection_range: 23..86,
+                    children: [],
+                },
+                Symbol {
+                    name: "Frame: Frame 2",
+                    kind: BeamerFrame,
+                    label: None,
+                    full_range: 87..150,
+                    selection_range: 87..150,
+                    children: [],
+                },
+            ]
+        "#]],
+    );
+}
