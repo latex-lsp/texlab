@@ -3,14 +3,21 @@ use std::{
     process::{Command, Stdio},
 };
 
-use base_db::Document;
+use base_db::{Document, Workspace};
 use rowan::{TextLen, TextRange};
 
 use crate::util::line_index_ext::LineIndexExt;
 
-pub fn format_with_texfmt(document: &Document) -> Option<Vec<lsp_types::TextEdit>> {
+pub fn format_with_texfmt(
+    workspace: &Workspace,
+    document: &Document,
+) -> Option<Vec<lsp_types::TextEdit>> {
+    let line_length = workspace.config().formatting.line_length;
+
     let mut child = Command::new("tex-fmt")
         .arg("--stdin")
+        .arg("--wraplen")
+        .arg(line_length.to_string())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
