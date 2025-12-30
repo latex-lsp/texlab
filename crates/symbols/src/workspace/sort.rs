@@ -37,7 +37,6 @@ impl<'a> From<&'a Workspace> for ProjectOrdering<'a> {
             .unique()
             .collect_vec();
 
-        eprintln!("{}", inner.iter().map(|doc| doc.uri.to_string()).join(", "));
         Self { inner }
     }
 }
