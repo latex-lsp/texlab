@@ -28,7 +28,7 @@ mod v483 {
         //
         // In later versions, latexmk provides the -dir-report-only option and we
         // won't have to resort to this hack with NONEXISTENT.tex.
-        let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
+        let output = std::process::Command::new("latexmk")
             .arg("-dir-report")
             .arg(non_existent_tex)
             .current_dir(temp_dir.path())
@@ -91,7 +91,7 @@ mod v484 {
         std::fs::write(temp_dir.path().join("dummy.tex"), "")?;
 
         // Run `latexmk -dir-report-only` to obtain out_dir and aux_dir values.
-        let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
+        let output = std::process::Command::new("latexmk")
             .arg("-dir-report-only")
             .current_dir(temp_dir.path())
             .output()?;
@@ -146,7 +146,7 @@ mod v484 {
 }
 
 pub fn parse_latexmkrc(input: &str, src_dir: &Path) -> std::io::Result<LatexmkrcData> {
-    let output = std::process::Command::new("/home/paddy/latexmk/latexmk.pl")
+    let output = std::process::Command::new("latexmk")
         .arg("--version")
         .output()?;
 
@@ -212,12 +212,8 @@ fn parse_texinputs<'a>(
         .filter_map(|path| change_root(src_dir, tmp_dir, path))
         .map(|path| src_dir.join(shellexpand::tilde(&path).as_ref()))
     {
-        eprintln!("Adding path: {path:?}");
-
         file_name_db.read_dir(path);
     }
-
-    eprintln!("File name db: {file_name_db:?}");
 
     (file_name_db, lines)
 }
