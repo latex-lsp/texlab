@@ -3,7 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "5.25.0"
+version = "5.25.1"
 license = "GPL-3.0"
 authors = [
     "Eric Förster <eric.foerster@outlook.com>",
