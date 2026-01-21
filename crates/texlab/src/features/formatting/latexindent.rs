@@ -1,9 +1,10 @@
 use std::{
+    env,
     path::Path,
     process::{Command, Stdio},
 };
 
-use base_db::{Document, LatexIndentConfig, Workspace, deps::ProjectRoot};
+use base_db::{Document, LatexIndentConfig, Workspace};
 use distro::Language;
 use rowan::TextLen;
 use tempfile::tempdir;
@@ -16,8 +17,6 @@ pub fn format_with_latexindent(
 ) -> Option<Vec<lsp_types::TextEdit>> {
     let config = workspace.config();
     let target_dir = tempdir().ok()?;
-    let root = ProjectRoot::walk_and_find(workspace, document.dir.as_ref()?);
-    let source_dir = root.src_dir.to_file_path().ok()?;
 
     let target_file = target_dir
         .path()
@@ -31,8 +30,8 @@ pub fn format_with_latexindent(
     let args = build_arguments(&config.formatting.latex_indent, &target_file);
 
     log::debug!(
-        "Running latexindent in folder \"{}\" with args: {:?}",
-        source_dir.display(),
+        "Running latexindent in folder {:?} with args: {:?}",
+        env::current_dir(),
         args,
     );
 
@@ -41,7 +40,6 @@ pub fn format_with_latexindent(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
-        .current_dir(source_dir)
         .output()
         .ok()?;
 
