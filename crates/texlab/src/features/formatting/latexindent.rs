@@ -49,6 +49,9 @@ pub fn format_with_latexindent(
     let new_text = String::from_utf8_lossy(&output.stdout).into_owned();
     if new_text.is_empty() {
         None
+    } else if new_text == *old_text {
+        // No edits needed
+        return Some(Vec::new());
     } else {
         let line_index = &document.line_index;
         let start = lsp_types::Position::new(0, 0);
