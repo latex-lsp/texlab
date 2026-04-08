@@ -1265,6 +1265,10 @@ impl<'a> Parser<'a> {
         self.eat();
         self.trivia();
 
+        if self.lexer.peek() == Some(Token::LBrack) {
+            self.brack_group();
+        }
+
         if self.lexer.peek() == Some(Token::LCurly) {
             self.curly_group_word();
         }
