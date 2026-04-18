@@ -5,7 +5,7 @@ mod progress;
 
 use std::{
     collections::HashMap,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, atomic::AtomicI32},
     time::Duration,
 };
@@ -56,6 +56,12 @@ enum InternalMessage {
     InverseSearch(TextDocumentPositionParams),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PathChangeKind {
+    CreatedOrModified,
+    Removed,
+}
+
 pub struct Server {
     connection: Arc<Connection>,
     internal_tx: Sender<InternalMessage>,
@@ -64,6 +70,7 @@ pub struct Server {
     client: LspClient,
     client_flags: Arc<ClientFlags>,
     diagnostic_manager: diagnostics::Manager,
+    published_diagnostics: FxHashSet<Url>,
     watcher: FileWatcher,
     pool: ThreadPool,
     pending_builds: Arc<Mutex<FxHashSet<u32>>>,
@@ -112,6 +119,7 @@ impl Server {
                 params.client_info,
             )),
             diagnostic_manager: diagnostics::Manager::default(),
+            published_diagnostics: FxHashSet::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
@@ -265,23 +273,11 @@ impl Server {
     fn publish_diagnostics(&mut self) -> Result<()> {
         let workspace = self.workspace.read();
 
-        for (uri, diagnostics) in self.diagnostic_manager.get(&workspace) {
-            let Some(document) = workspace.lookup(&uri) else {
-                continue;
-            };
-
-            let diagnostics = diagnostics
-                .into_iter()
-                .filter_map(|diagnostic| to_proto::diagnostic(&workspace, document, &diagnostic))
-                .collect();
-
-            let version = None;
-            let params = PublishDiagnosticsParams {
-                uri: to_proto::uri(&uri),
-                diagnostics,
-                version,
-            };
-
+        for params in collect_publish_diagnostics(
+            &workspace,
+            &self.diagnostic_manager,
+            &mut self.published_diagnostics,
+        ) {
             self.client
                 .send_notification::<PublishDiagnostics>(params)?;
         }
@@ -340,7 +336,38 @@ impl Server {
         Ok(())
     }
 
-    fn did_change_watched_files(&mut self, _params: DidChangeWatchedFilesParams) -> Result<()> {
+    fn did_change_watched_files(&mut self, params: DidChangeWatchedFilesParams) -> Result<()> {
+        let mut changed = false;
+        let mut workspace = self.workspace.write();
+
+        for change in params.changes {
+            let uri = from_proto::url(&change.uri);
+            if uri.scheme() != "file" {
+                continue;
+            }
+
+            let Ok(path) = uri.to_file_path() else {
+                continue;
+            };
+
+            let kind = match change.typ {
+                FileChangeType::CREATED | FileChangeType::CHANGED => {
+                    PathChangeKind::CreatedOrModified
+                }
+                FileChangeType::DELETED => PathChangeKind::Removed,
+                _ => continue,
+            };
+
+            changed |=
+                handle_path_change(&mut workspace, &mut self.diagnostic_manager, &path, kind);
+        }
+
+        if changed {
+            self.diagnostic_manager.cleanup(&workspace);
+            drop(workspace);
+            self.update_workspace();
+        }
+
         Ok(())
     }
 
@@ -826,22 +853,12 @@ impl Server {
                     };
 
                     for path in affected_paths {
-                        if !workspace
-                            .lookup_file(&path)
-                            .map_or(true, |doc| doc.owner == Owner::Server)
-                        {
-                            continue;
-                        }
-
-                        let Some(language) = Language::from_path(&path) else {
-                            continue;
-                        };
-
-                        changed |= workspace.load(&path, language).is_ok();
-
-                        if let Some(document) = workspace.lookup_file(&path) {
-                            self.diagnostic_manager.update_syntax(&workspace, document);
-                        }
+                        changed |= handle_path_change(
+                            &mut workspace,
+                            &mut self.diagnostic_manager,
+                            &path,
+                            PathChangeKind::CreatedOrModified,
+                        );
                     }
                 }
             }
@@ -1133,6 +1150,90 @@ impl Server {
         self.process_messages()?;
         self.pool.join();
         Ok(())
+    }
+}
+
+fn collect_publish_diagnostics(
+    workspace: &Workspace,
+    diagnostic_manager: &diagnostics::Manager,
+    published_diagnostics: &mut FxHashSet<Url>,
+) -> Vec<PublishDiagnosticsParams> {
+    let mut params = Vec::new();
+    let current_diagnostics = diagnostic_manager.get(workspace);
+    let current_uris = current_diagnostics
+        .keys()
+        .cloned()
+        .collect::<FxHashSet<_>>();
+
+    for (uri, diagnostics) in current_diagnostics {
+        let Some(document) = workspace.lookup(&uri) else {
+            continue;
+        };
+
+        let diagnostics = diagnostics
+            .into_iter()
+            .filter_map(|diagnostic| to_proto::diagnostic(workspace, document, &diagnostic))
+            .collect();
+
+        params.push(PublishDiagnosticsParams {
+            uri: to_proto::uri(&uri),
+            diagnostics,
+            version: None,
+        });
+    }
+
+    for uri in published_diagnostics.difference(&current_uris) {
+        params.push(PublishDiagnosticsParams {
+            uri: to_proto::uri(uri),
+            diagnostics: Vec::new(),
+            version: None,
+        });
+    }
+
+    *published_diagnostics = current_uris;
+    params
+}
+
+fn handle_path_change(
+    workspace: &mut Workspace,
+    diagnostic_manager: &mut diagnostics::Manager,
+    path: &Path,
+    kind: PathChangeKind,
+) -> bool {
+    match kind {
+        PathChangeKind::Removed => {
+            let affected_uris = workspace
+                .lookup_file_or_dir(path)
+                .filter(|doc| doc.owner == Owner::Server)
+                .map(|doc| doc.uri.clone())
+                .collect::<Vec<_>>();
+
+            for uri in &affected_uris {
+                workspace.remove(uri);
+            }
+
+            !affected_uris.is_empty()
+        }
+        PathChangeKind::CreatedOrModified => {
+            if !workspace
+                .lookup_file(path)
+                .map_or(true, |doc| doc.owner == Owner::Server)
+            {
+                return false;
+            }
+
+            let Some(language) = Language::from_path(path) else {
+                return false;
+            };
+
+            let changed = workspace.load(path, language).is_ok();
+
+            if let Some(document) = workspace.lookup_file(path) {
+                diagnostic_manager.update_syntax(workspace, document);
+            }
+
+            changed
+        }
     }
 }
 
