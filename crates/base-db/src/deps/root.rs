@@ -58,7 +58,9 @@ impl ProjectRoot {
 
         let compile_dir = dir.clone();
         let src_dir = dir.join("src/").unwrap();
-        let out_dir = dir.join("build/").unwrap();
+        let config = workspace.config();
+        let out_dir =
+            append_dir(dir, &config.build.pdf_dir, workspace).unwrap_or_else(|_| dir.clone());
         let aux_dir = out_dir.clone();
         let log_dir = out_dir.clone();
         let pdf_dir = out_dir;
