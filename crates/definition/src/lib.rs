@@ -1,3 +1,4 @@
+mod acronym;
 mod citation;
 mod command;
 mod include;
@@ -39,6 +40,7 @@ pub fn goto_definition<'a>(params: &DefinitionParams<'a>) -> FxHashSet<Definitio
     citation::goto_definition(&mut context);
     label::goto_definition(&mut context);
     string_ref::goto_definition(&mut context);
+    acronym::goto_definition(&mut context);
     context.results
 }
 
