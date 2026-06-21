@@ -154,3 +154,58 @@ fn test_string_field() {
                 |"#,
     )
 }
+
+#[test]
+fn test_acronym_definition() {
+    check(
+        r#"
+%! main.tex
+\newacronym{fps}{FPS}{Frames}
+           ^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+\acrshort{fps}
+          |
+         ^^^^^"#,
+    )
+}
+
+#[test]
+fn test_acronym_declaration() {
+    check(
+        r#"
+%! main.tex
+\DeclareAcronym{eg}{short=eg}
+               ^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+\acrshort{eg}
+          |
+         ^^^^"#,
+    )
+}
+
+#[test]
+fn test_acronym_cross_file() {
+    check(
+        r#"
+%! main.tex
+\input{acronyms}
+\acrshort{fps}
+          |
+         ^^^^^
+
+%! acronyms.tex
+\newacronym{fps}{FPS}{Frames}
+           ^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"#,
+    )
+}
+
+#[test]
+fn test_acronym_no_definition() {
+    check(
+        r#"
+%! main.tex
+\acrshort{unknown}
+           |"#,
+    )
+}

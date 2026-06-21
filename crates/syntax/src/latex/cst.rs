@@ -642,6 +642,10 @@ impl AcronymReference {
     pub fn command(&self) -> Option<SyntaxToken> {
         self.syntax().first_token()
     }
+
+    pub fn name(&self) -> Option<CurlyGroupWord> {
+        self.syntax().children().find_map(CurlyGroupWord::cast)
+    }
 }
 
 cst_node!(AcronymDefinition, ACRONYM_DEFINITION);
