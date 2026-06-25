@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.26.0] - 2026-06-25
+
+### Added
+
+- Add goto definition support for acronym definitions ([#1568](https://github.com/latex-lsp/texlab/pull/1568))
+
+### Fixed
+
+- Use `texlab.build.pdfDirectory` for Tectonic projects ([#1561](https://github.com/latex-lsp/texlab/issues/1561))
+- Refresh diagnostics when watched files change ([#1552](https://github.com/latex-lsp/texlab/issues/1552))
+- Use current working directory of server when starting `latexindent` ([#1345](https://github.com/latex-lsp/texlab/pull/1345))
+- Handle optional arguments in `\bibitem` commands correctly ([#1549](https://github.com/latex-lsp/texlab/issues/1549))
+- Send `TextEdit` only if `latexindent` changed something ([#1534](https://github.com/latex-lsp/texlab/pull/1534))
+
 ## [5.25.1] - 2025-12-30
 
 ### Fixed
