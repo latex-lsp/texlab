@@ -792,45 +792,92 @@ fn test_beamer_frame_title_argument_1525() {
 \documentclass{beamer}
 \begin{document}
 
-\section{A section}
-
-\begin{frame}{Frame Title}
-	Test frame
+\begin{frame}{Numbered Title}\label{frame:num}
+Body.
 \end{frame}
 
-\begin{frame}{Frame Title 2}
-	Test frame 2
+\begin{frame}{Unnumbered Title}\label{frame:nonum}
+Body.
 \end{frame}
 
-\end{document}"#,
+\begin{frame}\label{frame:notitle}
+Body.
+\end{frame}
+
+\begin{frame}
+Body.
+\end{frame}
+
+\begin{frame}{a title}
+\frametitle{Expected Title}
+Body.
+\end{frame}
+
+\end{document}
+
+%! main.aux
+\relax
+\newlabel{frame:num}{{1}{1}}
+\newlabel{frame:notitle}{{2}{1}}
+"#,
     );
 
     check(&fixture, expect![[r#"
         [
             Symbol {
-                name: "A section",
-                kind: Section,
+                name: "Frame 1: Numbered Title",
+                kind: BeamerFrame,
+                label: Some(
+                    Span(
+                        "frame:num",
+                        70..87,
+                    ),
+                ),
+                full_range: 41..105,
+                selection_range: 70..87,
+                children: [],
+            },
+            Symbol {
+                name: "Frame: Unnumbered Title",
+                kind: BeamerFrame,
+                label: Some(
+                    Span(
+                        "frame:nonum",
+                        138..157,
+                    ),
+                ),
+                full_range: 107..175,
+                selection_range: 138..157,
+                children: [],
+            },
+            Symbol {
+                name: "Frame 2",
+                kind: BeamerFrame,
+                label: Some(
+                    Span(
+                        "frame:notitle",
+                        190..211,
+                    ),
+                ),
+                full_range: 177..229,
+                selection_range: 190..211,
+                children: [],
+            },
+            Symbol {
+                name: "Frame",
+                kind: BeamerFrame,
                 label: None,
-                full_range: 41..168,
-                selection_range: 41..168,
-                children: [
-                    Symbol {
-                        name: "Frame: Frame Title",
-                        kind: BeamerFrame,
-                        label: None,
-                        full_range: 62..112,
-                        selection_range: 62..112,
-                        children: [],
-                    },
-                    Symbol {
-                        name: "Frame: Frame Title 2",
-                        kind: BeamerFrame,
-                        label: None,
-                        full_range: 114..168,
-                        selection_range: 114..168,
-                        children: [],
-                    },
-                ],
+                full_range: 231..262,
+                selection_range: 231..262,
+                children: [],
+            },
+            Symbol {
+                name: "Frame: Expected Title",
+                kind: BeamerFrame,
+                label: None,
+                full_range: 264..332,
+                selection_range: 264..332,
+                children: [],
             },
         ]
     "#]]);
