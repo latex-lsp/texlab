@@ -264,24 +264,23 @@ impl<'a> SymbolBuilder<'a> {
     fn visit_beamer_frame(&self, environment: &latex::Environment) -> Option<Symbol> {
         let range = latex::small_range(environment);
 
-        let caption = find_caption(environment)?;
+        let title = find_frame_title(environment);
+        let label = self.find_label(environment.syntax());
+        let number = label
+            .as_ref()
+            .and_then(|label| self.find_label_number(&label.text));
 
-        let symbol = match self.find_label(environment.syntax()) {
-            Some(label) => {
-                let name = match self.find_label_number(&label.text) {
-                    Some(number) => format!("Frame {number}: {caption}"),
-                    None => format!("Frame: {caption}"),
-                };
-
-                Symbol::new_label(name, SymbolKind::BeamerFrame, range, label)
-            }
-            None => {
-                let name = format!("Frame: {caption}");
-                Symbol::new_simple(name, SymbolKind::BeamerFrame, range, range)
-            }
+        let name = match (number, title) {
+            (Some(number), Some(title)) => format!("Frame {number}: {title}"),
+            (Some(number), None) => format!("Frame {number}"),
+            (None, Some(title)) => format!("Frame: {title}"),
+            (None, None) => "Frame".into(),
         };
 
-        Some(symbol)
+        Some(match label {
+            Some(label) => Symbol::new_label(name, SymbolKind::BeamerFrame, range, label),
+            None => Symbol::new_simple(name, SymbolKind::BeamerFrame, range, range),
+        })
     }
 
     fn visit_environment(
@@ -336,6 +335,20 @@ impl<'a> SymbolBuilder<'a> {
             .filter_map(|document| document.data.as_aux())
             .find_map(|data| data.semantics.label_numbers.get(name))
             .map(String::as_str)
+    }
+}
+
+fn find_frame_title(environment: &latex::Environment) -> Option<String> {
+    let title = find_caption(environment);
+    if title.is_some() {
+        title
+    } else {
+        environment
+            .begin()?
+            .syntax()
+            .next_sibling()
+            .and_then(latex::CurlyGroup::cast)
+            .and_then(|group| group.content_text())
     }
 }
 

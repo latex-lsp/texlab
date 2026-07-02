@@ -783,3 +783,55 @@ Frame 2 content.
         "#]],
     );
 }
+
+#[test]
+fn test_beamer_frame_title_argument_1525() {
+    let fixture = Fixture::parse(
+        r#"
+%! main.tex
+\documentclass{beamer}
+\begin{document}
+
+\section{A section}
+
+\begin{frame}{Frame Title}
+	Test frame
+\end{frame}
+
+\begin{frame}{Frame Title 2}
+	Test frame 2
+\end{frame}
+
+\end{document}"#,
+    );
+
+    check(&fixture, expect![[r#"
+        [
+            Symbol {
+                name: "A section",
+                kind: Section,
+                label: None,
+                full_range: 41..168,
+                selection_range: 41..168,
+                children: [
+                    Symbol {
+                        name: "Frame: Frame Title",
+                        kind: BeamerFrame,
+                        label: None,
+                        full_range: 62..112,
+                        selection_range: 62..112,
+                        children: [],
+                    },
+                    Symbol {
+                        name: "Frame: Frame Title 2",
+                        kind: BeamerFrame,
+                        label: None,
+                        full_range: 114..168,
+                        selection_range: 114..168,
+                        children: [],
+                    },
+                ],
+            },
+        ]
+    "#]]);
+}
