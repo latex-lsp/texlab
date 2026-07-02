@@ -124,6 +124,7 @@ impl Semantics {
             self.links.push(Link {
                 kind,
                 path: Span::from(&path),
+                full_range: latex::small_range(&include),
                 base_dir: None,
             });
         }
@@ -147,11 +148,13 @@ impl Semantics {
         };
         let text = format!("{base_dir}{}", path.to_string());
         let range = latex::small_range(&path);
+        let full_range = latex::small_range(&import);
 
         self.links.push(Link {
             kind: LinkKind::Tex,
             path: Span { text, range },
             base_dir: Some(base_dir),
+            full_range,
         });
     }
 
@@ -386,6 +389,7 @@ pub struct Link {
     pub kind: LinkKind,
     pub path: Span,
     pub base_dir: Option<String>,
+    pub full_range: TextRange,
 }
 
 impl Link {
