@@ -18,8 +18,21 @@ use syntax::BuildErrorLevel;
 
 use super::{ClientFlags, line_index_ext::LineIndexExt};
 
+/// Characters that `url::Url` leaves unencoded in paths
+/// but that RFC 3986 does not allow there.
+const NON_RFC_3986_PATH: &percent_encoding::AsciiSet = &percent_encoding::CONTROLS
+    .add(b'^')
+    .add(b'|')
+    .add(b'[')
+    .add(b']');
+
 pub fn uri(url: &url::Url) -> lsp_types::Uri {
-    lsp_types::Uri::from_str(url.as_str()).expect("valid URL")
+    lsp_types::Uri::from_str(url.as_str()).unwrap_or_else(|_| {
+        let path = percent_encoding::utf8_percent_encode(url.path(), NON_RFC_3986_PATH).to_string();
+        let mut url = url.clone();
+        url.set_path(&path);
+        lsp_types::Uri::from_str(url.as_str()).expect("valid URL")
+    })
 }
 
 pub fn diagnostic(
@@ -524,4 +537,13 @@ pub fn hover(
         contents: lsp_types::HoverContents::Markup(contents),
         range: line_index.line_col_lsp_range(hover.range),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_uri_with_caret() {
+        let url = url::Url::parse("file:///foo/bar^baz.tex").unwrap();
+        assert_eq!(super::uri(&url).as_str(), "file:///foo/bar%5Ebaz.tex");
+    }
 }

@@ -48,6 +48,7 @@ lsp-types.workspace = true
 notify-debouncer-full.workspace = true
 notify.workspace = true
 parking_lot.workspace = true
+percent-encoding.workspace = true
 parser = { path = "../parser" }
 references = { path = "../references" }
 regex.workspace = true

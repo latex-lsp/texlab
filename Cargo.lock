@@ -1834,6 +1834,7 @@ dependencies = [
  "notify-debouncer-full",
  "parking_lot",
  "parser",
+ "percent-encoding",
  "references",
  "regex",
  "rename",
