@@ -89,6 +89,7 @@ impl Manager {
         super::citations::detect_duplicate_entries(workspace, &mut results);
         super::labels::detect_duplicate_labels(workspace, &mut results);
         super::labels::detect_undefined_and_unused_labels(workspace, &mut results);
+        super::imports::detect_duplicate_imports(workspace, &mut results);
 
         results.retain(|uri, _| {
             workspace
