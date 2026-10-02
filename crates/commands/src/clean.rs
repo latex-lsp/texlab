@@ -9,6 +9,36 @@ pub enum CleanTarget {
     Artifacts,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::CleanCommand;
+
+    fn exit_command(code: u8) -> CleanCommand {
+        #[cfg(windows)]
+        let (executable, args) = (
+            String::from("cmd.exe"),
+            vec![
+                String::from("/d"),
+                String::from("/c"),
+                format!("exit {code}"),
+            ],
+        );
+        #[cfg(not(windows))]
+        let (executable, args) = (
+            String::from("sh"),
+            vec![String::from("-c"), format!("exit {code}")],
+        );
+        CleanCommand { executable, args }
+    }
+
+    #[test]
+    fn clean_reports_nonzero_exit_and_accepts_success() {
+        exit_command(0).run().unwrap();
+        let error = exit_command(7).run().unwrap_err();
+        assert!(error.to_string().contains("latexmk exited with status"));
+    }
+}
+
 #[derive(Debug)]
 pub struct CleanCommand {
     executable: String,
