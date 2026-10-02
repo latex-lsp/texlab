@@ -45,7 +45,12 @@ fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
 
     let mut files = Vec::new();
     for i in 0..table_size {
-        let offset = table_address + i * FNDB_ENTRY_SIZE;
+        let Some(offset) = i
+            .checked_mul(FNDB_ENTRY_SIZE)
+            .and_then(|offset| table_address.checked_add(offset))
+        else {
+            return Err(io::ErrorKind::InvalidData.into());
+        };
         reader.set_position(u64::from(offset));
         let file_name_offset = read_u32(&mut reader)? as usize;
         let directory_offset = read_u32(&mut reader)? as usize;
@@ -60,14 +65,14 @@ fn parse_database(bytes: &[u8]) -> io::Result<Vec<PathBuf>> {
 }
 
 fn read_string(bytes: &[u8], offset: usize) -> io::Result<&str> {
-    let mut byte = bytes[offset];
-    let mut length = 0;
-    while byte != 0x00 {
-        length += 1;
-        byte = bytes[offset + length];
-    }
+    let Some(bytes) = bytes.get(offset..) else {
+        return Err(io::ErrorKind::InvalidData.into());
+    };
+    let Some(length) = bytes.iter().position(|byte| *byte == 0x00) else {
+        return Err(io::ErrorKind::InvalidData.into());
+    };
 
-    std::str::from_utf8(&bytes[offset..offset + length])
+    std::str::from_utf8(&bytes[..length])
         .map_err(|_| io::ErrorKind::InvalidData.into())
 }
 
@@ -75,4 +80,20 @@ fn read_u32(reader: &mut Cursor<&[u8]>) -> io::Result<u32> {
     let mut buf = [0u8; std::mem::size_of::<u32>()];
     reader.read_exact(&mut buf)?;
     Ok(u32::from_le_bytes(buf))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FNDB_SIGNATURE, parse_database};
+
+    #[test]
+    fn invalid_file_name_offset_returns_error() {
+        let mut bytes = vec![0; 44];
+        bytes[0..4].copy_from_slice(&FNDB_SIGNATURE.to_le_bytes());
+        bytes[16..20].copy_from_slice(&28u32.to_le_bytes());
+        bytes[24..28].copy_from_slice(&1u32.to_le_bytes());
+        bytes[28..32].copy_from_slice(&44u32.to_le_bytes());
+
+        assert!(parse_database(&bytes).is_err());
+    }
 }
