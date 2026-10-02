@@ -63,7 +63,8 @@ fn extract_matches(
         if let Some(range) = ranges.iter().find(|range| range.contains(result.start())) {
             let line = captures
                 .name("line")
-                .map(|result| result.as_str().parse::<u32>().unwrap() - 1);
+                .and_then(|result| result.as_str().parse::<u32>().ok())
+                .and_then(|line| line.checked_sub(1));
 
             let hint: Option<String> = if line.is_some() {
                 captures
