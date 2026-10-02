@@ -1,9 +1,12 @@
-use std::{path::PathBuf, process::Stdio};
+use std::{
+    path::PathBuf,
+    process::{ExitStatus, Stdio},
+};
 
 use anyhow::Result;
 use base_db::{
-    Document, Workspace,
     deps::{self, ProjectRoot},
+    Document, Workspace,
 };
 use thiserror::Error;
 use url::Url;
@@ -29,6 +32,9 @@ pub enum ForwardSearchError {
 
     #[error("Unable to launch PDF viewer: {0}")]
     LaunchViewer(#[from] std::io::Error),
+
+    #[error("PDF viewer exited unsuccessfully: {0}")]
+    ViewerExit(ExitStatus),
 }
 
 #[derive(Debug)]
@@ -127,13 +133,36 @@ impl ForwardSearch {
             self.args
         );
 
-        std::process::Command::new(self.program)
+        let status = std::process::Command::new(self.program)
             .args(self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()?;
 
+        if !status.success() {
+            return Err(ForwardSearchError::ViewerExit(status));
+        }
+
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ForwardSearch;
+
+    #[test]
+    fn nonzero_exit_status_is_reported() {
+        let search = ForwardSearch {
+            program: String::from("cmd.exe"),
+            args: vec![
+                String::from("/d"),
+                String::from("/c"),
+                String::from("exit 7"),
+            ],
+        };
+
+        assert!(search.run().is_err());
     }
 }
