@@ -51,15 +51,15 @@ impl CleanCommand {
 
     pub fn run(self) -> Result<()> {
         log::debug!("Cleaning output files: {} {:?}", self.executable, self.args);
-        let result = std::process::Command::new(self.executable)
+        let status = std::process::Command::new(self.executable)
             .args(self.args)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .status();
+            .status()?;
 
-        if let Err(why) = result {
-            anyhow::bail!("failed to spawn process: {why}")
+        if !status.success() {
+            anyhow::bail!("latexmk exited with status {status}")
         }
 
         Ok(())
