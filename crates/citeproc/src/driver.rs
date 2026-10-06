@@ -543,7 +543,7 @@ impl Driver {
     }
 
     fn foreword(&mut self, entry: &mut EntryData) -> Option<()> {
-        let author = entry.author.remove(&AuthorField::Commentator)?;
+        let author = entry.author.remove(&AuthorField::Foreword)?;
         self.builder.push(
             Inline::Regular(format!("With a forew. by {}", author)),
             Punct::Dot,
@@ -554,7 +554,7 @@ impl Driver {
     }
 
     fn afterword(&mut self, entry: &mut EntryData) -> Option<()> {
-        let author = entry.author.remove(&AuthorField::Commentator)?;
+        let author = entry.author.remove(&AuthorField::Afterword)?;
         self.builder.push(
             Inline::Regular(format!("With an afterw. by {}", author)),
             Punct::Dot,

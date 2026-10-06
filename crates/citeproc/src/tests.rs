@@ -396,3 +396,16 @@ fn test_patent_almendro_1998() {
         ]],
     );
 }
+
+#[test]
+fn test_book_foreword_and_afterword_authors() {
+    check(
+        r#"
+@book{test,
+    title = {A Study},
+    foreword = {Able, Alice},
+    afterword = {Zed, Zoe},
+}"#,
+        expect![[r#""A Study". With a forew. by A. Able. With an afterw. by Z. Zed."#]],
+    );
+}
