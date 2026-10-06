@@ -1,6 +1,7 @@
 mod lexer;
 
 use rowan::{GreenNode, GreenNodeBuilder};
+use rustc_hash::FxHashSet;
 use syntax::latex::SyntaxKind::{self, *};
 
 use crate::SyntaxConfig;
@@ -36,6 +37,7 @@ struct KeyOptions {
 struct Parser<'a> {
     lexer: Lexer<'a>,
     builder: GreenNodeBuilder<'static>,
+    verbatim_environments: FxHashSet<String>,
 }
 
 impl<'a> Parser<'a> {
@@ -43,6 +45,7 @@ impl<'a> Parser<'a> {
         Self {
             lexer: Lexer::new(text, config),
             builder: GreenNodeBuilder::new(),
+            verbatim_environments: config.verbatim_environments.clone(),
         }
     }
 
@@ -58,6 +61,36 @@ impl<'a> Parser<'a> {
 
     fn peek(&self) -> Option<Token> {
         self.lexer.peek()
+    }
+
+    fn peek_environment_name(&self, command: &str) -> Option<String> {
+        let mut lexer = self.lexer.clone();
+        let (_, name) = lexer.eat()?;
+        if name != command {
+            return None;
+        }
+
+        while lexer.peek().is_some_and(|kind| {
+            matches!(
+                kind,
+                Token::LineBreak | Token::Whitespace | Token::LineComment
+            )
+        }) {
+            lexer.eat();
+        }
+
+        if lexer.peek() != Some(Token::LCurly) {
+            return None;
+        }
+        lexer.eat();
+
+        let mut environment = String::new();
+        while lexer.peek().is_some_and(|kind| kind != Token::RCurly) {
+            let (_, text) = lexer.eat()?;
+            environment.push_str(text);
+        }
+
+        (!environment.is_empty()).then_some(environment)
     }
 
     fn expect(&mut self, kind: Token) {
@@ -549,7 +582,24 @@ impl<'a> Parser<'a> {
 
     fn environment(&mut self) {
         self.builder.start_node(ENVIRONMENT.into());
+        let name = self.peek_environment_name("\\begin");
         self.begin();
+
+        if let Some(name) = name.filter(|name| {
+            self.verbatim_environments.contains(name)
+                && !matches!(name.as_str(), "asy" | "minted" | "lstlisting" | "pycode")
+        }) {
+            while self.peek().is_some() {
+                if self.peek_environment_name("\\end").as_deref() == Some(name.as_str()) {
+                    self.end();
+                    break;
+                }
+                self.eat_remap(SyntaxKind::VERBATIM);
+            }
+
+            self.builder.finish_node();
+            return;
+        }
 
         while self
             .peek()
