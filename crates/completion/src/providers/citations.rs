@@ -17,7 +17,7 @@ pub fn complete_citations<'a>(
     for document in &params.feature.project.documents {
         if let Some(data) = document.data.as_bib() {
             let items = data.semantics.entries.par_iter().filter_map(|entry| {
-                let score = builder.matcher.score(&entry.name.text, &cursor.text)?;
+                let score = builder.matcher.score(&entry.keywords, &cursor.text)?;
                 let data = CompletionItemData::Citation(CitationData { document, entry });
                 Some(CompletionItem::new_simple(score, cursor.range, data))
             });
