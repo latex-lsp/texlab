@@ -53,7 +53,16 @@ fn discover_parents(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pat
         .flat_map(|path| path.ancestors().skip(1))
         .filter(|path| workspace.contains(path))
         .map(|path| path.to_path_buf())
-        .collect::<FxHashSet<_>>();
+        .collect::<FxHashSet<_>>()
+        .into_iter()
+        .sorted_by(|left, right| {
+            right
+                .components()
+                .count()
+                .cmp(&left.components().count())
+                .then_with(|| left.cmp(right))
+        })
+        .collect::<Vec<_>>();
 
     let mut changed = false;
     for dir in dirs {
@@ -117,4 +126,49 @@ fn discover_children(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pa
     }
 
     changed
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs,
+        path::PathBuf,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    use distro::Language;
+    use rustc_hash::FxHashSet;
+
+    use super::discover;
+    use crate::Workspace;
+
+    #[test]
+    fn discovers_sources_in_tectonic_src_directory_before_marker() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("texlab-discover-{nonce}"));
+        let src = root.join("src");
+        let sections = src.join("sections");
+        fs::create_dir_all(&sections).unwrap();
+        fs::write(root.join("Tectonic.toml"), "[doc]\nname = \"test\"\n").unwrap();
+        fs::write(
+            src.join("main.tex"),
+            "\\documentclass{article}\n\\begin{document}\n\\input{sections/child}\n\\bibliography{refs}\n\\end{document}\n",
+        )
+        .unwrap();
+        fs::write(sections.join("child.tex"), "\\section{Child}\n").unwrap();
+        fs::write(src.join("refs.bib"), "@article{test,}\n").unwrap();
+
+        let mut workspace = Workspace::default();
+        workspace
+            .load(&sections.join("child.tex"), Language::Tex)
+            .unwrap();
+        discover(&mut workspace, &mut FxHashSet::default());
+
+        assert!(workspace.lookup_file(&src.join("main.tex")).is_some());
+        assert!(workspace.lookup_file(&src.join("refs.bib")).is_some());
+        fs::remove_dir_all(PathBuf::from(root)).unwrap();
+    }
 }
