@@ -12,7 +12,7 @@ impl<'a> ProjectOrdering<'a> {
         self.inner
             .iter()
             .position(|doc| doc.uri == *uri)
-            .unwrap_or(std::usize::MAX)
+            .unwrap_or(usize::MAX)
     }
 }
 
