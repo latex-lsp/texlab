@@ -46,8 +46,10 @@ impl Add for DateFieldData {
             | (Self::Other(_), date)
             | (date, Self::Other(_)) => date,
             (Self::Year(year), Self::Month(month)) | (Self::Month(month), Self::Year(year)) => {
-                let new_date = NaiveDate::from_ymd_opt(year, month.number_from_month(), 1).unwrap();
-                Self::Date(new_date)
+                match NaiveDate::from_ymd_opt(year, month.number_from_month(), 1) {
+                    Some(date) => Self::Date(date),
+                    None => Self::Other(format!("{} {}", month.name(), year)),
+                }
             }
             (Self::Year(year), Self::Date(date)) | (Self::Date(date), Self::Year(year)) => {
                 let new_date = date.with_year(year).unwrap_or(date);
@@ -81,5 +83,24 @@ impl DateFieldData {
             .or_else(|| text.parse().ok().map(Self::Year))
             .or_else(|| text.parse().ok().map(Self::Month))
             .or(Some(Self::Other(text)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{Datelike, Month, NaiveDate};
+
+    use super::DateFieldData;
+
+    #[test]
+    fn combining_out_of_range_year_and_month_does_not_panic() {
+        let last_supported_year = NaiveDate::MAX.year();
+        let supported =
+            DateFieldData::Year(last_supported_year) + DateFieldData::Month(Month::January);
+        assert!(matches!(supported, DateFieldData::Date(_)));
+
+        let result = DateFieldData::Year(last_supported_year + 1)
+            + DateFieldData::Month(Month::January);
+        assert!(matches!(result, DateFieldData::Other(_)));
     }
 }
