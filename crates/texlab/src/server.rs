@@ -1,3 +1,4 @@
+mod diagnostics_publisher;
 mod dispatch;
 mod extensions;
 pub mod options;
@@ -37,6 +38,7 @@ use crate::{
 };
 
 use self::{
+    diagnostics_publisher::{DiagnosticsPublisher, PublishToken},
     extensions::{
         BuildParams, BuildRequest, BuildResult, BuildStatus, EnvironmentLocation,
         ForwardSearchRequest, ForwardSearchResult, ForwardSearchStatus, TextWithRange,
@@ -50,7 +52,7 @@ enum InternalMessage {
     SetDistro(Distro),
     SetOptions(Box<Options>),
     FileEvent(Vec<DebouncedEvent>),
-    Diagnostics,
+    Diagnostics(PublishToken),
     ChktexFinished(Url, Vec<diagnostics::Diagnostic>),
     ForwardSearch(Url, Option<Position>),
     InverseSearch(TextDocumentPositionParams),
@@ -70,7 +72,7 @@ pub struct Server {
     client: LspClient,
     client_flags: Arc<ClientFlags>,
     diagnostic_manager: diagnostics::Manager,
-    published_diagnostics: FxHashSet<Url>,
+    diagnostics_publisher: DiagnosticsPublisher,
     watcher: FileWatcher,
     pool: ThreadPool,
     pending_builds: Arc<Mutex<FxHashSet<u32>>>,
@@ -119,7 +121,7 @@ impl Server {
                 params.client_info,
             )),
             diagnostic_manager: diagnostics::Manager::default(),
-            published_diagnostics: FxHashSet::default(),
+            diagnostics_publisher: DiagnosticsPublisher::default(),
             watcher,
             pool: threadpool::Builder::new().build(),
             pending_builds: Default::default(),
@@ -272,26 +274,14 @@ impl Server {
 
     fn publish_diagnostics(&mut self) -> Result<()> {
         let workspace = self.workspace.read();
-
-        for params in collect_publish_diagnostics(
-            &workspace,
-            &self.diagnostic_manager,
-            &mut self.published_diagnostics,
-        ) {
-            self.client
-                .send_notification::<PublishDiagnostics>(params)?;
-        }
-
-        Ok(())
+        self.diagnostics_publisher
+            .publish(&self.client, &workspace, &self.diagnostic_manager)
     }
 
     fn publish_diagnostics_with_delay(&mut self) {
-        let sender = self.internal_tx.clone();
         let delay = self.workspace.read().config().diagnostics.delay;
-        self.pool.execute(move || {
-            std::thread::sleep(delay);
-            sender.send(InternalMessage::Diagnostics).unwrap();
-        });
+        self.diagnostics_publisher
+            .schedule(&self.internal_tx, &self.pool, delay);
     }
 
     fn pull_options(&mut self) {
@@ -1098,8 +1088,10 @@ impl Server {
                                 self.handle_file_event(event);
                             }
                         }
-                        InternalMessage::Diagnostics => {
-                            self.publish_diagnostics()?;
+                        InternalMessage::Diagnostics(token) => {
+                            if self.diagnostics_publisher.should_publish(token) {
+                                self.publish_diagnostics()?;
+                            }
                         }
                         InternalMessage::ChktexFinished(uri, diagnostics) => {
                             self.diagnostic_manager.update_chktex(uri, diagnostics);
@@ -1151,47 +1143,6 @@ impl Server {
         self.pool.join();
         Ok(())
     }
-}
-
-fn collect_publish_diagnostics(
-    workspace: &Workspace,
-    diagnostic_manager: &diagnostics::Manager,
-    published_diagnostics: &mut FxHashSet<Url>,
-) -> Vec<PublishDiagnosticsParams> {
-    let mut params = Vec::new();
-    let current_diagnostics = diagnostic_manager.get(workspace);
-    let current_uris = current_diagnostics
-        .keys()
-        .cloned()
-        .collect::<FxHashSet<_>>();
-
-    for (uri, diagnostics) in current_diagnostics {
-        let Some(document) = workspace.lookup(&uri) else {
-            continue;
-        };
-
-        let diagnostics = diagnostics
-            .into_iter()
-            .filter_map(|diagnostic| to_proto::diagnostic(workspace, document, &diagnostic))
-            .collect();
-
-        params.push(PublishDiagnosticsParams {
-            uri: to_proto::uri(&uri),
-            diagnostics,
-            version: None,
-        });
-    }
-
-    for uri in published_diagnostics.difference(&current_uris) {
-        params.push(PublishDiagnosticsParams {
-            uri: to_proto::uri(uri),
-            diagnostics: Vec::new(),
-            version: None,
-        });
-    }
-
-    *published_diagnostics = current_uris;
-    params
 }
 
 fn handle_path_change(
