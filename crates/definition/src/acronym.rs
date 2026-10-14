@@ -50,10 +50,7 @@ pub(super) fn goto_definition(context: &mut DefinitionContext) -> Option<()> {
     Some(())
 }
 
-fn process_definition(
-    node: latex::SyntaxNode,
-    key: &str,
-) -> Option<(TextRange, TextRange)> {
+fn process_definition(node: latex::SyntaxNode, key: &str) -> Option<(TextRange, TextRange)> {
     let def = latex::AcronymDefinition::cast(node)?;
     let name = def.name()?;
     let name_key = name.key()?;
@@ -64,10 +61,7 @@ fn process_definition(
     }
 }
 
-fn process_declaration(
-    node: latex::SyntaxNode,
-    key: &str,
-) -> Option<(TextRange, TextRange)> {
+fn process_declaration(node: latex::SyntaxNode, key: &str) -> Option<(TextRange, TextRange)> {
     let decl = latex::AcronymDeclaration::cast(node)?;
     let name = decl.name()?;
     let name_key = name.key()?;
