@@ -183,8 +183,6 @@ impl Graph {
         start: Start,
         link: &semantics::tex::Link,
     ) {
-        let home_dir = HOME_DIR.as_deref();
-
         let stem = &link.path.text;
         let mut file_names = vec![stem.clone()];
         link.kind
@@ -200,10 +198,6 @@ impl Graph {
                 file_name_db
                     .get(name)
                     .or_else(|| start.root.file_name_db.get(name))
-            })
-            .filter(|path| {
-                home_dir.is_some_and(|dir| path.starts_with(dir))
-                    || Language::from_path(path) == Some(Language::Bib)
             })
             .flat_map(Url::from_file_path);
 
