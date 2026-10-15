@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.package]
 version = "5.26.0"
 license = "GPL-3.0"
+repository = "https://github.com/latex-lsp/texlab"
 authors = [
     "Eric Förster <eric.foerster@outlook.com>",
     "Patrick Förster <patrick.foerster@outlook.de>",
@@ -13,6 +14,30 @@ edition = "2024"
 rust-version = "1.89"
 
 [workspace.dependencies]
+# Internal crates
+base-db = { path = "crates/base-db", version = "5.26.0" }
+bibfmt = { path = "crates/bibfmt", version = "5.26.0" }
+bibtex-utils = { path = "crates/bibtex-utils", version = "5.26.0" }
+citeproc = { path = "crates/citeproc", version = "5.26.0" }
+commands = { path = "crates/commands", version = "5.26.0" }
+completion = { path = "crates/completion", version = "5.26.0" }
+completion-data = { path = "crates/completion-data", version = "5.26.0" }
+definition = { path = "crates/definition", version = "5.26.0" }
+diagnostics = { path = "crates/diagnostics", version = "5.26.0" }
+distro = { path = "crates/distro", version = "5.26.0" }
+folding = { path = "crates/folding", version = "5.26.0" }
+highlights = { path = "crates/highlights", version = "5.26.0" }
+hover = { path = "crates/hover", version = "5.26.0" }
+inlay-hints = { path = "crates/inlay-hints", version = "5.26.0" }
+ipc = { path = "crates/ipc", version = "5.26.0" }
+line-index = { path = "crates/line-index", version = "5.26.0" }
+links = { path = "crates/links", version = "5.26.0" }
+parser = { path = "crates/parser", version = "5.26.0" }
+references = { path = "crates/references", version = "5.26.0" }
+rename = { path = "crates/rename", version = "5.26.0" }
+symbols = { path = "crates/symbols", version = "5.26.0" }
+syntax = { path = "crates/syntax", version = "5.26.0" }
+test-utils = { path = "crates/test-utils", version = "5.26.0" }
 anyhow = "1.0.100"
 bstr = "1.12.1"
 chrono = { version = "0.4.44", default-features = false }
@@ -44,10 +69,11 @@ rayon = "1.12.0"
 regex = "1.12.3"
 rowan = "0.16.1"
 rustc-hash = "2.1.1"
-serde = "1.0.228"
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.147"
 serde_regex = "1.1.0"
 serde_repr = "0.1.20"
+toml = "0.8"
 shellexpand = "3.1.1"
 tempfile = "3.27.0"
 thiserror = "2.0.18"

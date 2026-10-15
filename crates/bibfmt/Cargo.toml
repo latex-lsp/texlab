@@ -1,19 +1,21 @@
 [package]
 name = "bibfmt"
-version = "0.0.0"
+description = "BibTeX formatter"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
 rowan.workspace = true
-syntax = { path = "../syntax" }
-line-index = { path = "../line-index" }
+syntax = { workspace = true }
+line-index = { workspace = true }
 
 [lib]
 doctest = false
 
 [dev-dependencies]
 expect-test.workspace = true
-parser = { path = "../parser" }
+parser = { workspace = true }

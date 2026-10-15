@@ -1,29 +1,31 @@
 [package]
 name = "diagnostics"
-version = "0.0.0"
+description = "Diagnostics for LaTeX documents and build logs"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
+base-db = { workspace = true }
 encoding_rs.workspace = true
 encoding_rs_io.workspace = true
 itertools.workspace = true
-line-index = { path = "../line-index" }
+line-index = { workspace = true }
 log.workspace = true
 multimap.workspace = true
 once_cell.workspace = true
 regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 url.workspace = true
 
 [dev-dependencies]
 expect-test.workspace = true
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }
 
 [lib]
 doctest = false

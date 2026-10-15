@@ -3,7 +3,7 @@ name = "texlab"
 description = "LaTeX Language Server"
 version.workspace = true
 license.workspace = true
-readme = "README.md"
+readme = "../../README.md"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -23,25 +23,25 @@ doctest = false
 
 [dependencies]
 anyhow.workspace = true
-base-db = { path = "../base-db" }
-bibfmt = { path = "../bibfmt" }
-citeproc = { path = "../citeproc" }
+base-db = { workspace = true }
+bibfmt = { workspace = true }
+citeproc = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-commands = { path = "../commands" }
-completion = { path = "../completion" }
-completion-data = { path = "../completion-data" }
+commands = { workspace = true }
+completion = { workspace = true }
+completion-data = { workspace = true }
 crossbeam-channel.workspace = true
-definition = { path = "../definition" }
-diagnostics = { path = "../diagnostics" }
-distro = { path = "../distro" }
+definition = { workspace = true }
+diagnostics = { workspace = true }
+distro = { workspace = true }
 fern.workspace = true
-folding = { path = "../folding" }
-highlights = { path = "../highlights" }
-hover = { path = "../hover" }
-inlay-hints = { path = "../inlay-hints" }
-ipc = { path = "../ipc" }
-line-index = { path = "../line-index" }
-links = { path = "../links" }
+folding = { workspace = true }
+highlights = { workspace = true }
+hover = { workspace = true }
+inlay-hints = { workspace = true }
+ipc = { workspace = true }
+line-index = { workspace = true }
+links = { workspace = true }
 log.workspace = true
 lsp-server.workspace = true
 lsp-types.workspace = true
@@ -49,18 +49,18 @@ notify-debouncer-full.workspace = true
 notify.workspace = true
 parking_lot.workspace = true
 percent-encoding.workspace = true
-parser = { path = "../parser" }
-references = { path = "../references" }
+parser = { workspace = true }
+references = { workspace = true }
 regex.workspace = true
-rename = { path = "../rename" }
+rename = { workspace = true }
 rowan.workspace = true
 rustc-hash.workspace = true
 serde_json.workspace = true
 serde_regex.workspace = true
 serde_repr.workspace = true
 serde.workspace = true
-symbols = { path = "../symbols" }
-syntax = { path = "../syntax" }
+symbols = { workspace = true }
+syntax = { workspace = true }
 tempfile.workspace = true
 threadpool.workspace = true
 titlecase.workspace = true

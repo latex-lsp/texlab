@@ -1,28 +1,30 @@
 [package]
 name = "base-db"
-version = "0.0.0"
+description = "Document store and dependency graph for LaTeX workspaces"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-bibtex-utils = { path = "../bibtex-utils" }
+bibtex-utils = { workspace = true }
 dirs.workspace = true
-distro = { path = "../distro" }
+distro = { workspace = true }
 itertools.workspace = true
-line-index = { path = "../line-index" }
+line-index = { workspace = true }
 log.workspace = true
 notify-debouncer-full.workspace = true
 notify.workspace = true
 once_cell.workspace = true
-parser = { path = "../parser" }
+parser = { workspace = true }
 percent-encoding.workspace = true
 regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
 shellexpand.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 titlecase.workspace = true
 url.workspace = true
 

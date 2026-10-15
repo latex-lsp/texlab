@@ -1,7 +1,9 @@
 [package]
 name = "symbols"
-version = "0.0.0"
+description = "Document symbol support for LaTeX and BibTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,12 +12,12 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
-base-db = { path = "../base-db" }
-distro = { path = "../distro" }
+base-db = { workspace = true }
+distro = { workspace = true }
 itertools.workspace = true
-line-index = { path = "../line-index" }
+line-index = { workspace = true }
 rowan.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 titlecase.workspace = true
 url.workspace = true
 
@@ -23,4 +25,4 @@ url.workspace = true
 expect-test.workspace = true
 regex.workspace = true
 rustc-hash.workspace = true
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }

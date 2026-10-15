@@ -1,28 +1,30 @@
 [package]
 name = "completion"
-version = "0.0.0"
+description = "Completion support for LaTeX and BibTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
-completion-data = { path = "../completion-data" }
+base-db = { workspace = true }
+completion-data = { workspace = true }
 fuzzy-matcher = { version = "0.3.7", features = ["compact"] }
-line-index = { path = "../line-index" }
+line-index = { workspace = true }
 rayon.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 url.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
-distro = { path = "../distro" }
+distro = { workspace = true }
 expect-test.workspace = true
-test-utils = { path = "../test-utils" }
-parser = { path = "../parser" }
+test-utils = { workspace = true }
+parser = { workspace = true }
 
 [lib]
 doctest = false

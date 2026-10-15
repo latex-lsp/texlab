@@ -96,7 +96,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "base-db"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "bibtex-utils",
  "dirs",
@@ -126,7 +126,7 @@ checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 
 [[package]]
 name = "bibfmt"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "expect-test",
  "line-index",
@@ -137,7 +137,7 @@ dependencies = [
 
 [[package]]
 name = "bibtex-utils"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "chrono",
  "expect-test",
@@ -248,7 +248,7 @@ dependencies = [
 
 [[package]]
 name = "citeproc"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "bibtex-utils",
@@ -312,7 +312,7 @@ checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
 name = "commands"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "anyhow",
  "base-db",
@@ -347,7 +347,7 @@ dependencies = [
 
 [[package]]
 name = "completion"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "completion-data",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "completion-data"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "flate2",
@@ -469,7 +469,7 @@ checksum = "248e3bacc7dc6baa3b21e405ee045c3047101a49145e7e9eca583ab4c2ca5345"
 
 [[package]]
 name = "definition"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "itertools 0.14.0",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "diagnostics"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "encoding_rs",
@@ -540,7 +540,7 @@ checksum = "86e3bdc80eee6e16b2b6b0f87fbc98c04bee3455e35174c0de1a125d0688c632"
 
 [[package]]
 name = "distro"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "anyhow",
  "rustc-hash 2.1.2",
@@ -647,7 +647,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "folding"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "expect-test",
@@ -732,7 +732,7 @@ checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
 
 [[package]]
 name = "highlights"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "expect-test",
@@ -742,7 +742,7 @@ dependencies = [
 
 [[package]]
 name = "hover"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "bibtex-utils",
@@ -914,7 +914,7 @@ dependencies = [
 
 [[package]]
 name = "inlay-hints"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "expect-test",
@@ -945,7 +945,7 @@ dependencies = [
 
 [[package]]
 name = "ipc"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "crossbeam-channel",
  "dirs",
@@ -1050,7 +1050,7 @@ dependencies = [
 
 [[package]]
 name = "line-index"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "rustc-hash 2.1.2",
  "text-size",
@@ -1058,7 +1058,7 @@ dependencies = [
 
 [[package]]
 name = "links"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "expect-test",
@@ -1322,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "parser"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "distro",
  "expect-test",
@@ -1498,7 +1498,7 @@ dependencies = [
 
 [[package]]
 name = "references"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "rowan",
@@ -1538,7 +1538,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rename"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "parser",
@@ -1744,7 +1744,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "symbols"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "distro",
@@ -1795,12 +1795,13 @@ dependencies = [
 
 [[package]]
 name = "syntax"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "distro",
  "itertools 0.14.0",
  "rowan",
  "rustc-hash 2.1.2",
+ "serde",
 ]
 
 [[package]]
@@ -1818,7 +1819,7 @@ dependencies = [
 
 [[package]]
 name = "test-utils"
-version = "0.0.0"
+version = "5.26.0"
 dependencies = [
  "base-db",
  "distro",

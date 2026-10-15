@@ -1,7 +1,9 @@
 [package]
 name = "line-index"
-version = "0.0.0"
+description = "Indexing and conversion of line/column positions"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true

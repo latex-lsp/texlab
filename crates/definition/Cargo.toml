@@ -1,20 +1,22 @@
 [package]
 name = "definition"
-version = "0.0.0"
+description = "Go to definition support for LaTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
+base-db = { workspace = true }
 rowan.workspace = true
 rustc-hash.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 
 [dev-dependencies]
 itertools.workspace = true
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }
 
 [lib]
 doctest = false

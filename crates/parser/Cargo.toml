@@ -1,13 +1,15 @@
 [package]
 name = "parser"
-version = "0.0.0"
+description = "Parsers for LaTeX, BibTeX, build logs and file lists"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-distro = { path = "../distro" }
+distro = { workspace = true }
 log.workspace = true
 logos.workspace = true
 once_cell.workspace = true
@@ -16,7 +18,7 @@ regex.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
 shellexpand.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 tempfile.workspace = true
 versions.workspace = true
 

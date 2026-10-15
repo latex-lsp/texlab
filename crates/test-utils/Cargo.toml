@@ -1,15 +1,17 @@
 [package]
 name = "test-utils"
-version = "0.0.0"
+description = "Test fixtures for the texlab feature crates"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
-distro = { path = "../distro" }
-line-index = { path = "../line-index" }
+base-db = { workspace = true }
+distro = { workspace = true }
+line-index = { workspace = true }
 rowan.workspace = true
 url.workspace = true
 

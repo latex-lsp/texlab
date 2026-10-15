@@ -1,16 +1,18 @@
 [package]
 name = "links"
-version = "0.0.0"
+description = "Document link support for LaTeX files"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
+base-db = { workspace = true }
 
 [dev-dependencies]
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }
 expect-test.workspace = true
 
 [lib]

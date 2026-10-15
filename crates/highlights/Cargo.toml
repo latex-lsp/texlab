@@ -1,18 +1,20 @@
 [package]
 name = "highlights"
-version = "0.0.0"
+description = "Document highlight support for LaTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
+base-db = { workspace = true }
 rowan.workspace = true
 
 [dev-dependencies]
 expect-test.workspace = true
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }
 
 [lib]
 doctest = false
