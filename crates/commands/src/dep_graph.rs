@@ -15,7 +15,7 @@ pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
     for (i, document) in workspace.iter().enumerate() {
         let node = format!("v{i:0>5}");
 
-        let label = document.uri.as_str();
+        let label = escape_dot_label(document.uri.as_str());
         let shape = if document
             .data
             .as_tex()
@@ -44,7 +44,7 @@ pub fn show_dependency_graph(workspace: &Workspace) -> Result<String> {
     {
         let source = &documents[&edge.source];
         let target = &documents[&edge.target];
-        let label = edge_label(edge);
+        let label = escape_dot_label(edge_label(edge));
 
         writeln!(&mut writer, "\t{source} -> {target} [label=\"{label}\"];")?;
     }
@@ -59,5 +59,48 @@ fn edge_label(edge: &Edge) -> &str {
         base_db::deps::EdgeData::AdditionalFiles => "<project>",
         base_db::deps::EdgeData::Artifact => "<artifact>",
         base_db::deps::EdgeData::FileList(_) => "<fls>",
+    }
+}
+
+fn escape_dot_label(label: &str) -> String {
+    let mut escaped = String::with_capacity(label.len());
+    for character in label.chars() {
+        match character {
+            '\\' => escaped.push_str("\\\\"),
+            '"' => escaped.push_str("\\\""),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
+#[cfg(test)]
+mod tests {
+    use test_utils::fixture::Fixture;
+
+    use super::show_dependency_graph;
+    use super::escape_dot_label;
+
+    #[test]
+    fn escapes_dot_string_special_characters() {
+        assert_eq!(
+            escape_dot_label("quote\" backslash\\ newline\n carriage\r"),
+            r#"quote\" backslash\\ newline\n carriage\r"#,
+        );
+    }
+
+    #[test]
+    fn escapes_quotes_in_link_labels() {
+        let fixture = Fixture::parse(
+            r#"
+%! main.tex
+\input{child"q}
+%! child"q.tex
+"#,
+        );
+        let graph = show_dependency_graph(&fixture.workspace).unwrap();
+        assert!(graph.contains("label=\"child\\\"q\""), "{graph}");
     }
 }
