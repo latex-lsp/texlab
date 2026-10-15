@@ -11,6 +11,7 @@ distro = { path = "../distro" }
 itertools.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
+serde = { workspace = true, features = ["derive"] }
 
 [lib]
 doctest = false

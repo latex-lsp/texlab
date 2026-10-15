@@ -9,6 +9,7 @@ pub enum Language {
     Root,
     Latexmkrc,
     Tectonic,
+    Llmk,
     FileList,
 }
 
@@ -21,6 +22,10 @@ impl Language {
 
         if name.eq_ignore_ascii_case("Tectonic.toml") {
             return Some(Self::Tectonic);
+        }
+
+        if name.eq_ignore_ascii_case("llmk.toml") {
+            return Some(Self::Llmk);
         }
 
         if name.eq_ignore_ascii_case(".latexmkrc") || name.eq_ignore_ascii_case("latexmkrc") {
