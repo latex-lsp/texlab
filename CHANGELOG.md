@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `texlab.clean.executable`, `texlab.clean.args`, `texlab.clobber.executable`, and `texlab.clobber.args` options to configure the commands used by `texlab.cleanAuxiliary` and `texlab.cleanArtifacts`
+
 ### Fixed
 
+- Run the clean command in the directory of the project root instead of the working directory of the server
 - Use `texlab.diagnosticsDelay` to debounce diagnostics updates with the goal of reducing load of the client
   ([#1551](https://github.com/latex-lsp/texlab/issues/1551))
 

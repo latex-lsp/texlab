@@ -272,6 +272,15 @@ pub fn config(value: Options) -> Config {
 
     config.build.output_filename = value.build.filename;
 
+    config.build.clean.program = value.clean.executable.unwrap_or(config.build.clean.program);
+    config.build.clean.args = value.clean.args.unwrap_or(config.build.clean.args);
+
+    config.build.clobber.program = value
+        .clobber
+        .executable
+        .unwrap_or(config.build.clobber.program);
+    config.build.clobber.args = value.clobber.args.unwrap_or(config.build.clobber.args);
+
     config.diagnostics.allowed_patterns = value
         .diagnostics
         .allowed_patterns

@@ -13,6 +13,8 @@ pub struct Options {
     pub diagnostics: DiagnosticsOptions,
     pub diagnostics_delay: Option<u64>,
     pub build: BuildOptions,
+    pub clean: CommandOptions,
+    pub clobber: CommandOptions,
     pub hover: HoverOptions,
     pub chktex: ChktexOptions,
     pub symbols: SymbolOptions,
@@ -75,6 +77,14 @@ pub struct BuildOptions {
     pub pdf_directory: Option<String>,
     pub filename: Option<String>,
     pub use_file_list: bool,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(default)]
+pub struct CommandOptions {
+    pub executable: Option<String>,
+    pub args: Option<Vec<String>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, Serialize, Deserialize)]
