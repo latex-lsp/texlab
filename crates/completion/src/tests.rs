@@ -403,6 +403,42 @@ fn citation() {
 }
 
 #[test]
+fn citation_matches_bib_fields() {
+    let fixture = test_utils::fixture::Fixture::parse(
+        r#"
+%! main.tex
+\addbibresource{main.bib}
+\cite{Folland
+             |
+
+%! main.bib
+@book{book00000007,
+    author = {Folland, Gerald B.},
+    title = {Harmonic analysis in phase space},
+}
+"#,
+    );
+
+    let spec = fixture
+        .documents
+        .iter()
+        .find(|document| document.cursor.is_some())
+        .unwrap();
+    let document = fixture.workspace.lookup(&spec.uri).unwrap();
+    let offset = spec.cursor.unwrap();
+    let feature = FeatureParams::new(&fixture.workspace, document);
+    let params = CompletionParams { feature, offset };
+    let result = crate::complete(&params);
+
+    assert!(
+        result
+            .items
+            .iter()
+            .any(|item| item.data.label() == "book00000007")
+    );
+}
+
+#[test]
 fn citation_open_brace() {
     check(
         r#"
