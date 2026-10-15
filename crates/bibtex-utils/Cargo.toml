@@ -1,7 +1,9 @@
 [package]
 name = "bibtex-utils"
-version = "0.0.0"
+description = "Utilities for interpreting BibTeX field data"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -12,7 +14,7 @@ human_name.workspace = true
 itertools.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 unicode-normalization.workspace = true
 
 [lib]
@@ -20,4 +22,4 @@ doctest = false
 
 [dev-dependencies]
 expect-test.workspace = true
-parser = { path = "../parser" }
+parser = { workspace = true }

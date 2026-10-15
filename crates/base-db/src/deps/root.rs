@@ -27,6 +27,7 @@ impl ProjectRoot {
         let mut current = dir.clone();
         loop {
             let root = Self::from_rootfile(workspace, &current)
+                .or_else(|| Self::from_llmk(workspace, &current))
                 .or_else(|| Self::from_tectonic(workspace, &current))
                 .or_else(|| Self::from_latexmkrc(workspace, &current));
 
@@ -44,6 +45,49 @@ impl ProjectRoot {
 
             current = parent;
         }
+    }
+
+    pub fn from_llmk(workspace: &Workspace, dir: &Url) -> Option<Self> {
+        let llmk = workspace
+            .iter()
+            .filter(|document| document.dir.as_ref() == Some(dir))
+            .find_map(|document| document.data.as_llmk())?;
+
+        log::debug!("Found llmk.toml in {:?}", dir);
+
+        let config = workspace.config();
+
+        // When output_directory is set, it applies to aux, log, and pdf
+        // directories simultaneously. Otherwise, each directory falls back
+        // to its own value from the workspace configuration.
+        let (aux_dir, log_dir, pdf_dir) = if let Some(path) = llmk.output_directory.as_deref() {
+            let out_dir = append_dir(dir, path, workspace)
+                .ok()
+                .unwrap_or_else(|| dir.clone());
+            log::debug!("llmk.toml output_directory: {path:?} -> aux/log/pdf={out_dir:?}",);
+            (out_dir.clone(), out_dir.clone(), out_dir)
+        } else {
+            let aux_dir = append_dir(dir, &config.build.aux_dir, workspace)
+                .ok()
+                .unwrap_or_else(|| dir.clone());
+            let log_dir = append_dir(dir, &config.build.log_dir, workspace)
+                .ok()
+                .unwrap_or_else(|| dir.clone());
+            let pdf_dir = append_dir(dir, &config.build.pdf_dir, workspace)
+                .ok()
+                .unwrap_or_else(|| dir.clone());
+            (aux_dir, log_dir, pdf_dir)
+        };
+
+        Some(Self {
+            compile_dir: dir.clone(),
+            src_dir: dir.clone(),
+            aux_dir,
+            log_dir,
+            pdf_dir,
+            additional_files: vec![],
+            file_name_db: Default::default(),
+        })
     }
 
     pub fn from_tectonic(workspace: &Workspace, dir: &Url) -> Option<Self> {
@@ -185,5 +229,92 @@ impl std::fmt::Debug for ProjectRoot {
             .field("additional_files", &self.additional_files)
             .field("file_name_db", &"...")
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use distro::Language;
+    use line_index::LineCol;
+    use url::Url;
+
+    use crate::{Config, Owner, Workspace};
+
+    use super::ProjectRoot;
+
+    fn open(workspace: &mut Workspace, uri: &str, text: &str, language: Language) {
+        workspace.open(
+            Url::parse(uri).unwrap(),
+            text.to_string(),
+            language,
+            Owner::Client,
+            LineCol { line: 0, col: 0 },
+        );
+    }
+
+    #[test]
+    fn llmk_output_directory_sets_all_dirs() {
+        let mut workspace = Workspace::default();
+        open(
+            &mut workspace,
+            "file:///texlab/llmk.toml",
+            r#"output_directory = "build""#,
+            Language::Llmk,
+        );
+
+        let root = ProjectRoot::walk_and_find(&workspace, &Url::parse("file:///texlab/").unwrap());
+
+        assert_eq!(root.compile_dir.as_str(), "file:///texlab/");
+        assert_eq!(root.src_dir.as_str(), "file:///texlab/");
+        assert_eq!(root.aux_dir.as_str(), "file:///texlab/build/");
+        assert_eq!(root.log_dir.as_str(), "file:///texlab/build/");
+        assert_eq!(root.pdf_dir.as_str(), "file:///texlab/build/");
+    }
+
+    #[test]
+    fn llmk_takes_priority_over_latexmkrc() {
+        let mut workspace = Workspace::default();
+        open(
+            &mut workspace,
+            "file:///texlab/llmk.toml",
+            r#"output_directory = "llmk-build""#,
+            Language::Llmk,
+        );
+        open(
+            &mut workspace,
+            "file:///texlab/.latexmkrc",
+            "$aux_dir = 'latexmk-aux';\n$out_dir = 'latexmk-out';",
+            Language::Latexmkrc,
+        );
+
+        let root = ProjectRoot::walk_and_find(&workspace, &Url::parse("file:///texlab/").unwrap());
+
+        // llmk.toml should win over .latexmkrc
+        assert_eq!(root.aux_dir.as_str(), "file:///texlab/llmk-build/");
+        assert_eq!(root.log_dir.as_str(), "file:///texlab/llmk-build/");
+        assert_eq!(root.pdf_dir.as_str(), "file:///texlab/llmk-build/");
+    }
+
+    #[test]
+    fn llmk_falls_back_to_config_when_no_output_directory() {
+        let mut config = Config::default();
+        config.build.aux_dir = "config-aux".to_string();
+        config.build.log_dir = "config-log".to_string();
+        config.build.pdf_dir = "config-pdf".to_string();
+
+        let mut workspace = Workspace::default();
+        workspace.set_config(config);
+        open(
+            &mut workspace,
+            "file:///texlab/llmk.toml",
+            "",
+            Language::Llmk,
+        );
+
+        let root = ProjectRoot::walk_and_find(&workspace, &Url::parse("file:///texlab/").unwrap());
+
+        assert_eq!(root.aux_dir.as_str(), "file:///texlab/config-aux/");
+        assert_eq!(root.log_dir.as_str(), "file:///texlab/config-log/");
+        assert_eq!(root.pdf_dir.as_str(), "file:///texlab/config-pdf/");
     }
 }

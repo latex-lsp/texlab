@@ -1,22 +1,24 @@
 [package]
 name = "hover"
-version = "0.0.0"
+description = "Hover support for LaTeX and BibTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-base-db = { path = "../base-db" }
-bibtex-utils = { path = "../bibtex-utils" }
-citeproc = { path = "../citeproc" }
-completion-data = { path = "../completion-data" }
+base-db = { workspace = true }
+bibtex-utils = { workspace = true }
+citeproc = { workspace = true }
+completion-data = { workspace = true }
 rowan.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 
 [dev-dependencies]
 expect-test.workspace = true
-test-utils = { path = "../test-utils" }
+test-utils = { workspace = true }
 
 [lib]
 doctest = false

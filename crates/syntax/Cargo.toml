@@ -1,16 +1,19 @@
 [package]
 name = "syntax"
-version = "0.0.0"
+description = "Syntax tree and token definitions for LaTeX and BibTeX"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-distro = { path = "../distro" }
+distro = { workspace = true }
 itertools.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
+serde.workspace = true
 
 [lib]
 doctest = false

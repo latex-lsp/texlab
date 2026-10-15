@@ -1,7 +1,9 @@
 [package]
 name = "ipc"
-version = "0.0.0"
+description = "Inter-process communication server for texlab"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,4 +21,4 @@ doctest = false
 
 [dev-dependencies]
 expect-test.workspace = true
-parser = { path = "../parser" }
+parser = { workspace = true }

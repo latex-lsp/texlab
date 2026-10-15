@@ -1,19 +1,21 @@
 [package]
 name = "citeproc"
-version = "0.0.0"
+description = "Citation processor for BibTeX documents"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-bibtex-utils = { path = "../bibtex-utils" }
-base-db = { path = "../base-db" }
+bibtex-utils = { workspace = true }
+base-db = { workspace = true }
 isocountry.workspace = true
 itertools.workspace = true
 rowan.workspace = true
 rustc-hash.workspace = true
-syntax = { path = "../syntax" }
+syntax = { workspace = true }
 titlecase.workspace = true
 unicode-normalization.workspace = true
 url.workspace = true
@@ -23,4 +25,4 @@ doctest = false
 
 [dev-dependencies]
 expect-test.workspace = true
-parser = { path = "../parser" }
+parser = { workspace = true }

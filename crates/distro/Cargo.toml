@@ -1,7 +1,9 @@
 [package]
 name = "distro"
-version = "0.0.0"
+description = "Detection of TeX distribution files"
+version.workspace = true
 license.workspace = true
+repository.workspace = true
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
