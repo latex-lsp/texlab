@@ -44,6 +44,33 @@ pub trait Object {
     }
 }
 
+impl Object for tex::Link {
+    fn name_text(&self) -> &str {
+        &self.path.text
+    }
+
+    fn name_range(&self) -> TextRange {
+        self.path.range
+    }
+
+    fn full_range(&self) -> TextRange {
+        self.full_range
+    }
+
+    fn kind(&self) -> ObjectKind {
+        ObjectKind::Definition
+    }
+
+    fn find<'db>(document: &'db Document) -> Box<dyn Iterator<Item = &'db Self> + 'db> {
+        let data = document.data.as_tex();
+        let iter = data
+            .into_iter()
+            .flat_map(|data| data.semantics.links.iter());
+
+        Box::new(iter)
+    }
+}
+
 impl Object for tex::Label {
     fn name_text(&self) -> &str {
         &self.name.text
