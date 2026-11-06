@@ -273,6 +273,7 @@ static DEFAULT_LABEL_REFERENCE_COMMANDS: &[&str] = &[
     "labelcref",
     "labelcpageref",
     "eqref",
+    "footref",
 ];
 
 static DEFAULT_LABEL_REFERENCE_PREFIXES: &[(&str, &str)] = &[];
