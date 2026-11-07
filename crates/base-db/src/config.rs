@@ -27,6 +27,14 @@ pub struct BuildConfig {
     pub log_dir: String,
     pub pdf_dir: String,
     pub output_filename: Option<String>,
+    pub clean: CommandConfig,
+    pub clobber: CommandConfig,
+}
+
+#[derive(Debug)]
+pub struct CommandConfig {
+    pub program: String,
+    pub args: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -133,6 +141,20 @@ impl Default for BuildConfig {
             log_dir: String::from("."),
             pdf_dir: String::from("."),
             output_filename: None,
+            clean: CommandConfig {
+                program: String::from("latexmk"),
+                args: ["-outdir=%o", "-c", "%f"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
+            },
+            clobber: CommandConfig {
+                program: String::from("latexmk"),
+                args: ["-outdir=%o", "-C", "%f"]
+                    .into_iter()
+                    .map(String::from)
+                    .collect(),
+            },
         }
     }
 }
