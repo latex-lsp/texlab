@@ -19,6 +19,17 @@ pub fn normalize_uri(uri: &mut url::Url) {
     }
 
     uri.set_path(&normalize_percent_encoding(uri.path()));
+
+    if uri.scheme() == "file" {
+        if let Some(normalized) = uri
+            .to_file_path()
+            .ok()
+            .and_then(|path| url::Url::from_file_path(path).ok())
+        {
+            *uri = normalized;
+        }
+    }
+
     uri.set_fragment(None);
 }
 
@@ -94,6 +105,16 @@ mod tests {
     fn test_uppercase_percent_encoding_unix() {
         let mut uri1 = Url::parse("file:///foo/%C3%A4.tex").unwrap();
         let uri2 = Url::from_file_path("/foo/ä.tex").unwrap();
+
+        normalize_uri(&mut uri1);
+        assert_eq!(uri1, uri2);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_percent_encoded_parentheses_unix() {
+        let mut uri1 = Url::parse("file:///foo%20%28bar%29/baz.tex").unwrap();
+        let uri2 = Url::from_file_path("/foo (bar)/baz.tex").unwrap();
 
         normalize_uri(&mut uri1);
         assert_eq!(uri1, uri2);

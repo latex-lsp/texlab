@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use distro::Language;
 use line_index::{LineCol, LineIndex};
 use rowan::TextRange;
-use syntax::{BuildError, bibtex, file_list::FileList, latex, latexmkrc::LatexmkrcData};
+use syntax::{
+    BuildError, bibtex, file_list::FileList, latex, latexmkrc::LatexmkrcData, llmk::LlmkTomlData,
+};
 use url::Url;
 
 use crate::{Config, semantics};
@@ -89,6 +91,13 @@ impl Document {
                 DocumentData::Latexmkrc(data)
             }
             Language::Tectonic => DocumentData::Tectonic,
+            Language::Llmk => {
+                let data = toml::from_str(&text).unwrap_or_else(|error| {
+                    log::warn!("Failed to parse {uri}: {error}");
+                    LlmkTomlData::default()
+                });
+                DocumentData::Llmk(data)
+            }
             Language::FileList => DocumentData::FileList(parser::parse_file_list(&text)),
         };
 
@@ -147,6 +156,7 @@ pub enum DocumentData {
     Root,
     Latexmkrc(LatexmkrcData),
     Tectonic,
+    Llmk(LlmkTomlData),
     FileList(FileList),
 }
 
@@ -185,6 +195,14 @@ impl DocumentData {
 
     pub fn as_latexmkrc(&self) -> Option<&LatexmkrcData> {
         if let DocumentData::Latexmkrc(data) = self {
+            Some(data)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_llmk(&self) -> Option<&LlmkTomlData> {
+        if let DocumentData::Llmk(data) = self {
             Some(data)
         } else {
             None

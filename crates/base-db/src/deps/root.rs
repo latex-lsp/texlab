@@ -27,6 +27,7 @@ impl ProjectRoot {
         let mut current = dir.clone();
         loop {
             let root = Self::from_rootfile(workspace, &current)
+                .or_else(|| Self::from_llmk(workspace, &current))
                 .or_else(|| Self::from_tectonic(workspace, &current))
                 .or_else(|| Self::from_latexmkrc(workspace, &current));
 
@@ -44,6 +45,33 @@ impl ProjectRoot {
 
             current = parent;
         }
+    }
+
+    pub fn from_llmk(workspace: &Workspace, dir: &Url) -> Option<Self> {
+        let llmk = workspace
+            .iter()
+            .filter(|document| document.dir.as_ref() == Some(dir))
+            .find_map(|document| document.data.as_llmk())?;
+
+        log::debug!("Found llmk.toml in {dir}");
+
+        let mut root = Self::from_config(workspace, dir);
+
+        // `output_directory` applies to the aux, log and pdf directory at the same
+        // time. If it is missing, the values from the configuration are used.
+        if let Some(path) = llmk
+            .output_directory
+            .as_deref()
+            .filter(|path| !path.is_empty())
+        {
+            let out_dir = append_dir(dir, path, workspace).unwrap_or_else(|_| dir.clone());
+            log::debug!("llmk.toml output_directory: {path:?} -> aux/log/pdf={out_dir}");
+            root.aux_dir = out_dir.clone();
+            root.log_dir = out_dir.clone();
+            root.pdf_dir = out_dir;
+        }
+
+        Some(root)
     }
 
     pub fn from_tectonic(workspace: &Workspace, dir: &Url) -> Option<Self> {

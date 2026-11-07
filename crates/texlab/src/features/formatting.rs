@@ -33,6 +33,7 @@ pub fn format_source_code(
         | Language::Log
         | Language::Root
         | Language::Latexmkrc
+        | Language::Llmk
         | Language::Tectonic
         | Language::FileList => None,
     }

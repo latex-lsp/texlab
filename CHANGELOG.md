@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `texlab.clean.executable`, `texlab.clean.args`, `texlab.clobber.executable`, and `texlab.clobber.args` options to configure the commands used by `texlab.cleanAuxiliary` and `texlab.cleanArtifacts`
+- Detect `llmk.toml` and use its `output_directory` as the auxiliary, log, and PDF directory
 
 ### Fixed
 
