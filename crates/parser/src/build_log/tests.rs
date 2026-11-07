@@ -120,6 +120,26 @@ PDF statistics:
 }
 
 #[test]
+fn zero_line_number_does_not_panic() {
+    check(
+        "(./main.tex\n! Undefined control sequence.\nl.0 \\bad\n",
+        expect![[r#"
+            BuildLog {
+                errors: [
+                    BuildError {
+                        relative_path: "./main.tex",
+                        level: Error,
+                        message: "Undefined control sequence.",
+                        hint: None,
+                        line: None,
+                    },
+                ],
+            }
+        "#]],
+    );
+}
+
+#[test]
 fn test_002() {
     check(
         r#"This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.30)  26 DEC 2018 16:52
