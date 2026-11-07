@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Detect `llmk.toml` and use its `output_directory` as the auxiliary, log, and PDF directory
+
 ### Fixed
 
 - Use `texlab.diagnosticsDelay` to debounce diagnostics updates with the goal of reducing load of the client

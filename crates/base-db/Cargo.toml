@@ -24,6 +24,7 @@ rustc-hash.workspace = true
 shellexpand.workspace = true
 syntax = { path = "../syntax" }
 titlecase.workspace = true
+toml.workspace = true
 url.workspace = true
 
 [lib]

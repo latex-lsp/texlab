@@ -82,7 +82,11 @@ fn discover_parents(workspace: &mut Workspace, checked_paths: &mut FxHashSet<Pat
 
             if !matches!(
                 lang,
-                Language::Tex | Language::Root | Language::Tectonic | Language::Latexmkrc
+                Language::Tex
+                    | Language::Root
+                    | Language::Tectonic
+                    | Language::Latexmkrc
+                    | Language::Llmk
             ) {
                 continue;
             }

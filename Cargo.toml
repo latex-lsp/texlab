@@ -53,6 +53,7 @@ tempfile = "3.27.0"
 thiserror = "2.0.18"
 threadpool = "1.8.1"
 titlecase = "3.6.0"
+toml = { version = "0.8.23", default-features = false, features = ["parse"] }
 uds_windows = "1.1.0"
 unicode-normalization = "0.1.25"
 url = "2.5.8"
