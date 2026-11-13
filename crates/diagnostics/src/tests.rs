@@ -1,8 +1,10 @@
+use base_db::Config;
 use expect_test::{Expect, expect};
 use itertools::Itertools;
 
-fn check(input: &str, expect: Expect) {
-    let fixture = test_utils::fixture::Fixture::parse(input);
+fn check_with_config(input: &str, config: Config, expect: Expect) {
+    let mut fixture = test_utils::fixture::Fixture::parse(input);
+    fixture.workspace.set_config(config);
     let mut manager = crate::Manager::default();
 
     for document in fixture.workspace.iter() {
@@ -18,6 +20,10 @@ fn check(input: &str, expect: Expect) {
         .collect_vec();
 
     expect.assert_debug_eq(&results);
+}
+
+fn check(input: &str, expect: Expect) {
+    check_with_config(input, Config::default(), expect)
 }
 
 #[test]
@@ -206,6 +212,48 @@ fn test_tex_environment_mismatched() {
                     ],
                 ),
             ]
+        "#]],
+    )
+}
+
+#[test]
+fn test_verbatim_environment_after_inline_begin() {
+    check(
+        r#"
+%! main.tex
+\begin{document}
+\begin{scriptsize}\begin{verbatim}
+\begin{document}
+\end{verbatim}\end{scriptsize}
+\end{document}
+"#,
+        expect![[r#"
+            []
+        "#]],
+    )
+}
+
+#[test]
+fn test_custom_verbatim_environment_ignores_tex_syntax() {
+    let mut config = Config::default();
+    config
+        .syntax
+        .verbatim_environments
+        .insert("Verbatim".to_string());
+
+    check_with_config(
+        r#"
+%! main.tex
+\begin{document}
+\usepackage{fancyvrb}
+\begin{Verbatim}
+{ printf("%s", x); }
+\end{Verbatim}
+\end{document}
+"#,
+        config,
+        expect![[r#"
+            []
         "#]],
     )
 }
