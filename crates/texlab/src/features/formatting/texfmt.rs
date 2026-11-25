@@ -13,11 +13,14 @@ pub fn format_with_texfmt(
     document: &Document,
 ) -> Option<Vec<lsp_types::TextEdit>> {
     let line_length = workspace.config().formatting.line_length;
+    let mut command = Command::new("tex-fmt");
+    command.arg("--stdin");
 
-    let mut child = Command::new("tex-fmt")
-        .arg("--stdin")
-        .arg("--wraplen")
-        .arg(line_length.to_string())
+    if line_length != 0 {
+        command.arg("--wraplen").arg(line_length.to_string());
+    }
+
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
