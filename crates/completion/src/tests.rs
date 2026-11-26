@@ -402,6 +402,83 @@ fn citation() {
     );
 }
 
+fn citation_labels(query: &str, matcher: base_db::MatchingAlgo) -> Vec<String> {
+    let entries = (1..=60)
+        .map(|index| {
+            let (author, title) = if index == 57 {
+                ("Folland, Gerald B.", "Harmonic analysis in phase space")
+            } else {
+                ("Stein, Elias M.", "Some paper")
+            };
+            format!(
+                "@book{{book{index:08}, author = {{{author}}}, title = {{{title}}}, year = {{1970}}}}\n"
+            )
+        })
+        .collect::<String>();
+    let input = format!(
+        "%! main.tex\n\\addbibresource{{main.bib}}\n\\cite{{{query}}}\n{}|\n\n%! main.bib\n{entries}",
+        " ".repeat(6 + query.len())
+    );
+    let mut fixture = test_utils::fixture::Fixture::parse(&input);
+    let mut config = Config::default();
+    config.completion.matcher = matcher;
+    fixture.workspace.set_config(config);
+    let (feature, offset) = fixture.make_params().unwrap();
+
+    crate::complete(&CompletionParams { feature, offset })
+        .items
+        .into_iter()
+        .map(|item| item.data.label().to_owned())
+        .collect()
+}
+
+#[test]
+fn citation_matches_author_with_more_than_limit_entries() {
+    use base_db::MatchingAlgo::*;
+
+    for (matcher, query) in [
+        (SkimIgnoreCase, "fol"),
+        (PrefixIgnoreCase, "fol"),
+        (Skim, "Fol"),
+        (Prefix, "Fol"),
+    ] {
+        assert_eq!(citation_labels(query, matcher), ["book00000057"]);
+    }
+}
+
+#[test]
+fn citation_matches_title_with_more_than_limit_entries() {
+    use base_db::MatchingAlgo::*;
+
+    for (matcher, query) in [
+        (SkimIgnoreCase, "harmonic"),
+        (PrefixIgnoreCase, "harmonic"),
+        (Skim, "Harmonic"),
+        (Prefix, "Harmonic"),
+    ] {
+        assert_eq!(citation_labels(query, matcher), ["book00000057"]);
+    }
+}
+
+#[test]
+fn citation_key_matching_keeps_order_and_limit() {
+    use base_db::MatchingAlgo::*;
+
+    for matcher in [Skim, SkimIgnoreCase, Prefix, PrefixIgnoreCase] {
+        let labels = citation_labels("book0000000", matcher);
+        let expected = (1..=9)
+            .map(|index| format!("book{index:08}"))
+            .collect::<Vec<_>>();
+        assert!(labels.starts_with(&expected));
+    }
+    for matcher in [Skim, SkimIgnoreCase, Prefix, PrefixIgnoreCase] {
+        assert_eq!(citation_labels("book00000007", matcher), ["book00000007"]);
+    }
+    let empty = citation_labels("", SkimIgnoreCase);
+    assert_eq!(empty.len(), crate::LIMIT);
+    assert!(!empty.contains(&"book00000057".to_string()));
+}
+
 #[test]
 fn citation_open_brace() {
     check(
