@@ -1,4 +1,4 @@
-use base_db::semantics::Span;
+use base_db::{MatchingAlgo, semantics::Span};
 use rayon::prelude::{IntoParallelRefIterator, ParallelExtend, ParallelIterator};
 use rowan::ast::AstNode;
 use syntax::latex;
@@ -13,11 +13,31 @@ pub fn complete_citations<'a>(
     builder: &mut CompletionBuilder<'a>,
 ) -> Option<()> {
     let cursor = find_citation(params)?;
+    let prefix_matcher = matches!(
+        params.feature.workspace.config().completion.matcher,
+        MatchingAlgo::Prefix | MatchingAlgo::PrefixIgnoreCase
+    );
 
     for document in &params.feature.project.documents {
         if let Some(data) = document.data.as_bib() {
             let items = data.semantics.entries.par_iter().filter_map(|entry| {
-                let score = builder.matcher.score(&entry.name.text, &cursor.text)?;
+                let score = builder
+                    .matcher
+                    .score(&entry.name.text, &cursor.text)
+                    .or_else(|| {
+                        let metadata = entry
+                            .keywords
+                            .strip_prefix(entry.name.text.as_str())
+                            .unwrap_or(&entry.keywords);
+                        if prefix_matcher {
+                            metadata
+                                .split_whitespace()
+                                .filter_map(|word| builder.matcher.score(word, &cursor.text))
+                                .max()
+                        } else {
+                            builder.matcher.score(metadata, &cursor.text)
+                        }
+                    })?;
                 let data = CompletionItemData::Citation(CitationData { document, entry });
                 Some(CompletionItem::new_simple(score, cursor.range, data))
             });
